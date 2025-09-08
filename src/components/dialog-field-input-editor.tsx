@@ -102,8 +102,6 @@ export default function FieldInputEditorDialog({ field, update }: Props) {
         setDropdownOptions(v => v.filter(v => v !== val))
     }
 
-    console.log(field)
-
     return (
         <Dialog open={openDialog} onOpenChange={setOpenDialog}>
             <DialogTrigger asChild>

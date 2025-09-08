@@ -9,7 +9,6 @@ import { formatAmount } from "@/data/currencies";
 
 export default function HomeDashboardPage() {
     const {club} = useContext(ClubContext) as ClubContextType
-    console.log('club', club)
     const {data, isLoading} = useGeneralReportingQuery(club?.club_account_id as string)
     // const {data: r}= useRegistrationBillingReportingQuery(club?.club_account_id as string)
     const navigate = useNavigate()
