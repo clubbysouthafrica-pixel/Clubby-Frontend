@@ -10,6 +10,7 @@ import { formatAmount } from "@/data/currencies";
 export default function HomeDashboardPage() {
     const {club} = useContext(ClubContext) as ClubContextType
     const {data, isLoading} = useGeneralReportingQuery(club?.club_account_id as string)
+    console.log('data', data)
     // const {data: r}= useRegistrationBillingReportingQuery(club?.club_account_id as string)
     const navigate = useNavigate()
     const manageRoutes = [
@@ -44,7 +45,7 @@ export default function HomeDashboardPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-center bg-muted rounded-full p-4 mx-auto w-12 h-12 justify-center items-center flex">{data?.total_registered_members}</div>
+                        <div className="text-center bg-muted rounded-full p-4 mx-auto w-12 h-12 justify-center items-center flex">{data?.report.total_registered_members}</div>
                     </CardContent>
                 </Card>
                 <Card className="flex-1">
@@ -57,7 +58,7 @@ export default function HomeDashboardPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-center bg-muted rounded-full p-4 mx-auto w-12 h-12 justify-center items-center flex">{data?.total_pending_members}</div>
+                        <div className="text-center bg-muted rounded-full p-4 mx-auto w-12 h-12 justify-center items-center flex">{data?.report.total_pending_members}</div>
                     </CardContent>
                 </Card>
                 
@@ -71,7 +72,7 @@ export default function HomeDashboardPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-center bg-muted rounded-full p-4 mx-auto w-12 h-12 justify-center items-center flex">{data?.total_registration_fees_due_by_pending_members}</div>
+                        <div className="text-center bg-muted rounded-full p-4 mx-auto w-12 h-12 justify-center items-center flex">{formatAmount(data?.report.total_registration_fees_due_by_pending_members)}</div>
                     </CardContent>
                 </Card>
 
@@ -86,7 +87,7 @@ export default function HomeDashboardPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-center bg-muted rounded-full p-4 mx-auto min-w-12 h-12 justify-center items-center flex">{formatAmount(data?.total_registration_fees, club?.currency)}</div>
+                        <div className="text-center bg-muted rounded-full p-4 mx-auto min-w-12 h-12 justify-center items-center flex">{formatAmount(data?.report.total_registration_fees, club?.currency)}</div>
                     </CardContent>
                 </Card>
 
@@ -101,7 +102,7 @@ export default function HomeDashboardPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-center bg-muted rounded-full p-4 mx-auto w-12 h-12 justify-center items-center flex">{data?.total_extra_fees_owed_by_registered_members}</div>
+                        <div className="text-center bg-muted rounded-full p-4 mx-auto w-12 h-12 justify-center items-center flex">{data?.report.total_extra_fees_owed_by_registered_members}</div>
                     </CardContent>
                 </Card>
             </div>
