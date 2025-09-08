@@ -46,7 +46,7 @@ export default function AdminRegistrationFormPage() {
     }
 
     const addPage = () => {
-        setPages((v: PageFormRegistration[]) => v.length > 0 ? [...v, {page_header: `Page ${v.length+1}`, page_index: v.length+1, fields: []}] : [defaultPage])
+        setPages((v: PageFormRegistration[]) => v.length > 0 ? [...v, {page_header: `Page ${v.length+1}`, page_index: v.length, fields: []}] : [defaultPage])
     }
 
     const removePage = (pageIndex: number) => {
@@ -101,7 +101,7 @@ export default function AdminRegistrationFormPage() {
                                     <TabsContent value={p.page_index.toString()} key={p.page_index}>
                                         <div>
                                             <div className="flex justify-between items-center mb-4">
-                                                <p className="font-bold">{p.page_header} ({p.page_index})</p>
+                                                <p className="font-bold">{p.page_header} ({p.page_index + 1})</p>
                                                 <ConfirmDeleteDialog tooltipDescription="Remove page" id={p.page_index} removeFunc={removePage} />
                                             </div>
                                             <Input value={p.page_header} onChange={v => changePageHeader(p.page_index, v.target.value)} placeholder="change page header"/>
