@@ -102,7 +102,7 @@ export default function HomeDashboardPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-center bg-muted rounded-full p-4 mx-auto w-12 h-12 justify-center items-center flex">{data?.report.total_extra_fees_owed_by_registered_members}</div>
+                        <div className="text-center bg-muted rounded-full p-4 mx-auto w-12 h-12 justify-center items-center flex">{formatAmount(data?.report.total_extra_fees_owed_by_registered_members)}</div>
                     </CardContent>
                 </Card>
             </div>
