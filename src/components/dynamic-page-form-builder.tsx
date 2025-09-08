@@ -94,10 +94,6 @@ export default function DynamicFormBuilder({ clubAccountId, page, setFields, del
     {
       value: "dropdown;billing",
       display: "Dropdown"
-    },
-    {
-      value: "membership;billing",
-      display: "Membership"
     }
   ]
 
