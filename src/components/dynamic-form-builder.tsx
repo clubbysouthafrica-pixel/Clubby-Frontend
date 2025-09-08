@@ -317,7 +317,7 @@ export default function FormBuilder({ clubAccountId, fields, setFields, deletedF
                                           ))}
                                         </div>
                                       )}
-                                  <Button variant="destructive" onClick={() => removeFieldFromList(field.id, field.field_name)}>
+                                  <Button variant="destructive" onClick={() => removeFieldFromList(field.id, field.field_id)}>
                                     Remove Field
                                   </Button>
                               </AccordionContent>

@@ -135,9 +135,9 @@ export default function DynamicFormBuilder({ clubAccountId, page, setFields, del
 };
 
   const removeFieldItem = (id: string) => {
-    const field = page.fields?.filter(f => f.field_order_id !== id)
-    setFields(page.page_index, field)
-    setDeletedFields([...deletedFields, field[0].field_name])
+    const field_to_delete = page.fields?.filter(f => f.field_id === id)
+    setFields(page.page_index, page.fields?.filter(f => f.field_id !== id))
+    setDeletedFields([...deletedFields, field_to_delete[0].field_id])
   }
 
   const updatePageInput = (input: InputFormRegistration) => {
@@ -194,7 +194,7 @@ export default function DynamicFormBuilder({ clubAccountId, page, setFields, del
                         <div className='flex w-full items-center justify-center mt-1 cursor-pointer hover:bg-gray-100 p-2 rounded-md' key={field.field_order_id}>
                           <FieldInputEditorDialog field={field} update={updatePageInput}/>
                         </div>
-                        <ConfirmDeleteDialog id={field.field_order_id} tooltipDescription="Remove input" removeFunc={removeFieldItem}/>
+                        <ConfirmDeleteDialog id={field.field_id} tooltipDescription="Remove input" removeFunc={removeFieldItem}/>
                       </div>
                     </SortableItem>
                 ))}

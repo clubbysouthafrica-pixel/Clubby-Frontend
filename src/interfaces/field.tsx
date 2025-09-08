@@ -6,6 +6,7 @@ export interface DropdownBillingOption {
 
 export interface Field {
   id: string;
+  field_id: string;
   field_name: string;
   field_type: string;
   placeholder: string;
