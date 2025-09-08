@@ -34,7 +34,7 @@ jobs:
 
       - name: Sync files to S3
         run: |
-          aws s3 sync ./dist s3://your-bucket-name --delete
+          aws s3 sync ./dist s3://stagingbucketclubby --delete --region ${{ secrets.AWS_REGION }}
         # Replace ./dist with your actual output directory (e.g. out, build, public)
 
       - name: Invalidate CloudFront cache
