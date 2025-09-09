@@ -80,7 +80,7 @@ export default function ViewClubPage() {
                                 }
                                 {
                                     data?.club_member_exists &&
-                                    <div className={"rounded-lg p-2 text-sm outline outline-[3px] " + (data.registered ? "outline-green-400 text-green-500 text-[1rem]" : "outline-yellow-400 text-yellow-500 text-[1rem]")}>
+                                    <div className={"rounded-lg p-2 text-sm outline outline-[3px] " + (data.registered ? "outline-green-600 text-green-700 text-[1rem]" : "outline-yellow-600 text-yellow-700 text-[1rem]")}>
                                         {
                                             data.registered ? "Member" : "Membership Pending"
                                         }
