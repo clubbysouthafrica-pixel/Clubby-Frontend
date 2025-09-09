@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils"
 import { fetchImagePresignedUrl } from "@/services/admin/image"
 import { EditIcon } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
+import { compressImage } from "@/utils/imageCompressor"
 
 interface ImageProps {
     title: string
@@ -22,6 +23,9 @@ export default function ImageUploadDialog({ title, description, presignedUrlApi,
   const [imagePreview, setImagePreview] = useState<string>("")
   const [presignedUrl, setPresignedUrl] = useState<string>("")
   const [openDialog, setOpenDialog] = useState<boolean>(false);
+
+  const [compressedBlob, setCompressedBlob] = useState<Blob | null>(null);
+  const [compressedMime, setCompressedMime] = useState<string | null>(null);
 
   useEffect(() => {
     const getImg = async () => {
@@ -39,52 +43,55 @@ export default function ImageUploadDialog({ title, description, presignedUrlApi,
   }, [presignedUrlApi])
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setSelectedFile(file)
-    const localUrl = URL.createObjectURL(file);
+    const file = e.target.files?.[0];
+    if (!file) return;
+  
+    // Compress (example: max 1600px, aim ~300KB, JPEG/WebP at 0.8)
+    const blob = await compressImage(file, {
+      maxWidth: 1600,
+      maxHeight: 1600,
+      quality: 0.8,
+      targetBytes: 300_000,
+    });
+  
+    setSelectedFile(file);
+    setCompressedBlob(blob);
+    setCompressedMime(blob.type || file.type);
+  
+    // Create a local preview URL from the *compressed* blob
+    const localUrl = URL.createObjectURL(blob);
     setImagePreview(localUrl);
-  }
+  };
 
   const upload = async () => {
-    if (!selectedFile) return;
-
+    if (!compressedBlob) return;
+  
     try {
-        setUploading(true)
+      setUploading(true);
   
-        // 🔁 1. Call your backend to get a pre-signed URL
-        // const res = await fetchImagePresignedUrl(presignedUrlApi) as { uploadUrl: string }
-        // const res = await fetch(presignedUrl, {
-        //   method: "POST",
-        //   headers: { "Content-Type": "application/json" },
-        //   body: JSON.stringify({ fileName: selectedFile.name, fileType: selectedFile.type }),
-        // })
+      // IMPORTANT: Many backends bind the expected Content-Type in the presign.
+      // Make sure the presigned URL was created for the *final* type you are uploading.
+      // If you changed format (e.g., to webp), ask your backend for a URL with that Content-Type.
+      const contentType = compressedMime || selectedFile?.type || "application/octet-stream";
   
-        // const { url, key } = await res.json()
+      const uploadRes = await fetch(presignedUrl, {
+        method: "PUT",
+        body: compressedBlob,
+        headers: { "Content-Type": contentType },
+      });
   
-        // 🔁 2. Upload the file to S3 using PUT
-        const url = presignedUrl
-        const uploadRes = await fetch(url, {
-          method: "PUT",
-          body: selectedFile,
-          headers: {
-            "Content-Type": selectedFile.type,
-          },
-        })
-  
-        if (uploadRes.ok) {
-            if (!imageUrl) setImageUrl(imagePreview)
-            setOpenDialog(false)
-        } else {
-          console.error("Upload failed")
-        }
-      } catch (err) {
-        console.error("Upload error:", err)
-      } finally {
-        setUploading(false)
+      if (uploadRes.ok) {
+        if (!imageUrl) setImageUrl(imagePreview);
+        setOpenDialog(false);
+      } else {
+        console.error("Upload failed");
       }
-  }
+    } catch (err) {
+      console.error("Upload error:", err);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <Dialog open={openDialog} onOpenChange={setOpenDialog}>
