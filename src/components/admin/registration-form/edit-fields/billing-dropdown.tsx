@@ -27,7 +27,6 @@ export default function EditBillingDropdown({
     fieldName,
     required = false,
     dropdownBillingOptions,
-    currency = "R",
     onFieldNameChange,
     onRequiredChange,
     onAddBillingOption,

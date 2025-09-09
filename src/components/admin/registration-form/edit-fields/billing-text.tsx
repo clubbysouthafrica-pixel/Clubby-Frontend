@@ -9,7 +9,7 @@ interface Props {
   amount: string | number
   required?: boolean
   onFieldNameChange: (val: string) => void
-  onAmountChange: (val: string) => void
+  onAmountChange: (val: number) => void
   onRequiredChange?: (val: boolean) => void
 }
 
@@ -36,7 +36,7 @@ export default function EditBillingText({
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInternalAmount(e.target.value)
-    onAmountChange(e.target.value)
+    onAmountChange(Number(e.target.value))
   }
 
   const handleRequiredChange = (checked: boolean) => {

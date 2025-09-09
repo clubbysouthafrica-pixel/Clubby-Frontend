@@ -133,7 +133,9 @@ export default function DynamicFormBuilder({ clubAccountId, page, setFields, del
   const removeFieldItem = (id: string) => {
     const field_to_delete = page.fields?.filter(f => f.field_id === id)
     setFields(page.page_index, page.fields?.filter(f => f.field_id !== id))
-    setDeletedFields([...deletedFields, field_to_delete[0].field_id])
+
+    const fields = (deletedFields?.length > 0) ? deletedFields.push(field_to_delete[0].field_id as string) : [field_to_delete[0].field_id]
+    setDeletedFields(fields as string[])
   }
 
   const updatePageInput = (input: InputFormRegistration) => {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog"
+import { Dialog, DialogTrigger, DialogContent, DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { PencilIcon, XIcon } from "lucide-react"
 import { InputBillingOption, InputFormRegistration } from "@/interfaces/formRegistration"
@@ -7,7 +7,6 @@ import { Label } from "./ui/label"
 import { Input } from "./ui/input"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { Checkbox } from "./ui/checkbox"
-import { v4 } from "uuid"
 import { formatAmount } from "@/data/currencies"
 import EditTextDisplay from "./admin/registration-form/edit-fields/text-display"
 import EditBillingText from "./admin/registration-form/edit-fields/billing-text"
@@ -30,8 +29,8 @@ export default function FieldInputEditorDialog({ field, update }: Props) {
     const [dropdownOptionField, setDropdownOptionField] = useState("")
     const [amount, setAmount] = useState(0)
 
-    const [dropdownLabel, setDropdownLabel] = useState("")
-    const [dropdownAmount, setDropdownAmount] = useState(0)
+    // const [dropdownLabel, setDropdownLabel] = useState("")
+    // const [dropdownAmount, setDropdownAmount] = useState(0)
     const [dropdownBillingOptions, setDropdownBillingOptions] = useState<InputBillingOption[]>([])
     const [dropdownOptions, setDropdownOptions] = useState<string[]>([])
 
@@ -81,7 +80,7 @@ export default function FieldInputEditorDialog({ field, update }: Props) {
         setOpenDialog(false)
     }
 
-    const addBillingOptionDisabled = () => !!(!dropdownAmount || !dropdownLabel)
+    // const addBillingOptionDisabled = () => !!(!dropdownAmount || !dropdownLabel)
     const handleAddBillingOption = (option: InputBillingOption) => {
         setDropdownBillingOptions(prev => [...prev, option])
     }
