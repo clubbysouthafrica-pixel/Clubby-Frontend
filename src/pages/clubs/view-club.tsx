@@ -98,7 +98,7 @@ export default function ViewClubPage() {
                                     <TabsTrigger value="home">Home</TabsTrigger>
                                     {
                                         data?.club_member_exists &&
-                                        <TabsTrigger value="bank">Bank Details</TabsTrigger>
+                                        <TabsTrigger value="bank">Payments & Billing</TabsTrigger>
                                     }
                                     {/* <TabsTrigger value="membership">Membership</TabsTrigger>
                                             <TabsTrigger value="storage">Storage</TabsTrigger>
@@ -172,14 +172,14 @@ export default function ViewClubPage() {
                                         <CardTitle>
                                             Outstanding amount: {formatAmount(bankDetails?.outstanding_amount, "ZAR")}
                                             <p className="text-[1rem] text-gray-500 mt-2 font-normal">
-                                            Reference Number: {bankDetails?.registration_payment_reference}
+                                            Payment Reference Number: {bankDetails?.registration_payment_reference}
                                             </p>
                                         </CardTitle>
                                     </Card>
                                     <Card className="w-full lg:w-1/3">
                                         <CardHeader>
                                             <CardTitle>Banking Details</CardTitle>
-                                            <CardDescription>Make any payments through EFT to the below banking details. Please make use of your payment reference number with making the payment.</CardDescription>
+                                            <CardDescription>Make any payments through EFT to the below banking details. Please make use of your <strong>payment reference number</strong> when making the payment.</CardDescription>
                                         </CardHeader>
                                         <CardContent>
                                             {
