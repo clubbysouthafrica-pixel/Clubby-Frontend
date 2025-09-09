@@ -7,11 +7,11 @@ import { Label } from "./ui/label"
 import { Input } from "./ui/input"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { Checkbox } from "./ui/checkbox"
-import { formatAmount } from "@/data/currencies"
 import EditTextDisplay from "./admin/registration-form/edit-fields/text-display"
 import EditBillingText from "./admin/registration-form/edit-fields/billing-text"
 import DisplayBillingText from "./admin/registration-form/display-fields/billing-text";
 import EditBillingDropdown from './admin/registration-form/edit-fields/billing-dropdown';
+import BillingDropdown from "./admin/registration-form/display-fields/billing-dropdown"
 
 interface Props {
     field: InputFormRegistration
@@ -109,24 +109,7 @@ export default function FieldInputEditorDialog({ field, update }: Props) {
                         field.input_type === "TEXT" && field.field_type === "BILLING" ?
                             <DisplayBillingText field={field} />
                             : field.input_type === "DROPDOWN" && field.field_type === "BILLING" ?
-                                <div className='w-full'>
-                                    <Label className='flex justify-between mb-2'>
-                                        <p>{field.field_name}</p>
-                                        <p className='text-gray-400 text-xs'>{field.input_type} ({field.field_type})</p>
-                                    </Label>
-                                    <Select>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder={field.placeholder} />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectGroup>
-                                                {field.billingOptions?.map(option => {
-                                                    return <SelectItem key={option.label} value={option.label}>{option.label}{` (${formatAmount(option.amount, "ZAR")}) `}</SelectItem>
-                                                })}
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                                <BillingDropdown field={field} />
                                 :
                                 <div className='w-full'>
                                     <Label className='flex justify-between mb-2'>
