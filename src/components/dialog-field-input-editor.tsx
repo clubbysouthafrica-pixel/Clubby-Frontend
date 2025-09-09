@@ -133,7 +133,6 @@ export default function FieldInputEditorDialog({ field, update }: Props) {
                                             <SelectContent>
                                                 <SelectGroup>
                                                     {field.options?.map(option => {
-                                                        console.log('here ', option)
                                                         return <SelectItem key={option} value={option}>{option}</SelectItem>
                                                     })}
                                                 </SelectGroup>

@@ -7,7 +7,6 @@ import { Calendar, Link as LinkIcon, Loader2, Mail, MapPin } from "lucide-react"
 import { useFetchClub, useFetchClubBankDetails } from "@/queries/clubs";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { clubCoverImagePresignedUrl, clubProfileImagePresignedUrl, fetchImagePresignedUrl } from "@/services/image";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { formatAmount } from "@/data/currencies";
 
@@ -25,18 +24,17 @@ export default function ViewClubPage() {
 
     useEffect(() => {
         const getImg = async () => {
+
             try {
-                const { fetchUrl: coverFetch } = await fetchImagePresignedUrl(clubCoverImagePresignedUrl(clubId as string))
-                const { fetchUrl } = await fetchImagePresignedUrl(clubProfileImagePresignedUrl(clubId as string))
-                setCoverImage(coverFetch)
-                setProfileImage(fetchUrl)
+                setCoverImage(data.club_cover_url)
+                setProfileImage(data.club_profile_url)
             } catch (error) {
                 console.error("Failed to fetch presigned URL", error)
             }
         }
 
         getImg()
-    }, [clubId])
+    }, [data])
 
     return (
         <Pager>

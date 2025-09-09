@@ -9,6 +9,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { Club } from "@/interfaces/club";
 import { Badge } from "./ui/badge";
+import { formatAmount } from "@/data/currencies";
 
 interface ClubCardProps extends React.HTMLAttributes<HTMLDivElement> {
     club: Club
@@ -17,18 +18,20 @@ interface ClubCardProps extends React.HTMLAttributes<HTMLDivElement> {
     height?: number
     titleClass?: string
     descriptionClass?: string
+    showRegistrationStatus: boolean
 }
 
 export function ClubCard({
-                                 club,
-                                 aspectRatio = "portrait",
-                                 width,
-                                 height,
-                                 className,
-                                 titleClass,
-                             descriptionClass,
-                                 ...props
-                             }: ClubCardProps) {
+    club,
+    aspectRatio = "portrait",
+    width,
+    height,
+    className,
+    titleClass,
+    descriptionClass,
+    showRegistrationStatus,
+    ...props
+}: ClubCardProps) {
     return (
         <div className={cn("space-y-3", className)} {...props}>
             <ContextMenu>
@@ -95,19 +98,23 @@ export function ClubCard({
                     <h3 className={cn("font-medium leading-none text-base", titleClass)}>{club.club_name}</h3>
                     <p className={cn("text-xs text-muted-foreground", descriptionClass)}>{club.club_type}</p>
                 </div>
-                <div className="text-sm space-y-1">
-                    <Badge className="block ml-auto">
-                        {club.registered
-                            ? "Member" : "Register"
-                        }
-                    </Badge>
-                    {
-                        (!!club.outstanding_amount) &&
-                        <Badge className="block ml-auto" variant="outline">
-                            Amount due: {(club.outstanding_amount / 100)}
-                        </Badge>
-                    }
-                </div>
+                {
+                    showRegistrationStatus ?
+                        <div className="text-sm space-y-1">
+                            <Badge className="block ml-auto">
+                                {club.registered
+                                    ? "Member" : showRegistrationStatus ? "Pending member" : undefined
+                                }
+                            </Badge>
+                            {
+                                (!!club.outstanding_amount) &&
+                                <Badge className="block ml-auto" variant="outline">
+                                    Amount due: {formatAmount(club.outstanding_amount, "ZAR")}
+                                </Badge>
+                            }
+                        </div>
+                        : undefined
+                }
             </div>
         </div>
     )
