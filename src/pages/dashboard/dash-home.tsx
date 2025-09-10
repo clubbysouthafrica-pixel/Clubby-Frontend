@@ -86,7 +86,7 @@ export default function HomeDashboardPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-center bg-muted rounded-full p-4 mx-auto min-w-12 h-12 justify-center items-center flex">{formatAmount(data?.report.total_registration_fees, club?.currency)}</div>
+                        <div className="text-center bg-muted rounded-full p-4 mx-auto min-w-12 h-12 justify-center items-center flex">{formatAmount(data?.report.total_registration_fees_paid, club?.currency)}</div>
                     </CardContent>
                 </Card>
 
