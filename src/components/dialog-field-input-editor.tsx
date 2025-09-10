@@ -14,11 +14,12 @@ import EditBillingDropdown from './admin/registration-form/edit-fields/billing-d
 import BillingDropdown from "./admin/registration-form/display-fields/billing-dropdown"
 
 interface Props {
+    currency: string;
     field: InputFormRegistration
     update: (input: InputFormRegistration) => void
 }
 
-export default function FieldInputEditorDialog({ field, update }: Props) {
+export default function FieldInputEditorDialog({ currency, field, update }: Props) {
     const [openDialog, setOpenDialog] = useState<boolean>(false);
 
     const [fieldText, setFieldText] = useState("")
@@ -107,9 +108,9 @@ export default function FieldInputEditorDialog({ field, update }: Props) {
                 <div className='w-full space-x-2 flex items-center'>
                     {
                         field.input_type === "TEXT" && field.field_type === "BILLING" ?
-                            <DisplayBillingText field={field} />
+                            <DisplayBillingText currency={currency} field={field} />
                             : field.input_type === "DROPDOWN" && field.field_type === "BILLING" ?
-                                <BillingDropdown field={field} />
+                                <BillingDropdown currency={currency} field={field} />
                                 :
                                 <div className='w-full'>
                                     <Label className='flex justify-between mb-2'>
@@ -161,6 +162,7 @@ export default function FieldInputEditorDialog({ field, update }: Props) {
                         />
                         : field.input_type === "TEXT" && field.field_type === "BILLING" ?
                             <EditBillingText
+                                currency={currency}
                                 fieldName={fieldName}
                                 amount={amount}
                                 required={required}
@@ -170,6 +172,7 @@ export default function FieldInputEditorDialog({ field, update }: Props) {
                             />
                             : field.input_type === "DROPDOWN" && field.field_type === "BILLING" ?
                                 <EditBillingDropdown
+                                    currency={currency}
                                     fieldName={fieldName}
                                     required={required}
                                     dropdownBillingOptions={dropdownBillingOptions} // always pass parent state

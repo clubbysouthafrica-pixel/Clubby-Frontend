@@ -13,6 +13,8 @@ export default function MyClubsPage() {
     const { data, isLoading } = useFetchMemberClubsQuery(isAdmin)
     const navigate = useNavigate()
 
+    console.log('my data', data)
+
     return (
             <Pager>
                 <div className="bg-background p-4 lg:p-0">
@@ -43,6 +45,7 @@ export default function MyClubsPage() {
                                         {data?.items?.map((club: Club) => (
                                             <ClubCard
                                                 onClick={() => navigate(`/clubs/${club.club_account_id}`)}
+                                                currency={club.currency}
                                                 key={club.club_name}
                                                 club={club}
                                                 className="cursor-pointer"

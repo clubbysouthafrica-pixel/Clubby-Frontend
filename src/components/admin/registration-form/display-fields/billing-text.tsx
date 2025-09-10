@@ -6,7 +6,7 @@ interface Props {
   field: InputFormRegistration
 }
 
-export default function DisplayBillingText({ field }: Props) {
+export default function DisplayBillingText({ currency, field }: Props) {
   return (
     <div className="w-full">
       <Label className="flex justify-between mb-2">
@@ -22,7 +22,7 @@ export default function DisplayBillingText({ field }: Props) {
 
       <Label className="flex justify-between mb-2">
         <p className="text-gray-500 text-s">
-          {formatAmount(field.amount ?? 0, "ZAR")}
+          {formatAmount(field.amount ?? 0, currency)}
         </p>
       </Label>
     </div>

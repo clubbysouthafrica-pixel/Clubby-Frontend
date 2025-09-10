@@ -19,9 +19,11 @@ interface ClubCardProps extends React.HTMLAttributes<HTMLDivElement> {
     titleClass?: string
     descriptionClass?: string
     showRegistrationStatus: boolean
+    currency: string
 }
 
 export function ClubCard({
+    currency,
     club,
     aspectRatio = "portrait",
     width,
@@ -32,6 +34,7 @@ export function ClubCard({
     showRegistrationStatus,
     ...props
 }: ClubCardProps) {
+    console.log(currency)
     return (
         <div className={cn("space-y-3", className)} {...props}>
             <ContextMenu>
@@ -107,9 +110,9 @@ export function ClubCard({
                                 }
                             </Badge>
                             {
-                                (!!club.outstanding_amount) &&
+                                (club.outstanding_amount) &&
                                 <Badge className="block ml-auto" variant="outline">
-                                    Amount due: {formatAmount(club.outstanding_amount, "ZAR")}
+                                    Amount due: {formatAmount(club.outstanding_amount, currency)}
                                 </Badge>
                             }
                         </div>

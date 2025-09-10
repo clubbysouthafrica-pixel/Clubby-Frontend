@@ -19,6 +19,8 @@ export default function ViewClubPage() {
         !!data?.club_member_exists
     )
 
+    console.log('THIS data: ', data)
+
     const [coverImage, setCoverImage] = useState("")
     const [profileImage, setProfileImage] = useState("")
 
@@ -168,7 +170,7 @@ export default function ViewClubPage() {
                                 <TabsContent value="bank">
                                     <Card className="w-full lg:w-1/3 text-xl border border-white shadow-none ">
                                         <CardTitle>
-                                            Outstanding amount: {formatAmount(bankDetails?.outstanding_amount, "ZAR")}
+                                            Outstanding amount: {formatAmount(bankDetails?.outstanding_amount, data.currency)}
                                             <p className="text-[1rem] text-gray-500 mt-2 font-normal">
                                             Payment Reference Number: {bankDetails?.registration_payment_reference}
                                             </p>

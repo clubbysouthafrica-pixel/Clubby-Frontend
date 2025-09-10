@@ -1,4 +1,4 @@
-import {ClubCard} from "@/components/club-card.tsx";
+import { ClubCard } from "@/components/club-card.tsx";
 import Pager from "@/components/pager.tsx";
 import { Club } from "@/interfaces/club";
 import { useFetchClubsQuery } from "@/queries/clubs";
@@ -10,20 +10,22 @@ export default function BrowseClubsPage() {
     const { data, isLoading } = useFetchClubsQuery()
     const navigate = useNavigate()
 
-    return (
-            <Pager>
-                <div className="bg-background p-4 lg:p-0">
-                        <div className="w-full pb-6">
-                            {
-                                isLoading &&
-                                    <div className="flex justify-center py-8">
-                                        <Loader2 className="h-8 w-8 animate-spin" />
-                                    </div>
-                            }
-                            {
-                                !isLoading &&
+    console.log('data', data)
 
-                            <div className="col-span-3 lg:col-span-4">
+    return (
+        <Pager>
+            <div className="bg-background p-4 lg:p-0">
+                <div className="w-full pb-6">
+                    {
+                        isLoading &&
+                        <div className="flex justify-center py-8">
+                            <Loader2 className="h-8 w-8 animate-spin" />
+                        </div>
+                    }
+                    {
+                        !isLoading &&
+
+                        <div className="col-span-3 lg:col-span-4">
                             <div className="h-full">
                                 <div className="mt-6 space-y-1">
                                     <h2 className="text-2xl font-semibold tracking-tight">
@@ -38,6 +40,7 @@ export default function BrowseClubsPage() {
                                         {data?.items?.map((club: Club) => (
                                             <ClubCard
                                                 onClick={() => navigate(`/clubs/${club.club_account_id}`)}
+                                                currency={club.currency}
                                                 key={club.club_name}
                                                 club={club}
                                                 className="cursor-pointer"
@@ -53,9 +56,9 @@ export default function BrowseClubsPage() {
                                 </div>
                             </div>
                         </div>
-                            }
-                        </div>
-                    </div>
-            </Pager>
+                    }
+                </div>
+            </div>
+        </Pager>
     )
 }

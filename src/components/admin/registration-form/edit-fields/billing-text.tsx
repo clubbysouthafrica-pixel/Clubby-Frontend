@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { formatAmount } from "@/data/currencies"
 
 interface Props {
+  currency: string;
   fieldName: string
   amount: string | number
   required?: boolean
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export default function EditBillingText({
+  currency,
   fieldName,
   amount,
   required = false,
@@ -60,7 +62,7 @@ export default function EditBillingText({
       <div>
         <Label className="block text-sm font-medium mb-2">Amount</Label>
         <div className='flex-1'>
-          {formatAmount(Number(internalAmount), "ZAR")}
+          {formatAmount(Number(internalAmount), currency)}
           <Input
             required
             type="text"

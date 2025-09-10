@@ -23,10 +23,11 @@ interface Field {
 }
 
 interface BillingSelectProps {
+  currency: string;
   field: Field
 }
 
-export default function BillingDropdown({ field }: BillingSelectProps) {
+export default function BillingDropdown({ currency, field }: BillingSelectProps) {
   return (
     <div className="w-full">
       <Label className="flex justify-between mb-2">
@@ -43,7 +44,7 @@ export default function BillingDropdown({ field }: BillingSelectProps) {
           <SelectGroup>
             {field.billingOptions?.map((option) => (
               <SelectItem key={option.label} value={option.label}>
-                {option.label} ({formatAmount(option.amount, "ZAR")})
+                {option.label} ({formatAmount(option.amount, currency)})
               </SelectItem>
             ))}
           </SelectGroup>

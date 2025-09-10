@@ -1,5 +1,6 @@
 export interface Club {
     club_name: string
+    currency?: string
     club_account_id: string
     club_type: string
     registered: boolean
