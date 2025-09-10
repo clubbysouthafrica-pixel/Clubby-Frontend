@@ -13,6 +13,8 @@ export default function MyClubsPage() {
     const { data, isLoading } = useFetchMemberClubsQuery(isAdmin)
     const navigate = useNavigate()
 
+    console.log('my data', data)
+
     return (
             <Pager>
                 <div className="bg-background p-4 lg:p-0">
@@ -38,26 +40,12 @@ export default function MyClubsPage() {
                                     </p>
                                 </div>
                                 <div className="relative mt-4">
-                                    {/*<ScrollArea>*/}
-                                    {/*    <div className="flex space-x-4 pb-4">*/}
-                                    {/*        {madeForYouAlbums.map((album) => (*/}
-                                    {/*            <ClubCard*/}
-                                    {/*                key={album.name}*/}
-                                    {/*                club={album}*/}
-                                    {/*                className="w-[250px] cursor-pointer"*/}
-                                    {/*                aspectRatio="square"*/}
-                                    {/*                width={250}*/}
-                                    {/*                height={250}*/}
-                                    {/*            />*/}
-                                    {/*        ))}*/}
-                                    {/*    </div>*/}
-                                    {/*    <ScrollBar orientation="horizontal" />*/}
-                                    {/*</ScrollArea>*/}
 
                                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 gap-y-10 lg:col-span-4">
                                         {data?.items?.map((club: Club) => (
                                             <ClubCard
                                                 onClick={() => navigate(`/clubs/${club.club_account_id}`)}
+                                                currency={club.currency}
                                                 key={club.club_name}
                                                 club={club}
                                                 className="cursor-pointer"
@@ -66,6 +54,7 @@ export default function MyClubsPage() {
                                                 height={250}
                                                 titleClass="text-lg font-semibold tracking-tight"
                                                 descriptionClass="text-xs tracking-tight"
+                                                showRegistrationStatus={true}
                                             />
                                         ))}
                                     </div>

@@ -57,6 +57,8 @@ export interface PageFieldBase {
   // --- UI state ---
   value?: string; // typed text or selected label
   selectedAmountCents?: number; // derived for BILLING when dropdown
+  option_order_id?: string; 
+  label?: string;    
 }
 
 export interface FormPage {
@@ -144,6 +146,8 @@ export function ClubRegisterForm({
         .map((f) => ({
           field_id: f.field_id!,
           value: (f.selectedAmountCents ?? f.amount ?? (f.value ? Number(f.value) : undefined)) as any,
+          option_order_id: f.input_type === "DROPDOWN" ? f.option_order_id : undefined,
+          label: f.input_type === "DROPDOWN" ? f.label : undefined,
         })),
       standard_fields: allFields
         .filter((f) => f.field_type === "STANDARD")
@@ -265,6 +269,8 @@ export function ClubRegisterForm({
                                 ...f,
                                 value: label,
                                 selectedAmountCents: option?.amount,
+                                label: option?.label,
+                                option_order_id: option?.option_order_id
                               }));
                             };
                             return (

@@ -1,11 +1,13 @@
 import { Label } from "@/components/ui/label"
 import { InputFormRegistration } from "@/interfaces/formRegistration"
+import { formatAmount } from "@/data/currencies"
 
 interface Props {
+  currency: string
   field: InputFormRegistration
 }
 
-export default function DisplayBillingText({ field }: Props) {
+export default function DisplayBillingText({ currency, field }: Props) {
   return (
     <div className="w-full">
       <Label className="flex justify-between mb-2">
@@ -21,7 +23,7 @@ export default function DisplayBillingText({ field }: Props) {
 
       <Label className="flex justify-between mb-2">
         <p className="text-gray-500 text-s">
-          R{field.amount ?? "0"}
+          {formatAmount(field.amount ?? 0, currency)}
         </p>
       </Label>
     </div>

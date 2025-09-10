@@ -56,7 +56,7 @@ interface FormBuilderProps {
   setDeletedFields: React.Dispatch<React.SetStateAction<string[]>>
 }
 
-export default function DynamicFormBuilder({ clubAccountId, page, setFields, deletedFields, setDeletedFields }: FormBuilderProps) {
+export default function DynamicFormBuilder({ currency, clubAccountId, page, setFields, deletedFields, setDeletedFields }: FormBuilderProps) {
   if (!clubAccountId) return
 
   const [fieldItemType, setFieldItemType] = useState('')
@@ -190,7 +190,7 @@ export default function DynamicFormBuilder({ clubAccountId, page, setFields, del
                     <SortableItem id={field.field_order_id} key={field.field_order_id}>
                       <div className='flex items-center'>
                         <div className='flex w-full items-center justify-center mt-1 cursor-pointer hover:bg-gray-100 p-2 rounded-md' key={field.field_order_id}>
-                          <FieldInputEditorDialog field={field} update={updatePageInput}/>
+                          <FieldInputEditorDialog currency={currency} field={field} update={updatePageInput}/>
                         </div>
                         <ConfirmDeleteDialog id={field.field_id} tooltipDescription="Remove input" removeFunc={removeFieldItem}/>
                       </div>

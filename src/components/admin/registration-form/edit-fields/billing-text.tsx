@@ -3,8 +3,10 @@ import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import { formatAmount } from "@/data/currencies"
 
 interface Props {
+  currency: string;
   fieldName: string
   amount: string | number
   required?: boolean
@@ -14,6 +16,7 @@ interface Props {
 }
 
 export default function EditBillingText({
+  currency,
   fieldName,
   amount,
   required = false,
@@ -58,12 +61,15 @@ export default function EditBillingText({
 
       <div>
         <Label className="block text-sm font-medium mb-2">Amount</Label>
-        <Input
-          required
-          type="text"
-          value={internalAmount}
-          onChange={handleAmountChange}
-        />
+        <div className='flex-1'>
+          {formatAmount(Number(internalAmount), currency)}
+          <Input
+            required
+            type="text"
+            value={internalAmount}
+            onChange={handleAmountChange}
+          />
+        </div>
       </div>
 
       <div className="flex items-center gap-3 mt-2">

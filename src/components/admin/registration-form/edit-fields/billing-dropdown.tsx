@@ -16,7 +16,7 @@ interface Props {
     fieldName: string
     required?: boolean
     dropdownBillingOptions: BillingOption[]
-    currency?: string
+    currency: string
     onFieldNameChange: (val: string) => void
     onRequiredChange?: (val: boolean) => void
     onAddBillingOption: (option: BillingOption) => void
@@ -24,6 +24,7 @@ interface Props {
 }
 
 export default function EditBillingDropdown({
+    currency,
     fieldName,
     required = false,
     dropdownBillingOptions,
@@ -88,7 +89,7 @@ export default function EditBillingDropdown({
                         required
                     />
                     <div className='flex-1'>
-                        <Label className="mb-2">Amount {formatAmount(dropdownAmount, "ZAR")}</Label>
+                        <Label className="mb-2">Amount {formatAmount(dropdownAmount, currency)}</Label>
                         <Input
                             className="flex-1"
                             type="number"
@@ -111,7 +112,7 @@ export default function EditBillingDropdown({
                                 className="flex items-center justify-between bg-gray-50 px-3 py-1 rounded-lg"
                             >
                                 <span>
-                                    {option.label} {formatAmount(option.amount, "ZAR")}
+                                    {option.label} {formatAmount(option.amount, currency)}
                                 </span>
                                 <Button
                                     variant="destructive"
