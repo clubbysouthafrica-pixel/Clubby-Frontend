@@ -3,6 +3,7 @@ import { InputFormRegistration } from "@/interfaces/formRegistration"
 import { formatAmount } from "@/data/currencies"
 
 interface Props {
+  currency: string
   field: InputFormRegistration
 }
 
