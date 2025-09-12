@@ -13,8 +13,6 @@ export default function MyClubsPage() {
     const { data, isLoading } = useFetchMemberClubsQuery(isAdmin)
     const navigate = useNavigate()
 
-    console.log('my data', data)
-
     return (
             <Pager>
                 <div className="bg-background p-4 lg:p-0">
