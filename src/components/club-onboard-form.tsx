@@ -57,8 +57,8 @@ export interface PageFieldBase {
   // --- UI state ---
   value?: string; // typed text or selected label
   selectedAmountCents?: number; // derived for BILLING when dropdown
-  option_order_id?: string; 
-  label?: string;    
+  option_order_id?: string;
+  label?: string;
 }
 
 export interface FormPage {
@@ -89,6 +89,7 @@ export function ClubRegisterForm({
   const [email, setEmail] = useState("");
   const [pages, setPages] = useState<FormPage[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const [requiredFieldsMissing, setRequiredFieldsMissing] = useState(false);
 
   // Load payload -> component state
   useEffect(() => {
@@ -106,6 +107,7 @@ export function ClubRegisterForm({
     fieldId: string,
     updater: (f: PageFieldBase) => PageFieldBase
   ) => {
+    if (requiredFieldsMissing) setRequiredFieldsMissing(false);
     setPages((prev) =>
       prev.map((p) =>
         p.page_index === pageIndex
@@ -132,9 +134,31 @@ export function ClubRegisterForm({
     return missing;
   }, [pages]);
 
+  const handleNextPage = () => {
+    const currentPage = pages[currentPageIndex];
+    const missingOnCurrent = currentPage.fields.filter((f) => {
+      if (f.required) {
+        if (f.field_type === "STANDARD") return !f.value?.trim();
+        if (f.field_type === "BILLING" && f.input_type === "DROPDOWN") return !f.value || !f.selectedAmountCents;
+      }
+      return false;
+    });
+
+    if (missingOnCurrent.length > 0) {
+      setRequiredFieldsMissing(true);
+      return;
+    }
+
+    setRequiredFieldsMissing(false);
+    setCurrentPageIndex((i) => i + 1);
+  };
+
   const registerUser = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (missingRequired.length > 0) return;
+    if (missingRequired.length > 0) {
+      setRequiredFieldsMissing(true);
+      return;
+    }
 
     const allFields = pages.flatMap((p) => p.fields);
 
@@ -186,7 +210,7 @@ export function ClubRegisterForm({
         </CardHeader>
         <CardContent>
           {!isSuccess && pages.length > 0 && (
-            <form onSubmit={registerUser}>
+            <form>
               <div className="grid-2 gap-6">
                 <div className="grid gap-6">
                   {!user && (
@@ -321,15 +345,6 @@ export function ClubRegisterForm({
                     </Alert>
                   )}
 
-                  {missingRequired.length > 0 && (
-                    <Alert>
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription className="text-xs">
-                        Please fill all required fields.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
                   {/* Navigation buttons */}
                   {pages.length === 1 ? (
                     <Button type="submit" className="w-full" disabled={isPending}>
@@ -343,15 +358,26 @@ export function ClubRegisterForm({
                         </Button>
                       )}
                       {isLastPage ? (
-                        <Button type="submit" disabled={isPending}>
+                        <Button type="button" onClick={(e) => registerUser(e as any)} disabled={isPending}>
                           {isPending ? "Registering..." : "Register"}
                         </Button>
                       ) : (
-                        <Button type="button" onClick={() => setCurrentPageIndex((i) => i + 1)}>
+                        <Button type="button" onClick={handleNextPage}>
                           Next
                         </Button>
                       )}
                     </div>
+                  )}
+                </div>
+
+                <div className="text-center text-sm mt-4">
+                  {requiredFieldsMissing && (
+                    <Alert className="border border-red-600 text-red-600">
+                      <AlertCircle className="h-4 w-4 text-red-600" />
+                      <AlertDescription className="text-xs text-red-600">
+                        Please fill all required fields. These fields are marked with (*).
+                      </AlertDescription>
+                    </Alert>
                   )}
                 </div>
 
@@ -378,10 +404,6 @@ export function ClubRegisterForm({
           )}
         </CardContent>
       </Card>
-      <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
-      </div>
     </div>
   );
 }
