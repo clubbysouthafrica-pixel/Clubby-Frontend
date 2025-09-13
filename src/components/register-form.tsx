@@ -58,9 +58,9 @@ export function RegisterForm({
         <div className={cn("flex flex-col gap-6", className)} {...props}>
             <Card>
                 <CardHeader className="text-center">
-                    <CardTitle className="text-xl">Welcome to {import.meta.env.VITE_BRAND_NAME}</CardTitle>
+                    <CardTitle className="text-xl">Member registration</CardTitle>
                     <CardDescription>
-                        Get started with {import.meta.env.VITE_BRAND_NAME} by registering your own account.
+                        Get started with {import.meta.env.VITE_BRAND_NAME} by registering your own club member account.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

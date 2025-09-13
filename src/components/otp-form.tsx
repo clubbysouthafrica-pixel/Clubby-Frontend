@@ -7,19 +7,20 @@ import {
     CardTitle,
 } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import {FormEvent, useContext, useState} from "react";
-import {InputOTP, InputOTPGroup, InputOTPSlot} from "@/components/ui/input-otp.tsx";
-import {useNavigate, useSearchParams} from "react-router-dom";
-import {Input} from "@/components/ui/input.tsx";
-import {AuthContext, AuthContextType} from "@/context/AuthContext.tsx";
-import {Alert, AlertDescription} from "@/components/ui/alert.tsx";
-import {AlertCircle} from "lucide-react";
-import {AxiosError} from "axios";
+import { FormEvent, useContext, useState } from "react";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp.tsx";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Input } from "@/components/ui/input.tsx";
+import { AuthContext, AuthContextType } from "@/context/AuthContext.tsx";
+import { Alert, AlertDescription } from "@/components/ui/alert.tsx";
+import { AlertCircle } from "lucide-react";
+import { AxiosError } from "axios";
+import { toast } from "sonner";
 
 export function OTPForm({
-                                 className,
-                                 ...props
-                             }: React.ComponentProps<"div">) {
+    className,
+    ...props
+}: React.ComponentProps<"div">) {
     const { verifyConfirmationCode } = useContext(AuthContext) as AuthContextType || {};
     const navigate = useNavigate()
 
@@ -38,10 +39,20 @@ export function OTPForm({
 
         try {
             await verifyConfirmationCode(username ?? email, otp)
-            navigate(`/login`)
+            navigate("/login")
+            toast.success(
+                "Your account has been created successfully. Please go back to the member login page to sign in to your account.",
+                {
+                    autoClose: 20000,
+                    style: {
+                        background: "#000000",
+                        color: "#fff",
+                    },
+                }
+            )
         } catch (e) {
             if (!e) {
-                setError("something went wrong")
+                setError("Something went wrong. If the issue persists please try re-registering.")
             }
 
             if (e instanceof AxiosError) {
@@ -109,7 +120,7 @@ export function OTPForm({
                         </div>
 
                         <Button type="submit" className="w-full mt-6" disabled={loading}>
-                            {loading ? "Submitting...": "Submit"}
+                            {loading ? "Submitting..." : "Submit"}
                         </Button>
                     </form>
                 </CardContent>
