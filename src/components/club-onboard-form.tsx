@@ -29,10 +29,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import StandardCheckbox from "./member/registration-form/standard-checkbox"
+import StandardCheckbox from "./member/registration-form/standard-checkbox";
+import BillingDropdown from "./member/registration-form/billing-dropdown";
+import StandardDopdown from "./member/registration-form/standard-dropdown";
+import StandardText from "./member/registration-form/standard-text";
 
 // --- Types that match the new payload ---
-export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX";
+export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER";
 export type FieldType = "TEXT" | "STANDARD" | "BILLING";
 
 export interface BillingOption {
@@ -237,6 +240,7 @@ export function ClubRegisterForm({
                     <div key={pages[currentPageIndex].page_index} className="space-y-4">
                       <h3 className="text-lg font-semibold">{pages[currentPageIndex].page_header}</h3>
                       {pages[currentPageIndex].fields.map((field) => {
+                        
                         if (field.field_type === "TEXT") {
                           return (
                             <p key={field.field_order_id} className="text-sm text-muted-foreground">
@@ -256,97 +260,50 @@ export function ClubRegisterForm({
                           )
                         }
 
-                        if (field.field_type === "STANDARD") {
-                          const isDropdown = field.input_type?.toLowerCase() === "dropdown";
-                          const onChange = (val: string) =>
-                            setFieldValue(pages[currentPageIndex].page_index, field.field_id, (f) => ({
-                              ...f,
-                              value: val,
-                            }));
-
+                        if (field.field_type === "STANDARD" && field.input_type === "DROPDOWN") {
                           return (
-                            <div className="grid gap-3" key={field.field_id}>
-                              <Label htmlFor={field.field_id}>
-                                {field.field_name} {field.required ? <span className="text-red-500">*</span> : null}
-                              </Label>
-                              {!isDropdown ? (
-                                <Input
-                                  id={field.field_id}
-                                  type="text"
-                                  placeholder={field.placeholder}
-                                  value={field.value ?? ""}
-                                  onChange={(e) => onChange(e.target.value)}
-                                  required={field.required}
-                                />
-                              ) : (
-                                <Select onValueChange={onChange} value={field.value}>
-                                  <SelectTrigger className="w-full">
-                                    <SelectValue placeholder={field.placeholder ?? "Select an option"} />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectGroup>
-                                      <SelectLabel>Options</SelectLabel>
-                                      {field.options?.map((opt) => (
-                                        <SelectItem key={opt} value={opt}>
-                                          {opt}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectGroup>
-                                  </SelectContent>
-                                </Select>
-                              )}
-                            </div>
+                            <StandardDopdown
+                              field={field}
+                              currentPageIndex={currentPageIndex}
+                              pages={pages}
+                              setFieldValue={setFieldValue}
+                            />
+                          )
+                        }
+
+                        if (field.field_type === "STANDARD" && (field.input_type === "TEXT" || field.input_type === "NUMBER")) {
+                          return (
+                            <StandardText
+                              field={field}
+                              currentPageIndex={currentPageIndex}
+                              pages={pages}
+                              setFieldValue={setFieldValue}
+                            />
+                          )
+                        }
+
+                        if (field.field_type === "BILLING" && field.input_type === "DROPDOWN") {
+                          return (
+                            <BillingDropdown
+                              field={field}
+                              clubCurrency={club.currency}
+                              currentPageIndex={currentPageIndex}
+                              pages={pages}
+                              setFieldValue={setFieldValue}
+                            />
                           );
                         }
 
-                        if (field.field_type === "BILLING") {
-                          const isDropdown = field.input_type?.toLowerCase() === "dropdown";
-
-                          if (isDropdown) {
-                            const onBillingSelect = (label: string) => {
-                              const option = field.billingOptions?.find((o) => o.label === label);
-                              setFieldValue(pages[currentPageIndex].page_index, field.field_id, (f) => ({
-                                ...f,
-                                value: label,
-                                selectedAmountCents: option?.amount,
-                                label: option?.label,
-                                option_order_id: option?.option_order_id
-                              }));
-                            };
-                            return (
-                              <div className="grid gap-3" key={field.field_id}>
-                                <Label>
-                                  {field.field_name} {field.required ? <span className="text-red-500">*</span> : null}
-                                </Label>
-                                <Select onValueChange={onBillingSelect} value={field.value}>
-                                  <SelectTrigger className="w-full">
-                                    <SelectValue placeholder={field.placeholder ?? "Select membership type"} />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectGroup>
-                                      <SelectLabel>{field.field_name}</SelectLabel>
-                                      {field.billingOptions?.map((opt) => (
-                                        <SelectItem key={opt.option_order_id} value={opt.label}>
-                                          {opt.label} ({formatAmount(opt.amount, field.currency)})
-                                        </SelectItem>
-                                      ))}
-                                    </SelectGroup>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            );
-                          }
-
+                        if (field.field_type === "BILLING" && field.input_type === "TEXT") {
                           return (
                             <p key={field.field_id}>
-                              {field.field_name}{" "}
+                              {field.field_name}:{" "}
                               <span className="font-semibold">
-                                {formatAmount(field.amount ?? 0, field.currency)}
+                                {formatAmount(field.amount ?? 0, club.currency)}
                               </span>
                             </p>
                           );
                         }
-
                         return null;
                       })}
                     </div>

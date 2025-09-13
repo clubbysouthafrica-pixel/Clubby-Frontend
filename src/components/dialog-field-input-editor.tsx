@@ -11,8 +11,10 @@ import EditTextDisplay from "./admin/registration-form/edit-fields/text-display"
 import EditBillingText from "./admin/registration-form/edit-fields/billing-text"
 import DisplayBillingText from "./admin/registration-form/display-fields/billing-text";
 import EditBillingDropdown from './admin/registration-form/edit-fields/billing-dropdown';
-import BillingDropdown from "./admin/registration-form/display-fields/billing-dropdown"
+import DisplayBillingDropdown from "./admin/registration-form/display-fields/billing-dropdown"
 import EditStandardCheckbox from "./admin/registration-form/edit-fields/standard-checkbox"
+import DisplayStandardCheckbox from "./admin/registration-form/display-fields/standard-checkbox"
+import DisplayStandardText from "./admin/registration-form/display-fields/standard-text"
 
 interface Props {
     currency: string;
@@ -111,50 +113,42 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
                         field.input_type === "TEXT" && field.field_type === "BILLING" ?
                             <DisplayBillingText currency={currency} field={field} />
                             : field.input_type === "DROPDOWN" && field.field_type === "BILLING" ?
-                                <BillingDropdown currency={currency} field={field} />
+                                <DisplayBillingDropdown currency={currency} field={field} />
                                 : field.input_type === "CHECKBOX" && field.field_type === "STANDARD" ?
-                                    <div className="w-full">
-                                        <Label className='flex justify-between mb-2'>
-                                            <p>{field.field_name}</p>
-                                            <p className='text-gray-400 text-xs'>{field.input_type} ({field.field_type})</p>
-                                        </Label>
-                                        <div className="flex items-center gap-2">
-                                            <Checkbox />
-                                            <Label>{field.placeholder}</Label>
+                                    <DisplayStandardCheckbox field={field} />
+                                    : field.input_type === "TEXT" && field.field_type === "STANDARD" ?
+                                        <DisplayStandardText field={field} />
+                                        :
+                                        <div className='w-full'>
+                                            <Label className='flex justify-between mb-2'>
+                                                <p>{field.field_type.toLowerCase() === "text" ? field.field_text : field.field_name}</p>
+                                                <p className='text-gray-400 text-xs'>{field.input_type} ({field.field_type})</p>
+                                            </Label>
+                                            {
+                                                field.input_type?.toUpperCase() === "CHECKBOX" &&
+                                                <Checkbox />
+                                            }
+                                            {
+                                                isInputType() && field.input_type !== "TEXT" &&
+                                                <Input placeholder={field.placeholder} type={field.input_type} disabled />
+                                            }
+                                            {
+                                                (field.input_type?.toUpperCase() === "DROPDOWN" || field.input_type?.toUpperCase() === "MEMBERSHIP") &&
+                                                <Select>
+                                                    <SelectTrigger className="w-full">
+                                                        <SelectValue placeholder={field.placeholder} />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectGroup>
+                                                            {field.options?.map(option => {
+                                                                return <SelectItem key={option} value={option}>{option}</SelectItem>
+                                                            })}
+                                                        </SelectGroup>
+                                                    </SelectContent>
+                                                </Select>
+                                            }
+                                            {field.input_type !== "DISPLAY" && field.input_type ? <p className="text-xs mt-1">Is Required: {field.required ? "true" : "false"} </p> : undefined}
                                         </div>
-                                        {field.input_type ? <p className="text-xs mt-1">Is Required: {field.required ? "true" : "false"} </p> : undefined}
-                                    </div>
-                                    :
-                                    <div className='w-full'>
-                                        <Label className='flex justify-between mb-2'>
-                                            <p>{field.field_type.toLowerCase() === "text" ? field.field_text : field.field_name}</p>
-                                            <p className='text-gray-400 text-xs'>{field.input_type} ({field.field_type})</p>
-                                        </Label>
-                                        {
-                                            field.input_type?.toUpperCase() === "CHECKBOX" &&
-                                            <Checkbox />
-                                        }
-                                        {
-                                            isInputType() && field.input_type !== "TEXT" &&
-                                            <Input placeholder={field.placeholder} type={field.input_type} disabled />
-                                        }
-                                        {
-                                            (field.input_type?.toUpperCase() === "DROPDOWN" || field.input_type?.toUpperCase() === "MEMBERSHIP") &&
-                                            <Select>
-                                                <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder={field.placeholder} />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectGroup>
-                                                        {field.options?.map(option => {
-                                                            return <SelectItem key={option} value={option}>{option}</SelectItem>
-                                                        })}
-                                                    </SelectGroup>
-                                                </SelectContent>
-                                            </Select>
-                                        }
-                                        {field.input_type !== "DISPLAY" && field.input_type ? <p className="text-xs mt-1">Is Required: {field.required ? "true" : "false"} </p> : undefined}
-                                    </div>
                     }
                     <Button>
                         <PencilIcon />
