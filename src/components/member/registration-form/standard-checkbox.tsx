@@ -1,6 +1,6 @@
+import { PageFieldBase } from "@/components/club-onboard-form"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import { PageFieldBase } from "@/types" 
 
 interface Props {
   field: PageFieldBase
