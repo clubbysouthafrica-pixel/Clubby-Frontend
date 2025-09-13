@@ -47,7 +47,7 @@ export function LoginForm({
         return
       }
 
-      navigate(isOnboarded ? "/" : "/onboard")
+      navigate(isOnboarded ? "/" : "/onboardMember")
     } catch (e: unknown) {
       if (!e) {
         setError("something went wrong")

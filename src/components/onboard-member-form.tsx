@@ -15,7 +15,7 @@ import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 
-export function UserOnboardForm({
+export function OnboardMemberForm({
                               className,
                               ...props
                           }: React.ComponentProps<"div">) {
@@ -45,9 +45,9 @@ export function UserOnboardForm({
         <div className={cn("flex flex-col gap-6", className)} {...props}>
             <Card>
                 <CardHeader className="text-center">
-                        <CardTitle className="text-xl">Onboard</CardTitle>
+                        <CardTitle className="text-xl">Onboarding form</CardTitle>
                         <CardDescription>
-                            Finish your profile
+                            The ensure your account is ready to register with clubs. Please complete the onboarding form
                         </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -103,10 +103,6 @@ export function UserOnboardForm({
                     </form>
                 </CardContent>
             </Card>
-            <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
-                By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-                and <a href="#">Privacy Policy</a>.
-            </div>
         </div>
     )
 }
