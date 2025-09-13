@@ -34,7 +34,6 @@ export function ClubCard({
     showRegistrationStatus,
     ...props
 }: ClubCardProps) {
-    console.log(currency)
     return (
         <div className={cn("space-y-3", className)} {...props}>
             <ContextMenu>

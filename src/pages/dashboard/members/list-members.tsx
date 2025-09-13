@@ -43,7 +43,16 @@ export default function ListMembersPage() {
             userId: member.user_id,
             payment_amount: memberRegisterAmount
         }, {
-            onSuccess: () => {
+            onSuccess: (response: any) => {
+                if (!response.registered) {
+                    clubMembers.unregistered.forEach((m: any) => {
+                        if (m.user_id === member.user_id) {
+                            m.outstanding_amount -= memberRegisterAmount 
+                        }
+                    })
+                } else {
+                    window.location.reload();
+                }
                 setMemberRegisterAmount(0)
                 refetch()
             },
