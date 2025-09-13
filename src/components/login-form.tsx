@@ -71,7 +71,7 @@ export function LoginForm({
         <CardHeader className="text-center">
           <CardTitle className="text-xl">{isAdminLogin ? "Admin Login" : "Member Login"}</CardTitle>
           <CardDescription>
-            Login to your {isAdminLogin ? "admin" : "club"} account
+            Login to your {isAdminLogin ? "admin" : "club"} account {isAdminLogin ? " and begin managing your clubs" : ""}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -125,7 +125,14 @@ export function LoginForm({
               </div>
               <div className="text-center text-sm">
                 {
-                  !isAdminLogin &&
+                  isAdminLogin ? 
+                  <p>
+                    Want to register a club?{" "}
+                    <Link to="/contactus" className="underline underline-offset-4">
+                      Contact us
+                    </Link>
+                  </p>
+                  :
                   <p>
                     Don&apos;t have an account?{" "}
                     <Link to="/register" className="underline underline-offset-4">
