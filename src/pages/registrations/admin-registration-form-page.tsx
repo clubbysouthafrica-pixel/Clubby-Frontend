@@ -11,7 +11,7 @@ import { InputFormRegistration, PageFormRegistration } from "@/interfaces/formRe
 import { Loader2, PlusIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import ConfirmDeleteDialog from "@/components/dialog-confirm-delete";
-import { useFetchRegisterationForm } from "@/queries/registration-form";
+import { useFetchRegisterationForm } from "@/queries/admin/registration-form";
 
 export default function AdminRegistrationFormPage() {
     const { club } = useContext(ClubContext) as ClubContextType
@@ -19,8 +19,6 @@ export default function AdminRegistrationFormPage() {
 
     const { mutate, isPending } = useCreateClubMutation()
     const {data, isLoading } = useFetchRegisterationForm(club?.club_account_id as string)
-
-    console.log('REG FORM: ', data)
 
     const defaultPage = { page_index: 0, page_header: "Page 1", fields: []}
 
