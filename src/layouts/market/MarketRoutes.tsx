@@ -13,7 +13,7 @@ import PasswordResetPage from "@/pages/authentication/password/PasswordReset.tsx
 import SettingsPage from "@/pages/profile/settings.tsx";
 import ProtectedRoute from "@/guards/ProtectedRoute.tsx";
 import ViewClubPage from "@/pages/clubs/view-club.tsx";
-import OnboardUser from "@/pages/authentication/onboard-user";
+import OnboardMember from "@/pages/authentication/onboard-member";
 import AdminRegistrationFormPage from "@/pages/registrations/admin-registration-form-page";
 import BrowseClubsPage from "@/pages/clubs/browse-clubs";
 import RegisterClubPage from "@/pages/clubs/register-club-page";
@@ -30,7 +30,7 @@ export default function MarketRoutes() {
             <Route path="/about" element={<AboutPage />}></Route>
             <Route path="/getstarted" element={<GetStartedPage />}></Route>
             <Route path="/contactus" element={<ContactPage />}></Route>
-            <Route path="/onboard" element={<ProtectedRoute><OnboardUser /></ProtectedRoute>}></Route>
+            <Route path="/onboardMember" element={<ProtectedRoute><OnboardMember /></ProtectedRoute>}></Route>
 
             <Route path="/clubs" element={<BrowseClubsPage />}></Route>
             <Route path="/clubs/:clubId" element={<ViewClubPage />}></Route>
