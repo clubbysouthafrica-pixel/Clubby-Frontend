@@ -27,7 +27,7 @@ interface BillingSelectProps {
   field: Field
 }
 
-export default function BillingDropdown({ currency, field }: BillingSelectProps) {
+export default function DisplayBillingDropdown({ currency, field }: BillingSelectProps) {
   return (
     <div className="w-full">
       <Label className="flex justify-between mb-2">
