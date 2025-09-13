@@ -122,7 +122,7 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
                                             <Checkbox />
                                             <Label>{field.placeholder}</Label>
                                         </div>
-                                        {field.input_type !== "DISPLAY" && field.input_type ? <p className="text-xs mt-1">Is Required: {field.required ? "true" : "false"} </p> : undefined}
+                                        {field.input_type ? <p className="text-xs mt-1">Is Required: {field.required ? "true" : "false"} </p> : undefined}
                                     </div>
                                     :
                                     <div className='w-full'>
