@@ -43,7 +43,7 @@ export function OTPForm({
             toast.success(
                 "Your account has been created successfully. Please go back to the member login page to sign in to your account.",
                 {
-                    autoClose: 40000,
+                    duration: 15000,
                     style: {
                         background: "#000000",
                         color: "#fff",
