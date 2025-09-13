@@ -37,7 +37,7 @@ export default function AdminRegistrationFormPage() {
     const saveRegistrationForm = () => {
         mutate({
             pages: pages,
-            deleteFields: deletedFields,
+            deleteFields: deletedFields.filter(field => typeof field === 'string'),
             club_account_id: club?.club_account_id as string,
         }, {
             onSuccess: displayToast,
