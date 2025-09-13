@@ -29,9 +29,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import StandardCheckbox from "./member/registration-form/standard-checkbox"
 
 // --- Types that match the new payload ---
-export type InputType = "TEXT" | "DROPDOWN";
+export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX";
 export type FieldType = "TEXT" | "STANDARD" | "BILLING";
 
 export interface BillingOption {
@@ -122,7 +123,11 @@ export function ClubRegisterForm({
     for (const p of pages) {
       for (const f of p.fields) {
         if (f.field_type === "STANDARD" && f.required) {
-          if (!f.value || f.value.trim() === "") missing.push({ page: p.page_index, field: f });
+          if (f.input_type === "CHECKBOX") {
+            if (!f.value || f.value !== "true") missing.push({ page: p.page_index, field: f });
+          } else {
+            if (!f.value || f.value.trim() === "") missing.push({ page: p.page_index, field: f });
+          }
         }
         if (f.field_type === "BILLING" && f.required) {
           if (f.input_type === "DROPDOWN") {
@@ -238,6 +243,17 @@ export function ClubRegisterForm({
                               {field.field_text}
                             </p>
                           );
+                        }
+
+                        if (field.field_type === "STANDARD" && field.input_type === "CHECKBOX") {
+                          return (
+                            <StandardCheckbox
+                              key={field.field_id}
+                              field={field}
+                              currentPageIndex={currentPageIndex}
+                              setFieldValue={setFieldValue}
+                            />
+                          )
                         }
 
                         if (field.field_type === "STANDARD") {
