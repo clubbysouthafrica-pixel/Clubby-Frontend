@@ -20,6 +20,8 @@ export default function AdminRegistrationFormPage() {
     const { mutate, isPending } = useCreateClubMutation()
     const {data, isLoading } = useFetchRegisterationForm(club?.club_account_id as string)
 
+    console.log('REG FORM: ', data)
+
     const defaultPage = { page_index: 0, page_header: "Page 1", fields: []}
 
     const [pages, setPages] = useState<PageFormRegistration[]>([defaultPage])
