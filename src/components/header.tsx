@@ -47,7 +47,10 @@ export default function Header() {
     const navigate = useNavigate()
     const [menuOpen, setMenuOpen] = useState(false);
 
-    const signOut = () => logout()
+    const signOut = () => {
+        logout()
+        navigate("/login")
+    }
 
     useKeyboardShortcut({
         key: 'q',
