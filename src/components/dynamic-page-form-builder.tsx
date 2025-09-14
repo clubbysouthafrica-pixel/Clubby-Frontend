@@ -131,11 +131,11 @@ export default function DynamicFormBuilder({ currency, clubAccountId, page, setF
   }
 
   const removeFieldItem = (id: string) => {
-    const field_to_delete = page.fields?.filter(f => f.field_id === id)
-    setFields(page.page_index, page.fields?.filter(f => f.field_id !== id))
-
-    const fields = (deletedFields?.length > 0) ? deletedFields.push(field_to_delete[0].field_id as string) : [field_to_delete[0].field_id]
-    setDeletedFields(fields as string[])
+    const field_to_delete = page.fields?.find(f => f.field_id === id);
+    if (!field_to_delete) return;
+  
+    setFields(page.page_index, page.fields?.filter(f => f.field_id !== id));
+    setDeletedFields(prev => [...prev, field_to_delete.field_id]);
   }
 
   const updatePageInput = (input: InputFormRegistration) => {
@@ -202,9 +202,7 @@ export default function DynamicFormBuilder({ currency, clubAccountId, page, setF
                           field={field}
                           update={updatePageInput}
                         />
-                        <ConfirmDeleteDialog
-                          onConfirm={() => removeFieldItem(field.field_id!)}
-                        />
+                        <ConfirmDeleteDialog id={field.field_id} tooltipDescription="Remove input" removeFunc={removeFieldItem}/>
                       </div>
                     </SortableItem>
                   ))}
