@@ -30,7 +30,8 @@ export default function AdminRegistrationFormPage() {
 
     useEffect(()=> {
         if (data?.pages?.length) {
-            setPages(data.pages)
+            const sortedPages = data.pages.sort((a, b) => a.page_index - b.page_index)
+            setPages(sortedPages)
         }
     }, [data])
 
@@ -52,12 +53,18 @@ export default function AdminRegistrationFormPage() {
         setPages((v: PageFormRegistration[]) => v.length > 0 ? [...v, {page_header: `Page ${v.length+1}`, page_index: v.length, fields: []}] : [defaultPage])
     }
 
+    console.log(deletedFields)
+
     const removePage = (pageIndex: number) => {
         setPages(
             (v: PageFormRegistration[]) =>
                 v.filter(v => v.page_index !== pageIndex)
                 .map((p, i) => ({ ...p, page_index: i }))
         )
+
+        pages[pageIndex].fields.forEach(field => {
+            setDeletedFields(prev => [...prev, field.field_id]);
+        })
     }
 
     const changePageHeader = (pageIndex: number, value: string) => {

@@ -56,7 +56,7 @@ interface FormBuilderProps {
   setDeletedFields: React.Dispatch<React.SetStateAction<string[]>>
 }
 
-export default function DynamicFormBuilder({ currency, clubAccountId, page, setFields, deletedFields, setDeletedFields }: FormBuilderProps) {
+export default function DynamicFormBuilder({ currency, clubAccountId, page, setFields, setDeletedFields }: FormBuilderProps) {
   if (!clubAccountId) return
 
   const [fieldItemType, setFieldItemType] = useState('')
