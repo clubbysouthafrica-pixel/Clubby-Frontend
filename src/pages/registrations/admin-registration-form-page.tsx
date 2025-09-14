@@ -92,13 +92,18 @@ export default function AdminRegistrationFormPage() {
                         </p>
                     </div>
                     <div className="flex gap-4">
-                        <Button onClick={setPreviewRegForm(!previewRegForm) as any} disabled={isPending}>{isPending ? "Loading..." : previewRegForm ? "Edit Form" : "Pre-view form"}</Button>
+                        <Button
+                            onClick={() => setPreviewRegForm((prev) => !prev)}
+                            disabled={isPending}
+                        >
+                            {isPending ? "Loading..." : previewRegForm ? "Edit Form" : "Preview form"}
+                        </Button>
                         <Button onClick={saveRegistrationForm} disabled={isPending}>{isPending ? "Loading..." : "Save Form"}</Button>
                     </div>
                 </div>
 
                 {
-                    !isLoading && previewRegForm && <PreviewForm currency={club?.currency ?? "ZAR"} formPages={pages}/>
+                    !isLoading && previewRegForm && <PreviewForm currency={club?.currency ?? "ZAR"} formPages={pages} />
                 }
 
                 {!isLoading && !previewRegForm &&
