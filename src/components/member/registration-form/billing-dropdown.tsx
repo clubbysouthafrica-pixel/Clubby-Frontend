@@ -61,10 +61,10 @@ export default function BillingDropdown({
     }
 
     return (
-        <div className="grid gap-3" key={field.field_id}>
+        <div className="grid gap-2" key={field.field_id}>
             <Label>
-                {field.required ? <span className="text-red-500">*</span> : null}
                 {field.field_name}
+                {field.required ? <span className="text-red-500">*</span> : null}
             </Label>
 
             <Select onValueChange={onBillingSelect} value={field.value}>

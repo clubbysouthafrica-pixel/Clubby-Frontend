@@ -8,7 +8,7 @@ export interface InputFormRegistration {
     field_name: string
     field_text: string
     input_type: string
-    field_order_id: string
+    field_order_id: number
     required: boolean,
     field_type: string
     placeholder: string

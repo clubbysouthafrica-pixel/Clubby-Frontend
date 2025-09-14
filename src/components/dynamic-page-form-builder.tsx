@@ -12,7 +12,6 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { v4 as uuidv4 } from 'uuid';
 import { MenuIcon } from 'lucide-react';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from './ui/select';
 import { Card } from './ui/card';
@@ -39,7 +38,7 @@ function SortableItem({ id, children }: { id: string; children: React.ReactNode 
       <div className="flex items-center space-x-2">
         {/* Drag handle */}
         <div {...attributes} {...listeners} className="cursor-move select-none text-lg px-2">
-          <MenuIcon/>
+          <MenuIcon />
         </div>
         <div className="flex-1">{children}</div>
       </div>
@@ -56,7 +55,7 @@ interface FormBuilderProps {
   setDeletedFields: React.Dispatch<React.SetStateAction<string[]>>
 }
 
-export default function DynamicFormBuilder({ currency, clubAccountId, page, setFields, deletedFields, setDeletedFields }: FormBuilderProps) {
+export default function DynamicFormBuilder({ currency, clubAccountId, page, setFields, setDeletedFields }: FormBuilderProps) {
   if (!clubAccountId) return
 
   const [fieldItemType, setFieldItemType] = useState('')
@@ -102,40 +101,40 @@ export default function DynamicFormBuilder({ currency, clubAccountId, page, setF
     const fieldType = fieldItemType.split(";")[1]
 
     const type = {
-        field_order_id: uuidv4(),
-        field_name: fieldType === "text"  ? "" : `Field ${page?.fields?.length ?? "Field" + 1}`,
-        input_type: fieldType === "text"  ? "DISPLAY" : inputType.toUpperCase(),
-        placeholder: 'Default placeholder',
-        field_type: fieldType.toUpperCase(),
-        required: true,
-        field_text: `Field ${page.fields?.length ?? 0 + 1}`,
-      }
-    
+      field_order_id: page.fields.length + 1,
+      field_name: fieldType === "text" ? "" : `Field ${page?.fields?.length ?? "Field" + 1}`,
+      input_type: fieldType === "text" ? "DISPLAY" : inputType.toUpperCase(),
+      placeholder: 'Default placeholder',
+      field_type: fieldType.toUpperCase(),
+      required: true,
+      field_text: `Field ${page.fields?.length ?? 0 + 1}`,
+    }
+
     setFields(page.page_index, [
       ...page.fields,
       type,
     ]);
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
-  const { active, over } = event;
-  if (!over || active.id === over.id) return;
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = page.fields.findIndex(f => f.field_id === active.id);
+      const newIndex = page.fields.findIndex(f => f.field_id === over.id);
 
-  const oldIndex = page.fields.findIndex(f => f.field_order_id === active.id);
-  const newIndex = page.fields.findIndex(f => f.field_order_id === over.id);
+      const reordered = arrayMove(page.fields, oldIndex, newIndex)
+        .map((f, index) => ({ ...f, field_order_id: index + 1 }));
 
-  if (oldIndex === -1 || newIndex === -1) return;
-
-  const reordered = arrayMove(page.fields, oldIndex, newIndex);
-  setFields(page.page_index, reordered);
-};
+      setFields(page.page_index, reordered);
+    }
+  }
 
   const removeFieldItem = (id: string) => {
-    const field_to_delete = page.fields?.filter(f => f.field_id === id)
-    setFields(page.page_index, page.fields?.filter(f => f.field_id !== id))
-
-    const fields = (deletedFields?.length > 0) ? deletedFields.push(field_to_delete[0].field_id as string) : [field_to_delete[0].field_id]
-    setDeletedFields(fields as string[])
+    const field_to_delete = page.fields?.find(f => f.field_id === id);
+    if (!field_to_delete) return;
+  
+    setFields(page.page_index, page.fields?.filter(f => f.field_id !== id));
+    setDeletedFields((prev: any) => [...prev, field_to_delete.field_id]);
   }
 
   const updatePageInput = (input: InputFormRegistration) => {
@@ -145,57 +144,68 @@ export default function DynamicFormBuilder({ currency, clubAccountId, page, setF
   return (
     <div className="w-full mx-auto py-6 space-y-4">
       <div>
-        <Card className='p-4'> 
-          <form className='flex space-x-4' onSubmit={(e) => {e.preventDefault();addField()}}>
+        <Card className='p-4'>
+          <form className='flex space-x-4' onSubmit={(e) => { e.preventDefault(); addField() }}>
             <div className='flex-1 w-full'>
               <Select onValueChange={setFieldItemType} defaultValue={fieldItemType}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select input type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Standard Input Types</SelectLabel>
-                      {
-                        inputTypes.map(i => (
-                          <SelectItem key={i.value} value={i.value}>{i.display}</SelectItem>
-                        ))
-                      }
-                      
-                      <SelectLabel>Billing Input Types</SelectLabel>
-                      {
-                        billingTypes.map(i => (
-                          <SelectItem key={i.value} value={i.value}>{i.display}</SelectItem>
-                        ))
-                      }
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select input type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Standard Input Types</SelectLabel>
+                    {
+                      inputTypes.map(i => (
+                        <SelectItem key={i.value} value={i.value}>{i.display}</SelectItem>
+                      ))
+                    }
 
-                      <SelectLabel>Display Types</SelectLabel>
-                       {
-                        displayTypes.map(i => (
-                          <SelectItem key={i.value} value={i.value}>{i.display}</SelectItem>
-                        ))
-                      }
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
+                    <SelectLabel>Billing Input Types</SelectLabel>
+                    {
+                      billingTypes.map(i => (
+                        <SelectItem key={i.value} value={i.value}>{i.display}</SelectItem>
+                      ))
+                    }
+
+                    <SelectLabel>Display Types</SelectLabel>
+                    {
+                      displayTypes.map(i => (
+                        <SelectItem key={i.value} value={i.value}>{i.display}</SelectItem>
+                      ))
+                    }
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
             <div className='flex-init'>
               <Button type='submit' className="flex-init" variant="outline" disabled={!fieldItemType}>Add Field</Button>
             </div>
           </form>
 
-          <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={page.fields.length > 0 ? page.fields.map((f: InputFormRegistration) => f.field_order_id) : []} strategy={verticalListSortingStrategy}>
-                {(!page.fields?.length) && <p className='text-sm text-center'>Start adding fields</p>}
-                {page.fields?.map((field: InputFormRegistration) => (
-                    <SortableItem id={field.field_order_id} key={field.field_order_id}>
-                      <div className='flex items-center'>
-                        <div className='flex w-full items-center justify-center mt-1 cursor-pointer hover:bg-gray-100 p-2 rounded-md' key={field.field_order_id}>
-                          <FieldInputEditorDialog currency={currency} field={field} update={updatePageInput}/>
-                        </div>
+          <DndContext
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={page.fields.map(f => f.field_id) as any}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-8">
+                {page.fields
+                  .sort((a, b) => a.field_order_id - b.field_order_id)
+                  .map((field) => (
+                    <SortableItem key={field.field_order_id} id={field.field_id as string}>
+                      <div className="flex items-center space-x-2">
+                        <FieldInputEditorDialog
+                          currency={currency}
+                          field={field}
+                          update={updatePageInput}
+                        />
                         <ConfirmDeleteDialog id={field.field_id} tooltipDescription="Remove input" removeFunc={removeFieldItem}/>
                       </div>
                     </SortableItem>
-                ))}
+                  ))}
+              </div>
             </SortableContext>
           </DndContext>
         </Card>
