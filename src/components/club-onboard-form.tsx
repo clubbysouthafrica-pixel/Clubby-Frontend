@@ -25,6 +25,7 @@ import BillingDropdown from "./member/registration-form/billing-dropdown";
 import StandardDopdown from "./member/registration-form/standard-dropdown";
 import StandardText from "./member/registration-form/standard-text";
 import { createValidRegistrationRequest } from "../helpers/members/registration/create-registration-request";
+import { getFieldName } from "../helpers/members/registration/get-field-name";
 
 // --- Types that match the new payload ---
 export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER";
@@ -34,6 +35,13 @@ export interface BillingOption {
   option_order_id: string;
   amount: number; // in cents
   label: string;
+}
+
+export interface FieldRequest {
+  field_id: string
+  value: string | number
+  option_order_id?: string
+  label?: string
 }
 
 export interface PageFieldBase {
@@ -233,13 +241,18 @@ export function ClubRegisterForm({
                     </div>
                   )}
 
-                  {
-                    registrationRequest && (
-                      <div>
-                        <p>Total registration fee: {formatAmount(totalRegistrationFee, club.currency)}</p>
-                      </div>
-                    )
-                  }
+                  {registrationRequest && (
+                    <div>
+                      <Label className="mb-1 block">Total registration fee: {formatAmount(totalRegistrationFee, club.currency)}</Label>
+                      <ul className="ml-6 list-disc space-y-1">
+                        {registrationRequest.billing_fields.map((f: FieldRequest) => (
+                          <li key={f.field_id} className="font-small">
+                            <Label className="font-normal">{getFieldName(pages, f.field_id)}: {formatAmount(f.value, club.currency)} {f.label ? `(${f.label})` : ""}</Label> 
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
                   {pages[currentPageIndex] && !registrationRequest && (
                     <div key={pages[currentPageIndex].page_index} className="space-y-5">
