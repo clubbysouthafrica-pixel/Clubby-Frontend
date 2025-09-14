@@ -228,9 +228,11 @@ export function ClubRegisterForm({
 
                   {/* Current Page */}
                   {pages[currentPageIndex] && (
-                    <div key={pages[currentPageIndex].page_index} className="space-y-4">
+                    <div key={pages[currentPageIndex].page_index} className="space-y-5">
                       <h3 className="text-lg font-semibold">{pages[currentPageIndex].page_header}</h3>
-                      {pages[currentPageIndex].fields.map((field) => {
+                      {pages[currentPageIndex].fields
+                      .sort((a, b) => a.field_order_id - b.field_order_id)
+                      .map((field) => {
                         
                         if (field.field_type === "TEXT") {
                           return (

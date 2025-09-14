@@ -16,7 +16,6 @@ export default function StandardCheckbox({ field, currentPageIndex, setFieldValu
   return (
     <div className="flex items-center gap-2" key={field.field_id}>
       <div className="flex items-center gap-1">
-        {field.required && <span className="text-red-500">*</span>}
         <Checkbox
           checked={!!field.value}
           onCheckedChange={(checked) =>
@@ -28,6 +27,7 @@ export default function StandardCheckbox({ field, currentPageIndex, setFieldValu
         />
       </div>
       <Label>{field.placeholder}</Label>
+      {field.required && <span className="text-red-500">*</span>}
     </div>
   )
 }
