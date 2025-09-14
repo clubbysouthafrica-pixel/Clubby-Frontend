@@ -20,15 +20,6 @@ import { useMemberRegistrationMutation } from "@/mutations/useMemberRegistration
 import { toast } from "sonner";
 import { formatAmount } from "@/data/currencies";
 import { AuthContext, AuthContextType } from "@/context/AuthContext";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import StandardCheckbox from "./member/registration-form/standard-checkbox";
 import BillingDropdown from "./member/registration-form/billing-dropdown";
 import StandardDopdown from "./member/registration-form/standard-dropdown";
@@ -49,9 +40,9 @@ export interface PageFieldBase {
   field_id: string;
   field_type: FieldType;
   field_text?: string; // helper/label text
-  field_name?: string; // title when STANDARD/BILLING
+  field_name: string; // title when STANDARD/BILLING
   required?: boolean;
-  input_type?: InputType; // when STANDARD/BILLING
+  input_type: InputType; // when STANDARD/BILLING
   placeholder?: string;
   options?: string[]; // for STANDARD DROPDOWN
   billingOptions?: BillingOption[]; // for BILLING DROPDOWN
