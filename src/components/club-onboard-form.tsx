@@ -177,8 +177,6 @@ export function ClubRegisterForm({
         .map((f) => ({ field_id: f.field_id!, value: f.value ?? "" })),
     };
 
-    console.log('req: ', registrationRequest)
-
     if (!user) (registrationRequest as any).email = email;
 
     mutate(registrationRequest, {
