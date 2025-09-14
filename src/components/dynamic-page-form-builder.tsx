@@ -102,7 +102,7 @@ export default function DynamicFormBuilder({ currency, clubAccountId, page, setF
     const fieldType = fieldItemType.split(";")[1]
 
     const type = {
-      field_order_id: uuidv4(),
+      field_order_id: page.fields.length + 1,
       field_name: fieldType === "text" ? "" : `Field ${page?.fields?.length ?? "Field" + 1}`,
       input_type: fieldType === "text" ? "DISPLAY" : inputType.toUpperCase(),
       placeholder: 'Default placeholder',

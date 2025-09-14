@@ -24,6 +24,7 @@ import StandardCheckbox from "./member/registration-form/standard-checkbox";
 import BillingDropdown from "./member/registration-form/billing-dropdown";
 import StandardDopdown from "./member/registration-form/standard-dropdown";
 import StandardText from "./member/registration-form/standard-text";
+import { createValidRegistrationRequest } from "../helpers/members/registration/create-registration-request";
 
 // --- Types that match the new payload ---
 export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER";
@@ -85,15 +86,21 @@ export function ClubRegisterForm({
   const [pages, setPages] = useState<FormPage[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [requiredFieldsMissing, setRequiredFieldsMissing] = useState(false);
+  const [registrationRequest, setRegistrationRequest] = useState<RegistrationRequest | undefined>(undefined)
+  const [totalRegistrationFee, setTotalRegistrationFee] = useState(0);
 
-  // Load payload -> component state
   useEffect(() => {
     if ((data as PagedFormPayload)?.pages) {
-      const cloned = (data as PagedFormPayload).pages.map((p) => ({
-        ...p,
-        fields: p.fields.map((f) => ({ ...f })),
-      }));
-      setPages(cloned);
+      const sorted = (data as PagedFormPayload).pages
+        .sort((a, b) => a.page_index - b.page_index)
+        .map((p, index) => ({
+          ...p,
+          page_index: index,
+          fields: p.fields
+            .sort((a, b) => Number(a.field_order_id) - Number(b.field_order_id))
+            .map((f) => ({ ...f })),
+        }));
+      setPages(sorted);
     }
   }, [data]);
 
@@ -161,29 +168,29 @@ export function ClubRegisterForm({
 
     const allFields = pages.flatMap((p) => p.fields);
 
-    const registrationRequest: RegistrationRequest = {
-      club_account_id: clubId as string,
-      billing_type: "",
-      billing_fields: allFields
-        .filter((f) => f.field_type === "BILLING")
-        .map((f) => ({
-          field_id: f.field_id!,
-          value: (f.selectedAmountCents ?? f.amount ?? (f.value ? Number(f.value) : undefined)) as any,
-          option_order_id: f.input_type === "DROPDOWN" ? f.option_order_id : undefined,
-          label: f.input_type === "DROPDOWN" ? f.label : undefined,
-        })),
-      standard_fields: allFields
-        .filter((f) => f.field_type === "STANDARD" && f.value)
-        .map((f) => ({ field_id: f.field_id!, value: f.value ?? "" })),
-    };
+    const request: RegistrationRequest = createValidRegistrationRequest(allFields, clubId)
 
-    if (!user) (registrationRequest as any).email = email;
+    if (!user) (request as any).email = email;
+    setRegistrationRequest(request)
 
+    let total = 0
+    request.billing_fields.forEach(field => {
+      total += field.value
+    })
+    setTotalRegistrationFee(total)
+  };
+
+  const submitRegistration = () => {
     mutate(registrationRequest, {
       onSuccess: () => navigate(`/clubs/${clubId}`),
       onError: () => toast(registerError?.message ?? "Registration failed"),
     });
-  };
+  }
+
+  const returnBackToRegistrationForm = () => {
+    setRegistrationRequest(undefined)
+    setTotalRegistrationFee(0)
+  }
 
   const isLastPage = currentPageIndex === pages.length - 1;
 
@@ -226,79 +233,86 @@ export function ClubRegisterForm({
                     </div>
                   )}
 
-                  {/* Current Page */}
-                  {pages[currentPageIndex] && (
+                  {
+                    registrationRequest && (
+                      <div>
+                        <p>Total registration fee: {formatAmount(totalRegistrationFee, club.currency)}</p>
+                      </div>
+                    )
+                  }
+
+                  {pages[currentPageIndex] && !registrationRequest && (
                     <div key={pages[currentPageIndex].page_index} className="space-y-5">
                       <h3 className="text-lg font-semibold">{pages[currentPageIndex].page_header}</h3>
                       {pages[currentPageIndex].fields
-                      .sort((a, b) => a.field_order_id - b.field_order_id)
-                      .map((field) => {
-                        
-                        if (field.field_type === "TEXT") {
-                          return (
-                            <p key={field.field_order_id} className="text-sm text-muted-foreground">
-                              {field.field_text}
-                            </p>
-                          );
-                        }
+                        .sort((a, b) => a.field_order_id - b.field_order_id)
+                        .map((field) => {
 
-                        if (field.field_type === "STANDARD" && field.input_type === "CHECKBOX") {
-                          return (
-                            <StandardCheckbox
-                              key={field.field_id}
-                              field={field}
-                              currentPageIndex={currentPageIndex}
-                              setFieldValue={setFieldValue}
-                            />
-                          )
-                        }
+                          if (field.field_type === "TEXT") {
+                            return (
+                              <p key={field.field_order_id} className="text-sm text-muted-foreground">
+                                {field.field_text}
+                              </p>
+                            );
+                          }
 
-                        if (field.field_type === "STANDARD" && field.input_type === "DROPDOWN") {
-                          return (
-                            <StandardDopdown
-                              field={field}
-                              currentPageIndex={currentPageIndex}
-                              pages={pages}
-                              setFieldValue={setFieldValue}
-                            />
-                          )
-                        }
+                          if (field.field_type === "STANDARD" && field.input_type === "CHECKBOX") {
+                            return (
+                              <StandardCheckbox
+                                key={field.field_id}
+                                field={field}
+                                currentPageIndex={currentPageIndex}
+                                setFieldValue={setFieldValue}
+                              />
+                            )
+                          }
 
-                        if (field.field_type === "STANDARD" && (field.input_type === "TEXT" || field.input_type === "NUMBER")) {
-                          return (
-                            <StandardText
-                              field={field}
-                              currentPageIndex={currentPageIndex}
-                              pages={pages}
-                              setFieldValue={setFieldValue}
-                            />
-                          )
-                        }
+                          if (field.field_type === "STANDARD" && field.input_type === "DROPDOWN") {
+                            return (
+                              <StandardDopdown
+                                field={field}
+                                currentPageIndex={currentPageIndex}
+                                pages={pages}
+                                setFieldValue={setFieldValue}
+                              />
+                            )
+                          }
 
-                        if (field.field_type === "BILLING" && field.input_type === "DROPDOWN") {
-                          return (
-                            <BillingDropdown
-                              field={field}
-                              clubCurrency={club.currency}
-                              currentPageIndex={currentPageIndex}
-                              pages={pages}
-                              setFieldValue={setFieldValue}
-                            />
-                          );
-                        }
+                          if (field.field_type === "STANDARD" && (field.input_type === "TEXT" || field.input_type === "NUMBER")) {
+                            return (
+                              <StandardText
+                                field={field}
+                                currentPageIndex={currentPageIndex}
+                                pages={pages}
+                                setFieldValue={setFieldValue}
+                              />
+                            )
+                          }
 
-                        if (field.field_type === "BILLING" && field.input_type === "TEXT") {
-                          return (
-                            <p key={field.field_id}>
-                              {field.field_name}:{" "}
-                              <span className="font-semibold">
-                                {formatAmount(field.amount ?? 0, club.currency)}
-                              </span>
-                            </p>
-                          );
-                        }
-                        return null;
-                      })}
+                          if (field.field_type === "BILLING" && field.input_type === "DROPDOWN") {
+                            return (
+                              <BillingDropdown
+                                field={field}
+                                clubCurrency={club.currency}
+                                currentPageIndex={currentPageIndex}
+                                pages={pages}
+                                setFieldValue={setFieldValue}
+                              />
+                            );
+                          }
+
+                          if (field.field_type === "BILLING" && field.input_type === "TEXT") {
+                            return (
+                              <p key={field.field_id}>
+                                {field.field_name}:{" "}
+                                <span className="font-semibold">
+                                  {formatAmount(field.amount ?? 0, club.currency)}
+                                </span>
+                              </p>
+                            );
+                          }
+                          return null;
+                        })}
                     </div>
                   )}
 
@@ -311,12 +325,11 @@ export function ClubRegisterForm({
                     </Alert>
                   )}
 
-                  {/* Navigation buttons */}
                   {pages.length === 1 ? (
                     <Button type="submit" className="w-full" disabled={isPending}>
-                      {isPending ? "Registering..." : "Register"}
+                      {isPending ? "Registering..." : "Continue"}
                     </Button>
-                  ) : (
+                  ) : !registrationRequest ? (
                     <div className="flex justify-between">
                       {currentPageIndex > 0 && (
                         <Button variant={"outline"} type="button" onClick={() => setCurrentPageIndex((i) => i - 1)}>
@@ -325,13 +338,22 @@ export function ClubRegisterForm({
                       )}
                       {isLastPage ? (
                         <Button type="button" onClick={(e) => registerUser(e as any)} disabled={isPending}>
-                          {isPending ? "Registering..." : "Register"}
+                          {isPending ? "Registering..." : "Continue"}
                         </Button>
                       ) : (
                         <Button type="button" onClick={handleNextPage}>
                           Next
                         </Button>
                       )}
+                    </div>
+                  ) : (
+                    <div className="flex justify-between">
+                      <Button variant={"outline"} type="button" onClick={returnBackToRegistrationForm}>
+                        Back to form
+                      </Button>
+                      <Button type="button" onClick={submitRegistration}>
+                        Submit registration
+                      </Button>
                     </div>
                   )}
                 </div>
