@@ -173,9 +173,11 @@ export function ClubRegisterForm({
           label: f.input_type === "DROPDOWN" ? f.label : undefined,
         })),
       standard_fields: allFields
-        .filter((f) => f.field_type === "STANDARD")
+        .filter((f) => f.field_type === "STANDARD" && f.value)
         .map((f) => ({ field_id: f.field_id!, value: f.value ?? "" })),
     };
+
+    console.log('req: ', registrationRequest)
 
     if (!user) (registrationRequest as any).email = email;
 
