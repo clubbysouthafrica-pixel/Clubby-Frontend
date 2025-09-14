@@ -176,7 +176,7 @@ export function ClubRegisterForm({
 
     const allFields = pages.flatMap((p) => p.fields);
 
-    const request: RegistrationRequest = createValidRegistrationRequest(allFields, clubId)
+    const request: RegistrationRequest = createValidRegistrationRequest(allFields, clubId as string)
 
     if (!user) (request as any).email = email;
     setRegistrationRequest(request)
@@ -189,10 +189,12 @@ export function ClubRegisterForm({
   };
 
   const submitRegistration = () => {
-    mutate(registrationRequest, {
-      onSuccess: () => navigate(`/clubs/${clubId}`),
-      onError: () => toast(registerError?.message ?? "Registration failed"),
-    });
+    if (registrationRequest) {
+      mutate(registrationRequest, {
+        onSuccess: () => navigate(`/clubs/${clubId}`),
+        onError: () => toast(registerError?.message ?? "Registration failed"),
+      });
+    }
   }
 
   const returnBackToRegistrationForm = () => {
@@ -247,7 +249,7 @@ export function ClubRegisterForm({
                       <ul className="ml-6 list-disc space-y-1">
                         {registrationRequest.billing_fields.map((f: FieldRequest) => (
                           <li key={f.field_id} className="font-small">
-                            <Label className="font-normal">{getFieldName(pages, f.field_id)}: {formatAmount(f.value, club.currency)} {f.label ? `(${f.label})` : ""}</Label> 
+                            <Label className="font-normal">{getFieldName(pages, f.field_id)}: {formatAmount(f?.value as number, club.currency)} {f.label ? `(${f.label})` : ""}</Label> 
                           </li>
                         ))}
                       </ul>
@@ -258,7 +260,7 @@ export function ClubRegisterForm({
                     <div key={pages[currentPageIndex].page_index} className="space-y-5">
                       <h3 className="text-lg font-semibold">{pages[currentPageIndex].page_header}</h3>
                       {pages[currentPageIndex].fields
-                        .sort((a, b) => a.field_order_id - b.field_order_id)
+                        .sort((a: any, b: any) => a.field_order_id - b.field_order_id)
                         .map((field) => {
 
                           if (field.field_type === "TEXT") {

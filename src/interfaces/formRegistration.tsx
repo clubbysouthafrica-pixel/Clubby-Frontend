@@ -12,7 +12,7 @@ export interface InputFormRegistration {
     required: boolean,
     field_type: string
     placeholder: string
-    field_id: string
+    field_id?: string
     currency?: string
     billingOptions?: InputBillingOption[]
     amount?: number;

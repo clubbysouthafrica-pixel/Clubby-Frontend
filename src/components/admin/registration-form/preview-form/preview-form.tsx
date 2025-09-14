@@ -10,6 +10,7 @@ import StandardCheckbox from "../../../member/registration-form/standard-checkbo
 import BillingDropdown from "../../../member/registration-form/billing-dropdown";
 import StandardDopdown from "../../../member/registration-form/standard-dropdown";
 import StandardText from "../../../member/registration-form/standard-text";
+import { PageFormRegistration } from "@/interfaces/formRegistration";
 
 // --- Types that match the new payload ---
 export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER";
@@ -41,7 +42,7 @@ export interface PageFieldBase {
   billingOptions?: BillingOption[]; // for BILLING DROPDOWN
   currency?: string; // for BILLING
   amount?: number; // for BILLING fixed price (cents)
-  value?: string; // typed text or selected label
+  value?: string | number; // typed text or selected label
   selectedAmountCents?: number; // derived for BILLING when dropdown
   option_order_id?: string;
   label?: string;
@@ -58,8 +59,8 @@ export interface PagedFormPayload {
 }
 
 interface PreviewFormProps extends React.ComponentProps<"div"> {
-  formPages: FormPage[];
   currency: string;
+  formPages: PageFormRegistration[];
 }
 
 export function PreviewForm({
@@ -83,7 +84,7 @@ export function PreviewForm({
           .map((f) => ({ ...f })),
       }));
 
-    setPages(sorted);
+    setPages(sorted as any);
   }, [formPages]);
 
   const setFieldValue = (
@@ -113,7 +114,7 @@ export function PreviewForm({
                   <div key={pages[currentPageIndex].page_index} className="space-y-5">
                     <h3 className="text-lg font-semibold">{pages[currentPageIndex].page_header}</h3>
                     {pages[currentPageIndex].fields
-                      .sort((a, b) => a.field_order_id - b.field_order_id)
+                      .sort((a: any, b: any) => a.field_order_id - b.field_order_id)
                       .map((field) => {
 
                         if (field.field_type === "TEXT") {
@@ -128,9 +129,9 @@ export function PreviewForm({
                           return (
                             <StandardCheckbox
                               key={field.field_id}
-                              field={field}
+                              field={field as any}
                               currentPageIndex={currentPageIndex}
-                              setFieldValue={setFieldValue}
+                              setFieldValue={setFieldValue as any}
                             />
                           )
                         }
@@ -138,7 +139,7 @@ export function PreviewForm({
                         if (field.field_type === "STANDARD" && field.input_type === "DROPDOWN") {
                           return (
                             <StandardDopdown
-                              field={field}
+                              field={field as any}
                               currentPageIndex={currentPageIndex}
                               pages={pages}
                               setFieldValue={setFieldValue}
@@ -149,7 +150,7 @@ export function PreviewForm({
                         if (field.field_type === "STANDARD" && (field.input_type === "TEXT" || field.input_type === "NUMBER")) {
                           return (
                             <StandardText
-                              field={field}
+                              field={field as any}
                               currentPageIndex={currentPageIndex}
                               pages={pages}
                               setFieldValue={setFieldValue}
@@ -160,7 +161,7 @@ export function PreviewForm({
                         if (field.field_type === "BILLING" && field.input_type === "DROPDOWN") {
                           return (
                             <BillingDropdown
-                              field={field}
+                              field={field as any}
                               clubCurrency={currency}
                               currentPageIndex={currentPageIndex}
                               pages={pages}

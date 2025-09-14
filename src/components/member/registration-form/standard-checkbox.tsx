@@ -18,7 +18,7 @@ export default function StandardCheckbox({ field, currentPageIndex, setFieldValu
       <div className="flex items-center gap-1">
         <Checkbox
           checked={!!field.value}
-          onCheckedChange={(checked) =>
+          onCheckedChange={(checked: any) =>
             setFieldValue(currentPageIndex, field.field_id, (f) => ({
               ...f,
               value: checked ? "true" : "",

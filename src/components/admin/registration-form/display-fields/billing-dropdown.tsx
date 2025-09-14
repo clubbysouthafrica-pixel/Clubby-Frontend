@@ -17,6 +17,7 @@ interface BillingOption {
 interface Field {
   field_name: string
   input_type: string
+  required?: boolean;
   field_type: string
   placeholder?: string
   billingOptions?: BillingOption[]

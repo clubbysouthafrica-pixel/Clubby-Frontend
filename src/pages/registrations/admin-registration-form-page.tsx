@@ -35,7 +35,7 @@ export default function AdminRegistrationFormPage() {
 
     useEffect(() => {
         if (data?.pages?.length) {
-            const sortedPages = data.pages.sort((a, b) => a.page_index - b.page_index)
+            const sortedPages = data.pages.sort((a: any, b: any) => a.page_index - b.page_index)
             setOriginalPages(sortedPages)
             setPages(sortedPages)
         }
@@ -53,10 +53,6 @@ export default function AdminRegistrationFormPage() {
         })
     }
 
-    const previewForm = () => {
-        setPreviewRegForm(!previewRegForm)
-    }
-
     const addPage = () => {
         setPages((v: PageFormRegistration[]) => v.length > 0 ? [...v, { page_header: `Page ${v.length + 1}`, page_index: v.length, fields: [] }] : [defaultPage])
     }
@@ -69,7 +65,7 @@ export default function AdminRegistrationFormPage() {
         )
 
         pages[pageIndex].fields.forEach(field => {
-            setDeletedFields(prev => [...prev, field.field_id]);
+            setDeletedFields(prev => [...prev, field.field_id] as any);
         })
     }
 
@@ -96,13 +92,13 @@ export default function AdminRegistrationFormPage() {
                         </p>
                     </div>
                     <div className="flex gap-4">
-                        <Button onClick={previewForm} disabled={isPending}>{isPending ? "Loading..." : previewRegForm ? "Edit Form" : "Pre-view form"}</Button>
+                        <Button onClick={setPreviewRegForm(!previewRegForm) as any} disabled={isPending}>{isPending ? "Loading..." : previewRegForm ? "Edit Form" : "Pre-view form"}</Button>
                         <Button onClick={saveRegistrationForm} disabled={isPending}>{isPending ? "Loading..." : "Save Form"}</Button>
                     </div>
                 </div>
 
                 {
-                    !isLoading && previewRegForm && <PreviewForm formPages={pages} currency={club?.currency} />
+                    !isLoading && previewRegForm && <PreviewForm currency={club?.currency ?? "ZAR"} formPages={pages}/>
                 }
 
                 {!isLoading && !previewRegForm &&

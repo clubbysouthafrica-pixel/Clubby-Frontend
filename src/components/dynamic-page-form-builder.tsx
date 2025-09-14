@@ -12,7 +12,6 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { v4 as uuidv4 } from 'uuid';
 import { MenuIcon } from 'lucide-react';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from './ui/select';
 import { Card } from './ui/card';
@@ -135,7 +134,7 @@ export default function DynamicFormBuilder({ currency, clubAccountId, page, setF
     if (!field_to_delete) return;
   
     setFields(page.page_index, page.fields?.filter(f => f.field_id !== id));
-    setDeletedFields(prev => [...prev, field_to_delete.field_id]);
+    setDeletedFields((prev: any) => [...prev, field_to_delete.field_id]);
   }
 
   const updatePageInput = (input: InputFormRegistration) => {
@@ -188,14 +187,14 @@ export default function DynamicFormBuilder({ currency, clubAccountId, page, setF
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={page.fields.map(f => f.field_id)}
+              items={page.fields.map(f => f.field_id) as any}
               strategy={verticalListSortingStrategy}
             >
               <div className="space-y-8">
                 {page.fields
                   .sort((a, b) => a.field_order_id - b.field_order_id)
                   .map((field) => (
-                    <SortableItem key={field.field_order_id} id={field.field_id}>
+                    <SortableItem key={field.field_order_id} id={field.field_id as string}>
                       <div className="flex items-center space-x-2">
                         <FieldInputEditorDialog
                           currency={currency}
