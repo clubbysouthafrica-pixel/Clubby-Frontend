@@ -54,6 +54,8 @@ export function RegisterForm({
         }
     }
 
+    console.log('here')
+
     return (
         <div className={cn("flex flex-col gap-6", className)} {...props}>
             <Card>
@@ -67,17 +69,6 @@ export function RegisterForm({
                     <form onSubmit={registerUser}>
                             <div className="grid gap-6">
                                 <div className="grid gap-6">
-                                    {/*<div className="grid gap-3">*/}
-                                    {/*    <Label htmlFor="email">Display Name</Label>*/}
-                                    {/*    <Input*/}
-                                    {/*        id="displayName"*/}
-                                    {/*        type="text"*/}
-                                    {/*        placeholder="John Doe"*/}
-                                    {/*        value={displayName}*/}
-                                    {/*        onChange={(event) => setDisplayName(event.target.value)}*/}
-                                    {/*        required*/}
-                                    {/*    />*/}
-                                    {/*</div>*/}
                                     <div className="grid gap-3">
                                         <Label htmlFor="email">Email</Label>
                                         <Input

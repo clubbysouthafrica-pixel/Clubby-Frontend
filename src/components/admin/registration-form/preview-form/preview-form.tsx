@@ -139,6 +139,7 @@ export function PreviewForm({
                         if (field.field_type === "STANDARD" && field.input_type === "DROPDOWN") {
                           return (
                             <StandardDopdown
+                            key={field.field_id}
                               field={field as any}
                               currentPageIndex={currentPageIndex}
                               pages={pages}
@@ -150,6 +151,7 @@ export function PreviewForm({
                         if (field.field_type === "STANDARD" && (field.input_type === "TEXT" || field.input_type === "NUMBER")) {
                           return (
                             <StandardText
+                            key={field.field_id}
                               field={field as any}
                               currentPageIndex={currentPageIndex}
                               pages={pages}
@@ -161,6 +163,7 @@ export function PreviewForm({
                         if (field.field_type === "BILLING" && field.input_type === "DROPDOWN") {
                           return (
                             <BillingDropdown
+                            key={field.field_id}
                               field={field as any}
                               clubCurrency={currency}
                               currentPageIndex={currentPageIndex}
