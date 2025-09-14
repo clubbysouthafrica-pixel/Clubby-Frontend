@@ -12,36 +12,40 @@ import { Loader2, PlusIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import ConfirmDeleteDialog from "@/components/dialog-confirm-delete";
 import { useFetchRegisterationForm } from "@/queries/admin/registration-form";
+import { createDeleteFieldsRequest } from "@/helpers/admin/registration/verify-delete-fields-structure";
+import { PreviewForm } from "@/components/admin/registration-form/preview-form/preview-form";
 
 export default function AdminRegistrationFormPage() {
     const { club } = useContext(ClubContext) as ClubContextType
     const [deletedFields, setDeletedFields] = useState<string[]>([]);
 
     const { mutate, isPending } = useCreateClubMutation()
-    const {data, isLoading } = useFetchRegisterationForm(club?.club_account_id as string)
+    const { data, isLoading } = useFetchRegisterationForm(club?.club_account_id as string)
 
-    const defaultPage = { page_index: 0, page_header: "Page 1", fields: []}
+    const [previewRegForm, setPreviewRegForm] = useState(false);
+
+    const defaultPage = { page_index: 0, page_header: "Page 1", fields: [] }
 
     const [pages, setPages] = useState<PageFormRegistration[]>([defaultPage])
+    const [originalPages, setOriginalPages] = useState<PageFormRegistration[]>([defaultPage])
 
     const displayToast = () => toast.success("Successfully saved registration form")
     const displayErrorToast = (e: any) => toast.error(((e as AxiosError).response?.data as any)?.message)
 
 
-    useEffect(()=> {
+    useEffect(() => {
         if (data?.pages?.length) {
             const sortedPages = data.pages.sort((a, b) => a.page_index - b.page_index)
+            setOriginalPages(sortedPages)
             setPages(sortedPages)
         }
     }, [data])
 
     const saveRegistrationForm = () => {
-        const cleanedDeletedFields = deletedFields.filter(
-            (field): field is string => typeof field === "string" && field.trim() !== ""
-        );
+        const deleteFields = createDeleteFieldsRequest(deletedFields, originalPages);
         mutate({
             pages: pages,
-            deleteFields: cleanedDeletedFields,
+            deleteFields: deleteFields,
             club_account_id: club?.club_account_id as string,
         }, {
             onSuccess: displayToast,
@@ -49,17 +53,19 @@ export default function AdminRegistrationFormPage() {
         })
     }
 
-    const addPage = () => {
-        setPages((v: PageFormRegistration[]) => v.length > 0 ? [...v, {page_header: `Page ${v.length+1}`, page_index: v.length, fields: []}] : [defaultPage])
+    const previewForm = () => {
+        setPreviewRegForm(!previewRegForm)
     }
 
-    console.log(deletedFields)
+    const addPage = () => {
+        setPages((v: PageFormRegistration[]) => v.length > 0 ? [...v, { page_header: `Page ${v.length + 1}`, page_index: v.length, fields: [] }] : [defaultPage])
+    }
 
     const removePage = (pageIndex: number) => {
         setPages(
             (v: PageFormRegistration[]) =>
                 v.filter(v => v.page_index !== pageIndex)
-                .map((p, i) => ({ ...p, page_index: i }))
+                    .map((p, i) => ({ ...p, page_index: i }))
         )
 
         pages[pageIndex].fields.forEach(field => {
@@ -76,7 +82,7 @@ export default function AdminRegistrationFormPage() {
             .map(i => i.page_index === pageIndex ? ({
                 ...i,
                 fields: fields
-            }): i ))
+            }) : i))
     }
 
     return (
@@ -89,37 +95,44 @@ export default function AdminRegistrationFormPage() {
                             Build your member registration form
                         </p>
                     </div>
-                    <Button onClick={saveRegistrationForm} disabled={isPending}>{ isPending ? "Loading..." : "Save Form"}</Button>
+                    <div className="flex gap-4">
+                        <Button onClick={previewForm} disabled={isPending}>{isPending ? "Loading..." : previewRegForm ? "Edit Form" : "Pre-view form"}</Button>
+                        <Button onClick={saveRegistrationForm} disabled={isPending}>{isPending ? "Loading..." : "Save Form"}</Button>
+                    </div>
                 </div>
 
-                {!isLoading &&
+                {
+                    !isLoading && previewRegForm && <PreviewForm formPages={pages} currency={club?.currency} />
+                }
+
+                {!isLoading && !previewRegForm &&
                     <Tabs defaultValue='0'>
                         <TabsList>
                             {pages.map(p => (
                                 <TabsTrigger value={p.page_index.toString()} key={p.page_index}>{p.page_header}</TabsTrigger>
                             ))}
 
-                            <Button onClick={addPage} className="ml-2 h-full" variant={'outline'}><PlusIcon/></Button>
+                            <Button onClick={addPage} className="ml-2 h-full" variant={'outline'}><PlusIcon /></Button>
                         </TabsList>
-                            {isLoading && (
-                                <div className="flex justify-center py-8">
-                                    <Loader2 className="h-8 w-8 animate-spin" />
-                                </div>
-                            )}
-                            {
-                                pages.map(p => (
-                                    <TabsContent value={p.page_index.toString()} key={p.page_index}>
-                                        <div>
-                                            <div className="flex justify-between items-center mb-4">
-                                                <p className="font-bold">{p.page_header} (Page {p.page_index + 1})</p>
-                                                <ConfirmDeleteDialog tooltipDescription="Remove page" id={p.page_index} removeFunc={removePage} />
-                                            </div>
-                                            <Input value={p.page_header} onChange={v => changePageHeader(p.page_index, v.target.value)} placeholder="change page header"/>
-                                            <DynamicFormBuilder currency={club?.currency ?? "ZAR"} clubAccountId={club?.club_account_id as string} page={p} setFields={setFields} deletedFields={deletedFields} setDeletedFields={setDeletedFields}/>
+                        {isLoading && (
+                            <div className="flex justify-center py-8">
+                                <Loader2 className="h-8 w-8 animate-spin" />
+                            </div>
+                        )}
+                        {
+                            pages.map(p => (
+                                <TabsContent value={p.page_index.toString()} key={p.page_index}>
+                                    <div>
+                                        <div className="flex justify-between items-center mb-4">
+                                            <p className="font-bold">{p.page_header} (Page {p.page_index + 1})</p>
+                                            <ConfirmDeleteDialog tooltipDescription="Remove page" id={p.page_index} removeFunc={removePage} />
                                         </div>
-                                    </TabsContent>
-                                ))
-                            }
+                                        <Input value={p.page_header} onChange={v => changePageHeader(p.page_index, v.target.value)} placeholder="change page header" />
+                                        <DynamicFormBuilder currency={club?.currency ?? "ZAR"} clubAccountId={club?.club_account_id as string} page={p} setFields={setFields} deletedFields={deletedFields} setDeletedFields={setDeletedFields} />
+                                    </div>
+                                </TabsContent>
+                            ))
+                        }
                     </Tabs>
                 }
             </div>
