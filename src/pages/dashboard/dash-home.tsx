@@ -5,7 +5,7 @@ import { useContext } from "react";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { useGeneralReportingQuery } from "@/queries/admin/useReporting";
 import { SectionCards } from "@/components/section-cards";
-import { ChartAreaInteractive } from "@/components/chart-area-interactive";
+// import { ChartAreaInteractive } from "@/components/chart-area-interactive";
 
 export default function HomeDashboardPage() {
     const { club } = useContext(ClubContext) as ClubContextType
