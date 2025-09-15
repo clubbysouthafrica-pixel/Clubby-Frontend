@@ -61,13 +61,13 @@ const data = {
           url: "/"
         },
         {
-          title: "Details",
+          title: "Manage Club",
           url: "/manage/club",
         },
-        {
-          title: "Edit",
-          url: "/manage/club/edit",
-        },
+        // {
+        //   title: "Edit",
+        //   url: "/manage/club/edit",
+        // },
       ],
     },
     {
