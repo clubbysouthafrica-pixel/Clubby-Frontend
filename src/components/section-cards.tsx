@@ -19,7 +19,7 @@ export function SectionCards({ report, currency }: props) {
         <CardHeader>
           <CardDescription>Total Revenue</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {formatAmount(report?.report?.total_registration_fees_paid, currency)}
+            {formatAmount(report?.total_registration_fees_paid, currency)}
           </CardTitle>
           {/* <CardAction>
             <Badge variant="outline">
@@ -41,7 +41,7 @@ export function SectionCards({ report, currency }: props) {
         <CardHeader>
           <CardDescription>Pending Members</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {report?.report?.total_pending_members}
+            {report?.total_pending_members}
           </CardTitle>
           {/* <CardAction>
             <Badge variant="outline">
@@ -63,7 +63,7 @@ export function SectionCards({ report, currency }: props) {
         <CardHeader>
           <CardDescription>Active Members</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {report?.report?.total_registered_members}
+            {report?.total_registered_members}
           </CardTitle>
           {/* <CardAction>
             <Badge variant="outline">
@@ -83,7 +83,7 @@ export function SectionCards({ report, currency }: props) {
         <CardHeader>
           <CardDescription>Pending Revenue</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {formatAmount(report?.report.total_registration_fees_due_by_pending_members, currency)}
+            {formatAmount(report?.total_registration_fees_due_by_pending_members, currency)}
           </CardTitle>
           {/* <CardAction>
             <Badge variant="outline">
