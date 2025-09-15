@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import ConfirmDeleteDialog from "@/components/dialog-confirm-delete";
 import { useFetchRegisterationForm } from "@/queries/admin/registration-form";
 import { createDeleteFieldsRequest } from "@/helpers/admin/registration/verify-delete-fields-structure";
+import { createPagesRequest } from "@/helpers/admin/registration/verify-create-pages-structure";
 import { PreviewForm } from "@/components/admin/registration-form/preview-form/preview-form";
 
 export default function AdminRegistrationFormPage() {
@@ -42,10 +43,9 @@ export default function AdminRegistrationFormPage() {
     }, [data])
 
     const saveRegistrationForm = () => {
-        const deleteFields = createDeleteFieldsRequest(deletedFields, originalPages);
         mutate({
-            pages: pages,
-            deleteFields: deleteFields,
+            pages: createPagesRequest(pages),
+            deleteFields: createDeleteFieldsRequest(deletedFields, originalPages),
             club_account_id: club?.club_account_id as string,
         }, {
             onSuccess: displayToast,
