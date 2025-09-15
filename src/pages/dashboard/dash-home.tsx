@@ -14,7 +14,7 @@ export default function HomeDashboardPage() {
     const manageRoutes = [
         {
             name: "Club",
-            description: "Manage your club here",
+            description: "Manage and edit your club page that is displayed to members here",
             route: "/manage/club"
         },
         {
