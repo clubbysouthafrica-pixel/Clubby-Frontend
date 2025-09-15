@@ -20,18 +20,18 @@ import { ReportDataRow } from "@/interfaces/report"
 
 const chartConfig = {
   total_pending_members: {
-    label: "Total Pending Members",
+    label: "Pending Members",
   },
   total_registration_fees_due_by_pending_members: {
-    label: "Total Pending Revenue",
+    label: "Pending Revenue",
     color: "var(--primary)",
   },
   total_registered_members: {
-    label: "Total Registered Members",
+    label: "Registered Members",
     color: "var(--primary)",
   },
   total_registration_fees_paid: {
-    label: "Total Registered Revenue",
+    label: "Registered Revenue",
     color: "var(--primary)",
   },
 } satisfies ChartConfig
@@ -177,6 +177,20 @@ export function ChartAreaInteractive({ data }: props) {
             />
             <Area
               dataKey="total_pending_members"
+              type="natural"
+              fill="url(#fillDesktop)"
+              stroke="var(--color-desktop)"
+              stackId="a"
+            />
+            <Area
+              dataKey="total_registration_fees_due_by_pending_members"
+              type="natural"
+              fill="url(#fillDesktop)"
+              stroke="var(--color-desktop)"
+              stackId="a"
+            />
+            <Area
+              dataKey="total_registration_fees_paid"
               type="natural"
               fill="url(#fillDesktop)"
               stroke="var(--color-desktop)"
