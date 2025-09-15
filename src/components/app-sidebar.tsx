@@ -57,6 +57,10 @@ const data = {
       isActive: true,
       items: [
         {
+          title: "Home",
+          url: "/"
+        },
+        {
           title: "Details",
           url: "/manage/club",
         },
@@ -74,6 +78,10 @@ const data = {
         {
           title: "Members",
           url: "/manage/members",
+        },
+        {
+          title: "Registration Reports",
+          url: "/manage/members/report",
         },
         // {
         //   title: "Balances",

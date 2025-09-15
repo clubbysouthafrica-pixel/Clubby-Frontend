@@ -4,13 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { useContext } from "react";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { useGeneralReportingQuery } from "@/queries/admin/useReporting";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatAmount } from "@/data/currencies";
+import { SectionCards } from "@/components/section-cards";
+import { ChartAreaInteractive } from "@/components/chart-area-interactive";
 
 export default function HomeDashboardPage() {
     const {club} = useContext(ClubContext) as ClubContextType
     const {data, isLoading} = useGeneralReportingQuery(club?.club_account_id as string)
-    // const {data: r}= useRegistrationBillingReportingQuery(club?.club_account_id as string)
     const navigate = useNavigate()
     const manageRoutes = [
         {
@@ -33,78 +32,14 @@ export default function HomeDashboardPage() {
     <div className="p-6 space-y-6 min-h-screen">
         <h1 className="text-base font-bold">General Report</h1>
         {!isLoading &&
-            <div className="rounded-md overflow-x-scroll flex space-x-2">
-                <Card className="flex-1">
-                    <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
-                        <div className="grid flex-1 gap-1">
-                            <CardTitle>Total Registered Members</CardTitle>
-                            <CardDescription className="text-xs">
-                                Showing total members registered
-                            </CardDescription>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-center bg-muted rounded-full p-4 mx-auto w-12 h-12 justify-center items-center flex">{data?.report.total_registered_members}</div>
-                    </CardContent>
-                </Card>
-                <Card className="flex-1">
-                    <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
-                        <div className="grid flex-1 gap-1">
-                            <CardTitle>Total Pending Members</CardTitle>
-                            <CardDescription className="text-xs">
-                                Showing total members pending
-                            </CardDescription>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-center bg-muted rounded-full p-4 mx-auto w-12 h-12 justify-center items-center flex">{data?.report.total_pending_members}</div>
-                    </CardContent>
-                </Card>
-                
-                <Card className="flex-1">
-                    <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
-                        <div className="grid flex-1 gap-1">
-                            <CardTitle>Total Fees Due</CardTitle>
-                            <CardDescription className="text-xs">
-                                Showing number of registration fees due from pending members
-                            </CardDescription>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-center bg-muted rounded-full p-4 mx-auto w-12 h-12 justify-center items-center flex">{formatAmount(data?.report.total_registration_fees_due_by_pending_members, club?.currency)}</div>
-                    </CardContent>
-                </Card>
-
-
-                <Card className="flex-1">
-                    <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
-                        <div className="grid flex-1 gap-1">
-                            <CardTitle>Total Registration Fees</CardTitle>
-                            <CardDescription className="text-xs">
-                                Showing total registration fees
-                            </CardDescription>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-center bg-muted rounded-full p-4 mx-auto min-w-12 h-12 justify-center items-center flex">{formatAmount(data?.report.total_registration_fees, club?.currency)}</div>
-                    </CardContent>
-                </Card>
-
-
-                <Card className="flex-1">
-                    <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
-                        <div className="grid flex-1 gap-1">
-                            <CardTitle>Total Extra fees</CardTitle>
-                            <CardDescription className="text-xs">
-                                Showing total extra fees owed by registered members
-                            </CardDescription>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-center bg-muted rounded-full p-4 mx-auto w-12 h-12 justify-center items-center flex">{formatAmount(data?.report.total_extra_fees_owed_by_registered_members, club?.currency)}</div>
-                    </CardContent>
-                </Card>
-            </div>
+         <div className="@container/main flex flex-1 flex-col gap-2">
+            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+                <SectionCards report={data} currency={club?.currency as string}/>
+                <div className="px-4 lg:px-6">
+                    <ChartAreaInteractive data={data?.report?.data} />
+                </div>
+             </div>
+        </div>
         }
 
       <h1 className="text-base font-bold">Manage</h1>
