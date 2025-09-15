@@ -28,15 +28,16 @@ export default function HomeDashboardPage() {
             route: "/manage/registrations/forms"
         },
     ]
+
   return (
-    <div className="p-6 space-y-6 min-h-screen">
+    <div className="p-6 min-h-screen">
         <h1 className="text-base font-bold">General Report</h1>
         {!isLoading &&
          <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
                 <SectionCards report={data} currency={club?.currency as string}/>
                 <div className="px-4 lg:px-6">
-                    <ChartAreaInteractive data={data?.report?.data} />
+                    <ChartAreaInteractive data={data?.data} />
                 </div>
              </div>
         </div>
