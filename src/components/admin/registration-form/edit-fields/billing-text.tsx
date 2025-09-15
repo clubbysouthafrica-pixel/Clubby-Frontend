@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
 import { formatAmount } from "@/data/currencies"
 
 interface Props {
@@ -19,18 +18,14 @@ export default function EditBillingText({
   currency,
   fieldName,
   amount,
-  required = false,
   onFieldNameChange,
-  onAmountChange,
-  onRequiredChange,
+  onAmountChange
 }: Props) {
   const [internalFieldName, setInternalFieldName] = useState(fieldName)
   const [internalAmount, setInternalAmount] = useState(amount)
-  const [internalRequired, setInternalRequired] = useState(required)
 
   useEffect(() => setInternalFieldName(fieldName), [fieldName])
   useEffect(() => setInternalAmount(amount), [amount])
-  useEffect(() => setInternalRequired(required), [required])
 
   const handleFieldNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInternalFieldName(e.target.value)
@@ -40,11 +35,6 @@ export default function EditBillingText({
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInternalAmount(e.target.value)
     onAmountChange(Number(e.target.value))
-  }
-
-  const handleRequiredChange = (checked: boolean) => {
-    setInternalRequired(checked)
-    if (onRequiredChange) onRequiredChange(checked)
   }
 
   return (
@@ -70,14 +60,6 @@ export default function EditBillingText({
             onChange={handleAmountChange}
           />
         </div>
-      </div>
-
-      <div className="flex items-center gap-3 mt-2">
-        <Checkbox
-          checked={internalRequired}
-          onCheckedChange={handleRequiredChange}
-        />
-        <Label>Is required</Label>
       </div>
     </div>
   )

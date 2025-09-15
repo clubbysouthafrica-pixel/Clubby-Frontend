@@ -6,7 +6,6 @@ export interface StandardField {
 export interface RegistrationRequest {
     email?: string
     club_account_id: string
-    billing_type: string
     billing_fields: StandardField[]
     standard_fields: StandardField[]
 }

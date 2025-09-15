@@ -17,6 +17,7 @@ interface BillingOption {
 interface Field {
   field_name: string
   input_type: string
+  required?: boolean;
   field_type: string
   placeholder?: string
   billingOptions?: BillingOption[]
@@ -27,7 +28,7 @@ interface BillingSelectProps {
   field: Field
 }
 
-export default function BillingDropdown({ currency, field }: BillingSelectProps) {
+export default function DisplayBillingDropdown({ currency, field }: BillingSelectProps) {
   return (
     <div className="w-full">
       <Label className="flex justify-between mb-2">
@@ -50,6 +51,9 @@ export default function BillingDropdown({ currency, field }: BillingSelectProps)
           </SelectGroup>
         </SelectContent>
       </Select>
+      <p className="text-xs mt-1">
+        Is Required: {field.required ? "true" : "false"}
+      </p>
     </div>
   )
 }

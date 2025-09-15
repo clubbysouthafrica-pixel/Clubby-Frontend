@@ -1,10 +1,10 @@
-import { UserOnboardForm } from "@/components/user-onboard-form"
+import { OnboardMemberForm } from "@/components/onboard-member-form"
 
-export default function OnboardUser() {
+export default function OnboardMember() {
     return (
         <div className="flex flex-col items-center justify-center gap-6 p-6 md:p-10">
             <div className="flex w-full max-w-lg flex-col gap-6">
-                <UserOnboardForm />
+                <OnboardMemberForm />
             </div>
         </div>
     )

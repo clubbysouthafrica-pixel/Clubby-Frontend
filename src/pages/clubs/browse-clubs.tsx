@@ -10,8 +10,6 @@ export default function BrowseClubsPage() {
     const { data, isLoading } = useFetchClubsQuery()
     const navigate = useNavigate()
 
-    console.log('data', data)
-
     return (
         <Pager>
             <div className="bg-background p-4 lg:p-0">

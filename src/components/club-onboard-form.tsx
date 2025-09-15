@@ -20,18 +20,15 @@ import { useMemberRegistrationMutation } from "@/mutations/useMemberRegistration
 import { toast } from "sonner";
 import { formatAmount } from "@/data/currencies";
 import { AuthContext, AuthContextType } from "@/context/AuthContext";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import StandardCheckbox from "./member/registration-form/standard-checkbox";
+import BillingDropdown from "./member/registration-form/billing-dropdown";
+import StandardDopdown from "./member/registration-form/standard-dropdown";
+import StandardText from "./member/registration-form/standard-text";
+import { createValidRegistrationRequest } from "../helpers/members/registration/create-registration-request";
+import { getFieldName } from "../helpers/members/registration/get-field-name";
 
 // --- Types that match the new payload ---
-export type InputType = "TEXT" | "DROPDOWN";
+export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER";
 export type FieldType = "TEXT" | "STANDARD" | "BILLING";
 
 export interface BillingOption {
@@ -40,14 +37,21 @@ export interface BillingOption {
   label: string;
 }
 
+export interface FieldRequest {
+  field_id: string
+  value: string | number
+  option_order_id?: string
+  label?: string
+}
+
 export interface PageFieldBase {
   field_order_id: string;
   field_id: string;
   field_type: FieldType;
   field_text?: string; // helper/label text
-  field_name?: string; // title when STANDARD/BILLING
+  field_name: string; // title when STANDARD/BILLING
   required?: boolean;
-  input_type?: InputType; // when STANDARD/BILLING
+  input_type: InputType; // when STANDARD/BILLING
   placeholder?: string;
   options?: string[]; // for STANDARD DROPDOWN
   billingOptions?: BillingOption[]; // for BILLING DROPDOWN
@@ -57,8 +61,8 @@ export interface PageFieldBase {
   // --- UI state ---
   value?: string; // typed text or selected label
   selectedAmountCents?: number; // derived for BILLING when dropdown
-  option_order_id?: string; 
-  label?: string;    
+  option_order_id?: string;
+  label?: string;
 }
 
 export interface FormPage {
@@ -89,15 +93,22 @@ export function ClubRegisterForm({
   const [email, setEmail] = useState("");
   const [pages, setPages] = useState<FormPage[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const [requiredFieldsMissing, setRequiredFieldsMissing] = useState(false);
+  const [registrationRequest, setRegistrationRequest] = useState<RegistrationRequest | undefined>(undefined)
+  const [totalRegistrationFee, setTotalRegistrationFee] = useState(0);
 
-  // Load payload -> component state
   useEffect(() => {
     if ((data as PagedFormPayload)?.pages) {
-      const cloned = (data as PagedFormPayload).pages.map((p) => ({
-        ...p,
-        fields: p.fields.map((f) => ({ ...f })),
-      }));
-      setPages(cloned);
+      const sorted = (data as PagedFormPayload).pages
+        .sort((a, b) => a.page_index - b.page_index)
+        .map((p, index) => ({
+          ...p,
+          page_index: index,
+          fields: p.fields
+            .sort((a, b) => Number(a.field_order_id) - Number(b.field_order_id))
+            .map((f) => ({ ...f })),
+        }));
+      setPages(sorted);
     }
   }, [data]);
 
@@ -106,6 +117,7 @@ export function ClubRegisterForm({
     fieldId: string,
     updater: (f: PageFieldBase) => PageFieldBase
   ) => {
+    if (requiredFieldsMissing) setRequiredFieldsMissing(false);
     setPages((prev) =>
       prev.map((p) =>
         p.page_index === pageIndex
@@ -120,7 +132,11 @@ export function ClubRegisterForm({
     for (const p of pages) {
       for (const f of p.fields) {
         if (f.field_type === "STANDARD" && f.required) {
-          if (!f.value || f.value.trim() === "") missing.push({ page: p.page_index, field: f });
+          if (f.input_type === "CHECKBOX") {
+            if (!f.value || f.value !== "true") missing.push({ page: p.page_index, field: f });
+          } else {
+            if (!f.value || f.value.trim() === "") missing.push({ page: p.page_index, field: f });
+          }
         }
         if (f.field_type === "BILLING" && f.required) {
           if (f.input_type === "DROPDOWN") {
@@ -132,35 +148,59 @@ export function ClubRegisterForm({
     return missing;
   }, [pages]);
 
+  const handleNextPage = () => {
+    const currentPage = pages[currentPageIndex];
+    const missingOnCurrent = currentPage.fields.filter((f) => {
+      if (f.required) {
+        if (f.field_type === "STANDARD") return !f.value?.trim();
+        if (f.field_type === "BILLING" && f.input_type === "DROPDOWN") return !f.value || !f.selectedAmountCents;
+      }
+      return false;
+    });
+
+    if (missingOnCurrent.length > 0) {
+      setRequiredFieldsMissing(true);
+      return;
+    }
+
+    setRequiredFieldsMissing(false);
+    setCurrentPageIndex((i) => i + 1);
+  };
+
   const registerUser = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (missingRequired.length > 0) return;
+    if (missingRequired.length > 0) {
+      setRequiredFieldsMissing(true);
+      return;
+    }
 
     const allFields = pages.flatMap((p) => p.fields);
 
-    const registrationRequest: RegistrationRequest = {
-      club_account_id: clubId as string,
-      billing_type: "",
-      billing_fields: allFields
-        .filter((f) => f.field_type === "BILLING")
-        .map((f) => ({
-          field_id: f.field_id!,
-          value: (f.selectedAmountCents ?? f.amount ?? (f.value ? Number(f.value) : undefined)) as any,
-          option_order_id: f.input_type === "DROPDOWN" ? f.option_order_id : undefined,
-          label: f.input_type === "DROPDOWN" ? f.label : undefined,
-        })),
-      standard_fields: allFields
-        .filter((f) => f.field_type === "STANDARD")
-        .map((f) => ({ field_id: f.field_id!, value: f.value ?? "" })),
-    };
+    const request: RegistrationRequest = createValidRegistrationRequest(allFields, clubId as string)
 
-    if (!user) (registrationRequest as any).email = email;
+    if (!user) (request as any).email = email;
+    setRegistrationRequest(request)
 
-    mutate(registrationRequest, {
-      onSuccess: () => navigate(`/clubs/${clubId}`),
-      onError: () => toast(registerError?.message ?? "Registration failed"),
-    });
+    let total = 0
+    request.billing_fields.forEach(field => {
+      total += field.value
+    })
+    setTotalRegistrationFee(total)
   };
+
+  const submitRegistration = () => {
+    if (registrationRequest) {
+      mutate(registrationRequest, {
+        onSuccess: () => navigate(`/clubs/${clubId}`),
+        onError: () => toast(registerError?.message ?? "Registration failed"),
+      });
+    }
+  }
+
+  const returnBackToRegistrationForm = () => {
+    setRegistrationRequest(undefined)
+    setTotalRegistrationFee(0)
+  }
 
   const isLastPage = currentPageIndex === pages.length - 1;
 
@@ -186,7 +226,7 @@ export function ClubRegisterForm({
         </CardHeader>
         <CardContent>
           {!isSuccess && pages.length > 0 && (
-            <form onSubmit={registerUser}>
+            <form>
               <div className="grid-2 gap-6">
                 <div className="grid gap-6">
                   {!user && (
@@ -203,112 +243,91 @@ export function ClubRegisterForm({
                     </div>
                   )}
 
-                  {/* Current Page */}
-                  {pages[currentPageIndex] && (
-                    <div key={pages[currentPageIndex].page_index} className="space-y-4">
+                  {registrationRequest && (
+                    <div>
+                      <Label className="mb-1 block">Total registration fee: {formatAmount(totalRegistrationFee, club.currency)}</Label>
+                      <ul className="ml-6 list-disc space-y-1">
+                        {registrationRequest.billing_fields.map((f: FieldRequest) => (
+                          <li key={f.field_id} className="font-small">
+                            <Label className="font-normal">{getFieldName(pages, f.field_id)}: {formatAmount(f?.value as number, club.currency)} {f.label ? `(${f.label})` : ""}</Label> 
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {pages[currentPageIndex] && !registrationRequest && (
+                    <div key={pages[currentPageIndex].page_index} className="space-y-5">
                       <h3 className="text-lg font-semibold">{pages[currentPageIndex].page_header}</h3>
-                      {pages[currentPageIndex].fields.map((field) => {
-                        if (field.field_type === "TEXT") {
-                          return (
-                            <p key={field.field_order_id} className="text-sm text-muted-foreground">
-                              {field.field_text}
-                            </p>
-                          );
-                        }
+                      {pages[currentPageIndex].fields
+                        .sort((a: any, b: any) => a.field_order_id - b.field_order_id)
+                        .map((field) => {
 
-                        if (field.field_type === "STANDARD") {
-                          const isDropdown = field.input_type?.toLowerCase() === "dropdown";
-                          const onChange = (val: string) =>
-                            setFieldValue(pages[currentPageIndex].page_index, field.field_id, (f) => ({
-                              ...f,
-                              value: val,
-                            }));
-
-                          return (
-                            <div className="grid gap-3" key={field.field_id}>
-                              <Label htmlFor={field.field_id}>
-                                {field.field_name} {field.required ? <span className="text-red-500">*</span> : null}
-                              </Label>
-                              {!isDropdown ? (
-                                <Input
-                                  id={field.field_id}
-                                  type="text"
-                                  placeholder={field.placeholder}
-                                  value={field.value ?? ""}
-                                  onChange={(e) => onChange(e.target.value)}
-                                  required={field.required}
-                                />
-                              ) : (
-                                <Select onValueChange={onChange} value={field.value}>
-                                  <SelectTrigger className="w-full">
-                                    <SelectValue placeholder={field.placeholder ?? "Select an option"} />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectGroup>
-                                      <SelectLabel>Options</SelectLabel>
-                                      {field.options?.map((opt) => (
-                                        <SelectItem key={opt} value={opt}>
-                                          {opt}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectGroup>
-                                  </SelectContent>
-                                </Select>
-                              )}
-                            </div>
-                          );
-                        }
-
-                        if (field.field_type === "BILLING") {
-                          const isDropdown = field.input_type?.toLowerCase() === "dropdown";
-
-                          if (isDropdown) {
-                            const onBillingSelect = (label: string) => {
-                              const option = field.billingOptions?.find((o) => o.label === label);
-                              setFieldValue(pages[currentPageIndex].page_index, field.field_id, (f) => ({
-                                ...f,
-                                value: label,
-                                selectedAmountCents: option?.amount,
-                                label: option?.label,
-                                option_order_id: option?.option_order_id
-                              }));
-                            };
+                          if (field.field_type === "TEXT") {
                             return (
-                              <div className="grid gap-3" key={field.field_id}>
-                                <Label>
-                                  {field.field_name} {field.required ? <span className="text-red-500">*</span> : null}
-                                </Label>
-                                <Select onValueChange={onBillingSelect} value={field.value}>
-                                  <SelectTrigger className="w-full">
-                                    <SelectValue placeholder={field.placeholder ?? "Select membership type"} />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectGroup>
-                                      <SelectLabel>{field.field_name}</SelectLabel>
-                                      {field.billingOptions?.map((opt) => (
-                                        <SelectItem key={opt.option_order_id} value={opt.label}>
-                                          {opt.label} ({formatAmount(opt.amount, field.currency)})
-                                        </SelectItem>
-                                      ))}
-                                    </SelectGroup>
-                                  </SelectContent>
-                                </Select>
-                              </div>
+                              <p key={field.field_order_id} className="text-sm text-muted-foreground">
+                                {field.field_text}
+                              </p>
                             );
                           }
 
-                          return (
-                            <p key={field.field_id}>
-                              {field.field_name}{" "}
-                              <span className="font-semibold">
-                                {formatAmount(field.amount ?? 0, field.currency)}
-                              </span>
-                            </p>
-                          );
-                        }
+                          if (field.field_type === "STANDARD" && field.input_type === "CHECKBOX") {
+                            return (
+                              <StandardCheckbox
+                                key={field.field_id}
+                                field={field}
+                                currentPageIndex={currentPageIndex}
+                                setFieldValue={setFieldValue}
+                              />
+                            )
+                          }
 
-                        return null;
-                      })}
+                          if (field.field_type === "STANDARD" && field.input_type === "DROPDOWN") {
+                            return (
+                              <StandardDopdown
+                                field={field}
+                                currentPageIndex={currentPageIndex}
+                                pages={pages}
+                                setFieldValue={setFieldValue}
+                              />
+                            )
+                          }
+
+                          if (field.field_type === "STANDARD" && (field.input_type === "TEXT" || field.input_type === "NUMBER")) {
+                            return (
+                              <StandardText
+                                field={field}
+                                currentPageIndex={currentPageIndex}
+                                pages={pages}
+                                setFieldValue={setFieldValue}
+                              />
+                            )
+                          }
+
+                          if (field.field_type === "BILLING" && field.input_type === "DROPDOWN") {
+                            return (
+                              <BillingDropdown
+                                field={field}
+                                clubCurrency={club.currency}
+                                currentPageIndex={currentPageIndex}
+                                pages={pages}
+                                setFieldValue={setFieldValue}
+                              />
+                            );
+                          }
+
+                          if (field.field_type === "BILLING" && field.input_type === "TEXT") {
+                            return (
+                              <p key={field.field_id}>
+                                {field.field_name}:{" "}
+                                <span className="font-semibold">
+                                  {formatAmount(field.amount ?? 0, club.currency)}
+                                </span>
+                              </p>
+                            );
+                          }
+                          return null;
+                        })}
                     </div>
                   )}
 
@@ -321,21 +340,11 @@ export function ClubRegisterForm({
                     </Alert>
                   )}
 
-                  {missingRequired.length > 0 && (
-                    <Alert>
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription className="text-xs">
-                        Please fill all required fields.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  {/* Navigation buttons */}
                   {pages.length === 1 ? (
                     <Button type="submit" className="w-full" disabled={isPending}>
-                      {isPending ? "Registering..." : "Register"}
+                      {isPending ? "Registering..." : "Continue"}
                     </Button>
-                  ) : (
+                  ) : !registrationRequest ? (
                     <div className="flex justify-between">
                       {currentPageIndex > 0 && (
                         <Button variant={"outline"} type="button" onClick={() => setCurrentPageIndex((i) => i - 1)}>
@@ -343,15 +352,35 @@ export function ClubRegisterForm({
                         </Button>
                       )}
                       {isLastPage ? (
-                        <Button type="submit" disabled={isPending}>
-                          {isPending ? "Registering..." : "Register"}
+                        <Button type="button" onClick={(e) => registerUser(e as any)} disabled={isPending}>
+                          {isPending ? "Registering..." : "Continue"}
                         </Button>
                       ) : (
-                        <Button type="button" onClick={() => setCurrentPageIndex((i) => i + 1)}>
+                        <Button type="button" onClick={handleNextPage}>
                           Next
                         </Button>
                       )}
                     </div>
+                  ) : (
+                    <div className="flex justify-between">
+                      <Button variant={"outline"} type="button" onClick={returnBackToRegistrationForm}>
+                        Back to form
+                      </Button>
+                      <Button type="button" onClick={submitRegistration}>
+                        Submit registration
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="text-center text-sm mt-4">
+                  {requiredFieldsMissing && (
+                    <Alert className="border border-red-600 text-red-600">
+                      <AlertCircle className="h-4 w-4 text-red-600" />
+                      <AlertDescription className="text-xs text-red-600">
+                        Please fill all required fields. These fields are marked with (*).
+                      </AlertDescription>
+                    </Alert>
                   )}
                 </div>
 
@@ -378,10 +407,6 @@ export function ClubRegisterForm({
           )}
         </CardContent>
       </Card>
-      <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
-      </div>
     </div>
   );
 }

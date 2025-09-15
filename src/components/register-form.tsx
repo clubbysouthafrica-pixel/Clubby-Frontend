@@ -54,30 +54,21 @@ export function RegisterForm({
         }
     }
 
+    console.log('here')
+
     return (
         <div className={cn("flex flex-col gap-6", className)} {...props}>
             <Card>
                 <CardHeader className="text-center">
-                    <CardTitle className="text-xl">Welcome to {import.meta.env.VITE_BRAND_NAME}</CardTitle>
+                    <CardTitle className="text-xl">Member registration</CardTitle>
                     <CardDescription>
-                        Get started with {import.meta.env.VITE_BRAND_NAME} by registering your own account.
+                        Get started with {import.meta.env.VITE_BRAND_NAME} by registering your own club member account.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={registerUser}>
                             <div className="grid gap-6">
                                 <div className="grid gap-6">
-                                    {/*<div className="grid gap-3">*/}
-                                    {/*    <Label htmlFor="email">Display Name</Label>*/}
-                                    {/*    <Input*/}
-                                    {/*        id="displayName"*/}
-                                    {/*        type="text"*/}
-                                    {/*        placeholder="John Doe"*/}
-                                    {/*        value={displayName}*/}
-                                    {/*        onChange={(event) => setDisplayName(event.target.value)}*/}
-                                    {/*        required*/}
-                                    {/*    />*/}
-                                    {/*</div>*/}
                                     <div className="grid gap-3">
                                         <Label htmlFor="email">Email</Label>
                                         <Input
