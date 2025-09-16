@@ -72,7 +72,7 @@ export default function ClubUsageAndCharges({ data, currency }: any) {
               </tr>
             ))}
             <tr className="font-semibold bg-gray-50">
-              <td className="px-3 py-2 border">Totals</td>
+              <td className="px-3 py-2 border">Total</td>
               <td className="px-3 py-2 border">{formatAmount(totalCharge, currency)}</td>
               <td className="px-3 py-2 border">{formatAmount(data["MCS total outstanding amount"], currency)}</td>
             </tr>
