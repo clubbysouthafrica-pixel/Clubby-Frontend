@@ -106,8 +106,15 @@ export default function ClubUsageAndCharges({ data, currency }: any) {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
             <YAxis yAxisId="left" />
-            <YAxis yAxisId="right" orientation="right" />
-            <Tooltip />
+            <YAxis yAxisId="right" orientation="right" tickFormatter={(value) => formatAmount(value, currency)} />
+            <Tooltip
+              formatter={(value, name) => {
+                if (name === "Charges" || name === "Email Charges") {
+                  return [formatAmount(value as number, currency), name];
+                }
+                return [value, name];
+              }}
+            />
             <Legend />
             <Bar yAxisId="left" dataKey="users" fill="#82ca9d" name="Users" />
             <Bar yAxisId="right" dataKey="charge" fill="#8884d8" name="Charges" />
@@ -149,8 +156,15 @@ export default function ClubUsageAndCharges({ data, currency }: any) {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
             <YAxis yAxisId="left" />
-            <YAxis yAxisId="right" orientation="right" />
-            <Tooltip />
+            <YAxis yAxisId="right" orientation="right" tickFormatter={(value) => formatAmount(value, currency)} />
+            <Tooltip
+              formatter={(value, name) => {
+                if (name === "Charges" || name === "Email Charges") {
+                  return [formatAmount(value as number, currency), name];
+                }
+                return [value, name];
+              }}
+            />
             <Legend />
             <Bar yAxisId="left" dataKey="emails" fill="#4caf50" name="Emails Sent" />
             <Bar yAxisId="right" dataKey="charge" fill="#ff9800" name="Email Charges" />
