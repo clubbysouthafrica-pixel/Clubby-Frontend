@@ -30,7 +30,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
                 return;
             }
 
-            if (process.env.ENVIRONMENT !== "Dev") {
+            if (import.meta.env.VITE_ENVIRONMENT !== "Dev") {
                 try {
                     const payload = JSON.parse(atob(token.split(".")[1]));
                     const exp = payload.exp * 1000;
