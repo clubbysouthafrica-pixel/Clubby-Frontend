@@ -1,14 +1,10 @@
 import React, { useContext, useEffect, useState, ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { AuthContext } from "@/context/AuthContext.tsx";
 import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
 import {
     Card,
-    CardContent,
-    CardDescription,
     CardHeader,
-    CardTitle,
 } from "@/components/ui/card"
 
 interface ProtectedRouteProps {
@@ -24,7 +20,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         throw new Error("ProtectedRoute must be used within an AuthProvider");
     }
 
-    const { user, isAdmin, loading, logout } = authContext;
+    const { user, loading, logout } = authContext;
 
     useEffect(() => {
         const checkTokenValidity = () => {

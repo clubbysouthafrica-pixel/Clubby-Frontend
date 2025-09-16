@@ -113,21 +113,14 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  // const navigate = useNavigate();
-
   const {club} = React.useContext(ClubContext) as ClubContextType
   const { data: clubData, isLoading: loadingClubs } = useFetchAdminClubs()
-
-  // if (clubData && clubData.status == 403) {
-  //   navigate("/admin/login")
-  //   // window.location.reload();
-  // }
 
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         { !loadingClubs &&
-          <ClubSwitcher clubs={(clubData.data as any)?.items} />
+          <ClubSwitcher clubs={((clubData as any).data as any)?.items} />
         }
       </SidebarHeader>
       <SidebarContent>
