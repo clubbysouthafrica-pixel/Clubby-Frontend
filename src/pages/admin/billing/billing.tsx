@@ -7,7 +7,6 @@ import ClubUsageAndCharges from "@/components/admin/billing-and-usage/club-usage
 export default function BillingPage() {
     const { club } = useContext(ClubContext) as ClubContextType
     const { data, isLoading } = useMcsBillingReportingQuery(club?.club_account_id as string)
-    console.log(data)
     return (
         <div className="p-5 min-h-screen">
             <h1 className="text-base font-bold mt-5">Billing and Usage</h1>
