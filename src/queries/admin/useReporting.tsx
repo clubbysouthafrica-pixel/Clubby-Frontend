@@ -1,4 +1,4 @@
-import { generalReportingQuery, getRegistrationBillingReporting } from "@/services/admin/reporting-query";
+import { generalReportingQuery, getMcsBillingReporting, getRegistrationBillingReporting } from "@/services/admin/reporting-query";
 import { useQuery } from "@tanstack/react-query"
 
 export const useGeneralReportingQuery = (clubAccountId: string) => {
@@ -18,6 +18,17 @@ export const useRegistrationBillingReportingQuery = (clubAccountId: string) => {
     queryFn: ({ queryKey }) => {
       const [_key, clubId] = queryKey;
       return getRegistrationBillingReporting(clubId);
+    },
+    enabled: !!clubAccountId,
+  });
+};
+
+export const useMcsBillingReportingQuery = (clubAccountId: string) => {
+  return useQuery({
+    queryKey: ['queryMcsBillingReporting', clubAccountId],
+    queryFn: ({ queryKey }) => {
+      const [_key, clubId] = queryKey;
+      return getMcsBillingReporting(clubId);
     },
     enabled: !!clubAccountId,
   });
