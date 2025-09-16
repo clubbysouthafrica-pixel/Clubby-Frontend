@@ -27,8 +27,6 @@ export default function ListMembersPage() {
     const [listActionItems, setlistActionItems] = useState<string[]>([])
     const [allMembersSelected, setAllMembersSelected] = useState(false)
 
-    console.log('lai: ', listActionItems)
-
     const [openDialogUserId, setOpenDialogUserId] = useState<string | null>(null);
     const [memberRegisterAmount, setMemberRegisterAmount] = useState(0)
 
@@ -45,7 +43,6 @@ export default function ListMembersPage() {
             setlistActionItems([])
             setAllMembersSelected(false)
         } else {
-            console.log(clubMembers)
             const allMembers = clubMembers.registered.map((member: ClubMember) => { return member.member_email });
             setlistActionItems(allMembers)
             setAllMembersSelected(true)
