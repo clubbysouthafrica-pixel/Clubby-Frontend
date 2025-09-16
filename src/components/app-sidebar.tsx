@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/sidebar"
 import { useFetchAdminClubs } from "@/queries/admin/clubs"
 import { ClubContext, ClubContextType } from "@/context/ClubContext"
-import { useNavigate } from "react-router-dom";
 
 // This is sample data.
 const data = {
@@ -113,7 +112,6 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const navigate = useNavigate();
   const {club} = React.useContext(ClubContext) as ClubContextType
   const { data: clubData, isLoading: loadingClubs } = useFetchAdminClubs()
   if (clubData && clubData.status == 403) {
@@ -126,7 +124,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         { !loadingClubs &&
-          <ClubSwitcher clubs={clubData?.items} />
+          <ClubSwitcher clubs={(clubData as any)?.items} />
         }
       </SidebarHeader>
       <SidebarContent>

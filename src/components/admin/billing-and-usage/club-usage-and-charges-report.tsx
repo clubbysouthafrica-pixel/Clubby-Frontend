@@ -9,18 +9,18 @@ import {
   ResponsiveContainer
 } from "recharts";
 
-export default function ClubUsageAndCharges({ data }) {
+export default function ClubUsageAndCharges({ data }: any) {
 
-  const months = Object.entries(data)
+  const months = Object.entries(data as any)
     .filter(([key]) => /^\d{4}-\d{2}$/.test(key)) 
     .map(([month, values]) => ({
       month,
-      registrations: values.Registration["Total registered users"],
-      registrationCharge: values.Registration["MCS registration charge"],
-      emailsSent: values.Emails["Total emails sent"],
-      emailCharge: values.Emails["MCS email charge"],
-      totalMonthlyCharge: values["MCS total monthly charge"],
-      monthlyOutstanding: values["MCS monthly outstanding amount"],
+      registrations: (values as any).Registration["Total registered users"],
+      registrationCharge: (values as any).Registration["MCS registration charge"],
+      emailsSent: (values as any).Emails["Total emails sent"],
+      emailCharge: (values as any).Emails["MCS email charge"],
+      totalMonthlyCharge: (values as any)["MCS total monthly charge"],
+      monthlyOutstanding: (values as any)["MCS monthly outstanding amount"],
     }));
 
 
