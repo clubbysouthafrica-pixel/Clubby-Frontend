@@ -34,15 +34,17 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
                 return;
             }
 
-            try {
-                const payload = JSON.parse(atob(token.split(".")[1]));
-                const exp = payload.exp * 1000;
+            if (process.env.ENVIRONMENT !== "Dev") {
+                try {
+                    const payload = JSON.parse(atob(token.split(".")[1]));
+                    const exp = payload.exp * 1000;
 
-                if (Date.now() > 1) {
+                    if (Date.now() > exp) {
+                        setSessionExpired(true);
+                    }
+                } catch (e) {
                     setSessionExpired(true);
                 }
-            } catch (e) {
-                setSessionExpired(true);
             }
         };
 
@@ -64,10 +66,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         return (
             <Card className="fixed m-1 inset-0 flex items-center justify-center bg-black/50 z-50">
                 <div className="bg-white p-6 rounded shadow-lg text-center max-w-sm">
-                        <CardHeader className="mb-1 text-s font-small p-1">Your session has expired.</CardHeader>
-                        <Button onClick={handleRelogin}>
-                            Click here to re-login
-                        </Button >
+                    <CardHeader className="mb-1 text-s font-small p-1">Your session has expired.</CardHeader>
+                    <Button onClick={handleRelogin}>
+                        Click here to re-login
+                    </Button >
                 </div>
             </Card>
         );
