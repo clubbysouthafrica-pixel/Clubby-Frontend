@@ -5,7 +5,7 @@ import {
 } from "recharts";
 import { Label } from "@/components/ui/label"
 import { formatAmount } from "@/data/currencies";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Card, CardDescription, CardTitle
