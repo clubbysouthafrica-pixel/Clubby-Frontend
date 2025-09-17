@@ -6,8 +6,7 @@ import ClubUsageAndCharges from "@/components/admin/billing-and-usage/club-usage
 export default function BillingPage() {
     const { club } = useContext(ClubContext) as ClubContextType;
     const { data, isLoading } = useMcsBillingReportingQuery(
-        club?.club_account_id as string,
-        { enabled: !!club?.club_account_id }
+        club?.club_account_id as string
     );
 
     if (isLoading || !data) {

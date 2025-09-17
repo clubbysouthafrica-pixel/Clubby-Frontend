@@ -15,17 +15,6 @@ const REPORTING_METRICS = ["Registrations", "Emails"]
 export default function ClubUsageAndCharges({ data, currency }: any) {
   const [selectedTab, setSelectedTab] = useState("Registrations");
 
-  const months = Object.entries(data as any)
-    .filter(([key]) => /^\d{4}-\d{2}$/.test(key))
-    .map(([month, values]) => ({
-      month,
-      registrations: (values as any).Registration["Total registered users"],
-      registrationCharge: (values as any).Registration["MCS registration charge"],
-      emailsSent: (values as any).Emails["Total emails sent"],
-      emailCharge: (values as any).Emails["MCS email charge"],
-      totalMonthlyCharge: (values as any)["MCS total monthly charge"],
-      monthlyOutstanding: (values as any)["MCS monthly outstanding amount"],
-    }));
   return (
     <div className="space-y-10">
 
@@ -41,7 +30,7 @@ export default function ClubUsageAndCharges({ data, currency }: any) {
             </tr>
           </thead>
           <tbody>
-            {Object.keys(data.overall_month_data).map((key, index) => (
+            {Object.keys(data.overall_month_data).map((key) => (
               <tr key={key}>
                 <td className="px-3 py-2 border">{key}</td>
                 <td className="px-3 py-2 border">{formatAmount(data.overall_month_data[key].total_amount, currency)}</td>
@@ -74,7 +63,7 @@ export default function ClubUsageAndCharges({ data, currency }: any) {
 
             return (
               <div key={key}>
-                <div className="mx-8 mb-2 grid grid-cols-1 gap-4 px-4 lg:px-0 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+                <div className="mx-8 mb-6 grid grid-cols-1 gap-4 px-4 lg:px-0 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
                   {Object.keys(data[key]).map((k) => {
                     if (k === "month_data") return null;
                     return (
