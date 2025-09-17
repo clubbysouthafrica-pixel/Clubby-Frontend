@@ -29,7 +29,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
                 setSessionExpired(true);
                 return;
             }
-            console.log('ENV: ', import.meta.env.VITE_ENVIRONMENT)
             if (import.meta.env.VITE_ENVIRONMENT !== "Dev") {
                 try {
                     const payload = JSON.parse(atob(token.split(".")[1]));

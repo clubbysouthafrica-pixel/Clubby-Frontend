@@ -5,46 +5,59 @@ import {
 } from "recharts";
 import { Label } from "@/components/ui/label"
 import { formatAmount } from "@/data/currencies";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Card, CardDescription, CardTitle
 } from "@/components/ui/card"
+import { DndContext, KeyboardSensor, MouseSensor, TouchSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
+import * as React from "react";
 
 const REPORTING_METRICS = ["Registrations", "Emails"]
 
 export default function ClubUsageAndCharges({ data, currency }: any) {
   const [selectedTab, setSelectedTab] = useState("Registrations");
 
+  const sensors = useSensors(
+    useSensor(MouseSensor, {}),
+    useSensor(TouchSensor, {}),
+    useSensor(KeyboardSensor, {})
+  )
+  const sortableId = React.useId()
+
   return (
     <div className="space-y-10">
-
-      {/* --- Billing Summary Table --- */}
-      <section>
-        <h2 className="text-xl font-semibold mb-2">Billing Summary</h2>
-        <table className="min-w-full border border-gray-300 text-left">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="px-3 py-2 border">Month</th>
-              <th className="px-3 py-2 border">Charge</th>
-              <th className="px-3 py-2 border">Outstanding</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.keys(data.overall_month_data).map((key) => (
-              <tr key={key}>
-                <td className="px-3 py-2 border">{key}</td>
-                <td className="px-3 py-2 border">{formatAmount(data.overall_month_data[key].total_amount, currency)}</td>
-                <td className="px-3 py-2 border">{formatAmount(data.overall_month_data[key].outstanding_amount, currency)}</td>
-              </tr>
-            ))}
-            <tr className="font-semibold bg-gray-50">
-              <td className="px-3 py-2 border">Total</td>
-              <td className="px-3 py-2 border">{formatAmount(data.total_charge, currency)}</td>
-              <td className="px-3 py-2 border">{formatAmount(data.total_outstanding_amount, currency)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
+      <h2 className="text-l font-semibold mb-2">Billing Summary</h2>
+      <div className="overflow-hidden rounded-lg border">
+        <DndContext
+          collisionDetection={closestCenter}
+          sensors={sensors}
+          id={sortableId}>
+          <Table>
+            <TableHeader className="bg-muted sticky top-0 z-10">
+              <TableRow>
+                <TableHead className="text-center">Month</TableHead>
+                <TableHead className="text-center">Charge</TableHead>
+                <TableHead className="text-center">Outstanding</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Object.keys(data.overall_month_data).map((key) => (
+                <TableRow key={key}>
+                  <TableCell className="text-center">{key}</TableCell>
+                  <TableCell className="text-center">{formatAmount(data.overall_month_data[key].total_amount, currency)}</TableCell>
+                  <TableCell className="text-center">{formatAmount(data.overall_month_data[key].outstanding_amount, currency)}</TableCell>
+                </TableRow>
+              ))}
+              <TableRow className="font-semibold bg-gray-50">
+                <TableCell className="text-center">Total</TableCell>
+                <TableCell className="text-center">{formatAmount(data.total_charge, currency)}</TableCell>
+                <TableCell className="text-center">{formatAmount(data.total_outstanding_amount, currency)}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </DndContext>
+      </div>
 
       {/* --- Graphs --- */}
       <Card className="p-5 w-full gap-2">
@@ -63,7 +76,7 @@ export default function ClubUsageAndCharges({ data, currency }: any) {
 
             return (
               <div key={key}>
-                <div className="mx-8 mb-6 grid grid-cols-1 gap-4 px-4 lg:px-0 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
+                <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-0 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 mb-4">
                   {Object.keys(data[key]).map((k) => {
                     if (k === "month_data") return null;
                     return (

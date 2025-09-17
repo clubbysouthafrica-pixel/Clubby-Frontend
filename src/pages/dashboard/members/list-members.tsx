@@ -155,7 +155,6 @@ export default function ListMembersPage() {
                                                 <TableCell className="text-center">{member.member_first_name + " " + member.member_surname}</TableCell>
                                                 <TableCell className="text-center">{member.member_email}</TableCell>
                                                 <TableCell className="text-center">{formatAmount(member.outstanding_amount, club?.currency)}</TableCell>
-                                                {/* <TableCell><Badge>{member.billing_type}</Badge></TableCell> */}
                                                 <TableCell className="text-center">
                                                     <Checkbox
                                                         checked={listActionItems.includes(member.member_email as string)}           // keep UI in sync
