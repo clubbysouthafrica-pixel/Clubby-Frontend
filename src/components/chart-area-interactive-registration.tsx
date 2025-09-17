@@ -11,12 +11,16 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import {
-  ChartConfig,
+  // ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
-import { RegistrationReportData, RegistrationReportRowDataItem, RegistrationRowData } from "@/interfaces/report"
+import { 
+  // RegistrationReportData, 
+  // RegistrationReportRowDataItem, 
+  RegistrationRowData 
+} from "@/interfaces/report"
 
 const chartConfig = {
   total_pending_members: {
@@ -34,7 +38,7 @@ const chartConfig = {
     label: "Registered Revenue",
     color: "var(--primary)",
   },
-} satisfies ChartConfig
+} // satisfies ChartConfig
 
 interface props {
   data: RegistrationRowData

@@ -1,8 +1,8 @@
 import { useContext } from "react";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { useRegistrationBillingReportingQuery } from "@/queries/admin/useReporting";
-import { ChartAreaInteractive } from "@/components/chart-area-interactive";
-import { RegistrationReportData, ReportDataRow } from "@/interfaces/report";
+// import { ChartAreaInteractive } from "@/components/chart-area-interactive";
+import { RegistrationReportData } from "@/interfaces/report";
 import { ChartAreaInteractiveRegistration } from "@/components/chart-area-interactive-registration";
 
 export default function RegistrationReportPage() {
