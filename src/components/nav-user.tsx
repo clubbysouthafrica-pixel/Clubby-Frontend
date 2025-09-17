@@ -2,7 +2,7 @@
 
 import {
   ChevronsUpDown,
-  LogOut, SettingsIcon,
+  LogOut, SettingsIcon, CreditCard
 } from "lucide-react"
 
 import {
@@ -90,11 +90,11 @@ export function NavUser({
               {/* <DropdownMenuItem onClick={() => navigate("/profile")}>
                 <BadgeCheck />
                 Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/billing")}>
-                <CreditCard />
-                Billing
               </DropdownMenuItem> */}
+              <DropdownMenuItem onClick={() => navigate("/billing&usage")}>
+                <CreditCard />
+                Billing and Usage
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/settings")}>
                 <SettingsIcon />
                 Settings

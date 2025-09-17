@@ -170,13 +170,13 @@ export default function Header() {
                                                 Profile
                                                 <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
                                         </DropdownMenuItem>
-                                    </Link>
-                                    <Link to="/billing">
+                                    </Link> */}
+                                    <Link to="/billing&usage">
                                         <DropdownMenuItem>
-                                            Billing
+                                            Billing and Usage
                                             <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
                                         </DropdownMenuItem>
-                                    </Link> */}
+                                    </Link>
                                     <Link to="/settings">
                                         <DropdownMenuItem>
                                             Settings

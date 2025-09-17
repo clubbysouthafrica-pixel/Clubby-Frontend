@@ -18,6 +18,7 @@ import ManagePage from "@/pages/dashboard/manage/manage";
 import ManageClubEditPage from "@/pages/dashboard/clubs/edit-club";
 import HomeDashboardPage from "@/pages/dashboard/dash-home";
 import RegistrationReportPage from "@/pages/dashboard/members/registration-report-page";
+import BillingPage from "@/pages/admin/billing/billing";
 
 export default function AdminRoutes() {
     return (
@@ -35,6 +36,7 @@ export default function AdminRoutes() {
             <Route path="/myclubs" element={<ProtectedRoute><MyClubsPage /></ProtectedRoute>}></Route>
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>}></Route>
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>}></Route>
+            <Route path="/billing&usage" element={<ProtectedRoute><BillingPage /></ProtectedRoute>}></Route>
             
             <Route path="/manage" element={<ProtectedRoute><ManagePage/></ProtectedRoute>}></Route>
             <Route path="/manage/members" element={<ProtectedRoute><ListMembersPage/></ProtectedRoute>}></Route>
