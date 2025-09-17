@@ -21,19 +21,7 @@ export function SectionCards({ report, currency }: props) {
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
             {report?.total_registered_members}
           </CardTitle>
-          {/* <CardAction>
-            <Badge variant="outline">
-              <IconTrendingUp />
-              +12.5%
-            </Badge>
-          </CardAction> */}
         </CardHeader>
-        {/* <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Strong user retention <IconTrendingUp className="size-4" />
-          </div>
-          <div className="text-muted-foreground">Engagement exceed targets</div>
-        </CardFooter> */}
       </Card>
       <Card className="@container/card">
         <CardHeader>
