@@ -47,7 +47,6 @@ export default function SettingsPage() {
     const {isAdmin} = useContext(AuthContext) as AuthContextType
     const {mutate, isPending} = useUpdateProfileMutation(isAdmin)
     const {data} = useGetProfileQuery(isAdmin)
-    console.log(data)
     // const {theme, setTheme} = useContext(ThemeProviderContext)
     const [accountSettings, setAccountSettings] = useState({
         first_name: "",
