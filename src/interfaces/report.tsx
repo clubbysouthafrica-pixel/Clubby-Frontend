@@ -38,5 +38,5 @@ export interface RegistrationReportData {
 }
 
 export interface RegistrationReport {
-  Report: RegistrationReportData[]
+  report: RegistrationReportData[]
 }
