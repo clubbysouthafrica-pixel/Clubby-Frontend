@@ -3,12 +3,31 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.tsx"
 import { Button } from "@/components/ui/button.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.tsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.tsx";
-import { Calendar, Link as LinkIcon, Loader2, Mail, MapPin } from "lucide-react";
+import { Calendar, Link as Loader2, Mail, MapPin } from "lucide-react";
 import { useFetchClub, useFetchClubBankDetails } from "@/queries/clubs";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { formatAmount } from "@/data/currencies";
+
+function epochToJoinedString(epoch: number): string {
+    const date = new Date(epoch); // if epoch is in seconds, use new Date(epoch * 1000)
+    const options: Intl.DateTimeFormatOptions = { month: "long", year: "numeric" };
+    const formatted = date.toLocaleDateString("en-US", options);
+    return `Joined ${formatted}`;
+}
+
+const countryMap: Record<string, string> = {
+    ZA: "South Africa",
+    US: "United States",
+    GB: "United Kingdom",
+    DE: "Germany",
+    FR: "France",
+};
+
+function getCountryName(code: string): string {
+    return countryMap[code.toUpperCase()] ?? code;
+}
 
 export default function ViewClubPage() {
     const navigate = useNavigate()
@@ -18,6 +37,8 @@ export default function ViewClubPage() {
         clubId as string,
         !!data?.club_member_exists
     )
+
+    console.log(data)
 
     const [coverImage, setCoverImage] = useState("")
     const [profileImage, setProfileImage] = useState("")
@@ -88,7 +109,6 @@ export default function ViewClubPage() {
                         </div>
                     </div>
 
-                    {/* Profile Content */}
                     <div className="mt-6">
                         <Tabs defaultValue="home">
                             <TabsList className="justify-start h-10">
@@ -98,64 +118,31 @@ export default function ViewClubPage() {
                                         data?.club_member_exists &&
                                         <TabsTrigger value="bank">Payments & Billing</TabsTrigger>
                                     }
-                                    {/* <TabsTrigger value="membership">Membership</TabsTrigger>
-                                            <TabsTrigger value="storage">Storage</TabsTrigger>
-                                            <TabsTrigger value="extra">Extra</TabsTrigger>
-                                            <TabsTrigger value="history">Account History</TabsTrigger> */}
                                 </>
                             </TabsList>
-                            {/*<Separator className="my-6" />*/}
 
                             <TabsContent value="home">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    {/* Bio Section */}
-                                    <Card className="md:col-span-2">
+                                <div>
+                                    <Card className="md:col-span-2 gap-4">
                                         <CardHeader>
-                                            <CardTitle>Bio</CardTitle>
+                                            <CardTitle>{data.club_name}</CardTitle>
                                             <CardDescription>
-                                                A passionate developer with expertise in React and TypeScript
+                                                {data?.description ?? "This is the clubs home page."}
                                             </CardDescription>
                                         </CardHeader>
                                         <CardContent>
                                             <div className="space-y-4">
                                                 <div className="flex items-center">
                                                     <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                                                    <span>john.doe@example.com</span>
+                                                    <span>{data.support_email}</span>
                                                 </div>
                                                 <div className="flex items-center">
                                                     <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                                                    <span>San Francisco, CA</span>
-                                                </div>
-                                                <div className="flex items-center">
-                                                    <LinkIcon className="h-4 w-4 mr-2 text-muted-foreground" />
-                                                    <a href="#" className="text-primary">github.com/johndoe</a>
+                                                    <span>{getCountryName(data.country_of_operation)}</span>
                                                 </div>
                                                 <div className="flex items-center">
                                                     <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                                                    <span>Joined March 2024</span>
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-
-                                    {/* Stats Card */}
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle>Stats</CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="space-y-4">
-                                                <div className="flex justify-between">
-                                                    <span className="text-muted-foreground">Followers</span>
-                                                    <span className="font-medium">1.2k</span>
-                                                </div>
-                                                <div className="flex justify-between">
-                                                    <span className="text-muted-foreground">Following</span>
-                                                    <span className="font-medium">427</span>
-                                                </div>
-                                                <div className="flex justify-between">
-                                                    <span className="text-muted-foreground">Projects</span>
-                                                    <span className="font-medium">32</span>
+                                                    <span>{epochToJoinedString(data.joined)}</span>
                                                 </div>
                                             </div>
                                         </CardContent>
@@ -170,7 +157,7 @@ export default function ViewClubPage() {
                                         <CardTitle>
                                             Outstanding amount: {formatAmount(bankDetails?.outstanding_amount, data.currency)}
                                             <p className="text-[1rem] text-gray-500 mt-2 font-normal">
-                                            Payment Reference Number: {bankDetails?.registration_payment_reference}
+                                                Payment Reference Number: {bankDetails?.registration_payment_reference}
                                             </p>
                                         </CardTitle>
                                     </Card>

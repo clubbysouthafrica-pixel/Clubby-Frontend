@@ -31,12 +31,21 @@ export interface RegistrationRowData {
   data: RegistrationReportRowDataItem[]
 }
 
-export interface RegistrationReportData {
+export interface RegistrationReportDropDown {
   table_name: string
   field_id: string
   rows: RegistrationRowData[]
 }
 
+export interface RegistrationReportText {
+  fee_amount: number
+  data: {
+    due_to_club: number
+    paid_to_club: number
+    month: string
+  }
+}
+
 export interface RegistrationReport {
-  report: RegistrationReportData[]
+  report: RegistrationReportDropDown[] | RegistrationReportText
 }
