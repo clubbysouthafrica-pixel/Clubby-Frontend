@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.tsx"
 import { Button } from "@/components/ui/button.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.tsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.tsx";
-import { Calendar, Link as LinkIcon, Loader2, Mail, MapPin } from "lucide-react";
+import { Calendar, Link as Loader2, Mail, MapPin } from "lucide-react";
 import { useFetchClub, useFetchClubBankDetails } from "@/queries/clubs";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";

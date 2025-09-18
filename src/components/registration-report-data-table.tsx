@@ -1,7 +1,7 @@
-import { RegistrationReport } from "@/interfaces/report"
+import { RegistrationReport, RegistrationReportDropDown, RegistrationReportRowDataItem, RegistrationRowData } from "@/interfaces/report"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"
 import { Card, CardDescription, CardHeader, CardTitle } from "./ui/card"
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "./ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table"
 import { formatAmount } from "@/data/currencies"
 
 interface props {
@@ -13,14 +13,14 @@ export function RegistrationReportData({ data, currency }: props) {
   return (
     <div>
 
-      <Tabs defaultValue={data?.report[0]?.table_name}>
+      <Tabs defaultValue={(data?.report as RegistrationReportDropDown[])[0]?.table_name}>
         <TabsList>
-          {data?.report?.map(c => (
+          {(data?.report as RegistrationReportDropDown[]).map((c: any) => (
             <TabsTrigger key={c.table_name} value={c.table_name}>{c.table_name}</TabsTrigger>
           ))}
         </TabsList>
 
-        {data?.report?.map(c => (
+        {(data?.report as RegistrationReportDropDown[]).map((c: any) => (
           <TabsContent key={c.table_name} value={c.table_name}>
             <Card className="p-4">
               {!c.rows?.length && !c?.data &&
@@ -71,7 +71,7 @@ export function RegistrationReportData({ data, currency }: props) {
                         </TableRow>
                       </TableHeader>
                       <TableBody className="font-semibold bg-gray-50">
-                        {c?.data.map(d => (
+                        {(c?.data as any).map((d: any) => (
                           <TableRow key={d.date}>
                             <TableCell className="font-medium text-center">{d.date}</TableCell>
                             <TableCell className="text-center">{formatAmount(d.due_to_club, currency)}</TableCell>
@@ -84,7 +84,7 @@ export function RegistrationReportData({ data, currency }: props) {
                 </div>
               }
               {
-                c.rows?.map((r, index) => (
+                c.rows?.map((r: RegistrationRowData, index: number) => (
                   <div key={r.row_name} className={index + 1 === c.rows.length ? "" : "mb-5"}>
                     <p className="font-bold">
                       {r.row_name}
@@ -128,7 +128,7 @@ export function RegistrationReportData({ data, currency }: props) {
                           </TableRow>
                         </TableHeader>
                         <TableBody className="font-semibold bg-gray-50">
-                          {r.data?.map(d => (
+                          {r.data?.map((d: RegistrationReportRowDataItem) => (
                             <TableRow key={d.date}>
                               <TableCell className="font-medium text-center">{d.date}</TableCell>
                               <TableCell className="text-center">{formatAmount(d.due_to_club, currency)}</TableCell>
