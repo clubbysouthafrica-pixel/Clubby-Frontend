@@ -66,16 +66,16 @@ export function RegistrationReportData({ data, currency }: props) {
                       <TableHeader className="bg-muted sticky top-0 z-10">
                         <TableRow>
                           <TableHead className="text-center">Date</TableHead>
-                          <TableHead className="text-center">Due</TableHead>
                           <TableHead className="text-center">Paid</TableHead>
+                          <TableHead className="text-center">Due</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody className="font-semibold bg-gray-50">
                         {(c?.data as any).map((d: any) => (
                           <TableRow key={d.date}>
                             <TableCell className="font-medium text-center">{d.date}</TableCell>
-                            <TableCell className="text-center">{formatAmount(d.due_to_club, currency)}</TableCell>
                             <TableCell className="text-center">{formatAmount(d.paid_to_club, currency)}</TableCell>
+                            <TableCell className="text-center">{formatAmount(d.due_to_club, currency)}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -123,16 +123,16 @@ export function RegistrationReportData({ data, currency }: props) {
                         <TableHeader className="bg-muted sticky top-0 z-10">
                           <TableRow>
                             <TableHead className="text-center">Date</TableHead>
-                            <TableHead className="text-center">Due</TableHead>
                             <TableHead className="text-center">Paid</TableHead>
+                            <TableHead className="text-center">Due</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody className="font-semibold bg-gray-50">
                           {r.data?.map((d: RegistrationReportRowDataItem) => (
                             <TableRow key={d.date}>
                               <TableCell className="font-medium text-center">{d.date}</TableCell>
-                              <TableCell className="text-center">{formatAmount(d.due_to_club, currency)}</TableCell>
                               <TableCell className="text-center">{formatAmount(d.paid_to_club, currency)}</TableCell>
+                              <TableCell className="text-center">{formatAmount(d.due_to_club, currency)}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
