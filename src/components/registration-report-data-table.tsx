@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"
 import { Card, CardDescription, CardHeader, CardTitle } from "./ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table"
 import { formatAmount } from "@/data/currencies"
+import { Label } from "./ui/label"
 
 interface props {
   data: RegistrationReport
@@ -10,9 +11,12 @@ interface props {
 }
 
 export function RegistrationReportData({ data, currency }: props) {
+  if (!data || !data.report || data.report.length === 0) {
+    return (<Label>No data to display yet</Label>)
+  }
+
   return (
     <div>
-
       <Tabs defaultValue={(data?.report as RegistrationReportDropDown[])[0]?.table_name}>
         <TabsList>
           {(data?.report as RegistrationReportDropDown[]).map((c: any) => (

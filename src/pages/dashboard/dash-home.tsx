@@ -69,7 +69,7 @@ export default function HomeDashboardPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {report.data.map((month: any) => (
+                                {report.data?.map((month: any) => (
                                     <TableRow key={month.date}>
                                         <TableCell className="text-center font-bold">{month.date}</TableCell>
                                         <TableCell className="text-center">{month.total_registered_members}</TableCell>
