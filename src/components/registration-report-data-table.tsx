@@ -11,7 +11,7 @@ interface props {
 }
 
 export function RegistrationReportData({ data, currency }: props) {
-  if (!data || !data.report || data.report.length === 0) {
+  if (!data || !data.report || (data.report as RegistrationReportDropDown[]).length === 0) {
     return (<Label>No data to display yet</Label>)
   }
 
