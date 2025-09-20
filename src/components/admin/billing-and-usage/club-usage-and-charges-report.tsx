@@ -25,6 +25,8 @@ export default function ClubUsageAndCharges({ data, currency }: any) {
   )
   const sortableId = React.useId()
 
+  console.log(data)
+
   return (
     <div className="space-y-10">
       <h2 className="text-l font-semibold mb-2">Billing Summary</h2>
@@ -42,11 +44,15 @@ export default function ClubUsageAndCharges({ data, currency }: any) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Object.keys(data.overall_month_data).map((key) => (
+              {Object.keys(data.overall_month_data || {}).map((key) => (
                 <TableRow key={key}>
                   <TableCell className="text-center">{key}</TableCell>
-                  <TableCell className="text-center">{formatAmount(data.overall_month_data[key].total_amount, currency)}</TableCell>
-                  <TableCell className="text-center">{formatAmount(data.overall_month_data[key].outstanding_amount, currency)}</TableCell>
+                  <TableCell className="text-center">
+                    {formatAmount(data.overall_month_data[key].total_amount, currency)}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {formatAmount(data.overall_month_data[key].outstanding_amount, currency)}
+                  </TableCell>
                 </TableRow>
               ))}
               <TableRow className="font-semibold bg-gray-50">
@@ -77,7 +83,7 @@ export default function ClubUsageAndCharges({ data, currency }: any) {
             return (
               <div key={key}>
                 <div className="flex gap-4 pb-4 px-8 *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs">
-                  {Object.keys(data[key]).map((k) => {
+                  {Object.keys(data[key])?.map((k) => {
                     if (k === "month_data") return null;
                     return (
                       <Card key={k} className="@container/card w-[100%]">
