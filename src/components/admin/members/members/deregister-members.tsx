@@ -11,7 +11,6 @@ import { Checkbox } from "@/components/ui/checkbox"
 
 interface ImageProps {
   clubId: string
-  disabled: boolean
   dereigsterMembers: { user_id: string, name: string }[]
 }
 
