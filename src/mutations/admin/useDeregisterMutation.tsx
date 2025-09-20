@@ -1,4 +1,4 @@
-import { deregisterAllMembersQuery, deregisterMemberQuery } from "@/services/admin/registration-form";
+import { deregisterAllMembersQuery, deregisterMembersQuery } from "@/services/admin/registration-form";
 import { useMutation } from "@tanstack/react-query";
 
 export const useDeregisterAllMutation = () => {
@@ -7,8 +7,8 @@ export const useDeregisterAllMutation = () => {
     });
 }
 
-export const useDeregisterMemberMutation = () => {
+export const useDeregisterMembersMutation = () => {
     return useMutation({
-        mutationFn: deregisterMemberQuery
+        mutationFn: deregisterMembersQuery
     });
 }
