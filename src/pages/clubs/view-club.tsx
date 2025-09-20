@@ -38,8 +38,6 @@ export default function ViewClubPage() {
         !!data?.club_member_exists
     )
 
-    console.log(data)
-
     const [coverImage, setCoverImage] = useState("")
     const [profileImage, setProfileImage] = useState("")
 

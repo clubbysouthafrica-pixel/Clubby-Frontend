@@ -11,6 +11,6 @@ export interface RegistrationRequest {
 }
 
 export interface DeregisterMemberRequest {
-    userId: string
+    userIds: string[]
     clubId: string
 }

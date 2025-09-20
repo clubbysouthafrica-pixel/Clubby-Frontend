@@ -15,7 +15,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import SendEmailDialog from "@/components/send-email-dialog";
-import DeregisterDialog from "@/components/deregister-dialog";
+import DeregisterAllDialog from "@/components/deregister-dialog";
+import DeregisterMembersDialog from "@/components/admin/members/members/deregister-members"
 import { formatAmount } from "@/data/currencies";
 import { Input } from "@/components/ui/input";
 
@@ -26,9 +27,9 @@ export default function ListMembersPage() {
     const { mutate, isPending, isSuccess, isError, reset } = useRegisterUserToClubMutation()
     const [listActionItems, setlistActionItems] = useState<string[]>([])
     const [allMembersSelected, setAllMembersSelected] = useState(false)
-
     const [openDialogUserId, setOpenDialogUserId] = useState<string | null>(null);
     const [memberRegisterAmount, setMemberRegisterAmount] = useState(0)
+    const [dereigsterMembers, setDeregisterMembers] = useState<{ user_id: string, name: string }[]>([])
 
     const sortableId = React.useId()
 
@@ -41,11 +42,14 @@ export default function ListMembersPage() {
     const setAllListActionItems = () => {
         if (allMembersSelected) {
             setlistActionItems([])
+            setDeregisterMembers([])
             setAllMembersSelected(false)
         } else {
             const allMembers = clubMembers.registered.map((member: ClubMember) => { return member.member_email });
+            const allDeregisterMembers = clubMembers.registered.map((member: ClubMember) => { return { user_id: member.user_id, name: `${member.member_first_name} ${member.member_surname}` } })
             setlistActionItems(allMembers)
             setAllMembersSelected(true)
+            setDeregisterMembers(allDeregisterMembers)
         }
     }
 
@@ -116,9 +120,9 @@ export default function ListMembersPage() {
                                 Pending Members <Badge variant="secondary">{clubMembers?.unregistered?.length ?? clubMembers?.not_registered?.length}</Badge>
                             </TabsTrigger>
                         </TabsList>
-                        {/* ACTION ITEMS */}
-                        <div className="flex-init space-x-2 items-center justify-center">
-                            {club?.club_account_id && <DeregisterDialog clubId={club.club_account_id} disabled={!clubMembers?.registered?.length} />}
+                        <div className="flex-init px-5 space-x-5 items-center justify-center">
+                            {club?.club_account_id && <DeregisterAllDialog clubId={club.club_account_id} disabled={!clubMembers?.registered?.length} />}
+                            {club?.club_account_id && <DeregisterMembersDialog dereigsterMembers={dereigsterMembers} clubId={club.club_account_id} />}
                             {club?.club_account_id && <SendEmailDialog clubId={club.club_account_id} contacts={listActionItems} />}
                         </div>
                     </div>
@@ -141,8 +145,8 @@ export default function ListMembersPage() {
                                             <TableHead className="text-center">
                                                 <div className="flex items-center justify-center gap-2">
                                                     Action
-                                                    <Checkbox 
-                                                        className="bg-white" 
+                                                    <Checkbox
+                                                        className="bg-white"
                                                         onCheckedChange={setAllListActionItems}
                                                     />
                                                 </div>
@@ -157,16 +161,23 @@ export default function ListMembersPage() {
                                                 <TableCell className="text-center">{formatAmount(member.outstanding_amount, club?.currency)}</TableCell>
                                                 <TableCell className="text-center">
                                                     <Checkbox
-                                                        checked={listActionItems.includes(member.member_email as string)}           // keep UI in sync
-                                                        onCheckedChange={(checked: boolean) =>
+                                                        checked={listActionItems.includes(member.member_email as string)}
+                                                        onCheckedChange={(checked: boolean) => {
                                                             setlistActionItems(prev =>
                                                                 checked
-                                                                    ? prev.includes(member.member_email as string)          // add only if it’s not already there
+                                                                    ? prev.includes(member.member_email as string)
                                                                         ? prev
                                                                         : [...prev, member.member_email as string]
-                                                                    : prev.filter(id => id !== member.member_email as string) // remove when unchecked
+                                                                    : prev.filter(id => id !== member.member_email as string)
                                                             )
-                                                        }
+                                                            setDeregisterMembers(prev =>
+                                                                checked
+                                                                    ? prev.some(m => m.user_id === member.user_id)
+                                                                        ? prev
+                                                                        : [...prev, { user_id: member.user_id, name: `${member.member_first_name} ${member.member_surname}` }]
+                                                                    : prev.filter(m => m.user_id !== member.user_id)
+                                                            )
+                                                        }}
                                                     />
                                                 </TableCell>
                                             </TableRow>

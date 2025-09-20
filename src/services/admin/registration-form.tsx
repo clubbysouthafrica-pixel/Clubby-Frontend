@@ -18,7 +18,8 @@ export const deregisterAllMembersQuery = (clubId: string) => {
         .then(res => res.data);
 }
 
-export const deregisterMemberQuery = (request: DeregisterMemberRequest) => {
-    return api.post("/deregistration/member", {club_account_id: request.clubId, user_id: request.userId})
+export const deregisterMembersQuery = (request: DeregisterMemberRequest) => {
+    console.log({club_account_id: request.clubId, user_ids: request.userIds})
+    return api.post("/deregistration/members", {club_account_id: request.clubId, user_ids: request.userIds})
         .then(res => res.data);
 }
