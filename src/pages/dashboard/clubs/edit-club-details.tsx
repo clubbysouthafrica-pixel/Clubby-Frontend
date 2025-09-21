@@ -65,8 +65,8 @@ export default function EditClubDetails() {
                     !isLoading &&
                     <Tabs defaultValue="account">
                         <TabsList>
-                            <TabsTrigger value="account">Banking Details</TabsTrigger>
-                            <TabsTrigger value="password">Location</TabsTrigger>
+                            <TabsTrigger className="w-[150px]" value="account">Banking Details</TabsTrigger>
+                            <TabsTrigger className="w-[150px]" value="password">Location</TabsTrigger>
                         </TabsList>
                         <TabsContent value="account">
                             <Card>

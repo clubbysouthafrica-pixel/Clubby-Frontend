@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
     Dialog,
-    DialogTrigger,
     DialogContent,
     DialogHeader,
     DialogTitle,
@@ -19,27 +18,37 @@ import {
 import { User } from "lucide-react";
 import { formatAmount } from "@/data/currencies";
 import { Label } from "@/components/ui/label";
+import { useFetchMemberTransactions } from "@/queries/admin/transactions";
 
 interface ImageProps {
     selectedMember: any;
     setSelectedMember: React.Dispatch<React.SetStateAction<any>>;
     currency: string;
+    clubAccountId: string;
 }
 
-export default function SelectedMemberDialog({
+export default function SelectedMember({
     selectedMember,
     setSelectedMember,
     currency,
+    clubAccountId,
 }: ImageProps) {
     const [selectedTab, setSelectedTab] = useState("registered-members");
     const [open, setOpen] = useState(false);
+
+    const { data: transactions, isLoading } = useFetchMemberTransactions(clubAccountId, selectedMember?.user_id);
 
     React.useEffect(() => {
         if (selectedMember) setOpen(true);
         else setOpen(false);
     }, [selectedMember]);
-
     if (!selectedMember) return null;
+
+    console.log(transactions)
+
+    if (isLoading) {
+        return (<div>kke</div>)
+    }
 
     return (
         <Dialog
@@ -52,10 +61,6 @@ export default function SelectedMemberDialog({
                 }
             }}
         >
-            <DialogTrigger asChild>
-                <></>
-            </DialogTrigger>
-
             <DialogContent className="max-w-4xl w-full p-6">
                 <DialogHeader className="flex justify-between">
                     <div className="flex items-end space-x-2">
@@ -69,8 +74,8 @@ export default function SelectedMemberDialog({
 
                 <Tabs value={selectedTab} onValueChange={setSelectedTab} className="mt-0">
                     <TabsList>
-                        <TabsTrigger value="registered-members">Club information</TabsTrigger>
-                        <TabsTrigger value="pending-members">Club fees</TabsTrigger>
+                        <TabsTrigger className="w-[150px]" value="registered-members">Club information</TabsTrigger>
+                        <TabsTrigger className="w-[150px]" value="pending-members">Club fees</TabsTrigger>
                     </TabsList>
 
                     {selectedTab === "registered-members" && (

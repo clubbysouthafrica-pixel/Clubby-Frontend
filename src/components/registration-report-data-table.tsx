@@ -20,7 +20,7 @@ export function RegistrationReportData({ data, currency }: props) {
       <Tabs defaultValue={(data?.report as RegistrationReportDropDown[])[0]?.table_name}>
         <TabsList>
           {(data?.report as RegistrationReportDropDown[]).map((c: any) => (
-            <TabsTrigger key={c.table_name} value={c.table_name}>{c.table_name}</TabsTrigger>
+            <TabsTrigger className="w-[150px]" key={c.table_name} value={c.table_name}>{c.table_name}</TabsTrigger>
           ))}
         </TabsList>
 

@@ -15,7 +15,6 @@ import AdminRegistrationFormPage from "@/pages/registrations/admin-registration-
 import ManageClubDashboard from "@/pages/dashboard/clubs/manage-club";
 import ListMembersPage from "@/pages/dashboard/members/list-members";
 import ManagePage from "@/pages/dashboard/manage/manage";
-import ManageClubEditPage from "@/pages/dashboard/clubs/edit-club";
 import HomeDashboardPage from "@/pages/dashboard/dash-home";
 import RegistrationReportPage from "@/pages/dashboard/members/registration-report-page";
 import BillingPage from "@/pages/admin/billing/billing";
@@ -41,7 +40,6 @@ export default function AdminRoutes() {
             <Route path="/manage" element={<ProtectedRoute><ManagePage/></ProtectedRoute>}></Route>
             <Route path="/manage/members" element={<ProtectedRoute><ListMembersPage/></ProtectedRoute>}></Route>
             <Route path="/manage/club" element={<ProtectedRoute><ManageClubDashboard/></ProtectedRoute>}></Route>
-            <Route path="/manage/club/edit" element={<ProtectedRoute><ManageClubEditPage/></ProtectedRoute>}></Route>
             <Route path="/manage/registrations/forms" element={<ProtectedRoute><AdminRegistrationFormPage /></ProtectedRoute>}></Route>
             <Route path="/manage/members/report" element={<ProtectedRoute><RegistrationReportPage/></ProtectedRoute>}></Route>
         </Routes>
