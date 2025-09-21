@@ -122,8 +122,8 @@ export default function ListMembersPage() {
                         </TabsList>
                         <div className="flex-init px-5 space-x-5 items-center justify-center">
                             {club?.club_account_id && <DeregisterAllDialog clubId={club.club_account_id} disabled={!clubMembers?.registered?.length} />}
-                            {club?.club_account_id && <DeregisterMembersDialog dereigsterMembers={dereigsterMembers} clubId={club.club_account_id} />}
-                            {club?.club_account_id && <SendEmailDialog clubId={club.club_account_id} contacts={listActionItems} />}
+                            {club?.club_account_id && <DeregisterMembersDialog dereigsterMembers={dereigsterMembers} clubId={club.club_account_id} setlistActionItems={setlistActionItems} setDeregisterMembers={setDeregisterMembers} setAllMembersSelected={setAllMembersSelected} />}
+                            {club?.club_account_id && <SendEmailDialog clubId={club.club_account_id} contacts={listActionItems} setlistActionItems={setlistActionItems} setDeregisterMembers={setDeregisterMembers} setAllMembersSelected={setAllMembersSelected} />}
                         </div>
                     </div>
                     <TabsContent
@@ -148,6 +148,7 @@ export default function ListMembersPage() {
                                                     <Checkbox
                                                         className="bg-white"
                                                         onCheckedChange={setAllListActionItems}
+                                                        checked={allMembersSelected}
                                                     />
                                                 </div>
                                             </TableHead>

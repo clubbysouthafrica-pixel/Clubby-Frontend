@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { CheckCircle2Icon, UserX } from "lucide-react"
@@ -12,13 +12,21 @@ import { Checkbox } from "@/components/ui/checkbox"
 interface ImageProps {
   clubId: string
   dereigsterMembers: { user_id: string, name: string }[]
+  setlistActionItems: React.Dispatch<React.SetStateAction<string[]>>
+  setDeregisterMembers: React.Dispatch<React.SetStateAction<{ user_id: string, name: string }[]>>
+  setAllMembersSelected: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-export default function DeregisterMembersDialog({ dereigsterMembers, clubId }: ImageProps) {
+export default function DeregisterMembersDialog({ dereigsterMembers, clubId, setlistActionItems, setDeregisterMembers, setAllMembersSelected }: ImageProps) {
   const [openDialog, setOpenDialog] = useState<boolean>(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false)
 
-  const { mutate, isPending, isSuccess } = useDeregisterMembersMutation()
+  const { mutate, isPending, isSuccess: mutationSuccess } = useDeregisterMembersMutation()
+
+  useEffect(() => {
+    setIsSuccess(mutationSuccess);
+  }, [mutationSuccess]);
 
   const send = () => {
     const userIds = dereigsterMembers.map(member => { return member.user_id })
@@ -31,8 +39,18 @@ export default function DeregisterMembersDialog({ dereigsterMembers, clubId }: I
     })
   }
 
+  const handleOpenChange = (open: boolean) => {
+    setOpenDialog(open);
+    if (!open && isSuccess) {
+      setIsSuccess(false)
+      setlistActionItems([])
+      setDeregisterMembers([])
+      setAllMembersSelected(false)
+    }
+  };
+
   return (
-    <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+    <Dialog open={openDialog} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Tooltip>
           <TooltipTrigger asChild>
