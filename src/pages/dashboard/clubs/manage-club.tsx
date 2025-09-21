@@ -34,10 +34,6 @@ export default function ManageClubDashboard() {
                 <div className="rounded-full overflow-hidden w-28 h-28 -mt-14 ml-6 cursor-pointer hover:shadow-xl">
                     <ImageUploadDialog title="Profile Image" description="Upload a new profile image." presignedUrlApi={clubProfileImagePresignedUrl(club.club_account_id)}/>
                 </div>
-                {/* <div className="mt-2 ml-2 space-x-1">
-                    <Badge variant="outline">{clubMembers?.registered?.length} Active Members</Badge>
-                    <Badge variant="default">{clubMembers?.unregistered?.length ?? clubMembers?.not_registered?.length} Pending Members</Badge>
-                </div> */}
                 <div className="mt-2 ml-auto">
                     <ShareClubDialog clubId={club.club_account_id}/>
                 </div>

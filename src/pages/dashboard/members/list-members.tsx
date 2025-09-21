@@ -16,7 +16,8 @@ import { AlertCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import SendEmailDialog from "@/components/send-email-dialog";
 import DeregisterAllDialog from "@/components/deregister-dialog";
-import DeregisterMembersDialog from "@/components/admin/members/members/deregister-members"
+import DeregisterMembersDialog from "@/components/admin/members/members/deregister-members";
+import SelectedMember from "@/components/admin/members/members/selected-members";
 import { formatAmount } from "@/data/currencies";
 import { Input } from "@/components/ui/input";
 
@@ -28,8 +29,19 @@ export default function ListMembersPage() {
     const [listActionItems, setlistActionItems] = useState<string[]>([])
     const [allMembersSelected, setAllMembersSelected] = useState(false)
     const [openDialogUserId, setOpenDialogUserId] = useState<string | null>(null);
-    const [memberRegisterAmount, setMemberRegisterAmount] = useState(0)
     const [dereigsterMembers, setDeregisterMembers] = useState<{ user_id: string, name: string }[]>([])
+    const [hashUserId, setHashUserId] = useState<string | null>(null);
+    const [selectedMember, setSelectedMember] = useState({})
+    const [memberRegisterAmount, setMemberRegisterAmount] = useState<number>(0);
+    const [displayAmount, setDisplayAmount] = useState<string>(formatAmount(0, club?.currency));
+
+    const handleFormattedInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const inputValue = e.target.value.replace(/[^\d]/g, "");
+        const numericValue = parseInt(inputValue || "0", 10);
+
+        setMemberRegisterAmount(numericValue);
+        setDisplayAmount(formatAmount(numericValue, club?.currency));
+    };
 
     const sortableId = React.useId()
 
@@ -52,6 +64,24 @@ export default function ListMembersPage() {
             setDeregisterMembers(allDeregisterMembers)
         }
     }
+
+    useEffect(() => {
+        setDisplayAmount(formatAmount(0, club?.currency))
+    }, [club]);
+
+    useEffect(() => {
+        const updateHash = () => {
+            const hash = window.location.hash.replace("#", "");
+            setHashUserId(hash || null);
+        };
+
+        updateHash();
+        window.addEventListener("hashchange", updateHash);
+
+        return () => {
+            window.removeEventListener("hashchange", updateHash);
+        };
+    }, []);
 
     const registerUser = (member: ClubMember) => {
         mutate({
@@ -77,9 +107,11 @@ export default function ListMembersPage() {
 
     useEffect(() => {
         if (isSuccess) {
-            setOpenDialogUserId(null); // Close the dialog after success
+            setOpenDialogUserId(null);
         }
     }, [isSuccess]);
+
+    // console.log(clubMembers)
 
     return (
         <div className="p-6 space-y-6 min-h-screen">
@@ -106,6 +138,11 @@ export default function ListMembersPage() {
                 !clubMembersLoading &&
                 <Tabs
                     defaultValue="registered-members"
+                    onValueChange={() => {
+                        setHashUserId(null);
+                        setSelectedMember({});
+                        window.history.pushState("", document.title, window.location.pathname + window.location.search); // remove hash from URL
+                    }}
                     className="w-full flex-col justify-start gap-6">
                     <div className="flex items-center justify-between">
                         <Label htmlFor="view-selector" className="sr-only">
@@ -157,7 +194,15 @@ export default function ListMembersPage() {
                                     <TableBody>
                                         {clubMembers?.registered?.length ? clubMembers.registered.map((member: ClubMember) => (
                                             <TableRow key={member.user_id}>
-                                                <TableCell className="text-center">{member.member_first_name + " " + member.member_surname}</TableCell>
+                                                <TableCell className="text-center">
+                                                    <a
+                                                        onClick={() => setSelectedMember(member)}
+                                                        href={`#${member.user_id}`}
+                                                        className="underline text-blue-600 hover:text-blue-800 cursor-pointer"
+                                                    >
+                                                        {member.member_first_name + " " + member.member_surname}
+                                                    </a>
+                                                </TableCell>
                                                 <TableCell className="text-center">{member.member_email}</TableCell>
                                                 <TableCell className="text-center">{formatAmount(member.outstanding_amount, club?.currency)}</TableCell>
                                                 <TableCell className="text-center">
@@ -222,8 +267,15 @@ export default function ListMembersPage() {
                                     <TableBody>
                                         {clubMembers?.unregistered?.length ? clubMembers.unregistered.map((member: ClubMember) => (
                                             <TableRow key={member.user_id}>
-                                                <TableCell className="text-center">{member.member_first_name + " " + member.member_surname}</TableCell>
-                                                {/* <TableCell><Badge variant="outline">{member.billing_type}</Badge></TableCell> */}
+                                                <TableCell className="text-center">
+                                                    <a
+                                                        onClick={() => setSelectedMember(member)}
+                                                        href={`#${member.user_id}`}
+                                                        className="underline text-blue-600 hover:text-blue-800 cursor-pointer"
+                                                    >
+                                                        {member.member_first_name + " " + member.member_surname}
+                                                    </a>
+                                                </TableCell>
                                                 <TableCell className="text-center">
                                                     {member.registration_submitted_on ? (() => {
                                                         const date = new Date(member.registration_submitted_on);
@@ -259,17 +311,17 @@ export default function ListMembersPage() {
                                                                     Confirm payment amount and register member
                                                                 </DialogDescription>
 
+                                                                <Label className="my-3 text-l">Outstanding amount: {formatAmount(member.outstanding_amount, club?.currency)}</Label>
+
                                                                 <div className="grid gap-3">
                                                                     <Label htmlFor="pay">Payment Amount</Label>
                                                                     <Input
                                                                         id="pay"
-                                                                        type="number"
-                                                                        placeholder="Enter amount paid in cents"
-                                                                        value={memberRegisterAmount}
-                                                                        onChange={(e) => setMemberRegisterAmount(Number(e.target.value))}
-                                                                        required={true}
+                                                                        type="text"
+                                                                        placeholder="Enter amount"
+                                                                        value={displayAmount}
+                                                                        onChange={handleFormattedInputChange}
                                                                     />
-                                                                    <p className="text-sm">{formatAmount(memberRegisterAmount, club?.currency)}</p>
                                                                 </div>
                                                                 {
                                                                     isError &&
@@ -307,6 +359,9 @@ export default function ListMembersPage() {
                         </div>
                     </TabsContent>
                 </Tabs>
+            }
+            {
+                hashUserId && <SelectedMember selectedMember={selectedMember} setSelectedMember={setSelectedMember} currency={club?.currency ?? "ZAR"} />
             }
         </div>
     );
