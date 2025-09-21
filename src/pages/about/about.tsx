@@ -1,85 +1,58 @@
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { MdOutlineFormatListBulleted } from 'react-icons/md';
+import { FaUserPlus } from 'react-icons/fa';
+import { HiOutlineMailOpen } from 'react-icons/hi';
+import { FaRegMoneyBillAlt } from 'react-icons/fa';
 import {
     Award,
     Clock,
-    Heart,
-    Lightbulb,
-    Target,
     Users,
 } from "lucide-react";
 import Pager from "@/components/pager";
 
 const values = [
     {
-        icon: <Heart className="w-6 h-6 text-primary" />,
-        title: "Passion",
+        icon: <MdOutlineFormatListBulleted className="w-6 h-6 text-primary" />,
+        title: "Custom Registration Forms",
         description:
-            "We're passionate about creating exceptional experiences and driving innovation in everything we do.",
+            "Easily build your own dynamic registration forms using our intuitive admin interface. Tailor fields to your club’s needs — from basic contact info to specific preferences or uploads.",
     },
     {
-        icon: <Users className="w-6 h-6 text-primary" />,
-        title: "Community",
+        icon: <FaUserPlus className="w-6 h-6 text-primary" />,
+        title: "Member Sign-Ups Made Simple",
         description:
-            "Building and nurturing a strong, inclusive community is at the heart of our mission.",
+            "Let members register directly through your form. Manage sign-ups in real-time, track statuses, and keep your club database automatically updated — no spreadsheets required.",
     },
     {
-        icon: <Target className="w-6 h-6 text-primary" />,
-        title: "Excellence",
+        icon: <HiOutlineMailOpen className="w-6 h-6 text-primary" />,
+        title: "Broadcast Emails",
         description:
-            "We strive for excellence in every aspect of our work, setting high standards and exceeding expectations.",
+            "Reach your members instantly. Send announcements, reminders, or updates with our built-in email tool. Target your entire list or filter by custom segments.",
     },
     {
-        icon: <Lightbulb className="w-6 h-6 text-primary" />,
-        title: "Innovation",
+        icon: <FaRegMoneyBillAlt className="w-6 h-6 text-primary" />,
+        title: "Financial Reporting",
         description:
-            "Constantly pushing boundaries and exploring new ideas to stay ahead in a rapidly evolving landscape.",
+            "Track payments, dues, and other financial activities in one place. Get clear summaries that help you stay on top of club finances without the accounting headache.",
     },
 ];
 
 const achievements = [
     {
-        number: "500K+",
+        number: "10k",
         label: "Active Users",
         icon: <Users className="w-6 h-6" />,
     },
     {
-        number: "50+",
-        label: "Countries",
+        number: "10+",
+        label: "Club",
         icon: <Award className="w-6 h-6" />,
     },
     {
         number: "24/7",
         label: "Support",
         icon: <Clock className="w-6 h-6" />,
-    },
-];
-
-const team = [
-    {
-        name: "Alex Johnson",
-        role: "CEO & Founder",
-        image: "/team/alex.jpg",
-        bio: "Visionary leader with 15+ years in tech",
-    },
-    {
-        name: "Sarah Chen",
-        role: "CTO",
-        image: "/team/sarah.jpg",
-        bio: "Engineering leader & cloud architecture expert",
-    },
-    {
-        name: "Michael Ross",
-        role: "Head of Design",
-        image: "/team/michael.jpg",
-        bio: "Award-winning designer & UX specialist",
-    },
-    {
-        name: "Emma Wilson",
-        role: "Head of Product",
-        image: "/team/emma.jpg",
-        bio: "Product strategist & innovation champion",
     },
 ];
 
@@ -96,16 +69,14 @@ export default function AboutPage() {
                     >
                         <h1 className="text-4xl font-bold mb-4">Our Story</h1>
                         <p className="text-muted-foreground max-w-2xl mx-auto">
-                            Founded in 2024, we're on a mission to transform the way people connect
-                            and collaborate in the digital age. Our platform brings together
-                            technology and community to create meaningful experiences.
+                            Established in 2024, our mission is to simplify and enhance how clubs manage registration and communication. Our platform empowers organizations by streamlining form creation, financial reporting, and member engagement — all in one place. From registrations to emails, we bring together the tools and support needed to build stronger communities.
                         </p>
                     </motion.div>
                 </div>
 
                 {/* Values Section */}
                 <div className="mb-24">
-                    <h2 className="text-2xl font-bold text-center mb-12">Our Values</h2>
+                    <h2 className="text-2xl font-bold text-center mb-12">Features</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {values.map((value, index) => (
                             <motion.div
@@ -128,7 +99,6 @@ export default function AboutPage() {
                     </div>
                 </div>
 
-                {/* Achievements Section */}
                 <div className="mb-24 bg-primary/5 rounded-3xl py-16">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
                         {achievements.map((achievement, index) => (
@@ -149,45 +119,12 @@ export default function AboutPage() {
                     </div>
                 </div>
 
-                {/* Team Section */}
-                <div className="mb-24">
-                    <h2 className="text-2xl font-bold text-center mb-12">Our Team</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                        {team.map((member, index) => (
-                            <motion.div
-                                key={member.name}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.1 }}
-                            >
-                                <Card className="text-center">
-                                    <CardContent className="pt-6">
-                                        <Avatar className="w-24 h-24 mx-auto mb-4">
-                                            <AvatarImage src={member.image} alt={member.name} />
-                                            <AvatarFallback>
-                                                {member.name.split(' ').map(n => n[0]).join('')}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <h3 className="font-semibold text-lg mb-1">{member.name}</h3>
-                                        <p className="text-primary mb-2">{member.role}</p>
-                                        <p className="text-muted-foreground text-sm">{member.bio}</p>
-                                    </CardContent>
-                                </Card>
-                            </motion.div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Mission Statement */}
                 <div className="max-w-3xl mx-auto text-center">
                     <Card>
                         <CardContent className="pt-6">
                             <h2 className="text-2xl font-bold mb-4">Our Mission</h2>
                             <p className="text-muted-foreground">
-                                To empower individuals and organizations through innovative
-                                technology solutions that foster collaboration, creativity, and
-                                growth. We're committed to building a future where technology
-                                brings people together and creates opportunities for everyone.
+                            To empower clubs and communities with simple, effective tools to manage registration, communication, and reporting — all in one place.
                             </p>
                         </CardContent>
                     </Card>

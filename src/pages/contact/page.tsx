@@ -2,13 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Mail, Phone, MapPin, Clock, MessagesSquare } from "lucide-react";
+import { Mail, MapPin, Clock, MessagesSquare } from "lucide-react";
 import Pager from "@/components/pager";
 
 export default function ContactPage() {
@@ -17,10 +11,9 @@ export default function ContactPage() {
             <div className="container mx-auto px-4 py-16">
                 {/* Header */}
                 <div className="text-center mb-16">
-                    <h1 className="text-4xl font-bold mb-4">Get in Touch</h1>
+                    <h1 className="text-4xl font-bold mb-4">Register a club</h1>
                     <p className="text-muted-foreground max-w-2xl mx-auto">
-                        Have questions? We'd love to hear from you. Send us a message and we'll
-                        respond as soon as possible.
+                        To get started, simply reach out to us with your details. Send us a message and we’ll get back to you as soon as possible to help you through the registration process.
                     </p>
                 </div>
 
@@ -34,27 +27,7 @@ export default function ContactPage() {
                                     <div>
                                         <h3 className="font-semibold mb-2">Email</h3>
                                         <p className="text-muted-foreground">
-                                            contact@example.com
-                                        </p>
-                                        <p className="text-muted-foreground">
-                                            support@example.com
-                                        </p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardContent className="p-6">
-                                <div className="flex items-start space-x-4">
-                                    <Phone className="w-6 h-6 text-primary mt-1" />
-                                    <div>
-                                        <h3 className="font-semibold mb-2">Phone</h3>
-                                        <p className="text-muted-foreground">
-                                            +1 (555) 123-4567
-                                        </p>
-                                        <p className="text-muted-foreground">
-                                            Mon-Fri from 8am to 6pm
+                                            gregtorrington@icloud.com
                                         </p>
                                     </div>
                                 </div>
@@ -68,9 +41,7 @@ export default function ContactPage() {
                                     <div>
                                         <h3 className="font-semibold mb-2">Office</h3>
                                         <p className="text-muted-foreground">
-                                            123 Business Street
-                                            <br />
-                                            San Francisco, CA 94105
+                                            Cape Town, South Africa
                                         </p>
                                     </div>
                                 </div>
@@ -155,8 +126,7 @@ export default function ContactPage() {
                     </Card>
                 </div>
 
-                {/* FAQ Section */}
-                <div className="mt-16">
+                {/* <div className="mt-16">
                     <h2 className="text-2xl font-bold text-center mb-8">
                         Frequently Asked Questions
                     </h2>
@@ -204,7 +174,7 @@ export default function ContactPage() {
                             </AccordionItem>
                         </Accordion>
                     </div>
-                </div>
+                </div> */}
             </div>
         </Pager>
     );

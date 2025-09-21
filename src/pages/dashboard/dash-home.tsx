@@ -74,7 +74,7 @@ export default function HomeDashboardPage() {
                                         <TableCell className="text-center font-bold">{month.date}</TableCell>
                                         <TableCell className="text-center">{month.total_registered_members}</TableCell>
                                         <TableCell className="text-center">{formatAmount(month.total_registration_fees_paid, club?.currency)}</TableCell>
-                                        <TableCell className="text-center">{formatAmount(month.total_pending_members, club?.currency)}</TableCell>
+                                        <TableCell className="text-center">{month.total_pending_members}</TableCell>
                                         <TableCell className="text-center">{formatAmount(month.total_registration_fees_due_by_pending_members, club?.currency)}</TableCell>
                                     </TableRow>
                                 ))}

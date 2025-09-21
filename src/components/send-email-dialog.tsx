@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from "@/components/ui/dialog"
+import { useEffect, useState } from "react"
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { CheckCircle2Icon, SendIcon } from "lucide-react"
@@ -8,44 +8,65 @@ import { useEmailerProcessMutation } from "@/mutations/admin/useEmailerMutation"
 import { Input } from "./ui/input"
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert"
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip"
+import { MessagesSquare } from "lucide-react";
 
 interface ImageProps {
-    clubId: string
-    contacts: string[]
+  clubId: string
+  contacts: string[]
+  setlistActionItems: React.Dispatch<React.SetStateAction<string[]>>
+  setDeregisterMembers: React.Dispatch<React.SetStateAction<{ user_id: string, name: string }[]>>
+  setAllMembersSelected: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-export default function SendEmailDialog({ contacts, clubId }: ImageProps) {
+export default function SendEmailDialog({ contacts, clubId, setlistActionItems, setDeregisterMembers, setAllMembersSelected }: ImageProps) {
   const [openDialog, setOpenDialog] = useState<boolean>(false);
   const [body, setBody] = useState("")
   const [subject, setSubject] = useState("")
+  const [isSuccess, setIsSuccess] = useState(false)
 
-  const { mutate, isPending, isSuccess } = useEmailerProcessMutation()
+  const { mutate, isPending, isSuccess: mutationSuccess } = useEmailerProcessMutation();
+  
+  useEffect(() => {
+    setIsSuccess(mutationSuccess);
+  }, [mutationSuccess]);
 
   const send = () => {
     if (!subject || !body || !contacts.length) return;
 
     mutate({
-        subject,
-        email_body: body,
-        emails: contacts,
-        club_account_id: clubId,
+      subject,
+      email_body: body,
+      emails: contacts,
+      club_account_id: clubId,
     })
   }
 
+  const handleOpenChange = (open: boolean) => {
+    setOpenDialog(open);
+    if (!open && isSuccess) {
+      setSubject("");
+      setBody("");
+      setIsSuccess(false)
+      setlistActionItems([])
+      setDeregisterMembers([])
+      setAllMembersSelected(false)
+    }
+  };
+
   return (
-    <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DialogTrigger asChild>
-                <Button variant={"outline"} disabled={!contacts.length}>
-                    <SendIcon />
-                </Button>
-            </DialogTrigger>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Send email to selected contacts</p>
-          </TooltipContent>
-        </Tooltip>
+    <Dialog open={openDialog} onOpenChange={handleOpenChange}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <Button variant={"outline"} disabled={!contacts.length}>
+              <SendIcon />
+            </Button>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Send email to selected contacts</p>
+        </TooltipContent>
+      </Tooltip>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Send Email</DialogTitle>
@@ -62,20 +83,22 @@ export default function SendEmailDialog({ contacts, clubId }: ImageProps) {
           </div>
         </div>
         {
-            isSuccess &&
-            <Alert>
-                <CheckCircle2Icon color="green" />
-                <AlertTitle className="text-green-800">Successfully sent!</AlertTitle>
-                <AlertDescription>
-                    Your email has successfully been sent to all contacts.
-                </AlertDescription>
-            </Alert>
+          isSuccess &&
+          <Alert>
+            <CheckCircle2Icon color="green" />
+            <AlertTitle className="text-green-800">Successfully sent!</AlertTitle>
+            <AlertDescription>
+              <span>
+                Your email broadcast is being queued. Messages will be sent shortly. You can view any failed emails{" "}
+                <span className="underline cursor-pointer">here</span>.
+              </span>
+            </AlertDescription>
+          </Alert>
         }
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogClose>
-          <Button type="submit" disabled={isPending || isSuccess} onClick={send}>{ isPending ? "Sending..." : "Send"}</Button>
+          <Button className="w-full" type="submit" disabled={isPending || isSuccess} onClick={send}>{isPending ? "Sending..." : "Send"}
+            <MessagesSquare className="w-4 h-4 mr-2" />
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

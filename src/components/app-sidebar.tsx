@@ -83,7 +83,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ],
           },
           {
-            title: "Registrations",
+            title: "Registration form",
             url: "/manage/registrations",
             icon: UserPlusIcon,
             items: [
