@@ -340,7 +340,7 @@ export function ClubRegisterForm({
                     </Alert>
                   )}
 
-                  {pages.length === 1 ? (
+                  {pages.length === 1 && !registrationRequest ? (
                     <Button type="button" onClick={(e) => registerUser(e as any)} disabled={isPending}>
                       {isPending ? "Registering..." : "Continue"}
                     </Button>
