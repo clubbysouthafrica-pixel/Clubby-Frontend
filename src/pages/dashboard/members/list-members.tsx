@@ -34,8 +34,10 @@ export default function ListMembersPage() {
     const [selectedMember, setSelectedMember] = useState({})
     const [memberRegisterAmount, setMemberRegisterAmount] = useState<number>(0);
     const [displayAmount, setDisplayAmount] = useState<string>(formatAmount(0, club?.currency));
+    const [invalidRegistrationAmount, setInvalidRegistrationAmount] = useState(false)
 
     const handleFormattedInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setInvalidRegistrationAmount(false)
         const inputValue = e.target.value.replace(/[^\d]/g, "");
         const numericValue = parseInt(inputValue || "0", 10);
 
@@ -84,6 +86,11 @@ export default function ListMembersPage() {
     }, []);
 
     const registerUser = (member: ClubMember) => {
+        if (memberRegisterAmount > member.outstanding_amount || memberRegisterAmount < 0) {
+            setInvalidRegistrationAmount(true)
+            return
+        }
+
         mutate({
             clubId: club?.club_account_id as string,
             userId: member.user_id,
@@ -339,6 +346,14 @@ export default function ListMembersPage() {
                                                                 </DialogClose>
                                                                 <Button onClick={() => registerUser(member)} disabled={isPending}>{isPending ? "Registering..." : "Confirm"}</Button>
                                                             </DialogFooter>
+                                                            {invalidRegistrationAmount && (
+                                                                <Alert className="border border-red-600 text-red-600">
+                                                                    <AlertCircle className="h-4 w-4 text-red-600" />
+                                                                    <AlertDescription className="text-xs text-red-600">
+                                                                        The amount entered cannot be less than {formatAmount(0, club?.currency)} and more than the outstanding amount.
+                                                                    </AlertDescription>
+                                                                </Alert>
+                                                            )}
                                                         </DialogContent>
                                                     </Dialog>
                                                 </TableCell>
