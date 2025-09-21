@@ -111,10 +111,13 @@ export default function ViewClubPage() {
                         <Tabs defaultValue="home">
                             <TabsList className="justify-start h-10">
                                 <>
-                                    <TabsTrigger value="home">Home</TabsTrigger>
+                                    <TabsTrigger className="w-[150px]" value="home">Home</TabsTrigger>
                                     {
                                         data?.club_member_exists &&
-                                        <TabsTrigger value="bank">Payments & Billing</TabsTrigger>
+                                        <>
+                                            <TabsTrigger className="w-[150px]" value="bank">Payments & Billing</TabsTrigger>
+                                            <TabsTrigger className="w-[150px]" value="transactions">Transactions</TabsTrigger>
+                                        </>
                                     }
                                 </>
                             </TabsList>
@@ -204,41 +207,6 @@ export default function ViewClubPage() {
                                     </Card>
                                 </TabsContent>
                             }
-                            {/* 
-                        <TabsContent value="membership">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Membership</CardTitle>
-                                    <CardDescription>Your recent posts will appear here.</CardDescription>
-                                </CardHeader>
-                            </Card>
-                        </TabsContent>
-
-                        <TabsContent value="storage">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Storage</CardTitle>
-                                    <CardDescription>Your storage data will appear here.</CardDescription>
-                                </CardHeader>
-                            </Card>
-                        </TabsContent>
-
-                        <TabsContent value="extra">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Extra</CardTitle>
-                                    <CardDescription>Club Extra details will appear here.</CardDescription>
-                                </CardHeader>
-                            </Card>
-                        </TabsContent>
-                        <TabsContent value="history">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Account history</CardTitle>
-                                    <CardDescription>Club account history will appear here.</CardDescription>
-                                </CardHeader>
-                            </Card>
-                        </TabsContent> */}
                         </Tabs>
                     </div>
                 </div>
