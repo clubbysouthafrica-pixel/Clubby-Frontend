@@ -249,7 +249,7 @@ export function ClubRegisterForm({
                       <ul className="ml-6 list-disc space-y-1">
                         {registrationRequest.billing_fields.map((f: FieldRequest) => (
                           <li key={f.field_id} className="font-small">
-                            <Label className="font-normal">{getFieldName(pages, f.field_id)}: {formatAmount(f?.value as number, club.currency)} {f.label ? `(${f.label})` : ""}</Label> 
+                            <Label className="font-normal">{getFieldName(pages, f.field_id)}: {formatAmount(f?.value as number, club.currency)} {f.label ? `(${f.label})` : ""}</Label>
                           </li>
                         ))}
                       </ul>
@@ -341,7 +341,7 @@ export function ClubRegisterForm({
                   )}
 
                   {pages.length === 1 ? (
-                    <Button type="submit" className="w-full" disabled={isPending}>
+                    <Button type="button" onClick={(e) => registerUser(e as any)} disabled={isPending}>
                       {isPending ? "Registering..." : "Continue"}
                     </Button>
                   ) : !registrationRequest ? (
