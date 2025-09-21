@@ -5,11 +5,8 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogFooter,
-    DialogClose,
     DialogDescription,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     Table,
@@ -19,7 +16,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { X, User } from "lucide-react";
+import { User } from "lucide-react";
 import { formatAmount } from "@/data/currencies";
 import { Label } from "@/components/ui/label";
 
@@ -37,22 +34,25 @@ export default function SelectedMemberDialog({
     const [selectedTab, setSelectedTab] = useState("registered-members");
     const [open, setOpen] = useState(false);
 
-    // Open the dialog automatically if selectedMember is set
     React.useEffect(() => {
         if (selectedMember) setOpen(true);
         else setOpen(false);
     }, [selectedMember]);
 
-    if (!selectedMember) return null; // Don't render if no member selected
+    if (!selectedMember) return null;
 
     return (
-        <Dialog open={open} onOpenChange={(openState) => {
-            setOpen(openState);
-            if (!openState) setSelectedMember(null); // Close resets selectedMember
-        }}>
+        <Dialog
+            open={open}
+            onOpenChange={(openState) => {
+                setOpen(openState);
+                if (!openState) {
+                    setSelectedMember(null);
+                    window.history.pushState("", document.title, window.location.pathname + window.location.search);
+                }
+            }}
+        >
             <DialogTrigger asChild>
-                {/* You can put your trigger button here if you want manual open */}
-                {/* Or remove this if you only open dialog programmatically */}
                 <></>
             </DialogTrigger>
 
@@ -69,7 +69,7 @@ export default function SelectedMemberDialog({
 
                 <Tabs value={selectedTab} onValueChange={setSelectedTab} className="mt-0">
                     <TabsList>
-                        <TabsTrigger value="registered-members">Information</TabsTrigger>
+                        <TabsTrigger value="registered-members">Club information</TabsTrigger>
                         <TabsTrigger value="pending-members">Club fees</TabsTrigger>
                     </TabsList>
 
@@ -105,8 +105,8 @@ export default function SelectedMemberDialog({
                                             </TableCell>
                                             <TableCell className="align-middle px-2 py-2">
                                                 {
-                                                key.value === "true" && key.type === "STANDARD_CHECKBOX" ? `✅`
-                                                    : key.value === "true" && key.type === "STANDARD_CHECKBOX" ? `❌` : key.value
+                                                    key.value === "true" && key.type === "STANDARD_CHECKBOX" ? `✅`
+                                                        : key.value === "true" && key.type === "STANDARD_CHECKBOX" ? `❌` : key.value
                                                 }
                                             </TableCell>
                                         </TableRow>

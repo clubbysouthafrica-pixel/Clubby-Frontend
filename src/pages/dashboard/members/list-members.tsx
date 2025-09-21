@@ -66,6 +66,10 @@ export default function ListMembersPage() {
     }
 
     useEffect(() => {
+        setDisplayAmount(formatAmount(0, club?.currency))
+    }, [club]);
+
+    useEffect(() => {
         const updateHash = () => {
             const hash = window.location.hash.replace("#", "");
             setHashUserId(hash || null);
@@ -103,7 +107,7 @@ export default function ListMembersPage() {
 
     useEffect(() => {
         if (isSuccess) {
-            setOpenDialogUserId(null); // Close the dialog after success
+            setOpenDialogUserId(null);
         }
     }, [isSuccess]);
 
@@ -263,8 +267,15 @@ export default function ListMembersPage() {
                                     <TableBody>
                                         {clubMembers?.unregistered?.length ? clubMembers.unregistered.map((member: ClubMember) => (
                                             <TableRow key={member.user_id}>
-                                                <TableCell className="text-center">{member.member_first_name + " " + member.member_surname}</TableCell>
-                                                {/* <TableCell><Badge variant="outline">{member.billing_type}</Badge></TableCell> */}
+                                                <TableCell className="text-center">
+                                                    <a
+                                                        onClick={() => setSelectedMember(member)}
+                                                        href={`#${member.user_id}`}
+                                                        className="underline text-blue-600 hover:text-blue-800 cursor-pointer"
+                                                    >
+                                                        {member.member_first_name + " " + member.member_surname}
+                                                    </a>
+                                                </TableCell>
                                                 <TableCell className="text-center">
                                                     {member.registration_submitted_on ? (() => {
                                                         const date = new Date(member.registration_submitted_on);
@@ -350,7 +361,7 @@ export default function ListMembersPage() {
                 </Tabs>
             }
             {
-                hashUserId && <SelectedMember selectedMember={selectedMember} setSelectedMember={setSelectedMember} currency={club?.currency} />
+                hashUserId && <SelectedMember selectedMember={selectedMember} setSelectedMember={setSelectedMember} currency={club?.currency ?? "ZAR"} />
             }
         </div>
     );
