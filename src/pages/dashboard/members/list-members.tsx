@@ -2,7 +2,6 @@ import React, { useContext, useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useFetchClubMembers } from "@/queries/admin/club-members";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
-import { useFetchClub } from "@/queries/clubs";
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +23,6 @@ import { Input } from "@/components/ui/input";
 export default function ListMembersPage() {
     const { club } = useContext(ClubContext) as ClubContextType
     const { data: clubMembers, isLoading: clubMembersLoading } = useFetchClubMembers(club?.club_account_id as string)
-    const { data: clubDetails, isLoading: clubLoading, refetch } = useFetchClub(club?.club_account_id as string)
     const { mutate, isPending, isSuccess, isError, reset } = useRegisterUserToClubMutation()
     const [listActionItems, setlistActionItems] = useState<string[]>([])
     const [allMembersSelected, setAllMembersSelected] = useState(false)
@@ -108,7 +106,6 @@ export default function ListMembersPage() {
                     window.location.reload();
                 }
                 setMemberRegisterAmount(0)
-                refetch()
             },
         })
     }
@@ -132,10 +129,6 @@ export default function ListMembersPage() {
     return (
         <div className="p-5 min-h-screen">
             <h1 className="text-base font-bold">Club Members</h1>
-            {
-                clubLoading &&
-                <div>loading...</div>
-            }
             {
                 clubMembersLoading && <div>loading...</div>
             }
