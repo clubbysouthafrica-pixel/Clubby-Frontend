@@ -35,6 +35,7 @@ export default function ListMembersPage() {
     const [memberRegisterAmount, setMemberRegisterAmount] = useState<number>(0);
     const [displayAmount, setDisplayAmount] = useState<string>(formatAmount(0, club?.currency));
     const [invalidRegistrationAmount, setInvalidRegistrationAmount] = useState(false)
+    const [memberNameFilter, setMemberNameFilter] = useState("");
 
     const handleFormattedInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setInvalidRegistrationAmount(false)
@@ -118,7 +119,15 @@ export default function ListMembersPage() {
         }
     }, [isSuccess]);
 
-    // console.log(clubMembers)
+    const filteredRegisteredMembers = clubMembers?.registered?.filter((member: ClubMember) => {
+        const fullName = (member.member_first_name + " " + member.member_surname).toLowerCase();
+        return fullName.includes(memberNameFilter.toLowerCase());
+    }) ?? [];
+
+    const filteredUnregisteredMembers = clubMembers?.unregistered?.filter((member: ClubMember) => {
+        const fullName = (member.member_first_name + " " + member.member_surname).toLowerCase();
+        return fullName.includes(memberNameFilter.toLowerCase());
+    }) ?? [];
 
     return (
         <div className="p-5 min-h-screen">
@@ -137,9 +146,9 @@ export default function ListMembersPage() {
                     onValueChange={() => {
                         setHashUserId(null);
                         setSelectedMember({});
-                        window.history.pushState("", document.title, window.location.pathname + window.location.search); // remove hash from URL
+                        window.history.pushState("", document.title, window.location.pathname + window.location.search);
                     }}
-                    className="w-full flex-col justify-start gap-6 mt-4">
+                    className="w-full flex-col justify-start gap-1 mt-4">
                     <div className="flex items-center justify-between">
                         <Label htmlFor="view-selector" className="sr-only">
                             View
@@ -153,6 +162,16 @@ export default function ListMembersPage() {
                                 Pending Members <Badge variant="secondary">{clubMembers?.unregistered?.length ?? clubMembers?.not_registered?.length}</Badge>
                             </TabsTrigger>
                         </TabsList>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <div className="mb-1 max-w-sm mt-4 w-[500px]">
+                            <Input
+                                placeholder="Filter by member name"
+                                value={memberNameFilter}
+                                onChange={(e) => setMemberNameFilter(e.target.value)}
+                                className="w-[80%]"
+                            />
+                        </div>
                         <div className="flex-init px-5 space-x-5 items-center justify-center">
                             {club?.club_account_id && <DeregisterAllDialog clubId={club.club_account_id} disabled={!clubMembers?.registered?.length} />}
                             {club?.club_account_id && <DeregisterMembersDialog dereigsterMembers={dereigsterMembers} clubId={club.club_account_id} setlistActionItems={setlistActionItems} setDeregisterMembers={setDeregisterMembers} setAllMembersSelected={setAllMembersSelected} />}
@@ -188,7 +207,7 @@ export default function ListMembersPage() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {clubMembers?.registered?.length ? clubMembers.registered.map((member: ClubMember) => (
+                                        {filteredRegisteredMembers.length ? filteredRegisteredMembers.map((member: ClubMember) => (
                                             <TableRow key={member.user_id}>
                                                 <TableCell className="text-center">
                                                     <a
@@ -261,7 +280,7 @@ export default function ListMembersPage() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {clubMembers?.unregistered?.length ? clubMembers.unregistered.map((member: ClubMember) => (
+                                        {filteredUnregisteredMembers.length ? filteredUnregisteredMembers.map((member: ClubMember) => (
                                             <TableRow key={member.user_id}>
                                                 <TableCell className="text-center">
                                                     <a
