@@ -172,7 +172,7 @@ export default function ListMembersPage() {
                                 <Table>
                                     <TableHeader className="bg-muted sticky top-0 z-10">
                                         <TableRow>
-                                            <TableHead className="text-center">Display Name</TableHead>
+                                            <TableHead className="text-center">Member name</TableHead>
                                             <TableHead className="text-center">Email</TableHead>
                                             <TableHead className="text-center">Outstanding Amount</TableHead>
                                             <TableHead className="text-center">
