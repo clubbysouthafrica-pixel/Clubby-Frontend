@@ -76,7 +76,6 @@ export default function ClubUsageAndCharges({ data, currency }: any) {
             </TabsList>
           </div>
 
-          {/* Only show the selected tab's data */}
           {REPORTING_METRICS.map((key) => {
             if (selectedTab !== key) return null;
 
@@ -103,7 +102,7 @@ export default function ClubUsageAndCharges({ data, currency }: any) {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis yAxisId="left" />
-                    <YAxis yAxisId="right" orientation="right"
+                    <YAxis yAxisId="right" orientation="right" 
                       tickFormatter={(value) => formatAmount(value, currency)} />
                     <Tooltip
                       formatter={(value, name) => {

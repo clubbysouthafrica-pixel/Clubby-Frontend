@@ -96,6 +96,7 @@ export function ClubRegisterForm({
   const [requiredFieldsMissing, setRequiredFieldsMissing] = useState(false);
   const [registrationRequest, setRegistrationRequest] = useState<RegistrationRequest | undefined>(undefined)
   const [totalRegistrationFee, setTotalRegistrationFee] = useState(0);
+  const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
     if ((data as PagedFormPayload)?.pages) {
@@ -189,9 +190,13 @@ export function ClubRegisterForm({
   };
 
   const submitRegistration = () => {
+    setIsRegistering(true)
     if (registrationRequest) {
       mutate(registrationRequest, {
-        onSuccess: () => navigate(`/clubs/${clubId}`),
+        onSuccess: () => {
+          navigate(`/clubs/${clubId}`)
+          setIsRegistering(false)
+        },
         onError: () => toast(registerError?.message ?? "Registration failed"),
       });
     }
@@ -367,7 +372,7 @@ export function ClubRegisterForm({
                         Back to form
                       </Button>
                       <Button type="button" onClick={submitRegistration}>
-                        Submit registration
+                        {isRegistering ? "Registering..." : "Submit registration"}
                       </Button>
                     </div>
                   )}

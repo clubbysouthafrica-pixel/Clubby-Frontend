@@ -14,4 +14,5 @@ export interface ClubDetailsRequest {
     bank_details: ClubBankDetailsRequest
     country_of_operation: string
     currency: string
+    support_email: string
 }

@@ -2,7 +2,6 @@ import React, { useContext, useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useFetchClubMembers } from "@/queries/admin/club-members";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
-import { useFetchClub } from "@/queries/clubs";
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +23,6 @@ import { Input } from "@/components/ui/input";
 export default function ListMembersPage() {
     const { club } = useContext(ClubContext) as ClubContextType
     const { data: clubMembers, isLoading: clubMembersLoading } = useFetchClubMembers(club?.club_account_id as string)
-    const { data: clubDetails, isLoading: clubLoading, refetch } = useFetchClub(club?.club_account_id as string)
     const { mutate, isPending, isSuccess, isError, reset } = useRegisterUserToClubMutation()
     const [listActionItems, setlistActionItems] = useState<string[]>([])
     const [allMembersSelected, setAllMembersSelected] = useState(false)
@@ -34,8 +32,11 @@ export default function ListMembersPage() {
     const [selectedMember, setSelectedMember] = useState({})
     const [memberRegisterAmount, setMemberRegisterAmount] = useState<number>(0);
     const [displayAmount, setDisplayAmount] = useState<string>(formatAmount(0, club?.currency));
+    const [invalidRegistrationAmount, setInvalidRegistrationAmount] = useState(false)
+    const [memberNameFilter, setMemberNameFilter] = useState("");
 
     const handleFormattedInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setInvalidRegistrationAmount(false)
         const inputValue = e.target.value.replace(/[^\d]/g, "");
         const numericValue = parseInt(inputValue || "0", 10);
 
@@ -84,6 +85,11 @@ export default function ListMembersPage() {
     }, []);
 
     const registerUser = (member: ClubMember) => {
+        if (memberRegisterAmount > member.outstanding_amount || memberRegisterAmount < 0) {
+            setInvalidRegistrationAmount(true)
+            return
+        }
+
         mutate({
             clubId: club?.club_account_id as string,
             userId: member.user_id,
@@ -100,7 +106,6 @@ export default function ListMembersPage() {
                     window.location.reload();
                 }
                 setMemberRegisterAmount(0)
-                refetch()
             },
         })
     }
@@ -111,26 +116,19 @@ export default function ListMembersPage() {
         }
     }, [isSuccess]);
 
-    // console.log(clubMembers)
+    const filteredRegisteredMembers = clubMembers?.registered?.filter((member: ClubMember) => {
+        const fullName = (member.member_first_name + " " + member.member_surname).toLowerCase();
+        return fullName.includes(memberNameFilter.toLowerCase());
+    }) ?? [];
+
+    const filteredUnregisteredMembers = clubMembers?.unregistered?.filter((member: ClubMember) => {
+        const fullName = (member.member_first_name + " " + member.member_surname).toLowerCase();
+        return fullName.includes(memberNameFilter.toLowerCase());
+    }) ?? [];
 
     return (
-        <div className="p-6 space-y-6 min-h-screen">
-            <h1 className="text-base font-bold">List Club Members</h1>
-
-            {/* Club Details */}
-            {
-                clubLoading &&
-                <div>loading...</div>
-            }
-            {
-                !clubLoading &&
-                <div className="flex space-x-4 content-center">
-                    <div className="text-4xl">{clubDetails?.club_name}</div>
-                    <div className="content-ceter self-center"><Badge>{clubDetails?.club_type}</Badge></div>
-                </div>
-            }
-
-            {/* Members Section */}
+        <div className="p-5 min-h-screen">
+            <h1 className="text-base font-bold">Club Members</h1>
             {
                 clubMembersLoading && <div>loading...</div>
             }
@@ -141,9 +139,9 @@ export default function ListMembersPage() {
                     onValueChange={() => {
                         setHashUserId(null);
                         setSelectedMember({});
-                        window.history.pushState("", document.title, window.location.pathname + window.location.search); // remove hash from URL
+                        window.history.pushState("", document.title, window.location.pathname + window.location.search);
                     }}
-                    className="w-full flex-col justify-start gap-6">
+                    className="w-full flex-col justify-start gap-1 mt-4">
                     <div className="flex items-center justify-between">
                         <Label htmlFor="view-selector" className="sr-only">
                             View
@@ -157,6 +155,16 @@ export default function ListMembersPage() {
                                 Pending Members <Badge variant="secondary">{clubMembers?.unregistered?.length ?? clubMembers?.not_registered?.length}</Badge>
                             </TabsTrigger>
                         </TabsList>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <div className="mb-1 max-w-sm mt-4 w-[500px]">
+                            <Input
+                                placeholder="Filter by member name"
+                                value={memberNameFilter}
+                                onChange={(e) => setMemberNameFilter(e.target.value)}
+                                className="w-[80%]"
+                            />
+                        </div>
                         <div className="flex-init px-5 space-x-5 items-center justify-center">
                             {club?.club_account_id && <DeregisterAllDialog clubId={club.club_account_id} disabled={!clubMembers?.registered?.length} />}
                             {club?.club_account_id && <DeregisterMembersDialog dereigsterMembers={dereigsterMembers} clubId={club.club_account_id} setlistActionItems={setlistActionItems} setDeregisterMembers={setDeregisterMembers} setAllMembersSelected={setAllMembersSelected} />}
@@ -176,7 +184,7 @@ export default function ListMembersPage() {
                                 <Table>
                                     <TableHeader className="bg-muted sticky top-0 z-10">
                                         <TableRow>
-                                            <TableHead className="text-center">Display Name</TableHead>
+                                            <TableHead className="text-center">Member name</TableHead>
                                             <TableHead className="text-center">Email</TableHead>
                                             <TableHead className="text-center">Outstanding Amount</TableHead>
                                             <TableHead className="text-center">
@@ -192,7 +200,7 @@ export default function ListMembersPage() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {clubMembers?.registered?.length ? clubMembers.registered.map((member: ClubMember) => (
+                                        {filteredRegisteredMembers.length ? filteredRegisteredMembers.map((member: ClubMember) => (
                                             <TableRow key={member.user_id}>
                                                 <TableCell className="text-center">
                                                     <a
@@ -265,7 +273,7 @@ export default function ListMembersPage() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {clubMembers?.unregistered?.length ? clubMembers.unregistered.map((member: ClubMember) => (
+                                        {filteredUnregisteredMembers.length ? filteredUnregisteredMembers.map((member: ClubMember) => (
                                             <TableRow key={member.user_id}>
                                                 <TableCell className="text-center">
                                                     <a
@@ -339,6 +347,14 @@ export default function ListMembersPage() {
                                                                 </DialogClose>
                                                                 <Button onClick={() => registerUser(member)} disabled={isPending}>{isPending ? "Registering..." : "Confirm"}</Button>
                                                             </DialogFooter>
+                                                            {invalidRegistrationAmount && (
+                                                                <Alert className="border border-red-600 text-red-600">
+                                                                    <AlertCircle className="h-4 w-4 text-red-600" />
+                                                                    <AlertDescription className="text-xs text-red-600">
+                                                                        The amount entered cannot be less than {formatAmount(0, club?.currency)} and more than the outstanding amount.
+                                                                    </AlertDescription>
+                                                                </Alert>
+                                                            )}
                                                         </DialogContent>
                                                     </Dialog>
                                                 </TableCell>
@@ -361,7 +377,7 @@ export default function ListMembersPage() {
                 </Tabs>
             }
             {
-                hashUserId && <SelectedMember selectedMember={selectedMember} setSelectedMember={setSelectedMember} currency={club?.currency ?? "ZAR"} />
+                hashUserId && <SelectedMember selectedMember={selectedMember} setSelectedMember={setSelectedMember} currency={club?.currency ?? "ZAR"} clubAccountId={club?.club_account_id ?? ""} />
             }
         </div>
     );

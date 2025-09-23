@@ -15,10 +15,11 @@ import AdminRegistrationFormPage from "@/pages/registrations/admin-registration-
 import ManageClubDashboard from "@/pages/dashboard/clubs/manage-club";
 import ListMembersPage from "@/pages/dashboard/members/list-members";
 import ManagePage from "@/pages/dashboard/manage/manage";
-import ManageClubEditPage from "@/pages/dashboard/clubs/edit-club";
 import HomeDashboardPage from "@/pages/dashboard/dash-home";
-import RegistrationReportPage from "@/pages/dashboard/members/registration-report-page";
+import RegistrationReportPage from "@/pages/admin/reporting/registration-report-page";
 import BillingPage from "@/pages/admin/billing/billing";
+import GeneralReportingPage from "@/pages/admin/reporting/general-reporting";
+import FinancialTransactionsPage from "@/pages/admin/reporting/financial-transactions";
 
 export default function AdminRoutes() {
     return (
@@ -41,9 +42,10 @@ export default function AdminRoutes() {
             <Route path="/manage" element={<ProtectedRoute><ManagePage/></ProtectedRoute>}></Route>
             <Route path="/manage/members" element={<ProtectedRoute><ListMembersPage/></ProtectedRoute>}></Route>
             <Route path="/manage/club" element={<ProtectedRoute><ManageClubDashboard/></ProtectedRoute>}></Route>
-            <Route path="/manage/club/edit" element={<ProtectedRoute><ManageClubEditPage/></ProtectedRoute>}></Route>
             <Route path="/manage/registrations/forms" element={<ProtectedRoute><AdminRegistrationFormPage /></ProtectedRoute>}></Route>
-            <Route path="/manage/members/report" element={<ProtectedRoute><RegistrationReportPage/></ProtectedRoute>}></Route>
+            <Route path="/reporting/registration" element={<ProtectedRoute><RegistrationReportPage/></ProtectedRoute>}></Route>
+            <Route path="/reporting/general" element={<ProtectedRoute><GeneralReportingPage/></ProtectedRoute>}></Route>
+            <Route path="/reporting/transactions" element={<ProtectedRoute><FinancialTransactionsPage/></ProtectedRoute>}></Route>
         </Routes>
     )
 }
