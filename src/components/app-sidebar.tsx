@@ -3,6 +3,7 @@ import {
   HomeIcon,
   UserPlusIcon,
   UsersIcon,
+  BarChart
 } from "lucide-react"
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
@@ -90,6 +91,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               {
                 title: "Create Form",
                 url: "/manage/registrations/forms",
+              },
+            ],
+          },
+          {
+            title: "Reporting",
+            url: "/reporting",
+            icon: BarChart,
+            items: [
+              {
+                title: "General reporting",
+                url: "/reporting/general",
+              },
+              {
+                title: "Registration reporting",
+                url: "/reporting/registration",
               },
             ],
           },
