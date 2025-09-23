@@ -43,9 +43,7 @@ export default function SelectedMember({
         else setOpen(false);
     }, [selectedMember]);
     if (!selectedMember) return null;
-
-    console.log(transactions)
-
+    
     return (
         <Dialog
             open={open}
@@ -162,22 +160,23 @@ export default function SelectedMember({
                                 </TableHeader>
                                 <TableBody>
                                     {
-                                        transactions.transactions.map((key: any) => (
-                                            <TableRow key={key.transaction_id}>
-                                                <TableCell className="text-center w-1/4">
-                                                    {key.date}
-                                                </TableCell>
-                                                <TableCell className="text-center w-1/4">
-                                                    {key.payment_type}
-                                                </TableCell>
-                                                <TableCell className="text-center w-1/4">
-                                                    {formatAmount(key.amount, currency)}
-                                                </TableCell>
-                                                <TableCell className={`text-center font-bold w-1/4 ${key.status === "PENDING" ? "text-red-500" : "text-green-500"}`}>
-                                                    {key.status}
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
+                                        isLoading ? <div>Loading...</div> :
+                                            transactions?.transactions.map((key: any) => (
+                                                <TableRow key={key.transaction_id}>
+                                                    <TableCell className="text-center w-1/4">
+                                                        {key.date}
+                                                    </TableCell>
+                                                    <TableCell className="text-center w-1/4">
+                                                        {key.payment_type}
+                                                    </TableCell>
+                                                    <TableCell className="text-center w-1/4">
+                                                        {formatAmount(key.amount, currency)}
+                                                    </TableCell>
+                                                    <TableCell className={`text-center font-bold w-1/4 ${key.status === "PENDING" ? "text-red-500" : "text-green-500"}`}>
+                                                        {key.status}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
                                 </TableBody>
                             </Table>
                         }
