@@ -121,23 +121,12 @@ export default function ListMembersPage() {
     // console.log(clubMembers)
 
     return (
-        <div className="p-6 space-y-6 min-h-screen">
-            <h1 className="text-base font-bold">List Club Members</h1>
-
-            {/* Club Details */}
+        <div className="p-5 min-h-screen">
+            <h1 className="text-base font-bold">Club Members</h1>
             {
                 clubLoading &&
                 <div>loading...</div>
             }
-            {
-                !clubLoading &&
-                <div className="flex space-x-4 content-center">
-                    <div className="text-4xl">{clubDetails?.club_name}</div>
-                    <div className="content-ceter self-center"><Badge>{clubDetails?.club_type}</Badge></div>
-                </div>
-            }
-
-            {/* Members Section */}
             {
                 clubMembersLoading && <div>loading...</div>
             }
@@ -150,7 +139,7 @@ export default function ListMembersPage() {
                         setSelectedMember({});
                         window.history.pushState("", document.title, window.location.pathname + window.location.search); // remove hash from URL
                     }}
-                    className="w-full flex-col justify-start gap-6">
+                    className="w-full flex-col justify-start gap-6 mt-4">
                     <div className="flex items-center justify-between">
                         <Label htmlFor="view-selector" className="sr-only">
                             View

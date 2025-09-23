@@ -24,6 +24,9 @@ export default function FinancialTransactionsPage() {
                                         Transaction ID
                                     </TableHead>
                                     <TableHead className="text-center w-1/4">
+                                        Member name
+                                    </TableHead>
+                                    <TableHead className="text-center w-1/4">
                                         Date
                                     </TableHead>
                                     <TableHead className="text-center w-1/4">
@@ -44,6 +47,9 @@ export default function FinancialTransactionsPage() {
                                             <TableRow key={key.transaction_id}>
                                                 <TableCell className="text-center w-1/4">
                                                     {key.transaction_id}
+                                                </TableCell>
+                                                <TableCell className="text-center w-1/4">
+                                                    {key.name}
                                                 </TableCell>
                                                 <TableCell className="text-center w-1/4">
                                                     {key.date}

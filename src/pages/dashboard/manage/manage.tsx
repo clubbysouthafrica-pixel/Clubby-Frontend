@@ -22,7 +22,7 @@ export default function Manage() {
         },
     ]
   return (
-    <div className="p-6 space-y-6 min-h-screen">
+    <div className="p-5 min-h-screen">
       <h1 className="text-base font-bold">Manage</h1>
       <div className="rounded-md border overflow-hidden">
       <Table>

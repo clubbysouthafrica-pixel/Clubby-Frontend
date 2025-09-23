@@ -33,7 +33,7 @@ export default function HomeDashboardPage() {
 
     return (
         <div className="p-5 min-h-screen">
-            <h1 className="text-base font-bold mt-5">Manage</h1>
+            <h1 className="text-base font-bold">Manage</h1>
             <div className="rounded-md border overflow-hidden md:my-3">
                 <Table>
                     <TableHeader className="bg-muted">
