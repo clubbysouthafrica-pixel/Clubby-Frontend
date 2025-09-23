@@ -106,7 +106,7 @@ export default function SelectedMember({
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {selectedTab === "registered-members" &&
+                                    {selectedTab !== "pending-members" &&
                                         selectedMember.meta_standard.map((key: any) => (
                                             <TableRow key={key.field_name}>
                                                 <TableCell className="text-center px-2 py-2">

@@ -19,6 +19,7 @@ import HomeDashboardPage from "@/pages/dashboard/dash-home";
 import RegistrationReportPage from "@/pages/admin/reporting/registration-report-page";
 import BillingPage from "@/pages/admin/billing/billing";
 import GeneralReportingPage from "@/pages/admin/reporting/general-reporting";
+import FinancialTransactionsPage from "@/pages/admin/reporting/financial-transactions";
 
 export default function AdminRoutes() {
     return (
@@ -44,6 +45,7 @@ export default function AdminRoutes() {
             <Route path="/manage/registrations/forms" element={<ProtectedRoute><AdminRegistrationFormPage /></ProtectedRoute>}></Route>
             <Route path="/reporting/registration" element={<ProtectedRoute><RegistrationReportPage/></ProtectedRoute>}></Route>
             <Route path="/reporting/general" element={<ProtectedRoute><GeneralReportingPage/></ProtectedRoute>}></Route>
+            <Route path="/reporting/transactions" element={<ProtectedRoute><FinancialTransactionsPage/></ProtectedRoute>}></Route>
         </Routes>
     )
 }

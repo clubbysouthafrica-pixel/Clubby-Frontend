@@ -1,4 +1,4 @@
-import { getMemberTransactions } from "@/services/admin/transactions"
+import { getMemberTransactions, getClubTransactions } from "@/services/admin/transactions"
 import { useQuery } from "@tanstack/react-query"
 
 export const useFetchMemberTransactions = (clubId: string, userId: string) => {
@@ -9,5 +9,16 @@ export const useFetchMemberTransactions = (clubId: string, userId: string) => {
             return getMemberTransactions(clubId, userId);
         },
         enabled: !!clubId && !!userId,
+    })
+}
+
+export const useFetchClubTransactions = (clubId: string) => {
+    return useQuery({
+        queryKey: ['adminMemberTransactions', clubId],
+        queryFn: ({ queryKey }) => {
+            const [_key, clubId] = queryKey;
+            return getClubTransactions(clubId);
+        },
+        enabled: !!clubId,
     })
 }

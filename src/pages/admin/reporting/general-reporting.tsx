@@ -20,7 +20,7 @@ export default function GeneralReportingPage() {
 
     return (
         <div className="p-5 min-h-screen">
-            <h1 className="text-base font-bold mt-5">General Report</h1>
+            <h1 className="text-base font-bold">General Report</h1>
             {!isLoading && report &&
                 <div className="@container/main flex flex-1 flex-col gap-2">
                     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-2">

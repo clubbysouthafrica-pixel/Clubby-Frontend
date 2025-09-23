@@ -103,6 +103,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 title: "Registration reporting",
                 url: "/reporting/registration",
               },
+              {
+                title: "Financial Transaction",
+                url: "/reporting/transactions",
+              }
             ],
           },
         ]} />}

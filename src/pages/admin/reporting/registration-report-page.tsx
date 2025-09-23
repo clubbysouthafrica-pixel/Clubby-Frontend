@@ -9,7 +9,7 @@ export default function RegistrationReportPage() {
 
   return (
     <div className="p-5 min-h-screen">
-      <h1 className="text-base font-bold mt-5">Registration Report</h1>
+      <h1 className="text-base font-bold">Registration Report</h1>
       {
         isLoading &&
         <div>loading...</div>
