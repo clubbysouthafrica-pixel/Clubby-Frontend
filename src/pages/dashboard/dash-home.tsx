@@ -1,13 +1,8 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { useContext } from "react";
-import { ClubContext, ClubContextType } from "@/context/ClubContext";
-import { useGeneralReportingQuery } from "@/queries/admin/useReporting";
 
 export default function HomeDashboardPage() {
-    const { club } = useContext(ClubContext) as ClubContextType
-    const { data: report, isLoading } = useGeneralReportingQuery(club?.club_account_id as string)
     const navigate = useNavigate()
     const manageRoutes = [
         {
@@ -26,10 +21,6 @@ export default function HomeDashboardPage() {
             route: "/manage/registrations/forms"
         },
     ]
-
-    if (isLoading || !report) {
-        return <div className="p-5">Loading...</div>;
-    }
 
     return (
         <div className="p-5 min-h-screen">
