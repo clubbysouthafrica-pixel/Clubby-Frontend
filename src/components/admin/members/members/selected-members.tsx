@@ -167,7 +167,7 @@ export default function SelectedMember({
                                                         {key.payment_type}
                                                     </TableCell>
                                                     <TableCell className="text-center w-1/4">
-                                                        {key.amount_paid}
+                                                        {formatAmount(key.amount_paid, currency)}
                                                     </TableCell>
                                                     <TableCell className="text-center w-1/4">
                                                         {formatAmount(key.amount, currency)}
