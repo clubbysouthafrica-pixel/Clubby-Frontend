@@ -172,7 +172,7 @@ export default function SelectedMember({
                                                     <TableCell className="text-center w-1/4">
                                                         {formatAmount(key.amount, currency)}
                                                     </TableCell>
-                                                    <TableCell className={`text-center font-bold w-1/4 ${key.status === "PENDING" ? "text-red-500" : "text-green-500"}`}>
+                                                    <TableCell className={`text-center font-bold w-1/4 ${key.status === "PENDING" ? "text-red-500" : key.status === "PARTIALLY PAID" ? "text-orange-500" : "text-green-500"}`}>
                                                         {key.status}
                                                     </TableCell>
                                                 </TableRow>
