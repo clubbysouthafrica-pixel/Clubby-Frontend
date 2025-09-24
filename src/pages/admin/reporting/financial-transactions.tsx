@@ -137,8 +137,7 @@ export default function FinancialTransactionsPage() {
                                             {formatAmount(key.amount, club?.currency)}
                                         </TableCell>
                                         <TableCell
-                                            className={`text-center font-bold w-1/6 ${key.status === "PENDING" ? "text-red-500" : "text-green-500"
-                                                }`}
+                                            className={`text-center font-bold w-1/6 ${`text-center font-bold w-1/4 ${key.status === "PENDING" ? "text-red-500" : key.status === "PARTIALLY PAID" ? "text-orange-500" : "text-green-500"}`}`}
                                         >
                                             {key.status}
                                         </TableCell>
