@@ -89,9 +89,9 @@ export default function FinancialTransactionsPage() {
                             <TableRow>
                                 <TableHead className="text-center w-1/6">Transaction ID</TableHead>
                                 <TableHead className="text-center w-1/6">Member name</TableHead>
-                                <TableHead className="text-center w-1/6">Date</TableHead>
                                 <TableHead className="text-center w-1/6">Payment type</TableHead>
-                                <TableHead className="text-center w-1/6">Amount</TableHead>
+                                <TableHead className="text-center w-1/6">Amount Paid</TableHead>
+                                <TableHead className="text-center w-1/6">Amount Owing</TableHead>
                                 <TableHead className="text-center w-1/6">Status</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -131,8 +131,8 @@ export default function FinancialTransactionsPage() {
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-center w-1/6">{key.name}</TableCell>
-                                        <TableCell className="text-center w-1/6">{key.date}</TableCell>
                                         <TableCell className="text-center w-1/6">{key.payment_type}</TableCell>
+                                        <TableCell className="text-center w-1/6">{formatAmount(key.amount_paid, club?.currency)}</TableCell>
                                         <TableCell className="text-center w-1/6">
                                             {formatAmount(key.amount, club?.currency)}
                                         </TableCell>
