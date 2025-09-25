@@ -113,6 +113,44 @@ export function ClubRegisterForm({
     }
   }, [data]);
 
+  useEffect(() => {
+    if (!club?.meta) return;
+    const updatedPages = pages.map((page) => ({
+      ...page,
+      fields: page.fields.map((field) => {
+        const metaField = club.meta[field.field_id];
+        if (!metaField) return field;
+
+        if (field.billingOptions) {
+          const matchedOption = field.billingOptions.find(
+            (opt) => opt.option_order_id === metaField.option_order_id
+          );
+
+          if (matchedOption) {
+            return {
+              ...field,
+              value: matchedOption.label,
+              label: matchedOption.label,
+              selectedAmountCents: matchedOption.amount,
+              option_order_id: matchedOption.option_order_id,
+            };
+          }
+        } else {
+          return {
+            ...field,
+            value: metaField.value,
+          };
+        }
+
+        return field;
+      }),
+    }));
+
+    console.log('PAGES: ', updatedPages)
+
+    setPages(updatedPages);
+  }, [club]);
+
   const setFieldValue = (
     pageIndex: number,
     fieldId: string,
@@ -175,6 +213,8 @@ export function ClubRegisterForm({
       return;
     }
 
+    console.log('AFTER: ', pages)
+
     const allFields = pages.flatMap((p) => p.fields);
 
     const request: RegistrationRequest = createValidRegistrationRequest(allFields, clubId as string)
@@ -192,13 +232,13 @@ export function ClubRegisterForm({
   const submitRegistration = () => {
     setIsRegistering(true)
     if (registrationRequest) {
-      mutate(registrationRequest, {
-        onSuccess: () => {
-          navigate(`/clubs/${clubId}`)
-          setIsRegistering(false)
-        },
-        onError: () => toast(registerError?.message ?? "Registration failed"),
-      });
+      // mutate(registrationRequest, {
+      //   onSuccess: () => {
+      //     navigate(`/clubs/${clubId}`)
+      //     setIsRegistering(false)
+      //   },
+      //   onError: () => toast(registerError?.message ?? "Registration failed"),
+      // });
     }
   }
 

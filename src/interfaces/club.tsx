@@ -1,4 +1,5 @@
 export interface Club {
+    resubmission_required: boolean
     club_name: string
     currency: string
     club_account_id: string
