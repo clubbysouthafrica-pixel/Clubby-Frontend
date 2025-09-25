@@ -110,8 +110,42 @@ export function ClubRegisterForm({
             .map((f) => ({ ...f })),
         }));
       setPages(sorted);
+
+      if (club?.meta) {
+        const updatedPages = sorted.map((page) => ({
+          ...page,
+          fields: page.fields.map((field) => {
+            const metaField = club.meta[field.field_id];
+            if (!metaField) return field;
+    
+            if (field.billingOptions) {
+              const matchedOption = field.billingOptions.find(
+                (opt) => opt.option_order_id === metaField.option_order_id
+              );
+    
+              if (matchedOption) {
+                return {
+                  ...field,
+                  value: matchedOption.label,
+                  label: matchedOption.label,
+                  selectedAmountCents: matchedOption.amount,
+                  option_order_id: matchedOption.option_order_id,
+                };
+              }
+            } else {
+              return {
+                ...field,
+                value: metaField.value,
+              };
+            }
+    
+            return field;
+          }),
+        }));
+        setPages(updatedPages);
+      }
     }
-  }, [data]);
+  }, [data, club]);
 
   const setFieldValue = (
     pageIndex: number,

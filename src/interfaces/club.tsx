@@ -1,4 +1,5 @@
 export interface Club {
+    resubmission_required: boolean
     club_name: string
     currency: string
     club_account_id: string
@@ -23,6 +24,7 @@ export interface ClubMember {
     registration_submitted_on: string
     registration_payment_reference: string
     user_id: string
+    resubmission_required: boolean
 }
 
 export interface RegisterClubMember {

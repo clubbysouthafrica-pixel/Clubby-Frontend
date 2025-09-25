@@ -33,7 +33,7 @@ export default function SelectedMember({
     currency,
     clubAccountId,
 }: ImageProps) {
-    const [selectedTab, setSelectedTab] = useState("registered-members");
+    const [selectedTab, setSelectedTab] = useState("club-information");
     const [open, setOpen] = useState(false);
 
     const { data: transactions, isLoading } = useFetchMemberTransactions(clubAccountId, selectedMember?.user_id);
@@ -43,7 +43,7 @@ export default function SelectedMember({
         else setOpen(false);
     }, [selectedMember]);
     if (!selectedMember) return null;
-    
+
     return (
         <Dialog
             open={open}
@@ -71,17 +71,17 @@ export default function SelectedMember({
 
                 <Tabs value={selectedTab} onValueChange={setSelectedTab} className="mt-0">
                     <TabsList>
-                        <TabsTrigger className="w-[150px]" value="registered-members">Club information</TabsTrigger>
-                        <TabsTrigger className="w-[150px]" value="pending-members">Club fees</TabsTrigger>
+                        <TabsTrigger className="w-[150px]" value="club-information">Club information</TabsTrigger>
+                        <TabsTrigger className="w-[150px]" value="club-fees">Club fees</TabsTrigger>
                         <TabsTrigger className="w-[150px]" value="transactions">Transactions</TabsTrigger>
                     </TabsList>
 
-                    {selectedTab === "registered-members" && (
+                    {selectedTab === "club-information" && (
                         <DialogDescription className="mt-2 mb-4">
                             This section contains the standard fields completed by the member at the time of registration.
                         </DialogDescription>
                     )}
-                    {selectedTab === "pending-members" && (
+                    {selectedTab === "club-fees" && (
                         <DialogDescription className="mt-2 mb-4">
                             This section shows the club fees owed and paid by this member at the time of registration.
                         </DialogDescription>
@@ -93,7 +93,7 @@ export default function SelectedMember({
                     )}
 
                     <div className="overflow-hidden rounded-lg border">
-                        {selectedTab === "registered-members" || selectedTab === "pending-members" &&
+                        {(selectedTab === "club-information" || selectedTab === "club-fees") &&
                             <Table>
                                 <TableHeader className="bg-muted sticky top-0 z-10">
                                     <TableRow>
@@ -106,7 +106,7 @@ export default function SelectedMember({
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {selectedTab !== "pending-members" &&
+                                    {selectedTab === "club-information" &&
                                         selectedMember.meta_standard.map((key: any) => (
                                             <TableRow key={key.field_name}>
                                                 <TableCell className="text-center px-2 py-2">
@@ -120,7 +120,7 @@ export default function SelectedMember({
                                                 </TableCell>
                                             </TableRow>
                                         ))}
-                                    {selectedTab === "pending-members" &&
+                                    {selectedTab === "club-fees" &&
                                         selectedMember.meta_billing.map((key: any) => (
                                             <TableRow key={key.field_name}>
                                                 <TableCell className="text-center px-2 py-2">
@@ -145,13 +145,13 @@ export default function SelectedMember({
                                 <TableHeader className="bg-muted sticky top-0 z-10">
                                     <TableRow>
                                         <TableHead className="text-center w-1/4">
-                                            Date
-                                        </TableHead>
-                                        <TableHead className="text-center w-1/4">
                                             Payment type
                                         </TableHead>
                                         <TableHead className="text-center w-1/4">
-                                            Amount
+                                            Amount Paid
+                                        </TableHead>
+                                        <TableHead className="text-center w-1/4">
+                                            Amount Owing
                                         </TableHead>
                                         <TableHead className="text-center w-1/4">
                                             Status
@@ -164,15 +164,15 @@ export default function SelectedMember({
                                             transactions?.transactions.map((key: any) => (
                                                 <TableRow key={key.transaction_id}>
                                                     <TableCell className="text-center w-1/4">
-                                                        {key.date}
+                                                        {key.payment_type}
                                                     </TableCell>
                                                     <TableCell className="text-center w-1/4">
-                                                        {key.payment_type}
+                                                        {formatAmount(key.amount_paid, currency)}
                                                     </TableCell>
                                                     <TableCell className="text-center w-1/4">
                                                         {formatAmount(key.amount, currency)}
                                                     </TableCell>
-                                                    <TableCell className={`text-center font-bold w-1/4 ${key.status === "PENDING" ? "text-red-500" : "text-green-500"}`}>
+                                                    <TableCell className={`text-center font-bold w-1/4 ${key.status === "PENDING" ? "text-red-500" : key.status === "PARTIALLY PAID" ? "text-orange-500" : "text-green-500"}`}>
                                                         {key.status}
                                                     </TableCell>
                                                 </TableRow>

@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import SendEmailDialog from "@/components/send-email-dialog";
-import DeregisterAllDialog from "@/components/deregister-dialog";
+// import DeregisterAllDialog from "@/components/deregister-dialog";
 import DeregisterMembersDialog from "@/components/admin/members/members/deregister-members";
 import SelectedMember from "@/components/admin/members/members/selected-members";
 import { formatAmount } from "@/data/currencies";
@@ -149,10 +149,10 @@ export default function ListMembersPage() {
 
                         <TabsList>
                             <TabsTrigger value="registered-members">
-                                Registered Members <Badge variant="secondary">{clubMembers?.registered?.length}</Badge>
+                                Members Registered <Badge variant="secondary">{clubMembers?.registered?.length}</Badge>
                             </TabsTrigger>
                             <TabsTrigger value="pending-members">
-                                Pending Members <Badge variant="secondary">{clubMembers?.unregistered?.length ?? clubMembers?.not_registered?.length}</Badge>
+                                Members Pending <Badge variant="secondary">{clubMembers?.unregistered?.length ?? clubMembers?.not_registered?.length}</Badge>
                             </TabsTrigger>
                         </TabsList>
                     </div>
@@ -166,7 +166,7 @@ export default function ListMembersPage() {
                             />
                         </div>
                         <div className="flex-init px-5 space-x-5 items-center justify-center">
-                            {club?.club_account_id && <DeregisterAllDialog clubId={club.club_account_id} disabled={!clubMembers?.registered?.length} />}
+                            {/* {club?.club_account_id && <DeregisterAllDialog clubId={club.club_account_id} disabled={!clubMembers?.registered?.length} />} */}
                             {club?.club_account_id && <DeregisterMembersDialog dereigsterMembers={dereigsterMembers} clubId={club.club_account_id} setlistActionItems={setlistActionItems} setDeregisterMembers={setDeregisterMembers} setAllMembersSelected={setAllMembersSelected} />}
                             {club?.club_account_id && <SendEmailDialog clubId={club.club_account_id} contacts={listActionItems} setlistActionItems={setlistActionItems} setDeregisterMembers={setDeregisterMembers} setAllMembersSelected={setAllMembersSelected} />}
                         </div>
@@ -264,12 +264,12 @@ export default function ListMembersPage() {
                                 <Table>
                                     <TableHeader className="bg-muted sticky top-0 z-10">
                                         <TableRow>
-                                            <TableHead className="text-center">Display Name</TableHead>
+                                            <TableHead className="text-center w-1/5">Display Name</TableHead>
                                             {/* <TableHead>Billing Type</TableHead> */}
-                                            <TableHead className="text-center">Registration Submitted</TableHead>
-                                            <TableHead className="text-center">Reference Numbers</TableHead>
-                                            <TableHead className="text-center">Outstanding Amount</TableHead>
-                                            <TableHead className="text-center">Action</TableHead>
+                                            <TableHead className="text-center w-1/5">Registration Submitted</TableHead>
+                                            <TableHead className="text-center w-1/5">Reference Numbers</TableHead>
+                                            <TableHead className="text-center w-1/5">Outstanding Amount</TableHead>
+                                            <TableHead className="text-center w-1/5">Action</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -284,7 +284,7 @@ export default function ListMembersPage() {
                                                         {member.member_first_name + " " + member.member_surname}
                                                     </a>
                                                 </TableCell>
-                                                <TableCell className="text-center">
+                                                <TableCell className="text-center w-1/5">
                                                     {member.registration_submitted_on ? (() => {
                                                         const date = new Date(member.registration_submitted_on);
                                                         const now = new Date();
@@ -294,69 +294,82 @@ export default function ListMembersPage() {
                                                         return `${date.toLocaleString()} (${diffDays === 0 ? 'today' : diffDays === 1 ? '1 day ago' : `${diffDays} days ago`})`;
                                                     })() : "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center">
+                                                <TableCell className="text-center w-1/5">
                                                     {member.registration_payment_reference}
                                                 </TableCell>
-                                                <TableCell className="text-center">
+                                                <TableCell className="text-center w-1/5">
                                                     {formatAmount(member.outstanding_amount, club?.currency)}
                                                 </TableCell>
-                                                <TableCell className="text-center">
-                                                    <Dialog
-                                                        open={openDialogUserId === member.user_id}
-                                                        onOpenChange={(open) => { reset(); setOpenDialogUserId(open ? member.user_id : null); setMemberRegisterAmount(0); }}>
-                                                        <DialogTrigger asChild>
-                                                            <Button
-                                                                variant="outline"
-                                                                onClick={() => { setOpenDialogUserId(member.user_id) }}
-                                                            >
-                                                                Register
-                                                            </Button>
-                                                        </DialogTrigger>
-                                                        <DialogContent>
-                                                            <DialogHeader>
-                                                                <DialogTitle>Register Member: <strong>{member.member_first_name + " " + member.member_surname}</strong></DialogTitle>
-                                                                <DialogDescription>
-                                                                    Confirm payment amount and register member
-                                                                </DialogDescription>
-
-                                                                <Label className="my-3 text-l">Outstanding amount: {formatAmount(member.outstanding_amount, club?.currency)}</Label>
-
-                                                                <div className="grid gap-3">
-                                                                    <Label htmlFor="pay">Payment Amount</Label>
-                                                                    <Input
-                                                                        id="pay"
-                                                                        type="text"
-                                                                        placeholder="Enter amount"
-                                                                        value={displayAmount}
-                                                                        onChange={handleFormattedInputChange}
-                                                                    />
+                                                <TableCell className="text-center w-1/5">
+                                                    {
+                                                        member.resubmission_required ?
+                                                            <div className="flex justify-center items-center">
+                                                                <Label className="text-red-500 font-bold">
+                                                                    Member resubmission required
+                                                                </Label>
+                                                            </div> :
+                                                            <Dialog
+                                                                open={openDialogUserId === member.user_id}
+                                                                onOpenChange={(open) => { reset(); setOpenDialogUserId(open ? member.user_id : null); setMemberRegisterAmount(0); }}>
+                                                                <div className="flex justify-center items-center">
+                                                                    <DialogTrigger asChild>
+                                                                        {
+                                                                            member.resubmission_required ? <Label className="text-red-500 font-bold">Member resubmission required</Label> :
+                                                                                <Button
+                                                                                    variant="outline"
+                                                                                    onClick={() => { setOpenDialogUserId(member.user_id) }}
+                                                                                >
+                                                                                    Register
+                                                                                </Button>
+                                                                        }
+                                                                    </DialogTrigger>
                                                                 </div>
-                                                                {
-                                                                    isError &&
-                                                                    <Alert variant="destructive">
-                                                                        <AlertCircle className="h-4 w-4" />
-                                                                        <AlertDescription className="text-xs">
-                                                                            Something went wrong registering user
-                                                                        </AlertDescription>
-                                                                    </Alert>
-                                                                }
-                                                            </DialogHeader>
-                                                            <DialogFooter>
-                                                                <DialogClose asChild>
-                                                                    <Button variant="outline">Cancel</Button>
-                                                                </DialogClose>
-                                                                <Button onClick={() => registerUser(member)} disabled={isPending}>{isPending ? "Registering..." : "Confirm"}</Button>
-                                                            </DialogFooter>
-                                                            {invalidRegistrationAmount && (
-                                                                <Alert className="border border-red-600 text-red-600">
-                                                                    <AlertCircle className="h-4 w-4 text-red-600" />
-                                                                    <AlertDescription className="text-xs text-red-600">
-                                                                        The amount entered cannot be less than {formatAmount(0, club?.currency)} and more than the outstanding amount.
-                                                                    </AlertDescription>
-                                                                </Alert>
-                                                            )}
-                                                        </DialogContent>
-                                                    </Dialog>
+                                                                <DialogContent>
+                                                                    <DialogHeader>
+                                                                        <DialogTitle>Register Member: <strong>{member.member_first_name + " " + member.member_surname}</strong></DialogTitle>
+                                                                        <DialogDescription>
+                                                                            Confirm payment amount and register member
+                                                                        </DialogDescription>
+
+                                                                        <Label className="my-3 text-l">Outstanding amount: {formatAmount(member.outstanding_amount, club?.currency)}</Label>
+
+                                                                        <div className="grid gap-3">
+                                                                            <Label htmlFor="pay">Payment Amount</Label>
+                                                                            <Input
+                                                                                id="pay"
+                                                                                type="text"
+                                                                                placeholder="Enter amount"
+                                                                                value={displayAmount}
+                                                                                onChange={handleFormattedInputChange}
+                                                                            />
+                                                                        </div>
+                                                                        {
+                                                                            isError &&
+                                                                            <Alert variant="destructive">
+                                                                                <AlertCircle className="h-4 w-4" />
+                                                                                <AlertDescription className="text-xs">
+                                                                                    Something went wrong registering user
+                                                                                </AlertDescription>
+                                                                            </Alert>
+                                                                        }
+                                                                    </DialogHeader>
+                                                                    <DialogFooter>
+                                                                        <DialogClose asChild>
+                                                                            <Button variant="outline">Cancel</Button>
+                                                                        </DialogClose>
+                                                                        <Button onClick={() => registerUser(member)} disabled={isPending}>{isPending ? "Registering..." : "Confirm"}</Button>
+                                                                    </DialogFooter>
+                                                                    {invalidRegistrationAmount && (
+                                                                        <Alert className="border border-red-600 text-red-600">
+                                                                            <AlertCircle className="h-4 w-4 text-red-600" />
+                                                                            <AlertDescription className="text-xs text-red-600">
+                                                                                The amount entered cannot be less than {formatAmount(0, club?.currency)} and more than the outstanding amount.
+                                                                            </AlertDescription>
+                                                                        </Alert>
+                                                                    )}
+                                                                </DialogContent>
+                                                            </Dialog>
+                                                    }
                                                 </TableCell>
                                             </TableRow>
                                         )) : (

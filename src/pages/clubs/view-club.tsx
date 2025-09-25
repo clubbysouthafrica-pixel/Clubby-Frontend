@@ -72,15 +72,11 @@ export default function ViewClubPage() {
             }
             {(!isLoading && !isError) &&
                 <div className="container mx-auto px-4">
-                    {/* Profile Header */}
                     <div className="relative">
-                        {/* Cover Image */}
                         <Avatar className="w-full h-28 md:h-28 rounded-lg bg-muted/30 overflow-hidden border-background">
                             <AvatarImage className="w-full h-full object-cover object-center" src={coverImage ?? "https://images.unsplash.com/photo-1707343843598-39755549ac9a"} />
                             <AvatarFallback className="rounded-none">{data?.club_name ?? "Background"}</AvatarFallback>
                         </Avatar>
-
-                        {/* Profile Info */}
                         <div className="flex flex-col md:flex-row items-center md:items-end -mt-16 md:space-x-6 px-4">
                             <Avatar className="w-32 h-32 border-4 border-background">
                                 <AvatarImage className="object-cover object-center" src={profileImage ?? "https://github.com/shadcn.png"} />
@@ -99,7 +95,11 @@ export default function ViewClubPage() {
                                     <Button variant="outline" className="shadow-none" onClick={() => navigate(`/clubs/${clubId}/register`)}>Join</Button>
                                 }
                                 {
-                                    data?.club_member_exists &&
+                                    data.resubmission_required && 
+                                    <Button variant="outline" className="shadow-none" onClick={() => navigate(`/clubs/${clubId}/register`)}>Re-register</Button>
+                                }
+                                {
+                                    data?.club_member_exists && !data.resubmission_required &&
                                     <div className={"rounded-lg p-2 text-sm outline outline-[3px] " + (data.registered ? "outline-green-600 text-green-700 text-[1rem]" : "outline-yellow-600 text-yellow-700 text-[1rem]")}>
                                         {
                                             data.registered ? "Member" : "Membership Pending"
@@ -116,7 +116,7 @@ export default function ViewClubPage() {
                                 <>
                                     <TabsTrigger className="w-[150px]" value="home">Home</TabsTrigger>
                                     {
-                                        data?.club_member_exists &&
+                                        data?.club_member_exists && !data?.resubmission_required &&
                                         <>
                                             <TabsTrigger className="w-[150px]" value="bank">Payments & Billing</TabsTrigger>
                                             <TabsTrigger className="w-[150px]" value="transactions">Transactions</TabsTrigger>
@@ -215,16 +215,16 @@ export default function ViewClubPage() {
                                                         Transaction ID
                                                     </TableHead>
                                                     <TableHead className="text-center w-1/6">
-                                                        Member name
-                                                    </TableHead>
-                                                    <TableHead className="text-center w-1/6">
-                                                        Date
+                                                        Creation date
                                                     </TableHead>
                                                     <TableHead className="text-center w-1/6">
                                                         Payment type
                                                     </TableHead>
                                                     <TableHead className="text-center w-1/6">
-                                                        Amount
+                                                        Paid
+                                                    </TableHead>
+                                                    <TableHead className="text-center w-1/6">
+                                                        Owing
                                                     </TableHead>
                                                     <TableHead className="text-center w-1/6">
                                                         Status
@@ -244,7 +244,7 @@ export default function ViewClubPage() {
                                                                         }}
                                                                         title="Click to copy full Transaction ID"
                                                                     >
-                                                                        <span className="font-mono">{key.transaction_id.slice(0, 5)}...</span>
+                                                                        <span className="font-mono">{key.transaction_id.slice(0, 10)}...</span>
                                                                         <svg
                                                                             xmlns="http://www.w3.org/2000/svg"
                                                                             className="h-4 w-4 text-muted-foreground hover:text-foreground transition"
@@ -257,18 +257,18 @@ export default function ViewClubPage() {
                                                                     </div>
                                                                 </TableCell>
                                                                 <TableCell className="text-center w-1/6">
-                                                                    {key.name}
-                                                                </TableCell>
-                                                                <TableCell className="text-center w-1/6">
-                                                                    {key.date}
+                                                                    {key.creation_date}
                                                                 </TableCell>
                                                                 <TableCell className="text-center w-1/6">
                                                                     {key.payment_type}
                                                                 </TableCell>
                                                                 <TableCell className="text-center w-1/6">
+                                                                    {formatAmount(key.amount_paid, "ZAR")}
+                                                                </TableCell>
+                                                                <TableCell className="text-center w-1/6">
                                                                     {formatAmount(key.amount, "ZAR")}
                                                                 </TableCell>
-                                                                <TableCell className={`text-center font-bold w-1/4 ${key.status === "PENDING" ? "text-red-500" : "text-green-500"}`}>
+                                                                <TableCell className={`text-center font-bold w-1/6 ${key.status === "PENDING" ? "text-red-500" : key.status === "PARTIALLY PAID" ? "text-orange-500" : "text-green-500"}`}>
                                                                     {key.status}
                                                                 </TableCell>
                                                             </TableRow>

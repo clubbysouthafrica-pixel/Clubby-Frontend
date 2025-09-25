@@ -78,7 +78,7 @@ export default function UserLandingPage() {
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center space-x-2">
-                                                    <Badge className={club.registered ? "bg-green-700" : "bg-yellow-700"}>{club.registered ? "Member" : "Pending"}</Badge>
+                                                    <Badge className={club.resubmission_required ? "bg-red-700" : club.registered ? "bg-green-700" : "bg-yellow-700"}>{club.resubmission_required ? "Resumission required" : club.registered ? "Member" : "Pending"}</Badge>
                                                 </div>
                                             </div>
                                         ))}
@@ -128,53 +128,6 @@ export default function UserLandingPage() {
                             </CardContent>
                         </Card>
                     </motion.div>
-
-                    {/* Notifications */}
-                    {/* <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.5, delay: 0.4 }}
-                    >
-                        <Card className="shadow-none rounded">
-                            <CardHeader>
-                                <CardTitle className="flex items-center">
-                                    <Bell className="mr-2 h-4 w-4" /> Notifications
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                {isLoadingNotifications ? (
-                                    <div className="flex justify-center py-8">
-                                        <Loader2 className="h-8 w-8 animate-spin" />
-                                    </div>
-                                ) : (
-                                    <ScrollArea className="h-[300px]">
-                                        <div className="space-y-4">
-                                            {notifications?.map((notification) => (
-                                                <div key={notification.id}>
-                                                    <div className="flex items-start space-x-3 py-2">
-                                                        {notification.type === "message" ? (
-                                                            <MessageSquare className="h-5 w-5 text-primary mt-0.5" />
-                                                        ) : notification.type === "event" ? (
-                                                            <Calendar className="h-5 w-5 text-primary mt-0.5" />
-                                                        ) : (
-                                                            <Bell className="h-5 w-5 text-primary mt-0.5" />
-                                                        )}
-                                                        <div className="flex-1">
-                                                            <p className="text-sm">{notification.content}</p>
-                                                            <p className="text-xs text-muted-foreground">
-                                                                {notification.timestamp}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                    <Separator className="my-2" />
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </ScrollArea>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </motion.div> */}
                 </div>
             </div>
         </div>
