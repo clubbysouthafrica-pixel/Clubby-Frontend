@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { formatAmount } from "@/data/currencies";
 import { DndContext, KeyboardSensor, MouseSensor, TouchSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
 import * as React from "react";
+import { ReportDataRow } from "@/interfaces/report";
 
 export default function GeneralReportingPage() {
     const { club } = useContext(ClubContext) as ClubContextType
@@ -45,13 +46,13 @@ export default function GeneralReportingPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {report.data?.map((month: any) => (
+                                {report.data?.map((month: ReportDataRow) => (
                                     <TableRow key={month.date}>
                                         <TableCell className="text-center font-bold">{month.date}</TableCell>
                                         <TableCell className="text-center">{month.total_registered_members}</TableCell>
-                                        <TableCell className="text-center">{formatAmount(month.total_registration_fees_paid, club?.currency)}</TableCell>
+                                        <TableCell className="text-center">{formatAmount(month.total_revenue, club?.currency)}</TableCell>
                                         <TableCell className="text-center">{month.total_pending_members}</TableCell>
-                                        <TableCell className="text-center">{formatAmount(month.total_registration_fees_due_by_pending_members, club?.currency)}</TableCell>
+                                        <TableCell className="text-center">{formatAmount(month.total_pending_revenue, club?.currency)}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

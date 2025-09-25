@@ -28,7 +28,7 @@ import {
           <CardHeader className="flex flex-col items-center justify-center text-center">
             <CardDescription>Total Revenue</CardDescription>
             <CardTitle className="text-xl font-semibold tabular-nums">
-              {formatAmount(report?.total_registration_fees_paid, currency)}
+              {formatAmount(report?.total_revenue, currency)}
             </CardTitle>
           </CardHeader>
         </Card>
@@ -47,7 +47,7 @@ import {
             <CardDescription>Pending Revenue</CardDescription>
             <CardTitle className="text-xl font-semibold tabular-nums">
               {formatAmount(
-                report?.total_registration_fees_due_by_pending_members,
+                report?.total_pending_revenue,
                 currency
               )}
             </CardTitle>
