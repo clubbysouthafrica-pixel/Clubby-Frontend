@@ -264,12 +264,12 @@ export default function ListMembersPage() {
                                 <Table>
                                     <TableHeader className="bg-muted sticky top-0 z-10">
                                         <TableRow>
-                                            <TableHead className="text-center">Display Name</TableHead>
+                                            <TableHead className="text-center w-1/5">Display Name</TableHead>
                                             {/* <TableHead>Billing Type</TableHead> */}
-                                            <TableHead className="text-center">Registration Submitted</TableHead>
-                                            <TableHead className="text-center">Reference Numbers</TableHead>
-                                            <TableHead className="text-center">Outstanding Amount</TableHead>
-                                            <TableHead className="text-center">Action</TableHead>
+                                            <TableHead className="text-center w-1/5">Registration Submitted</TableHead>
+                                            <TableHead className="text-center w-1/5">Reference Numbers</TableHead>
+                                            <TableHead className="text-center w-1/5">Outstanding Amount</TableHead>
+                                            <TableHead className="text-center w-1/5">Action</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -284,7 +284,7 @@ export default function ListMembersPage() {
                                                         {member.member_first_name + " " + member.member_surname}
                                                     </a>
                                                 </TableCell>
-                                                <TableCell className="text-center">
+                                                <TableCell className="text-center w-1/5">
                                                     {member.registration_submitted_on ? (() => {
                                                         const date = new Date(member.registration_submitted_on);
                                                         const now = new Date();
@@ -294,24 +294,29 @@ export default function ListMembersPage() {
                                                         return `${date.toLocaleString()} (${diffDays === 0 ? 'today' : diffDays === 1 ? '1 day ago' : `${diffDays} days ago`})`;
                                                     })() : "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center">
+                                                <TableCell className="text-center w-1/5">
                                                     {member.registration_payment_reference}
                                                 </TableCell>
-                                                <TableCell className="text-center">
+                                                <TableCell className="text-center w-1/5">
                                                     {formatAmount(member.outstanding_amount, club?.currency)}
                                                 </TableCell>
-                                                <TableCell className="text-center">
+                                                <TableCell className="text-center w-1/5">
                                                     <Dialog
                                                         open={openDialogUserId === member.user_id}
                                                         onOpenChange={(open) => { reset(); setOpenDialogUserId(open ? member.user_id : null); setMemberRegisterAmount(0); }}>
-                                                        <DialogTrigger asChild>
-                                                            <Button
-                                                                variant="outline"
-                                                                onClick={() => { setOpenDialogUserId(member.user_id) }}
-                                                            >
-                                                                Register
-                                                            </Button>
-                                                        </DialogTrigger>
+                                                        <div className="flex justify-center items-center">
+                                                            <DialogTrigger asChild>
+                                                                {
+                                                                    member.resubmission_required ? <Label className="text-red-500 font-bold">Member resubmission required</Label> :
+                                                                        <Button
+                                                                            variant="outline"
+                                                                            onClick={() => { setOpenDialogUserId(member.user_id) }}
+                                                                        >
+                                                                            Register
+                                                                        </Button>
+                                                                }
+                                                            </DialogTrigger>
+                                                        </div>
                                                         <DialogContent>
                                                             <DialogHeader>
                                                                 <DialogTitle>Register Member: <strong>{member.member_first_name + " " + member.member_surname}</strong></DialogTitle>
