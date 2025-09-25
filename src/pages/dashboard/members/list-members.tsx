@@ -298,7 +298,7 @@ export default function ListMembersPage() {
                                                     {member.registration_payment_reference}
                                                 </TableCell>
                                                 <TableCell className="text-center w-1/5">
-                                                    {formatAmount(member.outstanding_amount, club?.currency)}
+                                                    { member.resubmission_required ? "N/A" : formatAmount(member.outstanding_amount, club?.currency) }
                                                 </TableCell>
                                                 <TableCell className="text-center w-1/5">
                                                     {
