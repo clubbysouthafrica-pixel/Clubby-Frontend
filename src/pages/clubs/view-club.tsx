@@ -262,7 +262,7 @@ export default function ViewClubPage() {
                                                                 <TableCell className="text-center w-1/5">
                                                                     {formatAmount(key.amount, "ZAR")}
                                                                 </TableCell>
-                                                                <TableCell className={`text-center font-bold w-1/5 ${key.status === "PENDING" ? "text-red-500" : "text-green-500"}`}>
+                                                                <TableCell className={`text-center font-bold w-1/5 ${key.status === "PENDING" ? "text-red-500" : key.status === "PARTIALLY PAID" ? "text-orange-500" : "text-green-500"}`}>
                                                                     {key.status}
                                                                 </TableCell>
                                                             </TableRow>
