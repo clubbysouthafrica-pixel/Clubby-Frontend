@@ -25,8 +25,6 @@ export default function ClubUsageAndCharges({ data, currency }: any) {
   )
   const sortableId = React.useId()
 
-  console.log(data)
-
   return (
     <div className="space-y-10">
       <h2 className="text-l font-semibold mb-2">Billing Summary</h2>

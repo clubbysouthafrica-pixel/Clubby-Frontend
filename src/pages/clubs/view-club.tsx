@@ -211,19 +211,22 @@ export default function ViewClubPage() {
                                         <Table>
                                             <TableHeader className="bg-muted sticky top-0 z-10">
                                                 <TableRow>
-                                                    <TableHead className="text-center w-1/5">
+                                                    <TableHead className="text-center w-1/6">
                                                         Transaction ID
                                                     </TableHead>
-                                                    <TableHead className="text-center w-1/5">
+                                                    <TableHead className="text-center w-1/6">
+                                                        Creation date
+                                                    </TableHead>
+                                                    <TableHead className="text-center w-1/6">
                                                         Payment type
                                                     </TableHead>
-                                                    <TableHead className="text-center w-1/5">
+                                                    <TableHead className="text-center w-1/6">
                                                         Paid
                                                     </TableHead>
-                                                    <TableHead className="text-center w-1/5">
+                                                    <TableHead className="text-center w-1/6">
                                                         Owing
                                                     </TableHead>
-                                                    <TableHead className="text-center w-1/5">
+                                                    <TableHead className="text-center w-1/6">
                                                         Status
                                                     </TableHead>
                                                 </TableRow>
@@ -233,7 +236,7 @@ export default function ViewClubPage() {
                                                     isLoading ? <div>Loading...</div> :
                                                         transactions?.transactions.map((key: any) => (
                                                             <TableRow key={key.transaction_id}>
-                                                                <TableCell className="text-center w-1/5">
+                                                                <TableCell className="text-center w-1/6">
                                                                     <div
                                                                         className="inline-flex items-center gap-2 px-2 py-1 rounded-md bg-muted hover:bg-muted/70 cursor-pointer text-sm transition"
                                                                         onClick={() => {
@@ -253,16 +256,19 @@ export default function ViewClubPage() {
                                                                         </svg>
                                                                     </div>
                                                                 </TableCell>
-                                                                <TableCell className="text-center w-1/5">
+                                                                <TableCell className="text-center w-1/6">
+                                                                    {key.creation_date}
+                                                                </TableCell>
+                                                                <TableCell className="text-center w-1/6">
                                                                     {key.payment_type}
                                                                 </TableCell>
-                                                                <TableCell className="text-center w-1/5">
+                                                                <TableCell className="text-center w-1/6">
                                                                     {formatAmount(key.amount_paid, "ZAR")}
                                                                 </TableCell>
-                                                                <TableCell className="text-center w-1/5">
+                                                                <TableCell className="text-center w-1/6">
                                                                     {formatAmount(key.amount, "ZAR")}
                                                                 </TableCell>
-                                                                <TableCell className={`text-center font-bold w-1/5 ${key.status === "PENDING" ? "text-red-500" : key.status === "PARTIALLY PAID" ? "text-orange-500" : "text-green-500"}`}>
+                                                                <TableCell className={`text-center font-bold w-1/6 ${key.status === "PENDING" ? "text-red-500" : key.status === "PARTIALLY PAID" ? "text-orange-500" : "text-green-500"}`}>
                                                                     {key.status}
                                                                 </TableCell>
                                                             </TableRow>

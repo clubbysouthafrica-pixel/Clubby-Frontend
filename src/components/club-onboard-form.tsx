@@ -115,6 +115,7 @@ export function ClubRegisterForm({
 
   useEffect(() => {
     if (!club?.meta) return;
+    
     const updatedPages = pages.map((page) => ({
       ...page,
       fields: page.fields.map((field) => {
@@ -145,8 +146,6 @@ export function ClubRegisterForm({
         return field;
       }),
     }));
-
-    console.log('PAGES: ', updatedPages)
 
     setPages(updatedPages);
   }, [club]);
@@ -213,8 +212,6 @@ export function ClubRegisterForm({
       return;
     }
 
-    console.log('AFTER: ', pages)
-
     const allFields = pages.flatMap((p) => p.fields);
 
     const request: RegistrationRequest = createValidRegistrationRequest(allFields, clubId as string)
@@ -232,13 +229,13 @@ export function ClubRegisterForm({
   const submitRegistration = () => {
     setIsRegistering(true)
     if (registrationRequest) {
-      // mutate(registrationRequest, {
-      //   onSuccess: () => {
-      //     navigate(`/clubs/${clubId}`)
-      //     setIsRegistering(false)
-      //   },
-      //   onError: () => toast(registerError?.message ?? "Registration failed"),
-      // });
+      mutate(registrationRequest, {
+        onSuccess: () => {
+          navigate(`/clubs/${clubId}`)
+          setIsRegistering(false)
+        },
+        onError: () => toast(registerError?.message ?? "Registration failed"),
+      });
     }
   }
 

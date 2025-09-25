@@ -149,10 +149,10 @@ export default function ListMembersPage() {
 
                         <TabsList>
                             <TabsTrigger value="registered-members">
-                                Registered Members <Badge variant="secondary">{clubMembers?.registered?.length}</Badge>
+                                Members Registered <Badge variant="secondary">{clubMembers?.registered?.length}</Badge>
                             </TabsTrigger>
                             <TabsTrigger value="pending-members">
-                                Pending Members <Badge variant="secondary">{clubMembers?.unregistered?.length ?? clubMembers?.not_registered?.length}</Badge>
+                                Members Pending <Badge variant="secondary">{clubMembers?.unregistered?.length ?? clubMembers?.not_registered?.length}</Badge>
                             </TabsTrigger>
                         </TabsList>
                     </div>

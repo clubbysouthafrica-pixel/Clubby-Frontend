@@ -39,8 +39,8 @@ export default function GeneralReportingPage() {
                             <TableHeader className="bg-muted sticky top-0 z-10">
                                 <TableRow>
                                     <TableHead className="text-center font-bold">Month</TableHead>
-                                    <TableHead className="text-center font-bold">Registered members</TableHead>
-                                    <TableHead className="text-center font-bold">Deregistered members</TableHead>
+                                    <TableHead className="text-center font-bold">Members registered</TableHead>
+                                    <TableHead className="text-center font-bold">Members deregistered </TableHead>
                                     <TableHead className="text-center font-bold">Revenue</TableHead>
                                     <TableHead className="text-center font-bold">Pending members</TableHead>
                                     <TableHead className="text-center font-bold">Pending revenue</TableHead>

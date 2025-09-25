@@ -34,6 +34,7 @@ export default function DeregisterMembersDialog({ dereigsterMembers, clubId, set
         onSuccess: () =>    {
             toast.success("Successfully unregistered members")
             setOpenDialog(false)
+            window.location.reload();
         },
         onError: () => toast.error("Something went wrong")
     })
