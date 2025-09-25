@@ -4,7 +4,7 @@ export interface ReportDataRow {
     total_pending_members: number
     total_pending_revenue: number
     total_revenue: number
-    total_extra_fees_owed_by_registered_members: number
+    total_deregistered_members: number
 }
 
 export interface GeneralReport {
@@ -12,6 +12,8 @@ export interface GeneralReport {
   total_pending_members: number
   total_pending_revenue: number
   total_revenue: number
+  total_active_members: number
+  total_deregistered_members: number
   data: ReportDataRow[]
 }
 

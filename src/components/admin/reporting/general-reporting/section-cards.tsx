@@ -19,7 +19,25 @@ import {
           <CardHeader className="flex flex-col items-center justify-center text-center">
             <CardDescription>Active Members</CardDescription>
             <CardTitle className="text-xl font-semibold tabular-nums">
+              {report?.total_active_members}
+            </CardTitle>
+          </CardHeader>
+        </Card>
+
+        <Card className="@container/card w-[100%]">
+          <CardHeader className="flex flex-col items-center justify-center text-center">
+            <CardDescription>Registered Members</CardDescription>
+            <CardTitle className="text-xl font-semibold tabular-nums">
               {report?.total_registered_members}
+            </CardTitle>
+          </CardHeader>
+        </Card>
+
+        <Card className="@container/card w-[100%]">
+          <CardHeader className="flex flex-col items-center justify-center text-center">
+            <CardDescription>Deregistered Members</CardDescription>
+            <CardTitle className="text-xl font-semibold tabular-nums">
+              {report?.total_deregistered_members}
             </CardTitle>
           </CardHeader>
         </Card>

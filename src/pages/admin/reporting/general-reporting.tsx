@@ -39,7 +39,8 @@ export default function GeneralReportingPage() {
                             <TableHeader className="bg-muted sticky top-0 z-10">
                                 <TableRow>
                                     <TableHead className="text-center font-bold">Month</TableHead>
-                                    <TableHead className="text-center font-bold">Active members</TableHead>
+                                    <TableHead className="text-center font-bold">Registered members</TableHead>
+                                    <TableHead className="text-center font-bold">Deregistered members</TableHead>
                                     <TableHead className="text-center font-bold">Revenue</TableHead>
                                     <TableHead className="text-center font-bold">Pending members</TableHead>
                                     <TableHead className="text-center font-bold">Pending revenue</TableHead>
@@ -50,6 +51,7 @@ export default function GeneralReportingPage() {
                                     <TableRow key={month.date}>
                                         <TableCell className="text-center font-bold">{month.date}</TableCell>
                                         <TableCell className="text-center">{month.total_registered_members}</TableCell>
+                                        <TableCell className="text-center">{month.total_deregistered_members}</TableCell>
                                         <TableCell className="text-center">{formatAmount(month.total_revenue, club?.currency)}</TableCell>
                                         <TableCell className="text-center">{month.total_pending_members}</TableCell>
                                         <TableCell className="text-center">{formatAmount(month.total_pending_revenue, club?.currency)}</TableCell>
