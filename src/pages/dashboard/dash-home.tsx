@@ -8,7 +8,7 @@ import { HomeSectionCards } from "@/components/admin/club/home/section-cards";
 
 export default function HomeDashboardPage() {
     const { club } = useContext(ClubContext) as ClubContextType
-    const { data: report, isLoading } = useGeneralReportingQuery(club?.club_account_id as string);
+    const { data: report } = useGeneralReportingQuery(club?.club_account_id as string);
     
     const navigate = useNavigate()
     const manageRoutes = [

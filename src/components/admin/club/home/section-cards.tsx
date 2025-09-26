@@ -9,7 +9,7 @@ import { formatAmount } from "@/data/currencies"
 
 interface props {
     report: GeneralReport
-    currency: string
+    currency: string | undefined
 }
 
 export function HomeSectionCards({ report, currency }: props) {

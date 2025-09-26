@@ -57,7 +57,6 @@ export default function SelectedMember({
         >
             <DialogContent
                 className="!w-full !max-w-screen-xl overflow-y-auto p-5 gap-4"
-                containerClassName="items-start justify-center"
             >
                 <DialogHeader className="flex justify-between">
                     <div className="flex items-end space-x-2">
