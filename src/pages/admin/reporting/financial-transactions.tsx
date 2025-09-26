@@ -19,6 +19,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import * as React from "react";
 
 export default function FinancialTransactionsPage() {
     const { club } = useContext(ClubContext) as ClubContextType;
@@ -27,17 +28,28 @@ export default function FinancialTransactionsPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [paymentType, setPaymentType] = useState("all");
     const [statusFilter, setStatusFilter] = useState("all");
+    const [transactionType, setTransactionType] = useState("all");
+
+    const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+
+    const toggleRow = (id: string) => {
+        setExpandedRows(prev => ({
+            ...prev,
+            [id]: !prev[id]
+        }));
+    };
 
     const filteredTransactions = useMemo(() => {
         if (!transactions?.transactions) return [];
 
         return transactions.transactions.filter((txn: any) => {
             const matchesName = txn.name?.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesType = paymentType === "all" ? true : txn.payment_type === paymentType;
+            const matchesPaymentType = paymentType === "all" ? true : txn.payment_type === paymentType;
             const matchesStatus = statusFilter === "all" ? true : txn.status === statusFilter;
-            return matchesName && matchesType && matchesStatus;
+            const matchesType = transactionType === "all" ? true : txn.type === transactionType;
+            return matchesName && matchesPaymentType && matchesStatus && matchesType;
         });
-    }, [transactions, searchTerm, paymentType, statusFilter]);
+    }, [transactions, searchTerm, paymentType, statusFilter, transactionType]);
 
     return (
         <div className="p-5 min-h-screen">
@@ -50,6 +62,17 @@ export default function FinancialTransactionsPage() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
+
+                <Select onValueChange={setTransactionType} value={transactionType}>
+                    <SelectTrigger className="flex items-center gap-2 w-[20%]">
+                        <span className="text-muted-foreground whitespace-nowrap">Transaction Type:</span>
+                        <SelectValue placeholder="All" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="REGISTRATION">Registration</SelectItem>
+                    </SelectContent>
+                </Select>
 
                 <Select onValueChange={setPaymentType} value={paymentType}>
                     <SelectTrigger className="flex items-center gap-2 w-[20%]">
@@ -88,67 +111,130 @@ export default function FinancialTransactionsPage() {
                     <Table>
                         <TableHeader className="bg-muted sticky top-0 z-10">
                             <TableRow>
-                                <TableHead className="text-center w-1/7">Transaction ID</TableHead>
-                                <TableHead className="text-center w-1/7">Creation date</TableHead>
-                                <TableHead className="text-center w-1/7">Member name</TableHead>
-                                <TableHead className="text-center w-1/7">Payment type</TableHead>
-                                <TableHead className="text-center w-1/7">Amount Paid</TableHead>
-                                <TableHead className="text-center w-1/7">Amount Owing</TableHead>
-                                <TableHead className="text-center w-1/7">Status</TableHead>
+                                <TableHead className="text-center w-1/8">Transaction ID</TableHead>
+                                <TableHead className="text-center w-1/8">Creation date</TableHead>
+                                <TableHead className="text-center w-1/8">Type</TableHead>
+                                <TableHead className="text-center w-1/8">Member name</TableHead>
+                                <TableHead className="text-center w-1/8">Payment type</TableHead>
+                                <TableHead className="text-center w-1/8">Amount Paid</TableHead>
+                                <TableHead className="text-center w-1/8">Amount Owing</TableHead>
+                                <TableHead className="text-center w-1/8">Status</TableHead>
                             </TableRow>
                         </TableHeader>
+
                         <TableBody>
-                            {filteredTransactions.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-6">
-                                        No transactions found.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                filteredTransactions.map((key: any) => (
-                                    <TableRow key={key.transaction_id}>
-                                        <TableCell className="text-center w-1/7">
-                                            <div
-                                                className="inline-flex items-center gap-2 px-2 py-1 rounded-md bg-muted hover:bg-muted/70 cursor-pointer text-sm transition"
-                                                onClick={() =>
-                                                    navigator.clipboard.writeText(key.transaction_id)
-                                                }
-                                                title="Click to copy full Transaction ID"
-                                            >
-                                                <span className="font-mono">{key.transaction_id.slice(0, 5)}...</span>
+                            {filteredTransactions.map((tx: any) => (
+                                <React.Fragment key={tx.transaction_id}>
+                                    {/* Main Transaction Row */}
+                                    <TableRow
+                                        className="cursor-pointer hover:bg-muted/50 transition"
+                                        onClick={() => toggleRow(tx.transaction_id)}
+                                    >
+                                        <TableCell className="text-center w-1/8">
+                                            <div className="inline-flex items-center gap-2 justify-center">
+                                                <span className="font-mono">{tx.transaction_id.slice(0, 5)}...</span>
+
+                                                {/* Copy button */}
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation(); // Prevent triggering row expand
+                                                        navigator.clipboard.writeText(tx.transaction_id);
+                                                    }}
+                                                    title="Click to copy full Transaction ID"
+                                                    className="hover:text-primary"
+                                                >
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        className="h-4 w-4 text-muted-foreground hover:text-foreground transition"
+                                                        fill="none"
+                                                        viewBox="0 0 24 24"
+                                                        stroke="currentColor"
+                                                    >
+                                                        <path
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            strokeWidth={2}
+                                                            d="M8 16h8m2 0a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v8a2 2 0 002 2zM8 16v2a2 2 0 002 2h8a2 2 0 002-2v-2"
+                                                        />
+                                                    </svg>
+                                                </button>
+
+                                                {/* Expand icon */}
                                                 <svg
                                                     xmlns="http://www.w3.org/2000/svg"
-                                                    className="h-4 w-4 text-muted-foreground hover:text-foreground transition"
+                                                    className={`h-4 w-4 transition-transform ${expandedRows[tx.transaction_id] ? "rotate-90" : ""}`}
                                                     fill="none"
                                                     viewBox="0 0 24 24"
                                                     stroke="currentColor"
                                                 >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth={2}
-                                                        d="M8 16h8m2 0a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v8a2 2 0 002 2zM8 16v2a2 2 0 002 2h8a2 2 0 002-2v-2"
-                                                    />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                                 </svg>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="text-center w-1/7">{key.creation_date}</TableCell>
-                                        <TableCell className="text-center w-1/7">{key.name}</TableCell>
-                                        <TableCell className="text-center w-1/7">{key.payment_type}</TableCell>
-                                        <TableCell className="text-center w-1/7">{formatAmount(key.amount_paid, club?.currency)}</TableCell>
-                                        <TableCell className="text-center w-1/7">
-                                            {formatAmount(key.amount, club?.currency)}
-                                        </TableCell>
-                                        <TableCell
-                                            className={`text-center font-bold w-1/7 ${`text-center font-bold w-1/4 ${key.status === "PENDING" ? "text-red-500" : key.status === "PARTIALLY PAID" ? "text-orange-500" : "text-green-500"}`}`}
-                                        >
-                                            {key.status}
+
+                                        <TableCell className="text-center">{tx.creation_date}</TableCell>
+                                        <TableCell className="text-center">{tx.type}</TableCell>
+                                        <TableCell className="text-center">{tx.name}</TableCell>
+                                        <TableCell className="text-center">{tx.payment_type}</TableCell>
+                                        <TableCell className="text-center">{formatAmount(tx.amount_paid, club?.currency)}</TableCell>
+                                        <TableCell className="text-center">{formatAmount(tx.amount, club?.currency)}</TableCell>
+                                        <TableCell className={`text-center font-bold ${tx.status === "PENDING"
+                                            ? "text-red-500"
+                                            : tx.status === "PARTIALLY PAID"
+                                                ? "text-orange-500"
+                                                : "text-green-500"
+                                            }`}>
+                                            {tx.status}
                                         </TableCell>
                                     </TableRow>
-                                ))
-                            )}
+
+                                    {/* Lifecycle Row */}
+                                    {expandedRows[tx.transaction_id] && (
+                                        <TableRow className="bg-muted/10">
+                                            <TableCell colSpan={8} className="p-4">
+                                                <div className="overflow-hidden rounded-lg border">
+                                                    <Table className="w-full">
+                                                        <TableHeader className="bg-muted sticky top-0 z-10">
+                                                            <TableRow>
+                                                                <TableHead className="text-center">Date</TableHead>
+                                                                <TableHead className="text-center">Type</TableHead>
+                                                                <TableHead className="text-center">Description</TableHead>
+                                                                <TableHead className="text-center">Amount</TableHead>
+                                                            </TableRow>
+                                                        </TableHeader>
+                                                        <TableBody>
+                                                            {Object.entries(tx.lifecycle)
+                                                                // Sort by timestamp descending (latest first)
+                                                                .sort(([a], [b]) => Number(b) - Number(a))
+                                                                .map(([timestamp, entry]: any) => (
+                                                                    <TableRow key={timestamp}>
+                                                                        <TableCell className="text-center">
+                                                                            {new Date(Number(timestamp)).toLocaleString("en-GB", {
+                                                                                day: "2-digit",
+                                                                                month: "2-digit",
+                                                                                year: "numeric",
+                                                                                hour: "2-digit",
+                                                                                minute: "2-digit",
+                                                                                hour12: true,
+                                                                            })}
+                                                                        </TableCell>
+                                                                        <TableCell className="text-center">{entry.type}</TableCell>
+                                                                        <TableCell className="text-center">{entry.description}</TableCell>
+                                                                        <TableCell className={`text-center ${entry.type === "SUBMISSION" ? "text-red-500" : "text-green-500"} font-bold`}>{entry.type === "SUBMISSION" ? "-" : "+"}{formatAmount(entry.amount, club?.currency)}</TableCell>
+                                                                    </TableRow>
+                                                                ))}
+                                                        </TableBody>
+                                                    </Table>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </React.Fragment>
+                            ))}
                         </TableBody>
                     </Table>
+
+
                 )}
             </div>
         </div>

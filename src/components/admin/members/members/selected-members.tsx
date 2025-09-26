@@ -55,9 +55,9 @@ export default function SelectedMember({
                 }
             }}
         >
-
-
-            <DialogContent className="!w-full !max-w-screen-xl h-[90vh] overflow-y-auto p-6">
+            <DialogContent
+                className="!w-full !max-w-screen-xl overflow-y-auto p-5 gap-4"
+            >
                 <DialogHeader className="flex justify-between">
                     <div className="flex items-end space-x-2">
                         <User className="w-10 h-10 text-gray-600" />
@@ -67,7 +67,7 @@ export default function SelectedMember({
                     </div>
                 </DialogHeader>
 
-                <Label className="my-2 m-0">Outstanding amount: {formatAmount(selectedMember.outstanding_amount, currency)}</Label>
+                <Label className="my-2 text-lg m-0">Outstanding amount: <strong>{formatAmount(selectedMember.outstanding_amount, currency)}</strong> </Label>
 
                 <Tabs value={selectedTab} onValueChange={setSelectedTab} className="mt-0">
                     <TabsList>
