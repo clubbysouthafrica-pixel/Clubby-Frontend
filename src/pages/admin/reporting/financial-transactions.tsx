@@ -65,7 +65,7 @@ export default function FinancialTransactionsPage() {
 
                 <Select onValueChange={setTransactionType} value={transactionType}>
                     <SelectTrigger className="flex items-center gap-2 w-[20%]">
-                        <span className="text-muted-foreground whitespace-nowrap">Transaction Type:</span>
+                        <span className="text-muted-foreground whitespace-nowrap">Tx. Type:</span>
                         <SelectValue placeholder="All" />
                     </SelectTrigger>
                     <SelectContent>
