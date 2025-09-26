@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatAmount } from "@/data/currencies";
 import { useFetchUserTransactions } from "@/queries/transactions";
+import * as React from "react";
 
 function epochToJoinedString(epoch: number): string {
     const date = new Date(epoch); // if epoch is in seconds, use new Date(epoch * 1000)
@@ -39,7 +40,18 @@ export default function ViewClubPage() {
         !!data?.club_member_exists
     )
 
+    console.log(data)
+
     const { data: transactions, isLoading: isUserTransactionsLoading } = useFetchUserTransactions(data?.club_account_id ?? "", data?.user_id ?? "");
+
+    const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+
+    const toggleRow = (id: string) => {
+        setExpandedRows(prev => ({
+            ...prev,
+            [id]: !prev[id]
+        }));
+    };
 
     const [coverImage, setCoverImage] = useState("")
     const [profileImage, setProfileImage] = useState("")
@@ -95,7 +107,7 @@ export default function ViewClubPage() {
                                     <Button variant="outline" className="shadow-none" onClick={() => navigate(`/clubs/${clubId}/register`)}>Join</Button>
                                 }
                                 {
-                                    data.resubmission_required && 
+                                    data.resubmission_required &&
                                     <Button variant="outline" className="shadow-none" onClick={() => navigate(`/clubs/${clubId}/register`)}>Re-register</Button>
                                 }
                                 {
@@ -211,43 +223,37 @@ export default function ViewClubPage() {
                                         <Table>
                                             <TableHeader className="bg-muted sticky top-0 z-10">
                                                 <TableRow>
-                                                    <TableHead className="text-center w-1/7">
-                                                        Transaction ID
-                                                    </TableHead>
-                                                    <TableHead className="text-center w-1/7">
-                                                        Creation date
-                                                    </TableHead>
-                                                    <TableHead className="text-center w-1/7">
-                                                        Type
-                                                    </TableHead>
-                                                    <TableHead className="text-center w-1/7">
-                                                        Payment type
-                                                    </TableHead>
-                                                    <TableHead className="text-center w-1/7">
-                                                        Paid
-                                                    </TableHead>
-                                                    <TableHead className="text-center w-1/7">
-                                                        Owing
-                                                    </TableHead>
-                                                    <TableHead className="text-center w-1/7">
-                                                        Status
-                                                    </TableHead>
+                                                    <TableHead className="text-center w-1/7">Transaction ID</TableHead>
+                                                    <TableHead className="text-center w-1/7">Creation date</TableHead>
+                                                    <TableHead className="text-center w-1/7">Type</TableHead>
+                                                    <TableHead className="text-center w-1/7">Payment type</TableHead>
+                                                    <TableHead className="text-center w-1/7">Amount Paid</TableHead>
+                                                    <TableHead className="text-center w-1/7">Amount Owing</TableHead>
+                                                    <TableHead className="text-center w-1/7">Status</TableHead>
                                                 </TableRow>
                                             </TableHeader>
+
                                             <TableBody>
-                                                {
-                                                    isLoading ? <div>Loading...</div> :
-                                                        transactions?.transactions.map((key: any) => (
-                                                            <TableRow key={key.transaction_id}>
-                                                                <TableCell className="text-center w-1/7">
-                                                                    <div
-                                                                        className="inline-flex items-center gap-2 px-2 py-1 rounded-md bg-muted hover:bg-muted/70 cursor-pointer text-sm transition"
-                                                                        onClick={() => {
-                                                                            navigator.clipboard.writeText(key.transaction_id);
+                                                {transactions.transactions.map((tx: any) => (
+                                                    <React.Fragment key={tx.transaction_id}>
+                                                        {/* Main Transaction Row */}
+                                                        <TableRow
+                                                            className="cursor-pointer hover:bg-muted/50 transition"
+                                                            onClick={() => toggleRow(tx.transaction_id)}
+                                                        >
+                                                            <TableCell className="text-center w-1/7">
+                                                                <div className="inline-flex items-center gap-2 justify-center">
+                                                                    <span className="font-mono">{tx.transaction_id.slice(0, 5)}...</span>
+
+                                                                    {/* Copy button */}
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation(); // Prevent triggering row expand
+                                                                            navigator.clipboard.writeText(tx.transaction_id);
                                                                         }}
                                                                         title="Click to copy full Transaction ID"
+                                                                        className="hover:text-primary"
                                                                     >
-                                                                        <span className="font-mono">{key.transaction_id.slice(0, 10)}...</span>
                                                                         <svg
                                                                             xmlns="http://www.w3.org/2000/svg"
                                                                             className="h-4 w-4 text-muted-foreground hover:text-foreground transition"
@@ -255,30 +261,86 @@ export default function ViewClubPage() {
                                                                             viewBox="0 0 24 24"
                                                                             stroke="currentColor"
                                                                         >
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16h8m2 0a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v8a2 2 0 002 2zM8 16v2a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                                                                            <path
+                                                                                strokeLinecap="round"
+                                                                                strokeLinejoin="round"
+                                                                                strokeWidth={2}
+                                                                                d="M8 16h8m2 0a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v8a2 2 0 002 2zM8 16v2a2 2 0 002 2h8a2 2 0 002-2v-2"
+                                                                            />
                                                                         </svg>
+                                                                    </button>
+
+                                                                    {/* Expand icon */}
+                                                                    <svg
+                                                                        xmlns="http://www.w3.org/2000/svg"
+                                                                        className={`h-4 w-4 transition-transform ${expandedRows[tx.transaction_id] ? "rotate-90" : ""}`}
+                                                                        fill="none"
+                                                                        viewBox="0 0 24 24"
+                                                                        stroke="currentColor"
+                                                                    >
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                                    </svg>
+                                                                </div>
+                                                            </TableCell>
+
+                                                            <TableCell className="text-center">{tx.creation_date}</TableCell>
+                                                            <TableCell className="text-center">{tx.type}</TableCell>
+                                                            <TableCell className="text-center">{tx.payment_type}</TableCell>
+                                                            <TableCell className="text-center">{formatAmount(tx.amount_paid, data.currency)}</TableCell>
+                                                            <TableCell className="text-center">{formatAmount(tx.amount, data.currency)}</TableCell>
+                                                            <TableCell className={`text-center font-bold ${tx.status === "PENDING"
+                                                                ? "text-red-500"
+                                                                : tx.status === "PARTIALLY PAID"
+                                                                    ? "text-orange-500"
+                                                                    : "text-green-500"
+                                                                }`}>
+                                                                {tx.status}
+                                                            </TableCell>
+                                                        </TableRow>
+
+                                                        {/* Lifecycle Row */}
+                                                        {expandedRows[tx.transaction_id] && (
+                                                            <TableRow className="bg-muted/10">
+                                                                <TableCell colSpan={8} className="p-4">
+                                                                    <div className="overflow-hidden rounded-lg border">
+                                                                        <Table className="w-full">
+                                                                            <TableHeader className="bg-muted sticky top-0 z-10">
+                                                                                <TableRow>
+                                                                                    <TableHead className="text-center">Date</TableHead>
+                                                                                    <TableHead className="text-center">Type</TableHead>
+                                                                                    <TableHead className="text-center">Description</TableHead>
+                                                                                    <TableHead className="text-center">Amount</TableHead>
+                                                                                </TableRow>
+                                                                            </TableHeader>
+                                                                            <TableBody>
+                                                                                {Object.entries(tx.lifecycle)
+                                                                                    // Sort by timestamp descending (latest first)
+                                                                                    .sort(([a], [b]) => Number(b) - Number(a))
+                                                                                    .map(([timestamp, entry]: any) => (
+                                                                                        <TableRow key={timestamp}>
+                                                                                            <TableCell className="text-center">
+                                                                                                {new Date(Number(timestamp)).toLocaleString("en-GB", {
+                                                                                                    day: "2-digit",
+                                                                                                    month: "2-digit",
+                                                                                                    year: "numeric",
+                                                                                                    hour: "2-digit",
+                                                                                                    minute: "2-digit",
+                                                                                                    hour12: true,
+                                                                                                })}
+                                                                                            </TableCell>
+                                                                                            <TableCell className="text-center">{entry.type}</TableCell>
+                                                                                            <TableCell className="text-center">{entry.description}</TableCell>
+                                                                                            <TableCell className={`text-center ${entry.type === "SUBMISSION" ? "text-red-500" : "text-green-500"} font-bold`}>{entry.type === "SUBMISSION" ? "-" : "+"}{formatAmount(entry.amount, data.currency)}</TableCell>
+                                                                                        </TableRow>
+                                                                                    ))}
+                                                                            </TableBody>
+                                                                        </Table>
                                                                     </div>
                                                                 </TableCell>
-                                                                <TableCell className="text-center w-1/7">
-                                                                    {key.creation_date}
-                                                                </TableCell>
-                                                                <TableCell className="text-center w-1/7">
-                                                                    {key.type}
-                                                                </TableCell>
-                                                                <TableCell className="text-center w-1/7">
-                                                                    {key.payment_type}
-                                                                </TableCell>
-                                                                <TableCell className="text-center w-1/7">
-                                                                    {formatAmount(key.amount_paid, "ZAR")}
-                                                                </TableCell>
-                                                                <TableCell className="text-center w-1/7">
-                                                                    {formatAmount(key.amount, "ZAR")}
-                                                                </TableCell>
-                                                                <TableCell className={`text-center font-bold w-1/7 ${key.status === "PENDING" ? "text-red-500" : key.status === "PARTIALLY PAID" ? "text-orange-500" : "text-green-500"}`}>
-                                                                    {key.status}
-                                                                </TableCell>
                                                             </TableRow>
-                                                        ))}
+                                                        )}
+                                                    </React.Fragment>
+                                                ))}
                                             </TableBody>
                                         </Table>
                                     </div>
