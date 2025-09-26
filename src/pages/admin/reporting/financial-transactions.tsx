@@ -27,17 +27,21 @@ export default function FinancialTransactionsPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [paymentType, setPaymentType] = useState("all");
     const [statusFilter, setStatusFilter] = useState("all");
+    const [transactionType, setTransactionType] = useState("all");
 
     const filteredTransactions = useMemo(() => {
         if (!transactions?.transactions) return [];
 
         return transactions.transactions.filter((txn: any) => {
             const matchesName = txn.name?.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesType = paymentType === "all" ? true : txn.payment_type === paymentType;
+            const matchesPaymentType = paymentType === "all" ? true : txn.payment_type === paymentType;
             const matchesStatus = statusFilter === "all" ? true : txn.status === statusFilter;
-            return matchesName && matchesType && matchesStatus;
+            const matchesType = transactionType === "all" ? true : txn.type === transactionType;
+            return matchesName && matchesPaymentType && matchesStatus && matchesType;
         });
-    }, [transactions, searchTerm, paymentType, statusFilter]);
+    }, [transactions, searchTerm, paymentType, statusFilter, transactionType]);
+
+    console.log(filteredTransactions)
 
     return (
         <div className="p-5 min-h-screen">
@@ -50,6 +54,17 @@ export default function FinancialTransactionsPage() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
+
+                <Select onValueChange={setTransactionType} value={transactionType}>
+                    <SelectTrigger className="flex items-center gap-2 w-[20%]">
+                        <span className="text-muted-foreground whitespace-nowrap">Transaction Type:</span>
+                        <SelectValue placeholder="All" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="REGISTRATION">Registration</SelectItem>
+                    </SelectContent>
+                </Select>
 
                 <Select onValueChange={setPaymentType} value={paymentType}>
                     <SelectTrigger className="flex items-center gap-2 w-[20%]">
@@ -88,13 +103,14 @@ export default function FinancialTransactionsPage() {
                     <Table>
                         <TableHeader className="bg-muted sticky top-0 z-10">
                             <TableRow>
-                                <TableHead className="text-center w-1/7">Transaction ID</TableHead>
-                                <TableHead className="text-center w-1/7">Creation date</TableHead>
-                                <TableHead className="text-center w-1/7">Member name</TableHead>
-                                <TableHead className="text-center w-1/7">Payment type</TableHead>
-                                <TableHead className="text-center w-1/7">Amount Paid</TableHead>
-                                <TableHead className="text-center w-1/7">Amount Owing</TableHead>
-                                <TableHead className="text-center w-1/7">Status</TableHead>
+                                <TableHead className="text-center w-1/8">Transaction ID</TableHead>
+                                <TableHead className="text-center w-1/8">Creation date</TableHead>
+                                <TableHead className="text-center w-1/8">Type</TableHead>
+                                <TableHead className="text-center w-1/8">Member name</TableHead>
+                                <TableHead className="text-center w-1/8">Payment type</TableHead>
+                                <TableHead className="text-center w-1/8">Amount Paid</TableHead>
+                                <TableHead className="text-center w-1/8">Amount Owing</TableHead>
+                                <TableHead className="text-center w-1/8">Status</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -107,7 +123,7 @@ export default function FinancialTransactionsPage() {
                             ) : (
                                 filteredTransactions.map((key: any) => (
                                     <TableRow key={key.transaction_id}>
-                                        <TableCell className="text-center w-1/7">
+                                        <TableCell className="text-center w-1/8">
                                             <div
                                                 className="inline-flex items-center gap-2 px-2 py-1 rounded-md bg-muted hover:bg-muted/70 cursor-pointer text-sm transition"
                                                 onClick={() =>
@@ -132,15 +148,16 @@ export default function FinancialTransactionsPage() {
                                                 </svg>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="text-center w-1/7">{key.creation_date}</TableCell>
-                                        <TableCell className="text-center w-1/7">{key.name}</TableCell>
-                                        <TableCell className="text-center w-1/7">{key.payment_type}</TableCell>
-                                        <TableCell className="text-center w-1/7">{formatAmount(key.amount_paid, club?.currency)}</TableCell>
-                                        <TableCell className="text-center w-1/7">
+                                        <TableCell className="text-center w-1/8">{key.creation_date}</TableCell>
+                                        <TableCell className="text-center w-1/8">{key.type}</TableCell>
+                                        <TableCell className="text-center w-1/8">{key.name}</TableCell>
+                                        <TableCell className="text-center w-1/8">{key.payment_type}</TableCell>
+                                        <TableCell className="text-center w-1/8">{formatAmount(key.amount_paid, club?.currency)}</TableCell>
+                                        <TableCell className="text-center w-1/8">
                                             {formatAmount(key.amount, club?.currency)}
                                         </TableCell>
                                         <TableCell
-                                            className={`text-center font-bold w-1/7 ${`text-center font-bold w-1/4 ${key.status === "PENDING" ? "text-red-500" : key.status === "PARTIALLY PAID" ? "text-orange-500" : "text-green-500"}`}`}
+                                            className={`text-center font-bold w-1/8 ${`text-center font-bold w-1/4 ${key.status === "PENDING" ? "text-red-500" : key.status === "PARTIALLY PAID" ? "text-orange-500" : "text-green-500"}`}`}
                                         >
                                             {key.status}
                                         </TableCell>

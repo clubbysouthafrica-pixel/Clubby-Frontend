@@ -211,22 +211,25 @@ export default function ViewClubPage() {
                                         <Table>
                                             <TableHeader className="bg-muted sticky top-0 z-10">
                                                 <TableRow>
-                                                    <TableHead className="text-center w-1/6">
+                                                    <TableHead className="text-center w-1/7">
                                                         Transaction ID
                                                     </TableHead>
-                                                    <TableHead className="text-center w-1/6">
+                                                    <TableHead className="text-center w-1/7">
                                                         Creation date
                                                     </TableHead>
-                                                    <TableHead className="text-center w-1/6">
+                                                    <TableHead className="text-center w-1/7">
+                                                        Type
+                                                    </TableHead>
+                                                    <TableHead className="text-center w-1/7">
                                                         Payment type
                                                     </TableHead>
-                                                    <TableHead className="text-center w-1/6">
+                                                    <TableHead className="text-center w-1/7">
                                                         Paid
                                                     </TableHead>
-                                                    <TableHead className="text-center w-1/6">
+                                                    <TableHead className="text-center w-1/7">
                                                         Owing
                                                     </TableHead>
-                                                    <TableHead className="text-center w-1/6">
+                                                    <TableHead className="text-center w-1/7">
                                                         Status
                                                     </TableHead>
                                                 </TableRow>
@@ -236,7 +239,7 @@ export default function ViewClubPage() {
                                                     isLoading ? <div>Loading...</div> :
                                                         transactions?.transactions.map((key: any) => (
                                                             <TableRow key={key.transaction_id}>
-                                                                <TableCell className="text-center w-1/6">
+                                                                <TableCell className="text-center w-1/7">
                                                                     <div
                                                                         className="inline-flex items-center gap-2 px-2 py-1 rounded-md bg-muted hover:bg-muted/70 cursor-pointer text-sm transition"
                                                                         onClick={() => {
@@ -256,19 +259,22 @@ export default function ViewClubPage() {
                                                                         </svg>
                                                                     </div>
                                                                 </TableCell>
-                                                                <TableCell className="text-center w-1/6">
+                                                                <TableCell className="text-center w-1/7">
                                                                     {key.creation_date}
                                                                 </TableCell>
-                                                                <TableCell className="text-center w-1/6">
+                                                                <TableCell className="text-center w-1/7">
+                                                                    {key.type}
+                                                                </TableCell>
+                                                                <TableCell className="text-center w-1/7">
                                                                     {key.payment_type}
                                                                 </TableCell>
-                                                                <TableCell className="text-center w-1/6">
+                                                                <TableCell className="text-center w-1/7">
                                                                     {formatAmount(key.amount_paid, "ZAR")}
                                                                 </TableCell>
-                                                                <TableCell className="text-center w-1/6">
+                                                                <TableCell className="text-center w-1/7">
                                                                     {formatAmount(key.amount, "ZAR")}
                                                                 </TableCell>
-                                                                <TableCell className={`text-center font-bold w-1/6 ${key.status === "PENDING" ? "text-red-500" : key.status === "PARTIALLY PAID" ? "text-orange-500" : "text-green-500"}`}>
+                                                                <TableCell className={`text-center font-bold w-1/7 ${key.status === "PENDING" ? "text-red-500" : key.status === "PARTIALLY PAID" ? "text-orange-500" : "text-green-500"}`}>
                                                                     {key.status}
                                                                 </TableCell>
                                                             </TableRow>
