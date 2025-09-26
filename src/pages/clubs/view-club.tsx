@@ -108,15 +108,21 @@ export default function ViewClubPage() {
                                 }
                                 {
                                     data.resubmission_required &&
-                                    <Button variant="outline" className="shadow-none" onClick={() => navigate(`/clubs/${clubId}/register`)}>Re-register</Button>
+                                    <Button variant="outline" className="shadow-none text-red-700 border-red-700" onClick={() => navigate(`/clubs/${clubId}/register`)}>Re-register</Button>
                                 }
                                 {
                                     data?.club_member_exists && !data.resubmission_required &&
-                                    <div className={"rounded-lg p-2 text-sm outline outline-[3px] " + (data.registered ? "outline-green-600 text-green-700 text-[1rem]" : "outline-yellow-600 text-yellow-700 text-[1rem]")}>
-                                        {
-                                            data.registered ? "Member" : "Membership Pending"
-                                        }
-                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        className={`
+                                            shadow-none border-2 
+                                            ${data.registered ? "text-green-700 border-green-700" : "text-orange-700 border-orange-700"}
+                                            cursor-default pointer-events-none hover:bg-transparent hover:text-inherit hover:border-inherit
+                                        `}
+                                    >
+                                        {data.registered ? "Member" : "Membership Pending"}
+                                    </Button>
+
                                 }
                             </div>
                         </div>
@@ -291,8 +297,8 @@ export default function ViewClubPage() {
                                                             <TableCell className={`text-center font-bold ${tx.status === "PENDING"
                                                                 ? "text-red-500"
                                                                 : tx.status === "PARTIALLY PAID"
-                                                                    ? "text-orange-500"
-                                                                    : "text-green-500"
+                                                                    ? "text-orange-700"
+                                                                    : "text-green-700"
                                                                 }`}>
                                                                 {tx.status}
                                                             </TableCell>
@@ -330,7 +336,7 @@ export default function ViewClubPage() {
                                                                                             </TableCell>
                                                                                             <TableCell className="text-center">{entry.type}</TableCell>
                                                                                             <TableCell className="text-center">{entry.description}</TableCell>
-                                                                                            <TableCell className={`text-center ${entry.type === "SUBMISSION" ? "text-red-500" : "text-green-500"} font-bold`}>{entry.type === "SUBMISSION" ? "-" : "+"}{formatAmount(entry.amount, data.currency)}</TableCell>
+                                                                                            <TableCell className={`text-center ${entry.type === "SUBMISSION" ? "text-red-700" : "text-green-700"} font-bold`}>{entry.type === "SUBMISSION" ? "-" : "+"}{formatAmount(entry.amount, data.currency)}</TableCell>
                                                                                         </TableRow>
                                                                                     ))}
                                                                             </TableBody>
