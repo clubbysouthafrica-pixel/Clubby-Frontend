@@ -74,6 +74,8 @@ export default function ListMembersPage() {
     }
 
     useEffect(() => {
+        if (!clubMembers?.registered && !clubMembers?.unregistered) return;
+
         const fieldMap: Record<string, Set<string>> = {};
 
         clubMembers?.registered.forEach((member: ClubMember) => {
@@ -268,7 +270,7 @@ export default function ListMembersPage() {
                                 placeholder="Filter by member name"
                                 value={memberNameFilter}
                                 onChange={(e) => setMemberNameFilter(e.target.value)}
-                                className="w-[220px]"
+                                className="w-[350px]"
                             />
                             {availableDynamicFilters.map(({ key, fieldName, options }) => (
                                 <Select
