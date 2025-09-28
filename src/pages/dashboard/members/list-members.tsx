@@ -74,6 +74,8 @@ export default function ListMembersPage() {
     }
 
     useEffect(() => {
+        if (!clubMembers?.registered && !clubMembers?.unregistered) return;
+        
         const fieldMap: Record<string, Set<string>> = {};
 
         clubMembers?.registered.forEach((member: ClubMember) => {
