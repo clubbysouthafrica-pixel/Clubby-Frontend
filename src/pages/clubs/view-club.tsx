@@ -12,7 +12,7 @@ import { formatAmount } from "@/data/currencies";
 import { useFetchUserTransactions } from "@/queries/transactions";
 import * as React from "react";
 
-const loadingIcon = 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Loading_icon.gif';
+// const loadingIcon = 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Loading_icon.gif';
 
 function epochToJoinedString(epoch: number): string {
     const date = new Date(epoch); // if epoch is in seconds, use new Date(epoch * 1000)
