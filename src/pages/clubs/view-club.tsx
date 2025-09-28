@@ -12,6 +12,8 @@ import { formatAmount } from "@/data/currencies";
 import { useFetchUserTransactions } from "@/queries/transactions";
 import * as React from "react";
 
+const loadingIcon = 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Loading_icon.gif';
+
 function epochToJoinedString(epoch: number): string {
     const date = new Date(epoch); // if epoch is in seconds, use new Date(epoch * 1000)
     const options: Intl.DateTimeFormatOptions = { month: "long", year: "numeric" };
@@ -87,12 +89,24 @@ export default function ViewClubPage() {
                     <div className="relative">
                         <Avatar className="w-full h-28 md:h-28 rounded-lg bg-muted/30 overflow-hidden border-background">
                             <AvatarImage className="w-full h-full object-cover object-center" src={coverImage ?? "https://images.unsplash.com/photo-1707343843598-39755549ac9a"} />
-                            <AvatarFallback className="rounded-none">{data?.club_name ?? "Background"}</AvatarFallback>
+                            <AvatarFallback className="bg-white">
+                                {
+                                    coverImage ?
+                                        <img className="w-45 h-30 object-center bg-black" src={loadingIcon} />
+                                        : ""
+                                }
+                            </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col md:flex-row items-center md:items-end -mt-16 md:space-x-6 px-4">
                             <Avatar className="w-32 h-32 border-4 border-background">
                                 <AvatarImage className="object-cover object-center" src={profileImage ?? "https://github.com/shadcn.png"} />
-                                <AvatarFallback>JD</AvatarFallback>
+                                <AvatarFallback>
+                                    {
+                                        coverImage ?
+                                            <img className="w-full h-full object-cover object-center" src={loadingIcon} />
+                                            : ""
+                                    }
+                                </AvatarFallback>
                             </Avatar>
                             <div className="mt-4 md:mt-0 text-center md:text-left flex-1">
                                 <h1 className="text-2xl font-bold">{data?.club_name} <span className="ml-2 text-xs text-muted-foreground font-normal rounded-full">{data?.club_type}</span></h1>

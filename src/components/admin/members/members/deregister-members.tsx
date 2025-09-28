@@ -6,8 +6,8 @@ import { Alert, AlertDescription, AlertTitle } from "../../../ui/alert"
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../../ui/tooltip"
 import { useDeregisterMembersMutation } from "@/mutations/admin/useDeregisterMutation"
 import { toast } from "sonner"
-import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table"
 
 interface ImageProps {
   clubId: string
@@ -30,23 +30,27 @@ export default function DeregisterMembersDialog({ dereigsterMembers, clubId, set
 
   const send = () => {
     const userIds = dereigsterMembers.map(member => { return member.user_id })
-    mutate({clubId: clubId, userIds: userIds}, {
-        onSuccess: () =>    {
-            toast.success("Successfully unregistered members")
-            setOpenDialog(false)
-            window.location.reload();
-        },
-        onError: () => toast.error("Something went wrong")
+    mutate({ clubId: clubId, userIds: userIds }, {
+      onSuccess: () => {
+        toast.success("Successfully unregistered members")
+        setOpenDialog(false)
+        window.location.reload();
+      },
+      onError: () => toast.error("Something went wrong")
     })
   }
 
   const handleOpenChange = (open: boolean) => {
     setOpenDialog(open);
-    if (!open && isSuccess) {
-      setIsSuccess(false)
-      setlistActionItems([])
-      setDeregisterMembers([])
-      setAllMembersSelected(false)
+    if (!open) {
+      setConfirmed(false);
+
+      if (isSuccess) {
+        setIsSuccess(false)
+        setlistActionItems([])
+        setDeregisterMembers([])
+        setAllMembersSelected(false)
+      }
     }
   };
 
@@ -68,14 +72,18 @@ export default function DeregisterMembersDialog({ dereigsterMembers, clubId, set
         <DialogHeader>
           <DialogTitle>Unregister Members</DialogTitle>
           <DialogDescription>This will unregister the selected members:</DialogDescription>
-          <div className="max-h-40 overflow-y-auto border p-2 rounded-lg">
-            <ul className="list-disc pl-5">
-              {dereigsterMembers.map((member) => (
-                <li key={member.user_id}>
-                  <Label className="py-2">{member.name}</Label>
-                </li>
-              ))}
-            </ul>
+          <div className="overflow-hidden rounded-lg border my-2">
+            <div className="max-h-[200px] overflow-y-auto">
+              <Table>
+                <TableBody>
+                  {dereigsterMembers.map((member) => (
+                    <TableRow key={member.user_id} className="even:bg-white odd:bg-gray-100">
+                      <TableCell className="py-2">{member.name}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </DialogHeader>
         <div className="flex items-center gap-1">

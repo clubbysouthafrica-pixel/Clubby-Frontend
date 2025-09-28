@@ -14,10 +14,12 @@ export interface BillingOption {
 
 interface Props {
     fieldName: string
+    placeholder: string
     required?: boolean
     dropdownBillingOptions: BillingOption[]
     currency: string
     onFieldNameChange: (val: string) => void
+    onPlaceholderChange: (val: string) => void
     onRequiredChange?: (val: boolean) => void
     onAddBillingOption: (option: BillingOption) => void
     onRemoveBillingOption: (id: string) => void
@@ -26,20 +28,25 @@ interface Props {
 export default function EditBillingDropdown({
     currency,
     fieldName,
+    placeholder,
     required = false,
     dropdownBillingOptions,
     onFieldNameChange,
     onRequiredChange,
+    onPlaceholderChange,
     onAddBillingOption,
     onRemoveBillingOption,
 }: Props) {
     const [internalFieldName, setInternalFieldName] = useState(fieldName)
     const [internalRequired, setInternalRequired] = useState(required)
+    const [internalPlaceholder, setInternalPlaceholder] = useState(placeholder)
     const [dropdownLabel, setDropdownLabel] = useState("")
-    const [dropdownAmount, setDropdownAmount] = useState(0)
+    const [dropdownAmountRaw, setDropdownAmountRaw] = useState<number>(0)
+    const [dropdownAmountDisplay, setDropdownAmountDisplay] = useState<string>(formatAmount(0, currency))
 
     useEffect(() => setInternalFieldName(fieldName), [fieldName])
     useEffect(() => setInternalRequired(required), [required])
+    useEffect(() => setInternalPlaceholder(placeholder), [placeholder])
 
     const handleFieldNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setInternalFieldName(e.target.value)
@@ -51,17 +58,25 @@ export default function EditBillingDropdown({
         if (onRequiredChange) onRequiredChange(checked)
     }
 
-    const addDisabled = !dropdownLabel || !dropdownAmount
+    const handlePlaceholderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setInternalPlaceholder(e.target.value)
+        onPlaceholderChange(e.target.value)
+    }
+
+    const addDisabled = !dropdownLabel || dropdownAmountRaw <= 0
 
     const handleAddOption = () => {
         if (addDisabled) return
+
         onAddBillingOption({
             option_order_id: crypto.randomUUID(),
             label: dropdownLabel,
-            amount: dropdownAmount,
+            amount: dropdownAmountRaw,
         })
+
         setDropdownLabel("")
-        setDropdownAmount(0)
+        setDropdownAmountRaw(0)
+        setDropdownAmountDisplay(formatAmount(0, currency))
     }
 
     return (
@@ -69,6 +84,11 @@ export default function EditBillingDropdown({
             <div>
                 <Label className="block text-sm font-medium mb-2">Field Name</Label>
                 <Input type="text" value={internalFieldName} onChange={handleFieldNameChange} required />
+            </div>
+
+            <div>
+                <Label className="block text-sm font-medium mb-2">Placeholder</Label>
+                <Input required type="text" value={internalPlaceholder} onChange={handlePlaceholderChange} />
             </div>
 
             <div className="flex items-center gap-3 mt-2">
@@ -89,13 +109,17 @@ export default function EditBillingDropdown({
                         required
                     />
                     <div className='flex-1'>
-                        <Label className="mb-2">Amount {formatAmount(dropdownAmount, currency)}</Label>
                         <Input
                             className="flex-1"
-                            type="number"
+                            type="text"
                             placeholder="Amount"
-                            value={dropdownAmount}
-                            onChange={(e) => setDropdownAmount(Number(e.target.value))}
+                            value={dropdownAmountDisplay}
+                            onChange={(e) => {
+                                const cleaned = e.target.value.replace(/[^\d]/g, "")
+                                const numeric = parseInt(cleaned || "0", 10)
+                                setDropdownAmountRaw(numeric)
+                                setDropdownAmountDisplay(formatAmount(numeric, currency))
+                            }}
                             required
                         />
                     </div>

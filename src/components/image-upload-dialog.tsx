@@ -10,11 +10,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { compressImage } from "@/utils/imageCompressor"
 
 interface ImageProps {
-    title: string
-    description: string
-    presignedUrlApi: string
-    className?: string
+  title: string
+  description: string
+  presignedUrlApi: string
+  className?: string
 }
+
+const loadingIcon = 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Loading_icon.gif';
 
 export default function ImageUploadDialog({ title, description, presignedUrlApi, className }: ImageProps) {
   const [imageUrl, setImageUrl] = useState<string>("")
@@ -27,16 +29,19 @@ export default function ImageUploadDialog({ title, description, presignedUrlApi,
   const [compressedBlob, setCompressedBlob] = useState<Blob | null>(null);
   const [compressedMime, setCompressedMime] = useState<string | null>(null);
 
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     const getImg = async () => {
+      setLoading(true)
       try {
         const { uploadUrl, fetchUrl } = await fetchImagePresignedUrl(presignedUrlApi)
-
         setPresignedUrl(uploadUrl)
         setImageUrl(fetchUrl)
       } catch (error) {
         console.error("Failed to fetch presigned URL", error)
       }
+      setLoading(false)
     }
 
     getImg()
@@ -45,43 +50,40 @@ export default function ImageUploadDialog({ title, description, presignedUrlApi,
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-  
-    // Compress (example: max 1600px, aim ~300KB, JPEG/WebP at 0.8)
+
     const blob = await compressImage(file, {
       maxWidth: 1600,
       maxHeight: 1600,
       quality: 0.8,
       targetBytes: 300_000,
     });
-  
+
     setSelectedFile(file);
     setCompressedBlob(blob);
     setCompressedMime(blob.type || file.type);
-  
-    // Create a local preview URL from the *compressed* blob
+
     const localUrl = URL.createObjectURL(blob);
     setImagePreview(localUrl);
   };
 
   const upload = async () => {
     if (!compressedBlob) return;
-  
+
     try {
       setUploading(true);
-  
-      // IMPORTANT: Many backends bind the expected Content-Type in the presign.
-      // Make sure the presigned URL was created for the *final* type you are uploading.
-      // If you changed format (e.g., to webp), ask your backend for a URL with that Content-Type.
+
       const contentType = compressedMime || selectedFile?.type || "application/octet-stream";
-  
+
       const uploadRes = await fetch(presignedUrl, {
         method: "PUT",
         body: compressedBlob,
         headers: { "Content-Type": contentType },
       });
-  
+
       if (uploadRes.ok) {
         if (!imageUrl) setImageUrl(imagePreview);
+        const { fetchUrl } = await fetchImagePresignedUrl(presignedUrlApi)
+        setImageUrl(fetchUrl)
         setOpenDialog(false);
       } else {
         console.error("Upload failed");
@@ -97,20 +99,18 @@ export default function ImageUploadDialog({ title, description, presignedUrlApi,
     <Dialog open={openDialog} onOpenChange={setOpenDialog}>
       <DialogTrigger asChild>
         <Avatar className="w-full rounded-lg overflow-hidden max-h-36 h-full cursor-pointer hover:shadow-xl relative">
-            <AvatarImage className={cn("w-full object-center object-cover", className)} src={imageUrl || "https://images.unsplash.com/photo-1751402059584-ad2f8e0216df?q=80&w=1074&auto=format&fit=crop"} />
-            <AvatarFallback className="rounded-none">
-              <img className="w-full h-full object-center object-cover" src="https://images.unsplash.com/photo-1751402059584-ad2f8e0216df?q=80&w=1074&auto=format&fit=crop"/>
-            </AvatarFallback>
-            <EditIcon className="absolute top-1/2 left-1/2 bg-white rounded-full p-1 w-6 h-6 -translate-y-1/2 -translate-x-1/2 opacity-80 shadow-md"/>
+          {
+            loading ? <img className="w-full h-full object-center bg-black" src={loadingIcon} />
+              :
+              <AvatarImage className={cn("w-full object-center object-cover", className)} src={imageUrl || "https://images.unsplash.com/photo-1751402059584-ad2f8e0216df?q=80&w=1074&auto=format&fit=crop"} />
+          }
+          <AvatarFallback className="w-full object-center object-cover">
+            {
+              <img className="w-full h-full object-center bg-black" src={loadingIcon} />
+            }
+          </AvatarFallback>
+          <EditIcon className="absolute top-1/2 left-1/2 bg-white rounded-full p-1 w-6 h-6 -translate-y-1/2 -translate-x-1/2 opacity-80 shadow-md" />
         </Avatar>
-        {/* <div className="w-full rounded-lg overflow-hidden max-h-36 h-full cursor-pointer hover:shadow-xl relative" onClick={() => setOpenDialog(true)}>
-          <img
-            className={cn("w-full h-full object-center object-cover", className)}
-            src={imageUrl || "https://images.unsplash.com/photo-1751402059584-ad2f8e0216df?q=80&w=1074&auto=format&fit=crop"}
-            alt="Profile"
-          />
-          <EditIcon className="absolute top-1/2 left-1/2 bg-white rounded-full p-1 w-6 h-6 -translate-y-1/2 -translate-x-1/2 opacity-80 shadow-md"/>
-        </div> */}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
@@ -123,7 +123,7 @@ export default function ImageUploadDialog({ title, description, presignedUrlApi,
           <div className="grid gap-3">
             <Label htmlFor="image">Profile Image</Label>
             <Input type="file" accept="image/*" onChange={handleFileChange} disabled={uploading} />
-            {imagePreview && <img src={imagePreview} alt="Preview" className="rounded-lg mt-2 h-32 w-full object-cover" />}
+            {imagePreview && <img src={loadingIcon} alt="Preview" className="rounded-lg mt-2 h-32 w-full object-cover" />}
             {uploading && <p className="text-sm text-gray-500">Uploading...</p>}
           </div>
         </div>
@@ -131,7 +131,7 @@ export default function ImageUploadDialog({ title, description, presignedUrlApi,
           <DialogClose asChild>
             <Button variant="outline">Cancel</Button>
           </DialogClose>
-          <Button type="submit" onClick={upload} disabled={uploading}>{uploading? "Uploading...": "Upload"}</Button>
+          <Button type="submit" onClick={upload} disabled={uploading}>{uploading ? "Uploading..." : "Upload"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
