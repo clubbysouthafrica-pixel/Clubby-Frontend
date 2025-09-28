@@ -32,7 +32,9 @@ export function ClubCard({
     showRegistrationStatus,
     ...props
 }: ClubCardProps) {
-    const loadingIcon = 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Loading_icon.gif';
+    // const loadingIcon = 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Loading_icon.gif';
+
+    console.log(club)
 
     return (
         <div className={cn("space-y-3", className)} {...props}>
@@ -48,7 +50,7 @@ export function ClubCard({
                                 alt={club.club_name}
                             />
                             <AvatarFallback>
-                                <img className="w-full h-full object-cover object-center" src={club.club_cover_url ? loadingIcon : "https://images.unsplash.com/photo-1707343843598-39755549ac9a"} />
+                                <img className="w-full h-full object-center bg-black" src={"https://images.unsplash.com/photo-1707343843598-39755549ac9a"} />
                             </AvatarFallback>
                         </Avatar>
                     </div>

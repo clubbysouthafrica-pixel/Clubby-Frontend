@@ -95,6 +95,8 @@ export default function ImageUploadDialog({ title, description, presignedUrlApi,
     }
   };
 
+  console.log(imageUrl)
+
   return (
     <Dialog open={openDialog} onOpenChange={setOpenDialog}>
       <DialogTrigger asChild>
@@ -106,7 +108,7 @@ export default function ImageUploadDialog({ title, description, presignedUrlApi,
           }
           <AvatarFallback className="w-full object-center object-cover">
             {
-              <img className="w-full h-full object-center bg-black" src={loadingIcon} />
+              <img className="w-full h-full object-center bg-black" src="https://images.unsplash.com/photo-1751402059584-ad2f8e0216df?q=80&w=1074&auto=format&fit=crop" />
             }
           </AvatarFallback>
           <EditIcon className="absolute top-1/2 left-1/2 bg-white rounded-full p-1 w-6 h-6 -translate-y-1/2 -translate-x-1/2 opacity-80 shadow-md" />

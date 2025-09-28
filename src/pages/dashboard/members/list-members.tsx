@@ -74,7 +74,7 @@ export default function ListMembersPage() {
     }
 
     useEffect(() => {
-        if (!clubMembers?.registered && !clubMembers?.unregistered) return;
+        if (!clubMembers?.registered && !clubMembers?.not_registered) return;
 
         const fieldMap: Record<string, Set<string>> = {};
 
@@ -96,7 +96,7 @@ export default function ListMembersPage() {
             });
         });
 
-        clubMembers?.unregistered.forEach((member: ClubMember) => {
+        clubMembers?.not_registered.forEach((member: ClubMember) => {
             member.meta_standard?.forEach((field: any) => {
                 if (field.type === "STANDARD_DROPDOWN" && field.value) {
                     const key = `standard:${field.field_name}`;
