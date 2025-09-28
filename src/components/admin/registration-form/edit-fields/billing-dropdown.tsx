@@ -14,10 +14,12 @@ export interface BillingOption {
 
 interface Props {
     fieldName: string
+    placeholder: string
     required?: boolean
     dropdownBillingOptions: BillingOption[]
     currency: string
     onFieldNameChange: (val: string) => void
+    onPlaceholderChange: (val: string) => void
     onRequiredChange?: (val: boolean) => void
     onAddBillingOption: (option: BillingOption) => void
     onRemoveBillingOption: (id: string) => void
@@ -26,20 +28,24 @@ interface Props {
 export default function EditBillingDropdown({
     currency,
     fieldName,
+    placeholder,
     required = false,
     dropdownBillingOptions,
     onFieldNameChange,
     onRequiredChange,
+    onPlaceholderChange,
     onAddBillingOption,
     onRemoveBillingOption,
 }: Props) {
     const [internalFieldName, setInternalFieldName] = useState(fieldName)
     const [internalRequired, setInternalRequired] = useState(required)
+    const [internalPlaceholder, setInternalPlaceholder] = useState(placeholder)
     const [dropdownLabel, setDropdownLabel] = useState("")
     const [dropdownAmount, setDropdownAmount] = useState(0)
 
     useEffect(() => setInternalFieldName(fieldName), [fieldName])
     useEffect(() => setInternalRequired(required), [required])
+    useEffect(() => setInternalPlaceholder(placeholder), [placeholder])
 
     const handleFieldNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setInternalFieldName(e.target.value)
@@ -49,6 +55,11 @@ export default function EditBillingDropdown({
     const handleRequiredChange = (checked: boolean) => {
         setInternalRequired(checked)
         if (onRequiredChange) onRequiredChange(checked)
+    }
+
+    const handlePlaceholderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setInternalPlaceholder(e.target.value)
+        onPlaceholderChange(e.target.value)
     }
 
     const addDisabled = !dropdownLabel || !dropdownAmount
@@ -69,6 +80,11 @@ export default function EditBillingDropdown({
             <div>
                 <Label className="block text-sm font-medium mb-2">Field Name</Label>
                 <Input type="text" value={internalFieldName} onChange={handleFieldNameChange} required />
+            </div>
+
+            <div>
+                <Label className="block text-sm font-medium mb-2">Placeholder</Label>
+                <Input required type="text" value={internalPlaceholder} onChange={handlePlaceholderChange} />
             </div>
 
             <div className="flex items-center gap-3 mt-2">

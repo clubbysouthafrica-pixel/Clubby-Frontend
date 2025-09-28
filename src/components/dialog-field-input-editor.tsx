@@ -156,9 +156,6 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
                 </div>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
-                {/* <DialogHeader>
-                    <DialogTitle>Edit {field.input_type} field</DialogTitle>
-                </DialogHeader> */}
                 {
                     field.input_type === "DISPLAY" ?
                         <EditTextDisplay
@@ -190,9 +187,11 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
                                     <EditBillingDropdown
                                         currency={currency}
                                         fieldName={fieldName}
+                                        placeholder={placeholder}
                                         required={required}
                                         dropdownBillingOptions={dropdownBillingOptions} // always pass parent state
                                         onFieldNameChange={setFieldName}
+                                        onPlaceholderChange={setPlaceholder}
                                         onRequiredChange={setRequired}
                                         onAddBillingOption={handleAddBillingOption}
                                         onRemoveBillingOption={handleRemoveBillingOption}
