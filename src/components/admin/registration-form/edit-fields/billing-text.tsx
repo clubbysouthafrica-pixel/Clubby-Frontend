@@ -22,14 +22,12 @@ export default function EditBillingText({
   onAmountChange
 }: Props) {
   const [internalFieldName, setInternalFieldName] = useState(fieldName)
-  const [internalAmountRaw, setInternalAmountRaw] = useState(Number(amount))
   const [internalAmountDisplay, setInternalAmountDisplay] = useState(formatAmount(Number(amount), currency))
 
 
   useEffect(() => setInternalFieldName(fieldName), [fieldName])
   useEffect(() => {
     const num = Number(amount)
-    setInternalAmountRaw(num)
     setInternalAmountDisplay(formatAmount(num, currency))
   }, [amount, currency])
 
@@ -41,7 +39,6 @@ export default function EditBillingText({
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const cleaned = e.target.value.replace(/[^\d]/g, "")
     const numeric = parseInt(cleaned || "0", 10)
-    setInternalAmountRaw(numeric)
     setInternalAmountDisplay(formatAmount(numeric, currency))
     onAmountChange(numeric)
   }

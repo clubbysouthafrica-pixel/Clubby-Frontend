@@ -6,7 +6,6 @@ import { Alert, AlertDescription, AlertTitle } from "../../../ui/alert"
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../../ui/tooltip"
 import { useDeregisterMembersMutation } from "@/mutations/admin/useDeregisterMutation"
 import { toast } from "sonner"
-import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table"
 

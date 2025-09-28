@@ -78,8 +78,8 @@ export default function ListMembersPage() {
         console.log(clubMembers)
         const fieldMap: Record<string, Set<string>> = {};
 
-        clubMembers.registered.forEach((member) => {
-            member.meta_standard?.forEach((field) => {
+        clubMembers.registered.forEach((member: ClubMember) => {
+            member.meta_standard?.forEach((field: any) => {
                 if (field.type === "STANDARD_DROPDOWN" && field.value) {
                     const key = `standard:${field.field_name}`;
                     if (!fieldMap[key]) fieldMap[key] = new Set();
@@ -87,7 +87,7 @@ export default function ListMembersPage() {
                 }
             });
 
-            member.meta_billing?.forEach((field) => {
+            member.meta_billing?.forEach((field: any) => {
                 if (field.type === "BILLING_DROPDOWN" && field.label_value) {
                     const key = `billing:${field.field_name}`;
                     if (!fieldMap[key]) fieldMap[key] = new Set();
@@ -178,12 +178,12 @@ export default function ListMembersPage() {
             const [type, fieldName] = fullKey.split(":");
 
             if (type === "standard") {
-                const field = member.meta_standard?.find(f => f.field_name === fieldName);
+                const field = member.meta_standard?.find((f: any) => f.field_name === fieldName);
                 if (!field || field.value !== selectedValue) return false;
             }
 
             if (type === "billing") {
-                const field = member.meta_billing?.find(f => f.field_name === fieldName);
+                const field = member.meta_billing?.find((f: any) => f.field_name === fieldName);
                 if (!field || field.label_value !== selectedValue) return false;
             }
         }
@@ -201,12 +201,12 @@ export default function ListMembersPage() {
             const [type, fieldName] = fullKey.split(":");
 
             if (type === "standard") {
-                const field = member.meta_standard?.find(f => f.field_name === fieldName);
+                const field = member.meta_standard?.find((f: any) => f.field_name === fieldName);
                 if (!field || field.value !== selectedValue) return false;
             }
 
             if (type === "billing") {
-                const field = member.meta_billing?.find(f => f.field_name === fieldName);
+                const field = member.meta_billing?.find((f: any) => f.field_name === fieldName);
                 if (!field || field.label_value !== selectedValue) return false;
             }
         }
