@@ -270,7 +270,7 @@ export default function ListMembersPage() {
                                 placeholder="Filter by member name"
                                 value={memberNameFilter}
                                 onChange={(e) => setMemberNameFilter(e.target.value)}
-                                className="w-[350px]"
+                                className="w-[300px]"
                             />
                             {availableDynamicFilters.map(({ key, fieldName, options }) => (
                                 <Select
@@ -280,7 +280,7 @@ export default function ListMembersPage() {
                                     }
                                     value={dynamicFilters[key] || ""}
                                 >
-                                    <SelectTrigger className="w-[180px]">
+                                    <SelectTrigger className="w-[250px]">
                                         <span className="text-muted-foreground truncate">{fieldName}</span>
                                         <SelectValue placeholder="All" />
                                     </SelectTrigger>
