@@ -59,9 +59,7 @@ export default function EditBillingText({
       </div>
 
       <div>
-        {/* <Label className="block text-sm font-medium mb-2">Amount</Label> */}
         <div className='flex-1'>
-          {/* {formatAmount(Number(internalAmount), currency)} */}
           <Input
             required
             type="text"
