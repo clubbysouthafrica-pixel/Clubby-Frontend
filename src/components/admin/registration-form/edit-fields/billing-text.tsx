@@ -22,10 +22,16 @@ export default function EditBillingText({
   onAmountChange
 }: Props) {
   const [internalFieldName, setInternalFieldName] = useState(fieldName)
-  const [internalAmount, setInternalAmount] = useState(amount)
+  const [internalAmountRaw, setInternalAmountRaw] = useState(Number(amount))
+  const [internalAmountDisplay, setInternalAmountDisplay] = useState(formatAmount(Number(amount), currency))
+
 
   useEffect(() => setInternalFieldName(fieldName), [fieldName])
-  useEffect(() => setInternalAmount(amount), [amount])
+  useEffect(() => {
+    const num = Number(amount)
+    setInternalAmountRaw(num)
+    setInternalAmountDisplay(formatAmount(num, currency))
+  }, [amount, currency])
 
   const handleFieldNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInternalFieldName(e.target.value)
@@ -33,8 +39,11 @@ export default function EditBillingText({
   }
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInternalAmount(e.target.value)
-    onAmountChange(Number(e.target.value))
+    const cleaned = e.target.value.replace(/[^\d]/g, "")
+    const numeric = parseInt(cleaned || "0", 10)
+    setInternalAmountRaw(numeric)
+    setInternalAmountDisplay(formatAmount(numeric, currency))
+    onAmountChange(numeric)
   }
 
   return (
@@ -50,13 +59,13 @@ export default function EditBillingText({
       </div>
 
       <div>
-        <Label className="block text-sm font-medium mb-2">Amount</Label>
+        {/* <Label className="block text-sm font-medium mb-2">Amount</Label> */}
         <div className='flex-1'>
-          {formatAmount(Number(internalAmount), currency)}
+          {/* {formatAmount(Number(internalAmount), currency)} */}
           <Input
             required
             type="text"
-            value={internalAmount}
+            value={internalAmountDisplay}
             onChange={handleAmountChange}
           />
         </div>

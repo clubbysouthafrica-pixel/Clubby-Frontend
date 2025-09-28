@@ -41,7 +41,8 @@ export default function EditBillingDropdown({
     const [internalRequired, setInternalRequired] = useState(required)
     const [internalPlaceholder, setInternalPlaceholder] = useState(placeholder)
     const [dropdownLabel, setDropdownLabel] = useState("")
-    const [dropdownAmount, setDropdownAmount] = useState(0)
+    const [dropdownAmountRaw, setDropdownAmountRaw] = useState<number>(0)
+    const [dropdownAmountDisplay, setDropdownAmountDisplay] = useState<string>(formatAmount(0, currency))
 
     useEffect(() => setInternalFieldName(fieldName), [fieldName])
     useEffect(() => setInternalRequired(required), [required])
@@ -62,17 +63,20 @@ export default function EditBillingDropdown({
         onPlaceholderChange(e.target.value)
     }
 
-    const addDisabled = !dropdownLabel || !dropdownAmount
+    const addDisabled = !dropdownLabel || dropdownAmountRaw <= 0
 
     const handleAddOption = () => {
         if (addDisabled) return
+
         onAddBillingOption({
             option_order_id: crypto.randomUUID(),
             label: dropdownLabel,
-            amount: dropdownAmount,
+            amount: dropdownAmountRaw,
         })
+
         setDropdownLabel("")
-        setDropdownAmount(0)
+        setDropdownAmountRaw(0)
+        setDropdownAmountDisplay(formatAmount(0, currency))
     }
 
     return (
@@ -105,13 +109,17 @@ export default function EditBillingDropdown({
                         required
                     />
                     <div className='flex-1'>
-                        <Label className="mb-2">Amount {formatAmount(dropdownAmount, currency)}</Label>
                         <Input
                             className="flex-1"
-                            type="number"
+                            type="text"
                             placeholder="Amount"
-                            value={dropdownAmount}
-                            onChange={(e) => setDropdownAmount(Number(e.target.value))}
+                            value={dropdownAmountDisplay}
+                            onChange={(e) => {
+                                const cleaned = e.target.value.replace(/[^\d]/g, "")
+                                const numeric = parseInt(cleaned || "0", 10)
+                                setDropdownAmountRaw(numeric)
+                                setDropdownAmountDisplay(formatAmount(numeric, currency))
+                            }}
                             required
                         />
                     </div>
