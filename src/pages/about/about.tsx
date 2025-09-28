@@ -46,7 +46,7 @@ const achievements = [
     },
     {
         number: "10+",
-        label: "Club",
+        label: "Clubs",
         icon: <Award className="w-6 h-6" />,
     },
     {
