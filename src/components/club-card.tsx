@@ -34,8 +34,6 @@ export function ClubCard({
 }: ClubCardProps) {
     // const loadingIcon = 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Loading_icon.gif';
 
-    console.log(club)
-
     return (
         <div className={cn("space-y-3", className)} {...props}>
             <ContextMenu>
