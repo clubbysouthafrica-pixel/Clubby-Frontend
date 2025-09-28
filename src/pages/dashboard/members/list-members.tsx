@@ -74,11 +74,27 @@ export default function ListMembersPage() {
     }
 
     useEffect(() => {
-        if (!clubMembers?.registered) return;
-        console.log(clubMembers)
         const fieldMap: Record<string, Set<string>> = {};
 
-        clubMembers.registered.forEach((member: ClubMember) => {
+        clubMembers?.registered.forEach((member: ClubMember) => {
+            member.meta_standard?.forEach((field: any) => {
+                if (field.type === "STANDARD_DROPDOWN" && field.value) {
+                    const key = `standard:${field.field_name}`;
+                    if (!fieldMap[key]) fieldMap[key] = new Set();
+                    fieldMap[key].add(field.value);
+                }
+            });
+
+            member.meta_billing?.forEach((field: any) => {
+                if (field.type === "BILLING_DROPDOWN" && field.label_value) {
+                    const key = `billing:${field.field_name}`;
+                    if (!fieldMap[key]) fieldMap[key] = new Set();
+                    fieldMap[key].add(field.label_value);
+                }
+            });
+        });
+
+        clubMembers?.unregistered.forEach((member: ClubMember) => {
             member.meta_standard?.forEach((field: any) => {
                 if (field.type === "STANDARD_DROPDOWN" && field.value) {
                     const key = `standard:${field.field_name}`;
