@@ -131,7 +131,7 @@ export default function ListMembersPage() {
     }, []);
 
     const registerUser = (member: ClubMember) => {
-        if (memberRegisterAmount > member.outstanding_amount || memberRegisterAmount < 0) {
+        if (memberRegisterAmount > member.outstanding_amount || memberRegisterAmount <= 0) {
             setInvalidRegistrationAmount(true)
             return
         }
@@ -149,7 +149,10 @@ export default function ListMembersPage() {
                         }
                     })
                 } else {
-                    window.location.reload();
+                    const index = clubMembers.unregistered.findIndex((m: ClubMember) => m.user_id === member.user_id)
+                    clubMembers.unregistered.splice(index, 1);
+ 
+                    clubMembers.registered.push(member)
                 }
                 setMemberRegisterAmount(0)
             },
@@ -275,7 +278,6 @@ export default function ListMembersPage() {
                             ))}
                         </div>
 
-                        {/* Right Side: Action Buttons */}
                         <div className="px-2 py-1 flex items-center gap-3">
                             {club?.club_account_id && (
                                 <DeregisterMembersDialog
@@ -488,7 +490,7 @@ export default function ListMembersPage() {
                                                                         <Alert className="border border-red-600 text-red-600">
                                                                             <AlertCircle className="h-4 w-4 text-red-600" />
                                                                             <AlertDescription className="text-xs text-red-600">
-                                                                                The amount entered cannot be less than {formatAmount(0, club?.currency)} and more than the outstanding amount.
+                                                                                The amount entered cannot be less than {formatAmount(1, club?.currency)} and more than the outstanding amount.
                                                                             </AlertDescription>
                                                                         </Alert>
                                                                     )}
