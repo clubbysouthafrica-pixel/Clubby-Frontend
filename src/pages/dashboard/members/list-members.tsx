@@ -19,6 +19,7 @@ import DeregisterMembersDialog from "@/components/admin/members/members/deregist
 import SelectedMember from "@/components/admin/members/members/selected-members";
 import { formatAmount } from "@/data/currencies";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function ListMembersPage() {
     const { club } = useContext(ClubContext) as ClubContextType
@@ -34,6 +35,12 @@ export default function ListMembersPage() {
     const [displayAmount, setDisplayAmount] = useState<string>(formatAmount(0, club?.currency));
     const [invalidRegistrationAmount, setInvalidRegistrationAmount] = useState(false)
     const [memberNameFilter, setMemberNameFilter] = useState("");
+    const [dynamicFilters, setDynamicFilters] = useState<Record<string, string>>({});
+    const [filterLoading, setFilterLoading] = useState(true);
+
+    const [availableDynamicFilters, setAvailableDynamicFilters] = useState<
+        { key: string, fieldName: string, type: string, options: string[] }[]
+    >([]);
 
     const handleFormattedInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setInvalidRegistrationAmount(false)
@@ -65,6 +72,45 @@ export default function ListMembersPage() {
             setDeregisterMembers(allDeregisterMembers)
         }
     }
+
+    useEffect(() => {
+        if (!clubMembers?.registered) return;
+        console.log(clubMembers)
+        const fieldMap: Record<string, Set<string>> = {};
+
+        clubMembers.registered.forEach((member) => {
+            member.meta_standard?.forEach((field) => {
+                if (field.type === "STANDARD_DROPDOWN" && field.value) {
+                    const key = `standard:${field.field_name}`;
+                    if (!fieldMap[key]) fieldMap[key] = new Set();
+                    fieldMap[key].add(field.value);
+                }
+            });
+
+            member.meta_billing?.forEach((field) => {
+                if (field.type === "BILLING_DROPDOWN" && field.label_value) {
+                    const key = `billing:${field.field_name}`;
+                    if (!fieldMap[key]) fieldMap[key] = new Set();
+                    fieldMap[key].add(field.label_value);
+                }
+            });
+        });
+
+        const filters = Object.entries(fieldMap).map(([fullKey, values]) => {
+            const [type, field] = fullKey.split(":");
+            return {
+                key: fullKey,
+                fieldName: field,
+                type,
+                options: Array.from(values)
+            };
+        });
+
+        console.log(filters)
+
+        setAvailableDynamicFilters(filters);
+        setFilterLoading(false);
+    }, [clubMembers]);
 
     useEffect(() => {
         setDisplayAmount(formatAmount(0, club?.currency))
@@ -118,28 +164,70 @@ export default function ListMembersPage() {
 
     const filteredRegisteredMembers = clubMembers?.registered?.filter((member: ClubMember) => {
         const fullName = (member.member_first_name + " " + member.member_surname).toLowerCase();
-        return fullName.includes(memberNameFilter.toLowerCase());
+
+        // Filter by name
+        if (!fullName.includes(memberNameFilter.toLowerCase())) return false;
+
+        // Apply dynamic meta filters
+        for (const [fullKey, selectedValue] of Object.entries(dynamicFilters)) {
+            if (!selectedValue || selectedValue === "all") continue;
+
+            const [type, fieldName] = fullKey.split(":");
+
+            if (type === "standard") {
+                const field = member.meta_standard?.find(f => f.field_name === fieldName);
+                if (!field || field.value !== selectedValue) return false;
+            }
+
+            if (type === "billing") {
+                const field = member.meta_billing?.find(f => f.field_name === fieldName);
+                if (!field || field.label_value !== selectedValue) return false;
+            }
+        }
+
+        return true;
     }) ?? [];
 
     const filteredUnregisteredMembers = clubMembers?.unregistered?.filter((member: ClubMember) => {
         const fullName = (member.member_first_name + " " + member.member_surname).toLowerCase();
-        return fullName.includes(memberNameFilter.toLowerCase());
+        if (!fullName.includes(memberNameFilter.toLowerCase())) return false;
+
+        for (const [fullKey, selectedValue] of Object.entries(dynamicFilters)) {
+            if (!selectedValue || selectedValue === "all") continue;
+
+            const [type, fieldName] = fullKey.split(":");
+
+            if (type === "standard") {
+                const field = member.meta_standard?.find(f => f.field_name === fieldName);
+                if (!field || field.value !== selectedValue) return false;
+            }
+
+            if (type === "billing") {
+                const field = member.meta_billing?.find(f => f.field_name === fieldName);
+                if (!field || field.label_value !== selectedValue) return false;
+            }
+        }
+
+        return true;
     }) ?? [];
 
     return (
         <div className="p-5 min-h-screen">
             <h1 className="text-base font-bold">Club Members</h1>
             {
-                clubMembersLoading && <div>loading...</div>
+                (clubMembersLoading || filterLoading) && <div>loading...</div>
             }
             {
-                !clubMembersLoading &&
+                !clubMembersLoading && !filterLoading &&
                 <Tabs
                     defaultValue="registered-members"
                     onValueChange={() => {
                         setHashUserId(null);
                         setSelectedMember({});
                         window.history.pushState("", document.title, window.location.pathname + window.location.search);
+
+                        setMemberNameFilter("");
+                        setDynamicFilters({});
                     }}
                     className="w-full flex-col justify-start gap-1 mt-4">
                     <div className="flex items-center justify-between">
@@ -147,30 +235,69 @@ export default function ListMembersPage() {
                             View
                         </Label>
 
-                        <TabsList>
-                            <TabsTrigger value="registered-members">
-                                Members Registered <Badge variant="secondary">{clubMembers?.registered?.length}</Badge>
+                        <TabsList >
+                            <TabsTrigger value="registered-members" className="p-2">
+                                Members Registered <Badge variant="secondary">{filteredRegisteredMembers.length ?? 0}</Badge>
                             </TabsTrigger>
-                            <TabsTrigger value="pending-members">
-                                Members Pending <Badge variant="secondary">{clubMembers?.unregistered?.length ?? clubMembers?.not_registered?.length}</Badge>
+                            <TabsTrigger value="pending-members" className="p-2" >
+                                Members Pending <Badge variant="secondary">{filteredUnregisteredMembers.length ?? 0}</Badge>
                             </TabsTrigger>
                         </TabsList>
                     </div>
-                    <div className="flex items-center justify-between">
-                        <div className="mb-1 max-w-sm mt-4 w-[500px]">
+                    <div className="flex flex-wrap justify-between gap-4 mt-4">
+                        {/* Left Side: Filters */}
+                        <div className="flex flex-wrap gap-3 flex-1 min-w-[300px]">
                             <Input
                                 placeholder="Filter by member name"
                                 value={memberNameFilter}
                                 onChange={(e) => setMemberNameFilter(e.target.value)}
-                                className="w-[80%]"
+                                className="w-[220px]"
                             />
+                            {availableDynamicFilters.map(({ key, fieldName, options }) => (
+                                <Select
+                                    key={key}
+                                    onValueChange={(value) =>
+                                        setDynamicFilters(prev => ({ ...prev, [key]: value }))
+                                    }
+                                    value={dynamicFilters[key] || ""}
+                                >
+                                    <SelectTrigger className="w-[180px]">
+                                        <span className="text-muted-foreground truncate">{fieldName}</span>
+                                        <SelectValue placeholder="All" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All</SelectItem>
+                                        {options.map(opt => (
+                                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            ))}
                         </div>
-                        <div className="flex-init px-5 space-x-5 items-center justify-center">
-                            {/* {club?.club_account_id && <DeregisterAllDialog clubId={club.club_account_id} disabled={!clubMembers?.registered?.length} />} */}
-                            {club?.club_account_id && <DeregisterMembersDialog dereigsterMembers={dereigsterMembers} clubId={club.club_account_id} setlistActionItems={setlistActionItems} setDeregisterMembers={setDeregisterMembers} setAllMembersSelected={setAllMembersSelected} />}
-                            {club?.club_account_id && <SendEmailDialog clubId={club.club_account_id} contacts={listActionItems} setlistActionItems={setlistActionItems} setDeregisterMembers={setDeregisterMembers} setAllMembersSelected={setAllMembersSelected} />}
+
+                        {/* Right Side: Action Buttons */}
+                        <div className="px-2 py-1 flex items-center gap-3">
+                            {club?.club_account_id && (
+                                <DeregisterMembersDialog
+                                    dereigsterMembers={dereigsterMembers}
+                                    clubId={club.club_account_id}
+                                    setlistActionItems={setlistActionItems}
+                                    setDeregisterMembers={setDeregisterMembers}
+                                    setAllMembersSelected={setAllMembersSelected}
+                                />
+                            )}
+                            {club?.club_account_id && (
+                                <SendEmailDialog
+                                    clubId={club.club_account_id}
+                                    contacts={listActionItems}
+                                    setlistActionItems={setlistActionItems}
+                                    setDeregisterMembers={setDeregisterMembers}
+                                    setAllMembersSelected={setAllMembersSelected}
+                                />
+                            )}
                         </div>
                     </div>
+
                     <TabsContent
                         value="registered-members"
                         className="relative flex flex-col gap-4 overflow-auto">
@@ -254,7 +381,6 @@ export default function ListMembersPage() {
                     <TabsContent
                         value="pending-members"
                         className="relative flex flex-col gap-4 overflow-auto">
-
                         <div className="overflow-hidden rounded-lg border">
                             <DndContext
                                 collisionDetection={closestCenter}
@@ -265,7 +391,6 @@ export default function ListMembersPage() {
                                     <TableHeader className="bg-muted sticky top-0 z-10">
                                         <TableRow>
                                             <TableHead className="text-center w-1/5">Display Name</TableHead>
-                                            {/* <TableHead>Billing Type</TableHead> */}
                                             <TableHead className="text-center w-1/5">Registration Submitted</TableHead>
                                             <TableHead className="text-center w-1/5">Reference Numbers</TableHead>
                                             <TableHead className="text-center w-1/5">Outstanding Amount</TableHead>
@@ -298,7 +423,7 @@ export default function ListMembersPage() {
                                                     {member.registration_payment_reference}
                                                 </TableCell>
                                                 <TableCell className="text-center w-1/5">
-                                                    { member.resubmission_required ? "N/A" : formatAmount(member.outstanding_amount, club?.currency) }
+                                                    {member.resubmission_required ? "N/A" : formatAmount(member.outstanding_amount, club?.currency)}
                                                 </TableCell>
                                                 <TableCell className="text-center w-1/5">
                                                     {
