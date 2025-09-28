@@ -121,9 +121,7 @@ export default function ListMembersPage() {
                 options: Array.from(values)
             };
         });
-
-        console.log(filters)
-
+        
         setAvailableDynamicFilters(filters);
         setFilterLoading(false);
     }, [clubMembers]);
