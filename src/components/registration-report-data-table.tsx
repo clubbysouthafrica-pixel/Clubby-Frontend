@@ -116,7 +116,7 @@ export function RegistrationReportData({ data, currency }: props) {
                           <CardHeader className="flex flex-col items-center justify-center text-center">
                             <CardDescription>Fee Amount</CardDescription>
                             <CardTitle className="text-xl font-semibold tabular-nums">
-                              {formatAmount(r.total.fee_amount, currency)}
+                              {formatAmount(r.fee_amount, currency)}
                             </CardTitle>
                           </CardHeader>
                         </Card>

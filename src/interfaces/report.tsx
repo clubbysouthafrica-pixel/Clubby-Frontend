@@ -24,8 +24,8 @@ export interface RegistrationReportRowDataItem {
 }
 export interface RegistrationRowData {
   row_name: string
+  fee_amount: number
   total: {
-    fee_amount: number
     paid_to_club: number
     due_to_club: number
   }
