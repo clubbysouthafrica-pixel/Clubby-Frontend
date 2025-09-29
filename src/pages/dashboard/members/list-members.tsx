@@ -14,7 +14,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import SendEmailDialog from "@/components/send-email-dialog";
-// import DeregisterAllDialog from "@/components/deregister-dialog";
 import DeregisterMembersDialog from "@/components/admin/members/members/deregister-members";
 import SelectedMember from "@/components/admin/members/members/selected-members";
 import { formatAmount } from "@/data/currencies";
@@ -74,45 +73,49 @@ export default function ListMembersPage() {
     }
 
     useEffect(() => {
-        if (!clubMembers?.registered && !clubMembers?.not_registered) return;
+        if (!clubMembers?.registered && !clubMembers?.unregistered) return;
 
         const fieldMap: Record<string, Set<string>> = {};
 
-        clubMembers?.registered.forEach((member: ClubMember) => {
-            member.meta_standard?.forEach((field: any) => {
-                if (field.type === "STANDARD_DROPDOWN" && field.value) {
-                    const key = `standard:${field.field_name}`;
-                    if (!fieldMap[key]) fieldMap[key] = new Set();
-                    fieldMap[key].add(field.value);
-                }
-            });
+        if (clubMembers?.registered) {
+            clubMembers?.registered.forEach((member: ClubMember) => {
+                member.meta_standard?.forEach((field: any) => {
+                    if (field.type === "STANDARD_DROPDOWN" && field.value) {
+                        const key = `standard:${field.field_name}`;
+                        if (!fieldMap[key]) fieldMap[key] = new Set();
+                        fieldMap[key].add(field.value);
+                    }
+                });
 
-            member.meta_billing?.forEach((field: any) => {
-                if (field.type === "BILLING_DROPDOWN" && field.label_value) {
-                    const key = `billing:${field.field_name}`;
-                    if (!fieldMap[key]) fieldMap[key] = new Set();
-                    fieldMap[key].add(field.label_value);
-                }
+                member.meta_billing?.forEach((field: any) => {
+                    if (field.type === "BILLING_DROPDOWN" && field.label_value) {
+                        const key = `billing:${field.field_name}`;
+                        if (!fieldMap[key]) fieldMap[key] = new Set();
+                        fieldMap[key].add(field.label_value);
+                    }
+                });
             });
-        });
+        }
 
-        clubMembers?.not_registered.forEach((member: ClubMember) => {
-            member.meta_standard?.forEach((field: any) => {
-                if (field.type === "STANDARD_DROPDOWN" && field.value) {
-                    const key = `standard:${field.field_name}`;
-                    if (!fieldMap[key]) fieldMap[key] = new Set();
-                    fieldMap[key].add(field.value);
-                }
-            });
+        if (clubMembers?.unregistered) {
+            clubMembers?.unregistered?.forEach((member: ClubMember) => {
+                member.meta_standard?.forEach((field: any) => {
+                    if (field.type === "STANDARD_DROPDOWN" && field.value) {
+                        const key = `standard:${field.field_name}`;
+                        if (!fieldMap[key]) fieldMap[key] = new Set();
+                        fieldMap[key].add(field.value);
+                    }
+                });
 
-            member.meta_billing?.forEach((field: any) => {
-                if (field.type === "BILLING_DROPDOWN" && field.label_value) {
-                    const key = `billing:${field.field_name}`;
-                    if (!fieldMap[key]) fieldMap[key] = new Set();
-                    fieldMap[key].add(field.label_value);
-                }
+                member.meta_billing?.forEach((field: any) => {
+                    if (field.type === "BILLING_DROPDOWN" && field.label_value) {
+                        const key = `billing:${field.field_name}`;
+                        if (!fieldMap[key]) fieldMap[key] = new Set();
+                        fieldMap[key].add(field.label_value);
+                    }
+                });
             });
-        });
+        }
 
         const filters = Object.entries(fieldMap).map(([fullKey, values]) => {
             const [type, field] = fullKey.split(":");
@@ -123,7 +126,7 @@ export default function ListMembersPage() {
                 options: Array.from(values)
             };
         });
-        
+
         setAvailableDynamicFilters(filters);
         setFilterLoading(false);
     }, [clubMembers]);
@@ -167,7 +170,7 @@ export default function ListMembersPage() {
                 } else {
                     const index = clubMembers.unregistered.findIndex((m: ClubMember) => m.user_id === member.user_id)
                     clubMembers.unregistered.splice(index, 1);
- 
+
                     clubMembers.registered.push(member)
                 }
                 setMemberRegisterAmount(0)
