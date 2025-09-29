@@ -141,7 +141,6 @@ export default function ViewClubPage() {
                                         data?.club_member_exists && !data?.resubmission_required &&
                                         <>
                                             <TabsTrigger className="w-[150px]" value="bank">Payments & Billing</TabsTrigger>
-                                            <TabsTrigger className="w-[150px]" value="transactions">Transactions</TabsTrigger>
                                         </>
                                     }
                                 </>
@@ -224,136 +223,136 @@ export default function ViewClubPage() {
                                             }
                                         </CardContent>
                                     </Card>
-                                </TabsContent>
-                            }
-                            {
-                                data?.club_member_exists && !isUserTransactionsLoading && transactions &&
-                                <TabsContent value="transactions">
-                                    <div className="overflow-hidden rounded-lg border mt-3">
-                                        <Table>
-                                            <TableHeader className="bg-muted sticky top-0 z-10">
-                                                <TableRow>
-                                                    <TableHead className="text-center w-1/7">Transaction ID</TableHead>
-                                                    <TableHead className="text-center w-1/7">Creation date</TableHead>
-                                                    <TableHead className="text-center w-1/7">Type</TableHead>
-                                                    <TableHead className="text-center w-1/7">Payment type</TableHead>
-                                                    <TableHead className="text-center w-1/7">Amount Paid</TableHead>
-                                                    <TableHead className="text-center w-1/7">Amount Owing</TableHead>
-                                                    <TableHead className="text-center w-1/7">Status</TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-
-                                            <TableBody>
-                                                {transactions.transactions.map((tx: any) => (
-                                                    <React.Fragment key={tx.transaction_id}>
-                                                        {/* Main Transaction Row */}
-                                                        <TableRow
-                                                            className="cursor-pointer hover:bg-muted/50 transition"
-                                                            onClick={() => toggleRow(tx.transaction_id)}
-                                                        >
-                                                            <TableCell className="text-center w-1/7">
-                                                                <div className="inline-flex items-center gap-2 justify-center">
-                                                                    <span className="font-mono">{tx.transaction_id.slice(0, 5)}...</span>
-
-                                                                    {/* Copy button */}
-                                                                    <button
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation(); // Prevent triggering row expand
-                                                                            navigator.clipboard.writeText(tx.transaction_id);
-                                                                        }}
-                                                                        title="Click to copy full Transaction ID"
-                                                                        className="hover:text-primary"
-                                                                    >
-                                                                        <svg
-                                                                            xmlns="http://www.w3.org/2000/svg"
-                                                                            className="h-4 w-4 text-muted-foreground hover:text-foreground transition"
-                                                                            fill="none"
-                                                                            viewBox="0 0 24 24"
-                                                                            stroke="currentColor"
-                                                                        >
-                                                                            <path
-                                                                                strokeLinecap="round"
-                                                                                strokeLinejoin="round"
-                                                                                strokeWidth={2}
-                                                                                d="M8 16h8m2 0a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v8a2 2 0 002 2zM8 16v2a2 2 0 002 2h8a2 2 0 002-2v-2"
-                                                                            />
-                                                                        </svg>
-                                                                    </button>
-
-                                                                    {/* Expand icon */}
-                                                                    <svg
-                                                                        xmlns="http://www.w3.org/2000/svg"
-                                                                        className={`h-4 w-4 transition-transform ${expandedRows[tx.transaction_id] ? "rotate-90" : ""}`}
-                                                                        fill="none"
-                                                                        viewBox="0 0 24 24"
-                                                                        stroke="currentColor"
-                                                                    >
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                                    </svg>
-                                                                </div>
-                                                            </TableCell>
-
-                                                            <TableCell className="text-center">{tx.creation_date}</TableCell>
-                                                            <TableCell className="text-center">{tx.type}</TableCell>
-                                                            <TableCell className="text-center">{tx.payment_type}</TableCell>
-                                                            <TableCell className="text-center">{formatAmount(tx.amount_paid, data.currency)}</TableCell>
-                                                            <TableCell className="text-center">{formatAmount(tx.amount, data.currency)}</TableCell>
-                                                            <TableCell className={`text-center font-bold ${tx.status === "PENDING"
-                                                                ? "text-red-500"
-                                                                : tx.status === "PARTIALLY PAID"
-                                                                    ? "text-orange-700"
-                                                                    : "text-green-700"
-                                                                }`}>
-                                                                {tx.status}
-                                                            </TableCell>
+                                    {
+                                        !isUserTransactionsLoading && transactions &&
+                                        <div className="mt-7">
+                                            <h1 className="text-base font-bold">Transactions</h1>
+                                            <div className="overflow-hidden rounded-lg border mt-3">
+                                                <Table>
+                                                    <TableHeader className="bg-muted sticky top-0 z-10">
+                                                        <TableRow>
+                                                            <TableHead className="text-center w-1/7">Transaction ID</TableHead>
+                                                            <TableHead className="text-center w-1/7">Creation date</TableHead>
+                                                            <TableHead className="text-center w-1/7">Type</TableHead>
+                                                            <TableHead className="text-center w-1/7">Payment type</TableHead>
+                                                            <TableHead className="text-center w-1/7">Amount Paid</TableHead>
+                                                            <TableHead className="text-center w-1/7">Amount Owing</TableHead>
+                                                            <TableHead className="text-center w-1/7">Status</TableHead>
                                                         </TableRow>
+                                                    </TableHeader>
 
-                                                        {/* Lifecycle Row */}
-                                                        {expandedRows[tx.transaction_id] && (
-                                                            <TableRow className="bg-muted/10">
-                                                                <TableCell colSpan={8} className="p-4">
-                                                                    <div className="overflow-hidden rounded-lg border">
-                                                                        <Table className="w-full">
-                                                                            <TableHeader className="bg-muted sticky top-0 z-10">
-                                                                                <TableRow>
-                                                                                    <TableHead className="text-center">Date</TableHead>
-                                                                                    <TableHead className="text-center">Type</TableHead>
-                                                                                    <TableHead className="text-center">Description</TableHead>
-                                                                                    <TableHead className="text-center">Amount</TableHead>
-                                                                                </TableRow>
-                                                                            </TableHeader>
-                                                                            <TableBody>
-                                                                                {Object.entries(tx.lifecycle)
-                                                                                    // Sort by timestamp descending (latest first)
-                                                                                    .sort(([a], [b]) => Number(b) - Number(a))
-                                                                                    .map(([timestamp, entry]: any) => (
-                                                                                        <TableRow key={timestamp}>
-                                                                                            <TableCell className="text-center">
-                                                                                                {new Date(Number(timestamp)).toLocaleString("en-GB", {
-                                                                                                    day: "2-digit",
-                                                                                                    month: "2-digit",
-                                                                                                    year: "numeric",
-                                                                                                    hour: "2-digit",
-                                                                                                    minute: "2-digit",
-                                                                                                    hour12: true,
-                                                                                                })}
-                                                                                            </TableCell>
-                                                                                            <TableCell className="text-center">{entry.type}</TableCell>
-                                                                                            <TableCell className="text-center">{entry.description}</TableCell>
-                                                                                            <TableCell className={`text-center ${entry.type === "SUBMISSION" ? "text-red-700" : "text-green-700"} font-bold`}>{entry.type === "SUBMISSION" ? "-" : "+"}{formatAmount(entry.amount, data.currency)}</TableCell>
+                                                    <TableBody>
+                                                        {transactions.transactions.map((tx: any) => (
+                                                            <React.Fragment key={tx.transaction_id}>
+                                                                {/* Main Transaction Row */}
+                                                                <TableRow
+                                                                    className="cursor-pointer hover:bg-muted/50 transition"
+                                                                    onClick={() => toggleRow(tx.transaction_id)}
+                                                                >
+                                                                    <TableCell className="text-center w-1/7">
+                                                                        <div className="inline-flex items-center gap-2 justify-center">
+                                                                            <span className="font-mono">{tx.transaction_id.slice(0, 5)}...</span>
+
+                                                                            {/* Copy button */}
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation(); // Prevent triggering row expand
+                                                                                    navigator.clipboard.writeText(tx.transaction_id);
+                                                                                }}
+                                                                                title="Click to copy full Transaction ID"
+                                                                                className="hover:text-primary"
+                                                                            >
+                                                                                <svg
+                                                                                    xmlns="http://www.w3.org/2000/svg"
+                                                                                    className="h-4 w-4 text-muted-foreground hover:text-foreground transition"
+                                                                                    fill="none"
+                                                                                    viewBox="0 0 24 24"
+                                                                                    stroke="currentColor"
+                                                                                >
+                                                                                    <path
+                                                                                        strokeLinecap="round"
+                                                                                        strokeLinejoin="round"
+                                                                                        strokeWidth={2}
+                                                                                        d="M8 16h8m2 0a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v8a2 2 0 002 2zM8 16v2a2 2 0 002 2h8a2 2 0 002-2v-2"
+                                                                                    />
+                                                                                </svg>
+                                                                            </button>
+
+                                                                            <svg
+                                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                                className={`h-4 w-4 transition-transform ${expandedRows[tx.transaction_id] ? "rotate-90" : ""}`}
+                                                                                fill="none"
+                                                                                viewBox="0 0 24 24"
+                                                                                stroke="currentColor"
+                                                                            >
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                                            </svg>
+                                                                        </div>
+                                                                    </TableCell>
+
+                                                                    <TableCell className="text-center">{tx.creation_date}</TableCell>
+                                                                    <TableCell className="text-center">{tx.type}</TableCell>
+                                                                    <TableCell className="text-center">{tx.payment_type}</TableCell>
+                                                                    <TableCell className="text-center">{formatAmount(tx.amount_paid, data.currency)}</TableCell>
+                                                                    <TableCell className="text-center">{formatAmount(tx.amount, data.currency)}</TableCell>
+                                                                    <TableCell className={`text-center font-bold ${tx.status === "PENDING"
+                                                                        ? "text-red-500"
+                                                                        : tx.status === "PARTIALLY PAID"
+                                                                            ? "text-orange-700"
+                                                                            : "text-green-700"
+                                                                        }`}>
+                                                                        {tx.status}
+                                                                    </TableCell>
+                                                                </TableRow>
+
+                                                                {/* Lifecycle Row */}
+                                                                {expandedRows[tx.transaction_id] && (
+                                                                    <TableRow className="bg-muted/10">
+                                                                        <TableCell colSpan={8} className="p-4">
+                                                                            <div className="overflow-hidden rounded-lg border">
+                                                                                <Table className="w-full">
+                                                                                    <TableHeader className="bg-muted sticky top-0 z-10">
+                                                                                        <TableRow>
+                                                                                            <TableHead className="text-center">Date</TableHead>
+                                                                                            <TableHead className="text-center">Type</TableHead>
+                                                                                            <TableHead className="text-center">Description</TableHead>
+                                                                                            <TableHead className="text-center">Amount</TableHead>
                                                                                         </TableRow>
-                                                                                    ))}
-                                                                            </TableBody>
-                                                                        </Table>
-                                                                    </div>
-                                                                </TableCell>
-                                                            </TableRow>
-                                                        )}
-                                                    </React.Fragment>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
-                                    </div>
+                                                                                    </TableHeader>
+                                                                                    <TableBody>
+                                                                                        {Object.entries(tx.lifecycle)
+                                                                                            // Sort by timestamp descending (latest first)
+                                                                                            .sort(([a], [b]) => Number(b) - Number(a))
+                                                                                            .map(([timestamp, entry]: any) => (
+                                                                                                <TableRow key={timestamp}>
+                                                                                                    <TableCell className="text-center">
+                                                                                                        {new Date(Number(timestamp)).toLocaleString("en-GB", {
+                                                                                                            day: "2-digit",
+                                                                                                            month: "2-digit",
+                                                                                                            year: "numeric",
+                                                                                                            hour: "2-digit",
+                                                                                                            minute: "2-digit",
+                                                                                                            hour12: true,
+                                                                                                        })}
+                                                                                                    </TableCell>
+                                                                                                    <TableCell className="text-center">{entry.type}</TableCell>
+                                                                                                    <TableCell className="text-center">{entry.description}</TableCell>
+                                                                                                    <TableCell className={`text-center ${entry.type === "SUBMISSION" ? "text-red-700" : "text-green-700"} font-bold`}>{entry.type === "SUBMISSION" ? "-" : "+"}{formatAmount(entry.amount, data.currency)}</TableCell>
+                                                                                                </TableRow>
+                                                                                            ))}
+                                                                                    </TableBody>
+                                                                                </Table>
+                                                                            </div>
+                                                                        </TableCell>
+                                                                    </TableRow>
+                                                                )}
+                                                            </React.Fragment>
+                                                        ))}
+                                                    </TableBody>
+                                                </Table>
+                                            </div>
+                                        </div>
+                                    }
                                 </TabsContent>
                             }
                         </Tabs>
