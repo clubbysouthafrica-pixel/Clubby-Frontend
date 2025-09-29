@@ -38,19 +38,21 @@ export default function GeneralReportingPage() {
                         <Table>
                             <TableHeader className="bg-muted sticky top-0 z-10">
                                 <TableRow>
-                                    <TableHead className="text-center font-bold w-1/4">Month</TableHead>
-                                    <TableHead className="text-center font-bold w-1/4">Revenue</TableHead>
-                                    <TableHead className="text-center font-bold w-1/4">Pending revenue</TableHead>
-                                    <TableHead className="text-center font-bold w-1/4">Active members</TableHead>
+                                    <TableHead className="text-center font-bold w-1/5">Month</TableHead>
+                                    <TableHead className="text-center font-bold w-1/5">Revenue</TableHead>
+                                    <TableHead className="text-center font-bold w-1/5">Pending revenue</TableHead>
+                                    <TableHead className="text-center font-bold w-1/5">Members registered</TableHead>
+                                    <TableHead className="text-center font-bold w-1/5">Members deregistered</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {report.data?.map((month: ReportDataRow) => (
                                     <TableRow key={month.date}>
                                         <TableCell className="text-center font-bold w-1/4">{month.date}</TableCell>
-                                        <TableCell className="text-center w-1/4">{formatAmount(month.total_revenue, club?.currency)}</TableCell>
-                                        <TableCell className="text-center w-1/4">{formatAmount(month.total_pending_revenue, club?.currency)}</TableCell>
-                                        <TableCell className="text-center w-1/4">{month.total_registered_members - month.total_deregistered_members}</TableCell>
+                                        <TableCell className="text-center w-1/5">{formatAmount(month.total_revenue, club?.currency)}</TableCell>
+                                        <TableCell className="text-center w-1/5">{formatAmount(month.total_pending_revenue, club?.currency)}</TableCell>
+                                        <TableCell className="text-center w-1/5">{month.total_registered_members}</TableCell>
+                                        <TableCell className="text-center w-1/5">{month.total_deregistered_members}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
