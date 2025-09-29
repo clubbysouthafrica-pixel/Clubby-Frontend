@@ -18,7 +18,6 @@ import {
 import { User } from "lucide-react";
 import { formatAmount } from "@/data/currencies";
 import { Label } from "@/components/ui/label";
-import { useFetchMemberTransactions } from "@/queries/admin/transactions";
 
 interface ImageProps {
     selectedMember: any;
@@ -31,12 +30,9 @@ export default function SelectedMember({
     selectedMember,
     setSelectedMember,
     currency,
-    clubAccountId,
 }: ImageProps) {
     const [selectedTab, setSelectedTab] = useState("club-information");
     const [open, setOpen] = useState(false);
-
-    const { data: transactions, isLoading } = useFetchMemberTransactions(clubAccountId, selectedMember?.user_id);
 
     React.useEffect(() => {
         if (selectedMember) setOpen(true);
@@ -73,7 +69,7 @@ export default function SelectedMember({
                     <TabsList>
                         <TabsTrigger className="w-[150px]" value="club-information">Club information</TabsTrigger>
                         <TabsTrigger className="w-[150px]" value="club-fees">Club fees</TabsTrigger>
-                        <TabsTrigger className="w-[150px]" value="transactions">Transactions</TabsTrigger>
+                        {/* <TabsTrigger className="w-[150px]" value="transactions">Transactions</TabsTrigger> */}
                     </TabsList>
 
                     {selectedTab === "club-information" && (
@@ -140,48 +136,7 @@ export default function SelectedMember({
                                 </TableBody>
                             </Table>
                         }
-                        {selectedTab === "transactions" &&
-                            <Table>
-                                <TableHeader className="bg-muted sticky top-0 z-10">
-                                    <TableRow>
-                                        <TableHead className="text-center w-1/4">
-                                            Payment type
-                                        </TableHead>
-                                        <TableHead className="text-center w-1/4">
-                                            Amount Paid
-                                        </TableHead>
-                                        <TableHead className="text-center w-1/4">
-                                            Amount Owing
-                                        </TableHead>
-                                        <TableHead className="text-center w-1/4">
-                                            Status
-                                        </TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {
-                                        isLoading ? <div>Loading...</div> :
-                                            transactions?.transactions.map((key: any) => (
-                                                <TableRow key={key.transaction_id}>
-                                                    <TableCell className="text-center w-1/4">
-                                                        {key.payment_type}
-                                                    </TableCell>
-                                                    <TableCell className="text-center w-1/4">
-                                                        {formatAmount(key.amount_paid, currency)}
-                                                    </TableCell>
-                                                    <TableCell className="text-center w-1/4">
-                                                        {formatAmount(key.amount, currency)}
-                                                    </TableCell>
-                                                    <TableCell className={`text-center font-bold w-1/4 ${key.status === "PENDING" ? "text-red-500" : key.status === "PARTIALLY PAID" ? "text-orange-500" : "text-green-500"}`}>
-                                                        {key.status}
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                </TableBody>
-                            </Table>
-                        }
                     </div>
-
                 </Tabs>
             </DialogContent>
         </Dialog>

@@ -15,14 +15,15 @@ import { Label } from "@/components/ui/label";
 import { useUpdateProfileMutation } from "@/mutations/profile";
 import { useGetProfileQuery } from "@/queries/profile";
 import { AuthContext, AuthContextType } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 const SettingRow = ({
-                        icon,
-                        title,
-                        description,
-                        children,
-                        setWidthFlex
-                    }: {
+    icon,
+    title,
+    description,
+    children,
+    setWidthFlex
+}: {
     icon: React.ReactNode;
     title: string;
     description: string;
@@ -39,15 +40,14 @@ const SettingRow = ({
                 <p className="text-sm text-muted-foreground">{description}</p>
             </div>
         </div>
-        <div className={setWidthFlex ? "flex-1 ml-6": "flex-init"}>{children}</div>
+        <div className={setWidthFlex ? "flex-1 ml-6" : "flex-init"}>{children}</div>
     </div>
 );
 
 export default function SettingsPage() {
-    const {isAdmin} = useContext(AuthContext) as AuthContextType
-    const {mutate, isPending} = useUpdateProfileMutation(isAdmin)
-    const {data} = useGetProfileQuery(isAdmin)
-    // const {theme, setTheme} = useContext(ThemeProviderContext)
+    const { isAdmin } = useContext(AuthContext) as AuthContextType
+    const { mutate, isPending } = useUpdateProfileMutation(isAdmin)
+    const { data } = useGetProfileQuery(isAdmin)
     const [accountSettings, setAccountSettings] = useState({
         first_name: "",
         surname: "",
@@ -64,16 +64,16 @@ export default function SettingsPage() {
     useEffect(() => {
         if (data) {
             setAccountSettings({
-        first_name: data.first_name,
-        surname: data.surname,
-        date_of_birth: data.date_of_birth,
-        phone_number: data.phone_number,
-        address_line_1:data.address_line_1,
-        address_line_2: data.address_line_2,
-        suburb: data.suburb,
-        postal_code: data.postal_code,
-        city: data.city,
-        country: data.country
+                first_name: data.first_name,
+                surname: data.surname,
+                date_of_birth: data.date_of_birth,
+                phone_number: data.phone_number,
+                address_line_1: data.address_line_1,
+                address_line_2: data.address_line_2,
+                suburb: data.suburb,
+                postal_code: data.postal_code,
+                city: data.city,
+                country: data.country
             })
         }
     }, [data])
@@ -84,12 +84,10 @@ export default function SettingsPage() {
         marketing: false
     });
 
-    // const [security, setSecurity] = useState({
-    //     twoFactor: false,
-    //     activityLog: true
-    // });
-
-    const saveProfileSettings = () => mutate(accountSettings)
+    const saveProfileSettings = () => mutate(accountSettings, {
+        onSuccess: () => toast.success("Successfully saved user details."),
+        onError: () => toast.error("Something went wrong.")
+    })
 
     return (
         <Pager>
@@ -101,7 +99,7 @@ export default function SettingsPage() {
                             Manage your account preferences and settings
                         </p>
                     </div>
-                    <Button onClick={saveProfileSettings}>{ isPending ? "Saving Changes..." :"Save changes"}</Button>
+                    <Button onClick={saveProfileSettings}>{isPending ? "Saving Changes..." : "Save changes"}</Button>
                 </div>
 
                 <Tabs defaultValue="account">
@@ -119,36 +117,17 @@ export default function SettingsPage() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="sticky top-16 rounded-lg bg-white dark:bg-gray-800 w-full">
-                                <SettingRow
-                                    icon={<User className="h-5 w-5" />}
-                                    title="Profile Information"
-                                    description="Update your personal information and email address"
-                                >
-                                    <Button variant="outline" size="sm" disabled={isPending} onClick={saveProfileSettings}>
-                                        {isPending ? "Updating..." : "Update"}
-                                    </Button>
-                                </SettingRow>
+                                    <SettingRow
+                                        icon={<User className="h-5 w-5" />}
+                                        title="Profile Information"
+                                        description="Update your personal information and email address"
+                                    >
+                                        <Button variant="outline" size="sm" disabled={isPending} onClick={saveProfileSettings}>
+                                            {isPending ? "Updating..." : "Update"}
+                                        </Button>
+                                    </SettingRow>
                                 </div>
-
-                                {/* <SettingRow
-                                    icon={<Globe className="h-5 w-5" />}
-                                    title="Language"
-                                    description="Select your preferred language"
-                                >
-                                    <select className="form-select rounded-md border px-3 py-1">
-                                        <option>English</option>
-                                        <option>Spanish</option>
-                                        <option>French</option>
-                                    </select>
-                                </SettingRow> */}
-                                {/* <SettingRow
-                                    icon={<Globe className="h-5 w-5" />}
-                                    title="Profile Image"
-                                    description="Update your profile image"
-                                >
-                                    <MemberImageUploadDialog title="Profile Image" description="Upload profile image" presignedUrlApi={memberProfilePresignedUrl} className="w-36"/>
-                                </SettingRow> */}
-                                <Separator/>
+                                <Separator />
                                 <SettingRow
                                     icon={<Globe className="h-5 w-5" />}
                                     title="Account Details"
@@ -202,8 +181,8 @@ export default function SettingsPage() {
                                         </div>
                                     </div>
                                 </SettingRow>
-                                <Separator/>
-                                 <SettingRow
+                                <Separator />
+                                <SettingRow
                                     icon={<Globe className="h-5 w-5" />}
                                     title="Address Details"
                                     description="Please enter your address details"
