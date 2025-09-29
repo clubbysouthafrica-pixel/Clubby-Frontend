@@ -37,6 +37,8 @@ export default function ListMembersPage() {
     const [dynamicFilters, setDynamicFilters] = useState<Record<string, string>>({});
     const [filterLoading, setFilterLoading] = useState(true);
 
+    const [selectedTab, setSelectedTab] = useState("registered-members");
+
     const [availableDynamicFilters, setAvailableDynamicFilters] = useState<
         { key: string, fieldName: string, type: string, options: string[] }[]
     >([]);
@@ -184,54 +186,55 @@ export default function ListMembersPage() {
         }
     }, [isSuccess]);
 
-    const filteredRegisteredMembers = clubMembers?.registered?.filter((member: ClubMember) => {
-        const fullName = (member.member_first_name + " " + member.member_surname).toLowerCase();
+    const filteredRegisteredMembers =
+        selectedTab === "registered-members"
+            ? clubMembers?.registered?.filter((member: ClubMember) => {
+                const fullName = (member.member_first_name + " " + member.member_surname).toLowerCase();
+                if (!fullName.includes(memberNameFilter.toLowerCase())) return false;
 
-        // Filter by name
-        if (!fullName.includes(memberNameFilter.toLowerCase())) return false;
+                for (const [fullKey, selectedValue] of Object.entries(dynamicFilters)) {
+                    if (!selectedValue || selectedValue === "all") continue;
+                    const [type, fieldName] = fullKey.split(":");
 
-        // Apply dynamic meta filters
-        for (const [fullKey, selectedValue] of Object.entries(dynamicFilters)) {
-            if (!selectedValue || selectedValue === "all") continue;
+                    if (type === "standard") {
+                        const field = member.meta_standard?.find((f: any) => f.field_name === fieldName);
+                        if (!field || field.value !== selectedValue) return false;
+                    }
 
-            const [type, fieldName] = fullKey.split(":");
+                    if (type === "billing") {
+                        const field = member.meta_billing?.find((f: any) => f.field_name === fieldName);
+                        if (!field || field.label_value !== selectedValue) return false;
+                    }
+                }
 
-            if (type === "standard") {
-                const field = member.meta_standard?.find((f: any) => f.field_name === fieldName);
-                if (!field || field.value !== selectedValue) return false;
-            }
+                return true;
+            }) ?? []
+            : clubMembers?.registered ?? [];
 
-            if (type === "billing") {
-                const field = member.meta_billing?.find((f: any) => f.field_name === fieldName);
-                if (!field || field.label_value !== selectedValue) return false;
-            }
-        }
+    const filteredUnregisteredMembers =
+        selectedTab === "pending-members"
+            ? clubMembers?.unregistered?.filter((member: ClubMember) => {
+                const fullName = (member.member_first_name + " " + member.member_surname).toLowerCase();
+                if (!fullName.includes(memberNameFilter.toLowerCase())) return false;
 
-        return true;
-    }) ?? [];
+                for (const [fullKey, selectedValue] of Object.entries(dynamicFilters)) {
+                    if (!selectedValue || selectedValue === "all") continue;
+                    const [type, fieldName] = fullKey.split(":");
 
-    const filteredUnregisteredMembers = clubMembers?.unregistered?.filter((member: ClubMember) => {
-        const fullName = (member.member_first_name + " " + member.member_surname).toLowerCase();
-        if (!fullName.includes(memberNameFilter.toLowerCase())) return false;
+                    if (type === "standard") {
+                        const field = member.meta_standard?.find((f: any) => f.field_name === fieldName);
+                        if (!field || field.value !== selectedValue) return false;
+                    }
 
-        for (const [fullKey, selectedValue] of Object.entries(dynamicFilters)) {
-            if (!selectedValue || selectedValue === "all") continue;
+                    if (type === "billing") {
+                        const field = member.meta_billing?.find((f: any) => f.field_name === fieldName);
+                        if (!field || field.label_value !== selectedValue) return false;
+                    }
+                }
 
-            const [type, fieldName] = fullKey.split(":");
-
-            if (type === "standard") {
-                const field = member.meta_standard?.find((f: any) => f.field_name === fieldName);
-                if (!field || field.value !== selectedValue) return false;
-            }
-
-            if (type === "billing") {
-                const field = member.meta_billing?.find((f: any) => f.field_name === fieldName);
-                if (!field || field.label_value !== selectedValue) return false;
-            }
-        }
-
-        return true;
-    }) ?? [];
+                return true;
+            }) ?? []
+            : clubMembers?.unregistered ?? [];
 
     return (
         <div className="p-5 min-h-screen">
@@ -243,7 +246,8 @@ export default function ListMembersPage() {
                 !clubMembersLoading && !filterLoading &&
                 <Tabs
                     defaultValue="registered-members"
-                    onValueChange={() => {
+                    onValueChange={(value: string) => {
+                        setSelectedTab(value);
                         setHashUserId(null);
                         setSelectedMember({});
                         window.history.pushState("", document.title, window.location.pathname + window.location.search);
