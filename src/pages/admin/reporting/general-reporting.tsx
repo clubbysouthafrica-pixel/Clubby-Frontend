@@ -86,7 +86,7 @@ export default function GeneralReportingPage() {
                                 <TableBody>
                                     {report.data?.map((month: ReportDataRow) => (
                                         <TableRow key={month.date}>
-                                            <TableCell className="text-center font-bold w-1/4">{month.date}</TableCell>
+                                            <TableCell className="text-center font-bold w-1/5">{month.date}</TableCell>
                                             <TableCell className="text-center w-1/5">{formatAmount(month.total_revenue, club?.currency)}</TableCell>
                                             <TableCell className="text-center w-1/5">{formatAmount(month.total_pending_revenue, club?.currency)}</TableCell>
                                             <TableCell className="text-center w-1/5">{month.total_registered_members}</TableCell>
