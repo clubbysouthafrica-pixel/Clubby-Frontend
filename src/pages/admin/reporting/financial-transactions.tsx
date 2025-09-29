@@ -25,7 +25,8 @@ export default function FinancialTransactionsPage() {
     const { club } = useContext(ClubContext) as ClubContextType;
     const { data: transactions, isLoading } = useFetchClubTransactions(club?.club_account_id as string);
 
-    const [searchTerm, setSearchTerm] = useState("");
+    const [memberIdSearch, setMemberIdSearch] = useState("");
+    const [txIdSearch, setTxIdSearch] = useState("");
     const [paymentType, setPaymentType] = useState("all");
     const [statusFilter, setStatusFilter] = useState("all");
     const [transactionType, setTransactionType] = useState("all");
@@ -43,13 +44,14 @@ export default function FinancialTransactionsPage() {
         if (!transactions?.transactions) return [];
 
         return transactions.transactions.filter((txn: any) => {
-            const matchesName = txn.name?.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesName = txn.user_id?.toLowerCase().includes(memberIdSearch.toLowerCase());
+            const matchesTxId = txn.transaction_id?.toLowerCase().includes(txIdSearch.toLowerCase());
             const matchesPaymentType = paymentType === "all" ? true : txn.payment_type === paymentType;
             const matchesStatus = statusFilter === "all" ? true : txn.status === statusFilter;
             const matchesType = transactionType === "all" ? true : txn.type === transactionType;
-            return matchesName && matchesPaymentType && matchesStatus && matchesType;
+            return matchesName && matchesPaymentType && matchesStatus && matchesType && matchesTxId;
         });
-    }, [transactions, searchTerm, paymentType, statusFilter, transactionType]);
+    }, [transactions, memberIdSearch, paymentType, statusFilter, transactionType, txIdSearch]);
 
     return (
         <div className="p-5 min-h-screen">
@@ -58,9 +60,16 @@ export default function FinancialTransactionsPage() {
             <div className="flex flex-wrap gap-4 mb-6">
                 <Input
                     className="w-[20%]"
-                    placeholder="Search by member name"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search by Transaction ID"
+                    value={txIdSearch}
+                    onChange={(e) => setTxIdSearch(e.target.value)}
+                />
+
+                <Input
+                    className="w-[20%]"
+                    placeholder="Search by Member ID"
+                    value={memberIdSearch}
+                    onChange={(e) => setMemberIdSearch(e.target.value)}
                 />
 
                 <Select onValueChange={setTransactionType} value={transactionType}>
@@ -111,37 +120,51 @@ export default function FinancialTransactionsPage() {
                     <Table>
                         <TableHeader className="bg-muted sticky top-0 z-10">
                             <TableRow>
-                                <TableHead className="text-center w-1/8">Transaction ID</TableHead>
-                                <TableHead className="text-center w-1/8">Creation date</TableHead>
-                                <TableHead className="text-center w-1/8">Type</TableHead>
-                                <TableHead className="text-center w-1/8">Member name</TableHead>
-                                <TableHead className="text-center w-1/8">Payment type</TableHead>
-                                <TableHead className="text-center w-1/8">Amount Paid</TableHead>
-                                <TableHead className="text-center w-1/8">Amount Owing</TableHead>
-                                <TableHead className="text-center w-1/8">Status</TableHead>
+                                <TableHead className="text-center"></TableHead>
+                                <TableHead className="text-center w-1/7">Creation date</TableHead>
+                                <TableHead className="text-center w-1/7">Transaction ID</TableHead>
+                                <TableHead className="text-center w-1/7">Member ID</TableHead>
+                                <TableHead className="text-center w-1/7">Type</TableHead>
+                                <TableHead className="text-center w-1/7">Payment type</TableHead>
+                                <TableHead className="text-center w-1/7">Outstanding amount</TableHead>
+                                <TableHead className="text-center w-1/7">Status</TableHead>
                             </TableRow>
                         </TableHeader>
 
                         <TableBody>
                             {filteredTransactions.map((tx: any) => (
                                 <React.Fragment key={tx.transaction_id}>
-                                    {/* Main Transaction Row */}
                                     <TableRow
                                         className="cursor-pointer hover:bg-muted/50 transition"
                                         onClick={() => toggleRow(tx.transaction_id)}
                                     >
+                                        <TableCell className="text-center">
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                className={`h-4 w-4 transition-transform ${expandedRows[tx.transaction_id] ? "rotate-90" : ""}`}
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                            >
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            <div className="inline-flex items-center gap-2 justify-center">
+                                                {tx.creation_date}
+                                            </div>
+                                        </TableCell>
                                         <TableCell className="text-center w-1/8">
                                             <div className="inline-flex items-center gap-2 justify-center">
-                                                <span className="font-mono">{tx.transaction_id.slice(0, 5)}...</span>
+                                                <span className="font-mono">{tx.transaction_id.slice(0, 8)}...</span>
 
-                                                {/* Copy button */}
                                                 <button
                                                     onClick={(e) => {
-                                                        e.stopPropagation(); // Prevent triggering row expand
+                                                        e.stopPropagation();
                                                         navigator.clipboard.writeText(tx.transaction_id);
                                                     }}
                                                     title="Click to copy full Transaction ID"
-                                                    className="hover:text-primary"
+                                                    className="hover:text-primary cursor-pointer"
                                                 >
                                                     <svg
                                                         xmlns="http://www.w3.org/2000/svg"
@@ -158,26 +181,37 @@ export default function FinancialTransactionsPage() {
                                                         />
                                                     </svg>
                                                 </button>
-
-                                                {/* Expand icon */}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            <span className="font-mono">{tx.user_id.slice(0, 8)}...</span>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigator.clipboard.writeText(tx.user_id);
+                                                }}
+                                                title="Click to copy full Member ID"
+                                                className="hover:text-primary cursor-pointer"
+                                            >
                                                 <svg
                                                     xmlns="http://www.w3.org/2000/svg"
-                                                    className={`h-4 w-4 transition-transform ${expandedRows[tx.transaction_id] ? "rotate-90" : ""}`}
+                                                    className="h-4 w-4 text-muted-foreground hover:text-foreground transition"
                                                     fill="none"
                                                     viewBox="0 0 24 24"
                                                     stroke="currentColor"
                                                 >
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M8 16h8m2 0a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v8a2 2 0 002 2zM8 16v2a2 2 0 002 2h8a2 2 0 002-2v-2"
+                                                    />
                                                 </svg>
-                                            </div>
+                                            </button>
                                         </TableCell>
-
-                                        <TableCell className="text-center">{tx.creation_date}</TableCell>
                                         <TableCell className="text-center">{tx.type}</TableCell>
-                                        <TableCell className="text-center">{tx.name}</TableCell>
                                         <TableCell className="text-center">{tx.payment_type}</TableCell>
-                                        <TableCell className="text-center">{formatAmount(tx.amount_paid, club?.currency)}</TableCell>
-                                        <TableCell className="text-center">{formatAmount(tx.amount, club?.currency)}</TableCell>
+                                        <TableCell className="text-center">{formatAmount(tx.outstanding_amount, club?.currency)}</TableCell>
                                         <TableCell className={`text-center font-bold ${tx.status === "PENDING"
                                             ? "text-red-500"
                                             : tx.status === "PARTIALLY PAID"

@@ -336,10 +336,11 @@ export default function ListMembersPage() {
                                 <Table>
                                     <TableHeader className="bg-muted sticky top-0 z-10">
                                         <TableRow>
-                                            <TableHead className="text-center">Member name</TableHead>
-                                            <TableHead className="text-center">Email</TableHead>
-                                            <TableHead className="text-center">Outstanding Amount</TableHead>
-                                            <TableHead className="text-center">
+                                            <TableHead className="text-center w-1/5">Member name</TableHead>
+                                            <TableHead className="text-center w-1/5">Member ID</TableHead>
+                                            <TableHead className="text-center w-1/5">Email</TableHead>
+                                            <TableHead className="text-center w-1/5">Outstanding Amount</TableHead>
+                                            <TableHead className="text-center w-1/5">
                                                 <div className="flex items-center justify-center gap-2">
                                                     Action
                                                     <Checkbox
@@ -354,7 +355,7 @@ export default function ListMembersPage() {
                                     <TableBody>
                                         {filteredRegisteredMembers.length ? filteredRegisteredMembers.map((member: ClubMember) => (
                                             <TableRow key={member.user_id}>
-                                                <TableCell className="text-center">
+                                                <TableCell className="text-center w-1/5">
                                                     <a
                                                         onClick={() => setSelectedMember(member)}
                                                         href={`#${member.user_id}`}
@@ -363,9 +364,38 @@ export default function ListMembersPage() {
                                                         {member.member_first_name + " " + member.member_surname}
                                                     </a>
                                                 </TableCell>
-                                                <TableCell className="text-center">{member.member_email}</TableCell>
-                                                <TableCell className="text-center">{formatAmount(member.outstanding_amount, club?.currency)}</TableCell>
-                                                <TableCell className="text-center">
+                                                <TableCell className="text-center w-1/5">
+                                                    <div className="inline-flex items-center gap-2 justify-center">
+                                                        <span className="font-mono">{member.user_id.slice(0, 10)}...</span>
+
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                navigator.clipboard.writeText(member.user_id);
+                                                            }}
+                                                            title="Click to copy full Transaction ID"
+                                                            className="hover:text-primary cursor-pointer"
+                                                        >
+                                                            <svg
+                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                className="h-4 w-4 text-muted-foreground hover:text-foreground transition"
+                                                                fill="none"
+                                                                viewBox="0 0 24 24"
+                                                                stroke="currentColor"
+                                                            >
+                                                                <path
+                                                                    strokeLinecap="round"
+                                                                    strokeLinejoin="round"
+                                                                    strokeWidth={2}
+                                                                    d="M8 16h8m2 0a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v8a2 2 0 002 2zM8 16v2a2 2 0 002 2h8a2 2 0 002-2v-2"
+                                                                />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-center w-1/5">{member.member_email}</TableCell>
+                                                <TableCell className="text-center w-1/5">{formatAmount(member.outstanding_amount, club?.currency)}</TableCell>
+                                                <TableCell className="text-center w-1/5">
                                                     <Checkbox
                                                         checked={listActionItems.includes(member.member_email as string)}
                                                         onCheckedChange={(checked: boolean) => {
@@ -415,17 +445,18 @@ export default function ListMembersPage() {
                                 <Table>
                                     <TableHeader className="bg-muted sticky top-0 z-10">
                                         <TableRow>
-                                            <TableHead className="text-center w-1/5">Display Name</TableHead>
-                                            <TableHead className="text-center w-1/5">Registration Submitted</TableHead>
-                                            <TableHead className="text-center w-1/5">Reference Numbers</TableHead>
-                                            <TableHead className="text-center w-1/5">Outstanding Amount</TableHead>
-                                            <TableHead className="text-center w-1/5">Action</TableHead>
+                                            <TableHead className="text-center w-1/6">Display Name</TableHead>
+                                            <TableHead className="text-center w-1/6">Member ID</TableHead>
+                                            <TableHead className="text-center w-1/6">Registration Submitted</TableHead>
+                                            <TableHead className="text-center w-1/6">Reference Numbers</TableHead>
+                                            <TableHead className="text-center w-1/6">Outstanding Amount</TableHead>
+                                            <TableHead className="text-center w-1/6">Action</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {filteredUnregisteredMembers.length ? filteredUnregisteredMembers.map((member: ClubMember) => (
                                             <TableRow key={member.user_id}>
-                                                <TableCell className="text-center">
+                                                <TableCell className="text-center w-1/6">
                                                     <a
                                                         onClick={() => setSelectedMember(member)}
                                                         href={`#${member.user_id}`}
@@ -434,7 +465,36 @@ export default function ListMembersPage() {
                                                         {member.member_first_name + " " + member.member_surname}
                                                     </a>
                                                 </TableCell>
-                                                <TableCell className="text-center w-1/5">
+                                                <TableCell className="text-center w-1/6">
+                                                    <div className="inline-flex items-center gap-2 justify-center">
+                                                        <span className="font-mono">{member.user_id.slice(0, 10)}...</span>
+
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                navigator.clipboard.writeText(member.user_id);
+                                                            }}
+                                                            title="Click to copy full Transaction ID"
+                                                            className="hover:text-primary cursor-pointer"
+                                                        >
+                                                            <svg
+                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                className="h-4 w-4 text-muted-foreground hover:text-foreground transition"
+                                                                fill="none"
+                                                                viewBox="0 0 24 24"
+                                                                stroke="currentColor"
+                                                            >
+                                                                <path
+                                                                    strokeLinecap="round"
+                                                                    strokeLinejoin="round"
+                                                                    strokeWidth={2}
+                                                                    d="M8 16h8m2 0a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v8a2 2 0 002 2zM8 16v2a2 2 0 002 2h8a2 2 0 002-2v-2"
+                                                                />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-center w-1/6">
                                                     {member.registration_submitted_on ? (() => {
                                                         const date = new Date(member.registration_submitted_on);
                                                         const now = new Date();
@@ -444,13 +504,13 @@ export default function ListMembersPage() {
                                                         return `${date.toLocaleString()} (${diffDays === 0 ? 'today' : diffDays === 1 ? '1 day ago' : `${diffDays} days ago`})`;
                                                     })() : "-"}
                                                 </TableCell>
-                                                <TableCell className="text-center w-1/5">
+                                                <TableCell className="text-center w-1/6">
                                                     {member.registration_payment_reference}
                                                 </TableCell>
-                                                <TableCell className="text-center w-1/5">
+                                                <TableCell className="text-center w-1/6">
                                                     {member.resubmission_required ? "N/A" : formatAmount(member.outstanding_amount, club?.currency)}
                                                 </TableCell>
-                                                <TableCell className="text-center w-1/5">
+                                                <TableCell className="text-center w-1/6">
                                                     {
                                                         member.resubmission_required ?
                                                             <div className="flex justify-center items-center">
