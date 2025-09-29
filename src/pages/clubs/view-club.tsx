@@ -227,7 +227,7 @@ export default function ViewClubPage() {
                                         !isUserTransactionsLoading && transactions &&
                                         <div className="mt-7">
                                             <h1 className="text-base font-bold">Transactions</h1>
-                                            <div className="overflow-hidden rounded-lg border mt-3">
+                                            <div className="overflow-hidden rounded-lg border my-5">
                                                 <Table>
                                                     <TableHeader className="bg-muted sticky top-0 z-10">
                                                         <TableRow>
@@ -303,7 +303,6 @@ export default function ViewClubPage() {
                                                                     </TableCell>
                                                                 </TableRow>
 
-                                                                {/* Lifecycle Row */}
                                                                 {expandedRows[tx.transaction_id] && (
                                                                     <TableRow className="bg-muted/10">
                                                                         <TableCell colSpan={8} className="p-4">
