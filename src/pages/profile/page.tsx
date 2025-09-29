@@ -39,10 +39,6 @@ export default function ProfilePage() {
                         </div>
                         <div className="mt-4 md:mt-0 flex gap-4">
                             <Button variant="outline" onClick={() => navigate("/setting")}>Edit Profile</Button>
-                            {/*<Button>*/}
-                            {/*    <Users className="h-4 w-4 mr-2" />*/}
-                            {/*    Follow*/}
-                            {/*</Button>*/}
                         </div>
                     </div>
                 </div>
