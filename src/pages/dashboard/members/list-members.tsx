@@ -60,14 +60,14 @@ export default function ListMembersPage() {
         useSensor(KeyboardSensor, {})
     )
 
-    const setAllListActionItems = () => {
+    const setAllListActionItems = (members: ClubMember[]) => {
         if (allMembersSelected) {
             setlistActionItems([])
             setDeregisterMembers([])
             setAllMembersSelected(false)
         } else {
-            const allMembers = clubMembers.registered.map((member: ClubMember) => { return member.member_email });
-            const allDeregisterMembers = clubMembers.registered.map((member: ClubMember) => { return { user_id: member.user_id, name: `${member.member_first_name} ${member.member_surname}` } })
+            const allMembers = members.map((member: ClubMember) => { return member.member_email as string });
+            const allDeregisterMembers = members.map((member: ClubMember) => { return { user_id: member.user_id, name: `${member.member_first_name} ${member.member_surname}` } })
             setlistActionItems(allMembers)
             setAllMembersSelected(true)
             setDeregisterMembers(allDeregisterMembers)
@@ -172,7 +172,7 @@ export default function ListMembersPage() {
                 } else {
                     const index = clubMembers.unregistered.findIndex((m: ClubMember) => m.user_id === member.user_id)
                     clubMembers.unregistered.splice(index, 1);
-
+                    member.outstanding_amount = 0
                     clubMembers.registered.push(member)
                 }
                 setMemberRegisterAmount(0)
@@ -345,7 +345,7 @@ export default function ListMembersPage() {
                                                     Action
                                                     <Checkbox
                                                         className="bg-white"
-                                                        onCheckedChange={setAllListActionItems}
+                                                        onCheckedChange={() => setAllListActionItems(filteredRegisteredMembers)}
                                                         checked={allMembersSelected}
                                                     />
                                                 </div>
@@ -399,6 +399,9 @@ export default function ListMembersPage() {
                                                     <Checkbox
                                                         checked={listActionItems.includes(member.member_email as string)}
                                                         onCheckedChange={(checked: boolean) => {
+                                                            setlistActionItems([])
+                                                            setDeregisterMembers([])
+                                                            setAllMembersSelected(false)
                                                             setlistActionItems(prev =>
                                                                 checked
                                                                     ? prev.includes(member.member_email as string)

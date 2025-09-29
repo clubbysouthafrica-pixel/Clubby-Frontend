@@ -296,8 +296,8 @@ export default function ViewClubPage() {
                                                                     <TableCell className={`text-center font-bold ${tx.status === "PENDING"
                                                                         ? "text-red-500"
                                                                         : tx.status === "PARTIALLY PAID"
-                                                                            ? "text-orange-700"
-                                                                            : "text-green-700"
+                                                                            ? "text-orange-500"
+                                                                            : "text-green-500"
                                                                         }`}>
                                                                         {tx.status}
                                                                     </TableCell>
@@ -334,7 +334,7 @@ export default function ViewClubPage() {
                                                                                                     </TableCell>
                                                                                                     <TableCell className="text-center">{entry.type}</TableCell>
                                                                                                     <TableCell className="text-center">{entry.description}</TableCell>
-                                                                                                    <TableCell className={`text-center ${entry.type === "SUBMISSION" ? "text-red-700" : "text-green-700"} font-bold`}>{entry.type === "SUBMISSION" ? "-" : "+"}{formatAmount(entry.amount, data.currency)}</TableCell>
+                                                                                                    <TableCell className={`text-center ${entry.type === "SUBMISSION" ? "text-red-500" : "text-green-500"} font-bold`}>{entry.type === "SUBMISSION" ? "-" : "+"}{formatAmount(entry.amount, data.currency)}</TableCell>
                                                                                                 </TableRow>
                                                                                             ))}
                                                                                     </TableBody>

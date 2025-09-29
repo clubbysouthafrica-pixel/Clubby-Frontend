@@ -78,7 +78,7 @@ export default function UserLandingPage() {
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center space-x-2">
-                                                    <Badge className={club.resubmission_required ? "bg-red-700" : club.registered ? "bg-green-700" : "bg-yellow-700"}>{club.resubmission_required ? "Resumission required" : club.registered ? "Member" : "Pending"}</Badge>
+                                                    <Badge className={club.resubmission_required ? "bg-red-700" : club.registered ? "bg-green-700" : "bg-yellow-700"}>{club.resubmission_required ? "Resubmission required" : club.registered ? "Member" : "Pending"}</Badge>
                                                 </div>
                                             </div>
                                         ))}

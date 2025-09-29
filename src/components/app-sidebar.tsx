@@ -96,11 +96,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             icon: BarChart,
             items: [
               {
-                title: "Club financial reporting",
+                title: "Club financials",
                 url: "/reporting/general",
               },
               {
-                title: "Registration fees reporting",
+                title: "Registration fees",
                 url: "/reporting/registration",
               },
               {
