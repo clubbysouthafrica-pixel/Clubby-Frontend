@@ -10,6 +10,8 @@ export interface ReportDataRow {
 export interface GeneralReport {
   total_registered_members: number
   total_pending_members: number
+  total_registration_revenue: number
+  total_registration_pending_revenue: number
   total_pending_revenue: number
   total_revenue: number
   total_active_members: number
@@ -21,11 +23,15 @@ export interface RegistrationReportRowDataItem {
   date: string
   paid_to_club: number
   due_to_club: number
+  total: number
+  pending: number
 }
 export interface RegistrationRowData {
   row_name: string
   fee_amount: number
   total: {
+    total: number
+    pending: number
     paid_to_club: number
     due_to_club: number
   }

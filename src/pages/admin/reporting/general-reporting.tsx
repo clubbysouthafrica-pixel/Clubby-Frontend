@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { useGeneralReportingQuery } from "@/queries/admin/useReporting";
-import { GeneralReportingSectionCards } from "@/components/admin/reporting/general-reporting/section-cards";
+import { OverallReportingSectionCards, RegistrationReportingSectionCards } from "@/components/admin/reporting/general-reporting/section-cards";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatAmount } from "@/data/currencies";
 import { DndContext, KeyboardSensor, MouseSensor, TouchSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
@@ -21,47 +21,84 @@ export default function GeneralReportingPage() {
 
     return (
         <div className="p-5 min-h-screen">
-            <h1 className="text-base font-bold">General Report</h1>
-            {!isLoading && report &&
-                <div className="@container/main flex flex-1 flex-col gap-2">
-                    <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-2">
-                        <GeneralReportingSectionCards report={report} currency={club?.currency as string} />
+            <div>
+                <h1 className="text-base font-bold">Overall Report</h1>
+                {!isLoading && report &&
+                    <div className="@container/main flex flex-1 flex-col gap-2">
+                        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-2">
+                            <OverallReportingSectionCards report={report} currency={club?.currency as string} />
+                        </div>
                     </div>
-                </div>
-            }
-            { !isLoading && report &&
-                <div className="overflow-hidden rounded-lg border">
-                    <DndContext
-                        collisionDetection={closestCenter}
-                        sensors={sensors}
-                        id={sortableId}>
-                        <Table>
-                            <TableHeader className="bg-muted sticky top-0 z-10">
-                                <TableRow>
-                                    <TableHead className="text-center font-bold">Month</TableHead>
-                                    <TableHead className="text-center font-bold">Revenue</TableHead>
-                                    <TableHead className="text-center font-bold">Pending revenue</TableHead>
-                                    <TableHead className="text-center font-bold">Members registered</TableHead>
-                                    <TableHead className="text-center font-bold">Members deregistered </TableHead>
-                                    <TableHead className="text-center font-bold">Pending members</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {report.data?.map((month: ReportDataRow) => (
-                                    <TableRow key={month.date}>
-                                        <TableCell className="text-center font-bold">{month.date}</TableCell>
-                                        <TableCell className="text-center">{formatAmount(month.total_revenue, club?.currency)}</TableCell>
-                                        <TableCell className="text-center">{formatAmount(month.total_pending_revenue, club?.currency)}</TableCell>
-                                        <TableCell className="text-center">{month.total_registered_members}</TableCell>
-                                        <TableCell className="text-center">{month.total_deregistered_members}</TableCell>
-                                        <TableCell className="text-center">{month.total_pending_members}</TableCell>
+                }
+                {!isLoading && report &&
+                    <div className="overflow-hidden rounded-lg border">
+                        <DndContext
+                            collisionDetection={closestCenter}
+                            sensors={sensors}
+                            id={sortableId}>
+                            <Table>
+                                <TableHeader className="bg-muted sticky top-0 z-10">
+                                    <TableRow>
+                                        <TableHead className="text-center font-bold w-1/3">Month</TableHead>
+                                        <TableHead className="text-center font-bold w-1/3">Revenue</TableHead>
+                                        <TableHead className="text-center font-bold w-1/3">Pending revenue</TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </DndContext>
-                </div>
-            }
+                                </TableHeader>
+                                <TableBody>
+                                    {report.data?.map((month: ReportDataRow) => (
+                                        <TableRow key={month.date}>
+                                            <TableCell className="text-center font-bold w-1/3">{month.date}</TableCell>
+                                            <TableCell className="text-center w-1/3">{formatAmount(month.total_revenue, club?.currency)}</TableCell>
+                                            <TableCell className="text-center w-1/3">{formatAmount(month.total_pending_revenue, club?.currency)}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </DndContext>
+                    </div>
+                }
+            </div>
+            <div className="mt-10">
+                <h1 className="text-base font-bold">Registration Report</h1>
+                {!isLoading && report &&
+                    <div className="@container/main flex flex-1 flex-col gap-2">
+                        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-2">
+                            <RegistrationReportingSectionCards report={report} currency={club?.currency as string} />
+                        </div>
+                    </div>
+                }
+                {!isLoading && report &&
+                    <div className="overflow-hidden rounded-lg border">
+                        <DndContext
+                            collisionDetection={closestCenter}
+                            sensors={sensors}
+                            id={sortableId}>
+                            <Table>
+                                <TableHeader className="bg-muted sticky top-0 z-10">
+                                    <TableRow>
+                                        <TableHead className="text-center font-bold w-1/5">Month</TableHead>
+                                        <TableHead className="text-center font-bold w-1/5">Registration Revenue</TableHead>
+                                        <TableHead className="text-center font-bold w-1/5">Pending Registration Revenue</TableHead>
+                                        <TableHead className="text-center font-bold w-1/5">Members registered</TableHead>
+                                        <TableHead className="text-center font-bold w-1/5">Members deregistered</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {report.data?.map((month: ReportDataRow) => (
+                                        <TableRow key={month.date}>
+                                            <TableCell className="text-center font-bold w-1/4">{month.date}</TableCell>
+                                            <TableCell className="text-center w-1/5">{formatAmount(month.total_revenue, club?.currency)}</TableCell>
+                                            <TableCell className="text-center w-1/5">{formatAmount(month.total_pending_revenue, club?.currency)}</TableCell>
+                                            <TableCell className="text-center w-1/5">{month.total_registered_members}</TableCell>
+                                            <TableCell className="text-center w-1/5">{month.total_deregistered_members}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </DndContext>
+                    </div>
+                }
+            </div>
         </div>
     );
 }

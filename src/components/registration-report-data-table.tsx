@@ -15,6 +15,8 @@ export function RegistrationReportData({ data, currency }: props) {
     return (<Label>No data to display yet</Label>)
   }
 
+  console.log(data)
+
   return (
     <div>
       <Tabs defaultValue={(data?.report as RegistrationReportDropDown[])[0]?.table_name}>
@@ -34,32 +36,40 @@ export function RegistrationReportData({ data, currency }: props) {
                 c?.data &&
                 <div>
                   <p className="font-bold">
-                    {c.table_name}
+                    {c.table_name} - {formatAmount(c.fee_amount, currency)} each
                   </p>
                   <CardDescription>Report on latest {c.table_name}</CardDescription>
                   <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-2">
                     <div className="flex gap-4 *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs">
-                      <Card className="@container/card w-[100%]">
+                      <Card className="@container/card py-3 w-[100%]">
+                        <CardHeader className="flex flex-col items-center justify-center text-center">
+                          <CardDescription>Total</CardDescription>
+                          <CardTitle className="text-l font-semibold tabular-nums">
+                            {c.total.total}
+                          </CardTitle>
+                        </CardHeader>
+                      </Card>
+                      <Card className="@container/card py-3 w-[100%]">
                         <CardHeader className="flex flex-col items-center justify-center text-center">
                           <CardDescription>Paid to Club</CardDescription>
-                          <CardTitle className="text-xl font-semibold tabular-nums">
+                          <CardTitle className="text-l font-semibold tabular-nums">
                             {formatAmount(c.total.paid_to_club, currency)}
                           </CardTitle>
                         </CardHeader>
                       </Card>
-                      <Card className="@container/card w-[100%]">
+                      <Card className="@container/card py-3 w-[100%]">
                         <CardHeader className="flex flex-col items-center justify-center text-center">
-                          <CardDescription>Due to Club</CardDescription>
-                          <CardTitle className="text-xl font-semibold tabular-nums">
-                            {formatAmount(c.total.due_to_club, currency)}
+                          <CardDescription>Pending</CardDescription>
+                          <CardTitle className="text-l font-semibold tabular-nums">
+                            {c.total.pending}
                           </CardTitle>
                         </CardHeader>
                       </Card>
-                      <Card className="@container/card w-[100%]">
+                      <Card className="@container/card py-3 w-[100%]">
                         <CardHeader className="flex flex-col items-center justify-center text-center">
-                          <CardDescription>Fee Amount</CardDescription>
-                          <CardTitle className="text-xl font-semibold tabular-nums">
-                            {formatAmount(c.fee_amount, currency)}
+                          <CardDescription>Due to Club</CardDescription>
+                          <CardTitle className="text-l font-semibold tabular-nums">
+                            {formatAmount(c.total.due_to_club, currency)}
                           </CardTitle>
                         </CardHeader>
                       </Card>
@@ -70,7 +80,9 @@ export function RegistrationReportData({ data, currency }: props) {
                       <TableHeader className="bg-muted sticky top-0 z-10">
                         <TableRow>
                           <TableHead className="text-center">Date</TableHead>
+                          <TableHead className="text-center">Total</TableHead>
                           <TableHead className="text-center">Paid</TableHead>
+                          <TableHead className="text-center">Pending</TableHead>
                           <TableHead className="text-center">Due</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -78,7 +90,9 @@ export function RegistrationReportData({ data, currency }: props) {
                         {(c?.data as any).map((d: any) => (
                           <TableRow key={d.date}>
                             <TableCell className="font-medium text-center">{d.date}</TableCell>
+                            <TableCell className="font-medium text-center">{d.total}</TableCell>
                             <TableCell className="text-center">{formatAmount(d.paid_to_club, currency)}</TableCell>
+                            <TableCell className="font-medium text-center">{d.pending}</TableCell>
                             <TableCell className="text-center">{formatAmount(d.due_to_club, currency)}</TableCell>
                           </TableRow>
                         ))}
@@ -91,57 +105,73 @@ export function RegistrationReportData({ data, currency }: props) {
                 c.rows?.map((r: RegistrationRowData, index: number) => (
                   <div key={r.row_name} className={index + 1 === c.rows.length ? "" : "mb-5"}>
                     <p className="font-bold">
-                      {r.row_name}
+                      {r.row_name}  - {formatAmount(r.fee_amount, currency)} each
                     </p>
                     <CardDescription>Report on latest {r.row_name} items</CardDescription>
                     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-2">
                       <div className="flex gap-4 *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs">
-                        <Card className="@container/card w-[100%]">
+                        <Card className="@container/card py-3 w-[100%]">
+                          <CardHeader className="flex flex-col items-center justify-center text-center">
+                            <CardDescription>Total</CardDescription>
+                            <CardTitle className="text-l font-semibold tabular-nums">
+                              {r.total.total}
+                            </CardTitle>
+                          </CardHeader>
+                        </Card>
+                        <Card className="@container/card py-3 w-[100%]">
                           <CardHeader className="flex flex-col items-center justify-center text-center">
                             <CardDescription>Paid to Club</CardDescription>
-                            <CardTitle className="text-xl font-semibold tabular-nums">
+                            <CardTitle className="text-l font-semibold tabular-nums">
                               {formatAmount(r.total.paid_to_club, currency)}
                             </CardTitle>
                           </CardHeader>
                         </Card>
-                        <Card className="@container/card w-[100%]">
+                        <Card className="@container/card py-3 w-[100%]">
                           <CardHeader className="flex flex-col items-center justify-center text-center">
-                            <CardDescription>Due to Club</CardDescription>
-                            <CardTitle className="text-xl font-semibold tabular-nums">
-                              {formatAmount(r.total.due_to_club, currency)}
+                            <CardDescription>Pending</CardDescription>
+                            <CardTitle className="text-l font-semibold tabular-nums">
+                              {r.total.pending}
                             </CardTitle>
                           </CardHeader>
                         </Card>
-                        <Card className="@container/card w-[100%]">
+                        <Card className="@container/card py-3 w-[100%]">
                           <CardHeader className="flex flex-col items-center justify-center text-center">
-                            <CardDescription>Fee Amount</CardDescription>
-                            <CardTitle className="text-xl font-semibold tabular-nums">
-                              {formatAmount(r.fee_amount, currency)}
+                            <CardDescription>Due to Club</CardDescription>
+                            <CardTitle className="text-l font-semibold tabular-nums">
+                              {formatAmount(r.total.due_to_club, currency)}
                             </CardTitle>
                           </CardHeader>
                         </Card>
                       </div>
                     </div>
-                    <div className="overflow-hidden rounded-lg border">
-                      <Table>
-                        <TableHeader className="bg-muted sticky top-0 z-10">
-                          <TableRow>
-                            <TableHead className="text-center">Date</TableHead>
-                            <TableHead className="text-center">Paid</TableHead>
-                            <TableHead className="text-center">Due</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody className="font-semibold bg-gray-50">
-                          {r.data?.map((d: RegistrationReportRowDataItem) => (
-                            <TableRow key={d.date}>
-                              <TableCell className="font-medium text-center">{d.date}</TableCell>
-                              <TableCell className="text-center">{formatAmount(d.paid_to_club, currency)}</TableCell>
-                              <TableCell className="text-center">{formatAmount(d.due_to_club, currency)}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
+                    {
+                      r.data && r.data.length > 0 ?
+                        <div className="overflow-hidden rounded-lg border">
+                          <Table>
+                            <TableHeader className="bg-muted sticky top-0 z-10">
+                              <TableRow>
+                                <TableHead className="text-center w-1/5">Date</TableHead>
+                                <TableHead className="text-center w-1/5">Total</TableHead>
+                                <TableHead className="text-center w-1/5">Paid</TableHead>
+                                <TableHead className="text-center w-1/5">Pending</TableHead>
+                                <TableHead className="text-center w-1/5">Due</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody className="font-semibold bg-gray-50">
+                              {r.data?.map((d: RegistrationReportRowDataItem) => (
+                                <TableRow key={d.date}>
+                                  <TableCell className="font-medium text-center w-1/5">{d.date}</TableCell>
+                                  <TableCell className="font-medium text-center w-1/5">{d.total}</TableCell>
+                                  <TableCell className="text-center w-1/5">{formatAmount(d.paid_to_club, currency)}</TableCell>
+                                  <TableCell className="font-medium text-center w-1/5">{d.pending}</TableCell>
+                                  <TableCell className="text-center w-1/5">{formatAmount(d.due_to_club, currency)}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                        : null
+                    }
                   </div>
                 ))
               }
