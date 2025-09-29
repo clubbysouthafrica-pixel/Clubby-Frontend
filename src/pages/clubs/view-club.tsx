@@ -235,8 +235,7 @@ export default function ViewClubPage() {
                                                             <TableHead className="text-center w-1/7">Creation date</TableHead>
                                                             <TableHead className="text-center w-1/7">Type</TableHead>
                                                             <TableHead className="text-center w-1/7">Payment type</TableHead>
-                                                            <TableHead className="text-center w-1/7">Amount Paid</TableHead>
-                                                            <TableHead className="text-center w-1/7">Amount Owing</TableHead>
+                                                            <TableHead className="text-center w-1/7">Outstanding amount</TableHead>
                                                             <TableHead className="text-center w-1/7">Status</TableHead>
                                                         </TableRow>
                                                     </TableHeader>
@@ -293,8 +292,7 @@ export default function ViewClubPage() {
                                                                     <TableCell className="text-center">{tx.creation_date}</TableCell>
                                                                     <TableCell className="text-center">{tx.type}</TableCell>
                                                                     <TableCell className="text-center">{tx.payment_type}</TableCell>
-                                                                    <TableCell className="text-center">{formatAmount(tx.amount_paid, data.currency)}</TableCell>
-                                                                    <TableCell className="text-center">{formatAmount(tx.amount, data.currency)}</TableCell>
+                                                                    <TableCell className="text-center">{formatAmount(tx.outstanding_amount, data.currency)}</TableCell>
                                                                     <TableCell className={`text-center font-bold ${tx.status === "PENDING"
                                                                         ? "text-red-500"
                                                                         : tx.status === "PARTIALLY PAID"
