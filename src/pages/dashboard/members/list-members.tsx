@@ -366,7 +366,7 @@ export default function ListMembersPage() {
                                                 </TableCell>
                                                 <TableCell className="text-center w-1/5">
                                                     <div className="inline-flex items-center gap-2 justify-center">
-                                                        <span className="font-mono">{member.user_id.slice(0, 10)}...</span>
+                                                        <span className="font-mono">{member.user_id.slice(0, 8)}...</span>
 
                                                         <button
                                                             onClick={(e) => {
@@ -467,7 +467,7 @@ export default function ListMembersPage() {
                                                 </TableCell>
                                                 <TableCell className="text-center w-1/6">
                                                     <div className="inline-flex items-center gap-2 justify-center">
-                                                        <span className="font-mono">{member.user_id.slice(0, 10)}...</span>
+                                                        <span className="font-mono">{member.user_id.slice(0, 8)}...</span>
 
                                                         <button
                                                             onClick={(e) => {
