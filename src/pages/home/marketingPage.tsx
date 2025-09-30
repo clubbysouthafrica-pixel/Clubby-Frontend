@@ -1,12 +1,12 @@
-import {motion} from "framer-motion";
-import {Button} from "@/components/ui/button.tsx";
-import {ArrowRight, Laptop, Shield, Zap} from "lucide-react";
-import {Card, CardDescription, CardHeader, CardTitle} from "@/components/ui/card.tsx";
-import {useNavigate} from "react-router-dom";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button.tsx";
+import { ArrowRight, FilePlus, Mail, Users } from "lucide-react";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.tsx";
+import { useNavigate } from "react-router-dom";
 
 export const MarketingLandingPage = () => {
     const brandName = import.meta.env.VITE_BRAND_NAME;
-    const navigate= useNavigate()
+    const navigate = useNavigate()
 
     return (
         <div>
@@ -21,7 +21,7 @@ export const MarketingLandingPage = () => {
                         Welcome to <span className="text-primary">{brandName}</span>
                     </h1>
                     <p className="mt-6 text-xl text-muted-foreground max-w-2xl mx-auto">
-                    Your all-in-one platform to manage, track, and engage with your sports clubs.
+                        Your all-in-one platform to manage, track, and engage with your sports clubs.
                     </p>
                     <div className="flex gap-4 mt-8 justify-center">
                         <Button size="lg" onClick={() => navigate('/getstarted')}>
@@ -44,28 +44,28 @@ export const MarketingLandingPage = () => {
                     <div className="grid md:grid-cols-3 gap-8">
                         <Card className="p-6">
                             <CardHeader>
-                                <Laptop className="h-12 w-12 text-primary mb-4" />
-                                <CardTitle>Modern Design</CardTitle>
+                                <FilePlus className="h-12 w-12 text-primary mb-4" />
+                                <CardTitle>Dynamic Form Builder</CardTitle>
                                 <CardDescription>
-                                    Built with the latest design principles and technologies for the best user experience.
+                                    Create fully customizable registration forms with drag-and-drop simplicity. Collect everything from contact details to waivers, documents, and member preferences — all tailored to your club's needs.
                                 </CardDescription>
                             </CardHeader>
                         </Card>
                         <Card className="p-6">
                             <CardHeader>
-                                <Zap className="h-12 w-12 text-primary mb-4" />
+                                <Users className="h-12 w-12 text-primary mb-4" />
                                 <CardTitle>Lightning Fast</CardTitle>
                                 <CardDescription>
-                                    Optimized performance to ensure your application runs smoothly and efficiently.
+                                Keep your member database clean and up to date automatically. Track registrations, view activity history, and manage approvals or statuses in one centralized system.
                                 </CardDescription>
                             </CardHeader>
                         </Card>
                         <Card className="p-6">
                             <CardHeader>
-                                <Shield className="h-12 w-12 text-primary mb-4" />
-                                <CardTitle>Secure</CardTitle>
+                                <Mail className="h-12 w-12 text-primary mb-4" />
+                                <CardTitle>Email & Communication Tools</CardTitle>
                                 <CardDescription>
-                                    Built-in security features to keep your data and users protected.
+                                Send professional emails to members or groups with built-in filters and segments. Automate reminders, confirmations, or event updates — no third-party tools required.
                                 </CardDescription>
                             </CardHeader>
                         </Card>
