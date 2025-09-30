@@ -20,6 +20,7 @@ import RegistrationReportPage from "@/pages/admin/reporting/registration-report-
 import BillingPage from "@/pages/admin/billing/billing";
 import GeneralReportingPage from "@/pages/admin/reporting/general-reporting";
 import FinancialTransactionsPage from "@/pages/admin/reporting/financial-transactions";
+import OnboardClubPage from "@/pages/authentication/onboard-club";
 
 export default function AdminRoutes() {
     return (
@@ -33,6 +34,7 @@ export default function AdminRoutes() {
             <Route path="/about" element={<AboutPage />}></Route>
             <Route path="/getstarted" element={<GetStartedPage />}></Route>
             <Route path="/contactus" element={<ContactPage />}></Route>
+            <Route path="/onboard" element={<OnboardClubPage/>}></Route>
 
             <Route path="/myclubs" element={<ProtectedRoute><MyClubsPage /></ProtectedRoute>}></Route>
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>}></Route>

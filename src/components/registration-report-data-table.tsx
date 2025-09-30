@@ -15,8 +15,6 @@ export function RegistrationReportData({ data, currency }: props) {
     return (<Label>No data to display yet</Label>)
   }
 
-  console.log(data)
-
   return (
     <div>
       <Tabs defaultValue={(data?.report as RegistrationReportDropDown[])[0]?.table_name}>

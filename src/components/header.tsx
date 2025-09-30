@@ -171,12 +171,12 @@ export default function Header() {
                                                 <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
                                         </DropdownMenuItem>
                                     </Link> */}
-                                    <Link to="/billing&usage">
+                                    {/* <Link to="/billing&usage">
                                         <DropdownMenuItem>
                                             Billing and Usage
                                             <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
                                         </DropdownMenuItem>
-                                    </Link>
+                                    </Link> */}
                                     <Link to="/settings">
                                         <DropdownMenuItem>
                                             Settings
