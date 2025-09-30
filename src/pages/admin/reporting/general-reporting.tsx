@@ -79,7 +79,7 @@ export default function GeneralReportingPage() {
                                         <TableHead className="text-center font-bold w-1/5">Month</TableHead>
                                         <TableHead className="text-center font-bold w-1/5">Registration Revenue</TableHead>
                                         <TableHead className="text-center font-bold w-1/5">Pending Registration Revenue</TableHead>
-                                        <TableHead className="text-center font-bold w-1/5">Members registered</TableHead>
+                                        <TableHead className="text-center font-bold w-1/5">Registration forms submitted</TableHead>
                                         <TableHead className="text-center font-bold w-1/5">Members deregistered</TableHead>
                                     </TableRow>
                                 </TableHeader>
