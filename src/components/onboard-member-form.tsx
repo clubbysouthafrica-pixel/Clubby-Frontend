@@ -37,7 +37,9 @@ export function OnboardMemberForm({
             phone_number: phoneNumber,
         }, {
             onSuccess: () => navigate("/"),
-            onError: () => toast.error(error?.message)
+            onError: () => {
+                toast.error((error as any).response.data.message)
+            }
         })
     }
 
@@ -47,7 +49,7 @@ export function OnboardMemberForm({
                 <CardHeader className="text-center">
                         <CardTitle className="text-xl">Onboarding form</CardTitle>
                         <CardDescription>
-                            This ensure your account is ready to register with clubs. Please complete the onboarding form
+                            This will ensure your account is ready to register with clubs. Please complete the onboarding form
                         </CardDescription>
                 </CardHeader>
                 <CardContent>
