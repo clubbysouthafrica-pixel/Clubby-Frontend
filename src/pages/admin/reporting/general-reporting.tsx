@@ -30,7 +30,7 @@ export default function GeneralReportingPage() {
                         </div>
                     </div>
                 }
-                {!isLoading && report &&
+                {!isLoading && report && report.data && report.data.length > 0 &&
                     <div className="overflow-hidden rounded-lg border">
                         <DndContext
                             collisionDetection={closestCenter}
@@ -67,7 +67,7 @@ export default function GeneralReportingPage() {
                         </div>
                     </div>
                 }
-                {!isLoading && report &&
+                {!isLoading && report && report.data && report.data.length > 0 &&
                     <div className="overflow-hidden rounded-lg border">
                         <DndContext
                             collisionDetection={closestCenter}
