@@ -12,19 +12,19 @@ import {
     NavigationMenuTrigger,
     navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
-import {Link, useNavigate} from "react-router-dom";
-import {Button} from "@/components/ui/button.tsx";
-import {ChevronDown, Menu, X} from "lucide-react";
-import {useContext, useState} from "react";
-import {AuthContext, AuthContextType} from "@/context/AuthContext.tsx";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button.tsx";
+import { ChevronDown, Menu, X } from "lucide-react";
+import { useContext, useState } from "react";
+import { AuthContext, AuthContextType } from "@/context/AuthContext.tsx";
 import {
     DropdownMenu, DropdownMenuContent, DropdownMenuGroup,
     DropdownMenuItem, DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuShortcut, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu.tsx";
-import {useKeyboardShortcut} from "@/hooks/useKeyboardShortcut.tsx";
-import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar.tsx";
+import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut.tsx";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.tsx";
 import Img from "@/assets/logo.png"
 
 const components: { title: string; href: string; description: string }[] = [
@@ -43,7 +43,7 @@ const components: { title: string; href: string; description: string }[] = [
 ]
 
 export default function Header() {
-    const {user, logout} = useContext(AuthContext) as AuthContextType
+    const { user, logout } = useContext(AuthContext) as AuthContextType
     const navigate = useNavigate()
     const [menuOpen, setMenuOpen] = useState(false);
 
@@ -80,131 +80,122 @@ export default function Header() {
 
     return (
         <nav className="p-3 backdrop-blur-xl sticky top-0 z-50"
-        style={{
-            backgroundColor: "color-mix(in oklch, var(--background) 85%, transparent)",
-          }}
+            style={{
+                backgroundColor: "color-mix(in oklch, var(--background) 85%, transparent)",
+            }}
         >
             <div className="container mx-auto flex justify-between items-center">
                 <Link to="/" className="font-bold flex space-x-2 content-center align-middle">
-                    <img src={Img} className="w-8 h-8"/>
+                    <img src={Img} className="w-8 h-8" />
                     <p className="self-center">{import.meta.env.VITE_BRAND_NAME}</p>
                 </Link>
                 <NavigationMenu className="hidden md:flex">
                     <NavigationMenuList>
-                    <NavigationMenuItem>
-                        <NavigationMenuTrigger className="cursor-pointer bg-transparent">Clubs</NavigationMenuTrigger>
-                        <NavigationMenuContent>
-                            <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                                <li className="row-span-3">
-                                    <NavigationMenuLink asChild>
-                                        <Link
-                                            className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                                            to="/getstarted"
-                                        >
-                                            {/*<Icons.logo className="h-6 w-6" />*/}
-                                            <div className="mb-2 mt-4 text-lg font-medium">
-                                                {import.meta.env.VITE_BRAND_NAME}
-                                            </div>
-                                            <p className="text-sm leading-tight text-muted-foreground">
-                                                Join sports clubs and manage your clubs from one place.
-                                            </p>
-                                        </Link>
-                                    </NavigationMenuLink>
-                                </li>
-                                <ListItem href="/myclubs" title="My Clubs">
-                                    View all your clubs you have joined.
-                                </ListItem>
-                                {/* <ListItem href="/memberships" title="My Memberships">
+                        <NavigationMenuItem>
+                            <NavigationMenuTrigger className="cursor-pointer bg-transparent">Clubs</NavigationMenuTrigger>
+                            <NavigationMenuContent>
+                                <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
+                                    <li className="row-span-3">
+                                        <NavigationMenuLink asChild>
+                                            <Link
+                                                className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
+                                                to="/getstarted"
+                                            >
+                                                {/*<Icons.logo className="h-6 w-6" />*/}
+                                                <div className="mb-2 mt-4 text-lg font-medium">
+                                                    {import.meta.env.VITE_BRAND_NAME}
+                                                </div>
+                                                <p className="text-sm leading-tight text-muted-foreground">
+                                                    Join sports clubs and manage your clubs from one place.
+                                                </p>
+                                            </Link>
+                                        </NavigationMenuLink>
+                                    </li>
+                                    <ListItem href="/myclubs" title="My Clubs">
+                                        View all your clubs you have joined.
+                                    </ListItem>
+                                    {/* <ListItem href="/memberships" title="My Memberships">
                                     View all your memberships.
                                 </ListItem> */}
-                                <ListItem href="/clubs" title="Browse Clubs">
-                                    Browse Clubs
-                                </ListItem>
-                                {/*<ListItem href="/" title="Typography">*/}
-                                {/*    Styles for headings, paragraphs, lists...etc*/}
-                                {/*</ListItem>*/}
-                            </ul>
-                        </NavigationMenuContent>
-                    </NavigationMenuItem>
-                    <NavigationMenuItem >
-                        <NavigationMenuTrigger className="cursor-pointer bg-transparent">About</NavigationMenuTrigger>
-                        <NavigationMenuContent>
-                            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
-                                {components.map((component) => (
-                                    <ListItem
-                                        key={component.title}
-                                        title={component.title}
-                                        href={component.href}
-                                    >
-                                        {component.description}
+                                    <ListItem href="/clubs" title="Browse Clubs">
+                                        Browse Clubs
                                     </ListItem>
-                                ))}
-                            </ul>
-                        </NavigationMenuContent>
-                    </NavigationMenuItem>
-                    <NavigationMenuItem>
-                        <NavigationMenuLink asChild>
-                            <Link to="/contactus" className={navigationMenuTriggerStyle() + " cursor-pointer bg-transparent"}>
-                                Contact Us
-                            </Link>
-                        </NavigationMenuLink>
-                    </NavigationMenuItem>
-                </NavigationMenuList>
+                                    {/*<ListItem href="/" title="Typography">*/}
+                                    {/*    Styles for headings, paragraphs, lists...etc*/}
+                                    {/*</ListItem>*/}
+                                </ul>
+                            </NavigationMenuContent>
+                        </NavigationMenuItem>
+                        <NavigationMenuItem >
+                            <NavigationMenuTrigger className="cursor-pointer bg-transparent">About</NavigationMenuTrigger>
+                            <NavigationMenuContent>
+                                <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
+                                    {components.map((component) => (
+                                        <ListItem
+                                            key={component.title}
+                                            title={component.title}
+                                            href={component.href}
+                                        >
+                                            {component.description}
+                                        </ListItem>
+                                    ))}
+                                </ul>
+                            </NavigationMenuContent>
+                        </NavigationMenuItem>
+                        <NavigationMenuItem>
+                            <NavigationMenuLink asChild>
+                                <Link to="/contactus" className={navigationMenuTriggerStyle() + " cursor-pointer bg-transparent"}>
+                                    Contact Us
+                                </Link>
+                            </NavigationMenuLink>
+                        </NavigationMenuItem>
+                    </NavigationMenuList>
                 </NavigationMenu>
                 {
                     user ?
                         <div className="space-x-2 flex">
                             <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="shadow-none"><Avatar className="w-6 h-6">
-                                    <AvatarImage src="https://github.com/shadcn.png" />
-                                    <AvatarFallback>JD</AvatarFallback>
-                                </Avatar> <ChevronDown/></Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-56" align="end">
-                                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuGroup>
-                                    {/* <Link to="/profile" className="w-full">
-                                        <DropdownMenuItem>
-                                                Profile
-                                                <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-                                        </DropdownMenuItem>
-                                    </Link> */}
-                                    {/* <Link to="/billing&usage">
-                                        <DropdownMenuItem>
-                                            Billing and Usage
-                                            <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
-                                        </DropdownMenuItem>
-                                    </Link> */}
-                                    <Link to="/settings">
-                                        <DropdownMenuItem>
-                                            Settings
-                                            <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
-                                        </DropdownMenuItem>
-                                    </Link>
-                                </DropdownMenuGroup>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={signOut}>
-                                    Log out
-                                    <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="shadow-none"><Avatar className="w-6 h-6">
+                                        <AvatarImage src="https://github.com/shadcn.png" />
+                                        <AvatarFallback>JD</AvatarFallback>
+                                    </Avatar> <ChevronDown /></Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-56" align="end">
+                                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuGroup>
+                                        <Link to="/settings">
+                                            <DropdownMenuItem>
+                                                Settings
+                                                <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+                                            </DropdownMenuItem>
+                                        </Link>
+                                    </DropdownMenuGroup>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={signOut}>
+                                        Log out
+                                        <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                             {/* <ModeToggle /> */}
                             {/* Mobile Menu Button */}
                             <button className="md:hidden" onClick={() => setMenuOpen(!menuOpen)}>
                                 {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                             </button>
-                        </div>:
+                        </div> :
                         <div className="space-x-2 flex">
                             <Link to="/login" className="cursor-pointer">
                                 <Button className="cursor-pointer">
-                                    Sign In
+                                    Member Sign In
                                 </Button>
                             </Link>
-                            {/* <ModeToggle /> */}
-                            {/* Mobile Menu Button */}
+                            <Link to="/admin/login" className="cursor-pointer">
+                                <Button className="cursor-pointer">
+                                    Admin Sign In
+                                </Button>
+                            </Link>
                             <button className="md:hidden" onClick={() => setMenuOpen(!menuOpen)}>
                                 {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                             </button>

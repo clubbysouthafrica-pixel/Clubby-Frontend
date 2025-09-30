@@ -100,78 +100,92 @@ export function RegistrationReportData({ data, currency }: props) {
                 </div>
               }
               {
-                c.rows?.map((r: RegistrationRowData, index: number) => (
-                  <div key={r.row_name} className={index + 1 === c.rows.length ? "" : "mb-5"}>
-                    <p className="font-bold">
-                      {r.row_name}  - {formatAmount(r.fee_amount, currency)} each
-                    </p>
-                    <CardDescription>Report on latest {r.row_name} items</CardDescription>
-                    <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-2">
-                      <div className="flex gap-4 *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs">
-                        <Card className="@container/card py-3 w-[100%]">
-                          <CardHeader className="flex flex-col items-center justify-center text-center">
-                            <CardDescription>Total</CardDescription>
-                            <CardTitle className="text-l font-semibold tabular-nums">
-                              {r.total.total}
-                            </CardTitle>
-                          </CardHeader>
-                        </Card>
-                        <Card className="@container/card py-3 w-[100%]">
-                          <CardHeader className="flex flex-col items-center justify-center text-center">
-                            <CardDescription>Paid to Club</CardDescription>
-                            <CardTitle className="text-l font-semibold tabular-nums">
-                              {formatAmount(r.total.paid_to_club, currency)}
-                            </CardTitle>
-                          </CardHeader>
-                        </Card>
-                        <Card className="@container/card py-3 w-[100%]">
-                          <CardHeader className="flex flex-col items-center justify-center text-center">
-                            <CardDescription>Pending</CardDescription>
-                            <CardTitle className="text-l font-semibold tabular-nums">
-                              {r.total.pending}
-                            </CardTitle>
-                          </CardHeader>
-                        </Card>
-                        <Card className="@container/card py-3 w-[100%]">
-                          <CardHeader className="flex flex-col items-center justify-center text-center">
-                            <CardDescription>Due to Club</CardDescription>
-                            <CardTitle className="text-l font-semibold tabular-nums">
-                              {formatAmount(r.total.due_to_club, currency)}
-                            </CardTitle>
-                          </CardHeader>
-                        </Card>
-                      </div>
-                    </div>
+                c?.rows && c.rows.length > 0 &&
+                <div className="mb-5">
+                  <Tabs defaultValue={(c.rows[0]?.row_name)}>
+                    <TabsList>
+                      {c.rows.map((r: RegistrationRowData) => (
+                        <TabsTrigger className="w-[150px]" key={r.row_name} value={r.row_name}>{r.row_name}</TabsTrigger>
+                      ))}
+                    </TabsList>
                     {
-                      r.data && r.data.length > 0 ?
-                        <div className="overflow-hidden rounded-lg border">
-                          <Table>
-                            <TableHeader className="bg-muted sticky top-0 z-10">
-                              <TableRow>
-                                <TableHead className="text-center w-1/5">Date</TableHead>
-                                <TableHead className="text-center w-1/5">Total</TableHead>
-                                <TableHead className="text-center w-1/5">Paid</TableHead>
-                                <TableHead className="text-center w-1/5">Pending</TableHead>
-                                <TableHead className="text-center w-1/5">Due</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody className="font-semibold bg-gray-50">
-                              {r.data?.map((d: RegistrationReportRowDataItem) => (
-                                <TableRow key={d.date}>
-                                  <TableCell className="font-medium text-center w-1/5">{d.date}</TableCell>
-                                  <TableCell className="font-medium text-center w-1/5">{d.total}</TableCell>
-                                  <TableCell className="text-center w-1/5">{formatAmount(d.paid_to_club, currency)}</TableCell>
-                                  <TableCell className="font-medium text-center w-1/5">{d.pending}</TableCell>
-                                  <TableCell className="text-center w-1/5">{formatAmount(d.due_to_club, currency)}</TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </div>
-                        : null
+                      c.rows?.map((r: RegistrationRowData) => (
+                        <TabsContent key={r.row_name} value={r.row_name}>
+                          <div className="px-2">
+                            <p className="font-bold">
+                              Fee amount: {formatAmount(r.fee_amount, currency)} each
+                            </p>
+                            <CardDescription>Report on latest {r.row_name} items</CardDescription>
+                            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-2">
+                              <div className="flex gap-4 *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs">
+                                <Card className="@container/card py-3 w-[100%]">
+                                  <CardHeader className="flex flex-col items-center justify-center text-center">
+                                    <CardDescription>Total</CardDescription>
+                                    <CardTitle className="text-l font-semibold tabular-nums">
+                                      {r.total.total}
+                                    </CardTitle>
+                                  </CardHeader>
+                                </Card>
+                                <Card className="@container/card py-3 w-[100%]">
+                                  <CardHeader className="flex flex-col items-center justify-center text-center">
+                                    <CardDescription>Paid to Club</CardDescription>
+                                    <CardTitle className="text-l font-semibold tabular-nums">
+                                      {formatAmount(r.total.paid_to_club, currency)}
+                                    </CardTitle>
+                                  </CardHeader>
+                                </Card>
+                                <Card className="@container/card py-3 w-[100%]">
+                                  <CardHeader className="flex flex-col items-center justify-center text-center">
+                                    <CardDescription>Pending</CardDescription>
+                                    <CardTitle className="text-l font-semibold tabular-nums">
+                                      {r.total.pending}
+                                    </CardTitle>
+                                  </CardHeader>
+                                </Card>
+                                <Card className="@container/card py-3 w-[100%]">
+                                  <CardHeader className="flex flex-col items-center justify-center text-center">
+                                    <CardDescription>Due to Club</CardDescription>
+                                    <CardTitle className="text-l font-semibold tabular-nums">
+                                      {formatAmount(r.total.due_to_club, currency)}
+                                    </CardTitle>
+                                  </CardHeader>
+                                </Card>
+                              </div>
+                            </div>
+                            {
+                              r.data && r.data.length > 0 ?
+                                <div className="overflow-hidden rounded-lg border">
+                                  <Table>
+                                    <TableHeader className="bg-muted sticky top-0 z-10">
+                                      <TableRow>
+                                        <TableHead className="text-center w-1/5">Date</TableHead>
+                                        <TableHead className="text-center w-1/5">Total</TableHead>
+                                        <TableHead className="text-center w-1/5">Paid</TableHead>
+                                        <TableHead className="text-center w-1/5">Pending</TableHead>
+                                        <TableHead className="text-center w-1/5">Due</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody className="font-semibold bg-gray-50">
+                                      {r.data?.map((d: RegistrationReportRowDataItem) => (
+                                        <TableRow key={d.date}>
+                                          <TableCell className="font-medium text-center w-1/5">{d.date}</TableCell>
+                                          <TableCell className="font-medium text-center w-1/5">{d.total}</TableCell>
+                                          <TableCell className="text-center w-1/5">{formatAmount(d.paid_to_club, currency)}</TableCell>
+                                          <TableCell className="font-medium text-center w-1/5">{d.pending}</TableCell>
+                                          <TableCell className="text-center w-1/5">{formatAmount(d.due_to_club, currency)}</TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                                : null
+                            }
+                          </div>
+                        </TabsContent>
+                      ))
                     }
-                  </div>
-                ))
+                  </Tabs>
+                </div>
               }
             </Card>
           </TabsContent>
