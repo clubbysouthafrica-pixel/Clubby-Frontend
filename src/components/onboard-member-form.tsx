@@ -47,7 +47,7 @@ export function OnboardMemberForm({
                 <CardHeader className="text-center">
                         <CardTitle className="text-xl">Onboarding form</CardTitle>
                         <CardDescription>
-                            The ensure your account is ready to register with clubs. Please complete the onboarding form
+                            This ensure your account is ready to register with clubs. Please complete the onboarding form
                         </CardDescription>
                 </CardHeader>
                 <CardContent>

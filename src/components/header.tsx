@@ -165,18 +165,6 @@ export default function Header() {
                                     <DropdownMenuLabel>My Account</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuGroup>
-                                        {/* <Link to="/profile" className="w-full">
-                                        <DropdownMenuItem>
-                                                Profile
-                                                <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-                                        </DropdownMenuItem>
-                                    </Link> */}
-                                        <Link to="/billing&usage">
-                                            <DropdownMenuItem>
-                                                Billing and Usage
-                                                <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
-                                            </DropdownMenuItem>
-                                        </Link>
                                         <Link to="/settings">
                                             <DropdownMenuItem>
                                                 Settings
