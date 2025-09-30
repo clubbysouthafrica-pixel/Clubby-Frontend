@@ -114,15 +114,9 @@ export default function Header() {
                                     <ListItem href="/myclubs" title="My Clubs">
                                         View all your clubs you have joined.
                                     </ListItem>
-                                    {/* <ListItem href="/memberships" title="My Memberships">
-                                    View all your memberships.
-                                </ListItem> */}
                                     <ListItem href="/clubs" title="Browse Clubs">
                                         Browse Clubs
                                     </ListItem>
-                                    {/*<ListItem href="/" title="Typography">*/}
-                                    {/*    Styles for headings, paragraphs, lists...etc*/}
-                                    {/*</ListItem>*/}
                                 </ul>
                             </NavigationMenuContent>
                         </NavigationMenuItem>
@@ -179,8 +173,6 @@ export default function Header() {
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                            {/* <ModeToggle /> */}
-                            {/* Mobile Menu Button */}
                             <button className="md:hidden" onClick={() => setMenuOpen(!menuOpen)}>
                                 {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                             </button>
