@@ -44,7 +44,7 @@ export function ClubCard({
                             aspectRatio === "portrait" ? "aspect-[3/4]" : "aspect-square"
                         )}>
                             <AvatarImage className="w-full h-full object-cover object-center max-h-52"
-                                src={club.club_cover_url}
+                                src={club?.club_cover_url ?? ""}
                                 alt={club.club_name}
                             />
                             <AvatarFallback>

@@ -54,10 +54,8 @@ export function LoginForm({
       }
 
       if (e instanceof AxiosError) {
-        // handle axios specific error
         setError(e.response?.data?.message)
       } else {
-        // handle other errors
         setError((e as Error).message)
       }
     } finally {
