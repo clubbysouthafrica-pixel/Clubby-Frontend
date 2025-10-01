@@ -263,7 +263,7 @@ export default function ListMembersPage() {
 
                         <TabsList >
                             <TabsTrigger value="registered-members" className="p-2">
-                                Completed Registrations <Badge variant="secondary">{filteredRegisteredMembers.length ?? 0}</Badge>
+                                Active Members <Badge variant="secondary">{filteredRegisteredMembers.length ?? 0}</Badge>
                             </TabsTrigger>
                             <TabsTrigger value="pending-members" className="p-2" >
                                 Members Pending <Badge variant="secondary">{filteredUnregisteredMembers.length ?? 0}</Badge>

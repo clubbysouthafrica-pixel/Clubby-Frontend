@@ -55,7 +55,6 @@ export default function ViewClubPage() {
     const [profileImage, setProfileImage] = useState("")
 
     useEffect(() => {
-        console.log(data)
         const getImg = async () => {
             try {
                 setCoverImage(data?.club_cover_url ?? "")
