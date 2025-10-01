@@ -55,21 +55,23 @@ export default function ViewClubPage() {
 
     useEffect(() => {
         const getImg = async () => {
-
             try {
                 setCoverImage(data?.club_cover_url ?? "")
                 setProfileImage(data?.club_profile_url ?? "")
             } catch (error) {
-                console.error("Failed to fetch presigned URL", error)
+                console.error("Failed to fetch images", error)
             }
         }
-
-        if (data) {
-            setCountryName(countryMap[data.country_of_operation.toUpperCase()] ?? data.country_of_operation)
-            getImg()
+    
+        if (data?.country_of_operation) {
+            const upperCountryCode = data.country_of_operation.toUpperCase();
+            setCountryName(countryMap[upperCountryCode] ?? upperCountryCode);
         }
-
-    }, [data])
+    
+        if (data) {
+            getImg();
+        }
+    }, [data]);
 
     return (
         <Pager>
