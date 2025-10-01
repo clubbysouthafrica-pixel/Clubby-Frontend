@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { formatAmount } from "@/data/currencies";
 import { useFetchUserTransactions } from "@/queries/transactions";
 import * as React from "react";
+import { Label } from "@/components/ui/label";
 
 // const loadingIcon = 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Loading_icon.gif';
 
@@ -54,6 +55,7 @@ export default function ViewClubPage() {
     const [profileImage, setProfileImage] = useState("")
 
     useEffect(() => {
+        console.log(data)
         const getImg = async () => {
             try {
                 setCoverImage(data?.club_cover_url ?? "")
@@ -62,12 +64,12 @@ export default function ViewClubPage() {
                 console.error("Failed to fetch images", error)
             }
         }
-    
+
         if (data?.country_of_operation) {
             const upperCountryCode = data.country_of_operation.toUpperCase();
             setCountryName(countryMap[upperCountryCode] ?? upperCountryCode);
         }
-    
+
         if (data) {
             getImg();
         }
@@ -85,7 +87,17 @@ export default function ViewClubPage() {
             {
                 isError && <p> Something went wrong... </p>
             }
-            {(!isLoading && !isError) &&
+            {
+                data && !data?.onboarded &&
+                <div className="mt-10 flex items-start justify-center min-h-screen">
+                    <div className="text-center px-4">
+                        <Label className="w-[700px]">
+                            Member access is not yet available for this club. If you have any questions, please reach out to the club administrator at: {data?.support_email}.
+                        </Label>
+                    </div>
+                </div>
+            }
+            {(!isLoading && !isError && data.onboarded) &&
                 <div className="container mx-auto px-4">
                     <div className="relative">
                         <Avatar className="w-full h-28 md:h-28 rounded-lg bg-muted/30 overflow-hidden border-background">
