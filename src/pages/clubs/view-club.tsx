@@ -60,8 +60,8 @@ export default function ViewClubPage() {
         const getImg = async () => {
 
             try {
-                setCoverImage(data.club_cover_url)
-                setProfileImage(data.club_profile_url)
+                setCoverImage(data?.club_cover_url ?? "")
+                setProfileImage(data?.club_profile_url ?? "")
             } catch (error) {
                 console.error("Failed to fetch presigned URL", error)
             }
