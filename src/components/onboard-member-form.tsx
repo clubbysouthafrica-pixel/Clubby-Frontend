@@ -37,8 +37,8 @@ export function OnboardMemberForm({
             phone_number: phoneNumber,
         }, {
             onSuccess: () => navigate("/"),
-            onError: () => {
-                toast.error((error as any).response.data.message)
+            onError: (error: any) => {
+                toast.error(error.response?.data?.message || "An unexpected error occurred.")
             }
         })
     }
