@@ -86,7 +86,9 @@ export default function SettingsPage() {
 
     const saveProfileSettings = () => mutate(accountSettings, {
         onSuccess: () => toast.success("Successfully saved user details."),
-        onError: () => toast.error("Something went wrong.")
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || "An unexpected error occurred.")
+        }
     })
 
     return (
