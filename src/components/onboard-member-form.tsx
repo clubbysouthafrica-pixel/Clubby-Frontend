@@ -21,7 +21,7 @@ export function OnboardMemberForm({
                           }: React.ComponentProps<"div">) {
 
     const navigate = useNavigate()
-    const {mutate, isPending, error} = useOnboardProfileMutation()
+    const {mutate, isPending } = useOnboardProfileMutation()
     const [firstName, setFirstName] = useState("")
     const [surname, setSurname] = useState("")
     const [dob, setDob] = useState("")
