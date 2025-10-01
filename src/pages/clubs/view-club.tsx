@@ -29,13 +29,10 @@ const countryMap: Record<string, string> = {
     FR: "France",
 };
 
-function getCountryName(code: string): string {
-    return countryMap[code.toUpperCase()] ?? code;
-}
-
 export default function ViewClubPage() {
     const navigate = useNavigate()
     const { clubId } = useParams();
+    const [countryName, setCountryName] = useState("")
     const { data, isLoading, isError } = useFetchClub(clubId as string)
     const { data: bankDetails, isLoading: bankDetailsLoading } = useFetchClubBankDetails(
         clubId as string,
@@ -67,7 +64,11 @@ export default function ViewClubPage() {
             }
         }
 
-        getImg()
+        if (data) {
+            setCountryName(countryMap[data.country_of_operation.toUpperCase()] ?? data.country_of_operation)
+            getImg()
+        }
+
     }, [data])
 
     return (
@@ -163,7 +164,7 @@ export default function ViewClubPage() {
                                                 </div>
                                                 <div className="flex items-center">
                                                     <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                                                    <span>{getCountryName(data.country_of_operation)}</span>
+                                                    <span>{countryName}</span>
                                                 </div>
                                                 <div className="flex items-center">
                                                     <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
