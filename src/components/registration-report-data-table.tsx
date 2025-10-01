@@ -73,30 +73,33 @@ export function RegistrationReportData({ data, currency }: props) {
                       </Card>
                     </div>
                   </div>
-                  <div className="overflow-hidden rounded-lg border">
-                    <Table>
-                      <TableHeader className="bg-muted sticky top-0 z-10">
-                        <TableRow>
-                          <TableHead className="text-center">Date</TableHead>
-                          <TableHead className="text-center">Total</TableHead>
-                          <TableHead className="text-center">Paid</TableHead>
-                          <TableHead className="text-center">Pending</TableHead>
-                          <TableHead className="text-center">Due</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody className="font-semibold bg-gray-50">
-                        {(c?.data as any).map((d: any) => (
-                          <TableRow key={d.date}>
-                            <TableCell className="font-medium text-center">{d.date}</TableCell>
-                            <TableCell className="font-medium text-center">{d.total}</TableCell>
-                            <TableCell className="text-center">{formatAmount(d.paid_to_club, currency)}</TableCell>
-                            <TableCell className="font-medium text-center">{d.pending}</TableCell>
-                            <TableCell className="text-center">{formatAmount(d.due_to_club, currency)}</TableCell>
+                  {
+                    c?.data && c.data.length > 0 &&
+                    <div className="overflow-hidden rounded-lg border">
+                      <Table>
+                        <TableHeader className="bg-muted sticky top-0 z-10">
+                          <TableRow>
+                            <TableHead className="text-center">Date</TableHead>
+                            <TableHead className="text-center">Total</TableHead>
+                            <TableHead className="text-center">Paid</TableHead>
+                            <TableHead className="text-center">Pending</TableHead>
+                            <TableHead className="text-center">Due</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                        </TableHeader>
+                        <TableBody className="font-semibold bg-gray-50">
+                          {(c?.data as any).map((d: any) => (
+                            <TableRow key={d.date}>
+                              <TableCell className="font-medium text-center">{d.date}</TableCell>
+                              <TableCell className="font-medium text-center">{d.total}</TableCell>
+                              <TableCell className="text-center">{formatAmount(d.paid_to_club, currency)}</TableCell>
+                              <TableCell className="font-medium text-center">{d.pending}</TableCell>
+                              <TableCell className="text-center">{formatAmount(d.due_to_club, currency)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  }
                 </div>
               }
               {
