@@ -1,4 +1,4 @@
-import { DeregisterMemberRequest } from "@/requests/registration-request";
+import { DeregisterMemberRequest, DeregisterSeasonRequest } from "@/requests/registration-request";
 import { api } from "./api";
 import { FormRegistrationRequest } from "@/interfaces/formRegistration";
 
@@ -13,8 +13,9 @@ export const fetchRegistrationForm = (clubAccountId: string): Promise<any> => {
     return api.get(`/registration/getForm?club_account_id=${clubAccountId}`)
         .then(res => res.data);
 } 
-export const deregisterAllMembersQuery = (clubId: string) => {
-    return api.post("/deregistration/season", {club_account_id: clubId})
+export const deregisterAllMembersQuery = (request: DeregisterSeasonRequest) => {
+    console.log('here: ', request)
+    return api.post("/deregistration/season", {club_account_id: request.clubId})
         .then(res => res.data);
 }
 

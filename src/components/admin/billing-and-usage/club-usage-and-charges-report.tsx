@@ -25,6 +25,8 @@ export default function ClubUsageAndCharges({ data, currency }: any) {
   )
   const sortableId = React.useId()
 
+  console.log(data)
+
   return (
     <div className="space-y-10">
       <h2 className="text-l font-semibold mb-2">Billing Summary</h2>
@@ -36,34 +38,38 @@ export default function ClubUsageAndCharges({ data, currency }: any) {
           <Table>
             <TableHeader className="bg-muted sticky top-0 z-10">
               <TableRow>
-                <TableHead className="text-center">Month</TableHead>
-                <TableHead className="text-center">Charge</TableHead>
-                <TableHead className="text-center">Outstanding</TableHead>
+                <TableHead className="text-center w-1/4">Month</TableHead>
+                <TableHead className="text-center w-1/4">Total Charge</TableHead>
+                <TableHead className="text-center w-1/4">Registrations</TableHead>
+                <TableHead className="text-center w-1/4">Emails</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {Object.keys(data.overall_month_data || {}).map((key) => (
                 <TableRow key={key}>
-                  <TableCell className="text-center">{key}</TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="text-center w-1/4">{key}</TableCell>
+                  <TableCell className="text-center w-1/4">
                     {formatAmount(data.overall_month_data[key].total_amount, currency)}
                   </TableCell>
-                  <TableCell className="text-center">
-                    {formatAmount(data.overall_month_data[key].outstanding_amount, currency)}
+                  <TableCell className="text-center w-1/4">
+                    {formatAmount(data.overall_month_data[key].registration_amount, currency)}
+                  </TableCell>
+                  <TableCell className="text-center w-1/4">
+                    {formatAmount(data.overall_month_data[key].email_amount, currency)}
                   </TableCell>
                 </TableRow>
               ))}
               <TableRow className="font-semibold bg-gray-50">
-                <TableCell className="text-center">Total</TableCell>
-                <TableCell className="text-center">{formatAmount(data.total_charge, currency)}</TableCell>
-                <TableCell className="text-center">{formatAmount(data.total_outstanding_amount, currency)}</TableCell>
+                <TableCell className="text-center w-1/4">Total</TableCell>
+                <TableCell className="text-center w-1/4">{formatAmount(data.total_charge, currency)}</TableCell>
+                <TableCell className="text-center w-1/4">{formatAmount(data.total_registration_amount, currency)}</TableCell>
+                <TableCell className="text-center w-1/4">{formatAmount(data.total_email_amount, currency)}</TableCell>
               </TableRow>
             </TableBody>
           </Table>
         </DndContext>
       </div>
 
-      {/* --- Graphs --- */}
       <Card className="p-5 w-full gap-2">
         <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full flex-col gap-6">
           <div className="flex items-center justify-between">
@@ -124,6 +130,8 @@ export default function ClubUsageAndCharges({ data, currency }: any) {
           })}
         </Tabs>
       </Card>
+
+      <h1 className="text-xl font-bold mb-4 pb-2">Oustanding amount to Clubby: <stong>{formatAmount(data.total_outstanding_amount, currency)}</stong></h1>
     </div>
   );
 }
