@@ -11,10 +11,6 @@ import {useNavigate} from "react-router-dom";
 
 interface ImageProps {
     clubId: string
-    dereigsterMembers: { user_id: string, name: string }[]
-    setlistActionItems: React.Dispatch<React.SetStateAction<string[]>>
-    setDeregisterMembers: React.Dispatch<React.SetStateAction<{ user_id: string, name: string }[]>>
-    setAllMembersSelected: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 export default function DeregisterSeasonDialog({ clubId }: ImageProps) {

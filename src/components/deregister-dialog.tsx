@@ -20,7 +20,7 @@ export default function DeregisterAllDialog({ clubId, disabled }: ImageProps) {
   const { mutate, isPending, isSuccess } = useDeregisterAllMutation()
 
   const send = () => {
-    mutate(clubId, {
+    mutate({ clubId: clubId }, {
       onSuccess: () => {
         toast.success("Successfully unregistered all members")
         setOpenDialog(false)
@@ -41,7 +41,7 @@ export default function DeregisterAllDialog({ clubId, disabled }: ImageProps) {
               className="relative"
             >
               <Users />
-              <X className="absolute -right-0 h-3 w-3 scale-55 transform text-black" strokeWidth={3}  />
+              <X className="absolute -right-0 h-3 w-3 scale-55 transform text-black" strokeWidth={3} />
             </Button>
           </TooltipTrigger>
           <TooltipContent>

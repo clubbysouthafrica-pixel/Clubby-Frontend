@@ -189,7 +189,7 @@ export default function ListMembersPage() {
 
                 return true;
             }) ?? []
-            : clubMembers?.unregistered?.filter(member => !member?.resubmission_required) ?? [];
+            : clubMembers?.unregistered?.filter((member: ClubMember) => !member?.resubmission_required) ?? [];
 
     const filteredDeregisteredMembers =
         selectedTab === "previous-members"
@@ -216,7 +216,7 @@ export default function ListMembersPage() {
 
                 return true;
             }) ?? []
-            : clubMembers?.unregistered?.filter(member => member?.resubmission_required) ?? [];
+            : clubMembers?.unregistered?.filter((member: ClubMember) => member?.resubmission_required) ?? [];
 
     return (
         <div className="p-5 min-h-screen">
