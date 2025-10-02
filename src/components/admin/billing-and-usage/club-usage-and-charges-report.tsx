@@ -131,7 +131,7 @@ export default function ClubUsageAndCharges({ data, currency }: any) {
         </Tabs>
       </Card>
 
-      <h1 className="text-xl font-bold mb-4 pb-2">Oustanding amount to Clubby: <stong>{formatAmount(data.total_outstanding_amount, currency)}</stong></h1>
+      <h1 className="text-xl font-bold mb-4 pb-2">Oustanding amount to Clubby: {formatAmount(data.total_outstanding_amount, currency)}</h1>
     </div>
   );
 }
