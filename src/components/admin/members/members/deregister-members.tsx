@@ -64,14 +64,28 @@ export default function DeregisterMembersDialog({ dereigsterMembers, clubId, set
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Unregister selected members.</p>
+            <p>Deregister selected members</p>
           </TooltipContent>
         </Tooltip>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Unregister Members</DialogTitle>
-          <DialogDescription>This will unregister the selected members:</DialogDescription>
+          <DialogTitle>Deregister Members</DialogTitle>
+          <DialogDescription>
+            <span>
+              This action will remove all currently registered club members from the system. Member access will be revoked, and they will no longer be able to log in or participate in club activities.
+            </span>
+            <br />
+            <br />
+            <span>
+              Use this action if you need to reset your member list, clean up inactive accounts, or prepare for new registrations.
+            </span>
+            <br />
+            <br />
+            <span className="text-red-600">
+              ⚠️ This action is irreversible. All member associations will be removed. You may re-invite or members may re-register manually afterward.
+            </span>
+          </DialogDescription>
           <div className="overflow-hidden rounded-lg border my-2">
             <div className="max-h-[200px] overflow-y-auto">
               <Table>
@@ -91,7 +105,7 @@ export default function DeregisterMembersDialog({ dereigsterMembers, clubId, set
             id="consent"
             onCheckedChange={(checked: boolean) => setConfirmed(!!checked)}
           />
-          <DialogDescription className="text-black">I confirm to deregistering the selected members.</DialogDescription>
+          <DialogDescription className="text-black">I understand that this action will permanently deregister all current club members.</DialogDescription>
         </div>
         {
           isSuccess &&
@@ -113,7 +127,7 @@ export default function DeregisterMembersDialog({ dereigsterMembers, clubId, set
             disabled={!confirmed || isPending || isSuccess}
             onClick={send}
           >
-            {isPending ? "loading..." : "Unregister"}
+            {isPending ? "loading..." : "Deregister"}
           </Button>
         </DialogFooter>
       </DialogContent>

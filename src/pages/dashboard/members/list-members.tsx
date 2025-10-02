@@ -16,6 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import SendEmailDialog from "@/components/send-email-dialog";
 import DeregisterMembersDialog from "@/components/admin/members/members/deregister-members";
 import SelectedMember from "@/components/admin/members/members/selected-members";
+import DeregisterSeasonDialog from "@/components/admin/members/members/deregister-season";
 import { formatAmount } from "@/data/currencies";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -36,7 +37,6 @@ export default function ListMembersPage() {
     const [memberNameFilter, setMemberNameFilter] = useState("");
     const [dynamicFilters, setDynamicFilters] = useState<Record<string, string>>({});
     const [filterLoading, setFilterLoading] = useState(true);
-
     const [selectedTab, setSelectedTab] = useState("registered-members");
 
     const [availableDynamicFilters, setAvailableDynamicFilters] = useState<
@@ -77,59 +77,7 @@ export default function ListMembersPage() {
     useEffect(() => {
         if (!clubMembers?.registered && !clubMembers?.unregistered) return;
 
-        const fieldMap: Record<string, Set<string>> = {};
-
-        if (clubMembers?.registered) {
-            clubMembers?.registered.forEach((member: ClubMember) => {
-                member.meta_standard?.forEach((field: any) => {
-                    if (field.type === "STANDARD_DROPDOWN" && field.value) {
-                        const key = `standard:${field.field_name}`;
-                        if (!fieldMap[key]) fieldMap[key] = new Set();
-                        fieldMap[key].add(field.value);
-                    }
-                });
-
-                member.meta_billing?.forEach((field: any) => {
-                    if (field.type === "BILLING_DROPDOWN" && field.label_value) {
-                        const key = `billing:${field.field_name}`;
-                        if (!fieldMap[key]) fieldMap[key] = new Set();
-                        fieldMap[key].add(field.label_value);
-                    }
-                });
-            });
-        }
-
-        if (clubMembers?.unregistered) {
-            clubMembers?.unregistered?.forEach((member: ClubMember) => {
-                member.meta_standard?.forEach((field: any) => {
-                    if (field.type === "STANDARD_DROPDOWN" && field.value) {
-                        const key = `standard:${field.field_name}`;
-                        if (!fieldMap[key]) fieldMap[key] = new Set();
-                        fieldMap[key].add(field.value);
-                    }
-                });
-
-                member.meta_billing?.forEach((field: any) => {
-                    if (field.type === "BILLING_DROPDOWN" && field.label_value) {
-                        const key = `billing:${field.field_name}`;
-                        if (!fieldMap[key]) fieldMap[key] = new Set();
-                        fieldMap[key].add(field.label_value);
-                    }
-                });
-            });
-        }
-
-        const filters = Object.entries(fieldMap).map(([fullKey, values]) => {
-            const [type, field] = fullKey.split(":");
-            return {
-                key: fullKey,
-                fieldName: field,
-                type,
-                options: Array.from(values)
-            };
-        });
-
-        setAvailableDynamicFilters(filters);
+        setAvailableDynamicFilters(clubMembers?.filters);
         setFilterLoading(false);
     }, [clubMembers]);
 
@@ -186,6 +134,11 @@ export default function ListMembersPage() {
         }
     }, [isSuccess]);
 
+    const resetFilters = () => {
+        setMemberNameFilter("");
+        setDynamicFilters({});
+    }
+
     const filteredRegisteredMembers =
         selectedTab === "registered-members"
             ? clubMembers?.registered?.filter((member: ClubMember) => {
@@ -217,6 +170,8 @@ export default function ListMembersPage() {
                 const fullName = (member.member_first_name + " " + member.member_surname).toLowerCase();
                 if (!fullName.includes(memberNameFilter.toLowerCase())) return false;
 
+                if (member?.resubmission_required) return false
+
                 for (const [fullKey, selectedValue] of Object.entries(dynamicFilters)) {
                     if (!selectedValue || selectedValue === "all") continue;
                     const [type, fieldName] = fullKey.split(":");
@@ -234,7 +189,34 @@ export default function ListMembersPage() {
 
                 return true;
             }) ?? []
-            : clubMembers?.unregistered ?? [];
+            : clubMembers?.unregistered?.filter(member => !member?.resubmission_required) ?? [];
+
+    const filteredDeregisteredMembers =
+        selectedTab === "previous-members"
+            ? clubMembers?.unregistered?.filter((member: ClubMember) => {
+                const fullName = (member.member_first_name + " " + member.member_surname).toLowerCase();
+                if (!fullName.includes(memberNameFilter.toLowerCase())) return false;
+
+                if (!member?.resubmission_required) return false
+
+                for (const [fullKey, selectedValue] of Object.entries(dynamicFilters)) {
+                    if (!selectedValue || selectedValue === "all") continue;
+                    const [type, fieldName] = fullKey.split(":");
+
+                    if (type === "standard") {
+                        const field = member.meta_standard?.find((f: any) => f.field_name === fieldName);
+                        if (!field || field.value !== selectedValue) return false;
+                    }
+
+                    if (type === "billing") {
+                        const field = member.meta_billing?.find((f: any) => f.field_name === fieldName);
+                        if (!field || field.label_value !== selectedValue) return false;
+                    }
+                }
+
+                return true;
+            }) ?? []
+            : clubMembers?.unregistered?.filter(member => member?.resubmission_required) ?? [];
 
     return (
         <div className="p-5 min-h-screen">
@@ -255,23 +237,28 @@ export default function ListMembersPage() {
                         setMemberNameFilter("");
                         setDynamicFilters({});
                     }}
-                    className="w-full flex-col justify-start gap-1 mt-4">
+                    className="w-full flex-col justify-start gap-1 mt-2">
                     <div className="flex items-center justify-between">
                         <Label htmlFor="view-selector" className="sr-only">
                             View
                         </Label>
 
-                        <TabsList >
-                            <TabsTrigger value="registered-members" className="p-2">
+                        <TabsList className="w-[1000px]">
+                            <TabsTrigger value="registered-members">
                                 Active Members <Badge variant="secondary">{filteredRegisteredMembers.length ?? 0}</Badge>
                             </TabsTrigger>
-                            <TabsTrigger value="pending-members" className="p-2" >
+                            <TabsTrigger value="pending-members">
                                 Members Pending <Badge variant="secondary">{filteredUnregisteredMembers.length ?? 0}</Badge>
+                            </TabsTrigger>
+                            <TabsTrigger value="previous-members">
+                                Deregistered Members <Badge variant="secondary">{filteredDeregisteredMembers.length ?? 0}</Badge>
                             </TabsTrigger>
                         </TabsList>
                     </div>
-                    <div className="flex flex-wrap justify-between gap-4 mt-4">
-                        {/* Left Side: Filters */}
+                    <p className="px-2 mt-3 text-blue-600 underline cursor-pointer" onClick={resetFilters}>
+                        Reset filters
+                    </p>
+                    <div className="flex flex-wrap justify-between gap-4">
                         <div className="flex flex-wrap gap-3 flex-1 min-w-[300px]">
                             <Input
                                 placeholder="Filter by member name"
@@ -300,8 +287,7 @@ export default function ListMembersPage() {
                                 </Select>
                             ))}
                         </div>
-
-                        <div className="px-2 py-1 flex items-center gap-3">
+                        <div className="px-2 py-1 flex items-center gap-4">
                             {club?.club_account_id && (
                                 <DeregisterMembersDialog
                                     dereigsterMembers={dereigsterMembers}
@@ -320,9 +306,13 @@ export default function ListMembersPage() {
                                     setAllMembersSelected={setAllMembersSelected}
                                 />
                             )}
+                            {
+                                club?.club_account_id && (
+                                    <DeregisterSeasonDialog clubId={club.club_account_id} />
+                                )
+                            }
                         </div>
                     </div>
-
                     <TabsContent
                         value="registered-members"
                         className="relative flex flex-col gap-4 overflow-auto">
@@ -359,7 +349,7 @@ export default function ListMembersPage() {
                                                     <a
                                                         onClick={() => setSelectedMember(member)}
                                                         href={`#${member.user_id}`}
-                                                        className="underline text-blue-600 hover:text-blue-800 cursor-pointer"
+                                                        className="underline hover:text-blue-800 cursor-pointer"
                                                     >
                                                         {member.member_first_name + " " + member.member_surname}
                                                     </a>
@@ -463,7 +453,172 @@ export default function ListMembersPage() {
                                                     <a
                                                         onClick={() => setSelectedMember(member)}
                                                         href={`#${member.user_id}`}
-                                                        className="underline text-blue-600 hover:text-blue-800 cursor-pointer"
+                                                        className="underline hover:text-blue-800 cursor-pointer"
+                                                    >
+                                                        {member.member_first_name + " " + member.member_surname}
+                                                    </a>
+                                                </TableCell>
+                                                <TableCell className="text-center w-1/6">
+                                                    <div className="inline-flex items-center gap-2 justify-center">
+                                                        <span className="font-mono">{member.user_id.slice(0, 8)}...</span>
+
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                navigator.clipboard.writeText(member.user_id);
+                                                            }}
+                                                            title="Click to copy full Transaction ID"
+                                                            className="hover:text-primary cursor-pointer"
+                                                        >
+                                                            <svg
+                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                className="h-4 w-4 text-muted-foreground hover:text-foreground transition"
+                                                                fill="none"
+                                                                viewBox="0 0 24 24"
+                                                                stroke="currentColor"
+                                                            >
+                                                                <path
+                                                                    strokeLinecap="round"
+                                                                    strokeLinejoin="round"
+                                                                    strokeWidth={2}
+                                                                    d="M8 16h8m2 0a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v8a2 2 0 002 2zM8 16v2a2 2 0 002 2h8a2 2 0 002-2v-2"
+                                                                />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-center w-1/6">
+                                                    {member.registration_submitted_on ? (() => {
+                                                        const date = new Date(member.registration_submitted_on);
+                                                        const now = new Date();
+                                                        const diffTime = Math.abs(now.getTime() - date.getTime());
+                                                        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+                                                        return `${date.toLocaleString()} (${diffDays === 0 ? 'today' : diffDays === 1 ? '1 day ago' : `${diffDays} days ago`})`;
+                                                    })() : "-"}
+                                                </TableCell>
+                                                <TableCell className="text-center w-1/6">
+                                                    {member.registration_payment_reference}
+                                                </TableCell>
+                                                <TableCell className="text-center w-1/6">
+                                                    {member.resubmission_required ? "N/A" : formatAmount(member.outstanding_amount, club?.currency)}
+                                                </TableCell>
+                                                <TableCell className="text-center w-1/6">
+                                                    {
+                                                        member.resubmission_required ?
+                                                            <div className="flex justify-center items-center">
+                                                                <Label className="text-red-500 font-bold">
+                                                                    Member resubmission required
+                                                                </Label>
+                                                            </div> :
+                                                            <Dialog
+                                                                open={openDialogUserId === member.user_id}
+                                                                onOpenChange={(open) => { reset(); setOpenDialogUserId(open ? member.user_id : null); setMemberRegisterAmount(0); }}>
+                                                                <div className="flex justify-center items-center">
+                                                                    <DialogTrigger asChild>
+                                                                        {
+                                                                            member.resubmission_required ? <Label className="text-red-500 font-bold">Member resubmission required</Label> :
+                                                                                <Button
+                                                                                    variant="outline"
+                                                                                    onClick={() => { setOpenDialogUserId(member.user_id) }}
+                                                                                >
+                                                                                    Register
+                                                                                </Button>
+                                                                        }
+                                                                    </DialogTrigger>
+                                                                </div>
+                                                                <DialogContent>
+                                                                    <DialogHeader>
+                                                                        <DialogTitle>Register Member: <strong>{member.member_first_name + " " + member.member_surname}</strong></DialogTitle>
+                                                                        <DialogDescription>
+                                                                            Confirm payment amount and register member
+                                                                        </DialogDescription>
+
+                                                                        <Label className="my-3 text-l">Outstanding amount: {formatAmount(member.outstanding_amount, club?.currency)}</Label>
+
+                                                                        <div className="grid gap-3">
+                                                                            <Label htmlFor="pay">Payment Amount</Label>
+                                                                            <Input
+                                                                                id="pay"
+                                                                                type="text"
+                                                                                placeholder="Enter amount"
+                                                                                value={displayAmount}
+                                                                                onChange={handleFormattedInputChange}
+                                                                            />
+                                                                        </div>
+                                                                        {
+                                                                            isError &&
+                                                                            <Alert variant="destructive">
+                                                                                <AlertCircle className="h-4 w-4" />
+                                                                                <AlertDescription className="text-xs">
+                                                                                    Something went wrong registering user
+                                                                                </AlertDescription>
+                                                                            </Alert>
+                                                                        }
+                                                                    </DialogHeader>
+                                                                    <DialogFooter>
+                                                                        <DialogClose asChild>
+                                                                            <Button variant="outline">Cancel</Button>
+                                                                        </DialogClose>
+                                                                        <Button onClick={() => registerUser(member)} disabled={isPending}>{isPending ? "Registering..." : "Confirm"}</Button>
+                                                                    </DialogFooter>
+                                                                    {invalidRegistrationAmount && (
+                                                                        <Alert className="border border-red-600 text-red-600">
+                                                                            <AlertCircle className="h-4 w-4 text-red-600" />
+                                                                            <AlertDescription className="text-xs text-red-600">
+                                                                                The amount entered cannot be less than {formatAmount(1, club?.currency)} and more than the outstanding amount.
+                                                                            </AlertDescription>
+                                                                        </Alert>
+                                                                    )}
+                                                                </DialogContent>
+                                                            </Dialog>
+                                                    }
+                                                </TableCell>
+                                            </TableRow>
+                                        )) : (
+                                            <TableRow>
+                                                <TableCell
+                                                    colSpan={5}
+                                                    className="h-24 text-center"
+                                                >
+                                                    No results.
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </DndContext>
+                        </div>
+                    </TabsContent>
+
+                    <TabsContent
+                        value="previous-members"
+                        className="relative flex flex-col gap-4 overflow-auto">
+                        <div className="overflow-hidden rounded-lg border">
+                            <DndContext
+                                collisionDetection={closestCenter}
+                                sensors={sensors}
+                                id={sortableId}>
+
+                                <Table>
+                                    <TableHeader className="bg-muted sticky top-0 z-10">
+                                        <TableRow>
+                                            <TableHead className="text-center w-1/6">Display Name</TableHead>
+                                            <TableHead className="text-center w-1/6">Member ID</TableHead>
+                                            <TableHead className="text-center w-1/6">Registration Submitted</TableHead>
+                                            <TableHead className="text-center w-1/6">Reference Numbers</TableHead>
+                                            <TableHead className="text-center w-1/6">Outstanding Amount</TableHead>
+                                            <TableHead className="text-center w-1/6">Action</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filteredDeregisteredMembers.length ? filteredDeregisteredMembers.map((member: ClubMember) => (
+                                            <TableRow key={member.user_id}>
+                                                <TableCell className="text-center w-1/6">
+                                                    <a
+                                                        onClick={() => setSelectedMember(member)}
+                                                        href={`#${member.user_id}`}
+                                                        className="underline hover:text-blue-800 cursor-pointer"
                                                     >
                                                         {member.member_first_name + " " + member.member_surname}
                                                     </a>

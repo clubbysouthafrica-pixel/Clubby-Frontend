@@ -14,3 +14,7 @@ export interface DeregisterMemberRequest {
     userIds: string[]
     clubId: string
 }
+
+export interface DeregisterSeasonRequest {
+    clubId: string
+}

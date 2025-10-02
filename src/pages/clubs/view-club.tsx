@@ -91,7 +91,7 @@ export default function ViewClubPage() {
                 <div className="mt-10 flex items-start justify-center min-h-screen">
                     <div className="text-center px-4">
                         <Label className="w-[700px]">
-                            Member access is not yet available for this club. If you have any questions, please reach out to the club administrator at: {data?.support_email}.
+                        The club administrator has not yet completed setting up the club account for member registration. For urgent enquiries, please contact: {data?.support_email}.
                         </Label>
                     </div>
                 </div>
