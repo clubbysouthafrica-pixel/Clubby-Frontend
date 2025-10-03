@@ -11,6 +11,7 @@ export interface Club {
     club_account_id: string,
     club_type: string,
     currency: string
+    onboarded: boolean
 }
 
 interface ClubProviderProps {

@@ -6,8 +6,9 @@ export default function OnboardClubPage() {
           <div className="text-left">
           <div className="text-xl font-bold">Onboarding form</div>
           <div>
-              This ensures that the club is ready to start taking members
+              This ensures that the club is ready to start taking members.
           </div>
+          <div>Please make sure to update Banking details, Location and email.</div>
           </div>
           <div className="flex w-full max-w-lg flex-col gap-6">
             <EditClubDetails />

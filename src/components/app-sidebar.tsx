@@ -19,8 +19,10 @@ import { useFetchAdminClubs } from "@/queries/admin/clubs"
 import { ClubContext, ClubContextType } from "@/context/ClubContext"
 import { AuthContext, AuthContextType } from "@/context/AuthContext";
 import { useGetProfileQuery } from "@/queries/profile"
+import { useNavigate } from "react-router-dom"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const navigate = useNavigate()
   const { club } = React.useContext(ClubContext) as ClubContextType
   const { data: clubData, isLoading: loadingClubs } = useFetchAdminClubs()
 
@@ -34,6 +36,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   })
 
   React.useEffect(() => {
+    if (!club?.onboarded) {
+      navigate("/onboard")
+    }
+
     if (profile) {
       setUserData({
         name: `${profile?.first_name ?? ""} ${profile?.surfname ?? ""}`,

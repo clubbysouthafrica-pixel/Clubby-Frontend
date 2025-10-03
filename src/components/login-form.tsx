@@ -43,7 +43,6 @@ export function LoginForm({
       const isOnboarded = await login(isAdminLogin, email, password)
       if (isAdminLogin) {
         localStorage.setItem("isAdmin","true")
-        navigate(isOnboarded ? "/" : "/onboard")
         return
       }
 
