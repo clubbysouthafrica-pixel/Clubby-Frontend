@@ -34,7 +34,7 @@ export default function MarketRoutes() {
 
             <Route path="/clubs" element={<BrowseClubsPage />}></Route>
             <Route path="/clubs/:clubId" element={<ViewClubPage />}></Route>
-            <Route path="/clubs/:clubId/register" element={<RegisterClubPage />}></Route>
+            <Route path="/clubs/:clubId/register" element={<ProtectedRoute><RegisterClubPage /></ProtectedRoute>}></Route>
 
             <Route path="/myclubs" element={<ProtectedRoute><MyClubsPage /></ProtectedRoute>}></Route>
             <Route path="/myclubs/:clubId" element={<ProtectedRoute><ViewClubPage /></ProtectedRoute>}></Route>
