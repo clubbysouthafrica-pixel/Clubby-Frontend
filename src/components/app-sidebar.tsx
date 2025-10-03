@@ -36,7 +36,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   })
 
   React.useEffect(() => {
-    if (!club?.onboarded) {
+    if (club != null && !club.onboarded) {
       navigate("/onboard")
     }
 
