@@ -2,7 +2,6 @@ import { useContext } from "react";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { useFetchClub } from "@/queries/admin/clubs";
 import { Badge } from "@/components/ui/badge";
-import { Loader2 } from "lucide-react";
 import ImageUploadDialog from "@/components/image-upload-dialog";
 import { clubCoverImagePresignedUrl } from "@/services/image";
 import { clubProfileImagePresignedUrl } from "@/services/admin/image";

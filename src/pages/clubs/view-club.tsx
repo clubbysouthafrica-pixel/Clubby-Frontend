@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.tsx"
 import { Button } from "@/components/ui/button.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.tsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.tsx";
-import { Calendar, Link as Loader2, Mail, MapPin } from "lucide-react";
+import { Calendar, Loader2, Mail, MapPin } from "lucide-react";
 import { useFetchClub, useFetchClubBankDetails } from "@/queries/clubs";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -100,16 +100,18 @@ export default function ViewClubPage() {
                 <div className="container mx-auto px-4">
                     <div className="relative">
                         <Avatar className="w-full h-28 md:h-28 rounded-lg bg-muted/30 overflow-hidden border-background">
-                            <AvatarImage className="w-full h-full object-cover object-center" src={coverImage ?? "https://images.unsplash.com/photo-1707343843598-39755549ac9a"} />
-                            <AvatarFallback className="bg-white">
-                                <img className="w-full h-full object-center bg-black" src={"https://images.unsplash.com/photo-1707343843598-39755549ac9a"} />
+                            <AvatarImage className="w-full h-full object-cover object-center" src={coverImage} />
+                            <AvatarFallback className="rounded font-bold">
+                            {data?.club_name || "cover"}
                             </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col md:flex-row items-center md:items-end -mt-16 md:space-x-6 px-4">
                             <Avatar className="w-32 h-32 border-4 border-background">
-                                <AvatarImage className="object-cover object-center" src={profileImage ?? "https://github.com/shadcn.png"} />
-                                <AvatarFallback>
-                                    <img className="w-45 h-30 object-center bg-black" src={"https://images.unsplash.com/photo-1707343843598-39755549ac9a"} />
+                                <AvatarImage className="object-cover object-center" src={profileImage} />
+                                <AvatarFallback className="font-bold">
+                                {
+                                    data?.club_name?.split(" ").map((i: string) => i[0])
+                                }
                                 </AvatarFallback>
                             </Avatar>
                             <div className="mt-4 md:mt-0 text-center md:text-left flex-1">

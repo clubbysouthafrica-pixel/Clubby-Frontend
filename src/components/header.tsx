@@ -180,14 +180,14 @@ export default function Header() {
                         <div className="space-x-2 flex">
                             <Link to="/login" className="cursor-pointer">
                                 <Button className="cursor-pointer">
-                                    Member Sign In
+                                    Sign In
                                 </Button>
                             </Link>
-                            <Link to="/admin/login" className="cursor-pointer">
+                            {/* <Link to="/admin/login" className="cursor-pointer">
                                 <Button className="cursor-pointer">
                                     Admin Sign In
                                 </Button>
-                            </Link>
+                            </Link> */}
                             <button className="md:hidden" onClick={() => setMenuOpen(!menuOpen)}>
                                 {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                             </button>
