@@ -8,6 +8,7 @@ import { fetchImagePresignedUrl } from "@/services/admin/image"
 import { EditIcon } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { compressImage } from "@/utils/imageCompressor"
+import { Skeleton } from "./ui/skeleton"
 
 interface ImageProps {
   title: string
@@ -89,7 +90,6 @@ export default function ImageUploadDialog({ title, description, presignedUrlApi,
         console.error("Upload failed");
       }
     } catch (err) {
-      console.error("Upload error:", err);
     } finally {
       setUploading(false);
     }
@@ -98,17 +98,15 @@ export default function ImageUploadDialog({ title, description, presignedUrlApi,
   return (
     <Dialog open={openDialog} onOpenChange={setOpenDialog}>
       <DialogTrigger asChild>
-        <Avatar className="w-full rounded-lg overflow-hidden max-h-36 h-full cursor-pointer hover:shadow-xl relative">
-          {
-            loading ? <img className="w-full h-full object-center bg-black" src={loadingIcon} />
-              :
-              <AvatarImage className={cn("w-full object-center object-cover", className)} src={imageUrl || "https://images.unsplash.com/photo-1707343843598-39755549ac9a"} />
-          }
-          <AvatarFallback className="w-full object-center object-cover">
-            <img className="w-full h-full object-center bg-black" src={"https://images.unsplash.com/photo-1707343843598-39755549ac9a"} />
-          </AvatarFallback>
-          <EditIcon className="absolute top-1/2 left-1/2 bg-white rounded-full p-1 w-6 h-6 -translate-y-1/2 -translate-x-1/2 opacity-80 shadow-md" />
-        </Avatar>
+        {
+          loading ? 
+          <Skeleton className="h-full min-h-36 w-full rounded-full" /> :
+          <Avatar className="w-full rounded-lg overflow-hidden max-h-36 h-full cursor-pointer hover:shadow-xl relative">
+            <AvatarImage className={cn("w-full object-center object-cover", className)} src={imageUrl} />
+            <AvatarFallback className="w-full object-center object-cover min-h-36 rounded-lg"></AvatarFallback>
+            <EditIcon className="absolute top-1/2 left-1/2 bg-white rounded-full p-1 w-6 h-6 -translate-y-1/2 -translate-x-1/2 opacity-80 shadow-md" />
+          </Avatar>
+        }
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>

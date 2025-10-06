@@ -17,12 +17,6 @@ export default function ManageClubDashboard() {
     <div className="p-6 space-y-6 min-h-screen">
       <h1 className="text-base font-bold">Manage Club Page</h1>
       {
-        clubLoading &&
-        <div className="flex justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-      }
-      {
         !clubLoading && club?.club_account_id &&
         <div className="w-full">
             <ImageUploadDialog title="Cover Image" className="h-30" description="Upload a new cover image." presignedUrlApi={clubCoverImagePresignedUrl(club.club_account_id)}/>

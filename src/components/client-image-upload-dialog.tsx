@@ -51,17 +51,7 @@ export default function MemberImageUploadDialog({ title, description, presignedU
 
     try {
         setUploading(true)
-  
-        // 🔁 1. Call your backend to get a pre-signed URL
-        // const res = await fetchImagePresignedUrl(presignedUrlApi) as { uploadUrl: string }
-        // const res = await fetch(presignedUrl, {
-        //   method: "POST",
-        //   headers: { "Content-Type": "application/json" },
-        //   body: JSON.stringify({ fileName: selectedFile.name, fileType: selectedFile.type }),
-        // })
-  
-        // const { url, key } = await res.json()
-  
+        
         // 🔁 2. Upload the file to S3 using PUT
         const url = presignedUrl
         const uploadRes = await fetch(url, {
