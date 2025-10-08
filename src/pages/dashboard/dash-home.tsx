@@ -5,11 +5,12 @@ import { useGeneralReportingQuery } from "@/queries/admin/useReporting";
 import { useContext } from "react";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { HomeSectionCards } from "@/components/admin/club/home/section-cards";
+import { Loader2 } from "lucide-react";
 
 export default function HomeDashboardPage() {
     const { club } = useContext(ClubContext) as ClubContextType
-    const { data: report } = useGeneralReportingQuery(club?.club_account_id as string);
-    
+    const { data: report, isLoading: reportLoading } = useGeneralReportingQuery(club?.club_account_id as string);
+
     const navigate = useNavigate()
     const manageRoutes = [
         {
@@ -32,29 +33,40 @@ export default function HomeDashboardPage() {
     return (
         <div className="p-5 min-h-screen">
             <h1 className="text-base font-bold mb-2">Manage</h1>
-            <HomeSectionCards report={report} currency={club?.currency}/>
-            <div className="rounded-md border overflow-hidden md:my-3">
-                <Table>
-                    <TableHeader className="bg-muted">
-                        <TableRow>
-                            <TableHead>Manage</TableHead>
-                            <TableHead>Description</TableHead>
-                            <TableHead>Action</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {
-                            manageRoutes.map(r => (
-                                <TableRow onClick={() => navigate(r.route)} key={r.name}>
-                                    <TableCell className="font-bold">{r.name}</TableCell>
-                                    <TableCell>{r.description}</TableCell>
-                                    <TableCell><Button>View</Button></TableCell>
+            {
+                reportLoading &&
+                <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+            }
+            {
+                !reportLoading &&
+                <div>
+                    <HomeSectionCards report={report} currency={club?.currency} />
+                    <div className="rounded-md border overflow-hidden md:my-3">
+                        <Table>
+                            <TableHeader className="bg-muted">
+                                <TableRow>
+                                    <TableHead>Manage</TableHead>
+                                    <TableHead>Description</TableHead>
+                                    <TableHead>Action</TableHead>
                                 </TableRow>
-                            ))
-                        }
-                    </TableBody>
-                </Table>
-            </div>
+                            </TableHeader>
+                            <TableBody>
+                                {
+                                    manageRoutes.map(r => (
+                                        <TableRow onClick={() => navigate(r.route)} key={r.name}>
+                                            <TableCell className="font-bold">{r.name}</TableCell>
+                                            <TableCell>{r.description}</TableCell>
+                                            <TableCell><Button>View</Button></TableCell>
+                                        </TableRow>
+                                    ))
+                                }
+                            </TableBody>
+                        </Table>
+                    </div>
+                </div>
+            }
         </div>
     );
 }

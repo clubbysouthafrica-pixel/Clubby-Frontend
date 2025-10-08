@@ -12,12 +12,13 @@ import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table"
 interface ImageProps {
   clubId: string
   dereigsterMembers: { user_id: string, name: string }[]
+  selectedTab: string
   setlistActionItems: React.Dispatch<React.SetStateAction<string[]>>
   setDeregisterMembers: React.Dispatch<React.SetStateAction<{ user_id: string, name: string }[]>>
   setAllMembersSelected: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-export default function DeregisterMembersDialog({ dereigsterMembers, clubId, setlistActionItems, setDeregisterMembers, setAllMembersSelected }: ImageProps) {
+export default function DeregisterMembersDialog({ selectedTab, dereigsterMembers, clubId, setlistActionItems, setDeregisterMembers, setAllMembersSelected }: ImageProps) {
   const [openDialog, setOpenDialog] = useState<boolean>(false);
   const [confirmed, setConfirmed] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false)
@@ -59,7 +60,7 @@ export default function DeregisterMembersDialog({ dereigsterMembers, clubId, set
       <DialogTrigger asChild>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant={"outline"} disabled={!dereigsterMembers.length} onClick={() => setOpenDialog(true)}>
+            <Button variant={"outline"} disabled={!dereigsterMembers.length || selectedTab !== "registered-members"} onClick={() => setOpenDialog(true)}>
               <UserX />
             </Button>
           </TooltipTrigger>
