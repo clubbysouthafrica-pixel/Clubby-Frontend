@@ -36,26 +36,26 @@ export function ClubCard({
 
     return (
         <div className={cn("space-y-3", className)} {...props}>
-            <ContextMenu>
-                <ContextMenuTrigger>
+            {/* <ContextMenu>
+                <ContextMenuTrigger> */}
                     <div className="overflow-hidden rounded-md transition-all hover:scale-105">
                         <Avatar className={cn(
-                            "h-auto w-full object-cover bg-muted",
+                            "h-auto w-full object-cover bg-muted rounded-lg",
                             aspectRatio === "portrait" ? "aspect-[3/4]" : "aspect-square"
                         )}>
                             <AvatarImage className="w-full h-full object-cover object-center max-h-52"
-                                src={club?.club_cover_url ?? ""}
+                                src={club?.club_cover_url}
                                 alt={club.club_name}
                             />
-                            <AvatarFallback>
-                                <img className="w-full h-full object-center bg-black" src={"https://images.unsplash.com/photo-1707343843598-39755549ac9a"} />
+                            <AvatarFallback className="h-36 p-2">
+                                {club.club_name?.split(" ").map((i: string) => i[0])}
                             </AvatarFallback>
                         </Avatar>
                     </div>
-                </ContextMenuTrigger>
+                {/* </ContextMenuTrigger>
                 <ContextMenuContent className="w-40">
                 </ContextMenuContent>
-            </ContextMenu>
+            </ContextMenu> */}
             <div className="flex mt-2 space-x-2">
                 <div className="text-sm flex-1">
                     <h3 className={cn("font-medium leading-none text-base", titleClass)}>{club.club_name}</h3>
