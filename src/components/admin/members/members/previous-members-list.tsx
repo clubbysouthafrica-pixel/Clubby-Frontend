@@ -5,6 +5,7 @@ import { formatAmount } from "@/data/currencies"
 import { Label } from "@/components/ui/label";
 import { useEffect } from "react";
 import { Club } from "@/context/ClubContext"
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface ImageProps {
     club: Club | null
@@ -12,10 +13,16 @@ interface ImageProps {
     sortableId: any
     selectedTab: string
     clubMembers: any
+    listActionItems: string[]
+    allMembersSelected: boolean
     memberNameFilter: string
     dynamicFilters: Record<string, string>
+    setAllMembersSelected: React.Dispatch<React.SetStateAction<boolean>>
+    setlistActionItems: React.Dispatch<React.SetStateAction<string[]>>
     setSelectedMember: React.Dispatch<React.SetStateAction<object>>
     setDeregisteredMembersLength: React.Dispatch<React.SetStateAction<number>>
+    setAllListActionItems: (members: ClubMember[]) => void
+    setDeregisterMembers: React.Dispatch<React.SetStateAction<{ user_id: string, name: string }[]>>
 }
 
 export default function PreviousMembersList({
@@ -25,9 +32,15 @@ export default function PreviousMembersList({
     selectedTab,
     clubMembers,
     memberNameFilter,
+    allMembersSelected,
     dynamicFilters,
+    listActionItems,
     setSelectedMember,
+    setAllListActionItems,
     setDeregisteredMembersLength,
+    setlistActionItems,
+    setDeregisterMembers,
+    setAllMembersSelected,
 }: ImageProps) {
 
     const filteredDeregisteredMembers =
@@ -76,7 +89,16 @@ export default function PreviousMembersList({
                             <TableHead className="text-center w-1/6">Registration Submitted</TableHead>
                             <TableHead className="text-center w-1/6">Reference Numbers</TableHead>
                             <TableHead className="text-center w-1/6">Outstanding Amount</TableHead>
-                            <TableHead className="text-center w-1/6">Action</TableHead>
+                            <TableHead className="text-center w-1/5">
+                                <div className="flex items-center justify-center gap-2">
+                                    Action
+                                    <Checkbox
+                                        className="bg-white"
+                                        onCheckedChange={() => setAllListActionItems(filteredDeregisteredMembers)}
+                                        checked={allMembersSelected}
+                                    />
+                                </div>
+                            </TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -137,11 +159,28 @@ export default function PreviousMembersList({
                                     {member.resubmission_required ? "N/A" : formatAmount(member.outstanding_amount, club?.currency)}
                                 </TableCell>
                                 <TableCell className="text-center w-1/6">
-                                    <div className="flex justify-center items-center">
-                                        <Label className="text-red-500 font-bold">
-                                            Member resubmission required
-                                        </Label>
-                                    </div>
+                                    <Checkbox
+                                        checked={listActionItems.includes(member.member_email as string)}
+                                        onCheckedChange={(checked: boolean) => {
+                                            setlistActionItems([])
+                                            setDeregisterMembers([])
+                                            setAllMembersSelected(false)
+                                            setlistActionItems(prev =>
+                                                checked
+                                                    ? prev.includes(member.member_email as string)
+                                                        ? prev
+                                                        : [...prev, member.member_email as string]
+                                                    : prev.filter(id => id !== member.member_email as string)
+                                            )
+                                            setDeregisterMembers(prev =>
+                                                checked
+                                                    ? prev.some(m => m.user_id === member.user_id)
+                                                        ? prev
+                                                        : [...prev, { user_id: member.user_id, name: `${member.member_first_name} ${member.member_surname}` }]
+                                                    : prev.filter(m => m.user_id !== member.user_id)
+                                            )
+                                        }}
+                                    />
                                 </TableCell>
                             </TableRow>
                         )) : (

@@ -11,11 +11,11 @@ import {useNavigate} from "react-router-dom";
 
 interface ImageProps {
     clubId: string
+    selectedTab: string
 }
 
-export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
+export default function DeregisterSeasonDialog({ clubId, selectedTab }: ImageProps) {
     const { logout } = useContext(AuthContext) as AuthContextType;
-
     const navigate = useNavigate()
 
     const [openDialog, setOpenDialog] = useState<boolean>(false);
@@ -46,7 +46,7 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
             <DialogTrigger asChild>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant={"outline"} onClick={() => setOpenDialog(true)}>
+                        <Button variant={"outline"} onClick={() => setOpenDialog(true)} disabled={selectedTab !== "registered-members"}>
                             <RotateCcw />
                         </Button>
                     </TooltipTrigger>

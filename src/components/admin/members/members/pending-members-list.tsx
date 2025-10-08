@@ -10,6 +10,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Club } from "@/context/ClubContext"
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface ImageProps {
     club: Club | null
@@ -24,13 +25,19 @@ interface ImageProps {
     clubMembers: any
     memberNameFilter: string
     dynamicFilters: Record<string, string>
+    allMembersSelected: boolean
+    listActionItems: string[]
     reset: () => void
     handleFormattedInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void
     registerUser: (member: ClubMember) => void
     setSelectedMember: React.Dispatch<React.SetStateAction<object>>
     setOpenDialogUserId: React.Dispatch<React.SetStateAction<string | null>>
+    setlistActionItems: React.Dispatch<React.SetStateAction<string[]>>
     setMemberRegisterAmount: React.Dispatch<React.SetStateAction<number>>
+    setDeregisterMembers: React.Dispatch<React.SetStateAction<{ user_id: string, name: string }[]>>
     setUnregisteredMembersLength: React.Dispatch<React.SetStateAction<number>>
+    setAllListActionItems: React.Dispatch<React.SetStateAction<string[]>>
+    setAllMembersSelected: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 export default function PendingMembersList({
@@ -46,13 +53,19 @@ export default function PendingMembersList({
     clubMembers,
     memberNameFilter,
     dynamicFilters,
+    allMembersSelected,
+    listActionItems,
     reset,
     handleFormattedInputChange,
     registerUser,
     setSelectedMember,
+    setlistActionItems,
     setOpenDialogUserId,
+    setDeregisterMembers,
+    setAllMembersSelected,
     setMemberRegisterAmount,
     setUnregisteredMembersLength,
+    setAllListActionItems,
 }: ImageProps) {
 
     const filteredUnregisteredMembers =
@@ -101,7 +114,16 @@ export default function PendingMembersList({
                             <TableHead className="text-center w-1/6">Registration Submitted</TableHead>
                             <TableHead className="text-center w-1/6">Reference Numbers</TableHead>
                             <TableHead className="text-center w-1/6">Outstanding Amount</TableHead>
-                            <TableHead className="text-center w-1/6">Action</TableHead>
+                            <TableHead className="text-center w-1/5">
+                                <div className="flex items-center justify-center gap-2">
+                                    Action
+                                    <Checkbox
+                                        className="bg-white"
+                                        onCheckedChange={() => setAllListActionItems(filteredUnregisteredMembers)}
+                                        checked={allMembersSelected}
+                                    />
+                                </div>
+                            </TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -162,75 +184,91 @@ export default function PendingMembersList({
                                     {member.resubmission_required ? "N/A" : formatAmount(member.outstanding_amount, club?.currency)}
                                 </TableCell>
                                 <TableCell className="text-center w-1/6">
-                                    {
-                                        member.resubmission_required ?
+                                    <div>
+                                        <Dialog
+                                            open={openDialogUserId === member.user_id}
+                                            onOpenChange={(open) => { reset(); setOpenDialogUserId(open ? member.user_id : null); setMemberRegisterAmount(0); }}>
                                             <div className="flex justify-center items-center">
-                                                <Label className="text-red-500 font-bold">
-                                                    Member resubmission required
-                                                </Label>
-                                            </div> :
-                                            <Dialog
-                                                open={openDialogUserId === member.user_id}
-                                                onOpenChange={(open) => { reset(); setOpenDialogUserId(open ? member.user_id : null); setMemberRegisterAmount(0); }}>
-                                                <div className="flex justify-center items-center">
-                                                    <DialogTrigger asChild>
-                                                        {
-                                                            member.resubmission_required ? <Label className="text-red-500 font-bold">Member resubmission required</Label> :
-                                                                <Button
-                                                                    variant="outline"
-                                                                    onClick={() => { setOpenDialogUserId(member.user_id) }}
-                                                                >
-                                                                    Register
-                                                                </Button>
-                                                        }
-                                                    </DialogTrigger>
-                                                </div>
-                                                <DialogContent>
-                                                    <DialogHeader>
-                                                        <DialogTitle>Register Member: <strong>{member.member_first_name + " " + member.member_surname}</strong></DialogTitle>
-                                                        <DialogDescription>
-                                                            Confirm payment amount and register member
-                                                        </DialogDescription>
+                                                <DialogTrigger asChild>
+                                                    {
+                                                        member.resubmission_required ? <Label className="text-red-500 font-bold">Member resubmission required</Label> :
+                                                            <Button
+                                                                variant="outline"
+                                                                onClick={() => { setOpenDialogUserId(member.user_id) }}
+                                                            >
+                                                                Register
+                                                            </Button>
+                                                    }
+                                                </DialogTrigger>
+                                            </div>
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle>Register Member: <strong>{member.member_first_name + " " + member.member_surname}</strong></DialogTitle>
+                                                    <DialogDescription>
+                                                        Confirm payment amount and register member
+                                                    </DialogDescription>
 
-                                                        <Label className="my-3 text-l">Outstanding amount: {formatAmount(member.outstanding_amount, club?.currency)}</Label>
+                                                    <Label className="my-3 text-l">Outstanding amount: {formatAmount(member.outstanding_amount, club?.currency)}</Label>
 
-                                                        <div className="grid gap-3">
-                                                            <Label htmlFor="pay">Payment Amount</Label>
-                                                            <Input
-                                                                id="pay"
-                                                                type="text"
-                                                                placeholder="Enter amount"
-                                                                value={displayAmount}
-                                                                onChange={handleFormattedInputChange}
-                                                            />
-                                                        </div>
-                                                        {
-                                                            isError &&
-                                                            <Alert variant="destructive">
-                                                                <AlertCircle className="h-4 w-4" />
-                                                                <AlertDescription className="text-xs">
-                                                                    Something went wrong registering user
-                                                                </AlertDescription>
-                                                            </Alert>
-                                                        }
-                                                    </DialogHeader>
-                                                    <DialogFooter>
-                                                        <DialogClose asChild>
-                                                            <Button variant="outline">Cancel</Button>
-                                                        </DialogClose>
-                                                        <Button onClick={() => registerUser(member)} disabled={isPending}>{isPending ? "Registering..." : "Confirm"}</Button>
-                                                    </DialogFooter>
-                                                    {invalidRegistrationAmount && (
-                                                        <Alert className="border border-red-600 text-red-600">
-                                                            <AlertCircle className="h-4 w-4 text-red-600" />
-                                                            <AlertDescription className="text-xs text-red-600">
-                                                                The amount entered cannot be less than {formatAmount(1, club?.currency)} and more than the outstanding amount.
+                                                    <div className="grid gap-3">
+                                                        <Label htmlFor="pay">Payment Amount</Label>
+                                                        <Input
+                                                            id="pay"
+                                                            type="text"
+                                                            placeholder="Enter amount"
+                                                            value={displayAmount}
+                                                            onChange={handleFormattedInputChange}
+                                                        />
+                                                    </div>
+                                                    {
+                                                        isError &&
+                                                        <Alert variant="destructive">
+                                                            <AlertCircle className="h-4 w-4" />
+                                                            <AlertDescription className="text-xs">
+                                                                Something went wrong registering user
                                                             </AlertDescription>
                                                         </Alert>
-                                                    )}
-                                                </DialogContent>
-                                            </Dialog>
-                                    }
+                                                    }
+                                                </DialogHeader>
+                                                <DialogFooter>
+                                                    <DialogClose asChild>
+                                                        <Button variant="outline">Cancel</Button>
+                                                    </DialogClose>
+                                                    <Button onClick={() => registerUser(member)} disabled={isPending}>{isPending ? "Registering..." : "Confirm"}</Button>
+                                                </DialogFooter>
+                                                {invalidRegistrationAmount && (
+                                                    <Alert className="border border-red-600 text-red-600">
+                                                        <AlertCircle className="h-4 w-4 text-red-600" />
+                                                        <AlertDescription className="text-xs text-red-600">
+                                                            The amount entered cannot be less than {formatAmount(1, club?.currency)} and more than the outstanding amount.
+                                                        </AlertDescription>
+                                                    </Alert>
+                                                )}
+                                            </DialogContent>
+                                        </Dialog>
+                                        <Checkbox
+                                            checked={listActionItems.includes(member.member_email as string)}
+                                            onCheckedChange={(checked: boolean) => {
+                                                setlistActionItems([])
+                                                setDeregisterMembers([])
+                                                setAllMembersSelected(false)
+                                                setlistActionItems(prev =>
+                                                    checked
+                                                        ? prev.includes(member.member_email as string)
+                                                            ? prev
+                                                            : [...prev, member.member_email as string]
+                                                        : prev.filter(id => id !== member.member_email as string)
+                                                )
+                                                setDeregisterMembers(prev =>
+                                                    checked
+                                                        ? prev.some(m => m.user_id === member.user_id)
+                                                            ? prev
+                                                            : [...prev, { user_id: member.user_id, name: `${member.member_first_name} ${member.member_surname}` }]
+                                                        : prev.filter(m => m.user_id !== member.user_id)
+                                                )
+                                            }}
+                                        />
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         )) : (

@@ -146,6 +146,10 @@ export default function ListMembersPage() {
         setDynamicFilters({});
     }
 
+    console.log('LIST ACTION ITEMS: ', listActionItems)
+    console.log('DEREGISTER MEMBERS: ', dereigsterMembers)
+    console.log('ALL MEMBERS SELECTED: ', allMembersSelected)
+
     return (
         <div className="p-5 min-h-screen">
             <h1 className="text-base font-bold">Club Members</h1>
@@ -159,6 +163,9 @@ export default function ListMembersPage() {
                     onValueChange={(value: string) => {
                         setSelectedTab(value);
                         setHashUserId(null);
+                        setlistActionItems([])
+                        setDeregisterMembers([])
+                        setAllMembersSelected(false)
                         setSelectedMember({});
                         window.history.pushState("", document.title, window.location.pathname + window.location.search);
 
@@ -223,6 +230,7 @@ export default function ListMembersPage() {
                                     setlistActionItems={setlistActionItems}
                                     setDeregisterMembers={setDeregisterMembers}
                                     setAllMembersSelected={setAllMembersSelected}
+                                    selectedTab={selectedTab}
                                 />
                             )}
                             {club?.club_account_id && (
@@ -236,7 +244,10 @@ export default function ListMembersPage() {
                             )}
                             {
                                 club?.club_account_id && (
-                                    <DeregisterSeasonDialog clubId={club.club_account_id} />
+                                    <DeregisterSeasonDialog
+                                        clubId={club.club_account_id}
+                                        selectedTab={selectedTab}
+                                    />
                                 )
                             }
                         </div>
@@ -282,12 +293,14 @@ export default function ListMembersPage() {
                             clubMembers={clubMembers}
                             memberNameFilter={memberNameFilter}
                             dynamicFilters={dynamicFilters}
+                            allMembersSelected={allMembersSelected}
                             handleFormattedInputChange={handleFormattedInputChange}
                             registerUser={registerUser}
                             setSelectedMember={setSelectedMember}
                             setOpenDialogUserId={setOpenDialogUserId}
                             setMemberRegisterAmount={setMemberRegisterAmount}
                             setUnregisteredMembersLength={setUnregisteredMembersLength}
+                            setAllListActionItems={setAllListActionItems}
                         />
                     </TabsContent>
 
@@ -300,9 +313,15 @@ export default function ListMembersPage() {
                             sortableId={sortableId}
                             selectedTab={selectedTab}
                             clubMembers={clubMembers}
+                            allMembersSelected={allMembersSelected}
                             memberNameFilter={memberNameFilter}
                             dynamicFilters={dynamicFilters}
+                            listActionItems={listActionItems}
+                            setAllListActionItems={setAllListActionItems}
                             setSelectedMember={setSelectedMember}
+                            setlistActionItems={setlistActionItems}
+                            setDeregisterMembers={setDeregisterMembers}
+                            setAllMembersSelected={setAllMembersSelected}
                             setDeregisteredMembersLength={setDeregisteredMembersLength}
                         />
                     </TabsContent>
