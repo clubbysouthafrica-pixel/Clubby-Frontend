@@ -14,7 +14,6 @@ export const fetchRegistrationForm = (clubAccountId: string): Promise<any> => {
         .then(res => res.data);
 } 
 export const deregisterAllMembersQuery = (request: DeregisterSeasonRequest) => {
-    console.log('here: ', request)
     return api.post("/deregistration/season", {club_account_id: request.clubId})
         .then(res => res.data);
 }

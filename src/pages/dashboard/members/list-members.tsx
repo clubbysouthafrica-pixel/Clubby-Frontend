@@ -146,10 +146,6 @@ export default function ListMembersPage() {
         setDynamicFilters({});
     }
 
-    console.log('LIST ACTION ITEMS: ', listActionItems)
-    console.log('DEREGISTER MEMBERS: ', dereigsterMembers)
-    console.log('ALL MEMBERS SELECTED: ', allMembersSelected)
-
     return (
         <div className="p-5 min-h-screen">
             <h1 className="text-base font-bold">Club Members</h1>
