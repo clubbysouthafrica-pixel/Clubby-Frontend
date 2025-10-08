@@ -1,9 +1,4 @@
 import { cn } from "@/lib/utils";
-import {
-    ContextMenu,
-    ContextMenuContent,
-    ContextMenuTrigger,
-} from "@/components/ui/context-menu.tsx";
 import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 import { Club } from "@/interfaces/club";
 import { Badge } from "./ui/badge";
