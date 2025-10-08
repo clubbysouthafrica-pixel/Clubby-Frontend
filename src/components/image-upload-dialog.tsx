@@ -99,13 +99,13 @@ export default function ImageUploadDialog({ title, description, presignedUrlApi,
     <Dialog open={openDialog} onOpenChange={setOpenDialog}>
       <DialogTrigger asChild>
         {
-          loading ? 
-          <Skeleton className="h-full min-h-36 w-full rounded-full" /> :
-          <Avatar className="w-full rounded-lg overflow-hidden max-h-36 h-full cursor-pointer hover:shadow-xl relative">
-            <AvatarImage className={cn("w-full object-center object-cover", className)} src={imageUrl} />
-            <AvatarFallback className="w-full object-center object-cover min-h-36 rounded-lg"></AvatarFallback>
-            <EditIcon className="absolute top-1/2 left-1/2 bg-white rounded-full p-1 w-6 h-6 -translate-y-1/2 -translate-x-1/2 opacity-80 shadow-md" />
-          </Avatar>
+          loading ?
+            <Skeleton className="h-full min-h-36 w-full rounded-full" /> :
+            <Avatar className="w-full rounded-lg overflow-hidden max-h-36 h-full cursor-pointer hover:shadow-xl relative">
+              <AvatarImage className={cn("w-full object-center object-cover", className)} src={imageUrl} />
+              <AvatarFallback className="w-full object-center object-cover min-h-36 rounded-lg"></AvatarFallback>
+              <EditIcon className="absolute top-1/2 left-1/2 bg-white rounded-full p-1 w-6 h-6 -translate-y-1/2 -translate-x-1/2 opacity-80 shadow-md" />
+            </Avatar>
         }
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
@@ -119,8 +119,13 @@ export default function ImageUploadDialog({ title, description, presignedUrlApi,
           <div className="grid gap-3">
             <Label htmlFor="image">Profile Image</Label>
             <Input type="file" accept="image/*" onChange={handleFileChange} disabled={uploading} />
-            {imagePreview && <img src={loadingIcon} alt="Preview" className="rounded-lg mt-2 h-32 w-full object-cover" />}
-            {uploading && <p className="text-sm text-gray-500">Uploading...</p>}
+            {imagePreview && !uploading &&
+              <Avatar className="w-full rounded-lg overflow-hidden max-h-36 h-full cursor-pointer hover:shadow-xl relative">
+                <AvatarImage className={cn("w-full object-center object-cover", className)} src={imagePreview} />
+                <AvatarFallback className="w-full object-center object-cover min-h-36 rounded-lg"></AvatarFallback>
+                <EditIcon className="absolute top-1/2 left-1/2 bg-white rounded-full p-1 w-6 h-6 -translate-y-1/2 -translate-x-1/2 opacity-80 shadow-md" />
+              </Avatar>}
+            {uploading && <img src={loadingIcon} alt="Preview" className="rounded-lg mt-2 h-32 w-full object-cover" />}
           </div>
         </div>
         <DialogFooter>
