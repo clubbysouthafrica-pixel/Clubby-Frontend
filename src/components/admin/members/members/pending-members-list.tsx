@@ -36,7 +36,7 @@ interface ImageProps {
     setMemberRegisterAmount: React.Dispatch<React.SetStateAction<number>>
     setDeregisterMembers: React.Dispatch<React.SetStateAction<{ user_id: string, name: string }[]>>
     setUnregisteredMembersLength: React.Dispatch<React.SetStateAction<number>>
-    setAllListActionItems: React.Dispatch<React.SetStateAction<string[]>>
+    setAllListActionItems: (members: ClubMember[]) => void
     setAllMembersSelected: React.Dispatch<React.SetStateAction<boolean>>
 }
 

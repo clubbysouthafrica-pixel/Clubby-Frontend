@@ -287,16 +287,20 @@ export default function ListMembersPage() {
                             reset={reset}
                             selectedTab={selectedTab}
                             clubMembers={clubMembers}
+                            listActionItems={listActionItems}
                             memberNameFilter={memberNameFilter}
                             dynamicFilters={dynamicFilters}
                             allMembersSelected={allMembersSelected}
                             handleFormattedInputChange={handleFormattedInputChange}
                             registerUser={registerUser}
+                            setlistActionItems={setlistActionItems}
                             setSelectedMember={setSelectedMember}
                             setOpenDialogUserId={setOpenDialogUserId}
+                            setDeregisterMembers={setDeregisterMembers}
                             setMemberRegisterAmount={setMemberRegisterAmount}
                             setUnregisteredMembersLength={setUnregisteredMembersLength}
                             setAllListActionItems={setAllListActionItems}
+                            setAllMembersSelected={setAllMembersSelected}
                         />
                     </TabsContent>
 
