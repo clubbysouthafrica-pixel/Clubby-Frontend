@@ -55,15 +55,16 @@ export default function EditClubDetails() {
         onError: () => toast.error("Something went wrong")
     })
 
+    if (isLoading) {
+        return (
+            <div className="p-5 min-h-screen">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        )
+    }
     return (
         <div className="space-y-6 min-h-screen">
             <div className="flex w-full max-w-sm flex-col gap-6">
-                {
-                    isLoading &&
-                    <div className="flex justify-center py-8">
-                        <Loader2 className="h-8 w-8 animate-spin" />
-                    </div>
-                }
                 {
                     !isLoading &&
                     <Tabs defaultValue="account">

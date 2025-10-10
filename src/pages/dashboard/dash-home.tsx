@@ -30,15 +30,16 @@ export default function HomeDashboardPage() {
         },
     ]
 
+    if (reportLoading) {
+        return (
+            <div className="p-5 min-h-screen">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        )
+    }
     return (
         <div className="p-5 min-h-screen">
             <h1 className="text-base font-bold mb-2">Manage</h1>
-            {
-                reportLoading &&
-                <div className="flex justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                </div>
-            }
             {
                 !reportLoading &&
                 <div>

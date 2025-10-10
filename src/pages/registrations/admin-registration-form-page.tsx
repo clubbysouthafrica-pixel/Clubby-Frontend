@@ -81,6 +81,14 @@ export default function AdminRegistrationFormPage() {
             }) : i))
     }
 
+    if (isPending || isLoading) {
+        return (
+            <div className="p-5 min-h-screen">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        )
+    }
+
     return (
         <Pager>
             <div className="container max-w-4xl mx-auto px-4 py-16">
@@ -94,11 +102,10 @@ export default function AdminRegistrationFormPage() {
                     <div className="flex gap-4">
                         <Button
                             onClick={() => setPreviewRegForm((prev) => !prev)}
-                            disabled={isPending}
                         >
-                            {isPending ? "Loading..." : previewRegForm ? "Edit Form" : "Preview form"}
+                            {previewRegForm ? "Edit Form" : "Preview form"}
                         </Button>
-                        <Button onClick={saveRegistrationForm} disabled={isPending}>{isPending ? "Loading..." : "Save Form"}</Button>
+                        <Button onClick={saveRegistrationForm}>{"Save Form"}</Button>
                     </div>
                 </div>
 

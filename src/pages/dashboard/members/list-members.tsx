@@ -17,6 +17,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import RegisteredMembersList from "@/components/admin/members/members/registered-members-list";
 import PendingMembersList from "@/components/admin/members/members/pending-members-list";
 import PreviousMembersList from "@/components/admin/members/members/previous-members-list";
+import { 
+    filteredRegisteredMembers, 
+    previousRegisteredMembers, 
+    pendingRegisteredMembers 
+} from "@/helpers/admin/members/filter-members-list";
+import { Loader2 } from "lucide-react";
 
 export default function ListMembersPage() {
     const { club } = useContext(ClubContext) as ClubContextType
@@ -80,6 +86,15 @@ export default function ListMembersPage() {
 
         setAvailableDynamicFilters(clubMembers?.filters);
         setFilterLoading(false);
+
+        const regMembersFiltered = filteredRegisteredMembers(selectedTab, clubMembers, memberNameFilter, dynamicFilters);
+        setRegisteredMembersLength(regMembersFiltered.length)
+
+        const prevMembersFiltered = previousRegisteredMembers(selectedTab, clubMembers, memberNameFilter, dynamicFilters);
+        setDeregisteredMembersLength(prevMembersFiltered.length)
+
+        const pendingMembersFiltered = pendingRegisteredMembers(selectedTab, clubMembers, memberNameFilter, dynamicFilters);
+        setUnregisteredMembersLength(pendingMembersFiltered.length)
     }, [clubMembers]);
 
     useEffect(() => {
@@ -146,12 +161,16 @@ export default function ListMembersPage() {
         setDynamicFilters({});
     }
 
+    if (clubMembersLoading || filterLoading) {
+        return (
+            <div className="p-5 min-h-screen">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        )
+    }
     return (
         <div className="p-5 min-h-screen">
             <h1 className="text-base font-bold">Club Members</h1>
-            {
-                (clubMembersLoading || filterLoading) && <div>loading...</div>
-            }
             {
                 !clubMembersLoading && !filterLoading &&
                 <Tabs
@@ -194,15 +213,23 @@ export default function ListMembersPage() {
                             <Input
                                 placeholder="Filter by member name"
                                 value={memberNameFilter}
-                                onChange={(e) => setMemberNameFilter(e.target.value)}
+                                onChange={(e) => {
+                                    setMemberNameFilter(e.target.value)
+                                    setlistActionItems([])
+                                    setDeregisterMembers([])
+                                    setAllMembersSelected(false)
+                                }}
                                 className="w-[300px]"
                             />
                             {availableDynamicFilters && availableDynamicFilters.map(({ key, fieldName, options }) => (
                                 <Select
                                     key={key}
-                                    onValueChange={(value) =>
+                                    onValueChange={(value) => {
                                         setDynamicFilters(prev => ({ ...prev, [key]: value }))
-                                    }
+                                        setlistActionItems([])
+                                        setDeregisterMembers([])
+                                        setAllMembersSelected(false)
+                                    }}
                                     value={dynamicFilters[key] || ""}
                                 >
                                     <SelectTrigger className="w-[250px]">
