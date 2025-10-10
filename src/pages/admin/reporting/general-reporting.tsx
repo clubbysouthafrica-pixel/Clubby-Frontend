@@ -1,104 +1,46 @@
 import { useContext } from "react";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { useGeneralReportingQuery } from "@/queries/admin/useReporting";
-import { OverallReportingSectionCards, RegistrationReportingSectionCards } from "@/components/admin/reporting/general-reporting/section-cards";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatAmount } from "@/data/currencies";
-import { DndContext, KeyboardSensor, MouseSensor, TouchSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
-import * as React from "react";
-import { ReportDataRow } from "@/interfaces/report";
+import { OverallReport } from "@/components/admin/reporting/general-reporting/overall-report";
+import { RegistrationReport } from "@/components/admin/reporting/general-reporting/registration-report";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2 } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 export default function GeneralReportingPage() {
     const { club } = useContext(ClubContext) as ClubContextType
     const { data: report, isLoading } = useGeneralReportingQuery(club?.club_account_id as string);
 
-    const sensors = useSensors(
-        useSensor(MouseSensor, {}),
-        useSensor(TouchSensor, {}),
-        useSensor(KeyboardSensor, {})
-    )
-    const sortableId = React.useId()
-
+    if (isLoading) {
+        return (
+            <div className="p-5 min-h-screen">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        )
+    }
     return (
         <div className="p-5 min-h-screen">
-            <div>
-                <h1 className="text-base font-bold">Overall Report</h1>
-                {!isLoading && report &&
-                    <div className="@container/main flex flex-1 flex-col gap-2">
-                        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-2">
-                            <OverallReportingSectionCards report={report} currency={club?.currency as string} />
-                        </div>
-                    </div>
-                }
-                {!isLoading && report && report.data && report.data.length > 0 &&
-                    <div className="overflow-hidden rounded-lg border">
-                        <DndContext
-                            collisionDetection={closestCenter}
-                            sensors={sensors}
-                            id={sortableId}>
-                            <Table>
-                                <TableHeader className="bg-muted sticky top-0 z-10">
-                                    <TableRow>
-                                        <TableHead className="text-center font-bold w-1/3">Month</TableHead>
-                                        <TableHead className="text-center font-bold w-1/3">Revenue</TableHead>
-                                        <TableHead className="text-center font-bold w-1/3">Pending revenue</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {report.data?.map((month: ReportDataRow) => (
-                                        <TableRow key={month.date}>
-                                            <TableCell className="text-center font-bold w-1/3">{month.date}</TableCell>
-                                            <TableCell className="text-center w-1/3">{formatAmount(month.total_revenue, club?.currency)}</TableCell>
-                                            <TableCell className="text-center w-1/3">{formatAmount(month.total_pending_revenue, club?.currency)}</TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </DndContext>
-                    </div>
-                }
-            </div>
-            <div className="mt-10">
-                <h1 className="text-base font-bold">Registration Report</h1>
-                {!isLoading && report &&
-                    <div className="@container/main flex flex-1 flex-col gap-2">
-                        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-2">
-                            <RegistrationReportingSectionCards report={report} currency={club?.currency as string} />
-                        </div>
-                    </div>
-                }
-                {!isLoading && report && report.data && report.data.length > 0 &&
-                    <div className="overflow-hidden rounded-lg border">
-                        <DndContext
-                            collisionDetection={closestCenter}
-                            sensors={sensors}
-                            id={sortableId}>
-                            <Table>
-                                <TableHeader className="bg-muted sticky top-0 z-10">
-                                    <TableRow>
-                                        <TableHead className="text-center font-bold w-1/5">Month</TableHead>
-                                        <TableHead className="text-center font-bold w-1/5">Registration Revenue</TableHead>
-                                        <TableHead className="text-center font-bold w-1/5">Pending Registration Revenue</TableHead>
-                                        <TableHead className="text-center font-bold w-1/5">Completed Registrations</TableHead>
-                                        <TableHead className="text-center font-bold w-1/5">Members deregistered</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {report.data?.map((month: ReportDataRow) => (
-                                        <TableRow key={month.date}>
-                                            <TableCell className="text-center font-bold w-1/5">{month.date}</TableCell>
-                                            <TableCell className="text-center w-1/5">{formatAmount(month.total_revenue, club?.currency)}</TableCell>
-                                            <TableCell className="text-center w-1/5">{formatAmount(month.total_pending_revenue, club?.currency)}</TableCell>
-                                            <TableCell className="text-center w-1/5">{month.total_registered_members}</TableCell>
-                                            <TableCell className="text-center w-1/5">{month.total_deregistered_members}</TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </DndContext>
-                    </div>
-                }
-            </div>
+            <h1 className="text-base font-bold mb-2">Club Financial Reporting</h1>
+            <Tabs defaultValue="overall">
+                <TabsList>
+                    <TabsTrigger className="w-[200px]" key="overall" value="overall">Overall</TabsTrigger>
+                    <TabsTrigger className="w-[200px]" key="registration" value="registration">Registration</TabsTrigger>
+                </TabsList>
+                <TabsContent key="overall" value="overall">
+                    <Card className="p-4">
+                        {!isLoading && report && report.data &&
+                            <OverallReport report={report} currency={club?.currency ?? "ZAR"} />
+                        }
+                    </Card>
+                </TabsContent>
+                <TabsContent key="registration" value="registration">
+                    <Card className="p-4">
+                        {!isLoading && report && report.data &&
+                            <RegistrationReport report={report} currency={club?.currency ?? "ZAR"} />
+                        }
+                    </Card>
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }

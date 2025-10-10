@@ -45,7 +45,16 @@ export function RegistrationReportingSectionCards({ report, currency }: props) {
               {report.total_active_members}
             </CardTitle>
           </CardHeader>
-        </Card>
+        </Card> 
+
+        <Card className="@container/card py-3 w-[100%]">
+          <CardHeader className="flex flex-col items-center justify-center text-center">
+            <CardDescription>Pending Members</CardDescription>
+            <CardTitle className="text-l font-semibold tabular-nums">
+              {report.total_pending_members}
+            </CardTitle>
+          </CardHeader>
+        </Card> 
 
         <Card className="@container/card py-3 w-[100%]">
           <CardHeader className="flex flex-col items-center justify-center text-center">

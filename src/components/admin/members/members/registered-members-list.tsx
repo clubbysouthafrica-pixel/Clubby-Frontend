@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ClubMember } from "@/interfaces/club"
 import { formatAmount } from "@/data/currencies"
 import { Club } from "@/context/ClubContext"
+import { filteredRegisteredMembers as frg } from "@/helpers/admin/members/filter-members-list";
 
 interface ImageProps {
     club: Club | null
@@ -42,30 +43,7 @@ export default function RegisteredMembersList({
     setRegisteredMembersLength,
 }: ImageProps) {
 
-    const filteredRegisteredMembers =
-        selectedTab === "registered-members"
-            ? clubMembers?.registered?.filter((member: ClubMember) => {
-                const fullName = (member.member_first_name + " " + member.member_surname).toLowerCase();
-                if (!fullName.includes(memberNameFilter.toLowerCase())) return false;
-
-                for (const [fullKey, selectedValue] of Object.entries(dynamicFilters)) {
-                    if (!selectedValue || selectedValue === "all") continue;
-                    const [type, fieldName] = fullKey.split(":");
-
-                    if (type === "standard") {
-                        const field = member.meta_standard?.find((f: any) => f.field_name === fieldName);
-                        if (!field || field.value !== selectedValue) return false;
-                    }
-
-                    if (type === "billing") {
-                        const field = member.meta_billing?.find((f: any) => f.field_name === fieldName);
-                        if (!field || field.label_value !== selectedValue) return false;
-                    }
-                }
-
-                return true;
-            }) ?? []
-            : clubMembers?.registered ?? [];
+    const filteredRegisteredMembers = frg(selectedTab, clubMembers, memberNameFilter, dynamicFilters)
 
     useEffect(() => {
         setRegisteredMembersLength(filteredRegisteredMembers.length);
@@ -144,9 +122,7 @@ export default function RegisteredMembersList({
                                     <Checkbox
                                         checked={listActionItems.includes(member.member_email as string)}
                                         onCheckedChange={(checked: boolean) => {
-                                            setlistActionItems([])
-                                            setDeregisterMembers([])
-                                            setAllMembersSelected(false)
+                                            if (allMembersSelected) setAllMembersSelected(false)
                                             setlistActionItems(prev =>
                                                 checked
                                                     ? prev.includes(member.member_email as string)

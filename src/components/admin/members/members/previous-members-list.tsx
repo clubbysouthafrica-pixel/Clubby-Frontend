@@ -5,6 +5,7 @@ import { formatAmount } from "@/data/currencies"
 import { useEffect } from "react";
 import { Club } from "@/context/ClubContext"
 import { Checkbox } from "@/components/ui/checkbox";
+import { previousRegisteredMembers } from "@/helpers/admin/members/filter-members-list";
 
 interface ImageProps {
     club: Club | null
@@ -42,32 +43,7 @@ export default function PreviousMembersList({
     setAllMembersSelected,
 }: ImageProps) {
 
-    const filteredDeregisteredMembers =
-        selectedTab === "previous-members"
-            ? clubMembers?.unregistered?.filter((member: ClubMember) => {
-                const fullName = (member.member_first_name + " " + member.member_surname).toLowerCase();
-                if (!fullName.includes(memberNameFilter.toLowerCase())) return false;
-
-                if (!member?.resubmission_required) return false
-
-                for (const [fullKey, selectedValue] of Object.entries(dynamicFilters)) {
-                    if (!selectedValue || selectedValue === "all") continue;
-                    const [type, fieldName] = fullKey.split(":");
-
-                    if (type === "standard") {
-                        const field = member.meta_standard?.find((f: any) => f.field_name === fieldName);
-                        if (!field || field.value !== selectedValue) return false;
-                    }
-
-                    if (type === "billing") {
-                        const field = member.meta_billing?.find((f: any) => f.field_name === fieldName);
-                        if (!field || field.label_value !== selectedValue) return false;
-                    }
-                }
-
-                return true;
-            }) ?? []
-            : clubMembers?.unregistered?.filter((member: ClubMember) => member?.resubmission_required) ?? [];
+    const filteredDeregisteredMembers = previousRegisteredMembers(selectedTab, clubMembers, memberNameFilter, dynamicFilters);
 
     useEffect(() => {
         setDeregisteredMembersLength(filteredDeregisteredMembers.length);
