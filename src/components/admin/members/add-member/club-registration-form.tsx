@@ -5,30 +5,26 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { FormEvent, useContext, useEffect, useMemo, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useFetchRegisterationForm } from "@/queries/admin/registration-form";
 import { useFetchClub } from "@/queries/admin/clubs";
-import { RegistrationRequest } from "@/requests/registration-request";
-import { useMemberRegistrationMutation } from "@/mutations/useMemberRegistrationMutation";
+import { AdminRegistrationRequest, RegistrationRequest } from "@/requests/registration-request";
+import { useMemberRegistrationMutation } from "@/mutations/admin/useMemberRegistrationMutation";
 import { toast } from "sonner";
 import { formatAmount } from "@/data/currencies";
-import { AuthContext, AuthContextType } from "@/context/AuthContext";
 import StandardCheckbox from "../../../member/registration-form/standard-checkbox";
 import BillingDropdown from "../../../member/registration-form/billing-dropdown";
 import StandardDopdown from "../../../member/registration-form/standard-dropdown";
 import StandardText from "../../../member/registration-form/standard-text";
-import { createValidRegistrationRequest } from "../../../../helpers/members/registration/create-registration-request";
+import { createValidRegistrationRequest } from "../../../../helpers/admin/registration/create-registration-request";
 import { getFieldName } from "../../../../helpers/members/registration/get-field-name";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 
-// --- Types that match the new payload ---
 export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER";
 export type FieldType = "TEXT" | "STANDARD" | "BILLING";
 
@@ -49,19 +45,17 @@ export interface PageFieldBase {
   field_order_id: string;
   field_id: string;
   field_type: FieldType;
-  field_text?: string; // helper/label text
-  field_name: string; // title when STANDARD/BILLING
+  field_text?: string;
+  field_name: string;
   required?: boolean;
-  input_type: InputType; // when STANDARD/BILLING
+  input_type: InputType;
   placeholder?: string;
-  options?: string[]; // for STANDARD DROPDOWN
-  billingOptions?: BillingOption[]; // for BILLING DROPDOWN
-  currency?: string; // for BILLING
-  amount?: number; // for BILLING fixed price (cents)
-
-  // --- UI state ---
-  value?: string; // typed text or selected label
-  selectedAmountCents?: number; // derived for BILLING when dropdown
+  options?: string[];
+  billingOptions?: BillingOption[];
+  currency?: string;
+  amount?: number;
+  value?: string;
+  selectedAmountCents?: number;
   option_order_id?: string;
   label?: string;
 }
@@ -79,18 +73,18 @@ export interface PagedFormPayload {
 export function ClubRegisterForm({
   className,
   memberEmail,
+  memberFirstName,
+  memberSurname,
   ...props
-}: React.ComponentProps<"div"> & { memberEmail: string }) {
-  const { club } = useContext(ClubContext) as ClubContextType
-  const { user } = useContext(AuthContext) as AuthContextType;
-  const navigate = useNavigate();
-
-  const { mutate, isPending, isError, error: registerError, isSuccess } =
+}: React.ComponentProps<"div"> & { memberEmail: string; memberFirstName: string; memberSurname: string }) {
+  const { club } = useContext(ClubContext) as ClubContextType;
+  const { mutate, isPending, isSuccess } =
     useMemberRegistrationMutation();
   const { data, isLoading } = useFetchRegisterationForm(club?.club_account_id as string);
   const { data: clubDetails, isLoading: clubLoading } = useFetchClub(club?.club_account_id as string);
 
-  const [email, setEmail] = useState("");
+  const [submitRegistrationError, setSubmitRegistrationError] = useState<string | undefined>(undefined);
+
   const [pages, setPages] = useState<FormPage[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [requiredFieldsMissing, setRequiredFieldsMissing] = useState(false);
@@ -211,9 +205,14 @@ export function ClubRegisterForm({
 
     const allFields = pages.flatMap((p) => p.fields);
 
-    const request: RegistrationRequest = createValidRegistrationRequest(allFields, club?.club_account_id as string)
+    const request: AdminRegistrationRequest = createValidRegistrationRequest(
+      allFields,
+      club?.club_account_id as string,
+      memberEmail,
+      memberSurname,
+      memberFirstName
+    )
 
-    if (!user) (request as any).email = email;
     setRegistrationRequest(request)
 
     let total = 0
@@ -225,13 +224,16 @@ export function ClubRegisterForm({
 
   const submitRegistration = () => {
     setIsRegistering(true)
+    setSubmitRegistrationError(undefined)
     if (registrationRequest) {
       mutate(registrationRequest, {
         onSuccess: () => {
-          navigate(`/clubs/${club?.club_account_id as string}`)
           setIsRegistering(false)
         },
-        onError: () => toast(registerError?.message ?? "Registration failed"),
+        onError: (error: any) => {
+          setSubmitRegistrationError(error.response.data.message ?? "Registration failed")
+          setIsRegistering(false)
+        }
       });
     }
   }
@@ -247,11 +249,12 @@ export function ClubRegisterForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <h1 className="mt-0">New Member: <strong>{memberEmail}</strong></h1>
+          <h1 className="mt-0">Name: <strong>{memberFirstName} {memberSurname}</strong></h1>
+          <h1 className="mt-0">Email: <strong>{memberEmail}</strong></h1>
           <CardDescription>
             {!isSuccess
               ? "Finish the registration form to register this member."
-              : "Club will stay in contact with you once registration is completed."}
+              : "The member has been successfully registered!"}
           </CardDescription>
           {clubLoading && isLoading && (
             <div className="flex justify-center py-8">
@@ -264,19 +267,6 @@ export function ClubRegisterForm({
             <form>
               <div className="grid-2 gap-6">
                 <div className="grid gap-6">
-                  {!user && (
-                    <div className="grid gap-3">
-                      <Label htmlFor="user_email">Email Address</Label>
-                      <Input
-                        id="user_email"
-                        type="email"
-                        placeholder="Enter your email address"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                  )}
 
                   {registrationRequest && (
                     <div>
@@ -366,15 +356,6 @@ export function ClubRegisterForm({
                     </div>
                   )}
 
-                  {isError && (
-                    <Alert variant="destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription className="text-xs">
-                        {registerError?.message}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
                   {pages.length === 1 && !registrationRequest ? (
                     <Button type="button" onClick={(e) => registerUser(e as any)} disabled={isPending}>
                       {isPending ? "Registering..." : "Continue"}
@@ -382,7 +363,7 @@ export function ClubRegisterForm({
                   ) : !registrationRequest ? (
                     <div className="flex justify-between">
                       {currentPageIndex > 0 && (
-                        <Button variant={"outline"} type="button" onClick={() => setCurrentPageIndex((i) => i - 1)}>
+                        <Button variant={"outline"} type="button" onClick={() => {setCurrentPageIndex((i) => i - 1), setSubmitRegistrationError(undefined)}}>
                           Previous
                         </Button>
                       )}
@@ -419,6 +400,15 @@ export function ClubRegisterForm({
                   )}
                 </div>
 
+                {submitRegistrationError && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="text-xs">
+                      {submitRegistrationError}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 <div className="text-center text-sm mt-4">
                   <Link to={"/manage/members"} className="underline underline-offset-4">
                     Cancel
@@ -432,8 +422,8 @@ export function ClubRegisterForm({
             <div>
               <div className="grid-2 gap-6">
                 <div className="grid gap-6">
-                  <Link to={`/clubs/${club?.club_account_id as string}`}>
-                    <Button className="w-full">Back to club</Button>
+                  <Link to={`/manage/members`}>
+                    <Button className="w-full">Manage members</Button>
                   </Link>
                 </div>
               </div>

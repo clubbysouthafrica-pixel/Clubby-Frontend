@@ -253,7 +253,7 @@ export default function ListMembersPage() {
                             ))}
                         </div>
                         <div className="px-2 py-1 flex items-center gap-4">
-                            {club?.club_account_id && (
+                            {club?.club_account_id && selectedTab === "registered-members" && (
                                 <DeregisterMembersDialog
                                     dereigsterMembers={dereigsterMembers}
                                     clubId={club.club_account_id}
@@ -273,7 +273,7 @@ export default function ListMembersPage() {
                                 />
                             )}
                             {
-                                club?.club_account_id && (
+                                club?.club_account_id && selectedTab === "registered-members" && (
                                     <DeregisterSeasonDialog
                                         clubId={club.club_account_id}
                                         selectedTab={selectedTab}

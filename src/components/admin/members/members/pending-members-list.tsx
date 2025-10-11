@@ -109,11 +109,12 @@ export default function PendingMembersList({
                 <Table>
                     <TableHeader className="bg-muted sticky top-0 z-10">
                         <TableRow>
-                            <TableHead className="text-center w-1/6">Display Name</TableHead>
-                            <TableHead className="text-center w-1/6">Member ID</TableHead>
-                            <TableHead className="text-center w-1/6">Registration Submitted</TableHead>
-                            <TableHead className="text-center w-1/6">Reference Numbers</TableHead>
-                            <TableHead className="text-center w-1/6">Outstanding Amount</TableHead>
+                            <TableHead className="text-center w-1/7">Display Name</TableHead>
+                            <TableHead className="text-center w-1/7">Member ID</TableHead>
+                            <TableHead className="text-center w-1/7">Registration Submitted</TableHead>
+                            <TableHead className="text-center w-1/7">Reference Numbers</TableHead>
+                            <TableHead className="text-center w-1/7">Outstanding Amount</TableHead>
+                            <TableHead className="text-center w-1/7">Register member</TableHead>
                             <TableHead className="text-center w-1/5">
                                 <div className="flex items-center justify-center gap-2">
                                     Action
@@ -129,7 +130,7 @@ export default function PendingMembersList({
                     <TableBody>
                         {filteredUnregisteredMembers.length ? filteredUnregisteredMembers.map((member: ClubMember) => (
                             <TableRow key={member.user_id}>
-                                <TableCell className="text-center w-1/6">
+                                <TableCell className="text-center w-1/7">
                                     <a
                                         onClick={() => setSelectedMember(member)}
                                         href={`#${member.user_id}`}
@@ -138,7 +139,7 @@ export default function PendingMembersList({
                                         {member.member_first_name + " " + member.member_surname}
                                     </a>
                                 </TableCell>
-                                <TableCell className="text-center w-1/6">
+                                <TableCell className="text-center w-1/7">
                                     <div className="inline-flex items-center gap-2 justify-center">
                                         <span className="font-mono">{member.user_id.slice(0, 8)}...</span>
 
@@ -167,7 +168,7 @@ export default function PendingMembersList({
                                         </button>
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-center w-1/6">
+                                <TableCell className="text-center w-1/7">
                                     {member.registration_submitted_on ? (() => {
                                         const date = new Date(member.registration_submitted_on);
                                         const now = new Date();
@@ -177,13 +178,13 @@ export default function PendingMembersList({
                                         return `${date.toLocaleString()} (${diffDays === 0 ? 'today' : diffDays === 1 ? '1 day ago' : `${diffDays} days ago`})`;
                                     })() : "-"}
                                 </TableCell>
-                                <TableCell className="text-center w-1/6">
+                                <TableCell className="text-center w-1/7">
                                     {member.registration_payment_reference}
                                 </TableCell>
-                                <TableCell className="text-center w-1/6">
+                                <TableCell className="text-center w-1/7">
                                     {member.resubmission_required ? "N/A" : formatAmount(member.outstanding_amount, club?.currency)}
                                 </TableCell>
-                                <TableCell className="text-center w-1/6">
+                                <TableCell className="text-center w-1/7">
                                     <div>
                                         <Dialog
                                             open={openDialogUserId === member.user_id}
@@ -246,29 +247,31 @@ export default function PendingMembersList({
                                                 )}
                                             </DialogContent>
                                         </Dialog>
-                                        <Checkbox
-                                            checked={listActionItems.includes(member.member_email as string)}
-                                            onCheckedChange={(checked: boolean) => {
-                                                setlistActionItems([])
-                                                setDeregisterMembers([])
-                                                setAllMembersSelected(false)
-                                                setlistActionItems(prev =>
-                                                    checked
-                                                        ? prev.includes(member.member_email as string)
-                                                            ? prev
-                                                            : [...prev, member.member_email as string]
-                                                        : prev.filter(id => id !== member.member_email as string)
-                                                )
-                                                setDeregisterMembers(prev =>
-                                                    checked
-                                                        ? prev.some(m => m.user_id === member.user_id)
-                                                            ? prev
-                                                            : [...prev, { user_id: member.user_id, name: `${member.member_first_name} ${member.member_surname}` }]
-                                                        : prev.filter(m => m.user_id !== member.user_id)
-                                                )
-                                            }}
-                                        />
                                     </div>
+                                </TableCell>
+                                <TableCell className="text-center w-1/7">
+                                    <Checkbox
+                                        checked={listActionItems.includes(member.member_email as string)}
+                                        onCheckedChange={(checked: boolean) => {
+                                            setlistActionItems([])
+                                            setDeregisterMembers([])
+                                            setAllMembersSelected(false)
+                                            setlistActionItems(prev =>
+                                                checked
+                                                    ? prev.includes(member.member_email as string)
+                                                        ? prev
+                                                        : [...prev, member.member_email as string]
+                                                    : prev.filter(id => id !== member.member_email as string)
+                                            )
+                                            setDeregisterMembers(prev =>
+                                                checked
+                                                    ? prev.some(m => m.user_id === member.user_id)
+                                                        ? prev
+                                                        : [...prev, { user_id: member.user_id, name: `${member.member_first_name} ${member.member_surname}` }]
+                                                    : prev.filter(m => m.user_id !== member.user_id)
+                                            )
+                                        }}
+                                    />
                                 </TableCell>
                             </TableRow>
                         )) : (

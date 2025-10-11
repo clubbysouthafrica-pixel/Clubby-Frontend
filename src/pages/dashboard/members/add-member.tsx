@@ -5,15 +5,29 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { ClubRegisterForm } from "@/components/admin/members/add-member/club-registration-form";
+import { Label } from "@/components/ui/label";
 
 
 export default function AddMemberPage() {
     const [showRegistrationForm, setShowRegistrationForm] = useState(false);
     const [memberEmail, setMemberEmail] = useState("");
+    const [memberFirstName, setMemberFirstName] = useState("");
+    const [memberSurname, setMemberSurname] = useState("");
     const [isError, setIsError] = useState<undefined | string>(undefined)
 
     const handleEmailSubmission = () => {
-        if (memberEmail === "" || !memberEmail.includes('@') || !memberEmail.includes('.')) setIsError("Invalid email provided.")
+        if (memberEmail === "" || !memberEmail.includes('@') || !memberEmail.includes('.')) {
+            setIsError("Invalid email provided.")
+            return
+        }
+        if (!memberFirstName || memberFirstName === "") {
+            setIsError("Member firstname is required.")
+            return
+        }
+        if (!memberSurname || memberSurname === "") {
+            setIsError("Member surname is required.")
+            return
+        }
         setShowRegistrationForm(true)
     };
 
@@ -35,18 +49,49 @@ export default function AddMemberPage() {
             </CardDescription>
             {
                 !showRegistrationForm &&
-                <div className="flex flex-col gap-2">
-                    <Input
-                        id="email"
-                        type="text"
-                        placeholder="Enter member email address"
-                        className="mt-4 w-[350px]"
-                        onChange={(e) => {
-                            setMemberEmail(e.target.value);
-                            setIsError(false);
-                        }}
-                        required={true}
-                    />
+                <div className="flex flex-col gap-4 mt-4">
+                    <div className="flex flex-col gap-1">
+                        <Label className="px-2">Member email</Label>
+                        <Input
+                            id="email"
+                            type="text"
+                            placeholder="Enter member email address"
+                            className="w-[350px]"
+                            onChange={(e) => {
+                                setMemberEmail(e.target.value);
+                                setIsError(undefined);
+                            }}
+                            required={true}
+                        />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <Label className="px-2">Member firstname</Label>
+                        <Input
+                            id="firstname"
+                            type="text"
+                            placeholder="Enter member firstname"
+                            className="w-[350px]"
+                            onChange={(e) => {
+                                setMemberFirstName(e.target.value);
+                                setIsError(undefined);
+                            }}
+                            required={true}
+                        />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <Label className="px-2">Member surname</Label>
+                        <Input
+                            id="surname"
+                            type="text"
+                            placeholder="Enter member surname"
+                            className="w-[350px]"
+                            onChange={(e) => {
+                                setMemberSurname(e.target.value);
+                                setIsError(undefined);
+                            }}
+                            required={true}
+                        />
+                    </div>
                     {isError && (
                         <Alert variant="destructive" className="w-[350px] flex flex-row">
                             <AlertCircle className="h-4 w-4" />
@@ -61,7 +106,11 @@ export default function AddMemberPage() {
             {
                 showRegistrationForm &&
                 <div className="mt-4 w-[700px]">
-                    <ClubRegisterForm memberEmail={memberEmail} />
+                    <ClubRegisterForm 
+                        memberEmail={memberEmail} 
+                        memberFirstName={memberFirstName} 
+                        memberSurname={memberSurname}
+                    />
                 </div>
             }
         </div>
