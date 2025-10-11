@@ -17,12 +17,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import RegisteredMembersList from "@/components/admin/members/members/registered-members-list";
 import PendingMembersList from "@/components/admin/members/members/pending-members-list";
 import PreviousMembersList from "@/components/admin/members/members/previous-members-list";
-import { 
-    filteredRegisteredMembers, 
-    previousRegisteredMembers, 
-    pendingRegisteredMembers 
+import { User } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import {
+    filteredRegisteredMembers,
+    previousRegisteredMembers,
+    pendingRegisteredMembers
 } from "@/helpers/admin/members/filter-members-list";
 import { Loader2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 
 export default function ListMembersPage() {
     const { club } = useContext(ClubContext) as ClubContextType
@@ -45,6 +49,8 @@ export default function ListMembersPage() {
     const [registeredMembersLength, setRegisteredMembersLength] = useState<number>(0);
     const [unregisteredMembersLength, setUnregisteredMembersLength] = useState<number>(0);
     const [deregisteredMembersLength, setDeregisteredMembersLength] = useState<number>(0);
+
+    const navigate = useNavigate()
 
     const [availableDynamicFilters, setAvailableDynamicFilters] = useState<
         { key: string, fieldName: string, type: string, options: string[] }[]
@@ -168,6 +174,7 @@ export default function ListMembersPage() {
             </div>
         )
     }
+
     return (
         <div className="p-5 min-h-screen">
             <h1 className="text-base font-bold">Club Members</h1>
@@ -221,7 +228,7 @@ export default function ListMembersPage() {
                                 }}
                                 className="w-[300px]"
                             />
-                            {availableDynamicFilters && availableDynamicFilters.map(({ key, fieldName, options }) => (
+                            {availableDynamicFilters && availableDynamicFilters.map(({ key, field_name, options }) => (
                                 <Select
                                     key={key}
                                     onValueChange={(value) => {
@@ -233,7 +240,7 @@ export default function ListMembersPage() {
                                     value={dynamicFilters[key] || ""}
                                 >
                                     <SelectTrigger className="w-[250px]">
-                                        <span className="text-muted-foreground truncate">{fieldName}</span>
+                                        <span className="text-muted-foreground truncate">{field_name}:</span>
                                         <SelectValue placeholder="All" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -271,6 +278,20 @@ export default function ListMembersPage() {
                                         clubId={club.club_account_id}
                                         selectedTab={selectedTab}
                                     />
+                                )
+                            }                           
+                            {
+                                club?.club_account_id && (
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button variant={"outline"} onClick={() => navigate("/manage/members/add")}>
+                                                <User />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Add member</p>
+                                        </TooltipContent>
+                                    </Tooltip>
                                 )
                             }
                         </div>
