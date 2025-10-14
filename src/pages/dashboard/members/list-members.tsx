@@ -17,7 +17,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import RegisteredMembersList from "@/components/admin/members/members/registered-members-list";
 import PendingMembersList from "@/components/admin/members/members/pending-members-list";
 import PreviousMembersList from "@/components/admin/members/members/previous-members-list";
-import { User } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import {
     filteredRegisteredMembers,
@@ -25,8 +24,6 @@ import {
     pendingRegisteredMembers
 } from "@/helpers/admin/members/filter-members-list";
 import { Loader2 } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Button } from "@/components/ui/button";
 
 export default function ListMembersPage() {
     const { club } = useContext(ClubContext) as ClubContextType
@@ -49,8 +46,6 @@ export default function ListMembersPage() {
     const [registeredMembersLength, setRegisteredMembersLength] = useState<number>(0);
     const [unregisteredMembersLength, setUnregisteredMembersLength] = useState<number>(0);
     const [deregisteredMembersLength, setDeregisteredMembersLength] = useState<number>(0);
-
-    const navigate = useNavigate()
 
     const [availableDynamicFilters, setAvailableDynamicFilters] = useState<
         { key: string, fieldName: string, type: string, options: string[] }[]
@@ -278,20 +273,6 @@ export default function ListMembersPage() {
                                         clubId={club.club_account_id}
                                         selectedTab={selectedTab}
                                     />
-                                )
-                            }                           
-                            {
-                                club?.club_account_id && (
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button variant={"outline"} onClick={() => navigate("/manage/members/add")}>
-                                                <User />
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Add member</p>
-                                        </TooltipContent>
-                                    </Tooltip>
                                 )
                             }
                         </div>
