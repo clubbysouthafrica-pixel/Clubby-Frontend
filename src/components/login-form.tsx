@@ -39,7 +39,7 @@ export function LoginForm({
     setLoading(true)
 
     try {
-      const { onboarded, new_password_required } = await login(isAdminLogin, email, password)
+      const { onboarded, new_password_required }: {onboarded: boolean, new_password_required: boolean} = await login(isAdminLogin, email, password)
 
       if (new_password_required) {
         navigate(`/activateAccount?email=${encodeURIComponent(email)}`)

@@ -17,7 +17,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import RegisteredMembersList from "@/components/admin/members/members/registered-members-list";
 import PendingMembersList from "@/components/admin/members/members/pending-members-list";
 import PreviousMembersList from "@/components/admin/members/members/previous-members-list";
-import { useNavigate } from "react-router-dom"
 import {
     filteredRegisteredMembers,
     previousRegisteredMembers,
@@ -48,7 +47,7 @@ export default function ListMembersPage() {
     const [deregisteredMembersLength, setDeregisteredMembersLength] = useState<number>(0);
 
     const [availableDynamicFilters, setAvailableDynamicFilters] = useState<
-        { key: string, fieldName: string, type: string, options: string[] }[]
+        { key: string, field_name: string, type: string, options: string[] }[]
     >([]);
 
     const handleFormattedInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

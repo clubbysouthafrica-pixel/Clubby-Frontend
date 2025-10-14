@@ -28,7 +28,7 @@ interface Field {
 
 interface BillingSelectFieldProps {
     field: Field
-    clubCurrency: string
+    clubCurrency: string | undefined
     currentPageIndex: number
     pages: any[]
     setFieldValue: (

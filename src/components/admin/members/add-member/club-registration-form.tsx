@@ -13,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useFetchRegisterationForm } from "@/queries/admin/registration-form";
 import { useFetchClub } from "@/queries/admin/clubs";
-import { AdminRegistrationRequest, RegistrationRequest } from "@/requests/registration-request";
+import { AdminRegistrationRequest } from "@/requests/registration-request";
 import { useMemberRegistrationMutation } from "@/mutations/admin/useMemberRegistrationMutation";
 import { CheckCircle2Icon } from "lucide-react"
 import { formatAmount } from "@/data/currencies";
@@ -94,7 +94,7 @@ export function ClubRegisterForm({
   const [pages, setPages] = useState<FormPage[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [requiredFieldsMissing, setRequiredFieldsMissing] = useState(false);
-  const [registrationRequest, setRegistrationRequest] = useState<RegistrationRequest | undefined>(undefined)
+  const [registrationRequest, setRegistrationRequest] = useState<AdminRegistrationRequest | undefined>(undefined)
   const [totalRegistrationFee, setTotalRegistrationFee] = useState(0);
   const [isRegistering, setIsRegistering] = useState(false);
 
@@ -421,7 +421,7 @@ export function ClubRegisterForm({
                 )}
 
                 <div className="text-center text-sm mt-4">
-                  <Link onClick={() => setShowRegistrationForm(false)} className="underline underline-offset-4">
+                  <Link to="/manage/members/add" onClick={() => setShowRegistrationForm(false)} className="underline underline-offset-4">
                     Cancel
                   </Link>
                 </div>
@@ -433,7 +433,7 @@ export function ClubRegisterForm({
             <div>
               <div className="grid-2 gap-6">
                 <div className="grid gap-6">
-                  <Link onClick={() => setShowRegistrationForm(false)}>
+                  <Link to="/manage/members/add" onClick={() => setShowRegistrationForm(false)}>
                     <Button className="w-full">Add another member</Button>
                   </Link>
                 </div>

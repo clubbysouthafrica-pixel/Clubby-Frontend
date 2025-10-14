@@ -5,7 +5,7 @@ export interface AuthContextType {
     user: boolean | null;
     isAdmin: boolean | false;
     loading: boolean;
-    login: (isAdmin: boolean, email: string, password: string) => Promise<boolean>;
+    login: (isAdmin: boolean, email: string, password: string) => Promise<{onboarded: boolean, new_password_required: boolean}>;
     register: (email: string, password: string) => Promise<AxiosResponse>;
     logout: () => void;
     verifyConfirmationCode: (email: string, confirmationCode: string) => Promise<AxiosResponse>;

@@ -48,7 +48,7 @@ export function ActivateAccountForm({
         try {
             setLoading(true)
 
-            await activateUser(email, session, password)
+            await activateUser(email as string, session as string, password as string)
             toast.success("Successfully activated account.")
             navigate("/login")
 
