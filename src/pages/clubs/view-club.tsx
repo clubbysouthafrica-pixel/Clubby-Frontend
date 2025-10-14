@@ -91,7 +91,7 @@ export default function ViewClubPage() {
                 <div className="mt-10 flex items-start justify-center min-h-screen">
                     <div className="text-center px-4">
                         <Label className="w-[700px]">
-                        The club administrator has not yet completed setting up the club account for member registration. For urgent enquiries, please contact: {data?.support_email}.
+                            The club administrator has not yet completed setting up the club account for member registration. For urgent enquiries, please contact: {data?.support_email}.
                         </Label>
                     </div>
                 </div>
@@ -102,16 +102,16 @@ export default function ViewClubPage() {
                         <Avatar className="w-full h-28 md:h-28 rounded-lg bg-muted/30 overflow-hidden border-background">
                             <AvatarImage className="w-full h-full object-cover object-center" src={coverImage} />
                             <AvatarFallback className="rounded font-bold">
-                            {data?.club_name || "cover"}
+                                {data?.club_name || "cover"}
                             </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col md:flex-row items-center md:items-end -mt-16 md:space-x-6 px-4">
                             <Avatar className="w-32 h-32 border-4 border-background">
                                 <AvatarImage className="object-cover object-center" src={profileImage} />
                                 <AvatarFallback className="font-bold">
-                                {
-                                    data?.club_name?.split(" ").map((i: string) => i[0])
-                                }
+                                    {
+                                        data?.club_name?.split(" ").map((i: string) => i[0])
+                                    }
                                 </AvatarFallback>
                             </Avatar>
                             <div className="mt-4 md:mt-0 text-center md:text-left flex-1">
@@ -202,170 +202,177 @@ export default function ViewClubPage() {
                                             </p>
                                         </CardTitle>
                                     </Card>
-                                    <Card className="w-full lg:w-1/3">
-                                        <CardHeader>
-                                            <CardTitle>Banking Details</CardTitle>
-                                            <CardDescription>Make any payments through EFT to the below banking details. Please make use of your <strong>payment reference number</strong> when making the payment.</CardDescription>
-                                        </CardHeader>
-                                        <CardContent>
-                                            {
-                                                bankDetailsLoading &&
-                                                <div className="flex justify-center py-8">
-                                                    <Loader2 className="h-8 w-8 animate-spin" />
-                                                </div>
-                                            }
-                                            {
-                                                !bankDetailsLoading &&
-                                                <Table>
-                                                    <TableBody>
-                                                        <TableRow>
-                                                            <TableCell>Bank</TableCell>
-                                                            <TableCell>{bankDetails?.bank}</TableCell>
-                                                        </TableRow>
-                                                        <TableRow>
-                                                            <TableCell>Account Number</TableCell>
-                                                            <TableCell>{bankDetails?.account_number}</TableCell>
-                                                        </TableRow>
-                                                        <TableRow>
-                                                            <TableCell>Branch Code</TableCell>
-                                                            <TableCell>{bankDetails?.branch_code}</TableCell>
-                                                        </TableRow>
-                                                        <TableRow>
-                                                            <TableCell>Account Type</TableCell>
-                                                            <TableCell>{bankDetails?.account_type}</TableCell>
-                                                        </TableRow>
-                                                    </TableBody>
-                                                </Table>
-                                            }
-                                        </CardContent>
-                                    </Card>
-                                    {
-                                        !isUserTransactionsLoading && transactions &&
-                                        <div className="mt-7">
-                                            <h1 className="text-base font-bold">Transactions</h1>
-                                            <div className="overflow-hidden rounded-lg border my-5">
-                                                <Table>
-                                                    <TableHeader className="bg-muted sticky top-0 z-10">
-                                                        <TableRow>
-                                                            <TableHead className="text-center w-1/7">Transaction ID</TableHead>
-                                                            <TableHead className="text-center w-1/7">Creation date</TableHead>
-                                                            <TableHead className="text-center w-1/7">Type</TableHead>
-                                                            <TableHead className="text-center w-1/7">Payment type</TableHead>
-                                                            <TableHead className="text-center w-1/7">Outstanding amount</TableHead>
-                                                            <TableHead className="text-center w-1/7">Status</TableHead>
-                                                        </TableRow>
-                                                    </TableHeader>
-
-                                                    <TableBody>
-                                                        {transactions.transactions.map((tx: any) => (
-                                                            <React.Fragment key={tx.transaction_id}>
-                                                                {/* Main Transaction Row */}
-                                                                <TableRow
-                                                                    className="cursor-pointer hover:bg-muted/50 transition"
-                                                                    onClick={() => toggleRow(tx.transaction_id)}
-                                                                >
-                                                                    <TableCell className="text-center w-1/7">
-                                                                        <div className="inline-flex items-center gap-2 justify-center">
-                                                                            <span className="font-mono">{tx.transaction_id.slice(0, 5)}...</span>
-
-                                                                            {/* Copy button */}
-                                                                            <button
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation(); // Prevent triggering row expand
-                                                                                    navigator.clipboard.writeText(tx.transaction_id);
-                                                                                }}
-                                                                                title="Click to copy full Transaction ID"
-                                                                                className="hover:text-primary"
-                                                                            >
-                                                                                <svg
-                                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                                    className="h-4 w-4 text-muted-foreground hover:text-foreground transition"
-                                                                                    fill="none"
-                                                                                    viewBox="0 0 24 24"
-                                                                                    stroke="currentColor"
-                                                                                >
-                                                                                    <path
-                                                                                        strokeLinecap="round"
-                                                                                        strokeLinejoin="round"
-                                                                                        strokeWidth={2}
-                                                                                        d="M8 16h8m2 0a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v8a2 2 0 002 2zM8 16v2a2 2 0 002 2h8a2 2 0 002-2v-2"
-                                                                                    />
-                                                                                </svg>
-                                                                            </button>
-
-                                                                            <svg
-                                                                                xmlns="http://www.w3.org/2000/svg"
-                                                                                className={`h-4 w-4 transition-transform ${expandedRows[tx.transaction_id] ? "rotate-90" : ""}`}
-                                                                                fill="none"
-                                                                                viewBox="0 0 24 24"
-                                                                                stroke="currentColor"
-                                                                            >
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                                            </svg>
-                                                                        </div>
-                                                                    </TableCell>
-
-                                                                    <TableCell className="text-center">{tx.creation_date}</TableCell>
-                                                                    <TableCell className="text-center">{tx.type}</TableCell>
-                                                                    <TableCell className="text-center">{tx.payment_type}</TableCell>
-                                                                    <TableCell className="text-center">{formatAmount(tx.outstanding_amount, data.currency)}</TableCell>
-                                                                    <TableCell className={`text-center font-bold ${tx.status === "PENDING"
-                                                                        ? "text-red-500"
-                                                                        : tx.status === "PARTIALLY PAID"
-                                                                            ? "text-orange-500"
-                                                                            : "text-green-500"
-                                                                        }`}>
-                                                                        {tx.status}
-                                                                    </TableCell>
+                                    <div className="flex items-start w-full gap-2">
+                                        <Card className="w-2/6 h-[300px]">
+                                            <CardHeader>
+                                                <CardTitle>Banking Details</CardTitle>
+                                                <CardDescription>Make any payments through EFT to the below banking details. Please make use of your <strong>payment reference number</strong> when making the payment.</CardDescription>
+                                            </CardHeader>
+                                            <CardContent>
+                                                {
+                                                    bankDetailsLoading &&
+                                                    <div className="flex justify-center py-8">
+                                                        <Loader2 className="h-8 w-8 animate-spin" />
+                                                    </div>
+                                                }
+                                                {
+                                                    !bankDetailsLoading &&
+                                                    <Table>
+                                                        <TableBody>
+                                                            <TableRow>
+                                                                <TableCell>Bank</TableCell>
+                                                                <TableCell>{bankDetails?.bank}</TableCell>
+                                                            </TableRow>
+                                                            <TableRow>
+                                                                <TableCell>Account Number</TableCell>
+                                                                <TableCell>{bankDetails?.account_number}</TableCell>
+                                                            </TableRow>
+                                                            <TableRow>
+                                                                <TableCell>Branch Code</TableCell>
+                                                                <TableCell>{bankDetails?.branch_code}</TableCell>
+                                                            </TableRow>
+                                                            <TableRow>
+                                                                <TableCell>Account Type</TableCell>
+                                                                <TableCell>{bankDetails?.account_type}</TableCell>
+                                                            </TableRow>
+                                                        </TableBody>
+                                                    </Table>
+                                                }
+                                            </CardContent>
+                                        </Card>
+                                        {
+                                            !isUserTransactionsLoading && transactions &&
+                                            <Card className="gap-1 w-4/6 h-[300px]">
+                                                <CardHeader>
+                                                    <CardTitle>Transactions</CardTitle>
+                                                    <CardDescription>View your transactions with this club.</CardDescription>
+                                                </CardHeader>
+                                                <CardContent>
+                                                    <div className="overflow-hidden rounded-lg border my-5">
+                                                        <Table>
+                                                            <TableHeader className="bg-muted sticky top-0 z-10">
+                                                                <TableRow>
+                                                                    <TableHead className="text-center w-1/7">Transaction ID</TableHead>
+                                                                    <TableHead className="text-center w-1/7">Creation date</TableHead>
+                                                                    <TableHead className="text-center w-1/7">Type</TableHead>
+                                                                    <TableHead className="text-center w-1/7">Payment type</TableHead>
+                                                                    <TableHead className="text-center w-1/7">Outstanding amount</TableHead>
+                                                                    <TableHead className="text-center w-1/7">Status</TableHead>
                                                                 </TableRow>
+                                                            </TableHeader>
 
-                                                                {expandedRows[tx.transaction_id] && (
-                                                                    <TableRow className="bg-muted/10">
-                                                                        <TableCell colSpan={8} className="p-4">
-                                                                            <div className="overflow-hidden rounded-lg border">
-                                                                                <Table className="w-full">
-                                                                                    <TableHeader className="bg-muted sticky top-0 z-10">
-                                                                                        <TableRow>
-                                                                                            <TableHead className="text-center">Date</TableHead>
-                                                                                            <TableHead className="text-center">Type</TableHead>
-                                                                                            <TableHead className="text-center">Description</TableHead>
-                                                                                            <TableHead className="text-center">Amount</TableHead>
-                                                                                        </TableRow>
-                                                                                    </TableHeader>
-                                                                                    <TableBody>
-                                                                                        {Object.entries(tx.lifecycle)
-                                                                                            // Sort by timestamp descending (latest first)
-                                                                                            .sort(([a], [b]) => Number(b) - Number(a))
-                                                                                            .map(([timestamp, entry]: any) => (
-                                                                                                <TableRow key={timestamp}>
-                                                                                                    <TableCell className="text-center">
-                                                                                                        {new Date(Number(timestamp)).toLocaleString("en-GB", {
-                                                                                                            day: "2-digit",
-                                                                                                            month: "2-digit",
-                                                                                                            year: "numeric",
-                                                                                                            hour: "2-digit",
-                                                                                                            minute: "2-digit",
-                                                                                                            hour12: true,
-                                                                                                        })}
-                                                                                                    </TableCell>
-                                                                                                    <TableCell className="text-center">{entry.type}</TableCell>
-                                                                                                    <TableCell className="text-center">{entry.description}</TableCell>
-                                                                                                    <TableCell className={`text-center ${entry.type === "SUBMISSION" ? "text-red-500" : "text-green-500"} font-bold`}>{entry.type === "SUBMISSION" ? "-" : "+"}{formatAmount(entry.amount, data.currency)}</TableCell>
+                                                            <TableBody>
+                                                                {transactions.transactions.map((tx: any) => (
+                                                                    <React.Fragment key={tx.transaction_id}>
+                                                                        {/* Main Transaction Row */}
+                                                                        <TableRow
+                                                                            className="cursor-pointer hover:bg-muted/50 transition"
+                                                                            onClick={() => toggleRow(tx.transaction_id)}
+                                                                        >
+                                                                            <TableCell className="text-center w-1/7">
+                                                                                <div className="inline-flex items-center gap-2 justify-center">
+                                                                                    <span className="font-mono">{tx.transaction_id.slice(0, 5)}...</span>
+
+                                                                                    {/* Copy button */}
+                                                                                    <button
+                                                                                        onClick={(e) => {
+                                                                                            e.stopPropagation(); // Prevent triggering row expand
+                                                                                            navigator.clipboard.writeText(tx.transaction_id);
+                                                                                        }}
+                                                                                        title="Click to copy full Transaction ID"
+                                                                                        className="hover:text-primary"
+                                                                                    >
+                                                                                        <svg
+                                                                                            xmlns="http://www.w3.org/2000/svg"
+                                                                                            className="h-4 w-4 text-muted-foreground hover:text-foreground transition"
+                                                                                            fill="none"
+                                                                                            viewBox="0 0 24 24"
+                                                                                            stroke="currentColor"
+                                                                                        >
+                                                                                            <path
+                                                                                                strokeLinecap="round"
+                                                                                                strokeLinejoin="round"
+                                                                                                strokeWidth={2}
+                                                                                                d="M8 16h8m2 0a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v8a2 2 0 002 2zM8 16v2a2 2 0 002 2h8a2 2 0 002-2v-2"
+                                                                                            />
+                                                                                        </svg>
+                                                                                    </button>
+
+                                                                                    <svg
+                                                                                        xmlns="http://www.w3.org/2000/svg"
+                                                                                        className={`h-4 w-4 transition-transform ${expandedRows[tx.transaction_id] ? "rotate-90" : ""}`}
+                                                                                        fill="none"
+                                                                                        viewBox="0 0 24 24"
+                                                                                        stroke="currentColor"
+                                                                                    >
+                                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                                                    </svg>
+                                                                                </div>
+                                                                            </TableCell>
+
+                                                                            <TableCell className="text-center">{tx.creation_date}</TableCell>
+                                                                            <TableCell className="text-center">{tx.type}</TableCell>
+                                                                            <TableCell className="text-center">{tx.payment_type}</TableCell>
+                                                                            <TableCell className="text-center">{formatAmount(tx.outstanding_amount, data.currency)}</TableCell>
+                                                                            <TableCell className={`text-center font-bold ${tx.status === "PENDING"
+                                                                                ? "text-red-500"
+                                                                                : tx.status === "PARTIALLY PAID"
+                                                                                    ? "text-orange-500"
+                                                                                    : "text-green-500"
+                                                                                }`}>
+                                                                                {tx.status}
+                                                                            </TableCell>
+                                                                        </TableRow>
+
+                                                                        {expandedRows[tx.transaction_id] && (
+                                                                            <TableRow className="bg-muted/10">
+                                                                                <TableCell colSpan={8} className="p-4">
+                                                                                    <div className="overflow-hidden rounded-lg border">
+                                                                                        <Table className="w-full">
+                                                                                            <TableHeader className="bg-muted sticky top-0 z-10">
+                                                                                                <TableRow>
+                                                                                                    <TableHead className="text-center">Date</TableHead>
+                                                                                                    <TableHead className="text-center">Type</TableHead>
+                                                                                                    <TableHead className="text-center">Description</TableHead>
+                                                                                                    <TableHead className="text-center">Amount</TableHead>
                                                                                                 </TableRow>
-                                                                                            ))}
-                                                                                    </TableBody>
-                                                                                </Table>
-                                                                            </div>
-                                                                        </TableCell>
-                                                                    </TableRow>
-                                                                )}
-                                                            </React.Fragment>
-                                                        ))}
-                                                    </TableBody>
-                                                </Table>
-                                            </div>
-                                        </div>
-                                    }
+                                                                                            </TableHeader>
+                                                                                            <TableBody>
+                                                                                                {Object.entries(tx.lifecycle)
+                                                                                                    // Sort by timestamp descending (latest first)
+                                                                                                    .sort(([a], [b]) => Number(b) - Number(a))
+                                                                                                    .map(([timestamp, entry]: any) => (
+                                                                                                        <TableRow key={timestamp}>
+                                                                                                            <TableCell className="text-center">
+                                                                                                                {new Date(Number(timestamp)).toLocaleString("en-GB", {
+                                                                                                                    day: "2-digit",
+                                                                                                                    month: "2-digit",
+                                                                                                                    year: "numeric",
+                                                                                                                    hour: "2-digit",
+                                                                                                                    minute: "2-digit",
+                                                                                                                    hour12: true,
+                                                                                                                })}
+                                                                                                            </TableCell>
+                                                                                                            <TableCell className="text-center">{entry.type}</TableCell>
+                                                                                                            <TableCell className="text-center">{entry.description}</TableCell>
+                                                                                                            <TableCell className={`text-center ${entry.type === "SUBMISSION" ? "text-red-500" : "text-green-500"} font-bold`}>{entry.type === "SUBMISSION" ? "-" : "+"}{formatAmount(entry.amount, data.currency)}</TableCell>
+                                                                                                        </TableRow>
+                                                                                                    ))}
+                                                                                            </TableBody>
+                                                                                        </Table>
+                                                                                    </div>
+                                                                                </TableCell>
+                                                                            </TableRow>
+                                                                        )}
+                                                                    </React.Fragment>
+                                                                ))}
+                                                            </TableBody>
+                                                        </Table>
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        }
+                                    </div>
                                 </TabsContent>
                             }
                         </Tabs>
