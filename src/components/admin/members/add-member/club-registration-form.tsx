@@ -9,13 +9,13 @@ import {
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
 import { FormEvent, useContext, useEffect, useMemo, useState } from "react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useFetchRegisterationForm } from "@/queries/admin/registration-form";
 import { useFetchClub } from "@/queries/admin/clubs";
 import { AdminRegistrationRequest, RegistrationRequest } from "@/requests/registration-request";
 import { useMemberRegistrationMutation } from "@/mutations/admin/useMemberRegistrationMutation";
-import { toast } from "sonner";
+import { CheckCircle2Icon } from "lucide-react"
 import { formatAmount } from "@/data/currencies";
 import StandardCheckbox from "../../../member/registration-form/standard-checkbox";
 import BillingDropdown from "../../../member/registration-form/billing-dropdown";
@@ -72,11 +72,17 @@ export interface PagedFormPayload {
 
 export function ClubRegisterForm({
   className,
+  setShowRegistrationForm,
   memberEmail,
   memberFirstName,
   memberSurname,
   ...props
-}: React.ComponentProps<"div"> & { memberEmail: string; memberFirstName: string; memberSurname: string }) {
+}: React.ComponentProps<"div"> & {
+  memberEmail: string;
+  memberFirstName: string;
+  memberSurname: string;
+  setShowRegistrationForm: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
   const { club } = useContext(ClubContext) as ClubContextType;
   const { mutate, isPending, isSuccess } =
     useMemberRegistrationMutation();
@@ -254,7 +260,12 @@ export function ClubRegisterForm({
           <CardDescription>
             {!isSuccess
               ? "Finish the registration form to register this member."
-              : "The member has been successfully registered!"}
+              :
+              <Alert className="flex items-center justify-center gap-2 text-center">
+                <CheckCircle2Icon color="green" className="w-6 h-6" />
+                <AlertTitle className="text-green-800 mt-2">Registration successful!</AlertTitle>
+              </Alert>
+            }
           </CardDescription>
           {clubLoading && isLoading && (
             <div className="flex justify-center py-8">
@@ -363,7 +374,7 @@ export function ClubRegisterForm({
                   ) : !registrationRequest ? (
                     <div className="flex justify-between">
                       {currentPageIndex > 0 && (
-                        <Button variant={"outline"} type="button" onClick={() => {setCurrentPageIndex((i) => i - 1), setSubmitRegistrationError(undefined)}}>
+                        <Button variant={"outline"} type="button" onClick={() => { setCurrentPageIndex((i) => i - 1), setSubmitRegistrationError(undefined) }}>
                           Previous
                         </Button>
                       )}
@@ -410,7 +421,7 @@ export function ClubRegisterForm({
                 )}
 
                 <div className="text-center text-sm mt-4">
-                  <Link to={"/manage/members"} className="underline underline-offset-4">
+                  <Link onClick={() => setShowRegistrationForm(false)} className="underline underline-offset-4">
                     Cancel
                   </Link>
                 </div>
@@ -422,8 +433,8 @@ export function ClubRegisterForm({
             <div>
               <div className="grid-2 gap-6">
                 <div className="grid gap-6">
-                  <Link to={`/manage/members`}>
-                    <Button className="w-full">Manage members</Button>
+                  <Link onClick={() => setShowRegistrationForm(false)}>
+                    <Button className="w-full">Add another member</Button>
                   </Link>
                 </div>
               </div>

@@ -18,6 +18,16 @@ export const forgotPassword = async (username: string) => {
     return response.data;
 }
 
+export const activateUser = async (email: string, session: string, password: string) => {
+    const response = await api.post('/member/activateUser', {
+        email,
+        session,
+        password
+    });
+
+    return response.data;
+}
+
 export const resetPassword = async (username: string, code: string, newPassword: string) => {
     const response = await api.post('/member/resetPassword', {
         username,
