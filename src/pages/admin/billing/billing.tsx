@@ -18,7 +18,6 @@ export default function BillingPage() {
             </div>
         )
     }
-    console.log(data)
     return (
         <div className="p-5 min-h-screen">
             <h1 className="text-xl font-bold mb-4 pb-2">You Owe Clubby: {formatAmount(data.report.total_outstanding_amount, club?.currency)}</h1>
