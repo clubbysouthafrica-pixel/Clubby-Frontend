@@ -42,6 +42,7 @@ export default function SelectedMember({
 
     return (
         <Dialog
+        
             open={open}
             onOpenChange={(openState) => {
                 setOpen(openState);
@@ -52,7 +53,7 @@ export default function SelectedMember({
             }}
         >
             <DialogContent
-                className="!w-full !max-w-screen-xl overflow-y-auto p-5 gap-4"
+                className="overflow-y-auto p-5 gap-4"
             >
                 <DialogHeader className="flex justify-between">
                     <div className="flex items-end space-x-2">
