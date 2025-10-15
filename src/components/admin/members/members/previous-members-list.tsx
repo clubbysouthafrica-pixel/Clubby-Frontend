@@ -13,16 +13,15 @@ interface ImageProps {
     sortableId: any
     selectedTab: string
     clubMembers: any
-    listActionItems: string[]
+    listActionItems: { email: string, name: string }[]
     allMembersSelected: boolean
     memberNameFilter: string
     dynamicFilters: Record<string, string>
     setAllMembersSelected: React.Dispatch<React.SetStateAction<boolean>>
-    setlistActionItems: React.Dispatch<React.SetStateAction<string[]>>
+    setlistActionItems: React.Dispatch<React.SetStateAction<{ email: string, name: string }[]>>
     setSelectedMember: React.Dispatch<React.SetStateAction<object>>
     setDeregisteredMembersLength: React.Dispatch<React.SetStateAction<number>>
     setAllListActionItems: (members: ClubMember[]) => void
-    setDeregisterMembers: React.Dispatch<React.SetStateAction<{ user_id: string, name: string }[]>>
 }
 
 export default function PreviousMembersList({
@@ -39,7 +38,6 @@ export default function PreviousMembersList({
     setAllListActionItems,
     setDeregisteredMembersLength,
     setlistActionItems,
-    setDeregisterMembers,
     setAllMembersSelected,
 }: ImageProps) {
 
@@ -61,9 +59,7 @@ export default function PreviousMembersList({
                         <TableRow>
                             <TableHead className="text-center w-1/6">Display Name</TableHead>
                             <TableHead className="text-center w-1/6">Member ID</TableHead>
-                            <TableHead className="text-center w-1/6">Registration Submitted</TableHead>
-                            <TableHead className="text-center w-1/6">Reference Numbers</TableHead>
-                            <TableHead className="text-center w-1/6">Outstanding Amount</TableHead>
+                            <TableHead className="text-center w-1/6">Deregistered On</TableHead>
                             <TableHead className="text-center w-1/5">
                                 <div className="flex items-center justify-center gap-2">
                                     Action
@@ -118,8 +114,8 @@ export default function PreviousMembersList({
                                     </div>
                                 </TableCell>
                                 <TableCell className="text-center w-1/6">
-                                    {member.registration_submitted_on ? (() => {
-                                        const date = new Date(member.registration_submitted_on);
+                                    {member.deregistered_on ? (() => {
+                                        const date = new Date(member.deregistered_on);
                                         const now = new Date();
                                         const diffTime = Math.abs(now.getTime() - date.getTime());
                                         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -127,33 +123,27 @@ export default function PreviousMembersList({
                                         return `${date.toLocaleString()} (${diffDays === 0 ? 'today' : diffDays === 1 ? '1 day ago' : `${diffDays} days ago`})`;
                                     })() : "-"}
                                 </TableCell>
-                                <TableCell className="text-center w-1/6">
-                                    {member.registration_payment_reference}
-                                </TableCell>
-                                <TableCell className="text-center w-1/6">
-                                    {member.resubmission_required ? "N/A" : formatAmount(member.outstanding_amount, club?.currency)}
-                                </TableCell>
-                                <TableCell className="text-center w-1/6">
+                                <TableCell className="text-center w-1/7">
                                     <Checkbox
-                                        checked={listActionItems.includes(member.member_email as string)}
+                                        checked={listActionItems.some(
+                                            (item) =>
+                                                item.email === member.member_email &&
+                                                item.name === `${member.member_first_name} ${member.member_surname}`
+                                        )}
                                         onCheckedChange={(checked: boolean) => {
-                                            setlistActionItems([])
-                                            setDeregisterMembers([])
-                                            setAllMembersSelected(false)
-                                            setlistActionItems(prev =>
-                                                checked
-                                                    ? prev.includes(member.member_email as string)
-                                                        ? prev
-                                                        : [...prev, member.member_email as string]
-                                                    : prev.filter(id => id !== member.member_email as string)
-                                            )
-                                            setDeregisterMembers(prev =>
-                                                checked
-                                                    ? prev.some(m => m.user_id === member.user_id)
-                                                        ? prev
-                                                        : [...prev, { user_id: member.user_id, name: `${member.member_first_name} ${member.member_surname}` }]
-                                                    : prev.filter(m => m.user_id !== member.user_id)
-                                            )
+                                            if (checked) {
+                                                const updatedList = [...listActionItems, { email: member.member_email, name: `${member.member_first_name} ${member.member_surname}` }];
+                                                setlistActionItems(updatedList);
+                                                if (updatedList.length === filteredDeregisteredMembers.length) {
+                                                    setAllMembersSelected(true);
+                                                }
+                                            } else {
+                                                const updatedList = listActionItems.filter(
+                                                    (item) => item.email !== member.member_email
+                                                );
+                                                setlistActionItems(updatedList);
+                                                setAllMembersSelected(false);
+                                            }
                                         }}
                                     />
                                 </TableCell>

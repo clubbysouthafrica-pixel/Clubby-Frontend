@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { KeyboardSensor, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { ClubMember } from "@/interfaces/club";
 import { useRegisterUserToClubMutation } from "@/mutations/admin/member";
-import SendEmailDialog from "@/components/send-email-dialog";
+import SendEmailDialog from "@/components/admin/members/members/send-email";
 import DeregisterMembersDialog from "@/components/admin/members/members/deregister-members";
 import SelectedMember from "@/components/admin/members/members/selected-members";
 import DeregisterSeasonDialog from "@/components/admin/members/members/deregister-season";
@@ -28,7 +28,7 @@ export default function ListMembersPage() {
     const { club } = useContext(ClubContext) as ClubContextType
     const { data: clubMembers, isLoading: clubMembersLoading } = useFetchClubMembers(club?.club_account_id as string)
     const { mutate, isPending, isSuccess, isError, reset } = useRegisterUserToClubMutation()
-    const [listActionItems, setlistActionItems] = useState<string[]>([])
+    const [listActionItems, setlistActionItems] = useState<{ email: string, name: string }[]>([])
     const [allMembersSelected, setAllMembersSelected] = useState(false)
     const [openDialogUserId, setOpenDialogUserId] = useState<string | null>(null);
     const [dereigsterMembers, setDeregisterMembers] = useState<{ user_id: string, name: string }[]>([])
@@ -73,7 +73,7 @@ export default function ListMembersPage() {
             setDeregisterMembers([])
             setAllMembersSelected(false)
         } else {
-            const allMembers = members.map((member: ClubMember) => { return member.member_email as string });
+            const allMembers = members.map((member: ClubMember) => { return {email: member.member_email as string, name: `${member.member_first_name} ${member.member_surname}` } });
             const allDeregisterMembers = members.map((member: ClubMember) => { return { user_id: member.user_id, name: `${member.member_first_name} ${member.member_surname}` } })
             setlistActionItems(allMembers)
             setAllMembersSelected(true)
@@ -290,6 +290,7 @@ export default function ListMembersPage() {
                             clubMembers={clubMembers}
                             memberNameFilter={memberNameFilter}
                             dynamicFilters={dynamicFilters}
+                            dereigsterMembers={dereigsterMembers}
                             setAllListActionItems={setAllListActionItems}
                             setSelectedMember={setSelectedMember}
                             setlistActionItems={setlistActionItems}
@@ -324,7 +325,6 @@ export default function ListMembersPage() {
                             setlistActionItems={setlistActionItems}
                             setSelectedMember={setSelectedMember}
                             setOpenDialogUserId={setOpenDialogUserId}
-                            setDeregisterMembers={setDeregisterMembers}
                             setMemberRegisterAmount={setMemberRegisterAmount}
                             setUnregisteredMembersLength={setUnregisteredMembersLength}
                             setAllListActionItems={setAllListActionItems}
@@ -348,7 +348,6 @@ export default function ListMembersPage() {
                             setAllListActionItems={setAllListActionItems}
                             setSelectedMember={setSelectedMember}
                             setlistActionItems={setlistActionItems}
-                            setDeregisterMembers={setDeregisterMembers}
                             setAllMembersSelected={setAllMembersSelected}
                             setDeregisteredMembersLength={setDeregisteredMembersLength}
                         />
