@@ -12,14 +12,14 @@ export function RegistrationReport({ report, currency }: props) {
     return (
         <div>
             <h1 className="text-base font-bold">Registration Report</h1>
-            {report && report.data &&
+            {report &&
                 <div className="@container/main flex flex-1 flex-col gap-2">
                     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-2">
                         <RegistrationReportingSectionCards report={report} currency={currency as string} />
                     </div>
                 </div>
             }
-            {report && report.data.length > 0 &&
+            {report?.data && report.data.length > 0 &&
                 <div className="overflow-hidden rounded-lg border">
                     <Table>
                         <TableHeader className="bg-muted sticky top-0 z-10">

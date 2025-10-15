@@ -18,6 +18,8 @@ export default function GeneralReportingPage() {
             </div>
         )
     }
+
+    console.log(report)
     return (
         <div className="p-5 min-h-screen">
             <h1 className="text-base font-bold mb-2">Club Financial Reporting</h1>
@@ -28,14 +30,14 @@ export default function GeneralReportingPage() {
                 </TabsList>
                 <TabsContent key="overall" value="overall">
                     <Card className="p-4">
-                        {!isLoading && report && report.data &&
+                        {!isLoading && report &&
                             <OverallReport report={report} currency={club?.currency ?? "ZAR"} />
                         }
                     </Card>
                 </TabsContent>
                 <TabsContent key="registration" value="registration">
                     <Card className="p-4">
-                        {!isLoading && report && report.data &&
+                        {!isLoading && report &&
                             <RegistrationReport report={report} currency={club?.currency ?? "ZAR"} />
                         }
                     </Card>
