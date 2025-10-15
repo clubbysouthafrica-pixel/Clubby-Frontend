@@ -74,15 +74,16 @@ export default function ViewClubPage() {
         }
     }, [data]);
 
+    if (isLoading || isUserTransactionsLoading) {
+        return (
+            <div className="flex justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        )
+    }
+
     return (
         <Pager>
-            {
-                ( isLoading || isUserTransactionsLoading ) &&
-                <div className="flex justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                </div>
-
-            }
             {
                 isError && <p> Something went wrong... </p>
             }

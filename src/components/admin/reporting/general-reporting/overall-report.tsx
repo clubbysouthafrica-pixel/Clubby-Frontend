@@ -19,7 +19,7 @@ export function OverallReport({ report, currency }: props) {
                     </div>
                 </div>
             }
-            {report.data.length > 0 &&
+            {report?.data && report.data.length > 0 &&
                 <div className="overflow-hidden rounded-lg border">
                     <Table>
                         <TableHeader className="bg-muted sticky top-0 z-10">
@@ -30,7 +30,7 @@ export function OverallReport({ report, currency }: props) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {report.data?.map((month: ReportDataRow) => (
+                            {report?.data?.map((month: ReportDataRow) => (
                                 <TableRow key={month.date}>
                                     <TableCell className="text-center font-bold w-1/3">{month.date}</TableCell>
                                     <TableCell className="text-center w-1/3">{formatAmount(month.total_revenue, currency)}</TableCell>
