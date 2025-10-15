@@ -77,7 +77,7 @@ export default function ViewClubPage() {
     return (
         <Pager>
             {
-                isLoading &&
+                ( isLoading || isUserTransactionsLoading ) &&
                 <div className="flex justify-center py-8">
                     <Loader2 className="h-8 w-8 animate-spin" />
                 </div>
@@ -247,7 +247,7 @@ export default function ViewClubPage() {
                                                     <CardTitle>Transactions</CardTitle>
                                                     <CardDescription>View your transactions with this club.</CardDescription>
                                                 </CardHeader>
-                                                <CardContent>
+                                                <CardContent className="overflow-y-auto">
                                                     <div className="overflow-hidden rounded-lg border my-5">
                                                         <Table>
                                                             <TableHeader className="bg-muted sticky top-0 z-10">

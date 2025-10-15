@@ -59,9 +59,7 @@ export default function PreviousMembersList({
                         <TableRow>
                             <TableHead className="text-center w-1/6">Display Name</TableHead>
                             <TableHead className="text-center w-1/6">Member ID</TableHead>
-                            <TableHead className="text-center w-1/6">Registration Submitted</TableHead>
-                            <TableHead className="text-center w-1/6">Reference Numbers</TableHead>
-                            <TableHead className="text-center w-1/6">Outstanding Amount</TableHead>
+                            <TableHead className="text-center w-1/6">Deregistered On</TableHead>
                             <TableHead className="text-center w-1/5">
                                 <div className="flex items-center justify-center gap-2">
                                     Action
@@ -116,20 +114,14 @@ export default function PreviousMembersList({
                                     </div>
                                 </TableCell>
                                 <TableCell className="text-center w-1/6">
-                                    {member.registration_submitted_on ? (() => {
-                                        const date = new Date(member.registration_submitted_on);
+                                    {member.deregistered_on ? (() => {
+                                        const date = new Date(member.deregistered_on);
                                         const now = new Date();
                                         const diffTime = Math.abs(now.getTime() - date.getTime());
                                         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
                                         return `${date.toLocaleString()} (${diffDays === 0 ? 'today' : diffDays === 1 ? '1 day ago' : `${diffDays} days ago`})`;
                                     })() : "-"}
-                                </TableCell>
-                                <TableCell className="text-center w-1/6">
-                                    {member.registration_payment_reference}
-                                </TableCell>
-                                <TableCell className="text-center w-1/6">
-                                    {member.resubmission_required ? "N/A" : formatAmount(member.outstanding_amount, club?.currency)}
                                 </TableCell>
                                 <TableCell className="text-center w-1/7">
                                     <Checkbox

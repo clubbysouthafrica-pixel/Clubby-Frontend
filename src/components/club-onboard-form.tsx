@@ -386,7 +386,7 @@ export function ClubRegisterForm({
                   ) : !registrationRequest ? (
                     <div className="flex justify-between">
                       {currentPageIndex > 0 && (
-                        <Button variant={"outline"} type="button" onClick={() => setCurrentPageIndex((i) => i - 1)}>
+                        <Button variant={"outline"} type="button" onClick={() => setCurrentPageIndex((i) => i - 1)} disabled={isPending}>
                           Previous
                         </Button>
                       )}
@@ -395,17 +395,17 @@ export function ClubRegisterForm({
                           {isPending ? "Registering..." : "Continue"}
                         </Button>
                       ) : (
-                        <Button type="button" onClick={handleNextPage}>
+                        <Button type="button" onClick={handleNextPage} disabled={isPending}>
                           Next
                         </Button>
                       )}
                     </div>
                   ) : (
                     <div className="flex justify-between">
-                      <Button variant={"outline"} type="button" onClick={returnBackToRegistrationForm}>
+                      <Button variant={"outline"} type="button" onClick={returnBackToRegistrationForm} disabled={isPending}>
                         Back to form
                       </Button>
-                      <Button type="button" onClick={submitRegistration}>
+                      <Button type="button" onClick={submitRegistration} disabled={isPending}>
                         {isRegistering ? "Registering..." : "Submit registration"}
                       </Button>
                     </div>

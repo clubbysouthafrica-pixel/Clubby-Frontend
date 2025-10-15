@@ -15,6 +15,7 @@ export interface Club {
 
 export interface ClubMember {
     billing_type: string
+    deregistered_on?: number
     club_name: string
     member_first_name: string
     member_surname: string
