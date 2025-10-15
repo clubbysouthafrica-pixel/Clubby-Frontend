@@ -13,7 +13,7 @@ interface ImageProps {
   clubId: string
   dereigsterMembers: { user_id: string, name: string }[]
   selectedTab: string
-  setlistActionItems: React.Dispatch<React.SetStateAction<string[]>>
+  setlistActionItems: React.Dispatch<React.SetStateAction<{ email: string, name: string }[]>>
   setDeregisterMembers: React.Dispatch<React.SetStateAction<{ user_id: string, name: string }[]>>
   setAllMembersSelected: React.Dispatch<React.SetStateAction<boolean>>
 }

@@ -1,7 +1,6 @@
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ClubMember } from "@/interfaces/club"
-import { formatAmount } from "@/data/currencies"
 import { useEffect } from "react";
 import { Club } from "@/context/ClubContext"
 import { Checkbox } from "@/components/ui/checkbox";
@@ -25,7 +24,6 @@ interface ImageProps {
 }
 
 export default function PreviousMembersList({
-    club,
     sensors,
     sortableId,
     selectedTab,
