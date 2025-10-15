@@ -105,19 +105,32 @@ export function LoginForm({
                       Forgot your password?
                     </Link>
                   </div>
-                  <Input id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="***"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    required />
-                  <div
-                    className="absolute right-5 bottom-10 top-[55%] transform -translate-y-1/2 cursor-pointer text-muted-foreground"
-                    onClick={() => { setShowPassword(!showPassword), setError("") }}
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+
+                  {/* Relative wrapper for input + icon */}
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="***"
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      required
+                      className="pr-10" // Add padding to the right so the icon doesn't overlap text
+                    />
+
+                    {/* Eye icon */}
+                    <div
+                      className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground"
+                      onClick={() => {
+                        setShowPassword(!showPassword);
+                        setError("");
+                      }}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </div>
                   </div>
                 </div>
+
 
                 {
                   error &&
