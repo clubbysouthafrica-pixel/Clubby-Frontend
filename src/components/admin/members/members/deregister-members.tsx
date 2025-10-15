@@ -72,6 +72,20 @@ export default function DeregisterMembersDialog({ selectedTab, dereigsterMembers
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Deregister Members</DialogTitle>
+          <DialogDescription>Deregistration list ({dereigsterMembers.length}):</DialogDescription>
+          <div className="overflow-hidden rounded-lg border-b border-t mb-2">
+            <div className="max-h-[100px] overflow-y-auto border-bottom px-2">
+              <Table>
+                <TableBody>
+                  {dereigsterMembers.map((member) => (
+                    <TableRow key={member.user_id}>
+                      <TableCell className="py-2">{member.name}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
           <DialogDescription>
             <span>
               This action will remove all currently registered club members from the system. Member access will be revoked, and they will no longer be able to log in or participate in club activities.
@@ -87,19 +101,6 @@ export default function DeregisterMembersDialog({ selectedTab, dereigsterMembers
               ⚠️ This action is irreversible. All member associations will be removed. You may re-invite or members may re-register manually afterward.
             </span>
           </DialogDescription>
-          <div className="overflow-hidden rounded-lg border my-2">
-            <div className="max-h-[200px] overflow-y-auto">
-              <Table>
-                <TableBody>
-                  {dereigsterMembers.map((member) => (
-                    <TableRow key={member.user_id} className="even:bg-white odd:bg-gray-100">
-                      <TableCell className="py-2">{member.name}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
         </DialogHeader>
         <div className="flex items-center gap-1">
           <Checkbox

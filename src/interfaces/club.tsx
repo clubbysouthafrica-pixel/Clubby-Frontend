@@ -18,7 +18,7 @@ export interface ClubMember {
     club_name: string
     member_first_name: string
     member_surname: string
-    member_email?:string
+    member_email:string
     meta_billing: Record<string, any>
     meta_standard: Record<string, any>
     outstanding_amount: number

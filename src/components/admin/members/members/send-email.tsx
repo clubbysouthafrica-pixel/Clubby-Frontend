@@ -3,17 +3,18 @@ import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, Dialog
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { CheckCircle2Icon, SendIcon } from "lucide-react"
-import { Textarea } from "./ui/textarea"
+import { Textarea } from "../../../ui/textarea"
 import { useEmailerProcessMutation } from "@/mutations/admin/useEmailerMutation"
-import { Input } from "./ui/input"
-import { Alert, AlertDescription, AlertTitle } from "./ui/alert"
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip"
+import { Input } from "../../../ui/input"
+import { Alert, AlertDescription, AlertTitle } from "../../../ui/alert"
+import { Tooltip, TooltipContent, TooltipTrigger } from "../../../ui/tooltip"
 import { MessagesSquare } from "lucide-react";
+import { Table, TableBody, TableCell, TableRow } from "../../../ui/table"
 
 interface ImageProps {
   clubId: string
-  contacts: string[]
-  setlistActionItems: React.Dispatch<React.SetStateAction<string[]>>
+  contacts: { email: string, name: string }[]
+  setlistActionItems: React.Dispatch<React.SetStateAction<{ email: string, name: string }[]>>
   setDeregisterMembers: React.Dispatch<React.SetStateAction<{ user_id: string, name: string }[]>>
   setAllMembersSelected: React.Dispatch<React.SetStateAction<boolean>>
 }
@@ -36,7 +37,7 @@ export default function SendEmailDialog({ contacts, clubId, setlistActionItems, 
     mutate({
       subject,
       email_body: body,
-      emails: contacts,
+      emails: contacts.map(item => item.email),
       club_account_id: clubId,
     })
   }
@@ -70,7 +71,20 @@ export default function SendEmailDialog({ contacts, clubId, setlistActionItems, 
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Send Email</DialogTitle>
-          <DialogDescription>Selected Contacts ({contacts.length})</DialogDescription>
+          <DialogDescription>Mailing list ({contacts.length}):</DialogDescription>
+          <div className="overflow-hidden rounded-lg border-b border-t">
+            <div className="max-h-[100px] overflow-y-auto border-bottom px-2">
+              <Table>
+                <TableBody>
+                  {contacts.map((contact) => (
+                    <TableRow key={contact.email}>
+                      <TableCell className="py-2">{contact.name} ({contact.email})</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
         </DialogHeader>
         <div className="grid gap-4">
           <div className="grid gap-3">
