@@ -15,7 +15,6 @@ export interface User {
     name: string;
     username: string;
     displayName: string;
-    // add any other properties your user object may have
 }
 
 interface AuthProviderProps {

@@ -6,6 +6,7 @@ import { useContext } from "react";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { HomeSectionCards } from "@/components/admin/club/home/section-cards";
 import { Loader2 } from "lucide-react";
+import { CardDescription } from "@/components/ui/card";
 
 export default function HomeDashboardPage() {
     const { club } = useContext(ClubContext) as ClubContextType
@@ -37,9 +38,13 @@ export default function HomeDashboardPage() {
             </div>
         )
     }
+
     return (
         <div className="p-5 min-h-screen">
-            <h1 className="text-base font-bold mb-2">Manage</h1>
+            <h1 className="text-xl font-bold">Current Season: {club?.season_cycle}</h1>
+            <CardDescription className="mb-4">
+                To view reports from previous seasons, please visit the Historical Reporting section.
+            </CardDescription>
             {
                 !reportLoading &&
                 <div>
