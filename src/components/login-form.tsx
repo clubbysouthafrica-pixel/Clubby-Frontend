@@ -33,13 +33,14 @@ export function LoginForm({
   const [error, setError] = useState("")
   const [email, setEmail] = useState<string>(username || "");
   const [password, setPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const signIn = async () => {
     if (!email || !password) return
     setLoading(true)
 
     try {
-      const { onboarded, new_password_required }: {onboarded: boolean, new_password_required: boolean} = await login(isAdminLogin, email, password)
+      const { onboarded, new_password_required }: { onboarded: boolean, new_password_required: boolean } = await login(isAdminLogin, email, password)
 
       if (new_password_required) {
         navigate(`/activateAccount?email=${encodeURIComponent(email)}`)
@@ -105,11 +106,17 @@ export function LoginForm({
                     </Link>
                   </div>
                   <Input id="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     placeholder="***"
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     required />
+                  <div
+                    className="absolute right-5 bottom-10 top-[55%] transform -translate-y-1/2 cursor-pointer text-muted-foreground"
+                    onClick={() => { setShowPassword(!showPassword), setError("") }}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </div>
                 </div>
 
                 {
