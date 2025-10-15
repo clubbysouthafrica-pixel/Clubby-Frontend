@@ -35,7 +35,6 @@ function App() {
       </Router>
       <Toaster />
     </>
-    //   </ThemeProvider>
   )
 }
 

@@ -8,6 +8,7 @@ export interface ClubContextType {
 export interface Club {
     club_name: string
     access: string,
+    season_cycle: number
     club_account_id: string,
     club_type: string,
     currency: string
