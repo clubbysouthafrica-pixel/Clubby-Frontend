@@ -17,10 +17,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import RegisteredMembersList from "@/components/admin/members/members/registered-members-list";
 import PendingMembersList from "@/components/admin/members/members/pending-members-list";
 import PreviousMembersList from "@/components/admin/members/members/previous-members-list";
-import { 
-    filteredRegisteredMembers, 
-    previousRegisteredMembers, 
-    pendingRegisteredMembers 
+import {
+    filteredRegisteredMembers,
+    previousRegisteredMembers,
+    pendingRegisteredMembers
 } from "@/helpers/admin/members/filter-members-list";
 import { Loader2 } from "lucide-react";
 
@@ -47,7 +47,7 @@ export default function ListMembersPage() {
     const [deregisteredMembersLength, setDeregisteredMembersLength] = useState<number>(0);
 
     const [availableDynamicFilters, setAvailableDynamicFilters] = useState<
-        { key: string, fieldName: string, type: string, options: string[] }[]
+        { key: string, field_name: string, type: string, options: string[] }[]
     >([]);
 
     const handleFormattedInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -168,6 +168,7 @@ export default function ListMembersPage() {
             </div>
         )
     }
+
     return (
         <div className="p-5 min-h-screen">
             <h1 className="text-base font-bold">Club Members</h1>
@@ -221,7 +222,7 @@ export default function ListMembersPage() {
                                 }}
                                 className="w-[300px]"
                             />
-                            {availableDynamicFilters && availableDynamicFilters.map(({ key, fieldName, options }) => (
+                            {availableDynamicFilters && availableDynamicFilters.map(({ key, field_name, options }) => (
                                 <Select
                                     key={key}
                                     onValueChange={(value) => {
@@ -233,7 +234,7 @@ export default function ListMembersPage() {
                                     value={dynamicFilters[key] || ""}
                                 >
                                     <SelectTrigger className="w-[250px]">
-                                        <span className="text-muted-foreground truncate">{fieldName}</span>
+                                        <span className="text-muted-foreground truncate">{field_name}:</span>
                                         <SelectValue placeholder="All" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -247,6 +248,15 @@ export default function ListMembersPage() {
                         </div>
                         <div className="px-2 py-1 flex items-center gap-4">
                             {club?.club_account_id && (
+                                <SendEmailDialog
+                                    clubId={club.club_account_id}
+                                    contacts={listActionItems}
+                                    setlistActionItems={setlistActionItems}
+                                    setDeregisterMembers={setDeregisterMembers}
+                                    setAllMembersSelected={setAllMembersSelected}
+                                />
+                            )}
+                            {club?.club_account_id && selectedTab === "registered-members" && (
                                 <DeregisterMembersDialog
                                     dereigsterMembers={dereigsterMembers}
                                     clubId={club.club_account_id}
@@ -256,17 +266,8 @@ export default function ListMembersPage() {
                                     selectedTab={selectedTab}
                                 />
                             )}
-                            {club?.club_account_id && (
-                                <SendEmailDialog
-                                    clubId={club.club_account_id}
-                                    contacts={listActionItems}
-                                    setlistActionItems={setlistActionItems}
-                                    setDeregisterMembers={setDeregisterMembers}
-                                    setAllMembersSelected={setAllMembersSelected}
-                                />
-                            )}
                             {
-                                club?.club_account_id && (
+                                club?.club_account_id && selectedTab === "registered-members" && (
                                     <DeregisterSeasonDialog
                                         clubId={club.club_account_id}
                                         selectedTab={selectedTab}

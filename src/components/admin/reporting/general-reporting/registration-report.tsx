@@ -9,7 +9,6 @@ interface props {
 }
 
 export function RegistrationReport({ report, currency }: props) {
-    console.log(report)
     return (
         <div>
             <h1 className="text-base font-bold">Registration Report</h1>

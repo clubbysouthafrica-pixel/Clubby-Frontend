@@ -17,6 +17,7 @@ import OnboardMember from "@/pages/authentication/onboard-member";
 import AdminRegistrationFormPage from "@/pages/registrations/admin-registration-form-page";
 import BrowseClubsPage from "@/pages/clubs/browse-clubs";
 import RegisterClubPage from "@/pages/clubs/register-club-page";
+import ActivateAccount from "@/pages/authentication/temporary-password/ActivateAccount";
 export default function MarketRoutes() {
     return (
         <Routes>
@@ -25,6 +26,7 @@ export default function MarketRoutes() {
             <Route path="/admin/login" element={<LoginPage />}></Route>
             <Route path="/register" element={<RegisterPage />}></Route>
             <Route path="/forgotpassword" element={<ForgotPasswordPage />}></Route>
+            <Route path="/activateAccount" element={<ActivateAccount />}></Route>
             <Route path="/resetpassword" element={<PasswordResetPage />}></Route>
             <Route path="/otp" element={<OTPPage />}></Route>
             <Route path="/about" element={<AboutPage />}></Route>

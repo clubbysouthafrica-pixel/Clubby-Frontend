@@ -9,12 +9,12 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {Link, useLocation, useNavigate, useSearchParams} from "react-router-dom";
-import {useContext, useState} from "react";
-import {AuthContext, AuthContextType} from "@/context/AuthContext.tsx";
-import {Alert, AlertDescription} from "@/components/ui/alert.tsx";
-import {AlertCircle} from "lucide-react";
-import {AxiosError} from "axios";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useContext, useState } from "react";
+import { AuthContext, AuthContextType } from "@/context/AuthContext.tsx";
+import { Alert, AlertDescription } from "@/components/ui/alert.tsx";
+import { AlertCircle } from "lucide-react";
+import { AxiosError } from "axios";
 
 export function LoginForm({
   className,
@@ -22,7 +22,6 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const location = useLocation();
 
-  // Check if the current path is /admin/login
   const isAdminLogin = location.pathname === '/admin/login';
 
   const { login } = useContext(AuthContext) as AuthContextType || {};
@@ -40,14 +39,19 @@ export function LoginForm({
     setLoading(true)
 
     try {
-      const isOnboarded = await login(isAdminLogin, email, password)
-      if (isAdminLogin) {
-        localStorage.setItem("isAdmin","true")
-        navigate("/")
-        return
-      }
+      const { onboarded, new_password_required }: {onboarded: boolean, new_password_required: boolean} = await login(isAdminLogin, email, password)
 
-      navigate(isOnboarded ? "/" : "/onboardMember")
+      if (new_password_required) {
+        navigate(`/activateAccount?email=${encodeURIComponent(email)}`)
+      } else {
+        if (isAdminLogin) {
+          localStorage.setItem("isAdmin", "true")
+          navigate("/")
+          return
+        }
+
+        navigate(onboarded ? "/" : "/onboardMember")
+      }
     } catch (e: unknown) {
       if (!e) {
         setError("something went wrong")
@@ -101,42 +105,42 @@ export function LoginForm({
                     </Link>
                   </div>
                   <Input id="password"
-                         type="password"
-                         placeholder="***"
-                         value={password}
-                         onChange={(event) => setPassword(event.target.value)}
-                         required />
+                    type="password"
+                    placeholder="***"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    required />
                 </div>
 
                 {
-                    error &&
-                    <Alert variant="destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription className="text-xs">
-                        {error}
-                      </AlertDescription>
-                    </Alert>
+                  error &&
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="text-xs">
+                      {error}
+                    </AlertDescription>
+                  </Alert>
                 }
                 <Button type="submit" className="w-full" disabled={loading}>
-                  { loading ? "Logging in..." : "Login" }
+                  {loading ? "Logging in..." : "Login"}
                 </Button>
               </div>
               <div className="text-center text-sm">
                 {
-                  isAdminLogin ? 
-                  <p>
-                    Want to register a club?{" "}
-                    <Link to="/contactus" className="underline underline-offset-4">
-                      Contact us
-                    </Link>
-                  </p>
-                  :
-                  <p>
-                    Don&apos;t have an account?{" "}
-                    <Link to="/register" className="underline underline-offset-4">
-                      Register
-                    </Link>
-                  </p>
+                  isAdminLogin ?
+                    <p>
+                      Want to register a club?{" "}
+                      <Link to="/contactus" className="underline underline-offset-4">
+                        Contact us
+                      </Link>
+                    </p>
+                    :
+                    <p>
+                      Don&apos;t have an account?{" "}
+                      <Link to="/register" className="underline underline-offset-4">
+                        Register
+                      </Link>
+                    </p>
                 }
               </div>
             </div>

@@ -5,7 +5,7 @@ export interface AuthContextType {
     user: boolean | null;
     isAdmin: boolean | false;
     loading: boolean;
-    login: (isAdmin: boolean, email: string, password: string) => Promise<boolean>;
+    login: (isAdmin: boolean, email: string, password: string) => Promise<{onboarded: boolean, new_password_required: boolean}>;
     register: (email: string, password: string) => Promise<AxiosResponse>;
     logout: () => void;
     verifyConfirmationCode: (email: string, confirmationCode: string) => Promise<AxiosResponse>;
@@ -45,8 +45,16 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setLoading(false);
     }, []);
 
-    const login = async (isAdmin: boolean, email: string, password: string): Promise<boolean> => {
+    const login = async (isAdmin: boolean, email: string, password: string): Promise<{onboarded: boolean, new_password_required: boolean}> => {
         const response = await axios.post((isAdmin ? adminApiUrl : apiUrl) + ( isAdmin ? '/admin/signIn': '/member/signIn'), { username: email, password });
+
+        if (response.data?.new_password_required) {
+            sessionStorage.setItem("cognitoSession", response.data.session);
+            return {
+                onboarded: false,
+                new_password_required: true,
+            }
+        }
 
         // Store tokens
         localStorage.setItem(accessToken, response.data.accessToken);
@@ -60,7 +68,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         axios.defaults.headers.common['Authorization'] = `${response.data.accessToken}`;
         setUser(true);
 
-        return response.data.onboarded
+        return {onboarded: response.data.onboarded, new_password_required: false}
     };
 
     const verifyConfirmationCode = async (email: string, confirmationCode: string) => {
