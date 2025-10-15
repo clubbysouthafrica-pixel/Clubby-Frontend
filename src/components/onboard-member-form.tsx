@@ -27,14 +27,12 @@ export function OnboardMemberForm({
     const [surname, setSurname] = useState("")
     const [dob, setDob] = useState("")
     const [phoneNumber, setPhoneNumber] = useState("")
-    const [loading, setLoading] = useState(true)
 
-    const { data } = useGetProfileQuery(false)
+    const { data, isLoading } = useGetProfileQuery(false)
 
     useEffect(() => {
         setFirstName(data?.first_name ?? "")
         setSurname(data?.surname ?? "")
-        setLoading(false)
     }, [data]);
 
     const registerUser = async (e: FormEvent<HTMLFormElement>) => {
@@ -63,8 +61,8 @@ export function OnboardMemberForm({
                     </CardDescription>
                 </CardHeader>
                 {
-                    loading ?
-                        <CardContent>
+                    isLoading ?
+                        <CardContent className="flex justify-center items-center">
                             <Loader2 className="h-8 w-8 animate-spin" />
                         </CardContent>
                         :
