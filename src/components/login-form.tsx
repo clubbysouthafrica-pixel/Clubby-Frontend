@@ -13,7 +13,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router-do
 import { useContext, useState } from "react";
 import { AuthContext, AuthContextType } from "@/context/AuthContext.tsx";
 import { Alert, AlertDescription } from "@/components/ui/alert.tsx";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { AxiosError } from "axios";
 
 export function LoginForm({
