@@ -8,6 +8,7 @@ interface Field {
     field_name: string
     field_type: string
     input_type: string
+    signature_type: string
     placeholder?: string
     required?: boolean
     value?: string
@@ -30,16 +31,23 @@ export default function StandardSignature({
     pages,
     setFieldValue,
 }: StandardFieldInputProps) {
-    const [drawSignature, setDrawSignature] = useState(true)
-    const [signature, setSignature] = useState("");
-    const [name, setName] = useState("")
+    console.log(field)
+    const [drawSignature, setDrawSignature] = useState(field?.signature_type === "name" ? false : true)
+    const [name, setName] = useState(field?.signature_type === "name" && field?.value ? field.value : "")
 
     const sigPadRef = useRef<SignaturePad | null>(null);
 
     const clearSignature = () => {
         sigPadRef.current?.clear();
-        setSignature("");
-        onChange();
+        setFieldValue(
+            pages[currentPageIndex].page_index,
+            field.field_id,
+            (f) => ({
+                ...f,
+                value: "",
+                signature_type: "signature",
+            })
+        )
     };
 
     const save = async () => {
@@ -53,20 +61,17 @@ export default function StandardSignature({
         }
 
         const dataUrl = sigPadRef.current.toDataURL("image/png");
-        setSignature(dataUrl)
-    };
 
-    const onChange = () => {
         setFieldValue(
             pages[currentPageIndex].page_index,
             field.field_id,
             (f) => ({
                 ...f,
-                value: drawSignature ? signature : name,
-                signature_type: drawSignature ? "signature" : "name",
+                value: dataUrl,
+                signature_type: "signature",
             })
         )
-    }
+    };
 
     return (
         <div className="grid gap-2" key={field.field_id}>
@@ -76,18 +81,42 @@ export default function StandardSignature({
                 </Label>
                 {
                     drawSignature ?
-                        <div>
-                            <SignaturePad
-                                ref={sigPadRef}
-                                onEnd={save}
-                                canvasProps={{ width: 400, height: 70, className: "border-b-2" }}
-                            />
-                        </div>
+                        (
+                            <div>
+                                {field.value?.startsWith("data:image/png;base64,") ? (
+                                    <img
+                                        src={field.value}
+                                        alt="Saved Signature"
+                                        className="border-b-2"
+                                        style={{ width: "400px", height: "70px", objectFit: "contain" }}
+                                    />
+                                ) : (
+                                    <SignaturePad
+                                        ref={sigPadRef}
+                                        onEnd={save}
+                                        canvasProps={{ width: 400, height: 70, className: "border-b-2" }}
+                                    />
+                                )}
+                            </div>
+                        )
                         :
                         <div>
                             <Input
                                 type="text"
-                                onChange={(e) => setName(e.target.value)}
+                                value={name}
+                                onChange={(e) => {
+                                    const newName = e.target.value;
+                                    setName(newName);
+                                    setFieldValue(
+                                        pages[currentPageIndex].page_index,
+                                        field.field_id,
+                                        (f) => ({
+                                            ...f,
+                                            value: newName,
+                                            signature_type: "name",
+                                        })
+                                    );
+                                }}
                                 placeholder="Type your name as signature"
                                 style={{ fontFamily: "cursive", fontSize: "1.2rem", width: "400px", height: "50px" }}
                             />
@@ -106,7 +135,7 @@ export default function StandardSignature({
                     }
                     <button
                         type="button"
-                        onClick={() => setDrawSignature(!drawSignature)}
+                        onClick={() => {setDrawSignature(!drawSignature), clearSignature()}}
                         className="text-sm cursor-pointer text-green-800 hover:underline ml-2"
                     >
                         {drawSignature ? "Type name as signature" : "Draw signature"}
