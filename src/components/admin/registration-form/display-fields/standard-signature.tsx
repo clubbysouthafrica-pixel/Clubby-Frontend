@@ -2,13 +2,8 @@ import { Label } from "@/components/ui/label"
 import { useEffect } from "react"
 
 interface Field {
-  field_id: string
   field_name: string
-  field_type: string
-  input_type: string
-  placeholder?: string
-  required?: boolean
-  value?: string
+  required: boolean
 }
 
 interface StandardFieldInputProps {

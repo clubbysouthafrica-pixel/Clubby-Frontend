@@ -39,7 +39,7 @@ export default function StandardSignature({
     const clearSignature = () => {
         sigPadRef.current?.clear();
         setSignature("");
-        onChange("");
+        onChange();
     };
 
     const save = async () => {
@@ -56,7 +56,7 @@ export default function StandardSignature({
         setSignature(dataUrl)
     };
 
-    const onChange = (val: string) => {
+    const onChange = () => {
         setFieldValue(
             pages[currentPageIndex].page_index,
             field.field_id,
@@ -89,7 +89,7 @@ export default function StandardSignature({
                                 type="text"
                                 onChange={(e) => setName(e.target.value)}
                                 placeholder="Type your name as signature"
-                                style={{ fontFamily: "cursive", fontSize: "1.2rem", width: "400px", height: "50px", bottomBorder: "1px" }}
+                                style={{ fontFamily: "cursive", fontSize: "1.2rem", width: "400px", height: "50px" }}
                             />
                         </div>
                 }
