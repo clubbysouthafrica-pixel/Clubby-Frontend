@@ -10,10 +10,10 @@ import StandardCheckbox from "../../../member/registration-form/standard-checkbo
 import BillingDropdown from "../../../member/registration-form/billing-dropdown";
 import StandardDopdown from "../../../member/registration-form/standard-dropdown";
 import StandardText from "../../../member/registration-form/standard-text";
+import StandardSignature from "../../../member/registration-form/standard-signature";
 import { PageFormRegistration } from "@/interfaces/formRegistration";
 
-// --- Types that match the new payload ---
-export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER";
+export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER" | "SIGNATURE";
 export type FieldType = "TEXT" | "STANDARD" | "BILLING";
 
 export interface BillingOption {
@@ -33,17 +33,17 @@ export interface PageFieldBase {
   field_order_id: string;
   field_id: string;
   field_type: FieldType;
-  field_text?: string; // helper/label text
-  field_name: string; // title when STANDARD/BILLING
+  field_text?: string;
+  field_name: string;
   required?: boolean;
-  input_type: InputType; // when STANDARD/BILLING
+  input_type: InputType;
   placeholder?: string;
-  options?: string[]; // for STANDARD DROPDOWN
-  billingOptions?: BillingOption[]; // for BILLING DROPDOWN
-  currency?: string; // for BILLING
-  amount?: number; // for BILLING fixed price (cents)
-  value?: string | number; // typed text or selected label
-  selectedAmountCents?: number; // derived for BILLING when dropdown
+  options?: string[];
+  billingOptions?: BillingOption[];
+  currency?: string;
+  amount?: number;
+  value?: string | number;
+  selectedAmountCents?: number;
   option_order_id?: string;
   label?: string;
 }
@@ -136,10 +136,22 @@ export function PreviewForm({
                           )
                         }
 
+                        if (field.field_type === "STANDARD" && field.input_type === "SIGNATURE") {
+                          return (
+                            <StandardSignature 
+                              key={field.field_id}
+                              field={field as any}
+                              currentPageIndex={currentPageIndex}
+                              pages={pages}
+                              setFieldValue={setFieldValue}
+                            />
+                          )
+                        }
+
                         if (field.field_type === "STANDARD" && field.input_type === "DROPDOWN") {
                           return (
                             <StandardDopdown
-                            key={field.field_id}
+                              key={field.field_id}
                               field={field as any}
                               currentPageIndex={currentPageIndex}
                               pages={pages}
@@ -151,7 +163,7 @@ export function PreviewForm({
                         if (field.field_type === "STANDARD" && (field.input_type === "TEXT" || field.input_type === "NUMBER")) {
                           return (
                             <StandardText
-                            key={field.field_id}
+                              key={field.field_id}
                               field={field as any}
                               currentPageIndex={currentPageIndex}
                               pages={pages}
@@ -163,7 +175,7 @@ export function PreviewForm({
                         if (field.field_type === "BILLING" && field.input_type === "DROPDOWN") {
                           return (
                             <BillingDropdown
-                            key={field.field_id}
+                              key={field.field_id}
                               field={field as any}
                               clubCurrency={currency}
                               currentPageIndex={currentPageIndex}
