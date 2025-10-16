@@ -83,6 +83,10 @@ export default function DynamicFormBuilder({ currency, clubAccountId, page, setF
     {
       value: "checkbox;standard",
       display: "Checkbox"
+    },
+    {
+      value: "signature;standard",
+      display: "Signature"
     }
   ]
   const billingTypes = [
@@ -102,12 +106,20 @@ export default function DynamicFormBuilder({ currency, clubAccountId, page, setF
 
     const type = {
       field_order_id: page.fields.length + 1,
-      field_name: fieldType === "text" ? "" : `Field ${page?.fields?.length ?? "Field" + 1}`,
-      input_type: fieldType === "text" ? "DISPLAY" : inputType.toUpperCase(),
-      placeholder: 'Default placeholder',
       field_type: fieldType.toUpperCase(),
       required: true,
       field_text: `Field ${page.fields?.length ?? 0 + 1}`,
+      input_type: fieldType === "text" ? "DISPLAY" : inputType.toUpperCase(),
+      field_name: "",
+      placeholder: "",
+    }
+
+    if (fieldType === "standard" && inputType === "signature") {
+      type.field_name = "Signature"
+      type.placeholder = "Sign field with your name"
+    } else {
+      type.field_name = fieldType === "text" ? "" : `Field ${page?.fields?.length ?? "Field" + 1}`,
+      type.placeholder = "Default placeholder"
     }
 
     setFields(page.page_index, [

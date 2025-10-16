@@ -15,6 +15,8 @@ import DisplayBillingDropdown from "./admin/registration-form/display-fields/bil
 import EditStandardCheckbox from "./admin/registration-form/edit-fields/standard-checkbox"
 import DisplayStandardCheckbox from "./admin/registration-form/display-fields/standard-checkbox"
 import DisplayStandardText from "./admin/registration-form/display-fields/standard-text"
+import StandardSignature from "./admin/registration-form/display-fields/standard-signature"
+import EditStandardSignature from "./admin/registration-form/edit-fields/standard-signature"
 
 interface Props {
     currency: string;
@@ -33,8 +35,6 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
     const [dropdownOptionField, setDropdownOptionField] = useState("")
     const [amount, setAmount] = useState(0)
 
-    // const [dropdownLabel, setDropdownLabel] = useState("")
-    // const [dropdownAmount, setDropdownAmount] = useState(0)
     const [dropdownBillingOptions, setDropdownBillingOptions] = useState<InputBillingOption[]>([])
     const [dropdownOptions, setDropdownOptions] = useState<string[]>([])
 
@@ -110,45 +110,47 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
             <DialogTrigger asChild>
                 <div className='w-full space-x-2 flex items-center'>
                     {
-                        field.input_type === "TEXT" && field.field_type === "BILLING" ?
-                            <DisplayBillingText currency={currency} field={field} />
-                            : field.input_type === "DROPDOWN" && field.field_type === "BILLING" ?
-                                <DisplayBillingDropdown currency={currency} field={field} />
-                                : field.input_type === "CHECKBOX" && field.field_type === "STANDARD" ?
-                                    <DisplayStandardCheckbox field={field} />
-                                    : field.input_type === "TEXT" && field.field_type === "STANDARD" ?
-                                        <DisplayStandardText field={field} />
-                                        :
-                                        <div className='w-full'>
-                                            <Label className='flex justify-between mb-2'>
-                                                <p>{field.field_type.toLowerCase() === "text" ? field.field_text : field.field_name}</p>
-                                                <p className='text-gray-400 text-xs'>{field.input_type} ({field.field_type})</p>
-                                            </Label>
-                                            {
-                                                field.input_type?.toUpperCase() === "CHECKBOX" &&
-                                                <Checkbox />
-                                            }
-                                            {
-                                                isInputType() && field.input_type !== "TEXT" &&
-                                                <Input placeholder={field.placeholder} type={field.input_type} disabled />
-                                            }
-                                            {
-                                                (field.input_type?.toUpperCase() === "DROPDOWN" || field.input_type?.toUpperCase() === "MEMBERSHIP") &&
-                                                <Select>
-                                                    <SelectTrigger className="w-full">
-                                                        <SelectValue placeholder={field.placeholder} />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectGroup>
-                                                            {field.options?.map(option => {
-                                                                return <SelectItem key={option} value={option}>{option}</SelectItem>
-                                                            })}
-                                                        </SelectGroup>
-                                                    </SelectContent>
-                                                </Select>
-                                            }
-                                            {field.input_type !== "DISPLAY" && field.input_type ? <p className="text-xs mt-1">Is Required: {field.required ? "true" : "false"} </p> : undefined}
-                                        </div>
+                        field.input_type === "SIGNATURE" && field.field_type === "STANDARD" ?
+                            <StandardSignature field={field} />
+                            : field.input_type === "TEXT" && field.field_type === "BILLING" ?
+                                <DisplayBillingText currency={currency} field={field} />
+                                : field.input_type === "DROPDOWN" && field.field_type === "BILLING" ?
+                                    <DisplayBillingDropdown currency={currency} field={field} />
+                                    : field.input_type === "CHECKBOX" && field.field_type === "STANDARD" ?
+                                        <DisplayStandardCheckbox field={field} />
+                                        : field.input_type === "TEXT" && field.field_type === "STANDARD" ?
+                                            <DisplayStandardText field={field} />
+                                            :
+                                            <div className='w-full'>
+                                                <Label className='flex justify-between mb-2'>
+                                                    <p>{field.field_type.toLowerCase() === "text" ? field.field_text : field.field_name}</p>
+                                                    <p className='text-gray-400 text-xs'>{field.input_type} ({field.field_type})</p>
+                                                </Label>
+                                                {
+                                                    field.input_type?.toUpperCase() === "CHECKBOX" &&
+                                                    <Checkbox />
+                                                }
+                                                {
+                                                    isInputType() && field.input_type !== "TEXT" &&
+                                                    <Input placeholder={field.placeholder} type={field.input_type} disabled />
+                                                }
+                                                {
+                                                    (field.input_type?.toUpperCase() === "DROPDOWN" || field.input_type?.toUpperCase() === "MEMBERSHIP") &&
+                                                    <Select>
+                                                        <SelectTrigger className="w-full">
+                                                            <SelectValue placeholder={field.placeholder} />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectGroup>
+                                                                {field.options?.map(option => {
+                                                                    return <SelectItem key={option} value={option}>{option}</SelectItem>
+                                                                })}
+                                                            </SelectGroup>
+                                                        </SelectContent>
+                                                    </Select>
+                                                }
+                                                {field.input_type !== "DISPLAY" && field.input_type ? <p className="text-xs mt-1">Is Required: {field.required ? "true" : "false"} </p> : undefined}
+                                            </div>
                     }
                     <Button>
                         <PencilIcon />
@@ -157,130 +159,134 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 {
-                    field.input_type === "DISPLAY" ?
-                        <EditTextDisplay
-                            label="Field text"
-                            value={fieldText}
-                            onChange={setFieldText}
-                            placeholder="Enter something..."
+                    field.input_type === "SIGNATURE" ?
+                        <EditStandardSignature
+                            required={required} 
+                            onRequiredChange={setRequired}
                         />
-                        : field.input_type === "CHECKBOX" && field.field_type === "STANDARD" ?
-                            <EditStandardCheckbox
-                                fieldName={fieldName}
-                                placeholder={placeholder}
-                                required={required}
-                                onFieldNameChange={setFieldName}
-                                onPlaceholderChange={setPlaceholder}
-                                onRequiredChange={setRequired}
+                        : field.input_type === "DISPLAY" ?
+                            <EditTextDisplay
+                                label="Field text"
+                                value={fieldText}
+                                onChange={setFieldText}
+                                placeholder="Enter something..."
                             />
-                            : field.input_type === "TEXT" && field.field_type === "BILLING" ?
-                                <EditBillingText
-                                    currency={currency}
+                            : field.input_type === "CHECKBOX" && field.field_type === "STANDARD" ?
+                                <EditStandardCheckbox
                                     fieldName={fieldName}
-                                    amount={amount}
+                                    placeholder={placeholder}
                                     required={required}
                                     onFieldNameChange={setFieldName}
-                                    onAmountChange={setAmount}
+                                    onPlaceholderChange={setPlaceholder}
                                     onRequiredChange={setRequired}
                                 />
-                                : field.input_type === "DROPDOWN" && field.field_type === "BILLING" ?
-                                    <EditBillingDropdown
+                                : field.input_type === "TEXT" && field.field_type === "BILLING" ?
+                                    <EditBillingText
                                         currency={currency}
                                         fieldName={fieldName}
-                                        placeholder={placeholder}
+                                        amount={amount}
                                         required={required}
-                                        dropdownBillingOptions={dropdownBillingOptions} // always pass parent state
                                         onFieldNameChange={setFieldName}
-                                        onPlaceholderChange={setPlaceholder}
+                                        onAmountChange={setAmount}
                                         onRequiredChange={setRequired}
-                                        onAddBillingOption={handleAddBillingOption}
-                                        onRemoveBillingOption={handleRemoveBillingOption}
                                     />
-                                    : field.input_type ?
-                                        <div>
+                                    : field.input_type === "DROPDOWN" && field.field_type === "BILLING" ?
+                                        <EditBillingDropdown
+                                            currency={currency}
+                                            fieldName={fieldName}
+                                            placeholder={placeholder}
+                                            required={required}
+                                            dropdownBillingOptions={dropdownBillingOptions} // always pass parent state
+                                            onFieldNameChange={setFieldName}
+                                            onPlaceholderChange={setPlaceholder}
+                                            onRequiredChange={setRequired}
+                                            onAddBillingOption={handleAddBillingOption}
+                                            onRemoveBillingOption={handleRemoveBillingOption}
+                                        />
+                                        : field.input_type ?
                                             <div>
-                                                <label className="block text-sm font-medium mb-2">
-                                                    Field Name
-                                                </label>
-                                                <Input
-                                                    required
-                                                    type="text"
-                                                    value={fieldName}
-                                                    onChange={(e) => setFieldName(e.target.value)}
-                                                />
-                                            </div>
-                                            {field.input_type?.toUpperCase() !== "CHECKBOX" &&
-                                                <div className="mt-4">
+                                                <div>
                                                     <label className="block text-sm font-medium mb-2">
-                                                        Placeholder
+                                                        Field Name
                                                     </label>
                                                     <Input
                                                         required
                                                         type="text"
-                                                        value={placeholder}
-                                                        onChange={(e) => setPlaceholder(e.target.value)}
+                                                        value={fieldName}
+                                                        onChange={(e) => setFieldName(e.target.value)}
                                                     />
                                                 </div>
-                                            }
-                                            <div className="flex items-center gap-3 mt-4">
-                                                <Checkbox
-                                                    checked={required}
-                                                    onCheckedChange={(checked: boolean) => setRequired(checked)}
-                                                />
-                                                <Label htmlFor="terms">Is required</Label>
-                                            </div>
-                                            {
-                                                field.input_type?.toLowerCase() === "dropdown" && (
+                                                {field.input_type?.toUpperCase() !== "CHECKBOX" &&
                                                     <div className="mt-4">
                                                         <label className="block text-sm font-medium mb-2">
-                                                            Dropdown Options
+                                                            Placeholder
                                                         </label>
-                                                        <div className='flex space-x-2'>
-                                                            <Input
-                                                                required
-                                                                type="text"
-                                                                placeholder='Enter dropdown value'
-                                                                value={dropdownOptionField}
-                                                                onChange={(e) => setDropdownOptionField(e.target.value)}
-                                                            />
-                                                            <Button variant={"outline"} disabled={!dropdownOptionField} onClick={addOption}>Add</Button>
-                                                        </div>
+                                                        <Input
+                                                            required
+                                                            type="text"
+                                                            value={placeholder}
+                                                            onChange={(e) => setPlaceholder(e.target.value)}
+                                                        />
                                                     </div>
-                                                )
-                                            }
-
-                                            {/* NORMAL DROPDOWN */}
-                                            {field.input_type?.toLowerCase() === "dropdown" &&
-                                                (dropdownOptions?.length > 0) && (
-                                                    <div className="mt-2 space-y-1">
-                                                        {dropdownOptions.map((o) => (
-                                                            <div key={o} className="flex items-center justify-between bg-gray-50 px-3 py-1 rounded-lg">
-                                                                <span>{o}</span>
-                                                                <Button
-                                                                    variant="destructive"
-                                                                    size="sm"
-                                                                    onClick={() => removeOption(o)}
-                                                                >
-                                                                    <XIcon />
-                                                                </Button>
+                                                }
+                                                <div className="flex items-center gap-3 mt-4">
+                                                    <Checkbox
+                                                        checked={required}
+                                                        onCheckedChange={(checked: boolean) => setRequired(checked)}
+                                                    />
+                                                    <Label htmlFor="terms">Is required</Label>
+                                                </div>
+                                                {
+                                                    field.input_type?.toLowerCase() === "dropdown" && (
+                                                        <div className="mt-4">
+                                                            <label className="block text-sm font-medium mb-2">
+                                                                Dropdown Options
+                                                            </label>
+                                                            <div className='flex space-x-2'>
+                                                                <Input
+                                                                    required
+                                                                    type="text"
+                                                                    placeholder='Enter dropdown value'
+                                                                    value={dropdownOptionField}
+                                                                    onChange={(e) => setDropdownOptionField(e.target.value)}
+                                                                />
+                                                                <Button variant={"outline"} disabled={!dropdownOptionField} onClick={addOption}>Add</Button>
                                                             </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                        </div> :
-                                        <div>
+                                                        </div>
+                                                    )
+                                                }
+
+                                                {field.input_type?.toLowerCase() === "dropdown" &&
+                                                    (dropdownOptions?.length > 0) && (
+                                                        <div className="mt-2 space-y-1">
+                                                            {dropdownOptions.map((o) => (
+                                                                <div key={o} className="flex items-center justify-between bg-gray-50 px-3 py-1 rounded-lg">
+                                                                    <span>{o}</span>
+                                                                    <Button
+                                                                        variant="destructive"
+                                                                        size="sm"
+                                                                        onClick={() => removeOption(o)}
+                                                                    >
+                                                                        <XIcon />
+                                                                    </Button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                            </div> :
                                             <div>
-                                                <label className="block text-sm font-medium mb-2">
-                                                    Field Text
-                                                </label>
-                                                <Input
-                                                    required
-                                                    type="text"
-                                                    value={fieldText}
-                                                    onChange={(e) => setFieldText(e.target.value)}
-                                                />
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">
+                                                        Field Text
+                                                    </label>
+                                                    <Input
+                                                        required
+                                                        type="text"
+                                                        value={fieldText}
+                                                        onChange={(e) => setFieldText(e.target.value)}
+                                                    />
+                                                </div>
                                             </div>
-                                        </div>
                 }
                 <DialogFooter>
                     <DialogClose asChild>

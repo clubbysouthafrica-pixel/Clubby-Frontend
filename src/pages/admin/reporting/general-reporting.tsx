@@ -18,8 +18,7 @@ export default function GeneralReportingPage() {
             </div>
         )
     }
-
-    console.log(report)
+    
     return (
         <div className="p-5 min-h-screen">
             <h1 className="text-base font-bold mb-2">Club Financial Reporting</h1>
