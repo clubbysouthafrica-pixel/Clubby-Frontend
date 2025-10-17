@@ -117,7 +117,13 @@ export default function AdminRegistrationFormPage() {
                     <Tabs defaultValue='0'>
                         <TabsList>
                             {pages.map(p => (
-                                <TabsTrigger className="w-[150px]" value={p.page_index.toString()} key={p.page_index}>{p.page_header}</TabsTrigger>
+                                <TabsTrigger
+                                    className="w-[150px] truncate text-ellipsis whitespace-nowrap overflow-hidden"
+                                    value={p.page_index.toString()}
+                                    key={p.page_index}
+                                >
+                                    {p.page_header}
+                                </TabsTrigger>
                             ))}
 
                             <Button onClick={addPage} className="ml-2 h-full" variant={'outline'}><PlusIcon /></Button>
