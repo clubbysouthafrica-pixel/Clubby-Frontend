@@ -42,7 +42,7 @@ export default function SelectedMember({
 
     return (
         <Dialog
-        
+
             open={open}
             onOpenChange={(openState) => {
                 setOpen(openState);
@@ -105,14 +105,16 @@ export default function SelectedMember({
                                 <TableBody>
                                     {selectedTab === "club-information" &&
                                         selectedMember.meta_standard.map((key: any) => (
-                                            <TableRow key={key.field_name}>
+                                            key.type !== "STANDARD_SIGNATURE" &&
+                                            < TableRow key={key.field_name} >
                                                 <TableCell className="text-center px-2 py-2">
                                                     {key.field_name}
                                                 </TableCell>
                                                 <TableCell className="text-center px-2 py-2">
                                                     {
                                                         key.value === "true" && key.type === "STANDARD_CHECKBOX" ? `✅`
-                                                            : key.value === "true" && key.type === "STANDARD_CHECKBOX" ? `❌` : key.value
+                                                            : key.value === "true" && key.type === "STANDARD_CHECKBOX" ? `❌`
+                                                                : key.value
                                                     }
                                                 </TableCell>
                                             </TableRow>
@@ -140,6 +142,6 @@ export default function SelectedMember({
                     </div>
                 </Tabs>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }

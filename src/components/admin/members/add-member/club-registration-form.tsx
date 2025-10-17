@@ -24,8 +24,9 @@ import StandardText from "../../../member/registration-form/standard-text";
 import { createValidRegistrationRequest } from "../../../../helpers/admin/registration/create-registration-request";
 import { getFieldName } from "../../../../helpers/members/registration/get-field-name";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
+import StandardSignature from "../../../member/registration-form/standard-signature";
 
-export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER";
+export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER" | "SIGNATURE";
 export type FieldType = "TEXT" | "STANDARD" | "BILLING";
 
 export interface BillingOption {
@@ -333,6 +334,18 @@ export function ClubRegisterForm({
                             return (
                               <StandardText
                                 field={field}
+                                currentPageIndex={currentPageIndex}
+                                pages={pages}
+                                setFieldValue={setFieldValue}
+                              />
+                            )
+                          }
+
+                          if (field.field_type === "STANDARD" && field.input_type === "SIGNATURE") {
+                            return (
+                              <StandardSignature
+                                key={field.field_id}
+                                field={field as any}
                                 currentPageIndex={currentPageIndex}
                                 pages={pages}
                                 setFieldValue={setFieldValue}
