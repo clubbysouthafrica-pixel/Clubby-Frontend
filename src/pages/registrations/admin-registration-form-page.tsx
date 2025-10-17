@@ -52,12 +52,7 @@ export default function AdminRegistrationFormPage() {
             onError: displayErrorToast,
         })
     }
-
-    function truncateEnd(str: string, maxLength: number) {
-        if (str.length <= maxLength) return str;
-        return str.slice(0, maxLength) + '...';
-    }
-
+    
     const addPage = () => {
         setPages((v: PageFormRegistration[]) => v.length > 0 ? [...v, { page_header: `Page ${v.length + 1}`, page_index: v.length, fields: [] }] : [defaultPage])
     }
@@ -123,11 +118,11 @@ export default function AdminRegistrationFormPage() {
                         <TabsList>
                             {pages.map(p => (
                                 <TabsTrigger
-                                    className="w-[150px] whitespace-nowrap overflow-hidden px-2"
+                                    className="w-[150px]px-2"
                                     value={p.page_index.toString()}
                                     key={p.page_index}
                                 >
-                                    {truncateEnd(p.page_header, 20)}
+                                    {p.page_header.length > 20 ? `${p.page_header.slice(0, 8)}...` : p.page_header}
                                 </TabsTrigger>
                             ))}
 

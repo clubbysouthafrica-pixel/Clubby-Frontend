@@ -75,7 +75,7 @@ export default function StandardSignature({
         <div className="grid gap-2" key={field.field_id}>
             <div className="flex flex-row text-center gap-2 mt-2">
                 <Label onClick={save} className="text-l">
-                    {field.required ? <span className="text-red-500">*</span> : null} Signature:
+                    {field.required ? <span className="text-red-500">*</span> : null} {field.field_name}:
                 </Label>
                 {
                     drawSignature ?
