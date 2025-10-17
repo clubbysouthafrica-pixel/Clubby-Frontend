@@ -122,7 +122,7 @@ export default function AdminRegistrationFormPage() {
                                     value={p.page_index.toString()}
                                     key={p.page_index}
                                 >
-                                    {p.page_header.length > 20 ? `${p.page_header.slice(0, 20)}...` : p.page_header}
+                                    {p.page_header.length > 12 ? `${p.page_header.slice(0, 12)}...` : p.page_header}
                                 </TabsTrigger>
                             ))}
 
