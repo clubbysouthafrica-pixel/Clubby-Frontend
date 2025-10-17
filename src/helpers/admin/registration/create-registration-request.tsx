@@ -11,7 +11,7 @@ export interface PageFieldBase {
     field_order_id: string;
     field_id: string;
     field_type: FieldType;
-    signature_type: string
+    signature_type?: string
     field_text?: string;
     field_name: string;
     required?: boolean;
