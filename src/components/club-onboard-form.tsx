@@ -24,11 +24,12 @@ import StandardCheckbox from "./member/registration-form/standard-checkbox";
 import BillingDropdown from "./member/registration-form/billing-dropdown";
 import StandardDopdown from "./member/registration-form/standard-dropdown";
 import StandardText from "./member/registration-form/standard-text";
+import StandardSignature from "./member/registration-form/standard-signature";
 import { createValidRegistrationRequest } from "../helpers/members/registration/create-registration-request";
 import { getFieldName } from "../helpers/members/registration/get-field-name";
 
 // --- Types that match the new payload ---
-export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER";
+export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER" | "SIGNATURE";
 export type FieldType = "TEXT" | "STANDARD" | "BILLING";
 
 export interface BillingOption {
@@ -117,12 +118,12 @@ export function ClubRegisterForm({
           fields: page.fields.map((field) => {
             const metaField = club.meta[field.field_id];
             if (!metaField) return field;
-    
+
             if (field.billingOptions) {
               const matchedOption = field.billingOptions.find(
                 (opt) => opt.option_order_id === metaField.option_order_id
               );
-    
+
               if (matchedOption) {
                 return {
                   ...field,
@@ -138,7 +139,7 @@ export function ClubRegisterForm({
                 value: metaField.value,
               };
             }
-    
+
             return field;
           }),
         }));
@@ -336,6 +337,18 @@ export function ClubRegisterForm({
                             return (
                               <StandardText
                                 field={field}
+                                currentPageIndex={currentPageIndex}
+                                pages={pages}
+                                setFieldValue={setFieldValue}
+                              />
+                            )
+                          }
+
+                          if (field.field_type === "STANDARD" && field.input_type === "SIGNATURE") {
+                            return (
+                              <StandardSignature
+                                key={field.field_id}
+                                field={field as any}
                                 currentPageIndex={currentPageIndex}
                                 pages={pages}
                                 setFieldValue={setFieldValue}

@@ -1,5 +1,5 @@
 // --- Types that match the new payload ---
-export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER";
+export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER" | "SIGNATURE";
 export type FieldType = "TEXT" | "STANDARD" | "BILLING";
 
 export interface BillingOption {
@@ -12,6 +12,7 @@ export interface PageFieldBase {
     field_order_id: string;
     field_id: string;
     field_type: FieldType;
+    signature_type?: string
     field_text?: string; // helper/label text
     field_name: string; // title when STANDARD/BILLING
     required?: boolean;
@@ -32,6 +33,7 @@ export interface PageFieldBase {
 export interface FieldRequest {
     field_id: string
     value: string | number
+    signature_type?: string
     option_order_id?: string
     label?: string
 }
@@ -68,7 +70,14 @@ export function createValidRegistrationRequest(fields: PageFieldBase[], clubId: 
 
     const standard_fields = fields.filter((field: PageFieldBase) => field.field_type === "STANDARD");
     standard_fields.forEach(f => {
-        if (f.value) {
+        if (f.input_type === "SIGNATURE") {
+            const field: FieldRequest = {
+                field_id: f.field_id,
+                value: f.value as string | number,
+                signature_type: f.signature_type
+            }
+            request.standard_fields.push(field)
+        } else if (f.value) {
             const field: FieldRequest = {
                 field_id: f.field_id,
                 value: f.value
