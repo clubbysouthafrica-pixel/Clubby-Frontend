@@ -84,7 +84,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 url: "/manage/members",
               },
               {
-                title: "Register member",
+                title: "Add member",
                 url: "/manage/members/add",
               }
             ],
