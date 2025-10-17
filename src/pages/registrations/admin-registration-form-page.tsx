@@ -123,7 +123,7 @@ export default function AdminRegistrationFormPage() {
                         <TabsList>
                             {pages.map(p => (
                                 <TabsTrigger
-                                    className="w-[150px] whitespace-nowrap overflow-hidden"
+                                    className="w-[150px] whitespace-nowrap overflow-hidden px-2"
                                     value={p.page_index.toString()}
                                     key={p.page_index}
                                 >
