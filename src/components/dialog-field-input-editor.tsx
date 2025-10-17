@@ -162,6 +162,8 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
                     field.input_type === "SIGNATURE" ?
                         <EditStandardSignature
                             required={required} 
+                            fieldName={fieldName}
+                            onFieldNameChange={setFieldName}
                             onRequiredChange={setRequired}
                         />
                         : field.input_type === "DISPLAY" ?
