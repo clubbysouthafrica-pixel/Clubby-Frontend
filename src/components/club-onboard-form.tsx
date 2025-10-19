@@ -176,7 +176,7 @@ export function ClubRegisterForm({
         }
         if (f.field_type === "BILLING" && f.required) {
           if (f.input_type === "DROPDOWN") {
-            if (!f.value || !f.selectedAmountCents) missing.push({ page: p.page_index, field: f });
+            if (f.value == null || f.selectedAmountCents == null) missing.push({ page: p.page_index, field: f });
           }
         }
       }
