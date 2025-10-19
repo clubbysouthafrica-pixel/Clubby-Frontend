@@ -47,7 +47,7 @@ export default function DisplayBillingDropdown({ currency, field }: BillingSelec
           <SelectGroup>
             {field.billingOptions?.map((option) => (
               <SelectItem key={option.label} value={option.label}>
-                {option.label} ({formatAmount(option.amount, currency)})
+                {option.label} <strong>({option.amount == 0 ? "FREE" : formatAmount(option.amount, currency)})</strong>
               </SelectItem>
             ))}
           </SelectGroup>
