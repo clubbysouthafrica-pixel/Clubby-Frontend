@@ -42,7 +42,6 @@ export default function SelectedMember({
 
     return (
         <Dialog
-
             open={open}
             onOpenChange={(openState) => {
                 setOpen(openState);
@@ -51,9 +50,10 @@ export default function SelectedMember({
                     window.history.pushState("", document.title, window.location.pathname + window.location.search);
                 }
             }}
+            className="max-width-"
         >
             <DialogContent
-                className="overflow-y-auto p-5 gap-4"
+                className="!w-[60%] !h-[60%] !max-w-none !max-h-none overflow-y-auto p-5 gap-4 flex flex-col"
             >
                 <DialogHeader className="flex justify-between">
                     <div className="flex items-end space-x-2">
