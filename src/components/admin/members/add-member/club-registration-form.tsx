@@ -177,7 +177,7 @@ export function ClubRegisterForm({
         }
         if (f.field_type === "BILLING" && f.required) {
           if (f.input_type === "DROPDOWN") {
-            if (!f.value || !f.selectedAmountCents) missing.push({ page: p.page_index, field: f });
+            if (f.value == null || f.selectedAmountCents == null) missing.push({ page: p.page_index, field: f });
           }
         }
       }
@@ -190,7 +190,7 @@ export function ClubRegisterForm({
     const missingOnCurrent = currentPage.fields.filter((f) => {
       if (f.required) {
         if (f.field_type === "STANDARD") return !f.value?.trim();
-        if (f.field_type === "BILLING" && f.input_type === "DROPDOWN") return !f.value || !f.selectedAmountCents;
+        if (f.field_type === "BILLING" && f.input_type === "DROPDOWN") return f.value == null || f.selectedAmountCents == null;
       }
       return false;
     });
