@@ -25,10 +25,10 @@ import BillingDropdown from "./member/registration-form/billing-dropdown";
 import StandardDopdown from "./member/registration-form/standard-dropdown";
 import StandardText from "./member/registration-form/standard-text";
 import StandardSignature from "./member/registration-form/standard-signature";
+import BillingText from "./member/registration-form/billing-text";
 import { createValidRegistrationRequest } from "../helpers/members/registration/create-registration-request";
 import { getFieldName } from "../helpers/members/registration/get-field-name";
 
-// --- Types that match the new payload ---
 export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER" | "SIGNATURE";
 export type FieldType = "TEXT" | "STANDARD" | "BILLING";
 
@@ -49,19 +49,19 @@ export interface PageFieldBase {
   field_order_id: string;
   field_id: string;
   field_type: FieldType;
-  field_text?: string; // helper/label text
-  field_name: string; // title when STANDARD/BILLING
+  field_text?: string;
+  field_name: string;
   required?: boolean;
-  input_type: InputType; // when STANDARD/BILLING
+  input_type: InputType;
   placeholder?: string;
-  options?: string[]; // for STANDARD DROPDOWN
-  billingOptions?: BillingOption[]; // for BILLING DROPDOWN
-  currency?: string; // for BILLING
-  amount?: number; // for BILLING fixed price (cents)
-
-  // --- UI state ---
-  value?: string; // typed text or selected label
-  selectedAmountCents?: number; // derived for BILLING when dropdown
+  multiplier?: boolean
+  multiplier_value?: number
+  options?: string[];
+  billingOptions?: BillingOption[];
+  currency?: string;
+  amount?: number;
+  value?: string;
+  selectedAmountCents?: number;
   option_order_id?: string;
   label?: string;
 }
@@ -370,12 +370,13 @@ export function ClubRegisterForm({
 
                           if (field.field_type === "BILLING" && field.input_type === "TEXT") {
                             return (
-                              <p key={field.field_id}>
-                                {field.field_name}:{" "}
-                                <span className="font-semibold">
-                                  {formatAmount(field.amount ?? 0, club.currency)}
-                                </span>
-                              </p>
+                              <BillingText
+                                field={field}
+                                clubCurrency={club.currency}
+                                currentPageIndex={currentPageIndex}
+                                pages={pages}
+                                setFieldValue={setFieldValue}
+                              />
                             );
                           }
                           return null;

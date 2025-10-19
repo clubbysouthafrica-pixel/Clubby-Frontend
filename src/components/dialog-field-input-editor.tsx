@@ -32,6 +32,7 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
     const [fieldId, setFieldId] = useState("")
     const [placeholder, setPlaceholder] = useState("")
     const [required, setRequired] = useState(false)
+    const [multiplier, setMultiplier] = useState(false)
     const [dropdownOptionField, setDropdownOptionField] = useState("")
     const [amount, setAmount] = useState(0)
 
@@ -45,6 +46,7 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
         setFieldId(field?.field_id ?? crypto.randomUUID())
         setFieldText(field?.field_text ?? "")
         setAmount(field?.amount ?? 0)
+        setMultiplier(field?.multiplier ?? false)
 
         if (field?.billingOptions?.length) {
             setDropdownBillingOptions(field.billingOptions)
@@ -66,6 +68,7 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
             placeholder: placeholder,
             field_id: fieldId,
             amount: amount > 0 ? amount : undefined,
+            multiplier: multiplier,
         }
 
         if (field.input_type === "TEXT" && field.field_type === "BILLING") {
@@ -84,11 +87,9 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
         setOpenDialog(false)
     }
 
-    // const addBillingOptionDisabled = () => !!(!dropdownAmount || !dropdownLabel)
     const handleAddBillingOption = (option: InputBillingOption) => {
         setDropdownBillingOptions(prev => [...prev, option])
     }
-
 
     const handleRemoveBillingOption = (id: string) => {
         setDropdownBillingOptions(prev => prev.filter(o => o.option_order_id !== id))
@@ -113,7 +114,9 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
                         field.input_type === "SIGNATURE" && field.field_type === "STANDARD" ?
                             <StandardSignature field={field} />
                             : field.input_type === "TEXT" && field.field_type === "BILLING" ?
-                                <DisplayBillingText currency={currency} field={field} />
+                                <DisplayBillingText
+                                    currency={currency} field={field}
+                                />
                                 : field.input_type === "DROPDOWN" && field.field_type === "BILLING" ?
                                     <DisplayBillingDropdown currency={currency} field={field} />
                                     : field.input_type === "CHECKBOX" && field.field_type === "STANDARD" ?
@@ -161,7 +164,7 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
                 {
                     field.input_type === "SIGNATURE" ?
                         <EditStandardSignature
-                            required={required} 
+                            required={required}
                             fieldName={fieldName}
                             onFieldNameChange={setFieldName}
                             onRequiredChange={setRequired}
@@ -187,6 +190,8 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
                                         currency={currency}
                                         fieldName={fieldName}
                                         amount={amount}
+                                        onMultiplierChange={setMultiplier}
+                                        multiplier={multiplier}
                                         required={required}
                                         onFieldNameChange={setFieldName}
                                         onAmountChange={setAmount}
@@ -198,7 +203,9 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
                                             fieldName={fieldName}
                                             placeholder={placeholder}
                                             required={required}
-                                            dropdownBillingOptions={dropdownBillingOptions} // always pass parent state
+                                            dropdownBillingOptions={dropdownBillingOptions}
+                                            onMultiplierChange={setMultiplier}
+                                            multiplier={multiplier}
                                             onFieldNameChange={setFieldName}
                                             onPlaceholderChange={setPlaceholder}
                                             onRequiredChange={setRequired}

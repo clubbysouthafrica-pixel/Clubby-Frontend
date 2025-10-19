@@ -20,8 +20,8 @@ export function RegistrationReportData({ data, currency }: props) {
       <Tabs defaultValue={(data?.report as RegistrationReportDropDown[])[0]?.table_name}>
         <TabsList>
           {(data?.report as RegistrationReportDropDown[]).map((c: any) => (
-            <TabsTrigger className="w-[150px]" key={c.table_name} value={c.table_name}>
-              {c.table_name.length > 12 ? `${c.table_name.slice(0, 12)}...` : c.table_name}
+            <TabsTrigger className="w-[200px]" key={c.table_name} value={c.table_name}>
+              {c.table_name.length > 20 ? `${c.table_name.slice(0, 20)}...` : c.table_name}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -111,7 +111,7 @@ export function RegistrationReportData({ data, currency }: props) {
                     <TabsList>
                       {c.rows.map((r: RegistrationRowData) => (
                         <TabsTrigger className="w-[150px]" key={r.row_name} value={r.row_name}>
-                          {r.row_name.length > 12 ? `${r.row_name.slice(0, 12)}...` : r.row_name}
+                          {r.row_name.length > 15 ? `${r.row_name.slice(0, 15)}...` : r.row_name}
                         </TabsTrigger>
                       ))}
                     </TabsList>

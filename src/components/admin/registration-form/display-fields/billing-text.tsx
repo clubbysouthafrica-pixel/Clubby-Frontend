@@ -26,6 +26,11 @@ export default function DisplayBillingText({ currency, field }: Props) {
           {formatAmount(field.amount ?? 0, currency)}
         </p>
       </Label>
+      <div className="flex items-center space-x-2 text-xs">
+        <p>Is Required: {field.required ? "true" : "false"}</p>
+        <span className="text-gray-400">|</span>
+        <p>Multiplier: {field.multiplier ? "true" : "false"}</p>
+      </div>
     </div>
   )
 }
