@@ -79,7 +79,7 @@ export default function BillingDropdown({
                         <SelectLabel>{field.field_name}</SelectLabel>
                         {field.billingOptions?.map((opt) => (
                             <SelectItem key={opt.option_order_id} value={opt.label}>
-                                {opt.label} ({formatAmount(opt.amount, clubCurrency)})
+                                {opt.label} <strong>({opt.amount == 0 ? "FREE" : formatAmount(opt.amount, clubCurrency)})</strong>
                             </SelectItem>
                         ))}
                     </SelectGroup>
