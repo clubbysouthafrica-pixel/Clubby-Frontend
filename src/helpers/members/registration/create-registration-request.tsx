@@ -55,6 +55,7 @@ export function createValidRegistrationRequest(fields: PageFieldBase[], clubId: 
     billing_fields.forEach(f => {
         if (f.input_type === "TEXT" && !f.multiplier) {
             f.value = f.amount
+            f.multiplier_value = 1
         } else if (f.input_type === "TEXT" && f.multiplier && !f.multiplier_value && f.required) {
             f.value = f.amount
             f.multiplier_value = 1
