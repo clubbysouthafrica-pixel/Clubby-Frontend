@@ -37,6 +37,7 @@ export default function StandardSignature({
 
     const clearSignature = () => {
         sigPadRef.current?.clear();
+        setName("")
         setFieldValue(
             pages[currentPageIndex].page_index,
             field.field_id,

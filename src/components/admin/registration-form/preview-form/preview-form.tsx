@@ -5,11 +5,11 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { useEffect, useState } from "react";
-import { formatAmount } from "@/data/currencies";
 import StandardCheckbox from "../../../member/registration-form/standard-checkbox";
 import BillingDropdown from "../../../member/registration-form/billing-dropdown";
 import StandardDopdown from "../../../member/registration-form/standard-dropdown";
 import StandardText from "../../../member/registration-form/standard-text";
+import BillingText from "@/components/member/registration-form/billing-text";
 import StandardSignature from "../../../member/registration-form/standard-signature";
 import { PageFormRegistration } from "@/interfaces/formRegistration";
 
@@ -138,7 +138,7 @@ export function PreviewForm({
 
                         if (field.field_type === "STANDARD" && field.input_type === "SIGNATURE") {
                           return (
-                            <StandardSignature 
+                            <StandardSignature
                               key={field.field_id}
                               field={field as any}
                               currentPageIndex={currentPageIndex}
@@ -187,12 +187,13 @@ export function PreviewForm({
 
                         if (field.field_type === "BILLING" && field.input_type === "TEXT") {
                           return (
-                            <p key={field.field_id}>
-                              {field.field_name}:{" "}
-                              <span className="font-semibold">
-                                {formatAmount(field.amount ?? 0, currency)}
-                              </span>
-                            </p>
+                            <BillingText 
+                              field={field as any}
+                              clubCurrency={currency}
+                              currentPageIndex={currentPageIndex}
+                              pages={pages}
+                              setFieldValue={setFieldValue}
+                            />
                           );
                         }
                         return null;

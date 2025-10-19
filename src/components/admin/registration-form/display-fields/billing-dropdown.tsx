@@ -20,6 +20,8 @@ interface Field {
   required?: boolean;
   field_type: string
   placeholder?: string
+  multiplier?: boolean
+  multiplier_value?: number
   billingOptions?: BillingOption[]
 }
 
@@ -51,9 +53,11 @@ export default function DisplayBillingDropdown({ currency, field }: BillingSelec
           </SelectGroup>
         </SelectContent>
       </Select>
-      <p className="text-xs mt-1">
-        Is Required: {field.required ? "true" : "false"}
-      </p>
+      <div className="flex items-center space-x-2 text-xs">
+        <p>Is Required: {field.required ? "true" : "false"}</p>
+        <span className="text-gray-400">|</span>
+        <p>Multiplier: {field.multiplier ? "true" : "false"}</p>
+      </div>
     </div>
   )
 }

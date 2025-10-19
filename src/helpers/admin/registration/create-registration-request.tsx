@@ -21,6 +21,8 @@ export interface PageFieldBase {
     billingOptions?: BillingOption[];
     currency?: string;
     amount?: number;
+    multiplier?: boolean
+    multiplier_value?: number
     value?: string | number;
     selectedAmountCents?: number;
     option_order_id?: string;
@@ -32,6 +34,7 @@ export interface FieldRequest {
     value: string | number
     option_order_id?: string
     signature_type?: string
+    multiplier_value?: number
     label?: string
 }
 
@@ -56,14 +59,18 @@ export function createValidRegistrationRequest(fields: PageFieldBase[], clubId: 
 
     const billing_fields = fields.filter((field: PageFieldBase) => field.field_type === "BILLING");
     billing_fields.forEach(f => {
-        if (f.input_type === "TEXT") {
+        if (f.input_type === "TEXT" && !f.multiplier) {
             f.value = f.amount
+        } else if (f.input_type === "TEXT" && f.multiplier && !f.multiplier_value && f.required) {
+            f.value = f.amount
+            f.multiplier_value = 1
         }
 
         if (f.value) {
             const field: FieldRequest = {
                 field_id: f.field_id,
                 value: f?.selectedAmountCents ?? f.value,
+                multiplier_value: f?.multiplier_value ?? 1,
                 option_order_id: f.option_order_id,
                 label: f.label
             }

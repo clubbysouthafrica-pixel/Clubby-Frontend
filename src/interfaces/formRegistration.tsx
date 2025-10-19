@@ -14,6 +14,8 @@ export interface InputFormRegistration {
     placeholder: string
     field_id?: string
     currency?: string
+    multiplier?: boolean
+    multiplier_value?: number
     billingOptions?: InputBillingOption[]
     amount?: number;
     options?: string[];

@@ -21,6 +21,7 @@ import StandardCheckbox from "../../../member/registration-form/standard-checkbo
 import BillingDropdown from "../../../member/registration-form/billing-dropdown";
 import StandardDopdown from "../../../member/registration-form/standard-dropdown";
 import StandardText from "../../../member/registration-form/standard-text";
+import BillingText from "../../../member/registration-form/billing-text";
 import { createValidRegistrationRequest } from "../../../../helpers/admin/registration/create-registration-request";
 import { getFieldName } from "../../../../helpers/members/registration/get-field-name";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
@@ -367,12 +368,13 @@ export function ClubRegisterForm({
 
                           if (field.field_type === "BILLING" && field.input_type === "TEXT") {
                             return (
-                              <p key={field.field_id}>
-                                {field.field_name}:{" "}
-                                <span className="font-semibold">
-                                  {formatAmount(field.amount ?? 0, club?.currency)}
-                                </span>
-                              </p>
+                              <BillingText
+                                field={field}
+                                clubCurrency={club?.currency}
+                                currentPageIndex={currentPageIndex}
+                                pages={pages}
+                                setFieldValue={setFieldValue}
+                              />
                             );
                           }
                           return null;

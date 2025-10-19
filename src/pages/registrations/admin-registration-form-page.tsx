@@ -42,6 +42,33 @@ export default function AdminRegistrationFormPage() {
         }
     }, [data])
 
+    useEffect(() => {
+        const style = document.createElement('style');
+        style.innerHTML = `
+          .custom-thin-scrollbar::-webkit-scrollbar {
+            height: 2px;
+            width: 2px;
+          }
+          .custom-thin-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          .custom-thin-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(100, 100, 100, 0.3);
+            border-radius: 2px;
+          }
+          .custom-thin-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(100, 100, 100, 0.3) transparent;
+          }
+        `;
+        document.head.appendChild(style);
+
+        // Optional cleanup
+        return () => {
+            document.head.removeChild(style);
+        };
+    }, []);
+
     const saveRegistrationForm = () => {
         mutate({
             pages: createPagesRequest(pages),
@@ -115,18 +142,33 @@ export default function AdminRegistrationFormPage() {
 
                 {!isLoading && !previewRegForm &&
                     <Tabs defaultValue='0'>
-                        <TabsList>
-                            {pages.map(p => (
-                                <TabsTrigger
-                                    className="w-[150px] px-2"
-                                    value={p.page_index.toString()}
-                                    key={p.page_index}
-                                >
-                                    {p.page_header.length > 12 ? `${p.page_header.slice(0, 12)}...` : p.page_header}
-                                </TabsTrigger>
-                            ))}
+                        <TabsList className="flex items-center max-w-full">
+                            <div
+                                className="flex overflow-x-auto whitespace-nowrap custom-thin-scrollbar"
+                                style={{ maxWidth: '100%' }}
+                            >
+                                <div className="flex flex-nowrap w-max">
+                                    {pages.map((p) => (
+                                        <TabsTrigger
+                                            className="w-[180px] flex-shrink-0"
+                                            value={p.page_index.toString()}
+                                            key={p.page_index}
+                                        >
+                                            {p.page_header.length > 20
+                                                ? `${p.page_header.slice(0, 20)}...`
+                                                : p.page_header}
+                                        </TabsTrigger>
+                                    ))}
+                                </div>
+                            </div>
 
-                            <Button onClick={addPage} className="ml-2 h-full" variant={'outline'}><PlusIcon /></Button>
+                            <Button
+                                onClick={addPage}
+                                className="ml-2 h-full flex-shrink-0"
+                                variant={'outline'}
+                            >
+                                <PlusIcon />
+                            </Button>
                         </TabsList>
                         {isLoading && (
                             <div className="flex justify-center py-8">

@@ -1,10 +1,9 @@
-// --- Types that match the new payload ---
 export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER" | "SIGNATURE";
 export type FieldType = "TEXT" | "STANDARD" | "BILLING";
 
 export interface BillingOption {
     option_order_id: string;
-    amount: number; // in cents
+    amount: number;
     label: string;
 }
 
@@ -13,19 +12,19 @@ export interface PageFieldBase {
     field_id: string;
     field_type: FieldType;
     signature_type?: string
-    field_text?: string; // helper/label text
-    field_name: string; // title when STANDARD/BILLING
+    field_text?: string;
+    field_name: string;
     required?: boolean;
-    input_type: InputType; // when STANDARD/BILLING
+    input_type: InputType;
     placeholder?: string;
-    options?: string[]; // for STANDARD DROPDOWN
-    billingOptions?: BillingOption[]; // for BILLING DROPDOWN
-    currency?: string; // for BILLING
-    amount?: number; // for BILLING fixed price (cents)
-
-    // --- UI state ---
-    value?: string | number; // typed text or selected label
-    selectedAmountCents?: number; // derived for BILLING when dropdown
+    options?: string[];
+    billingOptions?: BillingOption[];
+    currency?: string;
+    amount?: number;
+    multiplier?: boolean
+    multiplier_value?: number
+    value?: string | number;
+    selectedAmountCents?: number;
     option_order_id?: string;
     label?: string;
 }
@@ -35,6 +34,7 @@ export interface FieldRequest {
     value: string | number
     signature_type?: string
     option_order_id?: string
+    multiplier_value?: number
     label?: string
 }
 
@@ -53,14 +53,18 @@ export function createValidRegistrationRequest(fields: PageFieldBase[], clubId: 
 
     const billing_fields = fields.filter((field: PageFieldBase) => field.field_type === "BILLING");
     billing_fields.forEach(f => {
-        if (f.input_type === "TEXT") {
+        if (f.input_type === "TEXT" && !f.multiplier) {
             f.value = f.amount
+        } else if (f.input_type === "TEXT" && f.multiplier && !f.multiplier_value && f.required) {
+            f.value = f.amount
+            f.multiplier_value = 1
         }
 
         if (f.value) {
             const field: FieldRequest = {
                 field_id: f.field_id,
                 value: f?.selectedAmountCents ?? f.value,
+                multiplier_value: f?.multiplier_value ?? 1,
                 option_order_id: f.option_order_id,
                 label: f.label
             }
