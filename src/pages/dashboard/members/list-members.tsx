@@ -234,7 +234,7 @@ export default function ListMembersPage() {
                                     value={dynamicFilters[key] || ""}
                                 >
                                     <SelectTrigger className="w-[250px]">
-                                        <span className="text-muted-foreground truncate">{field_name}:</span>
+                                        <span className="text-muted-foreground">{field_name}:</span>
                                         <SelectValue placeholder="All" />
                                     </SelectTrigger>
                                     <SelectContent>

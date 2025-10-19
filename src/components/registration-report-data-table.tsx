@@ -36,9 +36,9 @@ export function RegistrationReportData({ data, currency }: props) {
                 c?.data &&
                 <div>
                   <p className="font-bold">
-                    {c.table_name} - {formatAmount(c.fee_amount, currency)} each
+                    {c.table_name} - {c.fee_amount == 0 ? "Free" : `${formatAmount(c.fee_amount, currency)} each`}
                   </p>
-                  <CardDescription>Report on latest {c.table_name}</CardDescription>
+                  <CardDescription>Report on: <strong>{c.table_name}</strong></CardDescription>
                   <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-2">
                     <div className="flex gap-4 *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs">
                       <Card className="@container/card py-3 w-[100%]">
@@ -53,7 +53,7 @@ export function RegistrationReportData({ data, currency }: props) {
                         <CardHeader className="flex flex-col items-center justify-center text-center">
                           <CardDescription>Paid to Club</CardDescription>
                           <CardTitle className="text-l font-semibold tabular-nums">
-                            {formatAmount(c.total.paid_to_club, currency)}
+                            {c.fee_amount == 0 ? "Free" : formatAmount(c.total.paid_to_club, currency)}
                           </CardTitle>
                         </CardHeader>
                       </Card>
@@ -69,7 +69,7 @@ export function RegistrationReportData({ data, currency }: props) {
                         <CardHeader className="flex flex-col items-center justify-center text-center">
                           <CardDescription>Due to Club</CardDescription>
                           <CardTitle className="text-l font-semibold tabular-nums">
-                            {formatAmount(c.total.due_to_club, currency)}
+                            {c.fee_amount == 0 ? "Free" : formatAmount(c.total.due_to_club, currency)}
                           </CardTitle>
                         </CardHeader>
                       </Card>
@@ -120,9 +120,9 @@ export function RegistrationReportData({ data, currency }: props) {
                         <TabsContent key={r.row_name} value={r.row_name}>
                           <div className="px-2">
                             <p className="font-bold">
-                              Fee amount: {formatAmount(r.fee_amount, currency)} each
+                              {r.row_name} - {r.fee_amount == 0 ? "Free" : `${formatAmount(r.fee_amount, currency)} each`}
                             </p>
-                            <CardDescription>Report on latest {r.row_name} items</CardDescription>
+                            <CardDescription>Report on: <strong>{r.row_name}</strong></CardDescription>
                             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-2">
                               <div className="flex gap-4 *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs">
                                 <Card className="@container/card py-3 w-[100%]">
@@ -137,7 +137,9 @@ export function RegistrationReportData({ data, currency }: props) {
                                   <CardHeader className="flex flex-col items-center justify-center text-center">
                                     <CardDescription>Paid to Club</CardDescription>
                                     <CardTitle className="text-l font-semibold tabular-nums">
-                                      {formatAmount(r.total.paid_to_club, currency)}
+                                      {
+                                        r.fee_amount == 0 ? "Free" : formatAmount(r.total.paid_to_club, currency)
+                                      }
                                     </CardTitle>
                                   </CardHeader>
                                 </Card>
@@ -153,7 +155,7 @@ export function RegistrationReportData({ data, currency }: props) {
                                   <CardHeader className="flex flex-col items-center justify-center text-center">
                                     <CardDescription>Due to Club</CardDescription>
                                     <CardTitle className="text-l font-semibold tabular-nums">
-                                      {formatAmount(r.total.due_to_club, currency)}
+                                      {r.fee_amount == 0 ? "Free" : formatAmount(r.total.due_to_club, currency)}
                                     </CardTitle>
                                   </CardHeader>
                                 </Card>
