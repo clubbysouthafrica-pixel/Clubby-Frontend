@@ -50,7 +50,6 @@ export default function SelectedMember({
                     window.history.pushState("", document.title, window.location.pathname + window.location.search);
                 }
             }}
-            className="max-width-"
         >
             <DialogContent
                 className="!w-[60%] !h-[60%] !max-w-none !max-h-none overflow-y-auto p-5 gap-4 flex flex-col"
