@@ -94,7 +94,7 @@ export function MemberRegistration({
                 return (
                   <div key={field.label} className="flex flex-col gap-2">
                     <Label className="text-[12px] font-semibold">{field.label}:</Label>
-                    <Label className="text-[12px] border-b-2 border-gray-300 pb-1 w-200 text-gray-800">
+                    <Label className="text-[12px] border-b-2 border-gray-300 pb-1 w-200 text-gray-500">
                       Not filled in by member.
                     </Label>
                   </div>
