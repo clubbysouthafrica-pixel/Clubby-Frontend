@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 export function MemberRegistration({
   clubAccountId,
   currency,
-}: { userId: string, clubAccountId: string, currency: string }) {
+}: { clubAccountId: string, currency: string }) {
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
   const { data, isLoading } = useFetchMemberRegisteration(

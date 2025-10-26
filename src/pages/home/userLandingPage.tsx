@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import {
     ChevronRight,
     Loader2,
-    Star,
     Users
 } from "lucide-react";
 import { motion } from "framer-motion";
