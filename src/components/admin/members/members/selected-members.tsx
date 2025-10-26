@@ -18,6 +18,9 @@ import {
 import { User } from "lucide-react";
 import { formatAmount } from "@/data/currencies";
 import { Label } from "@/components/ui/label";
+import { CurrentMemberRegistration } from "../../../member_and_admin/registration/current_member_registration"
+import { useFetchMemberUser } from "@/queries/admin/member_user";
+import { Loader2 } from "lucide-react";
 
 interface ImageProps {
     selectedMember: any;
@@ -26,13 +29,30 @@ interface ImageProps {
     clubAccountId: string;
 }
 
+interface MemberUser { phone_number: string; date_of_birth: string; email: string; address_line_1: string; address_line_2: string; suburb: string; city: string; postal_code: string; }
+
+const MEMBER_USER_MAPPING = {
+    "phone_number": "Phone Number",
+    "date_of_birth": "Date of Birth",
+    "email": "Email",
+    "address_line_1": "Address Line 1",
+    "address_line_2": "Address Line 2",
+    "suburb": "Suburb",
+    "city": "City",
+    "postal_code": "Postal Code"
+}
+
 export default function SelectedMember({
     selectedMember,
     setSelectedMember,
+    clubAccountId,
     currency,
 }: ImageProps) {
-    const [selectedTab, setSelectedTab] = useState("club-information");
+    const [selectedTab, setSelectedTab] = useState("user-information");
     const [open, setOpen] = useState(false);
+
+    const userId = selectedMember?.user_id ?? "";
+    const { data: memberUser, isLoading } = useFetchMemberUser(userId);
 
     React.useEffect(() => {
         if (selectedMember) setOpen(true);
@@ -52,7 +72,7 @@ export default function SelectedMember({
             }}
         >
             <DialogContent
-                className="!w-[80%] !h-[60%] !max-w-none !max-h-none overflow-y-auto p-5 gap-4 flex flex-col"
+                className="!w-[80%] !h-[80%] !max-w-none !max-h-none p-5 gap-4 flex flex-col"
             >
                 <DialogHeader className="flex justify-between">
                     <div className="flex items-end space-x-2">
@@ -67,29 +87,28 @@ export default function SelectedMember({
 
                 <Tabs value={selectedTab} onValueChange={setSelectedTab} className="mt-0">
                     <TabsList>
-                        <TabsTrigger className="w-[150px]" value="club-information">Club information</TabsTrigger>
-                        <TabsTrigger className="w-[150px]" value="club-fees">Club fees</TabsTrigger>
-                        {/* <TabsTrigger className="w-[150px]" value="transactions">Transactions</TabsTrigger> */}
+                        <TabsTrigger className="w-[180px]" value="user-information">User information</TabsTrigger>
+                        <TabsTrigger className="w-[180px]" value="member-registration">Member registration</TabsTrigger>
                     </TabsList>
 
-                    {selectedTab === "club-information" && (
+                    {selectedTab === "user-information" && (
                         <DialogDescription className="mt-2 mb-4">
-                            This section contains the standard fields completed by the member at the time of registration.
+                            This section contains information on the Clubby user.
                         </DialogDescription>
                     )}
-                    {selectedTab === "club-fees" && (
+                    {selectedTab === "member-registration" && (
                         <DialogDescription className="mt-2 mb-4">
-                            This section shows the club fees owed and paid by this member at the time of registration.
-                        </DialogDescription>
-                    )}
-                    {selectedTab === "transactions" && (
-                        <DialogDescription className="mt-2 mb-4">
-                            This section shows transactions associated with this member and the club.
+                            This is the members current registration form.
                         </DialogDescription>
                     )}
 
                     <div className="overflow-hidden rounded-lg border">
-                        {(selectedTab === "club-information" || selectedTab === "club-fees") &&
+                        {selectedTab === "user-information" && isLoading && !memberUser &&
+                            <div className="p-5 min-h-screen">
+                                <Loader2 className="h-8 w-8 animate-spin" />
+                            </div>
+                        }
+                        {selectedTab === "user-information" && !isLoading && memberUser &&
                             <Table>
                                 <TableHeader className="bg-muted sticky top-0 z-10">
                                     <TableRow>
@@ -102,41 +121,26 @@ export default function SelectedMember({
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {selectedTab === "club-information" &&
-                                        selectedMember.meta_standard.map((key: any) => (
-                                            key.type !== "STANDARD_SIGNATURE" &&
-                                            < TableRow key={key.field_name} >
-                                                <TableCell className="text-center px-2 py-2">
-                                                    {key.field_name}
-                                                </TableCell>
-                                                <TableCell className="text-center px-2 py-2">
-                                                    {
-                                                        key.value === "true" && key.type === "STANDARD_CHECKBOX" ? `✅`
-                                                            : key.value === "true" && key.type === "STANDARD_CHECKBOX" ? `❌`
-                                                                : key.value
-                                                    }
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    {selectedTab === "club-fees" &&
-                                        selectedMember.meta_billing.map((key: any) => (
-                                            <TableRow key={key.field_name}>
-                                                <TableCell className="text-center px-2 py-2">
-                                                    {key.field_name}
-                                                </TableCell>
-                                                {key.type === "BILLING_DROPDOWN" ? (
+                                    {
+                                        Object.keys(memberUser as MemberUser).map((key) => {
+                                            const typedKey = key as keyof MemberUser; // <-- type assertion
+                                            return (
+                                                <TableRow key={typedKey}>
                                                     <TableCell className="text-center px-2 py-2">
-                                                        {key.label_value} ({formatAmount(key.value, currency)})
+                                                        {MEMBER_USER_MAPPING[typedKey]}
                                                     </TableCell>
-                                                ) : (
                                                     <TableCell className="text-center px-2 py-2">
-                                                        {formatAmount(key.value, currency)}
+                                                        {memberUser[typedKey]}
                                                     </TableCell>
-                                                )}
-                                            </TableRow>
-                                        ))}
+                                                </TableRow>
+                                            );
+                                        })
+                                    }
                                 </TableBody>
                             </Table>
+                        }
+                        {selectedTab === "member-registration" &&
+                            <CurrentMemberRegistration userId={selectedMember.user_id} clubAccountId={clubAccountId} currency={currency} />
                         }
                     </div>
                 </Tabs>

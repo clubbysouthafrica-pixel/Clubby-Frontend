@@ -13,6 +13,14 @@ export const fetchRegistrationForm = (clubAccountId: string): Promise<any> => {
     return api.get(`/registration/getForm?club_account_id=${clubAccountId}`)
         .then(res => res.data);
 } 
+
+export const fetchMemberRegistration = (clubAccountId: string, userId: string, currency: string): Promise<any> => {
+    if (!clubAccountId || !userId || !currency) throw new Error("no club set")
+
+    return api.get(`/registration/getMemberRegistration?club_account_id=${clubAccountId}&user_id=${userId}&currency=${currency}`)
+        .then(res => res.data);
+} 
+
 export const deregisterAllMembersQuery = (request: DeregisterSeasonRequest) => {
     return api.post("/deregistration/season", {club_account_id: request.clubId})
         .then(res => res.data);
