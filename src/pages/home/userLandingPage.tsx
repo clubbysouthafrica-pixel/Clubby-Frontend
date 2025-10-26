@@ -103,10 +103,8 @@ export default function UserLandingPage() {
                     </motion.div>
                 </div>
 
-                {/* Sidebar */}
                 <div className="space-y-6 border-l border-muted pl-6 sticky top-0">
-                    {/* Featured Section */}
-                    <motion.div
+                    {/* <motion.div
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.5, delay: 0.3 }}
@@ -127,7 +125,7 @@ export default function UserLandingPage() {
                                 </div>
                             </CardContent>
                         </Card>
-                    </motion.div>
+                    </motion.div> */}
                 </div>
             </div>
         </div>

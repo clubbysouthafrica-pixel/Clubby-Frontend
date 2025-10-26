@@ -71,9 +71,6 @@ export default function BillingText({
         );
     }
 
-    console.log('required: ', field?.required)
-    console.log('multiplier: ', field?.multiplier)
-
     return (
         <div
             className="flex items-center gap-4 py-2"
