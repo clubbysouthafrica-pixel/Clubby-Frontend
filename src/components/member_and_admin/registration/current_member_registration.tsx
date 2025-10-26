@@ -32,7 +32,7 @@ export function CurrentMemberRegistration({
     <Card className="w-full">
       <CardContent className="py-0 px-8 space-y-8">
         <div key={data.pages[currentPageIndex].page_index} className="space-y-5">
-          <h2 className="text-2xl font-bold text-center mb-6 mt-0">
+          <h2 className="text-xl font-bold text-center mb-6 mt-0">
             {data.pages[currentPageIndex].page_header}
           </h2>
           <div className="max-h-[30vh] overflow-y-auto p-4 border border-gray-200 rounded-lg bg-gray-50 space-y-6">
@@ -46,7 +46,7 @@ export function CurrentMemberRegistration({
                       <img
                         src={field.value}
                         alt="User Signature"
-                        className="border-b-2 border-gray-400 w-200"
+                        className="border-b-2 border-gray-400 w-50"
                       />
                     </div>
                   )
@@ -111,7 +111,7 @@ export function CurrentMemberRegistration({
             {currentPageIndex > 0 ? (
               <Button
                 type="button"
-                className="px-6 py-2"
+                className="w-[100px] text-[10px]"
                 onClick={() => setCurrentPageIndex((i) => i - 1)}
               >
                 Previous
@@ -123,7 +123,7 @@ export function CurrentMemberRegistration({
             {currentPageIndex < data.pages.length - 1 ? (
               <Button
                 type="button"
-                className="px-6 py-2"
+                className="w-[100px] text-[10px]"
                 onClick={() => setCurrentPageIndex((i) => i + 1)}
               >
                 Next
