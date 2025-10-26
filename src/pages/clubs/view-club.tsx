@@ -12,6 +12,7 @@ import { formatAmount } from "@/data/currencies";
 import { useFetchUserTransactions } from "@/queries/transactions";
 import * as React from "react";
 import { Label } from "@/components/ui/label";
+import { MemberRegistration } from "@/components/member/registration/member_registration";
 
 // const loadingIcon = 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Loading_icon.gif';
 
@@ -153,15 +154,25 @@ export default function ViewClubPage() {
                         <Tabs defaultValue="home">
                             <TabsList className="justify-start h-10">
                                 <>
-                                    <TabsTrigger className="w-[150px]" value="home">Home</TabsTrigger>
+                                    <TabsTrigger className="w-[200px]" value="home">Home</TabsTrigger>
                                     {
                                         data?.club_member_exists && !data?.resubmission_required &&
                                         <>
-                                            <TabsTrigger className="w-[150px]" value="bank">Payments & Billing</TabsTrigger>
+                                            <TabsTrigger className="w-[200px]" value="bank">Payments & Billing</TabsTrigger>
+                                        </>
+                                    }
+                                    {
+                                        data?.club_member_exists && !data?.resubmission_required &&
+                                        <>
+                                            <TabsTrigger className="w-[200px]" value="member-registration">Registration</TabsTrigger>
                                         </>
                                     }
                                 </>
                             </TabsList>
+
+                            <TabsContent value="member-registration">
+                                <MemberRegistration currency={data.currency} clubAccountId={data.club_account_id}/>
+                            </TabsContent>
 
                             <TabsContent value="home">
                                 <div>
