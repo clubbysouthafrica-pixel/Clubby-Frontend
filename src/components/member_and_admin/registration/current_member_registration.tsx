@@ -42,7 +42,7 @@ export function CurrentMemberRegistration({
                 if (field.signature_type === "signature") {
                   return (
                     <div key={field.label} className="flex flex-col gap-2">
-                      <Label className="text-[15px] font-semibold">{field.label}:</Label>
+                      <Label className="text-[10px] font-semibold">{field.label}:</Label>
                       <img
                         src={field.value}
                         alt="User Signature"
@@ -53,8 +53,8 @@ export function CurrentMemberRegistration({
                 } else {
                   return (
                     <div key={field.label} className="flex flex-col gap-2">
-                      <Label className="text-[15px] font-semibold">{field.label}:</Label>
-                      <Label className="text-[15px] font-[cursive] border-b-2 border-gray-400 pb-1 w-200">
+                      <Label className="text-[10px] font-semibold">{field.label}:</Label>
+                      <Label className="text-[10px] font-[cursive] border-b-2 border-gray-400 pb-1 w-200">
                         {field.value}
                       </Label>
                     </div>
@@ -65,8 +65,8 @@ export function CurrentMemberRegistration({
               if (field.type === "STANDARD_OTHER") {
                 return (
                   <div key={field.label} className="flex flex-col gap-2">
-                    <Label className="text-[15px] font-semibold">{field.label}:</Label>
-                    <Label className="text-[15px] border-b-2 border-gray-300 pb-1 w-200">
+                    <Label className="text-[10px] font-semibold">{field.label}:</Label>
+                    <Label className="text-[10px] border-b-2 border-gray-300 pb-1 w-200">
                       {field.value}
                     </Label>
                   </div>
@@ -76,8 +76,8 @@ export function CurrentMemberRegistration({
               if (field.type === "BILLING") {
                 return (
                   <div key={field.label} className="flex flex-col gap-2">
-                    <Label className="text-[15px] font-semibold">{field.label} {field.quantity ? `(x${field.quantity})` : null}:</Label>
-                    <Label className="text-[15px] border-b-2 border-gray-300 pb-1 w-200">
+                    <Label className="text-[10px] font-semibold">{field.label} {field.quantity ? `(x${field.quantity})` : null}:</Label>
+                    <Label className="text-[10px] border-b-2 border-gray-300 pb-1 w-200">
                       {field.value}
                     </Label>
                   </div>
@@ -89,6 +89,17 @@ export function CurrentMemberRegistration({
                   <p key={field.label} className="text-sm text-muted-foreground">
                     {field.label}
                   </p>
+                );
+              }
+
+              if (field.type === "DNE") {
+                return (
+                  <div key={field.label} className="flex flex-col gap-2">
+                    <Label className="text-[10px] font-semibold">{field.label}:</Label>
+                    <Label className="text-[10px] border-b-2 border-gray-300 pb-1 w-200">
+                      Not filled in by member.
+                    </Label>
+                  </div>
                 );
               }
 
