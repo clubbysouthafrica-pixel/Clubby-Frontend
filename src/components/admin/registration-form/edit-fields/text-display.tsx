@@ -1,22 +1,16 @@
 import { useState, useEffect } from "react"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 
 interface Props {
     label: string
     value: string
-    required?: boolean
-    type?: string
-    placeholder?: string
     onChange: (val: string) => void
 }
 
 export default function EditTextDisplay({
     label,
     value,
-    required = true,
-    type = "text",
-    placeholder,
     onChange,
 }: Props) {
     const [internalValue, setInternalValue] = useState(value)
@@ -25,21 +19,10 @@ export default function EditTextDisplay({
         setInternalValue(value)
     }, [value])
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setInternalValue(e.target.value)
-        onChange(e.target.value)
-    }
-
     return (
         <div className="space-y-2">
             <Label className="block text-sm font-medium">{label}</Label>
-            <Input
-                required={required}
-                type={type}
-                placeholder={placeholder}
-                value={internalValue}
-                onChange={handleChange}
-            />
+            <Textarea placeholder="Enter content" onChange={(v) => {setInternalValue(v.target.value), onChange(v.target.value)}} value={internalValue} />
         </div>
     )
 }

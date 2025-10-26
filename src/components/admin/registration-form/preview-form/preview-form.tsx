@@ -119,7 +119,10 @@ export function PreviewForm({
 
                         if (field.field_type === "TEXT") {
                           return (
-                            <p key={field.field_order_id} className="text-sm text-muted-foreground">
+                            <p
+                              key={field.field_order_id}
+                              className="text-sm text-muted-foreground whitespace-pre-line"
+                            >
                               {field.field_text}
                             </p>
                           );
@@ -187,7 +190,7 @@ export function PreviewForm({
 
                         if (field.field_type === "BILLING" && field.input_type === "TEXT") {
                           return (
-                            <BillingText 
+                            <BillingText
                               field={field as any}
                               clubCurrency={currency}
                               currentPageIndex={currentPageIndex}

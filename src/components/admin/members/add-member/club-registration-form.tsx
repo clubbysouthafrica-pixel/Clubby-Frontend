@@ -303,7 +303,10 @@ export function ClubRegisterForm({
 
                           if (field.field_type === "TEXT") {
                             return (
-                              <p key={field.field_order_id} className="text-sm text-muted-foreground">
+                              <p
+                                key={field.field_order_id}
+                                className="text-sm text-muted-foreground whitespace-pre-line"
+                              >
                                 {field.field_text}
                               </p>
                             );

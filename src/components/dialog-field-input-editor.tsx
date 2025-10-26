@@ -174,7 +174,6 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
                                 label="Field text"
                                 value={fieldText}
                                 onChange={setFieldText}
-                                placeholder="Enter something..."
                             />
                             : field.input_type === "CHECKBOX" && field.field_type === "STANDARD" ?
                                 <EditStandardCheckbox
