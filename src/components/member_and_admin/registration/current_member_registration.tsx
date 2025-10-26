@@ -46,7 +46,7 @@ export function CurrentMemberRegistration({
                       <img
                         src={field.value}
                         alt="User Signature"
-                        className="border-b-2 border-gray-400 w-64"
+                        className="border-b-2 border-gray-400 w-200"
                       />
                     </div>
                   )
@@ -54,7 +54,7 @@ export function CurrentMemberRegistration({
                   return (
                     <div key={field.label} className="flex flex-col gap-2">
                       <Label className="text-[15px] font-semibold">{field.label}:</Label>
-                      <Label className="text-[15px] font-[cursive] border-b-2 border-gray-400 pb-1 w-64">
+                      <Label className="text-[15px] font-[cursive] border-b-2 border-gray-400 pb-1 w-200">
                         {field.value}
                       </Label>
                     </div>
@@ -66,7 +66,7 @@ export function CurrentMemberRegistration({
                 return (
                   <div key={field.label} className="flex flex-col gap-2">
                     <Label className="text-[15px] font-semibold">{field.label}:</Label>
-                    <Label className="text-[15px] border-b-2 border-gray-300 pb-1 w-64">
+                    <Label className="text-[15px] border-b-2 border-gray-300 pb-1 w-200">
                       {field.value}
                     </Label>
                   </div>
@@ -77,7 +77,7 @@ export function CurrentMemberRegistration({
                 return (
                   <div key={field.label} className="flex flex-col gap-2">
                     <Label className="text-[15px] font-semibold">{field.label} {field.quantity ? `(x${field.quantity})` : null}:</Label>
-                    <Label className="text-[15px] border-b-2 border-gray-300 pb-1 w-64">
+                    <Label className="text-[15px] border-b-2 border-gray-300 pb-1 w-200">
                       {field.value}
                     </Label>
                   </div>
