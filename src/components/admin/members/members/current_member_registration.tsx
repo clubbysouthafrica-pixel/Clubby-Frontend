@@ -76,9 +76,9 @@ export function CurrentMemberRegistration({
               if (field.type === "BILLING") {
                 return (
                   <div key={field.label} className="flex flex-col gap-2">
-                    <Label className="text-[12px] font-semibold">{field.label} {field.quantity ? `(x${field.quantity})` : null}:</Label>
+                    <Label className="text-[12px] font-semibold">{field.label}:</Label>
                     <Label className="text-[12px] border-b-2 border-gray-300 pb-1 w-200">
-                      {field.value}
+                      {field.value} {field.quantity ? `(x${field.quantity})` : null}
                     </Label>
                   </div>
                 );
@@ -96,7 +96,7 @@ export function CurrentMemberRegistration({
                 return (
                   <div key={field.label} className="flex flex-col gap-2">
                     <Label className="text-[12px] font-semibold">{field.label}:</Label>
-                    <Label className="text-[12px] border-b-2 border-gray-300 pb-1 w-200">
+                    <Label className="text-[12px] border-b-2 border-gray-300 pb-1 w-200 text-gray-800">
                       Not filled in by member.
                     </Label>
                   </div>
@@ -111,7 +111,7 @@ export function CurrentMemberRegistration({
             {currentPageIndex > 0 ? (
               <Button
                 type="button"
-                className="w-[100px] text-[10px]"
+                className="w-[100px]"
                 onClick={() => setCurrentPageIndex((i) => i - 1)}
               >
                 Previous
@@ -123,7 +123,7 @@ export function CurrentMemberRegistration({
             {currentPageIndex < data.pages.length - 1 ? (
               <Button
                 type="button"
-                className="w-[100px] text-[10px]"
+                className="w-[100px]"
                 onClick={() => setCurrentPageIndex((i) => i + 1)}
               >
                 Next
