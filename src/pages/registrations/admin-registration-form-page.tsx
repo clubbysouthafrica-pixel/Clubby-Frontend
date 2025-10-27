@@ -14,6 +14,7 @@ import { useFetchRegisterationForm } from "@/queries/admin/registration-form";
 import { createDeleteFieldsRequest } from "@/helpers/admin/registration/verify-delete-fields-structure";
 import { createPagesRequest } from "@/helpers/admin/registration/verify-create-pages-structure";
 import { PreviewForm } from "@/components/admin/registration-form/preview-form/preview-form";
+import "../../index.css";
 
 export default function AdminRegistrationFormPage() {
     const { club } = useContext(ClubContext) as ClubContextType

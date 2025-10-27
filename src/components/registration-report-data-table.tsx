@@ -4,6 +4,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "./ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table"
 import { formatAmount } from "@/data/currencies"
 import { Label } from "./ui/label"
+import "../index.css";
 
 interface props {
   data: RegistrationReport
@@ -19,9 +20,9 @@ export function RegistrationReportData({ data, currency }: props) {
     <div>
       <Tabs defaultValue={(data?.report as RegistrationReportDropDown[])[0]?.table_name}>
         <TabsList className="flex items-center w-full">
-          <div className="flex-1 flex overflow-x-auto flex-nowrap custom-thin-scrollbar space-x-2 py-1">
+          <div className="flex-1 flex overflow-x-auto flex-nowrap custom-thin-scrollbar space-x-2">
             {(data?.report as RegistrationReportDropDown[]).map((c: any) => (
-              <TabsTrigger className="w-[200px]" key={c.table_name} value={c.table_name}>
+              <TabsTrigger className="w-[200px] flex-shrink-0 px-3 truncate !flex-none my-5" key={c.table_name} value={c.table_name}>
                 {c.table_name.length > 20 ? `${c.table_name.slice(0, 20)}...` : c.table_name}
               </TabsTrigger>
             ))}
@@ -113,8 +114,14 @@ export function RegistrationReportData({ data, currency }: props) {
                     <TabsList className="flex items-center w-full">
                       <div className="flex-1 flex overflow-x-auto flex-nowrap custom-thin-scrollbar space-x-2 py-1">
                         {c.rows.map((r: RegistrationRowData) => (
-                          <TabsTrigger className="w-[150px]" key={r.row_name} value={r.row_name}>
-                            {r.row_name.length > 15 ? `${r.row_name.slice(0, 15)}...` : r.row_name}
+                          <TabsTrigger
+                            key={r.row_name}
+                            value={r.row_name}
+                            className="w-[200px] flex-shrink-0 px-3 truncate !flex-none"
+                          >
+                            {r.row_name.length > 15
+                              ? `${r.row_name.slice(0, 15)}...`
+                              : r.row_name}
                           </TabsTrigger>
                         ))}
                       </div>
