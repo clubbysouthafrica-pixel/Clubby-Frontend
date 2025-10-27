@@ -161,7 +161,7 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
                     </Button>
                 </div>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px] max-h-[80vh] overflow-y-auto">
                 {
                     field.input_type === "SIGNATURE" ?
                         <EditStandardSignature
