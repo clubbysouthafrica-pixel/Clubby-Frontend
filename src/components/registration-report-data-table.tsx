@@ -18,12 +18,14 @@ export function RegistrationReportData({ data, currency }: props) {
   return (
     <div>
       <Tabs defaultValue={(data?.report as RegistrationReportDropDown[])[0]?.table_name}>
-        <TabsList>
-          {(data?.report as RegistrationReportDropDown[]).map((c: any) => (
-            <TabsTrigger className="w-[200px]" key={c.table_name} value={c.table_name}>
-              {c.table_name.length > 20 ? `${c.table_name.slice(0, 20)}...` : c.table_name}
-            </TabsTrigger>
-          ))}
+        <TabsList className="flex items-center w-full">
+          <div className="flex-1 flex overflow-x-auto flex-nowrap custom-thin-scrollbar space-x-2 py-1">
+            {(data?.report as RegistrationReportDropDown[]).map((c: any) => (
+              <TabsTrigger className="w-[200px]" key={c.table_name} value={c.table_name}>
+                {c.table_name.length > 20 ? `${c.table_name.slice(0, 20)}...` : c.table_name}
+              </TabsTrigger>
+            ))}
+          </div>
         </TabsList>
 
         {(data?.report as RegistrationReportDropDown[]).map((c: any) => (
@@ -108,12 +110,14 @@ export function RegistrationReportData({ data, currency }: props) {
                 c?.rows && c.rows.length > 0 &&
                 <div className="mb-5">
                   <Tabs defaultValue={(c.rows[0]?.row_name)}>
-                    <TabsList>
-                      {c.rows.map((r: RegistrationRowData) => (
-                        <TabsTrigger className="w-[150px]" key={r.row_name} value={r.row_name}>
-                          {r.row_name.length > 15 ? `${r.row_name.slice(0, 15)}...` : r.row_name}
-                        </TabsTrigger>
-                      ))}
+                    <TabsList className="flex items-center w-full">
+                      <div className="flex-1 flex overflow-x-auto flex-nowrap custom-thin-scrollbar space-x-2 py-1">
+                        {c.rows.map((r: RegistrationRowData) => (
+                          <TabsTrigger className="w-[150px]" key={r.row_name} value={r.row_name}>
+                            {r.row_name.length > 15 ? `${r.row_name.slice(0, 15)}...` : r.row_name}
+                          </TabsTrigger>
+                        ))}
+                      </div>
                     </TabsList>
                     {
                       c.rows?.map((r: RegistrationRowData) => (
