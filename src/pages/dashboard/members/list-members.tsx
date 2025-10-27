@@ -281,7 +281,6 @@ export default function ListMembersPage() {
                         className="relative flex flex-col gap-4 overflow-auto">
 
                         <RegisteredMembersList
-                            club={club}
                             sensors={sensors}
                             sortableId={sortableId}
                             allMembersSelected={allMembersSelected}

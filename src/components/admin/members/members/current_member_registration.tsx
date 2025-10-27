@@ -8,6 +8,17 @@ import { useFetchMemberRegisteration } from "@/queries/admin/registration-form";
 import { Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
+function formatEpoch(epoch: number) {
+  const date = new Date(epoch);
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+  const dd = String(date.getDate()).padStart(2, '0');
+  const hh = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
+
+  return `${yyyy}/${mm}/${dd} ${hh}:${min}`;
+}
+
 export function CurrentMemberRegistration({
   userId,
   clubAccountId,
@@ -21,6 +32,8 @@ export function CurrentMemberRegistration({
     currency
   );
 
+  console.log(data)
+
   if (isLoading || !data) {
     return (
       <div className="p-5 min-h-screen">
@@ -31,6 +44,34 @@ export function CurrentMemberRegistration({
   return (
     <Card className="w-full border-0 shadow-none py-1">
       <CardContent className="py-0 px-4 space-y-4">
+        <div className="flex items-center gap-2">
+          {data?.registration_submitted_on && (
+            <h1 className="flex items-center">
+              Registration Submitted On: <strong className="ml-1">{formatEpoch(data.registration_submitted_on)}</strong>
+            </h1>
+          )}
+
+          {data?.registration_submitted_on && data?.registered_on && (
+            <span className="mx-2 text-gray-400">|</span>
+          )}
+
+          {data?.registered_on && (
+            <h1 className="flex items-center">
+              Registered On: <strong className="ml-1">{formatEpoch(data.registered_on)}</strong>
+            </h1>
+          )}
+
+          {(data?.registered_on && data?.deregistered_on) || (data?.registration_submitted_on && data?.deregistered_on) ? (
+            <span className="mx-2 text-gray-400">|</span>
+          ) : null}
+
+          {data?.deregistered_on && (
+            <h1 className="flex items-center">
+              Deregistered On: <strong className="ml-1">{formatEpoch(data.deregistered_on)}</strong>
+            </h1>
+          )}
+        </div>
+
         <div key={data.pages[currentPageIndex].page_index} className="space-y-5">
           <div className="h-[45vh] overflow-y-auto p-4 shadow-md border border-gray-200 rounded-lg bg-gray-50 space-y-6">
             <h2 className="text-xl font-bold text-center mb-6 mt-0">

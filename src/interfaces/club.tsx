@@ -24,6 +24,7 @@ export interface ClubMember {
     meta_standard: Record<string, any>
     outstanding_amount: number
     primary_member: string
+    registered_on: string
     registration_submitted_on: string
     registration_payment_reference: string
     user_id: string

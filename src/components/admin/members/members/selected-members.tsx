@@ -82,9 +82,7 @@ export default function SelectedMember({
                         </DialogTitle>
                     </div>
                 </DialogHeader>
-
-                {/* <Label className="my-2 text-lg m-0">Outstanding amount: <strong>{formatAmount(selectedMember.outstanding_amount, currency)}</strong> </Label> */}
-
+                
                 <Tabs value={selectedTab} onValueChange={setSelectedTab} className="mt-0">
                     <TabsList>
                         <TabsTrigger className="w-[180px]" value="user-information">User information</TabsTrigger>

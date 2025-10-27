@@ -107,12 +107,10 @@ export default function PendingMembersList({
                 <Table>
                     <TableHeader className="bg-muted sticky top-0 z-10">
                         <TableRow>
-                            <TableHead className="text-center w-1/7">Display Name</TableHead>
-                            <TableHead className="text-center w-1/7">Member ID</TableHead>
-                            <TableHead className="text-center w-1/7">Registration Submitted</TableHead>
-                            <TableHead className="text-center w-1/7">Reference Numbers</TableHead>
-                            <TableHead className="text-center w-1/7">Outstanding Amount</TableHead>
-                            <TableHead className="text-center w-1/7">Register member</TableHead>
+                            <TableHead className="text-center w-1/5">Display Name</TableHead>
+                            <TableHead className="text-center w-1/5">Member ID</TableHead>
+                            <TableHead className="text-center w-1/5">Registration Submitted</TableHead>
+                            <TableHead className="text-center w-1/5">Register member</TableHead>
                             <TableHead className="text-center w-1/5">
                                 <div className="flex items-center justify-center gap-2">
                                     Action
@@ -128,7 +126,7 @@ export default function PendingMembersList({
                     <TableBody>
                         {filteredUnregisteredMembers.length ? filteredUnregisteredMembers.map((member: ClubMember) => (
                             <TableRow key={member.user_id}>
-                                <TableCell className="text-center w-1/7">
+                                <TableCell className="text-center w-1/5">
                                     <a
                                         onClick={() => setSelectedMember(member)}
                                         href={`#${member.user_id}`}
@@ -137,7 +135,7 @@ export default function PendingMembersList({
                                         {member.member_first_name + " " + member.member_surname}
                                     </a>
                                 </TableCell>
-                                <TableCell className="text-center w-1/7">
+                                <TableCell className="text-center w-1/6">
                                     <div className="inline-flex items-center gap-2 justify-center">
                                         <span className="font-mono">{member.user_id.slice(0, 8)}...</span>
 
@@ -166,7 +164,7 @@ export default function PendingMembersList({
                                         </button>
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-center w-1/7">
+                                <TableCell className="text-center w-1/5">
                                     {member.registration_submitted_on ? (() => {
                                         const date = new Date(member.registration_submitted_on);
                                         const now = new Date();
@@ -176,13 +174,7 @@ export default function PendingMembersList({
                                         return `${date.toLocaleString()} (${diffDays === 0 ? 'today' : diffDays === 1 ? '1 day ago' : `${diffDays} days ago`})`;
                                     })() : "-"}
                                 </TableCell>
-                                <TableCell className="text-center w-1/7">
-                                    {member.registration_payment_reference}
-                                </TableCell>
-                                <TableCell className="text-center w-1/7">
-                                    {member.resubmission_required ? "N/A" : formatAmount(member.outstanding_amount, club?.currency)}
-                                </TableCell>
-                                <TableCell className="text-center w-1/7">
+                                <TableCell className="text-center w-1/5">
                                     <div>
                                         <Dialog
                                             open={openDialogUserId === member.user_id}
@@ -206,9 +198,10 @@ export default function PendingMembersList({
                                                     <DialogDescription>
                                                         Confirm payment amount and register member
                                                     </DialogDescription>
-
-                                                    <Label className="my-3 text-l">Outstanding amount: {formatAmount(member.outstanding_amount, club?.currency)}</Label>
-
+                                                    <div className="flex flex-col gap-1 my-4">
+                                                        <Label className="text-l">Outstanding amount: {formatAmount(member.outstanding_amount, club?.currency)}</Label>
+                                                        <Label className="text-l">Member payment reference: {member.registration_payment_reference}</Label>
+                                                    </div>
                                                     <div className="grid gap-3">
                                                         <Label htmlFor="pay">Payment Amount</Label>
                                                         <Input
@@ -247,7 +240,7 @@ export default function PendingMembersList({
                                         </Dialog>
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-center w-1/7">
+                                <TableCell className="text-center w-1/5">
                                     <Checkbox
                                         checked={listActionItems.some(
                                             (item) =>

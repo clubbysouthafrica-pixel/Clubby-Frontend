@@ -3,12 +3,9 @@ import { useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ClubMember } from "@/interfaces/club"
-import { formatAmount } from "@/data/currencies"
-import { Club } from "@/context/ClubContext"
 import { filteredRegisteredMembers as frg } from "@/helpers/admin/members/filter-members-list";
 
 interface ImageProps {
-    club: Club | null
     sensors: any
     sortableId: any
     allMembersSelected: boolean
@@ -27,7 +24,6 @@ interface ImageProps {
 }
 
 export default function RegisteredMembersList({
-    club,
     sensors,
     sortableId,
     allMembersSelected,
@@ -61,11 +57,10 @@ export default function RegisteredMembersList({
                 <Table>
                     <TableHeader className="bg-muted sticky top-0 z-10">
                         <TableRow>
-                            <TableHead className="text-center w-1/5">Member name</TableHead>
-                            <TableHead className="text-center w-1/5">Member ID</TableHead>
-                            <TableHead className="text-center w-1/5">Email</TableHead>
-                            <TableHead className="text-center w-1/5">Outstanding Amount</TableHead>
-                            <TableHead className="text-center w-1/5">
+                            <TableHead className="text-center w-1/4">Member name</TableHead>
+                            <TableHead className="text-center w-1/4">Member ID</TableHead>
+                            <TableHead className="text-center w-1/5">Registered On</TableHead>
+                            <TableHead className="text-center w-1/4">
                                 <div className="flex items-center justify-center gap-2">
                                     Action
                                     <Checkbox
@@ -80,7 +75,7 @@ export default function RegisteredMembersList({
                     <TableBody>
                         {filteredRegisteredMembers.length ? filteredRegisteredMembers.map((member: ClubMember) => (
                             <TableRow key={member.user_id}>
-                                <TableCell className="text-center w-1/5">
+                                <TableCell className="text-center w-1/4">
                                     <a
                                         onClick={() => setSelectedMember(member)}
                                         href={`#${member.user_id}`}
@@ -89,7 +84,7 @@ export default function RegisteredMembersList({
                                         {member.member_first_name + " " + member.member_surname}
                                     </a>
                                 </TableCell>
-                                <TableCell className="text-center w-1/5">
+                                <TableCell className="text-center w-1/4">
                                     <div className="inline-flex items-center gap-2 justify-center">
                                         <span className="font-mono">{member.user_id.slice(0, 8)}...</span>
 
@@ -118,9 +113,17 @@ export default function RegisteredMembersList({
                                         </button>
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-center w-1/5">{member.member_email}</TableCell>
-                                <TableCell className="text-center w-1/5">{formatAmount(member.outstanding_amount, club?.currency)}</TableCell>
-                                <TableCell className="text-center w-1/7">
+                                <TableCell className="text-center w-1/5">
+                                    {member.registered_on ? (() => {
+                                        const date = new Date(member.registered_on);
+                                        const now = new Date();
+                                        const diffTime = Math.abs(now.getTime() - date.getTime());
+                                        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+                                        return `${date.toLocaleString()} (${diffDays === 0 ? 'today' : diffDays === 1 ? '1 day ago' : `${diffDays} days ago`})`;
+                                    })() : "-"}
+                                </TableCell>
+                                <TableCell className="text-center w-1/4">
                                     <Checkbox
                                         checked={listActionItems.some(
                                             (item) =>
