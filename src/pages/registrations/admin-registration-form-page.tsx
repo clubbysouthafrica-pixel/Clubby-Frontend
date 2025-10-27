@@ -129,7 +129,7 @@ export default function AdminRegistrationFormPage() {
 
     return (
         <Pager>
-            <div className="p-5 min-h-screen">
+            <div className="container mx-auto py-5">
                 <div className="flex justify-between items-center mb-8">
                     <div>
                         <h1 className="text-base font-bold">Registration Form</h1>
