@@ -22,7 +22,7 @@ export default function RegisterClubPage() {
                     </BreadcrumbItem>
                 </BreadcrumbList>
             </Breadcrumb>
-            <div className="flex justify-center pt-10">
+            <div className="flex justify-center pt-2">
                 <div className="flex flex-col gap-6">
                     <ClubRegisterForm />
                 </div>

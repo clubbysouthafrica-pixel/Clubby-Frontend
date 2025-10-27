@@ -280,20 +280,41 @@ export function ClubRegisterForm() {
                   )}
 
                   {registrationRequest && (
-                    <div>
-                      <Label className="mb-1 block">Total registration fee: {formatAmount(totalRegistrationFee, club.currency)}</Label>
-                      <ul className="ml-6 list-disc space-y-1">
-                        {registrationRequest.billing_fields.map((f: FieldRequest) => (
-                          <li key={f.field_id} className="font-small">
-                            <Label className="font-normal">{getFieldName(pages, f.field_id)}: {formatAmount(f?.value as number, club.currency)} {f.label ? `(${f.label})` : ""}</Label>
-                          </li>
-                        ))}
-                      </ul>
+                    <div className="h-[350px] overflow-y-auto p-4 border border-gray-200 rounded space-y-4 bg-white shadow-sm">
+                      {/* Total Registration Fee */}
+                      <div>
+                        <h2 className="text-lg font-semibold mb-2">
+                          Total Registration Fee: <strong>{formatAmount(totalRegistrationFee, club.currency)}</strong>
+                        </h2>
+                        <ul className="ml-6 list-disc space-y-1">
+                          {registrationRequest.billing_fields.map((f: FieldRequest) => (
+                            <li key={f.field_id} className="text-sm">
+                              {getFieldName(pages, f.field_id)}: {formatAmount(f?.value as number, club.currency)}
+                              {f.label ? ` (${f.label})` : ""}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* Additional Information / Disclaimer */}
+                      <div className="bg-gray-50 p-3 rounded border border-gray-200 space-y-2">
+                        <p className="font-medium text-yellow-700">⚠️ Please review your membership information carefully before submitting.</p>
+                        <p>
+                          Once your registration is submitted, you must visit the <strong>Payments</strong> tab in your associated club profile to view available payment methods and instructions for paying any outstanding amounts.
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Clubby is <strong>not responsible</strong> for any incorrect payments, misdirected payments, or payment errors. Please follow the instructions on the Payments tab carefully.
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Ensure all billing information is correct to avoid delays in processing your membership.
+                        </p>
+                      </div>
                     </div>
                   )}
 
+
                   {pages[currentPageIndex] && !registrationRequest && (
-                    <div key={pages[currentPageIndex].page_index} className="space-y-5 overflow-y-auto h-[400px]">
+                    <div key={pages[currentPageIndex].page_index} className="space-y-5 overflow-y-auto h-[350px]">
                       <h3 className="text-lg font-semibold">{pages[currentPageIndex].page_header}</h3>
                       {pages[currentPageIndex].fields
                         .sort((a: any, b: any) => a.field_order_id - b.field_order_id)
