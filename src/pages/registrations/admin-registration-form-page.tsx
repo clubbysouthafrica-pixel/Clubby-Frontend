@@ -154,9 +154,8 @@ export default function AdminRegistrationFormPage() {
                     <TabsList className="flex items-center max-w-full">
                         <div
                             className="flex overflow-x-auto whitespace-nowrap custom-thin-scrollbar"
-                            style={{ maxWidth: '100%' }}
                         >
-                            <div className="flex flex-nowrap w-max">
+                            <div className="flex min-w-max">
                                 {pages.map((p) => (
                                     <TabsTrigger
                                         className="w-[200px] flex-shrink-0"
