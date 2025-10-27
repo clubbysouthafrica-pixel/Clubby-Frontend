@@ -85,10 +85,19 @@ export function CurrentMemberRegistration({
               }
 
               if (field.type === "TEXT") {
+                const cleaned = field.label
+                  .replace(
+                    /<ol>(\s*<li[^>]*data-list="bullet"[^>]*>[\s\S]*?)<\/ol>/g,
+                    "<ul>$1</ul>"
+                  )
+                  .replace(/<span class="ql-ui"[^>]*><\/span>/g, "");
+
                 return (
-                  <p key={field.label} className="text-sm text-muted-foreground">
-                    {field.label}
-                  </p>
+                  <div
+                    key={field.label}
+                    className="prose text-gray-700 [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5"
+                    dangerouslySetInnerHTML={{ __html: cleaned }}
+                  />
                 );
               }
 

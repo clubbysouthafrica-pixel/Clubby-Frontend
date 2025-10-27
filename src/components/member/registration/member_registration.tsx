@@ -82,7 +82,7 @@ export function MemberRegistration({
                 );
               }
 
-              if (field.field_type === "TEXT") {
+              if (field.type === "TEXT") {
                 const cleaned = field.label
                   .replace(
                     /<ol>(\s*<li[^>]*data-list="bullet"[^>]*>[\s\S]*?)<\/ol>/g,
