@@ -16,8 +16,8 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { User } from "lucide-react";
-import { formatAmount } from "@/data/currencies";
-import { Label } from "@/components/ui/label";
+// import { formatAmount } from "@/data/currencies";
+// import { Label } from "@/components/ui/label";
 import { CurrentMemberRegistration } from "./current_member_registration"
 import { useFetchMemberUser } from "@/queries/admin/member_user";
 import { Loader2 } from "lucide-react";
