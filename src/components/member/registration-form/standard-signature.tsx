@@ -74,26 +74,25 @@ export default function StandardSignature({
 
     return (
         <div className="grid gap-2" key={field.field_id}>
-            <div className="flex flex-row text-center gap-2 mt-2">
+            <div className="flex flex-row text-center gap-4 mt-2">
                 <Label onClick={save} className="text-l">
                     {field.required ? <span className="text-red-500">*</span> : null} {field.field_name}:
                 </Label>
                 {
                     drawSignature ?
                         (
-                            <div>
+                            <div className="border-b-2 border-muted-foreground w-[300px] h-[70px]">
                                 {field.value?.startsWith("data:image/png;base64,") ? (
                                     <img
                                         src={field.value}
                                         alt="Saved Signature"
-                                        className="border-b-2"
-                                        style={{ width: "w-full", height: "70px", objectFit: "contain" }}
+                                        className="w-full h-full object-contain"
                                     />
                                 ) : (
                                     <SignaturePad
                                         ref={sigPadRef}
                                         onEnd={save}
-                                        canvasProps={{ width: "w-full", height: 70, className: "border-b-2" }}
+                                        canvasProps={{ width: 300, height: 70, className: "w-full h-full" }}
                                     />
                                 )}
                             </div>
@@ -117,17 +116,17 @@ export default function StandardSignature({
                                     );
                                 }}
                                 placeholder="Type your name as signature"
-                                className="w-full rounded-none border-0 border-b-2 border-muted-foreground focus:border-black focus:outline-none focus:ring-0 focus:ring-offset-0 focus:shadow-none focus-visible:none"
+                                className="w-[300px] rounded-none border-b-2 border-muted-foreground focus:border-black focus:outline-none"
                                 style={{ fontFamily: "cursive", fontSize: "1.2rem", height: "70px" }}
                             />
                         </div>
                 }
-                <div className="flex flex-col justify-between h-full items-start pt-10">
+                <div className="flex flex-col justify-end h-full items-start space-y-2">
                     {drawSignature && (
                         <button
                             type="button"
                             onClick={clearSignature}
-                            className="text-[10px] cursor-pointer text-red-800 hover:underline text-left"
+                            className="text-sm font-medium text-gray-600 hover:text-gray-800 focus:outline-none cursor-pointer"
                         >
                             Clear
                         </button>
@@ -139,7 +138,7 @@ export default function StandardSignature({
                             setDrawSignature(!drawSignature);
                             clearSignature();
                         }}
-                        className="text-[10px] cursor-pointer text-green-800 hover:underline text-left"
+                        className="text-sm font-medium text-gray-600 hover:text-gray-800 focus:outline-none cursor-pointer"
                     >
                         {drawSignature ? "Type signature" : "Draw signature"}
                     </button>

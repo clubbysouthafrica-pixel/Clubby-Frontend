@@ -20,8 +20,10 @@ export default function AdminRegistrationFormPage() {
     const { club } = useContext(ClubContext) as ClubContextType
     const [deletedFields, setDeletedFields] = useState<string[]>([]);
 
-    const { mutate, isPending } = useCreateClubMutation()
+    const { mutate } = useCreateClubMutation()
     const { data, isLoading } = useFetchRegisterationForm(club?.club_account_id as string)
+
+    const [saving, setSaving] = useState(false);
 
     const [previewRegForm, setPreviewRegForm] = useState(false);
 
@@ -63,22 +65,31 @@ export default function AdminRegistrationFormPage() {
         `;
         document.head.appendChild(style);
 
-        // Optional cleanup
         return () => {
             document.head.removeChild(style);
         };
     }, []);
 
     const saveRegistrationForm = () => {
-        mutate({
-            pages: createPagesRequest(pages),
-            deleteFields: createDeleteFieldsRequest(deletedFields, originalPages),
-            club_account_id: club?.club_account_id as string,
-        }, {
-            onSuccess: displayToast,
-            onError: displayErrorToast,
-        })
-    }
+        setSaving(true);
+        mutate(
+            {
+                pages: createPagesRequest(pages),
+                deleteFields: createDeleteFieldsRequest(deletedFields, originalPages),
+                club_account_id: club?.club_account_id as string,
+            },
+            {
+                onSuccess: () => {
+                    displayToast();
+                    setSaving(false);
+                },
+                onError: (e) => {
+                    displayErrorToast(e);
+                    setSaving(false);
+                },
+            }
+        );
+    };
 
     const addPage = () => {
         setPages((v: PageFormRegistration[]) => v.length > 0 ? [...v, { page_header: `Page ${v.length + 1}`, page_index: v.length, fields: [] }] : [defaultPage])
@@ -108,7 +119,7 @@ export default function AdminRegistrationFormPage() {
             }) : i))
     }
 
-    if (isPending || isLoading) {
+    if (isLoading) {
         return (
             <div className="p-5 min-h-screen">
                 <Loader2 className="h-8 w-8 animate-spin" />
@@ -118,7 +129,7 @@ export default function AdminRegistrationFormPage() {
 
     return (
         <Pager>
-            <div className="container max-w-4xl mx-auto px-4 py-16">
+            <div className="p-5 min-h-screen">
                 <div className="flex justify-between items-center mb-8">
                     <div>
                         <h1 className="text-base font-bold">Registration Form</h1>
@@ -150,13 +161,15 @@ export default function AdminRegistrationFormPage() {
                                 <div className="flex flex-nowrap w-max">
                                     {pages.map((p) => (
                                         <TabsTrigger
-                                            className="w-[180px] flex-shrink-0"
+                                            className="w-[200px] flex-shrink-0"
                                             value={p.page_index.toString()}
                                             key={p.page_index}
                                         >
-                                            {p.page_header.length > 20
-                                                ? `${p.page_header.slice(0, 20)}...`
-                                                : p.page_header}
+                                            <span className="px-3 block text-left truncate">
+                                                {p.page_header.length > 20
+                                                    ? `${p.page_header.slice(0, 20)}...`
+                                                    : p.page_header}
+                                            </span>
                                         </TabsTrigger>
                                     ))}
                                 </div>
@@ -170,12 +183,12 @@ export default function AdminRegistrationFormPage() {
                                 <PlusIcon />
                             </Button>
                         </TabsList>
-                        {isLoading && (
+                        {(saving || isLoading) && (
                             <div className="flex justify-center py-8">
                                 <Loader2 className="h-8 w-8 animate-spin" />
                             </div>
                         )}
-                        {
+                        {!saving && !isLoading && (
                             pages.map(p => (
                                 <TabsContent value={p.page_index.toString()} key={p.page_index}>
                                     <div>
@@ -188,7 +201,7 @@ export default function AdminRegistrationFormPage() {
                                     </div>
                                 </TabsContent>
                             ))
-                        }
+                        )}
                     </Tabs>
                 }
             </div>

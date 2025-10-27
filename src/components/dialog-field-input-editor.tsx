@@ -60,6 +60,7 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
         field.input_type?.toUpperCase() === "NUMBER"
 
     const updateRequest = () => {
+
         const inputRequest: InputFormRegistration = {
             ...field,
             field_name: fieldName,
@@ -169,7 +170,7 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
                             onFieldNameChange={setFieldName}
                             onRequiredChange={setRequired}
                         />
-                        : field.input_type === "DISPLAY" ?
+                        : field.field_type === "TEXT" ?
                             <EditTextDisplay
                                 label="Field text"
                                 value={fieldText}
