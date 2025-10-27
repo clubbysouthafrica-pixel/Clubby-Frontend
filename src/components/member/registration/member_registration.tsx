@@ -27,7 +27,7 @@ export function MemberRegistration({
     )
   }
   return (
-    <Card className="w-full">
+    <Card className="w-full mb-4">
       <CardContent className="py-0 px-8 space-y-8">
         <div key={data.pages[currentPageIndex].page_index} className="space-y-5">
           <h2 className="text-xl font-bold text-center mb-6 mt-0">
