@@ -293,7 +293,7 @@ export function ClubRegisterForm() {
                   )}
 
                   {pages[currentPageIndex] && !registrationRequest && (
-                    <div key={pages[currentPageIndex].page_index} className="space-y-5 overflow-y-auto h-[600px]">
+                    <div key={pages[currentPageIndex].page_index} className="space-y-5 overflow-y-auto h-[400px]">
                       <h3 className="text-lg font-semibold">{pages[currentPageIndex].page_header}</h3>
                       {pages[currentPageIndex].fields
                         .sort((a: any, b: any) => a.field_order_id - b.field_order_id)
