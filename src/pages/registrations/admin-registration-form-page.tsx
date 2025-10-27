@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import Pager from "@/components/pager";
 import DynamicFormBuilder from "@/components/dynamic-page-form-builder";
 import { useContext, useEffect, useState } from "react";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
