@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -76,10 +75,7 @@ export interface PagedFormPayload {
   pages: FormPage[];
 }
 
-export function ClubRegisterForm({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+export function ClubRegisterForm() {
   const { user } = useContext(AuthContext) as AuthContextType;
   const { clubId } = useParams();
   const navigate = useNavigate();
