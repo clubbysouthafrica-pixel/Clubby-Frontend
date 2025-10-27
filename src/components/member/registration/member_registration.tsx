@@ -34,10 +34,7 @@ export function MemberRegistration({
       <CardContent className="py-0 px-8 space-y-8">
         <div key={data.pages[currentPageIndex].page_index} className="flex flex-col gap-1 justify-center items-center">
           <CardDescription className="text-center w-[85%]">
-            This is your most recent registration form submitted for <strong>{clubName}</strong>.
-          </CardDescription>
-
-          <CardDescription className="text-center w-[85%]">
+            This is your most recent registration form submitted for <strong>{clubName}</strong>. <></> 
             {membershipStatus === "Pending" ? (
               <>
                 Your registration is currently <strong>pending</strong>. The club admin still needs to verify your submitted registration and confirm if your registration fee has been paid.
@@ -56,7 +53,7 @@ export function MemberRegistration({
               </>
             )}
           </CardDescription>
-          <div className="h-[50vh] w-[85%] overflow-y-auto p-4 border border-gray-200 rounded-lg bg-gray-50 space-y-6">
+          <div className="h-[50vh] w-[85%] mt-4 shadow-md overflow-y-auto p-4 border border-gray-200 rounded-lg bg-gray-50 space-y-6">
             <h2 className="text-xl font-bold text-center mb-6 mt-0">
               {data.pages[currentPageIndex].page_header}
             </h2>

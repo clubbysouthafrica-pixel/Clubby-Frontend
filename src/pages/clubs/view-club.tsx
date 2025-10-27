@@ -126,13 +126,13 @@ export default function ViewClubPage() {
                             <div className="mt-4 md:mt-0 flex gap-4">
                                 {
                                     !data?.club_member_exists &&
-                                    <Button variant="outline" className="shadow-none border-black" onClick={() => navigate(`/clubs/${clubId}/register`)}>Join</Button>
+                                    <Button variant="outline" className="shadow-none border-black hover:font-bold" onClick={() => navigate(`/clubs/${clubId}/register`)}>Join</Button>
                                 }
                                 {
                                     data.resubmission_required &&
                                     <div className="flex flex-row justify-center items-center gap-4 font-bold text-xl">
                                         <h1>Status: </h1>
-                                        <Button variant="outline" className="shadow-none text-red-700 border-red-700" onClick={() => navigate(`/clubs/${clubId}/register`)}>Re-registration required</Button>
+                                        <Button variant="outline" className="shadow-none text-red-700 hover:font-bold border border-red-700 hover:text-red-700 hover:border-red-700" onClick={() => navigate(`/clubs/${clubId}/register`)}>Re-registration required</Button>
                                     </div>
                                 }
                                 {
@@ -155,13 +155,13 @@ export default function ViewClubPage() {
                                 <>
                                     <TabsTrigger className="w-[200px]" value="home">Home</TabsTrigger>
                                     {
-                                        data?.club_member_exists && !data?.resubmission_required &&
+                                        (data?.club_member_exists || data?.resubmission_required) &&
                                         <>
                                             <TabsTrigger className="w-[200px]" value="bank">Payments & Billing</TabsTrigger>
                                         </>
                                     }
                                     {
-                                        data?.club_member_exists && !data?.resubmission_required &&
+                                        (data?.club_member_exists || data?.resubmission_required) &&
                                         <>
                                             <TabsTrigger className="w-[200px]" value="member-registration">Registration</TabsTrigger>
                                         </>

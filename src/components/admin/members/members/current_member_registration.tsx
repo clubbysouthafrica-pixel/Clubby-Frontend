@@ -29,13 +29,13 @@ export function CurrentMemberRegistration({
     )
   }
   return (
-    <Card className="w-full">
-      <CardContent className="py-0 px-8 space-y-8">
+    <Card className="w-full border-0 shadow-none py-1">
+      <CardContent className="py-0 px-4 space-y-4">
         <div key={data.pages[currentPageIndex].page_index} className="space-y-5">
-          <h2 className="text-xl font-bold text-center mb-6 mt-0">
-            {data.pages[currentPageIndex].page_header}
-          </h2>
-          <div className="h-[45vh] overflow-y-auto p-4 border border-gray-200 rounded-lg bg-gray-50 space-y-6">
+          <div className="h-[45vh] overflow-y-auto p-4 shadow-md border border-gray-200 rounded-lg bg-gray-50 space-y-6">
+            <h2 className="text-xl font-bold text-center mb-6 mt-0">
+              {data.pages[currentPageIndex].page_header}
+            </h2>
             {data.pages[currentPageIndex].fields.map((field: any) => {
 
               if (field.type === "STANDARD_SIGNATURE") {

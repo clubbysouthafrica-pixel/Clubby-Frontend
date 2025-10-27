@@ -60,6 +60,7 @@ export interface PageFieldBase {
   currency?: string;
   amount?: number;
   value?: string;
+  signature_type?: string;
   selectedAmountCents?: number;
   option_order_id?: string;
   label?: string;
@@ -73,6 +74,17 @@ export interface FormPage {
 
 export interface PagedFormPayload {
   pages: FormPage[];
+}
+
+async function presignedUrlToDataUrl(url: string): Promise<string> {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
 }
 
 export function ClubRegisterForm() {
@@ -96,7 +108,10 @@ export function ClubRegisterForm() {
   const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
-    if ((data as PagedFormPayload)?.pages) {
+    const processPages = async () => {
+      if (!(data as PagedFormPayload)?.pages) return;
+  
+      // Sort pages and fields
       const sorted = (data as PagedFormPayload).pages
         .sort((a, b) => a.page_index - b.page_index)
         .map((p, index) => ({
@@ -106,43 +121,57 @@ export function ClubRegisterForm() {
             .sort((a, b) => Number(a.field_order_id) - Number(b.field_order_id))
             .map((f) => ({ ...f })),
         }));
+  
       setPages(sorted);
-
-      if (club?.meta) {
-        const updatedPages = sorted.map((page) => ({
+  
+      if (!club?.meta) return;
+  
+      const updatedPages = await Promise.all(
+        sorted.map(async (page) => ({
           ...page,
-          fields: page.fields.map((field) => {
-            const metaField = club.meta[field.field_id];
-            if (!metaField) return field;
-
-            if (field.billingOptions) {
-              const matchedOption = field.billingOptions.find(
-                (opt) => opt.option_order_id === metaField.option_order_id
-              );
-
-              if (matchedOption) {
+          fields: await Promise.all(
+            page.fields.map(async (field) => {
+              const metaField = club.meta[field.field_id];
+              if (!metaField) return field;
+  
+              if (metaField?.signature_type === "signature") {
+                const dataUrl = await presignedUrlToDataUrl(metaField.value);
                 return {
                   ...field,
-                  value: matchedOption.label,
-                  label: matchedOption.label,
-                  selectedAmountCents: matchedOption.amount,
-                  option_order_id: matchedOption.option_order_id,
+                  value: dataUrl,
+                };
+              } else if (field.billingOptions) {
+                const matchedOption = field.billingOptions.find(
+                  (opt) => opt.option_order_id === metaField.option_order_id
+                );
+  
+                if (matchedOption) {
+                  return {
+                    ...field,
+                    value: matchedOption.label,
+                    label: matchedOption.label,
+                    selectedAmountCents: matchedOption.amount,
+                    option_order_id: matchedOption.option_order_id,
+                  };
+                }
+              } else {
+                return {
+                  ...field,
+                  value: metaField.value,
                 };
               }
-            } else {
-              return {
-                ...field,
-                value: metaField.value,
-              };
-            }
-
-            return field;
-          }),
-        }));
-        setPages(updatedPages);
-      }
-    }
-  }, [data, club]);
+  
+              return field;
+            })
+          ),
+        }))
+      );
+  
+      setPages(updatedPages);
+    };
+  
+    processPages();
+  }, [data, club]);  
 
   const setFieldValue = (
     pageIndex: number,

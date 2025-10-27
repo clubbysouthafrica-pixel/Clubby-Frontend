@@ -97,19 +97,19 @@ export default function SelectedMember({
                         </DialogDescription>
                     )}
                     {selectedTab === "member-registration" && (
-                        <DialogDescription className="mt-2 mb-4">
+                        <DialogDescription className="mt-2 ml-4">
                             This is the members current registration form.
                         </DialogDescription>
                     )}
 
-                    <div className="overflow-hidden rounded-lg border">
+                    <div className="overflow-hidden rounded-lg">
                         {selectedTab === "user-information" && isLoading && !memberUser &&
                             <div className="p-5 min-h-screen">
                                 <Loader2 className="h-8 w-8 animate-spin" />
                             </div>
                         }
                         {selectedTab === "user-information" && !isLoading && memberUser &&
-                            <Table>
+                            <Table className="border">
                                 <TableHeader className="bg-muted sticky top-0 z-10">
                                     <TableRow>
                                         <TableHead className="text-center px-2 py-2 w-1/2">
