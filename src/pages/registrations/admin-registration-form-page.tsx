@@ -145,11 +145,17 @@ export default function AdminRegistrationFormPage() {
                 </div>
             </div>
 
+            {(saving || isLoading) && (
+                <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+            )}
+
             {
-                !isLoading && previewRegForm && <PreviewForm currency={club?.currency ?? "ZAR"} formPages={pages} />
+                !isLoading && !saving && previewRegForm && <PreviewForm currency={club?.currency ?? "ZAR"} formPages={pages} />
             }
 
-            {!isLoading && !previewRegForm &&
+            {!isLoading && !saving && !previewRegForm &&
                 <Tabs defaultValue='0'>
                     <TabsList className="flex items-center w-full">
                         <div className="flex-1 flex overflow-x-auto flex-nowrap custom-thin-scrollbar space-x-2 py-1">
@@ -172,12 +178,7 @@ export default function AdminRegistrationFormPage() {
                             </Button>
                         </div>
                     </TabsList>
-                    {(saving || isLoading) && (
-                        <div className="flex justify-center py-8">
-                            <Loader2 className="h-8 w-8 animate-spin" />
-                        </div>
-                    )}
-                    {!saving && !isLoading && (
+                    {
                         pages.map(p => (
                             <TabsContent value={p.page_index.toString()} key={p.page_index}>
                                 <div>
@@ -190,7 +191,7 @@ export default function AdminRegistrationFormPage() {
                                 </div>
                             </TabsContent>
                         ))
-                    )}
+                    }
                 </Tabs>
             }
         </div>
