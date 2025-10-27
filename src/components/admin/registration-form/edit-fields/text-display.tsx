@@ -1,28 +1,47 @@
 import { useState, useEffect } from "react"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import ReactQuill from "react-quill-new"
+import "react-quill-new/dist/quill.snow.css"
 
 interface Props {
-    label: string
-    value: string
-    onChange: (val: string) => void
+  label: string
+  value: string
+  onChange: (val: string) => void
 }
 
 export default function EditTextDisplay({
-    label,
-    value,
-    onChange,
+  label,
+  value,
+  onChange,
 }: Props) {
-    const [internalValue, setInternalValue] = useState(value)
+  const [internalValue, setInternalValue] = useState(value)
 
-    useEffect(() => {
-        setInternalValue(value)
-    }, [value])
+  useEffect(() => {
+    setInternalValue(value)
+  }, [value])
 
-    return (
-        <div className="space-y-2">
-            <Label className="block text-sm font-medium">{label}</Label>
-            <Textarea placeholder="Enter content" onChange={(v) => {setInternalValue(v.target.value), onChange(v.target.value)}} value={internalValue} />
-        </div>
-    )
+  const handleChange = (val: string) => {
+    setInternalValue(val)  
+    onChange(val)
+  }
+
+  return (
+    <div className="space-y-2">
+      <Label className="block text-sm font-medium">{label}</Label>
+      <ReactQuill
+        theme="snow"
+        value={internalValue}
+        onChange={handleChange}
+        placeholder="Enter content"
+        modules={{
+          toolbar: [
+            [{ header: [1, 2, 3, false] }],
+            ["bold", "italic", "underline", "strike"],
+            [{ list: "ordered" }, { list: "bullet" }],
+            ["link", "clean"],
+          ],
+        }}
+      />
+    </div>
+  )
 }

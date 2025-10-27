@@ -117,14 +117,20 @@ export function PreviewForm({
                       .sort((a: any, b: any) => a.field_order_id - b.field_order_id)
                       .map((field) => {
 
-                        if (field.field_type === "TEXT") {
+                        if (field.field_type === "TEXT" && field.field_text) {
+                          const cleaned = field.field_text
+                            .replace(
+                              /<ol>(\s*<li[^>]*data-list="bullet"[^>]*>[\s\S]*?)<\/ol>/g,
+                              "<ul>$1</ul>"
+                            )
+                            .replace(/<span class="ql-ui"[^>]*><\/span>/g, "");
+
                           return (
-                            <p
+                            <div
                               key={field.field_order_id}
-                              className="text-sm text-muted-foreground whitespace-pre-line"
-                            >
-                              {field.field_text}
-                            </p>
+                              className="prose text-gray-700 [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5"
+                              dangerouslySetInnerHTML={{ __html: cleaned }}
+                            />
                           );
                         }
 
@@ -214,7 +220,7 @@ export function PreviewForm({
                           Previous
                         </Button>
                       ) : (
-                        <div />  // Empty spacer to keep layout
+                        <div />
                       )}
 
                       {currentPageIndex < pages.length - 1 ? (
