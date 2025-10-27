@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
 } from "@/components/ui/card";
 import { useState } from "react";
 import { useFetchMemberRegisteration } from "@/queries/registration-form";
@@ -10,8 +11,10 @@ import { Label } from "@/components/ui/label";
 
 export function MemberRegistration({
   clubAccountId,
+  clubName,
   currency,
-}: { clubAccountId: string, currency: string }) {
+  membershipStatus
+}: { clubAccountId: string, currency: string, clubName: string, membershipStatus: string }) {
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
   const { data, isLoading } = useFetchMemberRegisteration(
@@ -27,13 +30,36 @@ export function MemberRegistration({
     )
   }
   return (
-    <Card className="w-full mb-4">
+    <Card className="w-full mb-4 border-none shadow-none">
       <CardContent className="py-0 px-8 space-y-8">
-        <div key={data.pages[currentPageIndex].page_index} className="space-y-5">
-          <h2 className="text-xl font-bold text-center mb-6 mt-0">
-            {data.pages[currentPageIndex].page_header}
-          </h2>
-          <div className="h-[45vh] overflow-y-auto p-4 border border-gray-200 rounded-lg bg-gray-50 space-y-6">
+        <div key={data.pages[currentPageIndex].page_index} className="flex flex-col gap-1 justify-center items-center">
+          <CardDescription className="text-center w-[85%]">
+            This is your most recent registration form submitted for <strong>{clubName}</strong>.
+          </CardDescription>
+
+          <CardDescription className="text-center w-[85%]">
+            {membershipStatus === "Pending" ? (
+              <>
+                Your registration is currently <strong>pending</strong>. The club admin still needs to verify your submitted registration and confirm if your registration fee has been paid.
+                {` `}
+                If you haven’t paid yet, please visit <strong>Payments & Billing</strong> to complete the outstanding payment using a supported method.
+                {` `}
+                If your payment has already been made, please be patient while the admin completes the verification process.
+              </>
+            ) : membershipStatus === "Resubmission required" ? (
+              <>
+                Your registration requires a <strong>resubmission</strong>. This may be due to reasons such as your membership expiring, the club starting a new season, or invalid information in your previous submission. Please resubmit your registration form.
+              </>
+            ) : (
+              <>
+                Your registration has been <strong>successfully accepted</strong>, and your payment has been confirmed by the admin. You are now officially a member.
+              </>
+            )}
+          </CardDescription>
+          <div className="h-[50vh] w-[85%] overflow-y-auto p-4 border border-gray-200 rounded-lg bg-gray-50 space-y-6">
+            <h2 className="text-xl font-bold text-center mb-6 mt-0">
+              {data.pages[currentPageIndex].page_header}
+            </h2>
             {data.pages[currentPageIndex].fields.map((field: any) => {
 
               if (field.type === "STANDARD_SIGNATURE") {

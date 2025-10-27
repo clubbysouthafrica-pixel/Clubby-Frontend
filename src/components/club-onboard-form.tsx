@@ -280,7 +280,7 @@ export function ClubRegisterForm() {
                   )}
 
                   {registrationRequest && (
-                    <div className="h-[350px] overflow-y-auto p-4 border border-gray-200 rounded space-y-4 bg-white shadow-sm">
+                    <div className="h-[350px] p-2 overflow-y-auto p-4 border border-gray-200 rounded space-y-4 bg-white shadow-sm">
                       {/* Total Registration Fee */}
                       <div>
                         <h2 className="text-lg font-semibold mb-2">
@@ -300,7 +300,7 @@ export function ClubRegisterForm() {
                       <div className="bg-gray-50 p-3 rounded border border-gray-200 space-y-2">
                         <p className="font-medium text-yellow-700">⚠️ Please review your membership information carefully before submitting.</p>
                         <p>
-                          Once your registration is submitted, you must visit the <strong>Payments</strong> tab in your associated club profile to view available payment methods and instructions for paying any outstanding amounts.
+                          Once your registration is submitted, you must visit the <strong>Payments & Billing</strong> tab in your associated club profile to view available payment methods and instructions for paying any outstanding amounts.
                         </p>
                         <p className="text-sm text-gray-500">
                           Clubby is <strong>not responsible</strong> for any incorrect payments, misdirected payments, or payment errors. Please follow the instructions on the Payments tab carefully.
@@ -314,7 +314,7 @@ export function ClubRegisterForm() {
 
 
                   {pages[currentPageIndex] && !registrationRequest && (
-                    <div key={pages[currentPageIndex].page_index} className="space-y-5 overflow-y-auto h-[350px]">
+                    <div key={pages[currentPageIndex].page_index} className="space-y-5 overflow-y-auto h-[350px] p-2">
                       <h3 className="text-lg font-semibold">{pages[currentPageIndex].page_header}</h3>
                       {pages[currentPageIndex].fields
                         .sort((a: any, b: any) => a.field_order_id - b.field_order_id)

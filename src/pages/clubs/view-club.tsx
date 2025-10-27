@@ -126,24 +126,23 @@ export default function ViewClubPage() {
                             <div className="mt-4 md:mt-0 flex gap-4">
                                 {
                                     !data?.club_member_exists &&
-                                    <Button variant="outline" className="shadow-none" onClick={() => navigate(`/clubs/${clubId}/register`)}>Join</Button>
+                                    <Button variant="outline" className="shadow-none border-black" onClick={() => navigate(`/clubs/${clubId}/register`)}>Join</Button>
                                 }
                                 {
                                     data.resubmission_required &&
-                                    <Button variant="outline" className="shadow-none text-red-700 border-red-700" onClick={() => navigate(`/clubs/${clubId}/register`)}>Re-register</Button>
+                                    <div className="flex flex-row justify-center items-center gap-4 font-bold text-xl">
+                                        <h1>Status: </h1>
+                                        <Button variant="outline" className="shadow-none text-red-700 border-red-700" onClick={() => navigate(`/clubs/${clubId}/register`)}>Re-registration required</Button>
+                                    </div>
                                 }
                                 {
                                     data?.club_member_exists && !data.resubmission_required &&
-                                    <Button
-                                        variant="outline"
-                                        className={`
-                                            shadow-none border-2 
-                                            ${data.registered ? "text-green-700 border-green-700" : "text-orange-700 border-orange-700"}
-                                            cursor-default pointer-events-none hover:bg-transparent hover:text-inherit hover:border-inherit
-                                        `}
-                                    >
-                                        {data.registered ? "Member" : "Membership Pending"}
-                                    </Button>
+                                    <div className="flex flex-row justify-center items-center gap-2 font-bold text-xl">
+                                        <h1>Membership Status: </h1>
+                                        <h1 className={`shadow-none ${data.registered ? "text-green-700 border-green-700" : "text-orange-700 border-orange-700"}`}>
+                                            {data.registered ? "Registered" : "Pending admin approval"}
+                                        </h1>
+                                    </div>
 
                                 }
                             </div>
@@ -171,7 +170,7 @@ export default function ViewClubPage() {
                             </TabsList>
 
                             <TabsContent value="member-registration">
-                                <MemberRegistration currency={data.currency} clubAccountId={data.club_account_id}/>
+                                <MemberRegistration membershipStatus={data.resubmission_required ? "Resubmission required" : data.registered ? "Registered" : "Pending"} clubName={data.club_name} currency={data.currency} clubAccountId={data.club_account_id} />
                             </TabsContent>
 
                             <TabsContent value="home">
@@ -215,46 +214,55 @@ export default function ViewClubPage() {
                                         </CardTitle>
                                     </Card>
                                     <div className="flex items-start w-full gap-2">
-                                        <Card className="w-2/6 h-[300px]">
-                                            <CardHeader>
-                                                <CardTitle>Banking Details</CardTitle>
-                                                <CardDescription>Make any payments through EFT to the below banking details. Please make use of your <strong>payment reference number</strong> when making the payment.</CardDescription>
-                                            </CardHeader>
-                                            <CardContent>
-                                                {
-                                                    bankDetailsLoading &&
-                                                    <div className="flex justify-center py-8">
-                                                        <Loader2 className="h-8 w-8 animate-spin" />
-                                                    </div>
-                                                }
-                                                {
-                                                    !bankDetailsLoading &&
-                                                    <Table>
-                                                        <TableBody>
-                                                            <TableRow>
-                                                                <TableCell>Bank</TableCell>
-                                                                <TableCell>{bankDetails?.bank}</TableCell>
-                                                            </TableRow>
-                                                            <TableRow>
-                                                                <TableCell>Account Number</TableCell>
-                                                                <TableCell>{bankDetails?.account_number}</TableCell>
-                                                            </TableRow>
-                                                            <TableRow>
-                                                                <TableCell>Branch Code</TableCell>
-                                                                <TableCell>{bankDetails?.branch_code}</TableCell>
-                                                            </TableRow>
-                                                            <TableRow>
-                                                                <TableCell>Account Type</TableCell>
-                                                                <TableCell>{bankDetails?.account_type}</TableCell>
-                                                            </TableRow>
-                                                        </TableBody>
-                                                    </Table>
-                                                }
-                                            </CardContent>
+                                        <Card className="w-2/6 h-[400px]">
+                                            <h1 className="mx-6 text-xl font-bold">Payment Options</h1>
+                                            <Tabs defaultValue="eft">
+                                                <TabsList className="ml-4 justify-start h-[30px] p-1 rounded-[10px]">
+                                                    <TabsTrigger className="w-[100px] text-xs rounded-[10px]" value="eft">EFT</TabsTrigger>
+                                                    {/* <TabsTrigger className="w-[100px] text-xs rounded-[10px]" value="other">Other</TabsTrigger> */}
+                                                </TabsList>
+                                                <TabsContent value="eft" className="border-1 border-grey-400 mx-2 py-4 rounded-[20px]">
+                                                    <CardHeader>
+                                                        <CardTitle>Banking Details</CardTitle>
+                                                        <CardDescription>Make any payments through EFT to the below banking details. Please make use of your <strong>payment reference number</strong> when making the payment.</CardDescription>
+                                                    </CardHeader>
+                                                    <CardContent>
+                                                        {
+                                                            bankDetailsLoading &&
+                                                            <div className="flex justify-center py-8">
+                                                                <Loader2 className="h-8 w-8 animate-spin" />
+                                                            </div>
+                                                        }
+                                                        {
+                                                            !bankDetailsLoading &&
+                                                            <Table>
+                                                                <TableBody>
+                                                                    <TableRow>
+                                                                        <TableCell>Bank</TableCell>
+                                                                        <TableCell>{bankDetails?.bank}</TableCell>
+                                                                    </TableRow>
+                                                                    <TableRow>
+                                                                        <TableCell>Account Number</TableCell>
+                                                                        <TableCell>{bankDetails?.account_number}</TableCell>
+                                                                    </TableRow>
+                                                                    <TableRow>
+                                                                        <TableCell>Branch Code</TableCell>
+                                                                        <TableCell>{bankDetails?.branch_code}</TableCell>
+                                                                    </TableRow>
+                                                                    <TableRow>
+                                                                        <TableCell>Account Type</TableCell>
+                                                                        <TableCell>{bankDetails?.account_type}</TableCell>
+                                                                    </TableRow>
+                                                                </TableBody>
+                                                            </Table>
+                                                        }
+                                                    </CardContent>
+                                                </TabsContent>
+                                            </Tabs>
                                         </Card>
                                         {
                                             !isUserTransactionsLoading && transactions &&
-                                            <Card className="gap-1 w-4/6 h-[300px]">
+                                            <Card className="flex-1 gap-1 w-4/6 h-[400px]">
                                                 <CardHeader>
                                                     <CardTitle>Transactions</CardTitle>
                                                     <CardDescription>View your transactions with this club.</CardDescription>
