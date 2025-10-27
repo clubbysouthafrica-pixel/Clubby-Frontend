@@ -245,8 +245,8 @@ export function ClubRegisterForm({
   const isLastPage = currentPageIndex === pages.length - 1;
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
+    <div className="flex justify-center items-center">
+      <Card className="w-[800px] overflow-y-auto">
         <CardHeader className="text-center">
           {clubLoading && isLoading && (
             <div className="flex justify-center py-8">
@@ -297,7 +297,7 @@ export function ClubRegisterForm({
                   )}
 
                   {pages[currentPageIndex] && !registrationRequest && (
-                    <div key={pages[currentPageIndex].page_index} className="space-y-5">
+                    <div key={pages[currentPageIndex].page_index} className="space-y-5 overflow-y-auto h-[600px]">
                       <h3 className="text-lg font-semibold">{pages[currentPageIndex].page_header}</h3>
                       {pages[currentPageIndex].fields
                         .sort((a: any, b: any) => a.field_order_id - b.field_order_id)
@@ -310,7 +310,7 @@ export function ClubRegisterForm({
                                 "<ul>$1</ul>"
                               )
                               .replace(/<span class="ql-ui"[^>]*><\/span>/g, "");
-  
+
                             return (
                               <div
                                 key={field.field_order_id}
