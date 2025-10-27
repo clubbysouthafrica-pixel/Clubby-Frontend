@@ -33,7 +33,7 @@ export function MemberRegistration({
           <h2 className="text-xl font-bold text-center mb-6 mt-0">
             {data.pages[currentPageIndex].page_header}
           </h2>
-          <div className="max-h-[30vh] overflow-y-auto p-4 border border-gray-200 rounded-lg bg-gray-50 space-y-6">
+          <div className="h-[45vh] overflow-y-auto p-4 border border-gray-200 rounded-lg bg-gray-50 space-y-6">
             {data.pages[currentPageIndex].fields.map((field: any) => {
 
               if (field.type === "STANDARD_SIGNATURE") {
