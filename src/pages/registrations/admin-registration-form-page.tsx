@@ -127,7 +127,7 @@ export default function AdminRegistrationFormPage() {
     }
 
     return (
-        <div className="p-5 min-h-screen">
+        <div className="p-5 min-h-screen w-full max-w-[1500px]">
             <div className="flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-base font-bold">Create the member registration form</h1>
@@ -151,34 +151,26 @@ export default function AdminRegistrationFormPage() {
 
             {!isLoading && !previewRegForm &&
                 <Tabs defaultValue='0'>
-                    <TabsList className="flex items-center max-w-full">
-                        <div
-                            className="flex overflow-x-auto whitespace-nowrap custom-thin-scrollbar"
-                        >
-                            <div className="flex min-w-max">
-                                {pages.map((p) => (
-                                    <TabsTrigger
-                                        className="w-[200px] flex-shrink-0"
-                                        value={p.page_index.toString()}
-                                        key={p.page_index}
-                                    >
-                                        <span className="px-3 block text-left truncate">
-                                            {p.page_header.length > 20
-                                                ? `${p.page_header.slice(0, 20)}...`
-                                                : p.page_header}
-                                        </span>
-                                    </TabsTrigger>
-                                ))}
-                            </div>
+                    <TabsList className="flex items-center w-full">
+                        <div className="flex-1 flex overflow-x-auto flex-nowrap custom-thin-scrollbar space-x-2 py-1">
+                            {pages.map((p) => (
+                                <TabsTrigger
+                                    key={p.page_index}
+                                    value={p.page_index.toString()}
+                                    className="w-[200px] flex-shrink-0 px-3 truncate !flex-none"
+                                >
+                                    {p.page_header.length > 20
+                                        ? `${p.page_header.slice(0, 20)}...`
+                                        : p.page_header}
+                                </TabsTrigger>
+                            ))}
                         </div>
 
-                        <Button
-                            onClick={addPage}
-                            className="ml-2 h-full flex-shrink-0"
-                            variant={'outline'}
-                        >
-                            <PlusIcon />
-                        </Button>
+                        <div className="ml-2 flex-shrink-0">
+                            <Button onClick={addPage} variant="outline">
+                                <PlusIcon />
+                            </Button>
+                        </div>
                     </TabsList>
                     {(saving || isLoading) && (
                         <div className="flex justify-center py-8">
