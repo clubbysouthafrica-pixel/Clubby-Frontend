@@ -140,7 +140,7 @@ export default function ViewClubPage() {
                                     <div className="flex flex-row justify-center items-center gap-2 font-bold text-xl">
                                         <h1>Membership Status: </h1>
                                         <h1 className={`shadow-none ${data.registered ? "text-green-700 border-green-700" : "text-orange-700 border-orange-700"}`}>
-                                            {data.registered ? "Registered" : "Pending admin approval"}
+                                            {data.registered ? "Registered" : "Pending"}
                                         </h1>
                                     </div>
 
