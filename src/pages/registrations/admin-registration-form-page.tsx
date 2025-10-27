@@ -128,83 +128,81 @@ export default function AdminRegistrationFormPage() {
     }
 
     return (
-        <Pager>
-            <div className="container mx-auto py-5 max-w-full">
-                <div className="flex justify-between items-center mb-8">
-                    <div>
-                        <h1 className="text-base font-bold">Registration Form</h1>
-                        <p className="text-muted-foreground">
-                            Build your member registration form
-                        </p>
-                    </div>
-                    <div className="flex gap-4">
-                        <Button
-                            onClick={() => setPreviewRegForm((prev) => !prev)}
-                        >
-                            {previewRegForm ? "Edit Form" : "Preview form"}
-                        </Button>
-                        <Button onClick={saveRegistrationForm}>{"Save Form"}</Button>
-                    </div>
+        <div className="container mx-auto p-5 max-w-full">
+            <div className="flex justify-between items-center mb-8">
+                <div>
+                    <h1 className="text-base font-bold">Create the member registration form</h1>
+                    <p className="text-muted-foreground">
+                        Here you can build your dynamic member registration form for members to use and register to the club.
+                    </p>
                 </div>
-
-                {
-                    !isLoading && previewRegForm && <PreviewForm currency={club?.currency ?? "ZAR"} formPages={pages} />
-                }
-
-                {!isLoading && !previewRegForm &&
-                    <Tabs defaultValue='0'>
-                        <TabsList className="flex items-center max-w-full">
-                            <div
-                                className="flex overflow-x-auto whitespace-nowrap custom-thin-scrollbar"
-                                style={{ maxWidth: '100%' }}
-                            >
-                                <div className="flex flex-nowrap w-max">
-                                    {pages.map((p) => (
-                                        <TabsTrigger
-                                            className="w-[200px] flex-shrink-0"
-                                            value={p.page_index.toString()}
-                                            key={p.page_index}
-                                        >
-                                            <span className="px-3 block text-left truncate">
-                                                {p.page_header.length > 20
-                                                    ? `${p.page_header.slice(0, 20)}...`
-                                                    : p.page_header}
-                                            </span>
-                                        </TabsTrigger>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <Button
-                                onClick={addPage}
-                                className="ml-2 h-full flex-shrink-0"
-                                variant={'outline'}
-                            >
-                                <PlusIcon />
-                            </Button>
-                        </TabsList>
-                        {(saving || isLoading) && (
-                            <div className="flex justify-center py-8">
-                                <Loader2 className="h-8 w-8 animate-spin" />
-                            </div>
-                        )}
-                        {!saving && !isLoading && (
-                            pages.map(p => (
-                                <TabsContent value={p.page_index.toString()} key={p.page_index}>
-                                    <div>
-                                        <div className="flex justify-between items-center mb-4">
-                                            <p className="font-bold">{p.page_header} (Page {p.page_index + 1})</p>
-                                            <ConfirmDeleteDialog tooltipDescription="Remove page" id={p.page_index} removeFunc={removePage} />
-                                        </div>
-                                        <Input value={p.page_header} onChange={v => changePageHeader(p.page_index, v.target.value)} placeholder="change page header" />
-                                        <DynamicFormBuilder currency={club?.currency ?? "ZAR"} clubAccountId={club?.club_account_id as string} page={p} setFields={setFields} deletedFields={deletedFields} setDeletedFields={setDeletedFields} />
-                                    </div>
-                                </TabsContent>
-                            ))
-                        )}
-                    </Tabs>
-                }
+                <div className="flex gap-4">
+                    <Button
+                        onClick={() => setPreviewRegForm((prev) => !prev)}
+                    >
+                        {previewRegForm ? "Edit Form" : "Preview form"}
+                    </Button>
+                    <Button onClick={saveRegistrationForm}>{"Save Form"}</Button>
+                </div>
             </div>
-        </Pager>
+
+            {
+                !isLoading && previewRegForm && <PreviewForm currency={club?.currency ?? "ZAR"} formPages={pages} />
+            }
+
+            {!isLoading && !previewRegForm &&
+                <Tabs defaultValue='0'>
+                    <TabsList className="flex items-center max-w-full">
+                        <div
+                            className="flex overflow-x-auto whitespace-nowrap custom-thin-scrollbar"
+                            style={{ maxWidth: '100%' }}
+                        >
+                            <div className="flex flex-nowrap w-max">
+                                {pages.map((p) => (
+                                    <TabsTrigger
+                                        className="w-[200px] flex-shrink-0"
+                                        value={p.page_index.toString()}
+                                        key={p.page_index}
+                                    >
+                                        <span className="px-3 block text-left truncate">
+                                            {p.page_header.length > 20
+                                                ? `${p.page_header.slice(0, 20)}...`
+                                                : p.page_header}
+                                        </span>
+                                    </TabsTrigger>
+                                ))}
+                            </div>
+                        </div>
+
+                        <Button
+                            onClick={addPage}
+                            className="ml-2 h-full flex-shrink-0"
+                            variant={'outline'}
+                        >
+                            <PlusIcon />
+                        </Button>
+                    </TabsList>
+                    {(saving || isLoading) && (
+                        <div className="flex justify-center py-8">
+                            <Loader2 className="h-8 w-8 animate-spin" />
+                        </div>
+                    )}
+                    {!saving && !isLoading && (
+                        pages.map(p => (
+                            <TabsContent value={p.page_index.toString()} key={p.page_index}>
+                                <div>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <p className="font-bold">{p.page_header} (Page {p.page_index + 1})</p>
+                                        <ConfirmDeleteDialog tooltipDescription="Remove page" id={p.page_index} removeFunc={removePage} />
+                                    </div>
+                                    <Input value={p.page_header} onChange={v => changePageHeader(p.page_index, v.target.value)} placeholder="change page header" />
+                                    <DynamicFormBuilder currency={club?.currency ?? "ZAR"} clubAccountId={club?.club_account_id as string} page={p} setFields={setFields} deletedFields={deletedFields} setDeletedFields={setDeletedFields} />
+                                </div>
+                            </TabsContent>
+                        ))
+                    )}
+                </Tabs>
+            }
+        </div>
     );
 }
