@@ -105,7 +105,7 @@ export default function AddMemberPage() {
             }
             {
                 showRegistrationForm &&
-                <div className="mt-4 w-[700px]">
+                <div className="mt-4">
                     <ClubRegisterForm 
                         setShowRegistrationForm={setShowRegistrationForm}
                         memberEmail={memberEmail} 

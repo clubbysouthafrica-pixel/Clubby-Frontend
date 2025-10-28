@@ -202,7 +202,7 @@ export default function DynamicFormBuilder({ currency, clubAccountId, page, setF
               items={page.fields.map(f => f.field_id) as any}
               strategy={verticalListSortingStrategy}
             >
-              <div className="space-y-8">
+              <div className="space-y-8 overflow-y-auto max-h-[400px]">
                 {page.fields
                   .sort((a, b) => a.field_order_id - b.field_order_id)
                   .map((field) => (

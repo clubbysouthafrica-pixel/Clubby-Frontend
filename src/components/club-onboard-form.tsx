@@ -110,7 +110,7 @@ export function ClubRegisterForm() {
   useEffect(() => {
     const processPages = async () => {
       if (!(data as PagedFormPayload)?.pages) return;
-  
+
       // Sort pages and fields
       const sorted = (data as PagedFormPayload).pages
         .sort((a, b) => a.page_index - b.page_index)
@@ -121,11 +121,11 @@ export function ClubRegisterForm() {
             .sort((a, b) => Number(a.field_order_id) - Number(b.field_order_id))
             .map((f) => ({ ...f })),
         }));
-  
+
       setPages(sorted);
-  
+
       if (!club?.meta) return;
-  
+
       const updatedPages = await Promise.all(
         sorted.map(async (page) => ({
           ...page,
@@ -133,7 +133,7 @@ export function ClubRegisterForm() {
             page.fields.map(async (field) => {
               const metaField = club.meta[field.field_id];
               if (!metaField) return field;
-  
+
               if (metaField?.signature_type === "signature") {
                 const dataUrl = await presignedUrlToDataUrl(metaField.value);
                 return {
@@ -144,7 +144,7 @@ export function ClubRegisterForm() {
                 const matchedOption = field.billingOptions.find(
                   (opt) => opt.option_order_id === metaField.option_order_id
                 );
-  
+
                 if (matchedOption) {
                   return {
                     ...field,
@@ -160,18 +160,18 @@ export function ClubRegisterForm() {
                   value: metaField.value,
                 };
               }
-  
+
               return field;
             })
           ),
         }))
       );
-  
+
       setPages(updatedPages);
     };
-  
+
     processPages();
-  }, [data, club]);  
+  }, [data, club]);
 
   const setFieldValue = (
     pageIndex: number,
@@ -271,7 +271,7 @@ export function ClubRegisterForm() {
 
   return (
     <div className="flex justify-center items-center">
-      <Card className="w-[800px] overflow-y-auto">
+      <Card className="w-[800px] overflow-y-auto gap-2">
         <CardHeader className="text-center">
           {clubLoading && isLoading && (
             <div className="flex justify-center py-8">
@@ -279,7 +279,7 @@ export function ClubRegisterForm() {
             </div>
           )}
           {!clubLoading && (
-            <CardTitle className="text-xl">
+            <CardTitle className="text-xl text-center">
               {!isSuccess ? "Register to" : "Successfully Registered to"} {club?.club_name}
             </CardTitle>
           )}
@@ -292,7 +292,7 @@ export function ClubRegisterForm() {
         <CardContent>
           {!isSuccess && pages.length > 0 && (
             <form>
-              <div className="grid-2 gap-6">
+              <div className="gap-6">
                 <div className="grid gap-6">
                   {!user && (
                     <div className="grid gap-3">
@@ -341,10 +341,9 @@ export function ClubRegisterForm() {
                     </div>
                   )}
 
-
+                  <h3 className="text-[20px] font-semibold text-center">{pages[currentPageIndex].page_header}</h3>
                   {pages[currentPageIndex] && !registrationRequest && (
-                    <div key={pages[currentPageIndex].page_index} className="space-y-5 overflow-y-auto h-[350px] p-2">
-                      <h3 className="text-lg font-semibold">{pages[currentPageIndex].page_header}</h3>
+                    <div key={pages[currentPageIndex].page_index} className="space-y-6 overflow-y-auto h-[350px] p-2">
                       {pages[currentPageIndex].fields
                         .sort((a: any, b: any) => a.field_order_id - b.field_order_id)
                         .map((field) => {

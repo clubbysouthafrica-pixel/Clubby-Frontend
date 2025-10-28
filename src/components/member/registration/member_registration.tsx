@@ -3,6 +3,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardTitle,
 } from "@/components/ui/card";
 import { useState } from "react";
 import { useFetchMemberRegisteration } from "@/queries/registration-form";
@@ -34,7 +35,7 @@ export function MemberRegistration({
       <CardContent className="py-0 px-8 space-y-8">
         <div key={data.pages[currentPageIndex].page_index} className="flex flex-col gap-1 justify-center items-center">
           <CardDescription className="text-center w-[85%]">
-            This is your most recent registration form submitted for <strong>{clubName}</strong>. <></> 
+            This is your most recent registration form submitted for <strong>{clubName}</strong>. <></>
             {membershipStatus === "Pending" ? (
               <>
                 Your registration is currently <strong>pending</strong>. The club admin still needs to verify your submitted registration and confirm if your registration fee has been paid.
@@ -53,88 +54,91 @@ export function MemberRegistration({
               </>
             )}
           </CardDescription>
-          <div className="h-[50vh] w-[85%] mt-4 shadow-md overflow-y-auto p-4 border border-gray-200 rounded-lg bg-gray-50 space-y-6">
-            <h2 className="text-xl font-bold text-center mb-6 mt-0">
-              {data.pages[currentPageIndex].page_header}
-            </h2>
-            {data.pages[currentPageIndex].fields.map((field: any) => {
+          <div className="shadow-md p-4 w-[85%] border border-gray-200 rounded-lg bg-gray-50">
+            <CardTitle className="text-xl text-center underline">
+              {clubName}
+            </CardTitle>
+            <h3 className="text-[20px] font-semibold text-center">{data.pages[currentPageIndex].page_header}</h3>
+            <div className="h-[50vh] mt-2 overflow-y-auto space-y-6">
+              {data.pages[currentPageIndex].fields.map((field: any) => {
 
-              if (field.type === "STANDARD_SIGNATURE") {
-                if (field.signature_type === "signature") {
+                if (field.type === "STANDARD_SIGNATURE") {
+                  if (field.signature_type === "signature") {
+                    return (
+                      <div key={field.label} className="flex flex-col gap-2">
+                        <Label className="text-[12px] font-semibold">{field.label}:</Label>
+                        <img
+                          src={field.value}
+                          alt="User Signature"
+                          className="border-b-2 border-gray-400 w-50"
+                        />
+                      </div>
+                    )
+                  } else {
+                    return (
+                      <div key={field.label} className="flex flex-col gap-2">
+                        <Label className="text-[12px] font-semibold">{field.label}:</Label>
+                        <Label className="text-[15px] font-[cursive] border-b-2 border-gray-400 pb-1 w-200">
+                          {field.value}
+                        </Label>
+                      </div>
+                    )
+                  }
+                }
+
+                if (field.type === "STANDARD_OTHER") {
                   return (
                     <div key={field.label} className="flex flex-col gap-2">
                       <Label className="text-[12px] font-semibold">{field.label}:</Label>
-                      <img
-                        src={field.value}
-                        alt="User Signature"
-                        className="border-b-2 border-gray-400 w-50"
-                      />
-                    </div>
-                  )
-                } else {
-                  return (
-                    <div key={field.label} className="flex flex-col gap-2">
-                      <Label className="text-[12px] font-semibold">{field.label}:</Label>
-                      <Label className="text-[15px] font-[cursive] border-b-2 border-gray-400 pb-1 w-200">
+                      <Label className="text-[12px] border-b-2 border-gray-300 pb-1 w-200">
                         {field.value}
                       </Label>
                     </div>
-                  )
+                  );
                 }
-              }
 
-              if (field.type === "STANDARD_OTHER") {
-                return (
-                  <div key={field.label} className="flex flex-col gap-2">
-                    <Label className="text-[12px] font-semibold">{field.label}:</Label>
-                    <Label className="text-[12px] border-b-2 border-gray-300 pb-1 w-200">
-                      {field.value}
-                    </Label>
-                  </div>
-                );
-              }
+                if (field.type === "BILLING") {
+                  return (
+                    <div key={field.label} className="flex flex-col gap-2">
+                      <Label className="text-[12px] font-semibold">{field.label} {field.quantity ? `(x${field.quantity})` : null}:</Label>
+                      <Label className="text-[12px] border-b-2 border-gray-300 pb-1 w-200">
+                        {field.value}
+                      </Label>
+                    </div>
+                  );
+                }
 
-              if (field.type === "BILLING") {
-                return (
-                  <div key={field.label} className="flex flex-col gap-2">
-                    <Label className="text-[12px] font-semibold">{field.label} {field.quantity ? `(x${field.quantity})` : null}:</Label>
-                    <Label className="text-[12px] border-b-2 border-gray-300 pb-1 w-200">
-                      {field.value}
-                    </Label>
-                  </div>
-                );
-              }
+                if (field.type === "TEXT") {
+                  const cleaned = field.label
+                    .replace(
+                      /<ol>(\s*<li[^>]*data-list="bullet"[^>]*>[\s\S]*?)<\/ol>/g,
+                      "<ul>$1</ul>"
+                    )
+                    .replace(/<span class="ql-ui"[^>]*><\/span>/g, "");
 
-              if (field.type === "TEXT") {
-                const cleaned = field.label
-                  .replace(
-                    /<ol>(\s*<li[^>]*data-list="bullet"[^>]*>[\s\S]*?)<\/ol>/g,
-                    "<ul>$1</ul>"
-                  )
-                  .replace(/<span class="ql-ui"[^>]*><\/span>/g, "");
-
-                return (
-                  <div
-                    key={field.label}
-                    className="prose text-gray-700 [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5"
-                    dangerouslySetInnerHTML={{ __html: cleaned }}
-                  />
-                );
-              }
+                  return (
+                    <div
+                      key={field.label}
+                      className="prose text-gray-700 [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5"
+                      dangerouslySetInnerHTML={{ __html: cleaned }}
+                    />
+                  );
+                }
 
 
-              if (field.type === "DNE") {
-                return (
-                  <div key={field.label} className="flex flex-col gap-2">
-                    <Label className="text-[12px] font-semibold">{field.label}:</Label>
-                    <Label className="text-[12px] border-b-2 border-gray-300 pb-1 w-200 text-gray-500">
-                      Not filled in by member.
-                    </Label>
-                  </div>
-                );
-              }
+                if (field.type === "DNE") {
+                  return (
+                    <div key={field.label} className="flex flex-col gap-2">
+                      <Label className="text-[12px] font-semibold">{field.label}:</Label>
+                      <Label className="text-[12px] border-b-2 border-gray-300 pb-1 w-200 text-gray-500">
+                        Not filled in by member.
+                      </Label>
+                    </div>
+                  );
+                }
 
-            })}
+              })}
+            </div>
           </div>
         </div>
         {data.pages.length > 1 && (

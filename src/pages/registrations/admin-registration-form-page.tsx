@@ -153,7 +153,7 @@ export default function AdminRegistrationFormPage() {
             )}
 
             {
-                !isLoading && !saving && previewRegForm && <PreviewForm currency={club?.currency ?? "ZAR"} formPages={pages} />
+                !isLoading && !saving && previewRegForm && <PreviewForm clubName={club?.club_name ?? ""} currency={club?.currency ?? "ZAR"} formPages={pages} />
             }
 
             {!isLoading && !saving && !previewRegForm &&

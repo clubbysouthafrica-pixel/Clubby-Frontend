@@ -27,6 +27,7 @@ interface ImageProps {
     setSelectedMember: React.Dispatch<React.SetStateAction<any>>;
     currency: string;
     clubAccountId: string;
+    clubName: string;
 }
 
 interface MemberUser { phone_number: string; date_of_birth: string; email: string; address_line_1: string; address_line_2: string; suburb: string; city: string; postal_code: string; }
@@ -45,6 +46,7 @@ const MEMBER_USER_MAPPING = {
 export default function SelectedMember({
     selectedMember,
     setSelectedMember,
+    clubName,
     clubAccountId,
     currency,
 }: ImageProps) {
@@ -138,7 +140,7 @@ export default function SelectedMember({
                             </Table>
                         }
                         {selectedTab === "member-registration" &&
-                            <CurrentMemberRegistration userId={selectedMember.user_id} clubAccountId={clubAccountId} currency={currency} />
+                            <CurrentMemberRegistration clubName={clubName} userId={selectedMember.user_id} clubAccountId={clubAccountId} currency={currency} />
                         }
                     </div>
                 </Tabs>

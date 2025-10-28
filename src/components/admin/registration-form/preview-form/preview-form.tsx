@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardTitle,
 } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import StandardCheckbox from "../../../member/registration-form/standard-checkbox";
@@ -60,6 +61,7 @@ export interface PagedFormPayload {
 
 interface PreviewFormProps extends React.ComponentProps<"div"> {
   currency: string;
+  clubName: string;
   formPages: PageFormRegistration[];
 }
 
@@ -67,6 +69,7 @@ export function PreviewForm({
   className,
   currency,
   formPages,
+  clubName,
   ...props
 }: PreviewFormProps) {
   const [pages, setPages] = useState<FormPage[]>([]);
@@ -110,9 +113,11 @@ export function PreviewForm({
             <form>
               <div className="grid-2 gap-6">
                 <div className="grid gap-6">
-
-                  <div key={pages[currentPageIndex].page_index} className="space-y-5">
-                    <h3 className="text-lg font-semibold">{pages[currentPageIndex].page_header}</h3>
+                  <CardTitle className="text-xl text-center underline">
+                    {clubName}
+                  </CardTitle>
+                  <h3 className="text-lg font-semibold text-center">{pages[currentPageIndex].page_header}</h3>
+                  <div key={pages[currentPageIndex].page_index} className="space-y-5 overflow-y-auto h-[350px]">
                     {pages[currentPageIndex].fields
                       .sort((a: any, b: any) => a.field_order_id - b.field_order_id)
                       .map((field) => {

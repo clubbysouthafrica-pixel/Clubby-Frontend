@@ -354,7 +354,7 @@ export default function ListMembersPage() {
                 </Tabs>
             }
             {
-                hashUserId && <SelectedMember selectedMember={selectedMember} setSelectedMember={setSelectedMember} currency={club?.currency ?? "ZAR"} clubAccountId={club?.club_account_id ?? ""} />
+                hashUserId && <SelectedMember clubName={club?.club_name ?? ""} selectedMember={selectedMember} setSelectedMember={setSelectedMember} currency={club?.currency ?? "ZAR"} clubAccountId={club?.club_account_id ?? ""} />
             }
         </div>
     );

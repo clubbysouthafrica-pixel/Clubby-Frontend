@@ -255,7 +255,7 @@ export function ClubRegisterForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
+      <Card className="w-[800px] overflow-y-auto">
         <CardHeader className="text-center">
           <h1 className="mt-0">Name: <strong>{memberFirstName} {memberSurname}</strong></h1>
           <h1 className="mt-0">Email: <strong>{memberEmail}</strong></h1>
@@ -293,22 +293,28 @@ export function ClubRegisterForm({
                       </ul>
                     </div>
                   )}
-
+                  
+                  <h3 className="text-ls font-semibold text-center">{pages[currentPageIndex].page_header}</h3>
                   {pages[currentPageIndex] && !registrationRequest && (
-                    <div key={pages[currentPageIndex].page_index} className="space-y-5">
-                      <h3 className="text-lg font-semibold">{pages[currentPageIndex].page_header}</h3>
+                    <div key={pages[currentPageIndex].page_index} className="space-y-6 overflow-y-auto h-[350px] p-2">
                       {pages[currentPageIndex].fields
                         .sort((a: any, b: any) => a.field_order_id - b.field_order_id)
                         .map((field) => {
 
-                          if (field.field_type === "TEXT") {
+                          if (field.field_type === "TEXT" && field.field_text) {
+                            const cleaned = field.field_text
+                              .replace(
+                                /<ol>(\s*<li[^>]*data-list="bullet"[^>]*>[\s\S]*?)<\/ol>/g,
+                                "<ul>$1</ul>"
+                              )
+                              .replace(/<span class="ql-ui"[^>]*><\/span>/g, "");
+
                             return (
-                              <p
+                              <div
                                 key={field.field_order_id}
-                                className="text-sm text-muted-foreground whitespace-pre-line"
-                              >
-                                {field.field_text}
-                              </p>
+                                className="prose text-gray-700 [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5"
+                                dangerouslySetInnerHTML={{ __html: cleaned }}
+                              />
                             );
                           }
 
