@@ -19,7 +19,7 @@ export function RegistrationReportData({ data, currency }: props) {
   return (
     <div>
       <Tabs defaultValue={(data?.report as RegistrationReportDropDown[])[0]?.table_name}>
-        <TabsList className="flex items-center w-full">
+        <TabsList className="flex items-center">
           <div className="flex-1 flex overflow-x-auto flex-nowrap custom-thin-scrollbar space-x-2">
             {(data?.report as RegistrationReportDropDown[]).map((c: any) => (
               <TabsTrigger className="w-[200px] flex-shrink-0 px-3 truncate !flex-none my-5" key={c.table_name} value={c.table_name}>
