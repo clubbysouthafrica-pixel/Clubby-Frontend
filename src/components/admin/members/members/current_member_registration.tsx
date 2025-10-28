@@ -34,8 +34,6 @@ export function CurrentMemberRegistration({
     currency
   );
 
-  console.log(data)
-
   if (isLoading || !data) {
     return (
       <div className="p-5 min-h-screen">

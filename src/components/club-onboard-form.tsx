@@ -139,6 +139,7 @@ export function ClubRegisterForm() {
                 return {
                   ...field,
                   value: dataUrl,
+                  signature_type: "signature"
                 };
               } else if (field.billingOptions) {
                 const matchedOption = field.billingOptions.find(
@@ -325,7 +326,6 @@ export function ClubRegisterForm() {
                         </ul>
                       </div>
 
-                      {/* Additional Information / Disclaimer */}
                       <div className="bg-gray-50 p-3 rounded border border-gray-200 space-y-2">
                         <p className="font-medium text-yellow-700">⚠️ Please review your membership information carefully before submitting.</p>
                         <p>

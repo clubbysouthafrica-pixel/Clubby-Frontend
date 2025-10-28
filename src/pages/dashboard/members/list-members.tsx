@@ -140,10 +140,7 @@ export default function ListMembersPage() {
                         }
                     })
                 } else {
-                    const index = clubMembers.unregistered.findIndex((m: ClubMember) => m.user_id === member.user_id)
-                    clubMembers.unregistered.splice(index, 1);
-                    member.outstanding_amount = 0
-                    clubMembers.registered.push(member)
+                    window.location.reload();
                 }
                 setMemberRegisterAmount(0)
             },

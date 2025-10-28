@@ -54,7 +54,7 @@ export function MemberRegistration({
               </>
             )}
           </CardDescription>
-          <div className="shadow-md p-4 w-[85%] border border-gray-200 rounded-lg bg-gray-50">
+          <div className="shadow-md p-4 w-full border border-gray-200 rounded-lg bg-gray-50">
             <CardTitle className="text-xl text-center underline">
               {clubName}
             </CardTitle>
@@ -142,7 +142,7 @@ export function MemberRegistration({
           </div>
         </div>
         {data.pages.length > 1 && (
-          <div className="flex justify-between items-center mt-6 w-full">
+          <div className="flex justify-between items-center mt-6  w-full">
             {currentPageIndex > 0 ? (
               <Button
                 type="button"
