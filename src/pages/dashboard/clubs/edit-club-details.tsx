@@ -163,7 +163,7 @@ export default function EditClubDetails() {
                                 <CardContent className="grid gap-6">
                                     <div className="grid gap-3 w-full">
                                         <Label htmlFor="country">Country</Label>
-                                        <Select onValueChange={(v) => setCountry(v)} defaultValue={country} className="w-full">
+                                        <Select onValueChange={(v) => setCountry(v)} defaultValue={country}>
                                             <SelectTrigger className="w-full">
                                                 <SelectValue placeholder="Select country" />
                                             </SelectTrigger>
@@ -182,7 +182,7 @@ export default function EditClubDetails() {
 
                                     <div className="grid gap-3 w-full">
                                         <Label htmlFor="currency">Currency</Label>
-                                        <Select onValueChange={(v) => setCurrency(v)} defaultValue={currency} className="w-full">
+                                        <Select onValueChange={(v) => setCurrency(v)} defaultValue={currency}>
                                             <SelectTrigger className="w-full">
                                                 <SelectValue placeholder="Select currency" />
                                             </SelectTrigger>

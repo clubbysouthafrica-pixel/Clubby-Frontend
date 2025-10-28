@@ -15,4 +15,8 @@ export interface ClubDetailsRequest {
     country_of_operation: string
     currency: string
     support_email: string
+    registration_submission_email_template_body: string
+    registration_success_email_template_body: string
+    use_success_email_template: boolean
+    use_submission_email_template: boolean
 }
