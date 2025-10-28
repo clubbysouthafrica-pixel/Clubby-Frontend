@@ -77,7 +77,7 @@ export function CurrentMemberRegistration({
             {clubName}
           </CardTitle>
           <h3 className="text-[20px] font-semibold text-center">{data.pages[currentPageIndex].page_header}</h3>
-          <div className="h-[45vh] overflow-y-auto p-4 space-y-6">
+          <div className="h-[35vh] overflow-y-auto p-4 space-y-6">
             {data.pages[currentPageIndex].fields.map((field: any) => {
 
               if (field.type === "STANDARD_SIGNATURE") {
