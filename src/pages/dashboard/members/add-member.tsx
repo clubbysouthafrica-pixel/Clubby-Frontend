@@ -32,7 +32,7 @@ export default function AddMemberPage() {
     };
 
     return (
-        <div className="p-5 min-h-screen">
+        <div className="p-5">
             <h1 className="text-base font-bold">Add Member</h1>
             <CardDescription>
                 <>

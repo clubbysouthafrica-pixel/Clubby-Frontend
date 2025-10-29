@@ -61,7 +61,7 @@ export default function FinancialTransactionsPage() {
         )
     }
     return (
-        <div className="p-5 min-h-screen">
+        <div className="p-5">
             <h1 className="text-base font-bold mb-4">Financial Transactions</h1>
 
             <div className="flex flex-wrap gap-4 mb-6">

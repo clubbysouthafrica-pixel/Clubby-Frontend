@@ -167,7 +167,7 @@ export default function ListMembersPage() {
     }
 
     return (
-        <div className="p-5 min-h-screen">
+        <div className="p-5">
             <h1 className="text-base font-bold">Club Members</h1>
             {
                 !clubMembersLoading && !filterLoading &&

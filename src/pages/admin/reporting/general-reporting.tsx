@@ -20,7 +20,7 @@ export default function GeneralReportingPage() {
     }
     
     return (
-        <div className="p-5 min-h-screen">
+        <div className="p-5">
             <h1 className="text-base font-bold mb-2">Club Financial Reporting</h1>
             <Tabs defaultValue="overall">
                 <TabsList>

@@ -128,7 +128,7 @@ export default function AdminRegistrationFormPage() {
     }
 
     return (
-        <div className="p-5 min-h-screen w-[90%]">
+        <div className="p-5 w-[90%]">
             <div className="flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-base font-bold">Create the member registration form</h1>

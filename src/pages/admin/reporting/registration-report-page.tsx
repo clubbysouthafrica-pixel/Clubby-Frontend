@@ -17,7 +17,7 @@ export default function RegistrationReportPage() {
     )
   }
   return (
-    <div className="p-5 min-h-screen">
+    <div className="p-5">
       <h1 className="text-base font-bold">Registration Report</h1>
       {
         !isLoading &&

@@ -79,7 +79,7 @@ export default function EditClubDetails() {
         )
     }
     return (
-        <div className="space-y-6 min-h-screen">
+        <div className="space-y-6">
             <div className="flex w-[700px] flex-col gap-6">
                 {
                     !isLoading &&
