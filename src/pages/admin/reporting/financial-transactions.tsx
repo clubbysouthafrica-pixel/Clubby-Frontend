@@ -27,7 +27,6 @@ export default function FinancialTransactionsPage() {
 
     const [memberIdSearch, setMemberIdSearch] = useState("");
     const [txIdSearch, setTxIdSearch] = useState("");
-    const [paymentType, setPaymentType] = useState("all");
     const [statusFilter, setStatusFilter] = useState("all");
     const [transactionType, setTransactionType] = useState("all");
 
@@ -46,12 +45,11 @@ export default function FinancialTransactionsPage() {
         return transactions.transactions.filter((txn: any) => {
             const matchesName = txn.user_id?.toLowerCase().includes(memberIdSearch.toLowerCase());
             const matchesTxId = txn.transaction_id?.toLowerCase().includes(txIdSearch.toLowerCase());
-            const matchesPaymentType = paymentType === "all" ? true : txn.payment_type === paymentType;
             const matchesStatus = statusFilter === "all" ? true : txn.status === statusFilter;
             const matchesType = transactionType === "all" ? true : txn.type === transactionType;
-            return matchesName && matchesPaymentType && matchesStatus && matchesType && matchesTxId;
+            return matchesName && matchesStatus && matchesType && matchesTxId;
         });
-    }, [transactions, memberIdSearch, paymentType, statusFilter, transactionType, txIdSearch]);
+    }, [transactions, memberIdSearch, statusFilter, transactionType, txIdSearch]);
 
     if (isLoading) {
         return (
@@ -90,17 +88,6 @@ export default function FinancialTransactionsPage() {
                     </SelectContent>
                 </Select>
 
-                <Select onValueChange={setPaymentType} value={paymentType}>
-                    <SelectTrigger className="flex items-center gap-2 w-[20%]">
-                        <span className="text-muted-foreground whitespace-nowrap">Payment type:</span>
-                        <SelectValue placeholder="All" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All</SelectItem>
-                        <SelectItem value="EFT/CASH">EFT or Cash</SelectItem>
-                    </SelectContent>
-                </Select>
-
                 <Select onValueChange={setStatusFilter} value={statusFilter}>
                     <SelectTrigger className="flex items-center gap-2 w-[20%]">
                         <span className="text-muted-foreground whitespace-nowrap">Status:</span>
@@ -120,13 +107,11 @@ export default function FinancialTransactionsPage() {
                     <TableHeader className="bg-muted sticky top-0 z-10">
                         <TableRow>
                             <TableHead className="text-center"></TableHead>
-                            <TableHead className="text-center w-1/7">Creation date</TableHead>
-                            <TableHead className="text-center w-1/7">Transaction ID</TableHead>
-                            <TableHead className="text-center w-1/7">Member ID</TableHead>
-                            <TableHead className="text-center w-1/7">Type</TableHead>
-                            <TableHead className="text-center w-1/7">Payment type</TableHead>
-                            <TableHead className="text-center w-1/7">Outstanding amount</TableHead>
-                            <TableHead className="text-center w-1/7">Status</TableHead>
+                            <TableHead className="text-center w-1/5">Transaction ID</TableHead>
+                            <TableHead className="text-center w-1/5">Member ID</TableHead>
+                            <TableHead className="text-center w-1/5">Type</TableHead>
+                            <TableHead className="text-center w-1/5">Outstanding amount</TableHead>
+                            <TableHead className="text-center w-1/5">Status</TableHead>
                         </TableRow>
                     </TableHeader>
 
@@ -148,12 +133,7 @@ export default function FinancialTransactionsPage() {
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                         </svg>
                                     </TableCell>
-                                    <TableCell className="text-center">
-                                        <div className="inline-flex items-center gap-2 justify-center">
-                                            {tx.creation_date}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-center w-1/8">
+                                    <TableCell className="text-center w-1/6">
                                         <div className="inline-flex items-center gap-2 justify-center">
                                             <span className="font-mono">{tx.transaction_id.slice(0, 8)}...</span>
 
@@ -209,7 +189,6 @@ export default function FinancialTransactionsPage() {
                                         </button>
                                     </TableCell>
                                     <TableCell className="text-center">{tx.type}</TableCell>
-                                    <TableCell className="text-center">{tx.payment_type}</TableCell>
                                     <TableCell className="text-center">{formatAmount(tx.outstanding_amount, club?.currency)}</TableCell>
                                     <TableCell className={`text-center font-bold ${tx.status === "PENDING"
                                         ? "text-red-500"

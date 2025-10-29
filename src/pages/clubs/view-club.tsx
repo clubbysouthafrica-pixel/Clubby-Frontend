@@ -272,12 +272,10 @@ export default function ViewClubPage() {
                                                         <Table>
                                                             <TableHeader className="bg-muted sticky top-0 z-10">
                                                                 <TableRow>
-                                                                    <TableHead className="text-center w-1/7">Transaction ID</TableHead>
-                                                                    <TableHead className="text-center w-1/7">Creation date</TableHead>
-                                                                    <TableHead className="text-center w-1/7">Type</TableHead>
-                                                                    <TableHead className="text-center w-1/7">Payment type</TableHead>
-                                                                    <TableHead className="text-center w-1/7">Outstanding amount</TableHead>
-                                                                    <TableHead className="text-center w-1/7">Status</TableHead>
+                                                                    <TableHead className="text-center w-1/4">Transaction ID</TableHead>
+                                                                    <TableHead className="text-center w-1/4">Type</TableHead>
+                                                                    <TableHead className="text-center w-1/4">Outstanding amount</TableHead>
+                                                                    <TableHead className="text-center w-1/4">Status</TableHead>
                                                                 </TableRow>
                                                             </TableHeader>
 
@@ -289,7 +287,7 @@ export default function ViewClubPage() {
                                                                             className="cursor-pointer hover:bg-muted/50 transition"
                                                                             onClick={() => toggleRow(tx.transaction_id)}
                                                                         >
-                                                                            <TableCell className="text-center w-1/7">
+                                                                            <TableCell className="text-center w-1/4">
                                                                                 <div className="inline-flex items-center gap-2 justify-center">
                                                                                     <span className="font-mono">{tx.transaction_id.slice(0, 5)}...</span>
 
@@ -329,10 +327,7 @@ export default function ViewClubPage() {
                                                                                     </svg>
                                                                                 </div>
                                                                             </TableCell>
-
-                                                                            <TableCell className="text-center">{tx.creation_date}</TableCell>
                                                                             <TableCell className="text-center">{tx.type}</TableCell>
-                                                                            <TableCell className="text-center">{tx.payment_type}</TableCell>
                                                                             <TableCell className="text-center">{formatAmount(tx.outstanding_amount, data.currency)}</TableCell>
                                                                             <TableCell className={`text-center font-bold ${tx.status === "PENDING"
                                                                                 ? "text-red-500"

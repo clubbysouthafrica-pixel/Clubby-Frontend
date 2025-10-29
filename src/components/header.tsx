@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/navigation-menu"
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button.tsx";
-import { ChevronDown, Menu, X } from "lucide-react";
+import { ChevronDown, Menu, X, User } from "lucide-react";
 import { useContext, useState } from "react";
 import { AuthContext, AuthContextType } from "@/context/AuthContext.tsx";
 import {
@@ -24,7 +24,7 @@ import {
     DropdownMenuShortcut, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu.tsx";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut.tsx";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.tsx";
+import { Avatar } from "@/components/ui/avatar.tsx";
 import Img from "@/assets/logo.png"
 
 const components: { title: string; href: string; description: string }[] = [
@@ -150,10 +150,15 @@ export default function Header() {
                         <div className="space-x-2 flex">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="shadow-none"><Avatar className="w-6 h-6">
-                                        <AvatarImage src="https://github.com/shadcn.png" />
-                                        <AvatarFallback>JD</AvatarFallback>
-                                    </Avatar> <ChevronDown /></Button>
+                                    <Button
+                                        variant="outline"
+                                        className="shadow-none flex items-center justify-center gap-2"
+                                    >
+                                        <Avatar className="w-6 h-6 border-1 border-gray-500 flex items-center justify-center">
+                                            <User className=""/>
+                                        </Avatar>
+                                        <ChevronDown />
+                                    </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent className="w-56" align="end">
                                     <DropdownMenuLabel>My Account</DropdownMenuLabel>
@@ -183,11 +188,6 @@ export default function Header() {
                                     Sign In
                                 </Button>
                             </Link>
-                            {/* <Link to="/admin/login" className="cursor-pointer">
-                                <Button className="cursor-pointer">
-                                    Admin Sign In
-                                </Button>
-                            </Link> */}
                             <button className="md:hidden" onClick={() => setMenuOpen(!menuOpen)}>
                                 {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                             </button>

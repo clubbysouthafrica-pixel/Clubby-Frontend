@@ -2,13 +2,11 @@
 
 import {
   ChevronsUpDown,
-  LogOut, SettingsIcon, CreditCard
+  LogOut, SettingsIcon, CreditCard, User
 } from "lucide-react"
 
 import {
   Avatar,
-  AvatarFallback,
-  AvatarImage,
 } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -25,7 +23,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import {useNavigate} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useContext } from "react"
 import { AuthContext, AuthContextType } from "@/context/AuthContext"
 
@@ -56,10 +54,9 @@ export function NavUser({
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              {/* <Avatar className="h-8 w-8 rounded-lg"> */}
-                {/* <AvatarImage src={user.avatar} alt={user.name} /> */}
-                {/* <AvatarFallback className="rounded-lg">CN</AvatarFallback> */}
-              {/* </Avatar> */}
+              <Avatar className="h-8 w-8 rounded-lg">
+                <User className="w-10 h-10 text-gray-600" />
+              </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
                 <span className="truncate text-xs">{user.email}</span>
@@ -76,8 +73,7 @@ export function NavUser({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <User />
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
@@ -87,10 +83,6 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              {/* <DropdownMenuItem onClick={() => navigate("/profile")}>
-                <BadgeCheck />
-                Profile
-              </DropdownMenuItem> */}
               <DropdownMenuItem onClick={() => navigate("/billing&usage")}>
                 <CreditCard />
                 Billing and Usage
