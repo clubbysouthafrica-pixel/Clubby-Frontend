@@ -6,7 +6,7 @@ import { useContext } from "react";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { HomeSectionCards } from "@/components/admin/club/home/section-cards";
 import { Loader2 } from "lucide-react";
-import { Card, CardDescription } from "@/components/ui/card";
+import { CardDescription } from "@/components/ui/card";
 
 export default function HomeDashboardPage() {
     const { club } = useContext(ClubContext) as ClubContextType

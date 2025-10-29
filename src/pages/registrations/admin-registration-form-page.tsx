@@ -16,7 +16,6 @@ import { createPagesRequest } from "@/helpers/admin/registration/verify-create-p
 import { PreviewForm } from "@/components/admin/registration-form/preview-form/preview-form";
 import "../../index.css";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { DialogTrigger } from "@/components/ui/dialog";
 
 export default function AdminRegistrationFormPage() {
     const { club } = useContext(ClubContext) as ClubContextType
