@@ -6,7 +6,7 @@ import { useContext } from "react";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { HomeSectionCards } from "@/components/admin/club/home/section-cards";
 import { Loader2 } from "lucide-react";
-import { CardDescription } from "@/components/ui/card";
+import { Card, CardDescription } from "@/components/ui/card";
 
 export default function HomeDashboardPage() {
     const { club } = useContext(ClubContext) as ClubContextType
@@ -16,19 +16,24 @@ export default function HomeDashboardPage() {
     const manageRoutes = [
         {
             name: "Club",
-            description: "Manage and edit your club page that is displayed to members here",
+            description: "Manage and edit your club page displayed to members here. You can update key details such as your bank information (visible to members), the support email address they can contact, and customize the email templates sent to members during registration and upon successful registration.",
             route: "/manage/club"
         },
         {
             name: "Members",
-            description: "Manage your members here",
+            description: "Register new members or manage individuals who are or have previously been associated with your club. You can oversee Active Members (registered), Pending Members (awaiting registration), and Deregistered Members.",
             route: "/manage/members"
         },
         {
             name: "Registration Form",
-            description: "Manage your registration form here",
+            description: "Create and manage a registration form specific to your club. Changes to this form are reflected for all members and automatically adjust related reporting for your club.",
             route: "/manage/registrations/forms"
         },
+        {
+            name: "Reporting",
+            description: "View financial and general reports for your club.",
+            route: "/reporting/general"
+        }
     ]
 
     if (reportLoading) {
@@ -53,18 +58,20 @@ export default function HomeDashboardPage() {
                         <Table>
                             <TableHeader className="bg-muted">
                                 <TableRow>
-                                    <TableHead>Manage</TableHead>
-                                    <TableHead>Description</TableHead>
-                                    <TableHead>Action</TableHead>
+                                    <TableHead className="pl-5">Manage</TableHead>
+                                    <TableHead className="px-5">Description</TableHead>
+                                    <TableHead className="pr-10 items-center">Action</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {
                                     manageRoutes.map(r => (
                                         <TableRow onClick={() => navigate(r.route)} key={r.name}>
-                                            <TableCell className="font-bold">{r.name}</TableCell>
-                                            <TableCell>{r.description}</TableCell>
-                                            <TableCell><Button>View</Button></TableCell>
+                                            <TableCell className="font-bold pl-5">{r.name}</TableCell>
+                                            <TableCell className="w-full whitespace-normal break-words align-middle px-5">
+                                                <CardDescription> {r.description}</CardDescription>
+                                            </TableCell>
+                                            <TableCell className="pr-10 items-center"><Button>View</Button></TableCell>
                                         </TableRow>
                                     ))
                                 }

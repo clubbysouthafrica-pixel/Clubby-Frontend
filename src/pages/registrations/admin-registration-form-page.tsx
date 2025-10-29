@@ -15,6 +15,8 @@ import { createDeleteFieldsRequest } from "@/helpers/admin/registration/verify-d
 import { createPagesRequest } from "@/helpers/admin/registration/verify-create-pages-structure";
 import { PreviewForm } from "@/components/admin/registration-form/preview-form/preview-form";
 import "../../index.css";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { DialogTrigger } from "@/components/ui/dialog";
 
 export default function AdminRegistrationFormPage() {
     const { club } = useContext(ClubContext) as ClubContextType
@@ -158,7 +160,7 @@ export default function AdminRegistrationFormPage() {
 
             {!isLoading && !saving && !previewRegForm &&
                 <Tabs defaultValue='0'>
-                    <TabsList className="flex items-center w-full">
+                    <TabsList className="flex items-center max-w-full">
                         <div className="flex-1 flex overflow-x-auto flex-nowrap custom-thin-scrollbar space-x-2 py-1">
                             {pages.map((p) => (
                                 <TabsTrigger
@@ -174,9 +176,16 @@ export default function AdminRegistrationFormPage() {
                         </div>
 
                         <div className="ml-2 flex-shrink-0">
-                            <Button onClick={addPage} variant="outline">
-                                <PlusIcon />
-                            </Button>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button onClick={addPage} variant="outline" className="border-gray-300 shadow mr-1 h-[30px] w-[35px]">
+                                        <PlusIcon />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Add new page</p>
+                                </TooltipContent>
+                            </Tooltip>
                         </div>
                     </TabsList>
                     {

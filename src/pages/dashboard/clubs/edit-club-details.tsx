@@ -215,10 +215,10 @@ export default function EditClubDetails() {
                         <TabsContent value="emailing">
                             <Card className="flex flex-col h-[630px]">
                                 <Tabs defaultValue="support-email" className="px-5">
-                                    <TabsList className="flex justify-between h-[25px]">
-                                        <TabsTrigger className=" w-[200px] text-xs h-[20px]" value="support-email">Support Email</TabsTrigger>
-                                        <TabsTrigger className="w-[200px] text-xs h-[20px]" value="registration-submission">Registration Submission</TabsTrigger>
-                                        <TabsTrigger className="w-[200px] text-xs h-[20px]" value="registration-success">Registration Success</TabsTrigger>
+                                    <TabsList className="flex justify-between h-[30px]">
+                                        <TabsTrigger className=" w-[200px] text-xs h-[25px]" value="support-email">Support Email</TabsTrigger>
+                                        <TabsTrigger className="w-[200px] text-xs h-[25px]" value="registration-submission">Registration Submission</TabsTrigger>
+                                        <TabsTrigger className="w-[200px] text-xs h-[25px]" value="registration-success">Registration Success</TabsTrigger>
                                     </TabsList>
 
                                     <TabsContent value="support-email" className="flex flex-col py-2 gap-2">

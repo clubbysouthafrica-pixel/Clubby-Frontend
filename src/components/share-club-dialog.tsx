@@ -68,8 +68,8 @@ export default function ShareClubDialog({ clubId }: ShareClubProps) {
         </DialogHeader>
         <Tabs defaultValue="onboarding">
         <TabsList>
-          <TabsTrigger value="onboarding">Onboarding Details</TabsTrigger>
-          <TabsTrigger value="profile">Profile Details</TabsTrigger>
+          <TabsTrigger value="onboarding" className="w-[150px]">Onboarding Details</TabsTrigger>
+          <TabsTrigger value="profile" className="w-[150px]">Profile Details</TabsTrigger>
         </TabsList>
         <TabsContent value="onboarding">
             <div className="grid gap-4">

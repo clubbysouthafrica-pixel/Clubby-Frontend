@@ -5,12 +5,12 @@ import { TrashIcon } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip"
 
 interface Props {
-    id: any
-    tooltipDescription: string
-    removeFunc: (pageIndex: any) => void
+  id: any
+  tooltipDescription: string
+  removeFunc: (pageIndex: any) => void
 }
 
-export default function ConfirmDeleteDialog({id, tooltipDescription, removeFunc}: Props) {
+export default function ConfirmDeleteDialog({ id, tooltipDescription, removeFunc }: Props) {
   const [openDialog, setOpenDialog] = useState<boolean>(false);
 
   const remove = () => {
@@ -20,16 +20,16 @@ export default function ConfirmDeleteDialog({id, tooltipDescription, removeFunc}
 
   return (
     <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DialogTrigger asChild>
-                <Button variant={"outline"} className="ml-2 h-full"><TrashIcon/></Button>
-            </DialogTrigger>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{tooltipDescription}</p>
-          </TooltipContent>
-        </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <Button variant={"outline"} className="ml-2 h-full"><TrashIcon /></Button>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{tooltipDescription}</p>
+        </TooltipContent>
+      </Tooltip>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Are you sure you want to remove this?</DialogTitle>
