@@ -25,8 +25,8 @@ export default function EditableEmailTemplate({
     useEffect(() => {
         setInternalTemplate(
             template
-                .replace(/{{clubName}}/g, clubName)
-                .replace(/{{clubEmail}}/g, supportEmail)
+                .replace(/{{club_name}}/g, clubName)
+                .replace(/{{club_email}}/g, supportEmail)
         )
     }, [template, clubName, supportEmail])
 
