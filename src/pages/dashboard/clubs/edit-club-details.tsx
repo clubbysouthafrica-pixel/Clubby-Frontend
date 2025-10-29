@@ -224,7 +224,7 @@ export default function EditClubDetails() {
                                     <TabsContent value="support-email" className="flex flex-col py-2 gap-2">
                                         <CardTitle>Support Email</CardTitle>
                                         <CardDescription>
-                                            Set the support email that members can contact you on.
+                                            Set the support email members can contact. This mailbox will also receive a notification each time a member submits a registration form.
                                         </CardDescription>
                                         <Input
                                             id="tabs-demo-name"
@@ -238,7 +238,7 @@ export default function EditClubDetails() {
                                     <TabsContent value="registration-submission" className="flex flex-col py-2 gap-2">
                                         <CardTitle>Registration Submission Email</CardTitle>
                                         <CardDescription>
-                                            This is an editable draft of the email sent to a member when they submit their member registration. To place where the members name should be use, <strong>{"{{member_name}}"}</strong>.
+                                            This is an editable draft of the email sent to a member when they submit their registration. To insert the member’s name, use <strong>{"{{member_name}}"}</strong>.
                                         </CardDescription>
                                         <EditableEmailTemplate
                                             template={registrationSubmissionEmailTemplate}
@@ -253,7 +253,7 @@ export default function EditClubDetails() {
                                     <TabsContent value="registration-success" className="flex flex-col py-2 gap-2">
                                         <CardTitle>Registration Success Email</CardTitle>
                                         <CardDescription>
-                                            This is an editable draft of the email sent to a member when they are successfully registered by the admin. To place where the members name should be use, <strong>{"{{member_name}}"}</strong>.
+                                            This is an editable draft of the email sent to a member upon successful registration by the admin. To insert the member’s name, use <strong>{"{{member_name}}"}</strong>.
                                         </CardDescription>
                                         <EditableEmailTemplate
                                             template={registrationSuccessEmailTemplate}
