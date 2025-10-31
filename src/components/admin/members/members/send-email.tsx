@@ -104,7 +104,7 @@ export default function SendEmailDialog({
             Mailing list ({contacts.length}):
           </DialogDescription>
           <div className="rounded-lg border bg-white shadow-sm overflow-hidden">
-            <div className="max-h-[160px] overflow-y-auto divide-y divide-gray-100">
+            <div className="max-h-[160px] overflow-y-auto divide-y divide-gray-100 pr-2 scrollable-list">
               {contacts.map((contact) => {
                 const initials = contact.name
                   .split(" ")
@@ -185,6 +185,10 @@ export default function SendEmailDialog({
               max-height: 300px;
               overflow-y: auto;
             }
+            /* custom scrollbar for mailing/deregister lists */
+            .scrollable-list::-webkit-scrollbar { width: 8px; }
+            .scrollable-list::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 9999px; }
+            .scrollable-list { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.08) transparent; }
           `}</style>
         </div>
         {isSuccess && (
