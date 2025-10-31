@@ -97,7 +97,7 @@ export default function SendEmailDialog({
           <p>Send email to selected contacts</p>
         </TooltipContent>
       </Tooltip>
-      <DialogContent className="sm:max-w-[425px]">
+  <DialogContent className="sm:max-w-[640px] md:max-w-[768px]">
         <DialogHeader>
           <DialogTitle>Send Email</DialogTitle>
           <DialogDescription>

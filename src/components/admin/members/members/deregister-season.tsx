@@ -65,7 +65,7 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
                     </TooltipContent>
                 </Tooltip>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[640px] md:max-w-[768px]">
                 <DialogHeader>
                     <DialogTitle>Start New Club Season</DialogTitle>
                     <DialogDescription>
