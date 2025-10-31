@@ -301,6 +301,8 @@ export function ClubRegisterForm() {
 
   const isLastPage = currentPageIndex === pages.length - 1;
 
+  console.log('PAGE: ', pages[currentPageIndex])
+
   return (
     <div className="flex justify-center items-center">
       <Card className="w-[800px] overflow-y-auto gap-2">
@@ -348,7 +350,7 @@ export function ClubRegisterForm() {
                         <h2 className="text-lg font-semibold mb-2">
                           Total Registration Fee:{" "}
                           <strong>
-                            {formatAmount(totalRegistrationFee, club.currency)}
+                            {totalRegistrationFee === 0 ? "FREE" : formatAmount(totalRegistrationFee, club.currency)}
                           </strong>
                         </h2>
                         <ul className="ml-6 list-disc space-y-1">
@@ -356,7 +358,7 @@ export function ClubRegisterForm() {
                             (f: FieldRequest) => (
                               <li key={f.field_id} className="text-sm">
                                 {getFieldName(pages, f.field_id)}:{" "}
-                                {formatAmount(
+                                {f.value === 0 ? "FREE" : formatAmount(
                                   f?.value as number,
                                   club.currency
                                 )}
