@@ -65,7 +65,7 @@ export default function DeregisterMembersDialog({ selectedTab, dereigsterMembers
               <UserX />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent className="mr-2">
             <p>Deregister selected members</p>
           </TooltipContent>
         </Tooltip>
