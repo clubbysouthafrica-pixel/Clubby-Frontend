@@ -30,7 +30,7 @@ export default function StandardSignature({
     pages,
     setFieldValue,
 }: StandardFieldInputProps) {
-    const [drawSignature, setDrawSignature] = useState(field?.signature_type === "name" ? true : false)
+    const [drawSignature, setDrawSignature] = useState(field?.signature_type === "name" ? false : true)
     const [name, setName] = useState(field?.signature_type === "name" && field?.value ? field.value : "")
 
     const sigPadRef = useRef<SignaturePad | null>(null);
