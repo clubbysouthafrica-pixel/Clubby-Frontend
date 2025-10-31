@@ -1,7 +1,7 @@
 import { useContext, useState } from "react"
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { RotateCcw } from "lucide-react"
+import { UserMinus } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../../ui/tooltip"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useDeregisterAllMutation } from "@/mutations/admin/useDeregisterMutation"
@@ -11,10 +11,9 @@ import {useNavigate} from "react-router-dom";
 
 interface ImageProps {
     clubId: string
-    selectedTab: string
 }
 
-export default function DeregisterSeasonDialog({ clubId, selectedTab }: ImageProps) {
+export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
     const { logout } = useContext(AuthContext) as AuthContextType;
     const navigate = useNavigate()
 
@@ -30,7 +29,12 @@ export default function DeregisterSeasonDialog({ clubId, selectedTab }: ImagePro
                 logout()
                 navigate("/admin/login")
             },
-            onError: (error: any) => toast.error(error.response.message)
+            onError: (error: unknown) => {
+                const errObj = error as Record<string, unknown> | undefined;
+                const resp = errObj?.response as Record<string, unknown> | undefined;
+                const msg = (resp && (resp.message as string | undefined)) ?? String(error ?? "An error occurred");
+                toast.error(msg);
+            }
         })
     }
 
@@ -46,12 +50,18 @@ export default function DeregisterSeasonDialog({ clubId, selectedTab }: ImagePro
             <DialogTrigger asChild>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant={"outline"} onClick={() => setOpenDialog(true)} disabled={selectedTab !== "registered-members"}>
-                            <RotateCcw />
+                        <Button
+                            variant={"destructive"}
+                            onClick={() => setOpenDialog(true)}
+                            className="flex items-center gap-2 bg-red-800 hover:bg-red-800 text-white"
+                            aria-label="Deregister season"
+                        >
+                            <UserMinus />
+                            <span className="hidden sm:inline">Deregister Season</span>
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent className="mr-2">
-                        <p>Start new season (resets club data).</p>
+                        <p>Deregister all members and start a new season (resets club data).</p>
                     </TooltipContent>
                 </Tooltip>
             </DialogTrigger>
@@ -88,6 +98,7 @@ export default function DeregisterSeasonDialog({ clubId, selectedTab }: ImagePro
                     <Button
                         type="submit"
                         variant="destructive"
+                        className="bg-red-700 hover:bg-red-800 text-white"
                         disabled={!confirmed || isPending || isSuccess}
                         onClick={send}
                     >

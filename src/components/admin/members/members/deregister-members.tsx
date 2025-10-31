@@ -7,7 +7,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../../../ui/tooltip"
 import { useDeregisterMembersMutation } from "@/mutations/admin/useDeregisterMutation"
 import { toast } from "sonner"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table"
 
 interface ImageProps {
   clubId: string
@@ -73,17 +72,29 @@ export default function DeregisterMembersDialog({ selectedTab, dereigsterMembers
         <DialogHeader>
           <DialogTitle>Deregister Members</DialogTitle>
           <DialogDescription>Deregistration list ({dereigsterMembers.length}):</DialogDescription>
-          <div className="overflow-hidden rounded-lg border-b border-t mb-2">
-            <div className="max-h-[100px] overflow-y-auto border-bottom px-2">
-              <Table>
-                <TableBody>
-                  {dereigsterMembers.map((member) => (
-                    <TableRow key={member.user_id}>
-                      <TableCell className="py-2">{member.name}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+          <div className="rounded-lg border bg-white shadow-sm overflow-hidden mb-2">
+            <div className="max-h-[160px] overflow-y-auto divide-y divide-gray-100">
+              {dereigsterMembers.map((member) => {
+                const initials = member.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .slice(0, 2)
+                  .join("")
+                  .toUpperCase();
+                return (
+                  <div key={member.user_id} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50">
+                    <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center text-sm shadow-sm">
+                      {initials}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-medium text-sm">{member.name}</span>
+                    </div>
+                    <div className="ml-auto">
+                      <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">To be deregistered</span>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
           <DialogDescription>
