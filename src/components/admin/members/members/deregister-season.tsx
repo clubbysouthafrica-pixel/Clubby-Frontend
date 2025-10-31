@@ -51,13 +51,11 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <Button
-                            variant={"destructive"}
                             onClick={() => setOpenDialog(true)}
-                            className="flex items-center gap-2 bg-red-800 hover:bg-red-800 text-white"
                             aria-label="Deregister season"
                         >
                             <UserMinus />
-                            <span className="hidden sm:inline">Deregister Season</span>
+                           Deregister Season
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent className="mr-2">
