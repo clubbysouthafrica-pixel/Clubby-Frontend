@@ -20,8 +20,7 @@ export default function BillingPage() {
     }
     return (
         <div className="p-5">
-            <h1 className="text-xl font-bold mb-4 pb-2">You Owe Clubby: {formatAmount(data.report.total_outstanding_amount, club?.currency)}</h1>
-            <h1 className="text-xl font-bold mb-4 pb-2">Usage & Charges Summary</h1>
+            <h3 className="text-xl font-bold mb-4 pb-2">You Owe Clubby: {formatAmount(data.report.total_outstanding_amount, club?.currency)}</h3>
             <div className="@container/main flex flex-1 flex-col gap-1">
                 <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-2">
                     <ClubUsageAndCharges
