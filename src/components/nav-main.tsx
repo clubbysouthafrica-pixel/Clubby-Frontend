@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { ChevronRight, type LucideIcon } from "lucide-react"
 
 import {
@@ -17,7 +18,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
-import {Link} from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 export function NavMain({
   items,
@@ -33,6 +34,31 @@ export function NavMain({
     }[]
   }[]
 }) {
+  const location = useLocation()
+  const pathname = location.pathname
+
+  // Helper kept for potential parent matching; currently parent uses exact match and childActive uses exact child matches.
+  // (Left here in case we later want startsWith behavior for opening groups.)
+  // remove matchesUrl helper — subitems and parent use explicit checks below
+  const [openMap, setOpenMap] = React.useState<Record<string, boolean>>(() =>
+    items.reduce((acc, it) => {
+      acc[it.title] = Boolean(it.isActive)
+      return acc
+    }, {} as Record<string, boolean>)
+  )
+
+  // Sync open state when items' isActive changes (e.g., on route change)
+  React.useEffect(() => {
+    setOpenMap((prev) => {
+      const next: Record<string, boolean> = { ...prev }
+      for (const it of items) {
+        // If the route marks this group active, ensure it's open; otherwise close it.
+        next[it.title] = Boolean(it.isActive)
+      }
+      return next
+    })
+  }, [items])
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Management</SidebarGroupLabel>
@@ -41,12 +67,20 @@ export function NavMain({
           <Collapsible
             key={item.title}
             asChild
-            defaultOpen={item.isActive}
+            open={Boolean(openMap[item.title])}
+            onOpenChange={(open) => setOpenMap((m) => ({ ...m, [item.title]: open }))}
             className="group/collapsible"
           >
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton tooltip={item.title}>
+                {/* Parent is active when parent url OR any child url exactly matches the pathname */}
+                <SidebarMenuButton
+                  tooltip={item.title}
+                  isActive={
+                    (item.url ? item.url === pathname : false) ||
+                    (item.items ? item.items.some((s) => s.url === pathname) : false)
+                  }
+                >
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
                   <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
@@ -54,15 +88,15 @@ export function NavMain({
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <SidebarMenuSub>
-                  {item.items?.map((subItem) => (
-                    <SidebarMenuSubItem key={subItem.title}>
-                      <SidebarMenuSubButton asChild>
-                        <Link to={subItem.url}>
-                          <span>{subItem.title}</span>
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  ))}
+                    {item.items?.map((subItem) => (
+                      <SidebarMenuSubItem key={subItem.title}>
+                          <SidebarMenuSubButton asChild isActive={subItem.url === pathname}>
+                            <Link to={subItem.url}>
+                              <span>{subItem.title}</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                    ))}
                 </SidebarMenuSub>
               </CollapsibleContent>
             </SidebarMenuItem>

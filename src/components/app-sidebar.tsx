@@ -19,7 +19,7 @@ import { useFetchAdminClubs } from "@/queries/admin/clubs"
 import { ClubContext, ClubContextType } from "@/context/ClubContext"
 import { AuthContext, AuthContextType } from "@/context/AuthContext";
 import { useGetProfileQuery } from "@/queries/profile"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navigate = useNavigate()
@@ -47,7 +47,67 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         avatar: "/avatars/shadcn.jpg",
       })
     }
-  }, [profile, club])
+  }, [profile, club, navigate])
+
+  const location = useLocation()
+  const pathname = location.pathname
+
+  const navItems = React.useMemo(() => {
+    const baseItems = [
+      {
+        title: "Club",
+        url: "/manage/club",
+        icon: HomeIcon,
+        items: [
+          { title: "Home", url: "/" },
+          { title: "Manage Club", url: "/manage/club" },
+        ],
+      },
+      {
+        title: "Members",
+        url: "/manage/members",
+        icon: UsersIcon,
+        items: [
+          { title: "Members", url: "/manage/members" },
+          { title: "Add member", url: "/manage/members/add" },
+        ],
+      },
+      {
+        title: "Registration form",
+        url: "/manage/registrations",
+        icon: UserPlusIcon,
+        items: [
+          { title: "Create Form", url: "/manage/registrations/forms" },
+        ],
+      },
+      {
+        title: "Reporting",
+        url: "/reporting",
+        icon: BarChart,
+        items: [
+          { title: "Club financials", url: "/reporting/general" },
+          { title: "Registration fees", url: "/reporting/registration" },
+          { title: "Financial transactions", url: "/reporting/transactions" },
+        ],
+      },
+    ]
+
+    const matchesUrl = (url: string | undefined) => {
+      if (!url) return false
+      // root path must match exactly — otherwise startsWith("/") will match everything
+      if (url === "/") return pathname === url
+      return pathname === url || pathname.startsWith(url)
+    }
+
+    return baseItems.map((item) => {
+      const matched = matchesUrl(item.url) || item.items?.some((s) => matchesUrl(s.url))
+
+      return {
+        ...item,
+        isActive: Boolean(matched),
+      }
+    })
+  }, [pathname])
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -57,69 +117,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         }
       </SidebarHeader>
       <SidebarContent>
-        {club?.club_account_id && <NavMain items={[
-          {
-            title: "Club",
-            url: "/manage/club",
-            icon: HomeIcon,
-            isActive: true,
-            items: [
-              {
-                title: "Home",
-                url: "/"
-              },
-              {
-                title: "Manage Club",
-                url: "/manage/club",
-              },
-            ],
-          },
-          {
-            title: "Members",
-            url: "/manage/members",
-            icon: UsersIcon,
-            items: [
-              {
-                title: "Members",
-                url: "/manage/members",
-              },
-              {
-                title: "Add member",
-                url: "/manage/members/add",
-              }
-            ],
-          },
-          {
-            title: "Registration form",
-            url: "/manage/registrations",
-            icon: UserPlusIcon,
-            items: [
-              {
-                title: "Create Form",
-                url: "/manage/registrations/forms",
-              },
-            ],
-          },
-          {
-            title: "Reporting",
-            url: "/reporting",
-            icon: BarChart,
-            items: [
-              {
-                title: "Club financials",
-                url: "/reporting/general",
-              },
-              {
-                title: "Registration fees",
-                url: "/reporting/registration",
-              },
-              {
-                title: "Financial transactions",
-                url: "/reporting/transactions",
-              }
-            ],
-          },
-        ]} />}
+        {club?.club_account_id && <NavMain items={navItems} />}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userData} />

@@ -6,7 +6,6 @@ import {
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
 import { FormEvent, useContext, useEffect, useMemo, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -15,7 +14,7 @@ import { useFetchRegisterationForm } from "@/queries/admin/registration-form";
 import { useFetchClub } from "@/queries/admin/clubs";
 import { AdminRegistrationRequest } from "@/requests/registration-request";
 import { useMemberRegistrationMutation } from "@/mutations/admin/useMemberRegistrationMutation";
-import { CheckCircle2Icon } from "lucide-react"
+import { CheckCircle2Icon } from "lucide-react";
 import { formatAmount } from "@/data/currencies";
 import StandardCheckbox from "../../../member/registration-form/standard-checkbox";
 import BillingDropdown from "../../../member/registration-form/billing-dropdown";
@@ -27,7 +26,12 @@ import { getFieldName } from "../../../../helpers/members/registration/get-field
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import StandardSignature from "../../../member/registration-form/standard-signature";
 
-export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER" | "SIGNATURE";
+export type InputType =
+  | "TEXT"
+  | "DROPDOWN"
+  | "CHECKBOX"
+  | "NUMBER"
+  | "SIGNATURE";
 export type FieldType = "TEXT" | "STANDARD" | "BILLING";
 
 export interface BillingOption {
@@ -37,10 +41,10 @@ export interface BillingOption {
 }
 
 export interface FieldRequest {
-  field_id: string
-  value: string | number
-  option_order_id?: string
-  label?: string
+  field_id: string;
+  value: string | number;
+  option_order_id?: string;
+  label?: string;
 }
 
 export interface PageFieldBase {
@@ -86,17 +90,24 @@ export function ClubRegisterForm({
   setShowRegistrationForm: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const { club } = useContext(ClubContext) as ClubContextType;
-  const { mutate, isPending, isSuccess } =
-    useMemberRegistrationMutation();
-  const { data, isLoading } = useFetchRegisterationForm(club?.club_account_id as string);
-  const { data: clubDetails, isLoading: clubLoading } = useFetchClub(club?.club_account_id as string);
+  const { mutate, isPending, isSuccess } = useMemberRegistrationMutation();
+  const { data, isLoading } = useFetchRegisterationForm(
+    club?.club_account_id as string
+  );
+  const { data: clubDetails, isLoading: clubLoading } = useFetchClub(
+    club?.club_account_id as string
+  );
 
-  const [submitRegistrationError, setSubmitRegistrationError] = useState<string | undefined>(undefined);
+  const [submitRegistrationError, setSubmitRegistrationError] = useState<
+    string | undefined
+  >(undefined);
 
   const [pages, setPages] = useState<FormPage[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [requiredFieldsMissing, setRequiredFieldsMissing] = useState(false);
-  const [registrationRequest, setRegistrationRequest] = useState<AdminRegistrationRequest | undefined>(undefined)
+  const [registrationRequest, setRegistrationRequest] = useState<
+    AdminRegistrationRequest | undefined
+  >(undefined);
   const [totalRegistrationFee, setTotalRegistrationFee] = useState(0);
   const [isRegistering, setIsRegistering] = useState(false);
 
@@ -158,7 +169,12 @@ export function ClubRegisterForm({
     setPages((prev) =>
       prev.map((p) =>
         p.page_index === pageIndex
-          ? { ...p, fields: p.fields.map((f) => (f.field_id === fieldId ? updater(f) : f)) }
+          ? {
+              ...p,
+              fields: p.fields.map((f) =>
+                f.field_id === fieldId ? updater(f) : f
+              ),
+            }
           : p
       )
     );
@@ -170,14 +186,17 @@ export function ClubRegisterForm({
       for (const f of p.fields) {
         if (f.field_type === "STANDARD" && f.required) {
           if (f.input_type === "CHECKBOX") {
-            if (!f.value || f.value !== "true") missing.push({ page: p.page_index, field: f });
+            if (!f.value || f.value !== "true")
+              missing.push({ page: p.page_index, field: f });
           } else {
-            if (!f.value || f.value.trim() === "") missing.push({ page: p.page_index, field: f });
+            if (!f.value || f.value.trim() === "")
+              missing.push({ page: p.page_index, field: f });
           }
         }
         if (f.field_type === "BILLING" && f.required) {
           if (f.input_type === "DROPDOWN") {
-            if (f.value == null || f.selectedAmountCents == null) missing.push({ page: p.page_index, field: f });
+            if (f.value == null || f.selectedAmountCents == null)
+              missing.push({ page: p.page_index, field: f });
           }
         }
       }
@@ -190,7 +209,8 @@ export function ClubRegisterForm({
     const missingOnCurrent = currentPage.fields.filter((f) => {
       if (f.required) {
         if (f.field_type === "STANDARD") return !f.value?.trim();
-        if (f.field_type === "BILLING" && f.input_type === "DROPDOWN") return f.value == null || f.selectedAmountCents == null;
+        if (f.field_type === "BILLING" && f.input_type === "DROPDOWN")
+          return f.value == null || f.selectedAmountCents == null;
       }
       return false;
     });
@@ -208,6 +228,17 @@ export function ClubRegisterForm({
     e.preventDefault();
     if (missingRequired.length > 0) {
       setRequiredFieldsMissing(true);
+      // If there are missing required fields on other pages,
+      // navigate to the first page that contains a missing required field
+      // so the user can fill it in.
+      try {
+        const firstMissingPage = missingRequired[0]?.page;
+        if (typeof firstMissingPage === "number") {
+          setCurrentPageIndex(firstMissingPage);
+        }
+      } catch {
+        // noop - fall back to staying on current page and showing the alert
+      }
       return;
     }
 
@@ -219,55 +250,65 @@ export function ClubRegisterForm({
       memberEmail,
       memberSurname,
       memberFirstName
-    )
+    );
 
-    setRegistrationRequest(request)
+    setRegistrationRequest(request);
 
-    let total = 0
-    request.billing_fields.forEach(field => {
-      total += field.value
-    })
-    setTotalRegistrationFee(total)
+    let total = 0;
+    request.billing_fields.forEach((field) => {
+      total += field.value;
+    });
+    setTotalRegistrationFee(total);
   };
 
   const submitRegistration = () => {
-    setIsRegistering(true)
-    setSubmitRegistrationError(undefined)
+    setIsRegistering(true);
+    setSubmitRegistrationError(undefined);
     if (registrationRequest) {
       mutate(registrationRequest, {
         onSuccess: () => {
-          setIsRegistering(false)
+          setIsRegistering(false);
         },
         onError: (error: any) => {
-          setSubmitRegistrationError(error.response.data.message ?? "Registration failed")
-          setIsRegistering(false)
-        }
+          setSubmitRegistrationError(
+            error.response.data.message ?? "Registration failed"
+          );
+          setIsRegistering(false);
+        },
       });
     }
-  }
+  };
 
   const returnBackToRegistrationForm = () => {
-    setRegistrationRequest(undefined)
-    setTotalRegistrationFee(0)
-  }
+    setRegistrationRequest(undefined);
+    setTotalRegistrationFee(0);
+  };
 
   const isLastPage = currentPageIndex === pages.length - 1;
-
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="w-[800px] overflow-y-auto">
         <CardHeader className="text-center">
-          <h1 className="mt-0">Name: <strong>{memberFirstName} {memberSurname}</strong></h1>
-          <h1 className="mt-0">Email: <strong>{memberEmail}</strong></h1>
+          <h1 className="mt-0">
+            Name:{" "}
+            <strong>
+              {memberFirstName} {memberSurname}
+            </strong>
+          </h1>
+          <h1 className="mt-0">
+            Email: <strong>{memberEmail}</strong>
+          </h1>
           <CardDescription>
-            {!isSuccess
-              ? "Finish the registration form to register this member."
-              :
+            {!isSuccess ? (
+              "Finish the registration form to register this member."
+            ) : (
               <Alert className="flex items-center justify-center gap-2 text-center">
                 <CheckCircle2Icon color="green" className="w-6 h-6" />
-                <AlertTitle className="text-green-800 mt-2">Registration successful!</AlertTitle>
+                <AlertTitle className="text-green-800 mt-2">
+                  Registration successful!
+                </AlertTitle>
               </Alert>
-            }
+            )}
           </CardDescription>
           {clubLoading && isLoading && (
             <div className="flex justify-center py-8">
@@ -280,34 +321,83 @@ export function ClubRegisterForm({
             <form>
               <div className="grid-2 gap-6">
                 <div className="grid gap-6">
-
                   {registrationRequest && (
-                    <div>
-                      <Label className="mb-1 block">Total registration fee: {formatAmount(totalRegistrationFee, club?.currency)}</Label>
-                      <ul className="ml-6 list-disc space-y-1">
-                        {registrationRequest.billing_fields.map((f: FieldRequest) => (
-                          <li key={f.field_id} className="font-small">
-                            <Label className="font-normal">{getFieldName(pages, f.field_id)}: {formatAmount(f?.value as number, club?.currency)} {f.label ? `(${f.label})` : ""}</Label>
-                          </li>
-                        ))}
-                      </ul>
+                    <div className="h-[350px] p-2 overflow-y-auto p-4 border border-gray-200 rounded space-y-4 bg-white shadow-sm">
+                      {/* Total Registration Fee */}
+                      <div>
+                        <h2 className="text-lg font-semibold mb-2">
+                          Total Registration Fee:{" "}
+                          <strong>
+                            {formatAmount(totalRegistrationFee, club?.currency as string)}
+                          </strong>
+                        </h2>
+                        <ul className="ml-6 list-disc space-y-1">
+                          {registrationRequest.billing_fields.map(
+                            (f: FieldRequest) => (
+                              <li key={f.field_id} className="text-sm">
+                                {getFieldName(pages, f.field_id)}:{" "}
+                                {formatAmount(
+                                  f?.value as number,
+                                  club?.currency as string
+                                )}
+                                {f.label ? ` (${f.label})` : ""}
+                              </li>
+                            )
+                          )}
+                        </ul>
+                      </div>
+
+                      <div className="bg-gray-50 p-3 rounded border border-gray-200 space-y-2">
+                        <p className="font-medium text-yellow-700">
+                          ⚠️ Please review your membership information carefully
+                          before submitting.
+                        </p>
+                        <p>
+                          Once your registration is submitted, you must visit
+                          the <strong>Payments & Billing</strong> tab in your
+                          associated club profile to view available payment
+                          methods and instructions for paying any outstanding
+                          amounts.
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Clubby is <strong>not responsible</strong> for any
+                          incorrect payments, misdirected payments, or payment
+                          errors. Please follow the instructions on the Payments
+                          tab carefully.
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Ensure all billing information is correct to avoid
+                          delays in processing your membership.
+                        </p>
+                      </div>
                     </div>
                   )}
-                  
-                  <h3 className="text-ls font-semibold text-center">{pages[currentPageIndex].page_header}</h3>
+                  {!registrationRequest && (
+                    <h3 className="text-ls font-semibold text-center">
+                      {pages[currentPageIndex].page_header}
+                    </h3>
+                  )}
                   {pages[currentPageIndex] && !registrationRequest && (
-                    <div key={pages[currentPageIndex].page_index} className="space-y-6 overflow-y-auto h-[350px] p-2">
+                    <div
+                      key={pages[currentPageIndex].page_index}
+                      className="space-y-6 overflow-y-auto h-[350px] p-2"
+                    >
                       {pages[currentPageIndex].fields
-                        .sort((a: any, b: any) => a.field_order_id - b.field_order_id)
+                        .sort(
+                          (a: any, b: any) =>
+                            a.field_order_id - b.field_order_id
+                        )
                         .map((field) => {
-
                           if (field.field_type === "TEXT" && field.field_text) {
                             const cleaned = field.field_text
                               .replace(
                                 /<ol>(\s*<li[^>]*data-list="bullet"[^>]*>[\s\S]*?)<\/ol>/g,
                                 "<ul>$1</ul>"
                               )
-                              .replace(/<span class="ql-ui"[^>]*><\/span>/g, "");
+                              .replace(
+                                /<span class="ql-ui"[^>]*><\/span>/g,
+                                ""
+                              );
 
                             return (
                               <div
@@ -318,7 +408,10 @@ export function ClubRegisterForm({
                             );
                           }
 
-                          if (field.field_type === "STANDARD" && field.input_type === "CHECKBOX") {
+                          if (
+                            field.field_type === "STANDARD" &&
+                            field.input_type === "CHECKBOX"
+                          ) {
                             return (
                               <StandardCheckbox
                                 key={field.field_id}
@@ -326,10 +419,13 @@ export function ClubRegisterForm({
                                 currentPageIndex={currentPageIndex}
                                 setFieldValue={setFieldValue}
                               />
-                            )
+                            );
                           }
 
-                          if (field.field_type === "STANDARD" && field.input_type === "DROPDOWN") {
+                          if (
+                            field.field_type === "STANDARD" &&
+                            field.input_type === "DROPDOWN"
+                          ) {
                             return (
                               <StandardDopdown
                                 field={field}
@@ -337,10 +433,14 @@ export function ClubRegisterForm({
                                 pages={pages}
                                 setFieldValue={setFieldValue}
                               />
-                            )
+                            );
                           }
 
-                          if (field.field_type === "STANDARD" && (field.input_type === "TEXT" || field.input_type === "NUMBER")) {
+                          if (
+                            field.field_type === "STANDARD" &&
+                            (field.input_type === "TEXT" ||
+                              field.input_type === "NUMBER")
+                          ) {
                             return (
                               <StandardText
                                 field={field}
@@ -348,10 +448,13 @@ export function ClubRegisterForm({
                                 pages={pages}
                                 setFieldValue={setFieldValue}
                               />
-                            )
+                            );
                           }
 
-                          if (field.field_type === "STANDARD" && field.input_type === "SIGNATURE") {
+                          if (
+                            field.field_type === "STANDARD" &&
+                            field.input_type === "SIGNATURE"
+                          ) {
                             return (
                               <StandardSignature
                                 key={field.field_id}
@@ -360,10 +463,13 @@ export function ClubRegisterForm({
                                 pages={pages}
                                 setFieldValue={setFieldValue}
                               />
-                            )
+                            );
                           }
 
-                          if (field.field_type === "BILLING" && field.input_type === "DROPDOWN") {
+                          if (
+                            field.field_type === "BILLING" &&
+                            field.input_type === "DROPDOWN"
+                          ) {
                             return (
                               <BillingDropdown
                                 field={field}
@@ -375,7 +481,10 @@ export function ClubRegisterForm({
                             );
                           }
 
-                          if (field.field_type === "BILLING" && field.input_type === "TEXT") {
+                          if (
+                            field.field_type === "BILLING" &&
+                            field.input_type === "TEXT"
+                          ) {
                             return (
                               <BillingText
                                 field={field}
@@ -392,46 +501,60 @@ export function ClubRegisterForm({
                   )}
 
                   {pages.length === 1 && !registrationRequest ? (
-                    <Button type="button" onClick={(e) => registerUser(e as any)} disabled={isPending}>
+                    <Button
+                      type="button"
+                      onClick={(e) => registerUser(e as any)}
+                      disabled={isPending}
+                    >
                       {isPending ? "Registering..." : "Continue"}
                     </Button>
                   ) : !registrationRequest ? (
                     <div className="flex justify-between">
                       {currentPageIndex > 0 && (
-                        <Button variant={"outline"} type="button" disabled={isPending} onClick={() => { setCurrentPageIndex((i) => i - 1), setSubmitRegistrationError(undefined) }}>
+                        <Button
+                          variant={"outline"}
+                          type="button"
+                          disabled={isPending}
+                          onClick={() => {
+                            setCurrentPageIndex((i) => i - 1),
+                              setSubmitRegistrationError(undefined);
+                          }}
+                        >
                           Previous
                         </Button>
                       )}
                       {isLastPage ? (
-                        <Button type="button" onClick={(e) => registerUser(e as any)} disabled={isPending}>
+                        <Button
+                          type="button"
+                          onClick={(e) => registerUser(e as any)}
+                          disabled={isPending}
+                        >
                           {isPending ? "Registering..." : "Continue"}
                         </Button>
                       ) : (
-                        <Button type="button" disabled={isPending} onClick={handleNextPage}>
+                        <Button
+                          type="button"
+                          disabled={isPending}
+                          onClick={handleNextPage}
+                        >
                           Next
                         </Button>
                       )}
                     </div>
                   ) : (
                     <div className="flex justify-between">
-                      <Button variant={"outline"} type="button" disabled={isPending} onClick={returnBackToRegistrationForm}>
+                      <Button
+                        variant={"outline"}
+                        type="button"
+                        disabled={isPending}
+                        onClick={returnBackToRegistrationForm}
+                      >
                         Back to form
                       </Button>
                       <Button type="button" onClick={submitRegistration}>
                         {isRegistering ? "Registering..." : "Register member"}
                       </Button>
                     </div>
-                  )}
-                </div>
-
-                <div className="text-center text-sm mt-4">
-                  {requiredFieldsMissing && (
-                    <Alert className="border border-red-600 text-red-600">
-                      <AlertCircle className="h-4 w-4 text-red-600" />
-                      <AlertDescription className="text-xs text-red-600">
-                        Please fill all required fields. These fields are marked with (*).
-                      </AlertDescription>
-                    </Alert>
                   )}
                 </div>
 
@@ -445,9 +568,25 @@ export function ClubRegisterForm({
                 )}
 
                 <div className="text-center text-sm mt-4">
-                  <Link to="/manage/members/add" onClick={() => setShowRegistrationForm(false)} className="underline underline-offset-4">
+                  <Link
+                    to="/manage/members/add"
+                    onClick={() => setShowRegistrationForm(false)}
+                    className="underline underline-offset-4"
+                  >
                     Cancel
                   </Link>
+                </div>
+
+                <div className="text-center text-sm mt-4">
+                  {requiredFieldsMissing && (
+                    <Alert className="border border-red-600 text-red-600">
+                      <AlertCircle className="h-4 w-4 text-red-600" />
+                      <AlertDescription className="text-xs text-red-600">
+                        Please fill all required fields. These fields are marked
+                        with (*).
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 </div>
               </div>
             </form>
@@ -457,7 +596,10 @@ export function ClubRegisterForm({
             <div>
               <div className="grid-2 gap-6">
                 <div className="grid gap-6">
-                  <Link to="/manage/members/add" onClick={() => setShowRegistrationForm(false)}>
+                  <Link
+                    to="/manage/members/add"
+                    onClick={() => setShowRegistrationForm(false)}
+                  >
                     <Button className="w-full">Add another member</Button>
                   </Link>
                 </div>
