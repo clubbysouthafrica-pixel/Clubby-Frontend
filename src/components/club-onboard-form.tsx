@@ -144,12 +144,12 @@ export function ClubRegisterForm() {
               const metaField = club.meta[field.field_id];
               if (!metaField) return field;
 
-              if (metaField?.signature_type === "signature") {
+              if (metaField?.signature_type) {
                 const dataUrl = await presignedUrlToDataUrl(metaField.value);
                 return {
                   ...field,
                   value: dataUrl,
-                  signature_type: "signature",
+                  signature_type: metaField?.signature_type,
                 };
               } else if (field.billingOptions) {
                 const matchedOption = field.billingOptions.find(
