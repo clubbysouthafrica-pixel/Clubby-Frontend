@@ -79,7 +79,7 @@ export default function DeregisterMembersDialog({ selectedTab, dereigsterMembers
               <Input placeholder="Search for member" value={memberQuery} onChange={(e) => setMemberQuery(e.target.value)} className="mb-2" />
             </div>
             {/* make list compact and scroll only when > 2 items */}
-            <div className={"max-h-[160px] overflow-y-auto divide-y divide-gray-100 pr-2 scrollable-list"}>
+            <div className={`${dereigsterMembers.length > 2 ? 'max-h-[100px] overflow-y-auto' : 'max-h-[64px]'} divide-y divide-gray-100 pr-2 scrollable-list`}>
               {dereigsterMembers
                 .filter((m) => `${m.name}`.toLowerCase().includes(memberQuery.toLowerCase()))
                 .map((member) => {
