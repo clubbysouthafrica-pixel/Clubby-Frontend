@@ -1,14 +1,23 @@
-import { ClubCard } from "@/components/club-card.tsx";
+import { useMemo, useState } from "react";
 import Pager from "@/components/pager.tsx";
 import { Club } from "@/interfaces/club";
 import { useFetchClubsQuery } from "@/queries/clubs";
 import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Input } from "@/components/ui/input";
 
 
 export default function BrowseClubsPage() {
     const { data, isLoading } = useFetchClubsQuery()
     const navigate = useNavigate()
+    const [query, setQuery] = useState("")
+
+    const filtered = useMemo(() => {
+        const items: Club[] = data?.items ?? []
+        if (!query) return items
+        const q = query.trim().toLowerCase()
+        return items.filter((c: Club) => (c.club_name ?? "").toLowerCase().includes(q))
+    }, [data, query])
 
     return (
         <Pager>
@@ -34,21 +43,29 @@ export default function BrowseClubsPage() {
                                     </p>
                                 </div>
                                 <div className="relative mt-4">
-                                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 gap-y-10 lg:col-span-4">
-                                        {data?.items?.map((club: Club) => (
-                                            <ClubCard
+                                    <div className="mb-4">
+                                        <Input
+                                            placeholder="Search clubs by name"
+                                            value={query}
+                                            onChange={(e) => setQuery(e.target.value)}
+                                            className="w-full"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        {filtered.length === 0 && (
+                                            <div className="text-sm text-muted-foreground">No clubs found.</div>
+                                        )}
+
+                                        {filtered.map((club: Club) => (
+                                            <button
+                                                key={club.club_account_id}
                                                 onClick={() => navigate(`/clubs/${club.club_account_id}`)}
-                                                currency={club.currency}
-                                                key={club.club_name}
-                                                club={club}
-                                                className="cursor-pointer"
-                                                aspectRatio="square"
-                                                width={250}
-                                                height={250}
-                                                titleClass="text-lg font-semibold tracking-tight"
-                                                descriptionClass="text-xs tracking-tight"
-                                                showRegistrationStatus={false}
-                                            />
+                                                className="w-full text-left rounded-md p-3 bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-gray-50 transition cursor-pointer"
+                                            >
+                                                <div className="text-lg font-medium">{club.club_name}</div>
+                                                <div className="text-sm text-muted-foreground">{club.club_account_id}</div>
+                                            </button>
                                         ))}
                                     </div>
                                 </div>
