@@ -104,7 +104,9 @@ export default function SendEmailDialog({
             Mailing list ({contacts.length}):
           </DialogDescription>
           <div className="rounded-lg border bg-white shadow-sm overflow-hidden">
-            <div className="max-h-[160px] overflow-y-auto divide-y divide-gray-100 pr-2 scrollable-list">
+            {
+              /* make list compact and scroll only when > 2 items */}
+            <div className={`${contacts.length > 2 ? 'max-h-[160px] overflow-y-auto' : 'max-h-[88px]'} divide-y divide-gray-100 pr-2 scrollable-list`}>
               {contacts.map((contact) => {
                 const initials = contact.name
                   .split(" ")

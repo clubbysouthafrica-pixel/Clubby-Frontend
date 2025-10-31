@@ -73,7 +73,8 @@ export default function DeregisterMembersDialog({ selectedTab, dereigsterMembers
           <DialogTitle>Deregister Members</DialogTitle>
           <DialogDescription>Deregistration list ({dereigsterMembers.length}):</DialogDescription>
           <div className="rounded-lg border bg-white shadow-sm overflow-hidden mb-2">
-            <div className="max-h-[160px] overflow-y-auto divide-y divide-gray-100 pr-2 scrollable-list">
+            {/* make list compact and scroll only when > 2 items */}
+            <div className={`${dereigsterMembers.length > 2 ? 'max-h-[160px] overflow-y-auto' : 'max-h-[88px]'} divide-y divide-gray-100 pr-2 scrollable-list`}>
               {dereigsterMembers.map((member) => {
                 const initials = member.name
                   .split(" ")
