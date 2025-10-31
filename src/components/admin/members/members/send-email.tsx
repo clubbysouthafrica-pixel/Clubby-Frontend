@@ -42,6 +42,7 @@ export default function SendEmailDialog({
   const [openDialog, setOpenDialog] = useState<boolean>(false);
   const [body, setBody] = useState("");
   const [subject, setSubject] = useState("");
+  const [contactQuery, setContactQuery] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
 
   const {
@@ -104,10 +105,22 @@ export default function SendEmailDialog({
             Mailing list ({contacts.length}):
           </DialogDescription>
           <div className="rounded-lg border bg-white shadow-sm overflow-hidden">
+            <div className="p-2">
+              <Input
+                placeholder="Search for member"
+                value={contactQuery}
+                onChange={(e) => setContactQuery(e.target.value)}
+                className="mb-2"
+              />
+            </div>
             {
               /* make list compact and scroll only when > 2 items */}
-            <div className={`${contacts.length > 2 ? 'max-h-[160px] overflow-y-auto' : 'max-h-[88px]'} divide-y divide-gray-100 pr-2 scrollable-list`}>
-              {contacts.map((contact) => {
+            <div className={`${contacts.length > 2 ? 'max-h-[160px] overflow-y-auto' : 'max-h-[150px]'} divide-y divide-gray-100 pr-2 scrollable-list`}>
+              {contacts
+                .filter((contact) =>
+                  `${contact.name} ${contact.email}`.toLowerCase().includes(contactQuery.toLowerCase())
+                )
+                .map((contact) => {
                 const initials = contact.name
                   .split(" ")
                   .map((n) => n[0])

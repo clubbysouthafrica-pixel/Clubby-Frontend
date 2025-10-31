@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../../../ui/tooltip"
 import { useDeregisterMembersMutation } from "@/mutations/admin/useDeregisterMutation"
 import { toast } from "sonner"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "../../../ui/input"
 
 interface ImageProps {
   clubId: string
@@ -21,6 +22,7 @@ export default function DeregisterMembersDialog({ selectedTab, dereigsterMembers
   const [openDialog, setOpenDialog] = useState<boolean>(false);
   const [confirmed, setConfirmed] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false)
+  const [memberQuery, setMemberQuery] = useState("")
 
   const { mutate, isPending, isSuccess: mutationSuccess } = useDeregisterMembersMutation()
 
@@ -74,8 +76,13 @@ export default function DeregisterMembersDialog({ selectedTab, dereigsterMembers
           <DialogDescription>Deregistration list ({dereigsterMembers.length}):</DialogDescription>
           <div className="rounded-lg border bg-white shadow-sm overflow-hidden mb-2">
             {/* make list compact and scroll only when > 2 items */}
-            <div className={`${dereigsterMembers.length > 2 ? 'max-h-[160px] overflow-y-auto' : 'max-h-[88px]'} divide-y divide-gray-100 pr-2 scrollable-list`}>
-              {dereigsterMembers.map((member) => {
+            <div className={`${dereigsterMembers.length > 2 ? 'max-h-[160px] overflow-y-auto' : 'max-h-[150px]'} divide-y divide-gray-100 pr-2 scrollable-list`}>
+              <div className="p-2">
+                <Input placeholder="Search for member" value={memberQuery} onChange={(e) => setMemberQuery(e.target.value)} className="mb-2" />
+              </div>
+              {dereigsterMembers
+                .filter((m) => `${m.name}`.toLowerCase().includes(memberQuery.toLowerCase()))
+                .map((member) => {
                 const initials = member.name
                   .split(" ")
                   .map((n) => n[0])
