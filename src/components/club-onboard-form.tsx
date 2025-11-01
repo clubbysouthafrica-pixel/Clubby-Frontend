@@ -120,8 +120,7 @@ export function ClubRegisterForm() {
   useEffect(() => {
     const processPages = async () => {
       if (!(data as PagedFormPayload)?.pages) return;
-
-      // Sort pages and fields
+      
       const sorted = (data as PagedFormPayload).pages
         .sort((a, b) => a.page_index - b.page_index)
         .map((p, index) => ({
