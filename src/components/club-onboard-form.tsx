@@ -145,11 +145,11 @@ export function ClubRegisterForm() {
               if (!metaField) return field;
 
               if (metaField?.signature_type) {
-                const dataUrl = await presignedUrlToDataUrl(metaField.value);
+                const data = metaField.signature_type === "name" ? metaField.value : await presignedUrlToDataUrl(metaField.value);
                 return {
                   ...field,
-                  value: dataUrl,
-                  signature_type: metaField?.signature_type,
+                  value: data,
+                  signature_type: metaField.signature_type,
                 };
               } else if (field.billingOptions) {
                 const matchedOption = field.billingOptions.find(
