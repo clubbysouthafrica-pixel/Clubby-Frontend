@@ -35,6 +35,7 @@ import { useFetchUserTransactions } from "@/queries/transactions";
 import * as React from "react";
 import { Label } from "@/components/ui/label";
 import { MemberRegistration } from "@/components/member/registration/member_registration";
+import { useFetchPayFastCheckoutUrlQuery } from "@/queries/payfast";
 
 function epochToJoinedString(epoch: number): string {
   const date = new Date(epoch); // if epoch is in seconds, use new Date(epoch * 1000)
@@ -54,6 +55,18 @@ const countryMap: Record<string, string> = {
   FR: "France",
 };
 
+const usePayFastRedirect = (club_account_id: string) => {
+  const { data } = useFetchPayFastCheckoutUrlQuery(club_account_id ?? "");
+
+  const redirect = () => {
+    if (data?.payment_url) {
+      window.location.href = data.payment_url;
+    }
+  };
+
+  return { redirect };
+};
+
 export default function ViewClubPage() {
   const navigate = useNavigate();
   const { clubId } = useParams();
@@ -61,6 +74,8 @@ export default function ViewClubPage() {
   const { data, isLoading, isError } = useFetchClub(clubId as string);
   const { data: bankDetails, isLoading: bankDetailsLoading } =
     useFetchClubBankDetails(clubId as string, !!data?.club_member_exists);
+
+  const { redirect } = usePayFastRedirect(data?.club_account_id);
 
   const { data: transactions, isLoading: isUserTransactionsLoading } =
     useFetchUserTransactions(data?.club_account_id ?? "", data?.user_id ?? "");
@@ -105,8 +120,6 @@ export default function ViewClubPage() {
     );
   }
 
-  console.log(coverImage);
-
   return (
     <Pager>
       {isError && <p> Something went wrong... </p>}
@@ -121,7 +134,7 @@ export default function ViewClubPage() {
           </div>
         </div>
       )}
-      {!isLoading && !isError && data.onboarded && (
+      {!isLoading && !isError && data?.onboarded && (
         <div className="container mx-auto px-4">
           <div className="relative">
             <Avatar className="w-full h-28 md:h-28 rounded-lg bg-muted/30 overflow-hidden border-background">
@@ -294,14 +307,19 @@ export default function ViewClubPage() {
                         Payment Options
                       </h1>
                       <Tabs defaultValue="eft">
-                        <TabsList className="ml-4 justify-start h-[30px] p-1 rounded-[10px]">
+                        <TabsList className="ml-4 justify-start h-[35px] p-1">
                           <TabsTrigger
-                            className="w-[100px] text-xs rounded-[10px]"
+                            className="w-[150px] text-xs"
                             value="eft"
                           >
                             EFT
                           </TabsTrigger>
-                          {/* <TabsTrigger className="w-[100px] text-xs rounded-[10px]" value="other">Other</TabsTrigger> */}
+                          <TabsTrigger
+                            className="w-[150px] text-xs"
+                            value="online"
+                          >
+                            Credit/Debit Card
+                          </TabsTrigger>
                         </TabsList>
                         <TabsContent
                           value="eft"
@@ -351,6 +369,12 @@ export default function ViewClubPage() {
                               </Table>
                             )}
                           </CardContent>
+                        </TabsContent>
+                        <TabsContent
+                          value="online"
+                          className="border-grey-400 mx-2 px-4 py-4 rounded-[20px]"
+                        >
+                          <Button onClick={redirect}>Pay with PayFast</Button>
                         </TabsContent>
                       </Tabs>
                     </Card>
