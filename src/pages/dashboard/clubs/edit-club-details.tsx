@@ -93,14 +93,14 @@ export default function EditClubDetails() {
     }
     return (
         <div className="space-y-6">
-            <div className="flex w-[700px] flex-col gap-6">
+            <div className="flex w-[80%] flex-col">
                 {
                     !isLoading &&
                     <Tabs defaultValue="account">
-                        <TabsList>
-                            <TabsTrigger className="w-[150px]" value="account">Banking Details</TabsTrigger>
-                            <TabsTrigger className="w-[150px]" value="password">Location</TabsTrigger>
-                            <TabsTrigger className="w-[150px]" value="emailing">Emailing</TabsTrigger>
+                        <TabsList className="grid w-full grid-cols-3">
+                            <TabsTrigger value="account">Banking & Payments</TabsTrigger>
+                            <TabsTrigger value="location">Location</TabsTrigger>
+                            <TabsTrigger value="emailing">Emailing</TabsTrigger>
                         </TabsList>
                         <TabsContent value="account">
                             <BankingDetailsForm 
@@ -111,7 +111,7 @@ export default function EditClubDetails() {
                                 isPending={isPending}
                             />
                         </TabsContent>
-                        <TabsContent value="password">
+                        <TabsContent value="location">
                             <Card className="h-[630px]">
                                 <CardHeader>
                                     <CardTitle>Location</CardTitle>
@@ -173,11 +173,17 @@ export default function EditClubDetails() {
                         </TabsContent>
                         <TabsContent value="emailing">
                             <Card className="flex flex-col h-[630px]">
+                                <CardHeader>
+                                    <CardTitle>Emailing</CardTitle>
+                                    <CardDescription>
+                                        Draft custom automated emails and handle member communications.
+                                    </CardDescription>
+                                </CardHeader>
                                 <Tabs defaultValue="support-email" className="px-5">
-                                    <TabsList className="flex justify-between h-[30px]">
-                                        <TabsTrigger className=" w-[200px] text-xs h-[25px]" value="support-email">Support Email</TabsTrigger>
-                                        <TabsTrigger className="w-[200px] text-xs h-[25px]" value="registration-submission">Registration Submission</TabsTrigger>
-                                        <TabsTrigger className="w-[200px] text-xs h-[25px]" value="registration-success">Registration Success</TabsTrigger>
+                                    <TabsList className="grid w-full grid-cols-3">
+                                        <TabsTrigger value="support-email">Support Email</TabsTrigger>
+                                        <TabsTrigger value="registration-submission">Registration Submission</TabsTrigger>
+                                        <TabsTrigger value="registration-success">Registration Success</TabsTrigger>
                                     </TabsList>
 
                                     <TabsContent value="support-email" className="flex flex-col py-2 gap-2">

@@ -85,7 +85,7 @@ export function BankingDetailsForm({
             passphrase: payfastPassphrase
         }, {
             onSuccess: async () => {
-                toast.success("PayFast details saved.")
+                toast.success("PayFast merchant is connected.")
                 await queryClient.invalidateQueries({ queryKey: ['getClubDetails', clubAccountId] })
             },
             onError: (error) => toast.error(getApiErrorMessage(error))
@@ -130,6 +130,12 @@ export function BankingDetailsForm({
                         <TabsTrigger value="eft">EFT</TabsTrigger>
                         <TabsTrigger value="payfast">PayFast</TabsTrigger>
                     </TabsList>
+                    {activeTab === 'eft' && (
+                        <p className="mt-2 text-sm text-muted-foreground">
+                            Electronic Funds Transfer (EFT) allows members to pay directly into your club's bank account.
+                            These details will be displayed to members for manual transfers.
+                        </p>
+                    )}
                     {activeTab === 'payfast' && (
                         <p className="mt-2 text-sm text-muted-foreground">
                             PayFast is a South African payment gateway that enables secure online payments
@@ -235,7 +241,7 @@ export function BankingDetailsForm({
                                 Saving...
                             </>
                         ) : (
-                            'Save changes'
+                            'Update EFT details'
                         )}
                     </Button>
                 )}
