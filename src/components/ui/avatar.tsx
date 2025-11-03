@@ -45,6 +45,11 @@ function AvatarImage({
   React.useEffect(() => {
     // when src changes, mark loading true if there's a src
     if (setLoading) setLoading(!!src)
+    // safety: if no load/error event after a short delay, stop loading so fallback can show
+    if (src && setLoading) {
+      const t = window.setTimeout(() => setLoading(false), 2500)
+      return () => window.clearTimeout(t)
+    }
   }, [src, setLoading])
 
   const handleLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -61,7 +66,11 @@ function AvatarImage({
     <div data-slot="avatar-image" data-loading={loading ? "true" : "false"} className="relative w-full h-full">
       {src ? (
         <AvatarPrimitive.Image
-          className={cn("w-full h-full", className)}
+          className={cn(
+            "w-full h-full transition-opacity duration-300",
+            loading ? "opacity-0" : "opacity-100",
+            className
+          )}
           src={src}
           onLoad={handleLoad}
           onError={handleError}
@@ -83,12 +92,7 @@ function AvatarFallback({
   className,
   ...props
 }: React.ComponentProps<typeof AvatarPrimitive.Fallback>) {
-  const ctx = React.useContext(AvatarLoadingContext)
-  const loading = ctx?.loading ?? false
-
-  if (loading) {
-    return null
-  }
+  // Always render fallback so there's something visible under the loader
 
   return (
     <AvatarPrimitive.Fallback

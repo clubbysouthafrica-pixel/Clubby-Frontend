@@ -300,8 +300,6 @@ export function ClubRegisterForm() {
 
   const isLastPage = currentPageIndex === pages.length - 1;
 
-  console.log('PAGE: ', pages[currentPageIndex])
-
   return (
     <div className="flex justify-center items-center">
       <Card className="w-[800px] overflow-y-auto gap-2">
