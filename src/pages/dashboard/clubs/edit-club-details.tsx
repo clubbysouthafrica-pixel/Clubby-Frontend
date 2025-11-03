@@ -14,6 +14,7 @@ import { useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { REGISTRATION_SUBMISSION_EMAIL_TEMPLATE, REGISTRATION_SUCCESS_EMAIL_TEMPLATE } from "@/helpers/admin/constants/registration_submission_email_template";
 import EditableEmailTemplate from "../../../components/admin/manage/emailing/editable_email_template"
+import { BankingDetailsForm } from "@/components/admin/club/banking-details-form"
 
 
 export default function EditClubDetails() {
@@ -23,10 +24,6 @@ export default function EditClubDetails() {
 
     const [country, setCountry] = useState('')
     const [currency, setCurrency] = useState('')
-    const [bank, setBank] = useState('')
-    const [bankAccountNumber, setBankAccountNumber] = useState('')
-    const [branchCode, setBranchCode] = useState('')
-    const [accountType, setAccountType] = useState('')
     const [supportEmail, setSupportEmail] = useState('')
 
     const [registrationSubmissionEmailTemplate, setRegistrationSubmissionEmailTemplate] = useState<string>(REGISTRATION_SUBMISSION_EMAIL_TEMPLATE)
@@ -36,10 +33,6 @@ export default function EditClubDetails() {
 
     useEffect(() => {
         if (data) {
-            setBank(data.bank_details?.bank)
-            setBranchCode(data.bank_details?.branch_code)
-            setBankAccountNumber(data.bank_details?.account_number)
-            setAccountType(data.bank_details?.account_type)
             setCurrency(data?.currency)
             setCountry(data?.country_of_operation)
             setSupportEmail(data.support_email)
@@ -51,14 +44,34 @@ export default function EditClubDetails() {
         }
     }, [data])
 
+    const handleBankingDetailsSave = (bankingData: {
+        bank_details: {
+            bank: string
+            account_number: string
+            branch_code: string
+            account_type: string
+        }
+    }) => {
+        mutate({
+            club_account_id: club?.club_account_id as string,
+            bank_details: bankingData.bank_details,
+            country_of_operation: country,
+            currency,
+            support_email: supportEmail,
+            registration_submission_email_template_body: registrationSubmissionEmailTemplate,
+            registration_success_email_template_body: registrationSuccessEmailTemplate,
+            use_success_email_template: useSuccessEmailTemplate,
+            use_submission_email_template: useSubmissionEmailTemplate
+        }, {
+            onSuccess: () => toast.success("Successfully updated club details"),
+            onError: () => toast.error("Something went wrong")
+        })
+    }
+
     const update = () => mutate({
         club_account_id: club?.club_account_id as string,
-        bank_details: {
-            bank,
-            account_number: bankAccountNumber,
-            branch_code: branchCode,
-            account_type: accountType
-        },
+        bank_details: data?.bank_details || { bank: '', account_number: '', branch_code: '', account_type: '' },
+        payfast_details: data?.payfast_details || { merchant_id: '', merchant_key: '', passphrase: '' },
         country_of_operation: country,
         currency,
         support_email: supportEmail,
@@ -90,67 +103,13 @@ export default function EditClubDetails() {
                             <TabsTrigger className="w-[150px]" value="emailing">Emailing</TabsTrigger>
                         </TabsList>
                         <TabsContent value="account">
-                            <Card className="h-[630px]">
-                                <CardHeader>
-                                    <CardTitle>Banking Details</CardTitle>
-                                    <CardDescription>
-                                        Make changes to your account here. Click save when you&apos;re
-                                        done.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="grid gap-6">
-                                    <div className="grid gap-3">
-                                        <Label htmlFor="tabs-demo-name">Bank</Label>
-                                        <Input
-                                            id="tabs-demo-name"
-                                            type="text"
-                                            value={bank}
-                                            onChange={(e) => setBank(e.target.value)}
-                                            placeholder="Set bank"
-                                        />
-                                    </div>
-                                    <div className="grid gap-3">
-                                        <Label htmlFor="tabs-demo-name">Account Number</Label>
-                                        <Input
-                                            id="tabs-demo-name"
-                                            type="text"
-                                            value={bankAccountNumber}
-                                            onChange={(e) => setBankAccountNumber(e.target.value)}
-                                            placeholder="Set bank account number"
-                                        />
-                                    </div>
-                                    <div className="grid gap-3">
-                                        <Label htmlFor="tabs-demo-name">Branch Code</Label>
-                                        <Input
-                                            id="tabs-demo-name"
-                                            type="text"
-                                            value={branchCode}
-                                            onChange={(e) => setBranchCode(e.target.value)}
-                                            placeholder="Set bank branch code"
-                                        />
-                                    </div>
-                                    <div className="grid gap-3">
-                                        <Label htmlFor="tabs-demo-name">Account Type</Label>
-                                        <Input
-                                            id="tabs-demo-name"
-                                            type="text"
-                                            value={accountType}
-                                            onChange={(e) => setAccountType(e.target.value)}
-                                            placeholder="Set bank account type"
-                                        />
-                                    </div>
-                                </CardContent>
-                                <CardFooter className="flex justify-start mt-auto">
-                                    <Button onClick={update} disabled={isPending}>{
-                                        isPending ? (
-                                            <p className="flex space-x-2 items-center">
-                                                <Loader2 className="animate-spin" />
-                                                <span>Saving</span>
-                                            </p>
-                                        ) : "Save"
-                                    }</Button>
-                                </CardFooter>
-                            </Card>
+                            <BankingDetailsForm 
+                                club_account_id={club?.club_account_id as string}
+                                bankDetails={data?.bank_details}
+                                payfastEnabled={data?.payfast_enabled}
+                                onSave={handleBankingDetailsSave}
+                                isPending={isPending}
+                            />
                         </TabsContent>
                         <TabsContent value="password">
                             <Card className="h-[630px]">

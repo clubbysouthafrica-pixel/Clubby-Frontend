@@ -5,6 +5,12 @@ export interface ClubBankDetailsRequest {
     account_type: string
 }
 
+export interface ClubPayFastDetailsRequest {
+    merchant_id: string
+    merchant_key: string
+    passphrase?: string
+}
+
 export interface ClubLocationDetailsRequest {
     country: string
 }
@@ -12,6 +18,7 @@ export interface ClubLocationDetailsRequest {
 export interface ClubDetailsRequest {
     club_account_id: string
     bank_details: ClubBankDetailsRequest
+    payfast_details?: ClubPayFastDetailsRequest
     country_of_operation: string
     currency: string
     support_email: string
