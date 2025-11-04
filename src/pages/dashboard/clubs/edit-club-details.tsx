@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -112,12 +112,22 @@ export default function EditClubDetails() {
                             />
                         </TabsContent>
                         <TabsContent value="location">
-                            <Card className="h-[630px]">
-                                <CardHeader>
-                                    <CardTitle>Location</CardTitle>
-                                    <CardDescription>
-                                        Set the country the club is operating out of, save after update.
-                                    </CardDescription>
+                            <Card className="h-[630px] border-0 shadow-none">
+                                <CardHeader className="flex flex-row items-start justify-between space-y-0">
+                                    <div className="space-y-1.5">
+                                        <CardTitle>Location</CardTitle>
+                                        <CardDescription>
+                                            Set the country the club is operating out of, save after update.
+                                        </CardDescription>
+                                    </div>
+                                    <Button onClick={update} disabled={isPending}>{
+                                        isPending ? (
+                                            <p className="flex space-x-2 items-center">
+                                                <Loader2 className="animate-spin" />
+                                                <span>Saving</span>
+                                            </p>
+                                        ) : "Save location details"
+                                    }</Button>
                                 </CardHeader>
                                 <CardContent className="grid gap-6">
                                     <div className="grid gap-3 w-full">
@@ -158,26 +168,27 @@ export default function EditClubDetails() {
                                         </Select>
                                     </div>
                                 </CardContent>
-
-                                <CardFooter className="flex justify-start mt-auto">
-                                    <Button onClick={update} disabled={isPending}>{
-                                        isPending ? (
-                                            <p className="flex space-x-2 items-center">
-                                                <Loader2 className="animate-spin" />
-                                                <span>Saving</span>
-                                            </p>
-                                        ) : "Save"
-                                    }</Button>
-                                </CardFooter>
                             </Card>
                         </TabsContent>
                         <TabsContent value="emailing">
-                            <Card className="flex flex-col h-[630px]">
-                                <CardHeader>
-                                    <CardTitle>Emailing</CardTitle>
-                                    <CardDescription>
-                                        Draft custom automated emails and handle member communications.
-                                    </CardDescription>
+                            <Card className="flex flex-col border-0 shadow-none">
+                                <CardHeader className="flex flex-row items-start justify-between space-y-0">
+                                    <div className="space-y-1.5">
+                                        <CardTitle>Emailing</CardTitle>
+                                        <CardDescription>
+                                            Draft custom automated emails and handle member communications.
+                                        </CardDescription>
+                                    </div>
+                                    <Button onClick={update} disabled={isPending}>
+                                        {isPending ? (
+                                            <p className="flex space-x-2 items-center">
+                                                <Loader2 className="animate-spin" />
+                                                <span>Saving...</span>
+                                            </p>
+                                        ) : (
+                                            "Save email settings"
+                                        )}
+                                    </Button>
                                 </CardHeader>
                                 <Tabs defaultValue="support-email" className="px-5">
                                     <TabsList className="grid w-full grid-cols-3">
@@ -230,19 +241,6 @@ export default function EditClubDetails() {
                                         />
                                     </TabsContent>
                                 </Tabs>
-
-                                <CardFooter className="flex justify-start mt-auto">
-                                    <Button onClick={update} disabled={isPending}>
-                                        {isPending ? (
-                                            <p className="flex space-x-2 items-center">
-                                                <Loader2 className="animate-spin" />
-                                                <span>Saving...</span>
-                                            </p>
-                                        ) : (
-                                            "Save"
-                                        )}
-                                    </Button>
-                                </CardFooter>
                             </Card>
 
                         </TabsContent>

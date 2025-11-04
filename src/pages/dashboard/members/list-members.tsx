@@ -181,7 +181,8 @@ export default function ListMembersPage() {
   const registerUser = (member: ClubMember) => {
     if (
       memberRegisterAmount > member.outstanding_amount ||
-      memberRegisterAmount <= 0
+      (memberRegisterAmount == 0 && member.outstanding_amount > 0) || 
+      memberRegisterAmount < 0
     ) {
       setInvalidRegistrationAmount(true);
       return;

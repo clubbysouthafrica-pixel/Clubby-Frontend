@@ -18,7 +18,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card.tsx";
-import { Calendar, Loader2, Mail, MapPin } from "lucide-react";
+import {
+  Calendar,
+  Loader2,
+  Mail,
+  MapPin,
+  CreditCard,
+  Building2,
+  Hash,
+  Copy,
+  CheckCircle2,
+} from "lucide-react";
 import { useFetchClub, useFetchClubBankDetails } from "@/queries/clubs";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -55,6 +65,22 @@ const countryMap: Record<string, string> = {
   FR: "France",
 };
 
+// Local types for transactions to improve table typing
+type TransactionEntry = {
+  type: string;
+  description: string;
+  amount: number;
+  payment_type?: string;
+};
+
+type Transaction = {
+  transaction_id: string;
+  type: string;
+  outstanding_amount: number;
+  status: string;
+  lifecycle: Record<string, TransactionEntry>;
+};
+
 const usePayFastRedirect = (club_account_id: string) => {
   const { data } = useFetchPayFastCheckoutUrlQuery(club_account_id ?? "");
 
@@ -81,12 +107,40 @@ export default function ViewClubPage() {
     useFetchUserTransactions(data?.club_account_id ?? "", data?.user_id ?? "");
 
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+  const [highlightPayment, setHighlightPayment] = useState(false);
+  const [activeTab, setActiveTab] = useState("home");
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const toggleRow = (id: string) => {
     setExpandedRows((prev) => ({
       ...prev,
       [id]: !prev[id],
     }));
+  };
+
+  const handlePayHereClick = () => {
+    // Navigate to the Payments & Billing tab
+    setActiveTab("bank");
+
+    setTimeout(() => {
+      const paymentOptionsSection = document.getElementById(
+        "payment-options-section"
+      );
+      if (paymentOptionsSection) {
+        paymentOptionsSection.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        setHighlightPayment(true);
+        setTimeout(() => setHighlightPayment(false), 3000);
+      }
+    }, 100);
+  };
+
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
   };
 
   const [coverImage, setCoverImage] = useState("");
@@ -119,6 +173,8 @@ export default function ViewClubPage() {
       </div>
     );
   }
+
+  console.log("club data:", data);
 
   return (
     <Pager>
@@ -196,25 +252,44 @@ export default function ViewClubPage() {
                   </div>
                 )}
                 {data?.club_member_exists && !data.resubmission_required && (
-                  <div className="flex flex-row justify-center items-center gap-2 font-bold text-xl">
-                    <h1>Membership Status: </h1>
-                    <h1
-                      className={`shadow-none ${
-                        data.registered
-                          ? "text-green-700 border-green-700"
-                          : "text-orange-700 border-orange-700"
-                      }`}
-                    >
-                      {data.registered ? "Registered" : "Pending"}
-                    </h1>
+                  <div className="flex flex-col justify-center items-center font-bold text-xl">
+                    <div className="flex flex-row gap-2">
+                      <h1>Membership Status: </h1>
+                      <h1
+                        className={`shadow-none ${
+                          data.registered
+                            ? "text-green-700 border-green-700"
+                            : "text-orange-700 border-orange-700"
+                        }`}
+                      >
+                        {data.registered ? "Registered" : "Pending"}
+                      </h1>
+                    </div>
+                    {!data.registered && (
+                      <div className="flex flex-row gap-2">
+                        <h3>
+                          Outstanding amount:{" "}
+                          {formatAmount(
+                            bankDetails?.outstanding_amount,
+                            data.currency
+                          )}
+                        </h3>
+                        <Label
+                          className="underline cursor-pointer hover:text-red-600"
+                          onClick={handlePayHereClick}
+                        >
+                          (Pay here)
+                        </Label>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="mt-6">
-            <Tabs defaultValue="home">
+          <div className="mt-6 mb-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="justify-start h-10">
                 <>
                   <TabsTrigger className="w-[200px]" value="home">
@@ -288,7 +363,7 @@ export default function ViewClubPage() {
 
               {data?.club_member_exists && (
                 <TabsContent value="bank">
-                  <Card className="w-full lg:w-1/3 text-xl border border-white shadow-none ">
+                  <Card className="w-full text-xl border-none shadow-none mb-4">
                     <CardTitle>
                       Outstanding amount:{" "}
                       {formatAmount(
@@ -301,94 +376,266 @@ export default function ViewClubPage() {
                       </p>
                     </CardTitle>
                   </Card>
-                  <div className="flex items-start w-full gap-2">
-                    <Card className="w-2/6 h-[400px]">
-                      <h1 className="mx-6 text-xl font-bold">
-                        Payment Options
-                      </h1>
-                      <Tabs defaultValue="eft">
-                        <TabsList className="ml-4 justify-start h-[35px] p-1">
-                          <TabsTrigger
-                            className="w-[150px] text-xs"
-                            value="eft"
-                          >
-                            EFT
-                          </TabsTrigger>
-                          <TabsTrigger
-                            className="w-[150px] text-xs"
-                            value="online"
-                          >
-                            Credit/Debit Card
-                          </TabsTrigger>
+                  <div className="flex flex-col w-full gap-6">
+                    <Card
+                      id="payment-options-section"
+                      className={`transition-all duration-300 ${
+                        highlightPayment ? "ring-2 ring-red-300 shadow-lg" : ""
+                      }`}
+                    >
+                      <CardHeader className="px-6 pb-2">
+                        <CardTitle>Payment Options</CardTitle>
+                        <CardDescription>
+                          Choose how you’d like to pay: make a secure online
+                          payment via PayFast or pay by EFT using the club’s
+                          banking details.
+                        </CardDescription>
+                      </CardHeader>
+                      <Tabs defaultValue="eft" className="px-6 pb-6">
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="eft">EFT</TabsTrigger>
+                          {data?.payfast_enabled && data?.club_member_exists && (
+                            <TabsTrigger value="online">
+                              Online Payment (PayFast)
+                            </TabsTrigger>
+                          )}
                         </TabsList>
-                        <TabsContent
-                          value="eft"
-                          className="border-1 border-grey-400 mx-2 py-4 rounded-[20px]"
-                        >
-                          <CardHeader>
-                            <CardTitle>Banking Details</CardTitle>
-                            <CardDescription>
-                              Make any payments through EFT to the below banking
-                              details. Please make use of your{" "}
-                              <strong>payment reference number</strong> when
-                              making the payment.
-                            </CardDescription>
-                          </CardHeader>
-                          <CardContent>
+                        <TabsContent value="eft" className="pt-2">
+                          <div className="px-6 py-4 space-y-6">
+                            <div className="text-center space-y-2">
+                              <h3 className="text-lg font-semibold">
+                                Bank Transfer (EFT)
+                              </h3>
+                              <CardDescription>
+                                Make payments through electronic funds transfer
+                                to the banking details below.
+                                <br />
+                                Please use your{" "}
+                                <strong className="text-foreground">
+                                  payment reference number
+                                </strong>{" "}
+                                when making the payment.
+                              </CardDescription>
+                            </div>
+
                             {bankDetailsLoading && (
                               <div className="flex justify-center py-8">
                                 <Loader2 className="h-8 w-8 animate-spin" />
                               </div>
                             )}
+
                             {!bankDetailsLoading && (
-                              <Table>
-                                <TableBody>
-                                  <TableRow>
-                                    <TableCell>Bank</TableCell>
-                                    <TableCell>{bankDetails?.bank}</TableCell>
-                                  </TableRow>
-                                  <TableRow>
-                                    <TableCell>Account Number</TableCell>
-                                    <TableCell>
-                                      {bankDetails?.account_number}
-                                    </TableCell>
-                                  </TableRow>
-                                  <TableRow>
-                                    <TableCell>Branch Code</TableCell>
-                                    <TableCell>
-                                      {bankDetails?.branch_code}
-                                    </TableCell>
-                                  </TableRow>
-                                  <TableRow>
-                                    <TableCell>Account Type</TableCell>
-                                    <TableCell>
-                                      {bankDetails?.account_type}
-                                    </TableCell>
-                                  </TableRow>
-                                </TableBody>
-                              </Table>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="relative group">
+                                  <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg transition-colors">
+                                    <div className="flex items-center gap-3 flex-1">
+                                      <Building2 className="h-5 w-5 text-muted-foreground" />
+                                      <div>
+                                        <p className="text-xs text-muted-foreground">
+                                          Bank
+                                        </p>
+                                        <p className="font-semibold">
+                                          {bankDetails?.bank}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() =>
+                                        copyToClipboard(
+                                          bankDetails?.bank || "",
+                                          "bank"
+                                        )
+                                      }
+                                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                      {copiedField === "bank" ? (
+                                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                      ) : (
+                                        <Copy className="h-4 w-4" />
+                                      )}
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="relative group">
+                                  <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg transition-colors">
+                                    <div className="flex items-center gap-3 flex-1">
+                                      <Hash className="h-5 w-5 text-muted-foreground" />
+                                      <div>
+                                        <p className="text-xs text-muted-foreground">
+                                          Account Number
+                                        </p>
+                                        <p className="font-semibold font-mono">
+                                          {bankDetails?.account_number}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() =>
+                                        copyToClipboard(
+                                          bankDetails?.account_number || "",
+                                          "account"
+                                        )
+                                      }
+                                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                      {copiedField === "account" ? (
+                                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                      ) : (
+                                        <Copy className="h-4 w-4" />
+                                      )}
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="relative group">
+                                  <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg transition-colors">
+                                    <div className="flex items-center gap-3 flex-1">
+                                      <Hash className="h-5 w-5 text-muted-foreground" />
+                                      <div>
+                                        <p className="text-xs text-muted-foreground">
+                                          Branch Code
+                                        </p>
+                                        <p className="font-semibold font-mono">
+                                          {bankDetails?.branch_code}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() =>
+                                        copyToClipboard(
+                                          bankDetails?.branch_code || "",
+                                          "branch"
+                                        )
+                                      }
+                                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                      {copiedField === "branch" ? (
+                                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                      ) : (
+                                        <Copy className="h-4 w-4" />
+                                      )}
+                                    </Button>
+                                  </div>
+                                </div>
+
+                                {/* Account Type */}
+                                <div className="relative group">
+                                  <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg transition-colors">
+                                    <div className="flex items-center gap-3 flex-1">
+                                      <Building2 className="h-5 w-5 text-muted-foreground" />
+                                      <div>
+                                        <p className="text-xs text-muted-foreground">
+                                          Account Type
+                                        </p>
+                                        <p className="font-semibold">
+                                          {bankDetails?.account_type}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() =>
+                                        copyToClipboard(
+                                          bankDetails?.account_type || "",
+                                          "type"
+                                        )
+                                      }
+                                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                      {copiedField === "type" ? (
+                                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                      ) : (
+                                        <Copy className="h-4 w-4" />
+                                      )}
+                                    </Button>
+                                  </div>
+                                </div>
+
+                                {/* Payment Reference */}
+                                {bankDetails?.payment_reference && (
+                                  <div className="relative group sm:col-span-2">
+                                    <div className="flex items-center justify-between p-4 bg-primary/10 rounded-lg transition-colors">
+                                      <div className="flex items-center gap-3 flex-1">
+                                        <Hash className="h-5 w-5 text-primary" />
+                                        <div>
+                                          <p className="text-xs text-muted-foreground">
+                                            Payment Reference (Important!)
+                                          </p>
+                                          <p className="font-bold font-mono text-primary">
+                                            {bankDetails?.payment_reference}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() =>
+                                          copyToClipboard(
+                                            bankDetails?.payment_reference ||
+                                              "",
+                                            "reference"
+                                          )
+                                        }
+                                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                      >
+                                        {copiedField === "reference" ? (
+                                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                        ) : (
+                                          <Copy className="h-4 w-4" />
+                                        )}
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                             )}
-                          </CardContent>
+                          </div>
                         </TabsContent>
-                        <TabsContent
-                          value="online"
-                          className="border-grey-400 mx-2 px-4 py-4 rounded-[20px]"
-                        >
-                          <Button onClick={redirect}>Pay with PayFast</Button>
+                        <TabsContent value="online" className="px-6 py-8">
+                          <div className="flex flex-col items-center justify-center gap-4">
+                            <div className="text-center space-y-2">
+                              <h3 className="text-lg font-semibold">
+                                Pay Online with PayFast
+                              </h3>
+                              <p className="text-sm text-muted-foreground">
+                                Securely pay your outstanding amount using
+                                credit card, debit card, or instant EFT
+                              </p>
+                            </div>
+                            <Button
+                              onClick={redirect}
+                              disabled={bankDetails?.outstanding_amount === 0}
+                              size="lg"
+                              className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all duration-200"
+                            >
+                              <CreditCard className="mr-2 h-5 w-5" />
+                              Pay with PayFast
+                            </Button>
+                            <p className="text-xs text-muted-foreground">
+                              You will be redirected to PayFast's secure payment
+                              gateway
+                            </p>
+                          </div>
                         </TabsContent>
                       </Tabs>
                     </Card>
                     {!isUserTransactionsLoading && transactions && (
-                      <Card className="flex-1 gap-1 w-4/6 h-[400px]">
-                        <CardHeader>
+                      <Card>
+                        <CardHeader className="px-6 pb-2">
                           <CardTitle>Transactions</CardTitle>
                           <CardDescription>
                             View your transactions with this club.
                           </CardDescription>
                         </CardHeader>
-                        <CardContent className="overflow-y-auto">
-                          <div className="overflow-hidden rounded-lg border my-5">
-                            <Table>
+                        <CardContent className="px-6 pt-2 pb-6 max-h-[520px] overflow-y-auto">
+                          <div className="overflow-hidden rounded-lg">
+                            <Table className="border">
                               <TableHeader className="bg-muted sticky top-0 z-10">
                                 <TableRow>
                                   <TableHead className="text-center w-1/4">
@@ -407,35 +654,66 @@ export default function ViewClubPage() {
                               </TableHeader>
 
                               <TableBody>
-                                {transactions.transactions.map((tx: any) => (
-                                  <React.Fragment key={tx.transaction_id}>
-                                    {/* Main Transaction Row */}
-                                    <TableRow
-                                      className="cursor-pointer hover:bg-muted/50 transition"
-                                      onClick={() =>
-                                        toggleRow(tx.transaction_id)
-                                      }
+                                {transactions.transactions.length === 0 && (
+                                  <TableRow>
+                                    <TableCell
+                                      colSpan={4}
+                                      className="text-center py-8 text-muted-foreground"
                                     >
-                                      <TableCell className="text-center w-1/4">
-                                        <div className="inline-flex items-center gap-2 justify-center">
-                                          <span className="font-mono">
-                                            {tx.transaction_id.slice(0, 5)}...
-                                          </span>
+                                      No transactions yet.
+                                    </TableCell>
+                                  </TableRow>
+                                )}
+                                {transactions.transactions.map(
+                                  (tx: Transaction) => (
+                                    <React.Fragment key={tx.transaction_id}>
+                                      {/* Main Transaction Row */}
+                                      <TableRow
+                                        className="cursor-pointer hover:bg-muted/50 transition odd:bg-muted/20"
+                                        onClick={() =>
+                                          toggleRow(tx.transaction_id)
+                                        }
+                                      >
+                                        <TableCell className="text-center w-1/4">
+                                          <div className="inline-flex items-center gap-2 justify-center">
+                                            <span className="font-mono">
+                                              {tx.transaction_id.slice(0, 5)}...
+                                            </span>
 
-                                          {/* Copy button */}
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation(); // Prevent triggering row expand
-                                              navigator.clipboard.writeText(
-                                                tx.transaction_id
-                                              );
-                                            }}
-                                            title="Click to copy full Transaction ID"
-                                            className="hover:text-primary"
-                                          >
+                                            {/* Copy button */}
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation(); // Prevent triggering row expand
+                                                navigator.clipboard.writeText(
+                                                  tx.transaction_id
+                                                );
+                                              }}
+                                              title="Click to copy full Transaction ID"
+                                              className="hover:text-primary"
+                                            >
+                                              <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                className="h-4 w-4 text-muted-foreground hover:text-foreground transition"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M8 16h8m2 0a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v8a2 2 0 002 2zM8 16v2a2 2 0 002 2h8a2 2 0 002-2v-2"
+                                                />
+                                              </svg>
+                                            </button>
+
                                             <svg
                                               xmlns="http://www.w3.org/2000/svg"
-                                              className="h-4 w-4 text-muted-foreground hover:text-foreground transition"
+                                              className={`h-4 w-4 transition-transform ${
+                                                expandedRows[tx.transaction_id]
+                                                  ? "rotate-90"
+                                                  : ""
+                                              }`}
                                               fill="none"
                                               viewBox="0 0 24 24"
                                               stroke="currentColor"
@@ -444,136 +722,136 @@ export default function ViewClubPage() {
                                                 strokeLinecap="round"
                                                 strokeLinejoin="round"
                                                 strokeWidth={2}
-                                                d="M8 16h8m2 0a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v8a2 2 0 002 2zM8 16v2a2 2 0 002 2h8a2 2 0 002-2v-2"
+                                                d="M9 5l7 7-7 7"
                                               />
                                             </svg>
-                                          </button>
-
-                                          <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            className={`h-4 w-4 transition-transform ${
-                                              expandedRows[tx.transaction_id]
-                                                ? "rotate-90"
-                                                : ""
-                                            }`}
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                          >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth={2}
-                                              d="M9 5l7 7-7 7"
-                                            />
-                                          </svg>
-                                        </div>
-                                      </TableCell>
-                                      <TableCell className="text-center">
-                                        {tx.type}
-                                      </TableCell>
-                                      <TableCell className="text-center">
-                                        {formatAmount(
-                                          tx.outstanding_amount,
-                                          data.currency
-                                        )}
-                                      </TableCell>
-                                      <TableCell
-                                        className={`text-center font-bold ${
-                                          tx.status === "PENDING"
-                                            ? "text-red-500"
-                                            : tx.status === "PARTIALLY PAID"
-                                            ? "text-orange-500"
-                                            : "text-green-500"
-                                        }`}
-                                      >
-                                        {tx.status}
-                                      </TableCell>
-                                    </TableRow>
-
-                                    {expandedRows[tx.transaction_id] && (
-                                      <TableRow className="bg-muted/10">
-                                        <TableCell colSpan={8} className="p-4">
-                                          <div className="overflow-hidden rounded-lg border">
-                                            <Table className="w-full">
-                                              <TableHeader className="bg-muted sticky top-0 z-10">
-                                                <TableRow>
-                                                  <TableHead className="text-center">
-                                                    Date
-                                                  </TableHead>
-                                                  <TableHead className="text-center">
-                                                    Type
-                                                  </TableHead>
-                                                  <TableHead className="text-center">
-                                                    Description
-                                                  </TableHead>
-                                                  <TableHead className="text-center">
-                                                    Amount
-                                                  </TableHead>
-                                                </TableRow>
-                                              </TableHeader>
-                                              <TableBody>
-                                                {Object.entries(tx.lifecycle)
-                                                  // Sort by timestamp descending (latest first)
-                                                  .sort(
-                                                    ([a], [b]) =>
-                                                      Number(b) - Number(a)
-                                                  )
-                                                  .map(
-                                                    ([
-                                                      timestamp,
-                                                      entry,
-                                                    ]: any) => (
-                                                      <TableRow key={timestamp}>
-                                                        <TableCell className="text-center">
-                                                          {new Date(
-                                                            Number(timestamp)
-                                                          ).toLocaleString(
-                                                            "en-GB",
-                                                            {
-                                                              day: "2-digit",
-                                                              month: "2-digit",
-                                                              year: "numeric",
-                                                              hour: "2-digit",
-                                                              minute: "2-digit",
-                                                              hour12: true,
-                                                            }
-                                                          )}
-                                                        </TableCell>
-                                                        <TableCell className="text-center">
-                                                          {entry.type}
-                                                        </TableCell>
-                                                        <TableCell className="text-center">
-                                                          {entry.description}
-                                                        </TableCell>
-                                                        <TableCell
-                                                          className={`text-center ${
-                                                            entry.type ===
-                                                            "SUBMISSION"
-                                                              ? "text-red-500"
-                                                              : "text-green-500"
-                                                          } font-bold`}
-                                                        >
-                                                          {entry.type ===
-                                                          "SUBMISSION"
-                                                            ? "-"
-                                                            : "+"}
-                                                          {formatAmount(
-                                                            entry.amount,
-                                                            data.currency
-                                                          )}
-                                                        </TableCell>
-                                                      </TableRow>
-                                                    )
-                                                  )}
-                                              </TableBody>
-                                            </Table>
                                           </div>
                                         </TableCell>
+                                        <TableCell className="text-center">
+                                          {tx.type}
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                          {formatAmount(
+                                            tx.outstanding_amount,
+                                            data.currency
+                                          )}
+                                        </TableCell>
+                                        <TableCell
+                                          className={`text-center font-bold ${
+                                            tx.status === "PENDING"
+                                              ? "text-red-500"
+                                              : tx.status === "PARTIALLY PAID"
+                                              ? "text-orange-500"
+                                              : "text-green-500"
+                                          }`}
+                                        >
+                                          {tx.status}
+                                        </TableCell>
                                       </TableRow>
-                                    )}
-                                  </React.Fragment>
-                                ))}
+
+                                      {expandedRows[tx.transaction_id] && (
+                                        <TableRow className="bg-muted/10">
+                                          <TableCell
+                                            colSpan={8}
+                                            className="p-4"
+                                          >
+                                            <div className="overflow-hidden rounded-lg">
+                                              <Table className="w-full">
+                                                <TableHeader className="bg-muted sticky top-0 z-10">
+                                                  <TableRow>
+                                                    <TableHead className="text-center">
+                                                      Date
+                                                    </TableHead>
+                                                    <TableHead className="text-center">
+                                                      Type
+                                                    </TableHead>
+                                                    <TableHead className="text-center">
+                                                      Description
+                                                    </TableHead>
+                                                    <TableHead className="text-center">
+                                                      Amount
+                                                    </TableHead>
+                                                    <TableHead className="text-center">
+                                                      Payment type
+                                                    </TableHead>
+                                                  </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                  {Object.entries(
+                                                    tx.lifecycle as Record<
+                                                      string,
+                                                      TransactionEntry
+                                                    >
+                                                  )
+                                                    // Sort by timestamp descending (latest first)
+                                                    .sort(
+                                                      ([a], [b]) =>
+                                                        Number(b) - Number(a)
+                                                    )
+                                                    .map(
+                                                      ([timestamp, entry]: [
+                                                        string,
+                                                        TransactionEntry
+                                                      ]) => (
+                                                        <TableRow
+                                                          key={timestamp}
+                                                        >
+                                                          <TableCell className="text-center">
+                                                            {new Date(
+                                                              Number(timestamp)
+                                                            ).toLocaleString(
+                                                              "en-GB",
+                                                              {
+                                                                day: "2-digit",
+                                                                month:
+                                                                  "2-digit",
+                                                                year: "numeric",
+                                                                hour: "2-digit",
+                                                                minute:
+                                                                  "2-digit",
+                                                                hour12: true,
+                                                              }
+                                                            )}
+                                                          </TableCell>
+                                                          <TableCell className="text-center">
+                                                            {entry.type}
+                                                          </TableCell>
+                                                          <TableCell className="text-center">
+                                                            {entry.description}
+                                                          </TableCell>
+                                                          <TableCell
+                                                            className={`text-center ${
+                                                              entry.type ===
+                                                              "SUBMISSION"
+                                                                ? "text-red-500"
+                                                                : "text-green-500"
+                                                            } font-bold`}
+                                                          >
+                                                            {entry.type ===
+                                                            "SUBMISSION"
+                                                              ? "-"
+                                                              : "+"}
+                                                            {formatAmount(
+                                                              entry.amount,
+                                                              data.currency
+                                                            )}
+                                                          </TableCell>
+                                                          <TableCell className="text-center">
+                                                            {entry.payment_type ??
+                                                              "N/A"}
+                                                          </TableCell>
+                                                        </TableRow>
+                                                      )
+                                                    )}
+                                                </TableBody>
+                                              </Table>
+                                            </div>
+                                          </TableCell>
+                                        </TableRow>
+                                      )}
+                                    </React.Fragment>
+                                  )
+                                )}
                               </TableBody>
                             </Table>
                           </div>

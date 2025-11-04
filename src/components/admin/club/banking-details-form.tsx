@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -117,12 +117,71 @@ export function BankingDetailsForm({
     }
 
     return (
-        <Card className="h-[630px]">
-            <CardHeader>
-                <CardTitle>Banking Details</CardTitle>
-                <CardDescription>
-                    Configure your payment methods. Click save when you&apos;re done.
-                </CardDescription>
+        <Card className="h-[630px] border-0 shadow-none">
+            <CardHeader className="flex flex-row items-start justify-between space-y-0">
+                <div className="space-y-1.5">
+                    <CardTitle>Banking Details</CardTitle>
+                    <CardDescription>
+                        Configure your payment methods. Click save when you&apos;re done.
+                    </CardDescription>
+                </div>
+                {activeTab === 'eft' && (
+                    <Button onClick={handleSave} disabled={isPending}>
+                        {isPending ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Saving...
+                            </>
+                        ) : (
+                            'Save banking details'
+                        )}
+                    </Button>
+                )}
+                {activeTab === 'payfast' && (
+                    payfastEnabled ? (
+                        <>
+                            <Button type="button" onClick={() => setResetDialogOpen(true)} disabled={resetPayFastLoading}>
+                                <RefreshCw className="mr-2 h-4 w-4" /> Reset PayFast
+                            </Button>
+                            <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Reset PayFast details?</DialogTitle>
+                                        <DialogDescription>
+                                            This will remove your saved PayFast credentials and disconnect PayFast from your club. You can reconfigure at any time.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <UIDialogFooter>
+                                        <Button variant="outline" type="button" onClick={() => setResetDialogOpen(false)} disabled={resetPayFastLoading}>
+                                            Cancel
+                                        </Button>
+                                        <Button variant="destructive" type="button" onClick={handleResetPayFast} disabled={resetPayFastLoading}>
+                                            {resetPayFastLoading ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    Resetting...
+                                                </>
+                                            ) : (
+                                                'Confirm reset'
+                                            )}
+                                        </Button>
+                                    </UIDialogFooter>
+                                </DialogContent>
+                            </Dialog>
+                        </>
+                    ) : (
+                        <Button type="button" onClick={handleSavePayFast} disabled={updatePayFastLoading}>
+                            {updatePayFastLoading ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Saving...
+                                </>
+                            ) : (
+                                'Save PayFast details'
+                            )}
+                        </Button>
+                    )
+                )}
             </CardHeader>
             <CardContent className="grid gap-6">
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'eft' | 'payfast')} className="w-full">
@@ -232,65 +291,6 @@ export function BankingDetailsForm({
                     </TabsContent>
                 </Tabs>
             </CardContent>
-            <CardFooter className="flex justify-start mt-auto">
-                {activeTab === 'eft' && (
-                    <Button onClick={handleSave} disabled={isPending}>
-                        {isPending ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Saving...
-                            </>
-                        ) : (
-                            'Update EFT details'
-                        )}
-                    </Button>
-                )}
-                {activeTab === 'payfast' && (
-                    payfastEnabled ? (
-                        <>
-                            <Button type="button" onClick={() => setResetDialogOpen(true)} disabled={resetPayFastLoading}>
-                                <RefreshCw className="mr-2 h-4 w-4" /> Reset PayFast details
-                            </Button>
-                            <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Reset PayFast details?</DialogTitle>
-                                        <DialogDescription>
-                                            This will remove your saved PayFast credentials and disconnect PayFast from your club. You can reconfigure at any time.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <UIDialogFooter>
-                                        <Button variant="outline" type="button" onClick={() => setResetDialogOpen(false)} disabled={resetPayFastLoading}>
-                                            Cancel
-                                        </Button>
-                                        <Button variant="destructive" type="button" onClick={handleResetPayFast} disabled={resetPayFastLoading}>
-                                            {resetPayFastLoading ? (
-                                                <>
-                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                    Resetting...
-                                                </>
-                                            ) : (
-                                                'Confirm reset'
-                                            )}
-                                        </Button>
-                                    </UIDialogFooter>
-                                </DialogContent>
-                            </Dialog>
-                        </>
-                    ) : (
-                        <Button type="button" onClick={handleSavePayFast} disabled={updatePayFastLoading}>
-                            {updatePayFastLoading ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Saving...
-                                </>
-                            ) : (
-                                'Create PayFast connection'
-                            )}
-                        </Button>
-                    )
-                )}
-            </CardFooter>
         </Card>
     )
 }
