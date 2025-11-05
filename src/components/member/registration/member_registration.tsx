@@ -37,7 +37,7 @@ export function MemberRegistration({
     switch (membershipStatus) {
       case "Registered":
         return {
-          icon: <CheckCircle2 className="h-6 w-6" />,
+          icon: <CheckCircle2 className="h-4 w-4" />,
           color: "text-green-600",
           bgColor: "bg-green-50",
           borderColor: "border-green-200",
@@ -45,7 +45,7 @@ export function MemberRegistration({
         };
       case "Pending":
         return {
-          icon: <Clock className="h-6 w-6" />,
+          icon: <Clock className="h-4 w-4" />,
           color: "text-orange-600",
           bgColor: "bg-orange-50",
           borderColor: "border-orange-200",
@@ -53,7 +53,7 @@ export function MemberRegistration({
         };
       case "Resubmission required":
         return {
-          icon: <AlertCircle className="h-6 w-6" />,
+          icon: <AlertCircle className="h-4 w-4" />,
           color: "text-red-600",
           bgColor: "bg-red-50",
           borderColor: "border-red-200",
@@ -61,7 +61,7 @@ export function MemberRegistration({
         };
       default:
         return {
-          icon: <Clock className="h-6 w-6" />,
+          icon: <Clock className="h-4 w-4" />,
           color: "text-gray-600",
           bgColor: "bg-gray-50",
           borderColor: "border-gray-200",
@@ -79,13 +79,13 @@ export function MemberRegistration({
         {/* Title row with icon */}
         <div className="flex items-center gap-3">
           <div className={statusConfig.color}>{statusConfig.icon}</div>
-          <h3 className={`text-l font-semibold ${statusConfig.color}`}>
+          <h3 className={`text-sm font-semibold ${statusConfig.color}`}>
             {statusConfig.title}
           </h3>
         </div>
         
         {/* Description text full width */}
-        <div className="text-sm text-gray-700 leading-relaxed">
+        <div className="text-xs text-gray-700 leading-relaxed">
           {membershipStatus === "Pending" ? (
             <>
               Your registration is currently <strong>pending</strong>. The club admin still needs to verify your submitted registration and confirm if your registration fee has been paid.
