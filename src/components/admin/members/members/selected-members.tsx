@@ -123,7 +123,7 @@ export default function SelectedMember({
                                                     <Phone className="h-4 w-4 text-muted-foreground" />
                                                     <Label className="text-xs font-semibold text-muted-foreground">Phone Number</Label>
                                                 </div>
-                                                <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                <Label className="text-base text-xs border-b-2 border-gray-300 pb-1">
                                                     {memberUser.phone_number || "Not provided"}
                                                 </Label>
                                             </div>
@@ -134,7 +134,7 @@ export default function SelectedMember({
                                                     <Calendar className="h-4 w-4 text-muted-foreground" />
                                                     <Label className="text-xs font-semibold text-muted-foreground">Date of Birth</Label>
                                                 </div>
-                                                <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                <Label className="text-base text-xs border-b-2 border-gray-300 pb-1">
                                                     {memberUser.date_of_birth || "Not provided"}
                                                 </Label>
                                             </div>
@@ -145,7 +145,7 @@ export default function SelectedMember({
                                                     <MapPin className="h-4 w-4 text-muted-foreground" />
                                                     <Label className="text-xs font-semibold text-muted-foreground">Address Line 1</Label>
                                                 </div>
-                                                <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                <Label className="text-base text-xs border-b-2 border-gray-300 pb-1">
                                                     {memberUser.address_line_1 || "Not provided"}
                                                 </Label>
                                             </div>
@@ -156,7 +156,7 @@ export default function SelectedMember({
                                                     <MapPin className="h-4 w-4 text-muted-foreground" />
                                                     <Label className="text-xs font-semibold text-muted-foreground">Address Line 2</Label>
                                                 </div>
-                                                <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                <Label className="text-base text-xs border-b-2 border-gray-300 pb-1">
                                                     {memberUser.address_line_2 || "Not provided"}
                                                 </Label>
                                             </div>
@@ -167,7 +167,7 @@ export default function SelectedMember({
                                                     <MapPin className="h-4 w-4 text-muted-foreground" />
                                                     <Label className="text-xs font-semibold text-muted-foreground">Suburb</Label>
                                                 </div>
-                                                <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                <Label className="text-base text-xs border-b-2 border-gray-300 pb-1">
                                                     {memberUser.suburb || "Not provided"}
                                                 </Label>
                                             </div>
@@ -178,7 +178,7 @@ export default function SelectedMember({
                                                     <MapPin className="h-4 w-4 text-muted-foreground" />
                                                     <Label className="text-xs font-semibold text-muted-foreground">City</Label>
                                                 </div>
-                                                <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                <Label className="text-base text-xs border-b-2 border-gray-300 pb-1">
                                                     {memberUser.city || "Not provided"}
                                                 </Label>
                                             </div>
@@ -189,7 +189,7 @@ export default function SelectedMember({
                                                     <MapPin className="h-4 w-4 text-muted-foreground" />
                                                     <Label className="text-xs font-semibold text-muted-foreground">Postal Code</Label>
                                                 </div>
-                                                <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                <Label className="text-base text-xs border-b-2 border-gray-300 pb-1">
                                                     {memberUser.postal_code || "Not provided"}
                                                 </Label>
                                             </div>
