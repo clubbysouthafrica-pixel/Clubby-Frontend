@@ -77,7 +77,7 @@ export default function SelectedMember({
                     </TabsList>
 
                     {selectedTab === "user-information" && (
-                        <DialogDescription className="mt-2 mb-4">
+                        <DialogDescription className="mt-2 mb-2">
                             This section contains information on the Clubby user.
                         </DialogDescription>
                     )}
