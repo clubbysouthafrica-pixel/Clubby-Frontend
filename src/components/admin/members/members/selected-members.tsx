@@ -59,7 +59,7 @@ export default function SelectedMember({
             }}
         >
             <DialogContent
-                className="!w-[80%] !h-[90%] !max-w-none !max-h-none p-5 gap-4 flex flex-col"
+                className="!w-[1000px] !h-[800px] !max-w-none !max-h-none p-5 gap-4 flex flex-col"
             >
                 <DialogHeader className="flex justify-between">
                     <div className="flex items-end space-x-2">
@@ -70,7 +70,7 @@ export default function SelectedMember({
                     </div>
                 </DialogHeader>
                 
-                <Tabs value={selectedTab} onValueChange={setSelectedTab} className="mt-0">
+                <Tabs value={selectedTab} onValueChange={setSelectedTab} className="mt-0 h-full pb-5">
                     <TabsList>
                         <TabsTrigger className="w-[180px]" value="user-information">User information</TabsTrigger>
                         <TabsTrigger className="w-[180px]" value="member-registration">Member registration</TabsTrigger>
@@ -82,7 +82,7 @@ export default function SelectedMember({
                         </DialogDescription>
                     )}
 
-                    <div className="overflow-hidden rounded-lg">
+                    <div className="overflow-hidden rounded-lg h-full">
                         {selectedTab === "user-information" && isLoading && !memberUser &&
                             <div className="flex justify-center items-center p-5 min-h-[400px]">
                                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

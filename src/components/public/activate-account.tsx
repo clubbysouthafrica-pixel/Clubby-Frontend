@@ -13,7 +13,8 @@ import { Input } from "@/components/ui/input.tsx";
 import { Alert, AlertDescription } from "@/components/ui/alert.tsx";
 import { AlertCircle } from "lucide-react";
 import { Eye, EyeOff } from "lucide-react";
-import { activateUser } from "@/services/auth_service.tsx";
+import { activateMemberUser } from "@/services/auth_service.tsx";
+import { activateAdminUser } from "@/services/admin/auth_service.tsx";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 
@@ -48,7 +49,12 @@ export function ActivateAccountForm({
         try {
             setLoading(true)
 
-            await activateUser(email as string, session as string, password as string)
+            if (localStorage.getItem("isAdminActivation") === "true") {
+                await activateAdminUser(email as string, session as string, password as string)
+            } else {
+                await activateMemberUser(email as string, session as string, password as string)
+            }
+
             toast.success("Successfully activated account.")
             navigate("/login")
 

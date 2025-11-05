@@ -18,7 +18,7 @@ export const forgotPassword = async (username: string) => {
     return response.data;
 }
 
-export const activateUser = async (email: string, session: string, password: string) => {
+export const activateMemberUser = async (email: string, session: string, password: string) => {
     const response = await api.post('/member/activateUser', {
         email,
         session,

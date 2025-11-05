@@ -43,6 +43,7 @@ export function LoginForm({
       const { onboarded, new_password_required }: { onboarded: boolean, new_password_required: boolean } = await login(isAdminLogin, email, password)
 
       if (new_password_required) {
+        localStorage.setItem("isAdminActivation", "true")
         navigate(`/activateAccount?email=${encodeURIComponent(email)}`)
       } else {
         if (isAdminLogin) {
@@ -59,8 +60,10 @@ export function LoginForm({
       }
 
       if (e instanceof AxiosError) {
+        if (e.response?.data?.message === "User is not confirmed.") navigate(`/otp?username=${encodeURIComponent(email)}`)
         setError(e.response?.data?.message)
       } else {
+        console.log('here2')
         setError((e as Error).message)
       }
     } finally {

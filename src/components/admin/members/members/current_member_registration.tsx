@@ -45,7 +45,7 @@ export function CurrentMemberRegistration({
   }
   
   return (
-    <div className="w-full space-y-2">
+    <div className="w-full space-y-2 h-full">
       {/* Registration Timeline Info */}
       <div className="flex flex-wrap items-center gap-4 text-sm bg-muted/30 p-2 rounded-lg border">
         {data?.registration_submitted_on && (
@@ -79,7 +79,7 @@ export function CurrentMemberRegistration({
       </div>
 
       {/* Registration Form Card */}
-      <Card className="w-full border shadow-sm pt-0 gap-2">
+      <Card className="w-full border shadow-sm pt-0 gap-2 h-full pb-0">
         <CardHeader className="border-b bg-muted/30 py-1 pb-1">
           <CardTitle className="text-l text-center pt-2">
             {clubName}
@@ -88,13 +88,13 @@ export function CurrentMemberRegistration({
             Member Registration Form
           </CardDescription>
         </CardHeader>
-        <CardContent className="py-2 px-4">
+        <CardContent className="py-2 px-4 h-full">
           <div key={data.pages[currentPageIndex].page_index} className="space-y-2">
             <h3 className="text-base font-semibold text-center border-b pb-2">
               {data.pages[currentPageIndex].page_header}
             </h3>
             
-            <div className="h-[320px] overflow-y-auto space-y-1 px-2">
+            <div className="h-full overflow-y-auto space-y-1 px-2">
               {data.pages[currentPageIndex].fields.map((field: { type: string; label: string; value: string; signature_type?: string; quantity?: number }) => {
 
               if (field.type === "STANDARD_SIGNATURE") {

@@ -104,7 +104,7 @@ export function OTPForm({
                                     </InputOTPGroup>
                                 </InputOTP>
                                 <div className="text-xs">
-                                    Please enter the one-time pin sent to your email.
+                                    Please be patient and enter the one-time pin sent to your email. The email can take up to 10 minutes to arrive depending on your email provider.
                                 </div>
                             </div>
 
