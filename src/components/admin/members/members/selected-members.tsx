@@ -104,10 +104,10 @@ export default function SelectedMember({
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="p-6">
-                                    <div className="h-[500px] overflow-y-auto px-2">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="h-[400px] overflow-y-auto px-2">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                             {/* Email */}
-                                            <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                            <div className="flex flex-col gap-1 p-2 bg-muted/20 rounded-lg">
                                                 <div className="flex items-center gap-2">
                                                     <Mail className="h-4 w-4 text-muted-foreground" />
                                                     <Label className="text-sm font-semibold text-muted-foreground">Email</Label>
@@ -118,7 +118,7 @@ export default function SelectedMember({
                                             </div>
 
                                             {/* Phone Number */}
-                                            <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                            <div className="flex flex-col gap-1 p-2 bg-muted/20 rounded-lg">
                                                 <div className="flex items-center gap-2">
                                                     <Phone className="h-4 w-4 text-muted-foreground" />
                                                     <Label className="text-sm font-semibold text-muted-foreground">Phone Number</Label>
@@ -129,7 +129,7 @@ export default function SelectedMember({
                                             </div>
 
                                             {/* Date of Birth */}
-                                            <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                            <div className="flex flex-col gap-1 p-2 bg-muted/20 rounded-lg">
                                                 <div className="flex items-center gap-2">
                                                     <Calendar className="h-4 w-4 text-muted-foreground" />
                                                     <Label className="text-sm font-semibold text-muted-foreground">Date of Birth</Label>
@@ -140,7 +140,7 @@ export default function SelectedMember({
                                             </div>
 
                                             {/* Address Line 1 */}
-                                            <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                            <div className="flex flex-col gap-1 p-2 bg-muted/20 rounded-lg">
                                                 <div className="flex items-center gap-2">
                                                     <MapPin className="h-4 w-4 text-muted-foreground" />
                                                     <Label className="text-sm font-semibold text-muted-foreground">Address Line 1</Label>
@@ -151,7 +151,7 @@ export default function SelectedMember({
                                             </div>
 
                                             {/* Address Line 2 */}
-                                            <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                            <div className="flex flex-col gap-1 p-2 bg-muted/20 rounded-lg">
                                                 <div className="flex items-center gap-2">
                                                     <MapPin className="h-4 w-4 text-muted-foreground" />
                                                     <Label className="text-sm font-semibold text-muted-foreground">Address Line 2</Label>
@@ -162,7 +162,7 @@ export default function SelectedMember({
                                             </div>
 
                                             {/* Suburb */}
-                                            <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                            <div className="flex flex-col gap-1 p-2 bg-muted/20 rounded-lg">
                                                 <div className="flex items-center gap-2">
                                                     <MapPin className="h-4 w-4 text-muted-foreground" />
                                                     <Label className="text-sm font-semibold text-muted-foreground">Suburb</Label>
@@ -173,7 +173,7 @@ export default function SelectedMember({
                                             </div>
 
                                             {/* City */}
-                                            <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                            <div className="flex flex-col gap-1 p-2 bg-muted/20 rounded-lg">
                                                 <div className="flex items-center gap-2">
                                                     <MapPin className="h-4 w-4 text-muted-foreground" />
                                                     <Label className="text-sm font-semibold text-muted-foreground">City</Label>
@@ -184,7 +184,7 @@ export default function SelectedMember({
                                             </div>
 
                                             {/* Postal Code */}
-                                            <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                            <div className="flex flex-col gap-1 p-2 bg-muted/20 rounded-lg">
                                                 <div className="flex items-center gap-2">
                                                     <MapPin className="h-4 w-4 text-muted-foreground" />
                                                     <Label className="text-sm font-semibold text-muted-foreground">Postal Code</Label>
