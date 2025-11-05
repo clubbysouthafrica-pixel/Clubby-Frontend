@@ -104,93 +104,95 @@ export default function SelectedMember({
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="p-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {/* Email */}
-                                        <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
-                                            <div className="flex items-center gap-2">
-                                                <Mail className="h-4 w-4 text-muted-foreground" />
-                                                <Label className="text-sm font-semibold text-muted-foreground">Email</Label>
+                                    <div className="h-[500px] overflow-y-auto px-2">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {/* Email */}
+                                            <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                                <div className="flex items-center gap-2">
+                                                    <Mail className="h-4 w-4 text-muted-foreground" />
+                                                    <Label className="text-sm font-semibold text-muted-foreground">Email</Label>
+                                                </div>
+                                                <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                    {memberUser.email || "Not provided"}
+                                                </Label>
                                             </div>
-                                            <Label className="text-base border-b-2 border-gray-300 pb-1">
-                                                {memberUser.email || "Not provided"}
-                                            </Label>
-                                        </div>
 
-                                        {/* Phone Number */}
-                                        <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
-                                            <div className="flex items-center gap-2">
-                                                <Phone className="h-4 w-4 text-muted-foreground" />
-                                                <Label className="text-sm font-semibold text-muted-foreground">Phone Number</Label>
+                                            {/* Phone Number */}
+                                            <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                                <div className="flex items-center gap-2">
+                                                    <Phone className="h-4 w-4 text-muted-foreground" />
+                                                    <Label className="text-sm font-semibold text-muted-foreground">Phone Number</Label>
+                                                </div>
+                                                <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                    {memberUser.phone_number || "Not provided"}
+                                                </Label>
                                             </div>
-                                            <Label className="text-base border-b-2 border-gray-300 pb-1">
-                                                {memberUser.phone_number || "Not provided"}
-                                            </Label>
-                                        </div>
 
-                                        {/* Date of Birth */}
-                                        <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
-                                            <div className="flex items-center gap-2">
-                                                <Calendar className="h-4 w-4 text-muted-foreground" />
-                                                <Label className="text-sm font-semibold text-muted-foreground">Date of Birth</Label>
+                                            {/* Date of Birth */}
+                                            <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                                <div className="flex items-center gap-2">
+                                                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                                                    <Label className="text-sm font-semibold text-muted-foreground">Date of Birth</Label>
+                                                </div>
+                                                <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                    {memberUser.date_of_birth || "Not provided"}
+                                                </Label>
                                             </div>
-                                            <Label className="text-base border-b-2 border-gray-300 pb-1">
-                                                {memberUser.date_of_birth || "Not provided"}
-                                            </Label>
-                                        </div>
 
-                                        {/* Address Line 1 */}
-                                        <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
-                                            <div className="flex items-center gap-2">
-                                                <MapPin className="h-4 w-4 text-muted-foreground" />
-                                                <Label className="text-sm font-semibold text-muted-foreground">Address Line 1</Label>
+                                            {/* Address Line 1 */}
+                                            <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                                <div className="flex items-center gap-2">
+                                                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                                                    <Label className="text-sm font-semibold text-muted-foreground">Address Line 1</Label>
+                                                </div>
+                                                <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                    {memberUser.address_line_1 || "Not provided"}
+                                                </Label>
                                             </div>
-                                            <Label className="text-base border-b-2 border-gray-300 pb-1">
-                                                {memberUser.address_line_1 || "Not provided"}
-                                            </Label>
-                                        </div>
 
-                                        {/* Address Line 2 */}
-                                        <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
-                                            <div className="flex items-center gap-2">
-                                                <MapPin className="h-4 w-4 text-muted-foreground" />
-                                                <Label className="text-sm font-semibold text-muted-foreground">Address Line 2</Label>
+                                            {/* Address Line 2 */}
+                                            <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                                <div className="flex items-center gap-2">
+                                                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                                                    <Label className="text-sm font-semibold text-muted-foreground">Address Line 2</Label>
+                                                </div>
+                                                <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                    {memberUser.address_line_2 || "Not provided"}
+                                                </Label>
                                             </div>
-                                            <Label className="text-base border-b-2 border-gray-300 pb-1">
-                                                {memberUser.address_line_2 || "Not provided"}
-                                            </Label>
-                                        </div>
 
-                                        {/* Suburb */}
-                                        <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
-                                            <div className="flex items-center gap-2">
-                                                <MapPin className="h-4 w-4 text-muted-foreground" />
-                                                <Label className="text-sm font-semibold text-muted-foreground">Suburb</Label>
+                                            {/* Suburb */}
+                                            <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                                <div className="flex items-center gap-2">
+                                                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                                                    <Label className="text-sm font-semibold text-muted-foreground">Suburb</Label>
+                                                </div>
+                                                <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                    {memberUser.suburb || "Not provided"}
+                                                </Label>
                                             </div>
-                                            <Label className="text-base border-b-2 border-gray-300 pb-1">
-                                                {memberUser.suburb || "Not provided"}
-                                            </Label>
-                                        </div>
 
-                                        {/* City */}
-                                        <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
-                                            <div className="flex items-center gap-2">
-                                                <MapPin className="h-4 w-4 text-muted-foreground" />
-                                                <Label className="text-sm font-semibold text-muted-foreground">City</Label>
+                                            {/* City */}
+                                            <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                                <div className="flex items-center gap-2">
+                                                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                                                    <Label className="text-sm font-semibold text-muted-foreground">City</Label>
+                                                </div>
+                                                <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                    {memberUser.city || "Not provided"}
+                                                </Label>
                                             </div>
-                                            <Label className="text-base border-b-2 border-gray-300 pb-1">
-                                                {memberUser.city || "Not provided"}
-                                            </Label>
-                                        </div>
 
-                                        {/* Postal Code */}
-                                        <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
-                                            <div className="flex items-center gap-2">
-                                                <MapPin className="h-4 w-4 text-muted-foreground" />
-                                                <Label className="text-sm font-semibold text-muted-foreground">Postal Code</Label>
+                                            {/* Postal Code */}
+                                            <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                                <div className="flex items-center gap-2">
+                                                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                                                    <Label className="text-sm font-semibold text-muted-foreground">Postal Code</Label>
+                                                </div>
+                                                <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                    {memberUser.postal_code || "Not provided"}
+                                                </Label>
                                             </div>
-                                            <Label className="text-base border-b-2 border-gray-300 pb-1">
-                                                {memberUser.postal_code || "Not provided"}
-                                            </Label>
                                         </div>
                                     </div>
                                 </CardContent>
