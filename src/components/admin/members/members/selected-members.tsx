@@ -81,11 +81,6 @@ export default function SelectedMember({
                             This section contains information on the Clubby user.
                         </DialogDescription>
                     )}
-                    {selectedTab === "member-registration" && (
-                        <DialogDescription className="mt-2 ml-4">
-                            This is the members current registration form.
-                        </DialogDescription>
-                    )}
 
                     <div className="overflow-hidden rounded-lg">
                         {selectedTab === "user-information" && isLoading && !memberUser &&
