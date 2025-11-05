@@ -272,12 +272,14 @@ export default function ViewClubPage() {
                             data.currency
                           )}
                         </h3>
-                        <Label
-                          className="underline cursor-pointer hover:text-red-600"
-                          onClick={handlePayHereClick}
-                        >
-                          (Pay here)
-                        </Label>
+                        {bankDetails?.outstanding_amount > 0 && (
+                          <Label
+                            className="underline cursor-pointer hover:text-red-600"
+                            onClick={handlePayHereClick}
+                          >
+                            (Pay here)
+                          </Label>
+                        )}
                       </div>
                     )}
                   </div>
@@ -372,47 +374,60 @@ export default function ViewClubPage() {
                         Payment Reference Number:{" "}
                         {bankDetails?.registration_payment_reference}
                       </p>
-                      </CardTitle>
-                      </Card>
-                      <div className="flex flex-col w-full gap-6">
-                        <Card
-                          id="payment-options-section"
-                          className={`transition-all duration-300 ${
-                            highlightPayment ? "ring-2 ring-red-300 shadow-lg" : ""
+                    </CardTitle>
+                  </Card>
+                  <div className="flex flex-col w-full gap-6">
+                    <Card
+                      id="payment-options-section"
+                      className={`transition-all duration-300 ${
+                        highlightPayment ? "ring-2 ring-red-300 shadow-lg" : ""
+                      }`}
+                    >
+                      <CardHeader className="px-6 pb-2">
+                        <CardTitle>Payment Options</CardTitle>
+                        <CardDescription>
+                          Choose your preferred payment method to settle your
+                          outstanding balance. The club supports the following
+                          payment options:
+                        </CardDescription>
+                      </CardHeader>
+                      <Tabs defaultValue="eft" className="px-6 pb-6">
+                        <TabsList
+                          className={`grid w-full ${
+                            data?.payfast_enabled && data?.club_member_exists
+                              ? "grid-cols-2"
+                              : "grid-cols-1"
                           }`}
                         >
-                          <CardHeader className="px-6 pb-2">
-                            <CardTitle>Payment Options</CardTitle>
-                            <CardDescription>
-                              Choose your preferred payment method to settle your outstanding balance. The club supports the following payment options:
-                            </CardDescription>
-                          </CardHeader>
-                          <Tabs defaultValue="eft" className="px-6 pb-6">
-                            <TabsList className={`grid w-full ${data?.payfast_enabled && data?.club_member_exists ? "grid-cols-2" : "grid-cols-1"}`}>
-                              <TabsTrigger value="eft">Bank Transfer (EFT)</TabsTrigger>
-                              {data?.payfast_enabled && data?.club_member_exists && (
-                                <TabsTrigger value="online">
-                                  Online Payment
-                                </TabsTrigger>
-                              )}
-                            </TabsList>
-                            <TabsContent value="eft" className="pt-2">
-                              <div className="px-6 py-4 space-y-6">
-                                <div className="text-center space-y-2">
-                                  <h3 className="text-lg font-semibold">
-                                    Bank Transfer (EFT)
-                                  </h3>
-                                  <CardDescription>
-                                    Transfer funds directly to the club's bank account using the details below.
-                                    <br />
-                                    <strong className="text-foreground">
-                                      Important:
-                                    </strong>{" "}
-                                    Always include your payment reference number to ensure proper allocation of your payment.
-                                  </CardDescription>
-                                </div>
+                          <TabsTrigger value="eft">
+                            Bank Transfer (EFT)
+                          </TabsTrigger>
+                          {data?.payfast_enabled &&
+                            data?.club_member_exists && (
+                              <TabsTrigger value="online">
+                                Online Payment
+                              </TabsTrigger>
+                            )}
+                        </TabsList>
+                        <TabsContent value="eft" className="pt-2">
+                          <div className="px-6 py-4 space-y-6">
+                            <div className="text-center space-y-2">
+                              <h3 className="text-lg font-semibold">
+                                Bank Transfer (EFT)
+                              </h3>
+                              <CardDescription>
+                                Transfer funds directly to the club's bank
+                                account using the details below.
+                                <br />
+                                <strong className="text-foreground">
+                                  Important:
+                                </strong>{" "}
+                                Always include your payment reference number to
+                                ensure proper allocation of your payment.
+                              </CardDescription>
+                            </div>
 
-                                {bankDetailsLoading && (
+                            {bankDetailsLoading && (
                               <div className="flex justify-center py-8">
                                 <Loader2 className="h-8 w-8 animate-spin" />
                               </div>
