@@ -47,11 +47,11 @@ export function CurrentMemberRegistration({
   return (
     <div className="w-full space-y-6">
       {/* Registration Timeline Info */}
-      <div className="flex flex-wrap items-center gap-4 text-sm bg-muted/30 p-4 rounded-lg border">
+      <div className="flex flex-wrap items-center gap-4 text-sm bg-muted/30 p-2 rounded-lg border">
         {data?.registration_submitted_on && (
           <div className="flex items-center gap-1">
-            <span className="text-muted-foreground">Submitted:</span>
-            <strong>{formatEpoch(data.registration_submitted_on)}</strong>
+            <span className="text-muted-foreground text-xs">Submitted:</span>
+            <strong className="text-xs">{formatEpoch(data.registration_submitted_on)}</strong>
           </div>
         )}
 
@@ -61,8 +61,8 @@ export function CurrentMemberRegistration({
 
         {data?.registered_on && (
           <div className="flex items-center gap-1">
-            <span className="text-muted-foreground">Registered:</span>
-            <strong className="text-green-600">{formatEpoch(data.registered_on)}</strong>
+            <span className="text-muted-foreground text-xs">Registered:</span>
+            <strong className="text-green-600 text-xs">{formatEpoch(data.registered_on)}</strong>
           </div>
         )}
 
@@ -72,8 +72,8 @@ export function CurrentMemberRegistration({
 
         {data?.deregistered_on && (
           <div className="flex items-center gap-1">
-            <span className="text-muted-foreground">Deregistered:</span>
-            <strong className="text-red-600">{formatEpoch(data.deregistered_on)}</strong>
+            <span className="text-muted-foreground text-xs">Deregistered:</span>
+            <strong className="text-red-600 text-xs">{formatEpoch(data.deregistered_on)}</strong>
           </div>
         )}
       </div>
