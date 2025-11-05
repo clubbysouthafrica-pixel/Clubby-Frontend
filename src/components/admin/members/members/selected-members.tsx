@@ -96,14 +96,14 @@ export default function SelectedMember({
                         {selectedTab === "user-information" && !isLoading && memberUser &&
                             <Card className="border shadow-sm pt-0">
                                 <CardHeader className="border-b bg-muted/30">
-                                    <CardTitle className="text-xl text-center pt-5">
+                                    <CardTitle className="text-l text-center pt-5">
                                         User Information
                                     </CardTitle>
                                     <CardDescription className="text-center">
                                         Personal details and contact information
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent className="p-6">
+                                <CardContent className="p-4">
                                     <div className="h-[400px] overflow-y-auto px-2">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                             {/* Email */}
