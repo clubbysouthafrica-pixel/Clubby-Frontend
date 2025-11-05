@@ -388,7 +388,7 @@ export default function ViewClubPage() {
                             </CardDescription>
                           </CardHeader>
                           <Tabs defaultValue="eft" className="px-6 pb-6">
-                            <TabsList className="grid w-full grid-cols-2">
+                            <TabsList className={`grid w-full ${data?.payfast_enabled && data?.club_member_exists ? "grid-cols-2" : "grid-cols-1"}`}>
                               <TabsTrigger value="eft">Bank Transfer (EFT)</TabsTrigger>
                               {data?.payfast_enabled && data?.club_member_exists && (
                                 <TabsTrigger value="online">
