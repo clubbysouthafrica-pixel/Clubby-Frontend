@@ -79,8 +79,8 @@ export function CurrentMemberRegistration({
       </div>
 
       {/* Registration Form Card */}
-      <Card className="w-full border shadow-sm pt-0">
-        <CardHeader className="border-b bg-muted/30 py-1">
+      <Card className="w-full border shadow-sm pt-0 gap-2">
+        <CardHeader className="border-b bg-muted/30 py-1 pb-1">
           <CardTitle className="text-l text-center pt-2">
             {clubName}
           </CardTitle>
@@ -94,7 +94,7 @@ export function CurrentMemberRegistration({
               {data.pages[currentPageIndex].page_header}
             </h3>
             
-            <div className="h-[400px] overflow-y-auto space-y-1 px-2">
+            <div className="h-[350px] overflow-y-auto space-y-1 px-2">
               {data.pages[currentPageIndex].fields.map((field: { type: string; label: string; value: string; signature_type?: string; quantity?: number }) => {
 
               if (field.type === "STANDARD_SIGNATURE") {
