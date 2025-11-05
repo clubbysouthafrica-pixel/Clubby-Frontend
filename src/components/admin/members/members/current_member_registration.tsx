@@ -80,21 +80,21 @@ export function CurrentMemberRegistration({
 
       {/* Registration Form Card */}
       <Card className="w-full border shadow-sm pt-0">
-        <CardHeader className="border-b bg-muted/30 py-3">
-          <CardTitle className="text-lg text-center pt-2">
+        <CardHeader className="border-b bg-muted/30 py-1">
+          <CardTitle className="text-l text-center pt-2">
             {clubName}
           </CardTitle>
           <CardDescription className="text-center text-xs">
             Member Registration Form
           </CardDescription>
         </CardHeader>
-        <CardContent className="py-4 px-6">
-          <div key={data.pages[currentPageIndex].page_index} className="space-y-4">
+        <CardContent className="py-2 px-4">
+          <div key={data.pages[currentPageIndex].page_index} className="space-y-2">
             <h3 className="text-base font-semibold text-center border-b pb-2">
               {data.pages[currentPageIndex].page_header}
             </h3>
             
-            <div className="h-[400px] overflow-y-auto space-y-3 px-2">
+            <div className="h-[400px] overflow-y-auto space-y-1 px-2">
               {data.pages[currentPageIndex].fields.map((field: { type: string; label: string; value: string; signature_type?: string; quantity?: number }) => {
 
               if (field.type === "STANDARD_SIGNATURE") {
