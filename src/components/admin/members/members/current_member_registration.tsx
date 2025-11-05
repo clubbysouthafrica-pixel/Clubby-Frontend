@@ -113,7 +113,7 @@ export function CurrentMemberRegistration({
                   return (
                     <div key={field.label} className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg">
                       <Label className="text-xs font-semibold text-muted-foreground">{field.label}</Label>
-                      <Label className="text-sm font-[cursive] border-b-2 border-gray-400 pb-1">
+                      <Label className="text-xs font-[cursive] border-b-2 border-gray-400 pb-1">
                         {field.value}
                       </Label>
                     </div>
@@ -125,7 +125,7 @@ export function CurrentMemberRegistration({
                 return (
                   <div key={field.label} className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg">
                     <Label className="text-xs font-semibold text-muted-foreground">{field.label}</Label>
-                    <Label className="text-sm border-b-2 border-gray-300 pb-1">
+                    <Label className="text-xs border-b-2 border-gray-300 pb-1">
                       {field.value}
                     </Label>
                   </div>
@@ -138,7 +138,7 @@ export function CurrentMemberRegistration({
                     <Label className="text-xs font-semibold text-blue-700">
                       {field.label} {field.quantity ? `(x${field.quantity})` : null}
                     </Label>
-                    <Label className="text-sm font-medium text-blue-900 border-b-2 border-blue-300 pb-1">
+                    <Label className="text-xs font-medium text-blue-900 border-b-2 border-blue-300 pb-1">
                       {field.value}
                     </Label>
                   </div>
@@ -156,7 +156,7 @@ export function CurrentMemberRegistration({
                 return (
                   <div
                     key={field.label}
-                    className="prose prose-sm max-w-none text-gray-700 p-3 bg-muted/10 rounded-lg text-sm [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5"
+                    className="prose prose-sm max-w-none text-gray-700 p-3 bg-muted/10 rounded-lg text-xs [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5"
                     dangerouslySetInnerHTML={{ __html: cleaned }}
                   />
                 );
