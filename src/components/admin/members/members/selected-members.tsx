@@ -110,9 +110,9 @@ export default function SelectedMember({
                                             <div className="flex flex-col gap-1 p-2 bg-muted/20 rounded-lg">
                                                 <div className="flex items-center gap-2">
                                                     <Mail className="h-4 w-4 text-muted-foreground" />
-                                                    <Label className="text-sm font-semibold text-muted-foreground">Email</Label>
+                                                    <Label className="text-xs font-semibold text-muted-foreground">Email</Label>
                                                 </div>
-                                                <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                <Label className="text-base text-xs border-b-2 border-gray-300 pb-1">
                                                     {memberUser.email || "Not provided"}
                                                 </Label>
                                             </div>
@@ -121,7 +121,7 @@ export default function SelectedMember({
                                             <div className="flex flex-col gap-1 p-2 bg-muted/20 rounded-lg">
                                                 <div className="flex items-center gap-2">
                                                     <Phone className="h-4 w-4 text-muted-foreground" />
-                                                    <Label className="text-sm font-semibold text-muted-foreground">Phone Number</Label>
+                                                    <Label className="text-xs font-semibold text-muted-foreground">Phone Number</Label>
                                                 </div>
                                                 <Label className="text-base border-b-2 border-gray-300 pb-1">
                                                     {memberUser.phone_number || "Not provided"}
@@ -132,7 +132,7 @@ export default function SelectedMember({
                                             <div className="flex flex-col gap-1 p-2 bg-muted/20 rounded-lg">
                                                 <div className="flex items-center gap-2">
                                                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                                                    <Label className="text-sm font-semibold text-muted-foreground">Date of Birth</Label>
+                                                    <Label className="text-xs font-semibold text-muted-foreground">Date of Birth</Label>
                                                 </div>
                                                 <Label className="text-base border-b-2 border-gray-300 pb-1">
                                                     {memberUser.date_of_birth || "Not provided"}
@@ -143,7 +143,7 @@ export default function SelectedMember({
                                             <div className="flex flex-col gap-1 p-2 bg-muted/20 rounded-lg">
                                                 <div className="flex items-center gap-2">
                                                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                                                    <Label className="text-sm font-semibold text-muted-foreground">Address Line 1</Label>
+                                                    <Label className="text-xs font-semibold text-muted-foreground">Address Line 1</Label>
                                                 </div>
                                                 <Label className="text-base border-b-2 border-gray-300 pb-1">
                                                     {memberUser.address_line_1 || "Not provided"}
@@ -154,7 +154,7 @@ export default function SelectedMember({
                                             <div className="flex flex-col gap-1 p-2 bg-muted/20 rounded-lg">
                                                 <div className="flex items-center gap-2">
                                                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                                                    <Label className="text-sm font-semibold text-muted-foreground">Address Line 2</Label>
+                                                    <Label className="text-xs font-semibold text-muted-foreground">Address Line 2</Label>
                                                 </div>
                                                 <Label className="text-base border-b-2 border-gray-300 pb-1">
                                                     {memberUser.address_line_2 || "Not provided"}
@@ -165,7 +165,7 @@ export default function SelectedMember({
                                             <div className="flex flex-col gap-1 p-2 bg-muted/20 rounded-lg">
                                                 <div className="flex items-center gap-2">
                                                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                                                    <Label className="text-sm font-semibold text-muted-foreground">Suburb</Label>
+                                                    <Label className="text-xs font-semibold text-muted-foreground">Suburb</Label>
                                                 </div>
                                                 <Label className="text-base border-b-2 border-gray-300 pb-1">
                                                     {memberUser.suburb || "Not provided"}
@@ -176,7 +176,7 @@ export default function SelectedMember({
                                             <div className="flex flex-col gap-1 p-2 bg-muted/20 rounded-lg">
                                                 <div className="flex items-center gap-2">
                                                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                                                    <Label className="text-sm font-semibold text-muted-foreground">City</Label>
+                                                    <Label className="text-xs font-semibold text-muted-foreground">City</Label>
                                                 </div>
                                                 <Label className="text-base border-b-2 border-gray-300 pb-1">
                                                     {memberUser.city || "Not provided"}
@@ -187,7 +187,7 @@ export default function SelectedMember({
                                             <div className="flex flex-col gap-1 p-2 bg-muted/20 rounded-lg">
                                                 <div className="flex items-center gap-2">
                                                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                                                    <Label className="text-sm font-semibold text-muted-foreground">Postal Code</Label>
+                                                    <Label className="text-xs font-semibold text-muted-foreground">Postal Code</Label>
                                                 </div>
                                                 <Label className="text-base border-b-2 border-gray-300 pb-1">
                                                     {memberUser.postal_code || "Not provided"}
