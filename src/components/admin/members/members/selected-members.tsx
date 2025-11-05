@@ -8,16 +8,14 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-import { User } from "lucide-react";
-// import { formatAmount } from "@/data/currencies";
-// import { Label } from "@/components/ui/label";
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { User, Mail, Phone, MapPin, Calendar } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import { CurrentMemberRegistration } from "./current_member_registration"
 import { useFetchMemberUser } from "@/queries/admin/member_user";
 import { Loader2 } from "lucide-react";
@@ -28,19 +26,6 @@ interface ImageProps {
     currency: string;
     clubAccountId: string;
     clubName: string;
-}
-
-interface MemberUser { phone_number: string; date_of_birth: string; email: string; address_line_1: string; address_line_2: string; suburb: string; city: string; postal_code: string; }
-
-const MEMBER_USER_MAPPING = {
-    "phone_number": "Phone Number",
-    "date_of_birth": "Date of Birth",
-    "email": "Email",
-    "address_line_1": "Address Line 1",
-    "address_line_2": "Address Line 2",
-    "suburb": "Suburb",
-    "city": "City",
-    "postal_code": "Postal Code"
 }
 
 export default function SelectedMember({
@@ -104,40 +89,112 @@ export default function SelectedMember({
 
                     <div className="overflow-hidden rounded-lg">
                         {selectedTab === "user-information" && isLoading && !memberUser &&
-                            <div className="p-5 min-h-screen">
-                                <Loader2 className="h-8 w-8 animate-spin" />
+                            <div className="flex justify-center items-center p-5 min-h-[400px]">
+                                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                             </div>
                         }
                         {selectedTab === "user-information" && !isLoading && memberUser &&
-                            <Table className="border">
-                                <TableHeader className="bg-muted sticky top-0 z-10">
-                                    <TableRow>
-                                        <TableHead className="text-center px-2 py-2 w-1/2">
-                                            Field
-                                        </TableHead>
-                                        <TableHead className="text-center px-2 py-2 w-1/2">
-                                            Value
-                                        </TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {
-                                        Object.keys(memberUser as MemberUser).map((key) => {
-                                            const typedKey = key as keyof MemberUser; // <-- type assertion
-                                            return (
-                                                <TableRow key={typedKey}>
-                                                    <TableCell className="text-center px-2 py-2">
-                                                        {MEMBER_USER_MAPPING[typedKey]}
-                                                    </TableCell>
-                                                    <TableCell className="text-center px-2 py-2">
-                                                        {memberUser[typedKey]}
-                                                    </TableCell>
-                                                </TableRow>
-                                            );
-                                        })
-                                    }
-                                </TableBody>
-                            </Table>
+                            <Card className="border shadow-sm pt-0">
+                                <CardHeader className="border-b bg-muted/30">
+                                    <CardTitle className="text-xl text-center pt-5">
+                                        User Information
+                                    </CardTitle>
+                                    <CardDescription className="text-center">
+                                        Personal details and contact information
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="p-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Email */}
+                                        <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                            <div className="flex items-center gap-2">
+                                                <Mail className="h-4 w-4 text-muted-foreground" />
+                                                <Label className="text-sm font-semibold text-muted-foreground">Email</Label>
+                                            </div>
+                                            <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                {memberUser.email || "Not provided"}
+                                            </Label>
+                                        </div>
+
+                                        {/* Phone Number */}
+                                        <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                            <div className="flex items-center gap-2">
+                                                <Phone className="h-4 w-4 text-muted-foreground" />
+                                                <Label className="text-sm font-semibold text-muted-foreground">Phone Number</Label>
+                                            </div>
+                                            <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                {memberUser.phone_number || "Not provided"}
+                                            </Label>
+                                        </div>
+
+                                        {/* Date of Birth */}
+                                        <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                            <div className="flex items-center gap-2">
+                                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                                <Label className="text-sm font-semibold text-muted-foreground">Date of Birth</Label>
+                                            </div>
+                                            <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                {memberUser.date_of_birth || "Not provided"}
+                                            </Label>
+                                        </div>
+
+                                        {/* Address Line 1 */}
+                                        <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                            <div className="flex items-center gap-2">
+                                                <MapPin className="h-4 w-4 text-muted-foreground" />
+                                                <Label className="text-sm font-semibold text-muted-foreground">Address Line 1</Label>
+                                            </div>
+                                            <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                {memberUser.address_line_1 || "Not provided"}
+                                            </Label>
+                                        </div>
+
+                                        {/* Address Line 2 */}
+                                        <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                            <div className="flex items-center gap-2">
+                                                <MapPin className="h-4 w-4 text-muted-foreground" />
+                                                <Label className="text-sm font-semibold text-muted-foreground">Address Line 2</Label>
+                                            </div>
+                                            <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                {memberUser.address_line_2 || "Not provided"}
+                                            </Label>
+                                        </div>
+
+                                        {/* Suburb */}
+                                        <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                            <div className="flex items-center gap-2">
+                                                <MapPin className="h-4 w-4 text-muted-foreground" />
+                                                <Label className="text-sm font-semibold text-muted-foreground">Suburb</Label>
+                                            </div>
+                                            <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                {memberUser.suburb || "Not provided"}
+                                            </Label>
+                                        </div>
+
+                                        {/* City */}
+                                        <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                            <div className="flex items-center gap-2">
+                                                <MapPin className="h-4 w-4 text-muted-foreground" />
+                                                <Label className="text-sm font-semibold text-muted-foreground">City</Label>
+                                            </div>
+                                            <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                {memberUser.city || "Not provided"}
+                                            </Label>
+                                        </div>
+
+                                        {/* Postal Code */}
+                                        <div className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                                            <div className="flex items-center gap-2">
+                                                <MapPin className="h-4 w-4 text-muted-foreground" />
+                                                <Label className="text-sm font-semibold text-muted-foreground">Postal Code</Label>
+                                            </div>
+                                            <Label className="text-base border-b-2 border-gray-300 pb-1">
+                                                {memberUser.postal_code || "Not provided"}
+                                            </Label>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
                         }
                         {selectedTab === "member-registration" &&
                             <CurrentMemberRegistration clubName={clubName} userId={selectedMember.user_id} clubAccountId={clubAccountId} currency={currency} />

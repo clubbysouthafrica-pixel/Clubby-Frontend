@@ -287,6 +287,7 @@ export function ClubRegisterForm() {
         onSuccess: () => {
           navigate(`/clubs/${clubId}`);
           setIsRegistering(false);
+          window.location.reload();
         },
         onError: () => toast(registerError?.message ?? "Registration failed"),
       });

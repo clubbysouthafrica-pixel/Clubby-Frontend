@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
+  CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { useState } from "react";
@@ -36,67 +38,82 @@ export function CurrentMemberRegistration({
 
   if (isLoading || !data) {
     return (
-      <div className="p-5 min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex justify-center items-center p-5 min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
-    )
+    );
   }
+  
   return (
-    <Card className="w-full border-0 shadow-none py-1">
-      <CardContent className="py-0 px-4 space-y-4">
-        <div className="flex items-center gap-2">
-          {data?.registration_submitted_on && (
-            <h1 className="flex items-center">
-              Registration Submitted On: <strong className="ml-1">{formatEpoch(data.registration_submitted_on)}</strong>
-            </h1>
-          )}
+    <div className="w-full space-y-6">
+      {/* Registration Timeline Info */}
+      <div className="flex flex-wrap items-center gap-4 text-sm bg-muted/30 p-4 rounded-lg border">
+        {data?.registration_submitted_on && (
+          <div className="flex items-center gap-1">
+            <span className="text-muted-foreground">Submitted:</span>
+            <strong>{formatEpoch(data.registration_submitted_on)}</strong>
+          </div>
+        )}
 
-          {data?.registration_submitted_on && data?.registered_on && (
-            <span className="mx-2 text-gray-400">|</span>
-          )}
+        {data?.registration_submitted_on && data?.registered_on && (
+          <span className="text-gray-300">|</span>
+        )}
 
-          {data?.registered_on && (
-            <h1 className="flex items-center">
-              Registered On: <strong className="ml-1">{formatEpoch(data.registered_on)}</strong>
-            </h1>
-          )}
+        {data?.registered_on && (
+          <div className="flex items-center gap-1">
+            <span className="text-muted-foreground">Registered:</span>
+            <strong className="text-green-600">{formatEpoch(data.registered_on)}</strong>
+          </div>
+        )}
 
-          {(data?.registered_on && data?.deregistered_on) || (data?.registration_submitted_on && data?.deregistered_on) ? (
-            <span className="mx-2 text-gray-400">|</span>
-          ) : null}
+        {(data?.registered_on && data?.deregistered_on) || (data?.registration_submitted_on && data?.deregistered_on) ? (
+          <span className="text-gray-300">|</span>
+        ) : null}
 
-          {data?.deregistered_on && (
-            <h1 className="flex items-center">
-              Deregistered On: <strong className="ml-1">{formatEpoch(data.deregistered_on)}</strong>
-            </h1>
-          )}
-        </div>
+        {data?.deregistered_on && (
+          <div className="flex items-center gap-1">
+            <span className="text-muted-foreground">Deregistered:</span>
+            <strong className="text-red-600">{formatEpoch(data.deregistered_on)}</strong>
+          </div>
+        )}
+      </div>
 
-        <div key={data.pages[currentPageIndex].page_index} className="space-y-5 shadow-md border border-gray-200 rounded-lg bg-gray-50 p-5">
-          <CardTitle className="text-xl text-center underline">
+      {/* Registration Form Card */}
+      <Card className="w-full border shadow-sm pt-0">
+        <CardHeader className="border-b bg-muted/30">
+          <CardTitle className="text-2xl text-center pt-5">
             {clubName}
           </CardTitle>
-          <h3 className="text-[20px] font-semibold text-center">{data.pages[currentPageIndex].page_header}</h3>
-          <div className="h-[35vh] overflow-y-auto p-4 space-y-6">
-            {data.pages[currentPageIndex].fields.map((field: any) => {
+          <CardDescription className="text-center">
+            Member Registration Form
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="py-6 px-8">
+          <div key={data.pages[currentPageIndex].page_index} className="space-y-6">
+            <h3 className="text-xl font-semibold text-center border-b pb-3">
+              {data.pages[currentPageIndex].page_header}
+            </h3>
+            
+            <div className="max-h-[60vh] overflow-y-auto space-y-6 px-2">
+              {data.pages[currentPageIndex].fields.map((field: { type: string; label: string; value: string; signature_type?: string; quantity?: number }) => {
 
               if (field.type === "STANDARD_SIGNATURE") {
                 if (field.signature_type === "signature") {
                   return (
-                    <div key={field.label} className="flex flex-col gap-2">
-                      <Label className="text-[12px] font-semibold">{field.label}:</Label>
+                    <div key={field.label} className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                      <Label className="text-sm font-semibold text-muted-foreground">{field.label}</Label>
                       <img
                         src={field.value}
                         alt="User Signature"
-                        className="border-b-2 border-gray-400 w-50"
+                        className="border-b-2 border-gray-400 max-w-xs"
                       />
                     </div>
                   )
                 } else {
                   return (
-                    <div key={field.label} className="flex flex-col gap-2">
-                      <Label className="text-[12px] font-semibold">{field.label}:</Label>
-                      <Label className="text-[15px] font-[cursive] border-b-2 border-gray-400 pb-1 w-200">
+                    <div key={field.label} className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                      <Label className="text-sm font-semibold text-muted-foreground">{field.label}</Label>
+                      <Label className="text-base font-[cursive] border-b-2 border-gray-400 pb-1">
                         {field.value}
                       </Label>
                     </div>
@@ -106,9 +123,9 @@ export function CurrentMemberRegistration({
 
               if (field.type === "STANDARD_OTHER") {
                 return (
-                  <div key={field.label} className="flex flex-col gap-2">
-                    <Label className="text-[12px] font-semibold">{field.label}:</Label>
-                    <Label className="text-[12px] border-b-2 border-gray-300 pb-1 w-200">
+                  <div key={field.label} className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                    <Label className="text-sm font-semibold text-muted-foreground">{field.label}</Label>
+                    <Label className="text-base border-b-2 border-gray-300 pb-1">
                       {field.value}
                     </Label>
                   </div>
@@ -117,10 +134,12 @@ export function CurrentMemberRegistration({
 
               if (field.type === "BILLING") {
                 return (
-                  <div key={field.label} className="flex flex-col gap-2">
-                    <Label className="text-[12px] font-semibold">{field.label}:</Label>
-                    <Label className="text-[12px] border-b-2 border-gray-300 pb-1 w-200">
-                      {field.value} {field.quantity ? `(x${field.quantity})` : null}
+                  <div key={field.label} className="flex flex-col gap-2 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <Label className="text-sm font-semibold text-blue-700">
+                      {field.label} {field.quantity ? `(x${field.quantity})` : null}
+                    </Label>
+                    <Label className="text-base font-medium text-blue-900 border-b-2 border-blue-300 pb-1">
+                      {field.value}
                     </Label>
                   </div>
                 );
@@ -137,7 +156,7 @@ export function CurrentMemberRegistration({
                 return (
                   <div
                     key={field.label}
-                    className="prose text-gray-700 [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5"
+                    className="prose prose-sm max-w-none text-gray-700 p-4 bg-muted/10 rounded-lg [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5"
                     dangerouslySetInnerHTML={{ __html: cleaned }}
                   />
                 );
@@ -145,9 +164,9 @@ export function CurrentMemberRegistration({
 
               if (field.type === "DNE") {
                 return (
-                  <div key={field.label} className="flex flex-col gap-2">
-                    <Label className="text-[12px] font-semibold">{field.label}:</Label>
-                    <Label className="text-[12px] border-b-2 border-gray-300 pb-1 w-200 text-gray-500">
+                  <div key={field.label} className="flex flex-col gap-2 p-4 bg-gray-50 rounded-lg border border-dashed">
+                    <Label className="text-sm font-semibold text-muted-foreground">{field.label}</Label>
+                    <Label className="text-sm italic text-gray-500">
                       Not filled in by member.
                     </Label>
                   </div>
@@ -156,35 +175,43 @@ export function CurrentMemberRegistration({
 
             })}
           </div>
-        </div>
-        {data.pages.length > 1 && (
-          <div className="flex justify-between items-center mt-6 w-full">
-            {currentPageIndex > 0 ? (
-              <Button
-                type="button"
-                className="w-[100px]"
-                onClick={() => setCurrentPageIndex((i) => i - 1)}
-              >
-                Previous
-              </Button>
-            ) : (
-              <div />
-            )}
 
-            {currentPageIndex < data.pages.length - 1 ? (
-              <Button
-                type="button"
-                className="w-[100px]"
-                onClick={() => setCurrentPageIndex((i) => i + 1)}
-              >
-                Next
-              </Button>
-            ) : (
-              <div />
-            )}
-          </div>
-        )}
+          {/* Pagination Controls */}
+          {data.pages.length > 1 && (
+            <div className="flex justify-between items-center pt-4 border-t">
+              {currentPageIndex > 0 ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-[100px]"
+                  onClick={() => setCurrentPageIndex((i) => i - 1)}
+                >
+                  Previous
+                </Button>
+              ) : (
+                <div />
+              )}
+
+              <div className="text-sm text-muted-foreground">
+                Page {currentPageIndex + 1} of {data.pages.length}
+              </div>
+
+              {currentPageIndex < data.pages.length - 1 ? (
+                <Button
+                  type="button"
+                  className="w-[100px]"
+                  onClick={() => setCurrentPageIndex((i) => i + 1)}
+                >
+                  Next
+                </Button>
+              ) : (
+                <div />
+              )}
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
+  </div>
   );
 }

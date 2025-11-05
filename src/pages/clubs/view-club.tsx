@@ -174,8 +174,6 @@ export default function ViewClubPage() {
     );
   }
 
-  console.log("club data:", data);
-
   return (
     <Pager>
       {isError && <p> Something went wrong... </p>}
@@ -374,51 +372,47 @@ export default function ViewClubPage() {
                         Payment Reference Number:{" "}
                         {bankDetails?.registration_payment_reference}
                       </p>
-                    </CardTitle>
-                  </Card>
-                  <div className="flex flex-col w-full gap-6">
-                    <Card
-                      id="payment-options-section"
-                      className={`transition-all duration-300 ${
-                        highlightPayment ? "ring-2 ring-red-300 shadow-lg" : ""
-                      }`}
-                    >
-                      <CardHeader className="px-6 pb-2">
-                        <CardTitle>Payment Options</CardTitle>
-                        <CardDescription>
-                          Choose how you’d like to pay: make a secure online
-                          payment via PayFast or pay by EFT using the club’s
-                          banking details.
-                        </CardDescription>
-                      </CardHeader>
-                      <Tabs defaultValue="eft" className="px-6 pb-6">
-                        <TabsList className="grid w-full grid-cols-2">
-                          <TabsTrigger value="eft">EFT</TabsTrigger>
-                          {data?.payfast_enabled && data?.club_member_exists && (
-                            <TabsTrigger value="online">
-                              Online Payment (PayFast)
-                            </TabsTrigger>
-                          )}
-                        </TabsList>
-                        <TabsContent value="eft" className="pt-2">
-                          <div className="px-6 py-4 space-y-6">
-                            <div className="text-center space-y-2">
-                              <h3 className="text-lg font-semibold">
-                                Bank Transfer (EFT)
-                              </h3>
-                              <CardDescription>
-                                Make payments through electronic funds transfer
-                                to the banking details below.
-                                <br />
-                                Please use your{" "}
-                                <strong className="text-foreground">
-                                  payment reference number
-                                </strong>{" "}
-                                when making the payment.
-                              </CardDescription>
-                            </div>
+                      </CardTitle>
+                      </Card>
+                      <div className="flex flex-col w-full gap-6">
+                        <Card
+                          id="payment-options-section"
+                          className={`transition-all duration-300 ${
+                            highlightPayment ? "ring-2 ring-red-300 shadow-lg" : ""
+                          }`}
+                        >
+                          <CardHeader className="px-6 pb-2">
+                            <CardTitle>Payment Options</CardTitle>
+                            <CardDescription>
+                              Choose your preferred payment method to settle your outstanding balance. The club supports the following payment options:
+                            </CardDescription>
+                          </CardHeader>
+                          <Tabs defaultValue="eft" className="px-6 pb-6">
+                            <TabsList className="grid w-full grid-cols-2">
+                              <TabsTrigger value="eft">Bank Transfer (EFT)</TabsTrigger>
+                              {data?.payfast_enabled && data?.club_member_exists && (
+                                <TabsTrigger value="online">
+                                  Online Payment
+                                </TabsTrigger>
+                              )}
+                            </TabsList>
+                            <TabsContent value="eft" className="pt-2">
+                              <div className="px-6 py-4 space-y-6">
+                                <div className="text-center space-y-2">
+                                  <h3 className="text-lg font-semibold">
+                                    Bank Transfer (EFT)
+                                  </h3>
+                                  <CardDescription>
+                                    Transfer funds directly to the club's bank account using the details below.
+                                    <br />
+                                    <strong className="text-foreground">
+                                      Important:
+                                    </strong>{" "}
+                                    Always include your payment reference number to ensure proper allocation of your payment.
+                                  </CardDescription>
+                                </div>
 
-                            {bankDetailsLoading && (
+                                {bankDetailsLoading && (
                               <div className="flex justify-center py-8">
                                 <Loader2 className="h-8 w-8 animate-spin" />
                               </div>
@@ -626,8 +620,8 @@ export default function ViewClubPage() {
                       </Tabs>
                     </Card>
                     {!isUserTransactionsLoading && transactions && (
-                      <Card>
-                        <CardHeader className="px-6 pb-2">
+                      <Card className="border-none shadow-none gap-2">
+                        <CardHeader className="px-6">
                           <CardTitle>Transactions</CardTitle>
                           <CardDescription>
                             View your transactions with this club.

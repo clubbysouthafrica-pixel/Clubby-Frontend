@@ -3,11 +3,12 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { useState } from "react";
 import { useFetchMemberRegisteration } from "@/queries/registration-form";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
 export function MemberRegistration({
@@ -25,60 +26,122 @@ export function MemberRegistration({
 
   if (isLoading || !data) {
     return (
-      <div className="p-5 min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex justify-center items-center p-5 min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
-    )
+    );
   }
+
+  // Determine status styling
+  const getStatusConfig = () => {
+    switch (membershipStatus) {
+      case "Registered":
+        return {
+          icon: <CheckCircle2 className="h-6 w-6" />,
+          color: "text-green-600",
+          bgColor: "bg-green-50",
+          borderColor: "border-green-200",
+          title: "Registration Confirmed",
+        };
+      case "Pending":
+        return {
+          icon: <Clock className="h-6 w-6" />,
+          color: "text-orange-600",
+          bgColor: "bg-orange-50",
+          borderColor: "border-orange-200",
+          title: "Registration Pending",
+        };
+      case "Resubmission required":
+        return {
+          icon: <AlertCircle className="h-6 w-6" />,
+          color: "text-red-600",
+          bgColor: "bg-red-50",
+          borderColor: "border-red-200",
+          title: "Resubmission Required",
+        };
+      default:
+        return {
+          icon: <Clock className="h-6 w-6" />,
+          color: "text-gray-600",
+          bgColor: "bg-gray-50",
+          borderColor: "border-gray-200",
+          title: "Registration Status",
+        };
+    }
+  };
+
+  const statusConfig = getStatusConfig();
+
   return (
-    <Card className="w-full mb-4 border-none shadow-none">
-      <CardContent className="py-0 px-8 space-y-8">
-        <div key={data.pages[currentPageIndex].page_index} className="flex flex-col gap-1 justify-center items-center">
-          <CardDescription className="text-center w-[85%]">
-            This is your most recent registration form submitted for <strong>{clubName}</strong>. <></>
-            {membershipStatus === "Pending" ? (
-              <>
-                Your registration is currently <strong>pending</strong>. The club admin still needs to verify your submitted registration and confirm if your registration fee has been paid.
-                {` `}
-                If you haven’t paid yet, please visit <strong>Payments & Billing</strong> to complete the outstanding payment using a supported method.
-                {` `}
-                If your payment has already been made, please be patient while the admin completes the verification process.
-              </>
-            ) : membershipStatus === "Resubmission required" ? (
-              <>
-                Your registration requires a <strong>resubmission</strong>. This may be due to reasons such as your membership expiring, the club starting a new season, or invalid information in your previous submission. Please resubmit your registration form.
-              </>
-            ) : (
-              <>
-                Your registration has been <strong>successfully accepted</strong>, and your payment has been confirmed by the admin. You are now officially a member.
-              </>
-            )}
+    <div className="w-full space-y-6">
+      {/* Status Alert Banner */}
+      <div className={`${statusConfig.bgColor} ${statusConfig.borderColor} border-2 rounded-lg p-4 space-y-3`}>
+        {/* Title row with icon */}
+        <div className="flex items-center gap-3">
+          <div className={statusConfig.color}>{statusConfig.icon}</div>
+          <h3 className={`text-lg font-semibold ${statusConfig.color}`}>
+            {statusConfig.title}
+          </h3>
+        </div>
+        
+        {/* Description text full width */}
+        <div className="text-sm text-gray-700 leading-relaxed">
+          {membershipStatus === "Pending" ? (
+            <>
+              Your registration is currently <strong>pending</strong>. The club admin still needs to verify your submitted registration and confirm if your registration fee has been paid.
+              {" "}
+              If you haven't paid yet, please visit <strong>Payments & Billing</strong> to complete the outstanding payment using a supported method.
+              {" "}
+              If your payment has already been made, please be patient while the admin completes the verification process.
+            </>
+          ) : membershipStatus === "Resubmission required" ? (
+            <>
+              Your registration requires a <strong>resubmission</strong>. This may be due to reasons such as your membership expiring, the club starting a new season, or invalid information in your previous submission. Please resubmit your registration form.
+            </>
+          ) : (
+            <>
+              Your registration has been <strong>successfully accepted</strong>, and your payment has been confirmed by the admin. You are now officially a member of {clubName}.
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Registration Form Card */}
+      <Card className="w-full border shadow-sm pt-0">
+        <CardHeader className="border-b bg-muted/30">
+          <CardTitle className="text-2xl text-center pt-5">
+            {clubName}
+          </CardTitle>
+          <CardDescription className="text-center">
+            {membershipStatus === "Resubmission required" ? "Deregistered Registration Form" : "Submitted Registration Form" }
           </CardDescription>
-          <div className="shadow-md p-4 w-full border border-gray-200 rounded-lg bg-gray-50">
-            <CardTitle className="text-xl text-center underline">
-              {clubName}
-            </CardTitle>
-            <h3 className="text-[20px] font-semibold text-center">{data.pages[currentPageIndex].page_header}</h3>
-            <div className="h-[50vh] mt-2 overflow-y-auto space-y-6">
-              {data.pages[currentPageIndex].fields.map((field: any) => {
+        </CardHeader>
+        <CardContent className="py-6 px-8">
+          <div key={data.pages[currentPageIndex].page_index} className="space-y-6">
+            <h3 className="text-xl font-semibold text-center border-b pb-3">
+              {data.pages[currentPageIndex].page_header}
+            </h3>
+            
+            <div className="max-h-[60vh] overflow-y-auto space-y-6 px-2">
+              {data.pages[currentPageIndex].fields.map((field: { type: string; label: string; value: string; signature_type?: string; quantity?: number }) => {
 
                 if (field.type === "STANDARD_SIGNATURE") {
                   if (field.signature_type === "signature") {
                     return (
-                      <div key={field.label} className="flex flex-col gap-2">
-                        <Label className="text-[12px] font-semibold">{field.label}:</Label>
+                      <div key={field.label} className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                        <Label className="text-sm font-semibold text-muted-foreground">{field.label}</Label>
                         <img
                           src={field.value}
                           alt="User Signature"
-                          className="border-b-2 border-gray-400 w-50"
+                          className="border-b-2 border-gray-400 max-w-xs"
                         />
                       </div>
                     )
                   } else {
                     return (
-                      <div key={field.label} className="flex flex-col gap-2">
-                        <Label className="text-[12px] font-semibold">{field.label}:</Label>
-                        <Label className="text-[15px] font-[cursive] border-b-2 border-gray-400 pb-1 w-200">
+                      <div key={field.label} className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                        <Label className="text-sm font-semibold text-muted-foreground">{field.label}</Label>
+                        <Label className="text-base font-[cursive] border-b-2 border-gray-400 pb-1">
                           {field.value}
                         </Label>
                       </div>
@@ -88,9 +151,9 @@ export function MemberRegistration({
 
                 if (field.type === "STANDARD_OTHER") {
                   return (
-                    <div key={field.label} className="flex flex-col gap-2">
-                      <Label className="text-[12px] font-semibold">{field.label}:</Label>
-                      <Label className="text-[12px] border-b-2 border-gray-300 pb-1 w-200">
+                    <div key={field.label} className="flex flex-col gap-2 p-4 bg-muted/20 rounded-lg">
+                      <Label className="text-sm font-semibold text-muted-foreground">{field.label}</Label>
+                      <Label className="text-base border-b-2 border-gray-300 pb-1">
                         {field.value}
                       </Label>
                     </div>
@@ -99,9 +162,11 @@ export function MemberRegistration({
 
                 if (field.type === "BILLING") {
                   return (
-                    <div key={field.label} className="flex flex-col gap-2">
-                      <Label className="text-[12px] font-semibold">{field.label} {field.quantity ? `(x${field.quantity})` : null}:</Label>
-                      <Label className="text-[12px] border-b-2 border-gray-300 pb-1 w-200">
+                    <div key={field.label} className="flex flex-col gap-2 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <Label className="text-sm font-semibold text-blue-700">
+                        {field.label} {field.quantity ? `(x${field.quantity})` : null}
+                      </Label>
+                      <Label className="text-base font-medium text-blue-900 border-b-2 border-blue-300 pb-1">
                         {field.value}
                       </Label>
                     </div>
@@ -119,7 +184,7 @@ export function MemberRegistration({
                   return (
                     <div
                       key={field.label}
-                      className="prose text-gray-700 [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5"
+                      className="prose prose-sm max-w-none text-gray-700 p-4 bg-muted/10 rounded-lg [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5"
                       dangerouslySetInnerHTML={{ __html: cleaned }}
                     />
                   );
@@ -128,9 +193,9 @@ export function MemberRegistration({
 
                 if (field.type === "DNE") {
                   return (
-                    <div key={field.label} className="flex flex-col gap-2">
-                      <Label className="text-[12px] font-semibold">{field.label}:</Label>
-                      <Label className="text-[12px] border-b-2 border-gray-300 pb-1 w-200 text-gray-500">
+                    <div key={field.label} className="flex flex-col gap-2 p-4 bg-gray-50 rounded-lg border border-dashed">
+                      <Label className="text-sm font-semibold text-muted-foreground">{field.label}</Label>
+                      <Label className="text-sm italic text-gray-500">
                         Not filled in by member.
                       </Label>
                     </div>
@@ -139,36 +204,43 @@ export function MemberRegistration({
 
               })}
             </div>
-          </div>
-        </div>
-        {data.pages.length > 1 && (
-          <div className="flex justify-between items-center mt-6  w-full">
-            {currentPageIndex > 0 ? (
-              <Button
-                type="button"
-                className="w-[100px]"
-                onClick={() => setCurrentPageIndex((i) => i - 1)}
-              >
-                Previous
-              </Button>
-            ) : (
-              <div />
-            )}
 
-            {currentPageIndex < data.pages.length - 1 ? (
-              <Button
-                type="button"
-                className="w-[100px]"
-                onClick={() => setCurrentPageIndex((i) => i + 1)}
-              >
-                Next
-              </Button>
-            ) : (
-              <div />
+            {/* Pagination Controls */}
+            {data.pages.length > 1 && (
+              <div className="flex justify-between items-center pt-4 border-t">
+                {currentPageIndex > 0 ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-[100px]"
+                    onClick={() => setCurrentPageIndex((i) => i - 1)}
+                  >
+                    Previous
+                  </Button>
+                ) : (
+                  <div />
+                )}
+
+                <div className="text-sm text-muted-foreground">
+                  Page {currentPageIndex + 1} of {data.pages.length}
+                </div>
+
+                {currentPageIndex < data.pages.length - 1 ? (
+                  <Button
+                    type="button"
+                    className="w-[100px]"
+                    onClick={() => setCurrentPageIndex((i) => i + 1)}
+                  >
+                    Next
+                  </Button>
+                ) : (
+                  <div />
+                )}
+              </div>
             )}
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
