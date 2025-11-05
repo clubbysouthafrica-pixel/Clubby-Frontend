@@ -104,8 +104,8 @@ export default function SelectedMember({
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="p-4">
-                                    <div className="h-[400px] overflow-y-auto px-2">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    <div className="h-[350px] overflow-y-auto px-2">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             {/* Email */}
                                             <div className="flex flex-col gap-1 p-2 bg-muted/20 rounded-lg">
                                                 <div className="flex items-center gap-2">
