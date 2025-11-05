@@ -45,7 +45,7 @@ export function CurrentMemberRegistration({
   }
   
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-2">
       {/* Registration Timeline Info */}
       <div className="flex flex-wrap items-center gap-4 text-sm bg-muted/30 p-2 rounded-lg border">
         {data?.registration_submitted_on && (
@@ -134,11 +134,11 @@ export function CurrentMemberRegistration({
 
               if (field.type === "BILLING") {
                 return (
-                  <div key={field.label} className="flex flex-col gap-1.5 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <Label className="text-xs font-semibold text-blue-700">
+                  <div key={field.label} className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg border">
+                    <Label className="text-xs font-semibold text-muted-foreground">
                       {field.label} {field.quantity ? `(x${field.quantity})` : null}
                     </Label>
-                    <Label className="text-xs font-medium text-blue-900 border-b-2 border-blue-300 pb-1">
+                    <Label className="text-xs font-medium border-b-2 border-gray-300 pb-1">
                       {field.value}
                     </Label>
                   </div>
