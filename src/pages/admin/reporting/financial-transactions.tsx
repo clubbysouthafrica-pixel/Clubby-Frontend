@@ -212,6 +212,7 @@ export default function FinancialTransactionsPage() {
                                                             <TableHead className="text-center">Type</TableHead>
                                                             <TableHead className="text-center">Description</TableHead>
                                                             <TableHead className="text-center">Amount</TableHead>
+                                                            <TableHead className="text-center">Payment type</TableHead>
                                                         </TableRow>
                                                     </TableHeader>
                                                     <TableBody>
@@ -233,6 +234,7 @@ export default function FinancialTransactionsPage() {
                                                                     <TableCell className="text-center">{entry.type}</TableCell>
                                                                     <TableCell className="text-center">{entry.description}</TableCell>
                                                                     <TableCell className={`text-center ${entry.type === "SUBMISSION" ? "text-red-500" : "text-green-500"} font-bold`}>{entry.type === "SUBMISSION" ? "-" : "+"}{formatAmount(entry.amount, club?.currency)}</TableCell>
+                                                                    <TableCell className="text-center">{entry.payment_type || "N/A"}</TableCell>
                                                                 </TableRow>
                                                             ))}
                                                     </TableBody>
