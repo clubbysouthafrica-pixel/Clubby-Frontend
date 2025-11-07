@@ -113,7 +113,7 @@ export default function SendEmailDialog({
                 className="mb-2"
               />
             </div>
-            <div className={`max-h-[240px] overflow-y-auto divide-y divide-gray-100 pr-2 scrollable-list`}>
+            <div className={`max-h-[80px] overflow-y-auto divide-y divide-gray-100 pr-2 scrollable-list`}>
               {contacts
                 .filter((contact) =>
                   `${contact.name} ${contact.email}`.toLowerCase().includes(contactQuery.toLowerCase())
