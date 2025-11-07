@@ -73,13 +73,13 @@ export function MemberRegistration({
   const statusConfig = getStatusConfig();
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-2 flex-1 min-h-0 flex flex-col">
       {/* Status Alert Banner */}
-      <div className={`${statusConfig.bgColor} ${statusConfig.borderColor} border-2 rounded-lg p-4 space-y-3`}>
+      <div className={`${statusConfig.bgColor} ${statusConfig.borderColor} border rounded-lg p-3 space-y-2`}>
         {/* Title row with icon */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <div className={statusConfig.color}>{statusConfig.icon}</div>
-          <h3 className={`text-sm font-semibold ${statusConfig.color}`}>
+          <h3 className={`text-xs font-semibold ${statusConfig.color}`}>
             {statusConfig.title}
           </h3>
         </div>
@@ -107,22 +107,22 @@ export function MemberRegistration({
       </div>
 
       {/* Registration Form Card */}
-      <Card className="w-full border shadow-sm pt-0">
-        <CardHeader className="border-b bg-muted/30 py-3">
-          <CardTitle className="text-lg text-center pt-2">
+      <Card className="w-full border shadow-sm pt-0 flex-1 min-h-0 flex flex-col">
+        <CardHeader className="border-b bg-muted/30 py-1 pb-1">
+          <CardTitle className="text-l text-center pt-2">
             {clubName}
           </CardTitle>
           <CardDescription className="text-center text-xs">
             {membershipStatus === "Resubmission required" ? "Deregistered Registration Form" : "Submitted Registration Form" }
           </CardDescription>
         </CardHeader>
-        <CardContent className="py-4 px-6">
-          <div key={data.pages[currentPageIndex].page_index} className="space-y-4">
+        <CardContent className="py-2 px-4 flex-1 min-h-0 flex flex-col">
+          <div key={data.pages[currentPageIndex].page_index} className="flex-1 min-h-0 flex flex-col">
             <h3 className="text-base font-semibold text-center border-b pb-2">
               {data.pages[currentPageIndex].page_header}
             </h3>
             
-            <div className="h-[400px] overflow-y-auto space-y-3 px-2">
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-1 px-2 py-2">
               {data.pages[currentPageIndex].fields.map((field: { type: string; label: string; value: string; signature_type?: string; quantity?: number }) => {
 
                 if (field.type === "STANDARD_SIGNATURE") {

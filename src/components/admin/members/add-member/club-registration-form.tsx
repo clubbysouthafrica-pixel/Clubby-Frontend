@@ -287,18 +287,18 @@ export function ClubRegisterForm({
   const isLastPage = currentPageIndex === pages.length - 1;
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="w-[800px] overflow-y-auto">
-        <CardHeader className="text-center">
-          <h1 className="mt-0">
+      <Card className="w-[800px] overflow-y-auto border shadow-sm pt-0">
+        <CardHeader className="border-b bg-muted/30 py-1 pb-1">
+          <h1 className="text-l text-center pt-2">
             Name:{" "}
             <strong>
               {memberFirstName} {memberSurname}
             </strong>
           </h1>
-          <h1 className="mt-0">
+          <h1 className="text-l text-center">
             Email: <strong>{memberEmail}</strong>
           </h1>
-          <CardDescription>
+          <CardDescription className="text-center text-xs">
             {!isSuccess ? (
               "Finish the registration form to register this member."
             ) : (
@@ -316,16 +316,16 @@ export function ClubRegisterForm({
             </div>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="py-2 px-4">
           {!isSuccess && pages.length > 0 && (
             <form>
-              <div className="grid-2 gap-6">
-                <div className="grid gap-6">
+              <div className="space-y-2">
+                <div className="grid gap-2">
                   {registrationRequest && (
-                    <div className="h-[350px] p-2 overflow-y-auto p-4 border border-gray-200 rounded space-y-4 bg-white shadow-sm">
+                    <div className="h-[350px] overflow-y-auto px-2 py-2 border rounded-lg space-y-2 bg-muted/10">
                       {/* Total Registration Fee */}
-                      <div>
-                        <h2 className="text-lg font-semibold mb-2">
+                      <div className="p-3 bg-muted/20 rounded-lg">
+                        <h2 className="text-base font-semibold mb-2">
                           Total Registration Fee:{" "}
                           <strong>
                             {formatAmount(totalRegistrationFee, club?.currency as string)}
@@ -334,7 +334,7 @@ export function ClubRegisterForm({
                         <ul className="ml-6 list-disc space-y-1">
                           {registrationRequest.billing_fields.map(
                             (f: FieldRequest) => (
-                              <li key={f.field_id} className="text-sm">
+                              <li key={f.field_id} className="text-xs">
                                 {getFieldName(pages, f.field_id)}:{" "}
                                 {formatAmount(
                                   f?.value as number,
@@ -347,25 +347,25 @@ export function ClubRegisterForm({
                         </ul>
                       </div>
 
-                      <div className="bg-gray-50 p-3 rounded border border-gray-200 space-y-2">
-                        <p className="font-medium text-yellow-700">
+                      <div className="bg-muted/20 p-3 rounded-lg border space-y-2">
+                        <p className="text-xs font-semibold text-yellow-700">
                           ⚠️ Please review your membership information carefully
                           before submitting.
                         </p>
-                        <p>
+                        <p className="text-xs">
                           Once your registration is submitted, you must visit
                           the <strong>Payments & Billing</strong> tab in your
                           associated club profile to view available payment
                           methods and instructions for paying any outstanding
                           amounts.
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-xs text-muted-foreground">
                           Clubby is <strong>not responsible</strong> for any
                           incorrect payments, misdirected payments, or payment
                           errors. Please follow the instructions on the Payments
                           tab carefully.
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-xs text-muted-foreground">
                           Ensure all billing information is correct to avoid
                           delays in processing your membership.
                         </p>
@@ -373,14 +373,14 @@ export function ClubRegisterForm({
                     </div>
                   )}
                   {!registrationRequest && (
-                    <h3 className="text-ls font-semibold text-center">
+                    <h3 className="text-base font-semibold text-center border-b pb-2">
                       {pages[currentPageIndex].page_header}
                     </h3>
                   )}
                   {pages[currentPageIndex] && !registrationRequest && (
                     <div
                       key={pages[currentPageIndex].page_index}
-                      className="space-y-6 overflow-y-auto h-[350px] p-2"
+                      className="space-y-1 overflow-y-auto h-[350px] px-2 py-2"
                     >
                       {pages[currentPageIndex].fields
                         .sort(
@@ -402,7 +402,7 @@ export function ClubRegisterForm({
                             return (
                               <div
                                 key={field.field_order_id}
-                                className="prose text-gray-700 [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5"
+                                className="prose prose-sm max-w-none text-gray-700 p-3 bg-muted/10 rounded-lg text-xs [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5"
                                 dangerouslySetInnerHTML={{ __html: cleaned }}
                               />
                             );
@@ -505,15 +505,19 @@ export function ClubRegisterForm({
                       type="button"
                       onClick={(e) => registerUser(e as any)}
                       disabled={isPending}
+                      className="w-full mt-2"
+                      size="sm"
                     >
                       {isPending ? "Registering..." : "Continue"}
                     </Button>
                   ) : !registrationRequest ? (
-                    <div className="flex justify-between">
-                      {currentPageIndex > 0 && (
+                    <div className="flex justify-between items-center pt-3 border-t mt-2">
+                      {currentPageIndex > 0 ? (
                         <Button
                           variant={"outline"}
                           type="button"
+                          size="sm"
+                          className="w-[90px]"
                           disabled={isPending}
                           onClick={() => {
                             setCurrentPageIndex((i) => i - 1),
@@ -522,18 +526,27 @@ export function ClubRegisterForm({
                         >
                           Previous
                         </Button>
+                      ) : (
+                        <div className="w-[90px]" />
                       )}
+                      <div className="text-xs text-muted-foreground flex-1 text-center">
+                        Page {currentPageIndex + 1} of {pages.length}
+                      </div>
                       {isLastPage ? (
                         <Button
                           type="button"
+                          size="sm"
+                          className="w-[90px]"
                           onClick={(e) => registerUser(e as any)}
                           disabled={isPending}
                         >
-                          {isPending ? "Registering..." : "Continue"}
+                          {isPending ? "..." : "Continue"}
                         </Button>
                       ) : (
                         <Button
                           type="button"
+                          size="sm"
+                          className="w-[90px]"
                           disabled={isPending}
                           onClick={handleNextPage}
                         >
@@ -542,16 +555,22 @@ export function ClubRegisterForm({
                       )}
                     </div>
                   ) : (
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center pt-3 border-t mt-2">
                       <Button
                         variant={"outline"}
                         type="button"
+                        size="sm"
+                        className="w-[110px]"
                         disabled={isPending}
                         onClick={returnBackToRegistrationForm}
                       >
                         Back to form
                       </Button>
-                      <Button type="button" onClick={submitRegistration}>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={submitRegistration}
+                      >
                         {isRegistering ? "Registering..." : "Register member"}
                       </Button>
                     </div>
@@ -559,7 +578,7 @@ export function ClubRegisterForm({
                 </div>
 
                 {submitRegistrationError && (
-                  <Alert variant="destructive">
+                  <Alert variant="destructive" className="mt-2">
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription className="text-xs">
                       {submitRegistrationError}
@@ -567,7 +586,17 @@ export function ClubRegisterForm({
                   </Alert>
                 )}
 
-                <div className="text-center text-sm mt-4">
+                {requiredFieldsMissing && (
+                  <Alert className="border border-red-600 text-red-600 mt-2">
+                    <AlertCircle className="h-4 w-4 text-red-600" />
+                    <AlertDescription className="text-xs text-red-600">
+                      Please fill all required fields. These fields are marked
+                      with (*).
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="text-center text-xs mt-2 pt-2 border-t">
                   <Link
                     to="/manage/members/add"
                     onClick={() => setShowRegistrationForm(false)}
@@ -575,18 +604,6 @@ export function ClubRegisterForm({
                   >
                     Cancel
                   </Link>
-                </div>
-
-                <div className="text-center text-sm mt-4">
-                  {requiredFieldsMissing && (
-                    <Alert className="border border-red-600 text-red-600">
-                      <AlertCircle className="h-4 w-4 text-red-600" />
-                      <AlertDescription className="text-xs text-red-600">
-                        Please fill all required fields. These fields are marked
-                        with (*).
-                      </AlertDescription>
-                    </Alert>
-                  )}
                 </div>
               </div>
             </form>
