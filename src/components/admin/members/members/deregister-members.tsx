@@ -8,6 +8,8 @@ import { useDeregisterMembersMutation } from "@/mutations/admin/useDeregisterMut
 import { toast } from "sonner"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "../../../ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 
 interface ImageProps {
   clubId: string
@@ -23,6 +25,7 @@ export default function DeregisterMembersDialog({ selectedTab, dereigsterMembers
   const [confirmed, setConfirmed] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false)
   const [memberQuery, setMemberQuery] = useState("")
+  const [reason, setReason] = useState("")
 
   const { mutate, isPending, isSuccess: mutationSuccess } = useDeregisterMembersMutation()
 
@@ -32,7 +35,7 @@ export default function DeregisterMembersDialog({ selectedTab, dereigsterMembers
 
   const send = () => {
     const userIds = dereigsterMembers.map(member => { return member.user_id })
-    mutate({ clubId: clubId, userIds: userIds }, {
+    mutate({ clubId: clubId, userIds: userIds, deregistration_reason: reason.trim() || undefined }, {
       onSuccess: () => {
         toast.success("Successfully unregistered members")
         setOpenDialog(false)
@@ -53,6 +56,7 @@ export default function DeregisterMembersDialog({ selectedTab, dereigsterMembers
         setDeregisterMembers([])
         setAllMembersSelected(false)
       }
+      setReason("")
     }
   };
 
@@ -120,6 +124,19 @@ export default function DeregisterMembersDialog({ selectedTab, dereigsterMembers
               ⚠️ This action is irreversible. All member associations will be removed. You may re-invite or members may re-register manually afterward.
             </span>
           </DialogDescription>
+          <div className="mt-3 space-y-1">
+            <Label htmlFor="dereg-reason" className="text-sm">Optional message to members</Label>
+            <Textarea
+              id="dereg-reason"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Add a short note explaining why these members were deregistered (optional)"
+              className="min-h-20"
+            />
+            <DialogDescription className="text-xs text-muted-foreground">
+              If provided, this message will be included in the notification to affected members.
+            </DialogDescription>
+          </div>
         </DialogHeader>
         <div className="flex items-center gap-1">
           <Checkbox

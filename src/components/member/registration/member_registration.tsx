@@ -24,6 +24,15 @@ export function MemberRegistration({
     currency
   );
 
+  const getDeregReason = (d: unknown): string | undefined => {
+    if (typeof d === "object" && d !== null && "deregistration_reason" in d) {
+      const val = (d as { deregistration_reason?: unknown }).deregistration_reason;
+      if (typeof val === "string" && val.trim()) return val;
+    }
+    return undefined;
+  };
+  const deregReason = getDeregReason(data);
+
   if (isLoading || !data) {
     return (
       <div className="flex justify-center items-center p-5 min-h-[400px]">
@@ -32,7 +41,6 @@ export function MemberRegistration({
     );
   }
 
-  // Determine status styling
   const getStatusConfig = () => {
     switch (membershipStatus) {
       case "Registered":
@@ -105,6 +113,19 @@ export function MemberRegistration({
           )}
         </div>
       </div>
+
+      {/* Deregistration reason (when provided by the club) */}
+      {deregReason && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 space-y-2">
+          <div className="flex items-center gap-2 text-yellow-700">
+            <AlertCircle className="h-4 w-4" />
+            <h3 className="text-xs font-semibold">Why was I deregistered?</h3>
+          </div>
+          <div className="text-xs text-gray-700 whitespace-pre-wrap">
+            {deregReason}
+          </div>
+        </div>
+      )}
 
       {/* Registration Form Card */}
       <Card className="w-full border shadow-sm pt-0 flex-1 min-h-0 flex flex-col">

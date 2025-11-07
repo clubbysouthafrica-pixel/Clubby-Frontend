@@ -22,6 +22,7 @@ export interface AdminRegistrationRequest {
 export interface DeregisterMemberRequest {
     userIds: string[]
     clubId: string
+    deregistration_reason?: string
 }
 
 export interface DeregisterSeasonRequest {
