@@ -10,7 +10,7 @@ import { Link } from "react-router-dom";
 import { FormEvent, useContext, useEffect, useMemo, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
-import { useFetchRegisterationForm } from "@/queries/admin/registration-form";
+import { useFetchRegistrationForm } from "@/queries/admin/registration-form";
 import { useFetchClub } from "@/queries/admin/clubs";
 import { AdminRegistrationRequest } from "@/requests/registration-request";
 import { useMemberRegistrationMutation } from "@/mutations/admin/useMemberRegistrationMutation";
@@ -91,7 +91,7 @@ export function ClubRegisterForm({
 }) {
   const { club } = useContext(ClubContext) as ClubContextType;
   const { mutate, isPending, isSuccess } = useMemberRegistrationMutation();
-  const { data, isLoading } = useFetchRegisterationForm(
+  const { data, isLoading } = useFetchRegistrationForm(
     club?.club_account_id as string
   );
   const { data: clubDetails, isLoading: clubLoading } = useFetchClub(

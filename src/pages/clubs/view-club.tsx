@@ -23,7 +23,6 @@ import {
   Loader2,
   Mail,
   MapPin,
-  CreditCard,
   Building2,
   Hash,
   Copy,
@@ -45,8 +44,7 @@ import { useFetchUserTransactions } from "@/queries/transactions";
 import * as React from "react";
 import { Label } from "@/components/ui/label";
 import { MemberRegistration } from "@/components/member/registration/member_registration";
-import { useFetchPayFastCheckoutUrlQuery } from "@/queries/payfast";
-import { toast } from 'sonner'
+import { PayFastPayment } from "@/components/payments/payfast-payment";
 
 function epochToJoinedString(epoch: number): string {
   const date = new Date(epoch); // if epoch is in seconds, use new Date(epoch * 1000)
@@ -82,10 +80,6 @@ type Transaction = {
   lifecycle: Record<string, TransactionEntry>;
 };
 
-type PayfastResponse = {
-  payment_url?: string;
-};
-
 export default function ViewClubPage() {
   const navigate = useNavigate();
   const { clubId } = useParams();
@@ -93,18 +87,12 @@ export default function ViewClubPage() {
   const { data, isLoading, isError } = useFetchClub(clubId as string);
   const { data: bankDetails, isLoading: bankDetailsLoading } =
     useFetchClubBankDetails(clubId as string, !!data?.club_member_exists);
-  // PayFast checkout URL query (disabled until club account id is available)
-  const { data: payfastData, refetch: refetchPayfast } =
-    useFetchPayFastCheckoutUrlQuery(data?.club_account_id ?? "");
 
   const { data: transactions, isLoading: isUserTransactionsLoading } =
-    useFetchUserTransactions(data?.club_account_id ?? "", data?.user_id ?? "");
-
-  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+    useFetchUserTransactions(data?.club_account_id ?? "", data?.user_id ?? "");  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [highlightPayment, setHighlightPayment] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [isPayfastLoading, setIsPayfastLoading] = useState(false);
 
   const toggleRow = (id: string) => {
     setExpandedRows((prev) => ({
@@ -136,30 +124,6 @@ export default function ViewClubPage() {
     navigator.clipboard.writeText(text);
     setCopiedField(field);
     setTimeout(() => setCopiedField(null), 2000);
-  };
-
-  const handlePayfastClick = async () => {
-    // Begin loading state, disable the button, and show spinner
-    setIsPayfastLoading(true);
-    try {
-      let url: string | undefined = payfastData?.payment_url;
-      if (!url) {
-        const result = await refetchPayfast();
-        const refreshed = (result as { data?: PayfastResponse }).data;
-        url = refreshed?.payment_url;
-      }
-
-      if (url) {
-        // Navigate to PayFast. We don't clear loading here because the page will redirect.
-        window.location.href = url;
-      } else {
-        toast.error("Failed to redirect to payment page. Please try again later.");
-        setIsPayfastLoading(false);
-      }
-    } catch {
-      toast.error("Failed to start online payment. Please try again.");
-      setIsPayfastLoading(false);
-    }
   };
 
   const [coverImage, setCoverImage] = useState("");
@@ -626,39 +590,10 @@ export default function ViewClubPage() {
                           </div>
                         </TabsContent>
                         <TabsContent value="online" className="px-6 py-8">
-                          <div className="flex flex-col items-center justify-center gap-4">
-                            <div className="text-center space-y-2">
-                              <h3 className="text-lg font-semibold">
-                                Pay Online with PayFast
-                              </h3>
-                              <p className="text-sm text-muted-foreground">
-                                Securely pay your outstanding amount using
-                                credit card, debit card, or instant EFT
-                              </p>
-                            </div>
-                            <Button
-                              onClick={handlePayfastClick}
-                              disabled={bankDetails?.outstanding_amount === 0 || isPayfastLoading}
-                              size="lg"
-                              className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold px-8 py-6 text-base shadow-lg hover:shadow-xl transition-all duration-200"
-                            >
-                              {isPayfastLoading ? (
-                                <>
-                                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                  Redirecting...
-                                </>
-                              ) : (
-                                <>
-                                  <CreditCard className="mr-2 h-5 w-5" />
-                                  Pay with PayFast
-                                </>
-                              )}
-                            </Button>
-                            <p className="text-xs text-muted-foreground">
-                              You will be redirected to PayFast's secure payment
-                              gateway
-                            </p>
-                          </div>
+                          <PayFastPayment
+                            clubAccountId={data?.club_account_id ?? ""}
+                            outstandingAmount={bankDetails?.outstanding_amount ?? 0}
+                          />
                         </TabsContent>
                       </Tabs>
                     </Card>

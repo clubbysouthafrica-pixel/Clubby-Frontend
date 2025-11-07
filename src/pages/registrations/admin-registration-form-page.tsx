@@ -10,7 +10,7 @@ import { InputFormRegistration, PageFormRegistration } from "@/interfaces/formRe
 import { Loader2, PlusIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import ConfirmDeleteDialog from "@/components/dialog-confirm-delete";
-import { useFetchRegisterationForm } from "@/queries/admin/registration-form";
+import { useFetchRegistrationForm } from "@/queries/admin/registration-form";
 import { createDeleteFieldsRequest } from "@/helpers/admin/registration/verify-delete-fields-structure";
 import { createPagesRequest } from "@/helpers/admin/registration/verify-create-pages-structure";
 import { PreviewForm } from "@/components/admin/registration-form/preview-form/preview-form";
@@ -22,7 +22,7 @@ export default function AdminRegistrationFormPage() {
     const [deletedFields, setDeletedFields] = useState<string[]>([]);
 
     const { mutate } = useCreateClubMutation()
-    const { data, isLoading } = useFetchRegisterationForm(club?.club_account_id as string)
+    const { data, isLoading } = useFetchRegistrationForm(club?.club_account_id as string)
 
     const [saving, setSaving] = useState(false);
 

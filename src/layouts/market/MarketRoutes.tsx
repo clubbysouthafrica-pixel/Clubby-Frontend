@@ -16,7 +16,7 @@ import ViewClubPage from "@/pages/clubs/view-club.tsx";
 import OnboardMember from "@/pages/authentication/onboard-member";
 import AdminRegistrationFormPage from "@/pages/registrations/admin-registration-form-page";
 import BrowseClubsPage from "@/pages/clubs/browse-clubs";
-import RegisterClubPage from "@/pages/clubs/register-club-page";
+import PublicJoinRegisterPage from "@/pages/clubs/public-join-register";
 import ActivateAccount from "@/pages/authentication/temporary-password/ActivateAccount";
 export default function MarketRoutes() {
     return (
@@ -36,7 +36,7 @@ export default function MarketRoutes() {
 
             <Route path="/clubs" element={<BrowseClubsPage />}></Route>
             <Route path="/clubs/:clubId" element={<ViewClubPage />}></Route>
-            <Route path="/clubs/:clubId/register" element={<ProtectedRoute><RegisterClubPage /></ProtectedRoute>}></Route>
+            <Route path="/clubs/:clubId/register" element={<PublicJoinRegisterPage />}></Route>
 
             <Route path="/myclubs" element={<ProtectedRoute><MyClubsPage /></ProtectedRoute>}></Route>
             <Route path="/myclubs/:clubId" element={<ProtectedRoute><ViewClubPage /></ProtectedRoute>}></Route>

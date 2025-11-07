@@ -12,7 +12,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { FormEvent, useContext, useEffect, useMemo, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
-import { useFetchRegisterationForm } from "@/queries/registration-form";
+import { useFetchRegistrationForm } from "@/queries/registration-form";
 import { useFetchClub } from "@/queries/clubs";
 import { RegistrationRequest } from "@/requests/registration-request";
 import { useMemberRegistrationMutation } from "@/mutations/useMemberRegistrationMutation";
@@ -104,7 +104,7 @@ export function ClubRegisterForm() {
     error: registerError,
     isSuccess,
   } = useMemberRegistrationMutation();
-  const { data, isLoading } = useFetchRegisterationForm(clubId as string);
+  const { data, isLoading } = useFetchRegistrationForm(clubId as string);
   const { data: club, isLoading: clubLoading } = useFetchClub(clubId as string);
 
   const [email, setEmail] = useState("");
