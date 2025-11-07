@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useFetchRegistrationForm } from "@/queries/registration-form";
 import { AlertCircle, Loader2, CheckCircle2Icon } from "lucide-react";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import StandardCheckbox from "@/components/member/registration-form/standard-checkbox";
 import BillingDropdown from "@/components/member/registration-form/billing-dropdown";
@@ -9,10 +9,13 @@ import StandardDopdown from "@/components/member/registration-form/standard-drop
 import StandardText from "@/components/member/registration-form/standard-text";
 import StandardSignature from "@/components/member/registration-form/standard-signature";
 import BillingText from "@/components/member/registration-form/billing-text";
-import { createValidRegistrationRequest } from "../../../helpers/admin/registration/create-registration-request";
+import {
+  createValidRegistrationRequest,
+  type SubmitRegistrationRequest,
+  type FieldRequest as SubmitFieldRequest,
+} from "../../../helpers/admin/registration/create-registration-request";
 import { getFieldName } from "@/helpers/members/registration/get-field-name";
 import { formatAmount } from "@/data/currencies";
-import { AdminRegistrationRequest } from "@/requests/registration-request";
 import { useMemberRegistrationMutation } from "@/mutations/admin/useMemberRegistrationMutation";
 
 export type InputType =
@@ -29,12 +32,8 @@ export interface BillingOption {
   label: string;
 }
 
-export interface FieldRequest {
-  field_id: string;
-  value: string | number;
-  option_order_id?: string;
-  label?: string;
-}
+// Local view model for displaying field breakdowns is inferred from
+// SubmitRegistrationRequest's FieldRequest. No separate interface needed.
 
 export interface PageFieldBase {
   field_order_id: string;
@@ -102,7 +101,7 @@ export function RegistrationForm({
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [requiredFieldsMissing, setRequiredFieldsMissing] = useState(false);
   const [registrationRequest, setRegistrationRequest] = useState<
-    AdminRegistrationRequest | undefined
+    SubmitRegistrationRequest | undefined
   >(undefined);
   const [totalRegistrationFee, setTotalRegistrationFee] = useState(0);
   const [isRegistering, setIsRegistering] = useState(false);
@@ -188,8 +187,7 @@ export function RegistrationForm({
     setCurrentPageIndex((i) => i + 1);
   };
 
-  const registerUser = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const registerUser = async () => {
     if (missingRequired.length > 0) {
       setRequiredFieldsMissing(true);
       try {
@@ -204,20 +202,18 @@ export function RegistrationForm({
     }
 
     const allFields = pages.flatMap((p) => p.fields);
-    const request: AdminRegistrationRequest = createValidRegistrationRequest(
+    const request: SubmitRegistrationRequest = createValidRegistrationRequest(
       allFields,
       clubAccountId,
       email,
       surname,
       firstName
     );
-
-    (request as any).email = email;
     setRegistrationRequest(request);
 
     let total = 0;
     request.billing_fields.forEach((field) => {
-      total += field.value;
+      total += Number(field.value ?? 0);
     });
     setTotalRegistrationFee(total);
   };
@@ -230,10 +226,13 @@ export function RegistrationForm({
         onSuccess: () => {
           setIsRegistering(false);
         },
-        onError: (error: any) => {
-          setSubmitRegistrationError(
-            error.response.data.message ?? "Registration failed"
-          );
+        onError: (error) => {
+          let message = "Registration failed";
+          if (error && typeof error === "object") {
+            const err = error as { response?: { data?: { message?: string } }; message?: string };
+            message = err.response?.data?.message ?? err.message ?? message;
+          }
+          setSubmitRegistrationError(message);
           setIsRegistering(false);
         },
       });
@@ -257,8 +256,9 @@ export function RegistrationForm({
 
   return (
     <div className="space-y-2">
-      <div className="border-b py-1 pb-1 -mx-6 px-6 -mt-4 mb-4">
-        <div className="flex justify-center items-center gap-4 text-sm">
+      {/* Header strip aligned with page content */}
+      <div className="border-b py-1 mb-3">
+        <div className="flex justify-center items-center gap-4 text-sm text-center">
           <span>
             Name:{" "}
             <strong>
@@ -292,7 +292,7 @@ export function RegistrationForm({
           <div className="space-y-2">
             <div className="grid gap-2">
               {registrationRequest && (
-                <div className="h-[350px] overflow-y-auto px-2 py-2 border rounded-lg space-y-2 bg-muted/10">
+                <div className="h-[300px] overflow-y-auto px-2 py-2 border rounded-lg space-y-2 bg-muted/10">
                   {/* Total Registration Fee */}
                   <div className="p-3 bg-muted/20 rounded-lg">
                     <h2 className="text-base font-semibold mb-2">
@@ -303,7 +303,7 @@ export function RegistrationForm({
                     </h2>
                     <ul className="ml-6 list-disc space-y-1">
                       {registrationRequest.billing_fields.map(
-                        (f: FieldRequest) => (
+                        (f: SubmitFieldRequest) => (
                           <li key={f.field_id} className="text-xs">
                             {getFieldName(pages, f.field_id)}:{" "}
                             {formatAmount(f?.value as number, clubCurrency)}
@@ -346,7 +346,7 @@ export function RegistrationForm({
               {pages[currentPageIndex] && !registrationRequest && (
                 <div
                   key={pages[currentPageIndex].page_index}
-                  className="space-y-1 overflow-y-auto h-[350px] px-2 py-2"
+                  className="space-y-1 overflow-y-auto h-[300px] px-2 py-2"
                 >
                   {pages[currentPageIndex].fields
                     .sort(
@@ -420,10 +420,20 @@ export function RegistrationForm({
                         field.field_type === "STANDARD" &&
                         field.input_type === "SIGNATURE"
                       ) {
+                        const signatureField = {
+                          field_id: field.field_id,
+                          field_name: field.field_name,
+                          field_type: field.field_type,
+                          input_type: field.input_type,
+                          signature_type: field.signature_type ?? "signature",
+                          placeholder: field.placeholder,
+                          required: field.required,
+                          value: field.value as string | undefined,
+                        };
                         return (
                           <StandardSignature
                             key={field.field_id}
-                            field={field as any}
+                            field={signatureField}
                             currentPageIndex={currentPageIndex}
                             pages={pages}
                             setFieldValue={setFieldValue}
@@ -470,7 +480,7 @@ export function RegistrationForm({
               {pages.length === 1 && !registrationRequest ? (
                 <Button
                   type="button"
-                  onClick={(e) => registerUser(e as any)}
+                  onClick={registerUser}
                   disabled={isRegistering}
                   className="w-full mt-2"
                   size="sm"
@@ -504,7 +514,7 @@ export function RegistrationForm({
                       type="button"
                       size="sm"
                       className="w-[90px]"
-                      onClick={(e) => registerUser(e as any)}
+                      onClick={registerUser}
                       disabled={isRegistering}
                     >
                       {isRegistering ? "..." : "Continue"}
