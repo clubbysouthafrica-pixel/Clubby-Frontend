@@ -18,6 +18,7 @@ import AdminRegistrationFormPage from "@/pages/registrations/admin-registration-
 import BrowseClubsPage from "@/pages/clubs/browse-clubs";
 import PublicJoinRegisterPage from "@/pages/clubs/public-join-register";
 import ActivateAccount from "@/pages/authentication/temporary-password/ActivateAccount";
+import { ClubRegisterForm } from "@/components/club-onboard-form";
 export default function MarketRoutes() {
     return (
         <Routes>
@@ -36,7 +37,8 @@ export default function MarketRoutes() {
 
             <Route path="/clubs" element={<BrowseClubsPage />}></Route>
             <Route path="/clubs/:clubId" element={<ViewClubPage />}></Route>
-            <Route path="/clubs/:clubId/register" element={<PublicJoinRegisterPage />}></Route>
+            <Route path="/clubs/:clubId/public/register" element={<PublicJoinRegisterPage />}></Route>
+            <Route path="/clubs/:clubId/register" element={<ProtectedRoute><ClubRegisterForm /></ProtectedRoute>}></Route>
 
             <Route path="/myclubs" element={<ProtectedRoute><MyClubsPage /></ProtectedRoute>}></Route>
             <Route path="/myclubs/:clubId" element={<ProtectedRoute><ViewClubPage /></ProtectedRoute>}></Route>

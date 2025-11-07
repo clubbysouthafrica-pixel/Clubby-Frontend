@@ -48,7 +48,6 @@ export function ActivateAccountForm({
         const session = sessionStorage.getItem("cognitoSession");
         try {
             setLoading(true)
-
             if (localStorage.getItem("isAdminActivation") === "true") {
                 await activateAdminUser(email as string, session as string, password as string)
             } else {

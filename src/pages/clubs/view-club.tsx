@@ -45,6 +45,8 @@ import * as React from "react";
 import { Label } from "@/components/ui/label";
 import { MemberRegistration } from "@/components/member/registration/member_registration";
 import { PayFastPayment } from "@/components/payments/payfast-payment";
+import { AuthContext } from "@/context/AuthContext";
+import { useContext } from "react";
 
 function epochToJoinedString(epoch: number): string {
   const date = new Date(epoch); // if epoch is in seconds, use new Date(epoch * 1000)
@@ -81,6 +83,9 @@ type Transaction = {
 };
 
 export default function ViewClubPage() {
+  const auth = useContext(AuthContext);
+  const isLoggedIn = !!auth?.user; 
+
   const navigate = useNavigate();
   const { clubId } = useParams();
   const [countryName, setCountryName] = useState("");
@@ -211,11 +216,20 @@ export default function ViewClubPage() {
                 )}
               </div>
               <div className="mt-4 md:mt-0 flex gap-4">
-                {!data?.club_member_exists && (
+                {!data?.club_member_exists && isLoggedIn && (
                   <Button
                     variant="outline"
                     className="shadow-none border-black hover:font-bold"
                     onClick={() => navigate(`/clubs/${clubId}/register`)}
+                  >
+                    Join
+                  </Button>
+                )}
+                {!data?.club_member_exists && !isLoggedIn && (
+                  <Button
+                    variant="outline"
+                    className="shadow-none border-black hover:font-bold"
+                    onClick={() => navigate(`/clubs/${clubId}/public/register`)}
                   >
                     Join
                   </Button>
