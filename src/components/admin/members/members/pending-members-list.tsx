@@ -1,5 +1,6 @@
 import { DndContext, closestCenter } from "@dnd-kit/core";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronsUpDown } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import {
@@ -83,44 +84,44 @@ export default function PendingMembersList({
   setUnregisteredMembersLength,
   setAllListActionItems,
 }: ImageProps) {
-  const filteredUnregisteredMembers =
-    selectedTab === "pending-members"
+  const filteredUnregisteredMembers = useMemo(() => {
+    const base = selectedTab === "pending-members"
       ? clubMembers?.unregistered?.filter((member: ClubMember) => {
-          const fullName = (
-            member.member_first_name +
-            " " +
-            member.member_surname
-          ).toLowerCase();
+          const fullName = (member.member_first_name + " " + member.member_surname).toLowerCase();
           if (!fullName.includes(memberNameFilter.toLowerCase())) return false;
-
           if (member?.resubmission_required) return false;
 
-          for (const [fullKey, selectedValue] of Object.entries(
-            dynamicFilters
-          )) {
+          for (const [fullKey, selectedValue] of Object.entries(dynamicFilters)) {
             if (!selectedValue || selectedValue === "all") continue;
             const [type, fieldName] = fullKey.split(":");
 
             if (type === "standard") {
-              const field = member.meta_standard?.find(
-                (f: any) => f.field_name === fieldName
-              );
+              const field = member.meta_standard?.find((f: any) => f.field_name === fieldName);
               if (!field || field.value !== selectedValue) return false;
             }
-
             if (type === "billing") {
-              const field = member.meta_billing?.find(
-                (f: any) => f.field_name === fieldName
-              );
+              const field = member.meta_billing?.find((f: any) => f.field_name === fieldName);
               if (!field || field.label_value !== selectedValue) return false;
             }
           }
-
           return true;
         }) ?? []
-      : clubMembers?.unregistered?.filter(
-          (member: ClubMember) => !member?.resubmission_required
-        ) ?? [];
+      : clubMembers?.unregistered?.filter((member: ClubMember) => !member?.resubmission_required) ?? [];
+    return base;
+  }, [selectedTab, clubMembers, memberNameFilter, dynamicFilters]);
+
+  const [submittedSortAsc, setSubmittedSortAsc] = useState<boolean | null>(null);
+
+  const sortedUnregisteredMembers = useMemo(() => {
+    if (submittedSortAsc === null) return filteredUnregisteredMembers;
+    const copy = [...filteredUnregisteredMembers];
+    copy.sort((a: ClubMember, b: ClubMember) => {
+      const at = a?.registration_submitted_on ? new Date(a.registration_submitted_on).getTime() : 0;
+      const bt = b?.registration_submitted_on ? new Date(b.registration_submitted_on).getTime() : 0;
+      return submittedSortAsc ? at - bt : bt - at;
+    });
+    return copy;
+  }, [filteredUnregisteredMembers, submittedSortAsc]);
 
   useEffect(() => {
     setUnregisteredMembersLength(filteredUnregisteredMembers.length);
@@ -139,7 +140,19 @@ export default function PendingMembersList({
               <TableHead className="text-center w-1/6">Display Name</TableHead>
               <TableHead className="text-center w-1/6">Member ID</TableHead>
               <TableHead className="text-center w-1/6">
-                Registration Submitted
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 hover:underline"
+                  onClick={() => setSubmittedSortAsc((prev) => (prev === null ? true : !prev))}
+                  title="Toggle sort by Registration Submitted On"
+                >
+                  Registration Submitted On
+                  {submittedSortAsc === null ? (
+                    <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                  ) : (
+                    <span className="text-xs">{submittedSortAsc ? "▲" : "▼"}</span>
+                  )}
+                </button>
               </TableHead>
               <TableHead className="text-center w-1/6">
                 Outstanding Reg. Amount
@@ -163,7 +176,7 @@ export default function PendingMembersList({
           </TableHeader>
           <TableBody>
             {filteredUnregisteredMembers.length ? (
-              filteredUnregisteredMembers.map((member: ClubMember) => (
+              sortedUnregisteredMembers.map((member: ClubMember) => (
                 <TableRow key={member.user_id}>
                   <TableCell className="text-center w-1/6">
                     <a

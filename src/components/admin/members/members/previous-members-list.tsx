@@ -1,7 +1,8 @@
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ClubMember } from "@/interfaces/club"
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronsUpDown } from "lucide-react";
 import { Club } from "@/context/ClubContext"
 import { Checkbox } from "@/components/ui/checkbox";
 import { previousRegisteredMembers } from "@/helpers/admin/members/filter-members-list";
@@ -40,6 +41,18 @@ export default function PreviousMembersList({
 }: ImageProps) {
 
     const filteredDeregisteredMembers = previousRegisteredMembers(selectedTab, clubMembers, memberNameFilter, dynamicFilters);
+    const [deregSortAsc, setDeregSortAsc] = useState<boolean | null>(null);
+
+    const sortedDeregisteredMembers = useMemo(() => {
+        if (deregSortAsc === null) return filteredDeregisteredMembers;
+        const copy = [...filteredDeregisteredMembers];
+        copy.sort((a: ClubMember, b: ClubMember) => {
+            const at = a?.deregistered_on ? new Date(a.deregistered_on).getTime() : 0;
+            const bt = b?.deregistered_on ? new Date(b.deregistered_on).getTime() : 0;
+            return deregSortAsc ? at - bt : bt - at;
+        });
+        return copy;
+    }, [filteredDeregisteredMembers, deregSortAsc]);
 
     useEffect(() => {
         setDeregisteredMembersLength(filteredDeregisteredMembers.length);
@@ -57,7 +70,21 @@ export default function PreviousMembersList({
                         <TableRow>
                             <TableHead className="text-center w-1/6">Display Name</TableHead>
                             <TableHead className="text-center w-1/6">Member ID</TableHead>
-                            <TableHead className="text-center w-1/6">Deregistered On</TableHead>
+                            <TableHead className="text-center w-1/6">
+                                <button
+                                    type="button"
+                                    className="inline-flex items-center gap-1 hover:underline"
+                                    onClick={() => setDeregSortAsc(prev => prev === null ? true : !prev)}
+                                    title="Toggle sort by Deregistered On"
+                                >
+                                    Deregistered On
+                                    {deregSortAsc === null ? (
+                                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                                    ) : (
+                                        <span className="text-xs">{deregSortAsc ? "▲" : "▼"}</span>
+                                    )}
+                                </button>
+                            </TableHead>
                             <TableHead className="text-center w-1/5">
                                 <div className="flex items-center justify-center gap-2">
                                     Action
@@ -71,7 +98,7 @@ export default function PreviousMembersList({
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {filteredDeregisteredMembers.length ? filteredDeregisteredMembers.map((member: ClubMember) => (
+                        {sortedDeregisteredMembers.length ? sortedDeregisteredMembers.map((member: ClubMember) => (
                             <TableRow key={member.user_id}>
                                 <TableCell className="text-center w-1/6">
                                     <a

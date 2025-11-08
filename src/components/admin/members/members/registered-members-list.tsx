@@ -1,5 +1,6 @@
 import { DndContext, closestCenter } from "@dnd-kit/core";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronsUpDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ClubMember } from "@/interfaces/club"
@@ -42,6 +43,18 @@ export default function RegisteredMembersList({
 }: ImageProps) {
 
     const filteredRegisteredMembers = frg(selectedTab, clubMembers, memberNameFilter, dynamicFilters)
+    const [regSortAsc, setRegSortAsc] = useState<boolean | null>(null);
+
+    const sortedRegisteredMembers = useMemo(() => {
+        if (regSortAsc === null) return filteredRegisteredMembers;
+        const copy = [...filteredRegisteredMembers];
+        copy.sort((a: ClubMember, b: ClubMember) => {
+            const at = a?.registered_on ? new Date(a.registered_on).getTime() : 0;
+            const bt = b?.registered_on ? new Date(b.registered_on).getTime() : 0;
+            return regSortAsc ? at - bt : bt - at;
+        });
+        return copy;
+    }, [filteredRegisteredMembers, regSortAsc]);
 
     useEffect(() => {
         setRegisteredMembersLength(filteredRegisteredMembers.length);
@@ -59,7 +72,21 @@ export default function RegisteredMembersList({
                         <TableRow>
                             <TableHead className="text-center w-1/4">Member name</TableHead>
                             <TableHead className="text-center w-1/4">Member ID</TableHead>
-                            <TableHead className="text-center w-1/5">Registered On</TableHead>
+                            <TableHead className="text-center w-1/5">
+                                <button
+                                    type="button"
+                                    className="inline-flex items-center gap-1 hover:underline"
+                                    onClick={() => setRegSortAsc((prev) => (prev === null ? true : !prev))}
+                                    title="Toggle sort by Registered On"
+                                >
+                                    Registered On
+                                    {regSortAsc === null ? (
+                                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                                    ) : (
+                                        <span className="text-xs">{regSortAsc ? "▲" : "▼"}</span>
+                                    )}
+                                </button>
+                            </TableHead>
                             <TableHead className="text-center w-1/4">
                                 <div className="flex items-center justify-center gap-2">
                                     Action
@@ -73,7 +100,7 @@ export default function RegisteredMembersList({
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {filteredRegisteredMembers.length ? filteredRegisteredMembers.map((member: ClubMember) => (
+                        {sortedRegisteredMembers.length ? sortedRegisteredMembers.map((member: ClubMember) => (
                             <TableRow key={member.user_id}>
                                 <TableCell className="text-center w-1/4">
                                     <a
