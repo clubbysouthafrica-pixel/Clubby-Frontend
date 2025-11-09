@@ -36,7 +36,7 @@ export default function GeneralReportingPage() {
                     </Card>
                 </TabsContent>
                 <TabsContent key="registration" value="registration" className="space-y-4">
-                    <Card className="p-6 shadow-sm border-none shadow-none">
+                    <Card className="px-6 py-0 shadow-sm border-none shadow-none">
                         {report && <RegistrationReport report={report} currency={club?.currency ?? "ZAR"} />}
                     </Card>
                 </TabsContent>
