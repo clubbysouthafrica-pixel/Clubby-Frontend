@@ -29,33 +29,6 @@ const steps = [
     },
 ];
 
-// const resources = [
-//     {
-//         title: "Documentation",
-//         icon: <BookOpen className="w-6 h-6" />,
-//         description: "Comprehensive guides and API references",
-//         link: "#",
-//     },
-//     {
-//         title: "Examples",
-//         icon: <FileCode2 className="w-6 h-6" />,
-//         description: "Ready-to-use code examples and templates",
-//         link: "#",
-//     },
-//     {
-//         title: "Playground",
-//         icon: <Gamepad2 className="w-6 h-6" />,
-//         description: "Interactive environment to test components",
-//         link: "#",
-//     },
-//     {
-//         title: "GitHub",
-//         icon: <GitBranch className="w-6 h-6" />,
-//         description: "Source code and community contributions",
-//         link: "#",
-//     },
-// ];
-
 export default function GetStartedPage() {
     return (
         <Pager>
@@ -74,7 +47,6 @@ export default function GetStartedPage() {
                     </motion.div>
                 </div>
 
-                {/* Progress Timeline */}
                 <div className="max-w-3xl mx-auto mb-16">
                     <Progress value={25} className="mb-8" />
                     <div className="grid gap-8">

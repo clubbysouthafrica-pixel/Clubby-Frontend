@@ -185,6 +185,8 @@ export function RegistrationForm({
 
     setRequiredFieldsMissing(false);
     setCurrentPageIndex((i) => i + 1);
+    // Smoothly scroll to top when navigating to the next page
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const registerUser = async () => {
@@ -346,7 +348,7 @@ export function RegistrationForm({
               {pages[currentPageIndex] && !registrationRequest && (
                 <div
                   key={pages[currentPageIndex].page_index}
-                  className="space-y-6 overflow-y-auto h-[300px] px-2 py-2"
+                  className="space-y-6 px-2 py-2"
                 >
                   {pages[currentPageIndex].fields
                     .sort(
@@ -499,6 +501,8 @@ export function RegistrationForm({
                       onClick={() => {
                         setCurrentPageIndex((i) => i - 1);
                         setSubmitRegistrationError(undefined);
+                        // Smoothly scroll to top when navigating to the previous page
+                        window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
                     >
                       Previous

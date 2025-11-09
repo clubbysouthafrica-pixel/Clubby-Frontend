@@ -222,6 +222,8 @@ export function ClubRegisterForm({
 
     setRequiredFieldsMissing(false);
     setCurrentPageIndex((i) => i + 1);
+    // Scroll to top when navigating to the next page
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const registerUser = async (e: FormEvent<HTMLFormElement>) => {
@@ -380,7 +382,7 @@ export function ClubRegisterForm({
                   {pages[currentPageIndex] && !registrationRequest && (
                     <div
                       key={pages[currentPageIndex].page_index}
-                      className="space-y-6 overflow-y-auto h-[350px] px-2 py-2"
+                      className="space-y-6  px-2 py-2"
                     >
                       {pages[currentPageIndex].fields
                         .sort(
@@ -520,8 +522,10 @@ export function ClubRegisterForm({
                           className="w-[90px]"
                           disabled={isPending}
                           onClick={() => {
-                            setCurrentPageIndex((i) => i - 1),
-                              setSubmitRegistrationError(undefined);
+                            setCurrentPageIndex((i) => i - 1);
+                            setSubmitRegistrationError(undefined);
+                            // Scroll to top when navigating to the previous page
+                            window.scrollTo({ top: 0, behavior: "smooth" });
                           }}
                         >
                           Previous

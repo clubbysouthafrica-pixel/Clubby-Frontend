@@ -106,6 +106,7 @@ export default function DynamicFormBuilder({ currency, clubAccountId, page, setF
 
     const type = {
       field_order_id: page.fields.length + 1,
+      field_id: `new-field-${Date.now()}-${Math.random()}`, // Generate unique ID for new fields
       field_type: fieldType.toUpperCase(),
       required: true,
       field_text: `Field ${page.fields?.length ?? 0 + 1}`,
@@ -145,7 +146,12 @@ export default function DynamicFormBuilder({ currency, clubAccountId, page, setF
     const field_to_delete = page.fields?.find(f => f.field_id === id);
     if (!field_to_delete) return;
   
-    setFields(page.page_index, page.fields?.filter(f => f.field_id !== id));
+    // Filter out the deleted field and reindex field_order_id
+    const updatedFields = page.fields
+      ?.filter(f => f.field_id !== id)
+      .map((f, index) => ({ ...f, field_order_id: index + 1 }));
+    
+    setFields(page.page_index, updatedFields);
     setDeletedFields((prev: any) => [...prev, field_to_delete.field_id]);
   }
 
@@ -202,7 +208,7 @@ export default function DynamicFormBuilder({ currency, clubAccountId, page, setF
               items={page.fields.map(f => f.field_id) as any}
               strategy={verticalListSortingStrategy}
             >
-              <div className="space-y-8 overflow-y-auto max-h-[400px]">
+              <div className="space-y-8">
                 {page.fields
                   .sort((a, b) => a.field_order_id - b.field_order_id)
                   .map((field) => (

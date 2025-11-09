@@ -117,7 +117,7 @@ export function PreviewForm({
                     {clubName}
                   </CardTitle>
                   <h3 className="text-lg font-semibold text-center">{pages[currentPageIndex].page_header}</h3>
-                  <div key={pages[currentPageIndex].page_index} className="space-y-5 overflow-y-auto h-[350px]">
+                  <div key={pages[currentPageIndex].page_index} className="space-y-5">
                     {pages[currentPageIndex].fields
                       .sort((a: any, b: any) => a.field_order_id - b.field_order_id)
                       .map((field) => {
@@ -220,7 +220,10 @@ export function PreviewForm({
                         <Button
                           type="button"
                           className="px-6 py-2 rounded-lg shadow-sm"
-                          onClick={() => setCurrentPageIndex((i) => i - 1)}
+                          onClick={() => {
+                            setCurrentPageIndex((i) => i - 1);
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
                         >
                           Previous
                         </Button>
@@ -232,7 +235,10 @@ export function PreviewForm({
                         <Button
                           type="button"
                           className="px-6 py-2 rounded-lg shadow-sm"
-                          onClick={() => setCurrentPageIndex((i) => i + 1)}
+                          onClick={() => {
+                            setCurrentPageIndex((i) => i + 1);
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
                         >
                           Next
                         </Button>

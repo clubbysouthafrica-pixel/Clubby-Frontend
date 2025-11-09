@@ -125,56 +125,6 @@ export default function ContactPage() {
                         </CardContent>
                     </Card>
                 </div>
-
-                {/* <div className="mt-16">
-                    <h2 className="text-2xl font-bold text-center mb-8">
-                        Frequently Asked Questions
-                    </h2>
-                    <div className="max-w-3xl mx-auto">
-                        <Accordion type="single" collapsible>
-                            <AccordionItem value="item-1">
-                                <AccordionTrigger>
-                                    What are your business hours?
-                                </AccordionTrigger>
-                                <AccordionContent>
-                                    We are open Monday through Friday from 8:00 AM to 6:00 PM, and
-                                    Saturday from 9:00 AM to 3:00 PM. We are closed on Sundays and
-                                    major holidays.
-                                </AccordionContent>
-                            </AccordionItem>
-
-                            <AccordionItem value="item-2">
-                                <AccordionTrigger>
-                                    How quickly do you respond to inquiries?
-                                </AccordionTrigger>
-                                <AccordionContent>
-                                    We strive to respond to all inquiries within 24 business hours.
-                                    For urgent matters, we recommend calling our support line directly.
-                                </AccordionContent>
-                            </AccordionItem>
-
-                            <AccordionItem value="item-3">
-                                <AccordionTrigger>
-                                    Do you offer remote consultations?
-                                </AccordionTrigger>
-                                <AccordionContent>
-                                    Yes, we offer remote consultations via video conferencing platforms.
-                                    You can schedule a remote consultation through our online booking system.
-                                </AccordionContent>
-                            </AccordionItem>
-
-                            <AccordionItem value="item-4">
-                                <AccordionTrigger>
-                                    What is your response time for support tickets?
-                                </AccordionTrigger>
-                                <AccordionContent>
-                                    Support tickets are typically addressed within 4-8 business hours.
-                                    Premium support customers receive priority response times.
-                                </AccordionContent>
-                            </AccordionItem>
-                        </Accordion>
-                    </div>
-                </div> */}
             </div>
         </Pager>
     );

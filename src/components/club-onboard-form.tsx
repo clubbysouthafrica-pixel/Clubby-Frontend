@@ -245,6 +245,7 @@ export function ClubRegisterForm() {
 
     setRequiredFieldsMissing(false);
     setCurrentPageIndex((i) => i + 1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const registerUser = async (e: FormEvent<HTMLFormElement>) => {
@@ -302,8 +303,8 @@ export function ClubRegisterForm() {
   const isLastPage = currentPageIndex === pages.length - 1;
 
   return (
-    <div className="flex justify-center items-center">
-      <Card className="w-[800px] overflow-y-auto border shadow-sm pt-0">
+    <div className="flex justify-center items-center py-8">
+      <Card className="w-[800px] border shadow-sm pt-0">
         <CardHeader className="border-b bg-muted/30 py-1 pb-1">
           {clubLoading && isLoading && (
             <div className="flex justify-center py-8">
@@ -343,7 +344,7 @@ export function ClubRegisterForm() {
                   )}
 
                   {registrationRequest && (
-                    <div className="h-[350px] overflow-y-auto px-2 py-2 border rounded-lg space-y-2 bg-muted/10">
+                    <div className="px-2 py-2 border rounded-lg space-y-2 bg-muted/10">
                       {/* Total Registration Fee */}
                       <div className="p-3 bg-muted/20 rounded-lg">
                         <h2 className="text-base font-semibold mb-2">
@@ -402,7 +403,7 @@ export function ClubRegisterForm() {
                   {pages[currentPageIndex] && !registrationRequest && (
                     <div
                       key={pages[currentPageIndex].page_index}
-                      className="space-y-6 overflow-y-auto h-[350px] px-2 py-2"
+                      className="space-y-6 px-2 py-2"
                     >
                       {pages[currentPageIndex].fields
                         .sort(
@@ -549,7 +550,10 @@ export function ClubRegisterForm() {
                           type="button"
                           size="sm"
                           className="w-[90px]"
-                          onClick={() => setCurrentPageIndex((i) => i - 1)}
+                          onClick={() => {
+                            setCurrentPageIndex((i) => i - 1);
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
                           disabled={isPending}
                         >
                           Previous
