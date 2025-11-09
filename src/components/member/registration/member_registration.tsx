@@ -143,7 +143,6 @@ export function MemberRegistration({
               {data.pages[currentPageIndex].page_header}
             </h3>
             
-            {/* Fixed-height scroll container: remove flex-1 so h-[300px] is respected */}
             <div className="h-[300px] flex-none overflow-y-auto space-y-6 px-2 py-2">
               {data.pages[currentPageIndex].fields.map((field: { type: string; label: string; value: string; signature_type?: string; quantity?: number }) => {
 
