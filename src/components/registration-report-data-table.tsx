@@ -180,6 +180,11 @@ export function RegistrationReportData({ data, currency }: props) {
                 )}
                 {c?.rows && c.rows.length > 0 && (
                   <div className="mb-5">
+                    <div className="flex flex-col w-full items-center py-2">
+                      <p className="font-bold w-full text-center">
+                        {c.table_name}
+                      </p>
+                    </div>
                     <Tabs defaultValue={c.rows[0]?.row_name}>
                       <TabsList className="flex justify-center h-10 flex-wrap gap-2 mx-auto py-1">
                         {c.rows.map((r: RegistrationRowData) => (
