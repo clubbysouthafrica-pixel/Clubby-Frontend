@@ -180,7 +180,7 @@ export function RegistrationReportData({ data, currency }: props) {
                 )}
                 {c?.rows && c.rows.length > 0 && (
                   <div className="mb-5">
-                    <div className="flex flex-col w-full items-center py-2">
+                    <div className="flex flex-col w-full items-center pb-2">
                       <p className="font-bold w-full text-center">
                         {c.table_name}
                       </p>
@@ -199,11 +199,6 @@ export function RegistrationReportData({ data, currency }: props) {
                           </TabsTrigger>
                         ))}
                       </TabsList>
-                      <div className="flex flex-col w-full items-center py-4">
-                        <p className="font-bold w-full text-center">
-                          {c.rows[0]?.row_name}
-                        </p>
-                      </div>
                       {c.rows?.map((r: RegistrationRowData) => (
                         <TabsContent key={r.row_name} value={r.row_name}>
                           <div className="px-2">
