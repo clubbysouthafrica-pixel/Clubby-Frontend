@@ -86,7 +86,7 @@ export default function MemberImageUploadDialog({ title, description, presignedU
           />
         </div>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] border-2 border-primary rounded-xl shadow-lg">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>

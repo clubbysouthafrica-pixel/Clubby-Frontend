@@ -111,7 +111,7 @@ export default function ImageUploadDialog({
           <EditIcon className="absolute top-1/2 left-1/2 bg-white rounded-full p-1 w-6 h-6 -translate-y-1/2 -translate-x-1/2 opacity-80 shadow-md" />
         </Avatar>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] border-2 border-primary rounded-xl shadow-lg">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
