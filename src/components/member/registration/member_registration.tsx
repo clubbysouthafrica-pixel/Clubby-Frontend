@@ -143,7 +143,7 @@ export function MemberRegistration({
               {data.pages[currentPageIndex].page_header}
             </h3>
             
-            <div className="h-[300px] flex-none overflow-y-auto space-y-6 px-2 py-2">
+            <div className="flex-none space-y-6 px-2 py-2">
               {data.pages[currentPageIndex].fields.map((field: { type: string; label: string; value: string; signature_type?: string; quantity?: number }) => {
 
                 if (field.type === "STANDARD_SIGNATURE") {
@@ -235,7 +235,10 @@ export function MemberRegistration({
                     variant="outline"
                     size="sm"
                     className="w-[90px]"
-                    onClick={() => setCurrentPageIndex((i) => i - 1)}
+                    onClick={() => {
+                      setCurrentPageIndex((i) => i - 1);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
                   >
                     Previous
                   </Button>
@@ -252,7 +255,10 @@ export function MemberRegistration({
                     type="button"
                     size="sm"
                     className="w-[90px]"
-                    onClick={() => setCurrentPageIndex((i) => i + 1)}
+                    onClick={() => {
+                      setCurrentPageIndex((i) => i + 1);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
                   >
                     Next
                   </Button>
