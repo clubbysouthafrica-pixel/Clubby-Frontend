@@ -31,7 +31,7 @@ export default function GeneralReportingPage() {
                     <TabsTrigger key="registration" value="registration">Registration</TabsTrigger>
                 </TabsList>
                 <TabsContent key="overall" value="overall" className="space-y-4">
-                    <Card className="p-6 shadow-sm border border-none shadow-none">
+                    <Card className="px-6 shadow-sm border border-none shadow-none">
                         {report && <OverallReport report={report} currency={club?.currency ?? "ZAR"} />}
                     </Card>
                 </TabsContent>
