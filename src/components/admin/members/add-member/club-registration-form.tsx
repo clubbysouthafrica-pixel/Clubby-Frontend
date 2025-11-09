@@ -380,7 +380,7 @@ export function ClubRegisterForm({
                   {pages[currentPageIndex] && !registrationRequest && (
                     <div
                       key={pages[currentPageIndex].page_index}
-                      className="space-y-1 overflow-y-auto h-[350px] px-2 py-2"
+                      className="space-y-6 overflow-y-auto h-[350px] px-2 py-2"
                     >
                       {pages[currentPageIndex].fields
                         .sort(
