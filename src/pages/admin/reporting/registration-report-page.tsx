@@ -2,6 +2,7 @@ import { useContext } from "react";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { useRegistrationBillingReportingQuery } from "@/queries/admin/useReporting";
 import { RegistrationReportData } from "@/components/registration-report-data-table";
+import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
 export default function RegistrationReportPage() {
@@ -17,20 +18,14 @@ export default function RegistrationReportPage() {
     )
   }
   return (
-    <div className="p-5">
-      <h1 className="text-base font-bold">Registration Report</h1>
-      {
-        !isLoading &&
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2">
-            <div className="flex flex-col gap-4 py-2 md:gap-6 md:py-2">
-              <div className="px-0 lg:px-0 space-y-4">
-                <RegistrationReportData data={data} currency={club?.currency as string} />
-              </div>
-            </div>
-          </div>
-        </div>
-      }
+    <div className="p-6 md:p-8 space-y-4">
+      <div className="space-y-1 text-center">
+        <h1 className="text-2xl font-semibold tracking-tight">Registration Billing</h1>
+        <p className="text-sm text-muted-foreground max-w-2xl mx-auto">Analyze each registration fee with monthly totals, pending counts, paid amounts and amounts due to your club.</p>
+      </div>
+      <Card className="p-6 shadow-sm border-none shadow-none">
+        {data && <RegistrationReportData data={data} currency={club?.currency as string} />}
+      </Card>
     </div>
   );
 }

@@ -143,7 +143,7 @@ export function MemberRegistration({
               {data.pages[currentPageIndex].page_header}
             </h3>
             
-            <div className="flex-1 min-h-0 overflow-y-auto space-y-1 px-2 py-2">
+            <div className="flex-1 min-h-0 overflow-y-auto max-h-300px space-y-1 px-2 py-2">
               {data.pages[currentPageIndex].fields.map((field: { type: string; label: string; value: string; signature_type?: string; quantity?: number }) => {
 
                 if (field.type === "STANDARD_SIGNATURE") {

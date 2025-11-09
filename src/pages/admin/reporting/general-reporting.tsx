@@ -20,25 +20,24 @@ export default function GeneralReportingPage() {
     }
     
     return (
-        <div className="p-5">
-            <h1 className="text-base font-bold mb-2">Club Financial Reporting</h1>
-            <Tabs defaultValue="overall">
-                <TabsList>
-                    <TabsTrigger className="w-[200px]" key="overall" value="overall">Overall</TabsTrigger>
-                    <TabsTrigger className="w-[200px]" key="registration" value="registration">Registration</TabsTrigger>
+        <div className="p-6 md:p-8 space-y-6">
+            <div className="space-y-1 text-center">
+                <h1 className="text-2xl font-semibold tracking-tight">Club Reporting</h1>
+                <p className="text-sm text-muted-foreground max-w-2xl mx-auto">Track your club’s financial and registration performance with interactive summaries, charts and detailed monthly breakdowns.</p>
+            </div>
+            <Tabs defaultValue="overall" className="space-y-4">
+                <TabsList className="grid grid-cols-2 max-w-md mx-auto">
+                    <TabsTrigger key="overall" value="overall">Overall</TabsTrigger>
+                    <TabsTrigger key="registration" value="registration">Registration</TabsTrigger>
                 </TabsList>
-                <TabsContent key="overall" value="overall">
-                    <Card className="p-4">
-                        {!isLoading && report &&
-                            <OverallReport report={report} currency={club?.currency ?? "ZAR"} />
-                        }
+                <TabsContent key="overall" value="overall" className="space-y-4">
+                    <Card className="p-6 shadow-sm border border-none shadow-none">
+                        {report && <OverallReport report={report} currency={club?.currency ?? "ZAR"} />}
                     </Card>
                 </TabsContent>
-                <TabsContent key="registration" value="registration">
-                    <Card className="p-4">
-                        {!isLoading && report &&
-                            <RegistrationReport report={report} currency={club?.currency ?? "ZAR"} />
-                        }
+                <TabsContent key="registration" value="registration" className="space-y-4">
+                    <Card className="p-6 shadow-sm border-none shadow-none">
+                        {report && <RegistrationReport report={report} currency={club?.currency ?? "ZAR"} />}
                     </Card>
                 </TabsContent>
             </Tabs>
