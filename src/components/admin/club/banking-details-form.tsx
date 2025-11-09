@@ -126,7 +126,7 @@ export function BankingDetailsForm({
                     </CardDescription>
                 </div>
                 {activeTab === 'eft' && (
-                    <Button onClick={handleSave} disabled={isPending}>
+                    <Button onClick={handleSave} disabled={isPending} variant="outline">
                         {isPending ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -140,7 +140,7 @@ export function BankingDetailsForm({
                 {activeTab === 'payfast' && (
                     payfastEnabled ? (
                         <>
-                            <Button type="button" onClick={() => setResetDialogOpen(true)} disabled={resetPayFastLoading}>
+                            <Button type="button" variant="outline" onClick={() => setResetDialogOpen(true)} disabled={resetPayFastLoading}>
                                 <RefreshCw className="mr-2 h-4 w-4" /> Reset PayFast
                             </Button>
                             <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>

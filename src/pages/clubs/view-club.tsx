@@ -1,3 +1,4 @@
+// fixed erroneous import from prior patch
 import Pager from "@/components/pager.tsx";
 import {
   Avatar,
@@ -27,6 +28,7 @@ import {
   Hash,
   Copy,
   CheckCircle2,
+  ExternalLink,
 } from "lucide-react";
 import { useFetchClub, useFetchClubBankDetails } from "@/queries/clubs";
 import { useNavigate, useParams } from "react-router-dom";
@@ -84,7 +86,7 @@ type Transaction = {
 
 export default function ViewClubPage() {
   const auth = useContext(AuthContext);
-  const isLoggedIn = !!auth?.user; 
+  const isLoggedIn = !!auth?.user;
 
   const navigate = useNavigate();
   const { clubId } = useParams();
@@ -94,7 +96,8 @@ export default function ViewClubPage() {
     useFetchClubBankDetails(clubId as string, !!data?.club_member_exists);
 
   const { data: transactions, isLoading: isUserTransactionsLoading } =
-    useFetchUserTransactions(data?.club_account_id ?? "", data?.user_id ?? "");  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+    useFetchUserTransactions(data?.club_account_id ?? "", data?.user_id ?? "");
+  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [highlightPayment, setHighlightPayment] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -331,29 +334,58 @@ export default function ViewClubPage() {
 
               <TabsContent value="home">
                 <div>
-                  <Card className="md:col-span-2 gap-4">
-                    <CardHeader>
-                      <CardTitle>{data.club_name}</CardTitle>
-                      <CardDescription>
-                        {data?.description ?? "This is the clubs home page."}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div className="flex items-center">
-                          <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span>{data.support_email}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span>{countryName}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span>{epochToJoinedString(data.joined)}</span>
-                        </div>
+                  <Card className="md:col-span-2 gap-4 border-none shadow-none">
+                    {data?.club_url ? (
+                      <div className="relative group w-full overflow-hidden shadow-2xl rounded-lg shadow-black/20 ring-1 ring-black/10">
+                        {/* Open in new tab button (keeps iframe interactive/scrollable) */}
+                        <button
+                          type="button"
+                          aria-label="Open embedded site in a new tab"
+                          onClick={() => window.open(data.club_url!, "_blank")}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              window.open(data.club_url!, "_blank");
+                            }
+                          }}
+                          className="absolute top-2 right-2 z-20 cursor-pointer text-[11px] md:text-xs bg-white text-foreground px-3 py-1.5 rounded-md border border-black/10 shadow-lg hover:shadow-xl active:shadow-md transition flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          Open full site
+                        </button>
+                        <iframe
+                          src={data.club_url}
+                          title="Embedded Page"
+                          className="w-full border-0"
+                          style={{ height: "80vh" }}
+                        />
                       </div>
-                    </CardContent>
+                    ) : (
+                      <>
+                        <CardHeader>
+                          <CardTitle>{data.club_name}</CardTitle>
+                          <CardDescription>
+                            {data?.description ?? "This is the clubs home page."}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            <div className="flex items-center">
+                              <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                              <span>{data.support_email}</span>
+                            </div>
+                            <div className="flex items-center">
+                              <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                              <span>{countryName}</span>
+                            </div>
+                            <div className="flex items-center">
+                              <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                              <span>{epochToJoinedString(data.joined)}</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </>
+                    )}
                   </Card>
                 </div>
               </TabsContent>
@@ -606,7 +638,9 @@ export default function ViewClubPage() {
                         <TabsContent value="online" className="px-6 py-8">
                           <PayFastPayment
                             clubAccountId={data?.club_account_id ?? ""}
-                            outstandingAmount={bankDetails?.outstanding_amount ?? 0}
+                            outstandingAmount={
+                              bankDetails?.outstanding_amount ?? 0
+                            }
                           />
                         </TabsContent>
                       </Tabs>
@@ -619,8 +653,8 @@ export default function ViewClubPage() {
                             View your transactions with this club.
                           </CardDescription>
                         </CardHeader>
-                        <CardContent className="px-6 pt-2 pb-6 max-h-[520px] overflow-y-auto">
-                          <div className="overflow-hidden rounded-lg">
+                        <CardContent className="px-6 pt-2 pb-6">
+                          <div className="">
                             <Table className="border">
                               <TableHeader className="bg-muted sticky top-0 z-10">
                                 <TableRow>
