@@ -70,9 +70,6 @@ export function RegistrationReportData({ data, currency }: props) {
                           ? "Free"
                           : `${formatAmount(c.fee_amount ?? 0, currency)} each`}
                       </p>
-                      <CardDescription>
-                        Report on: <strong>{c.table_name}</strong>
-                      </CardDescription>
                     </div>
                     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-2">
                       <div className="flex gap-4 *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs">
@@ -197,6 +194,11 @@ export function RegistrationReportData({ data, currency }: props) {
                           </TabsTrigger>
                         ))}
                       </TabsList>
+                      <div className="flex flex-col w-full items-center py-4">
+                        <p className="font-bold w-full text-center">
+                          {c.rows[0]?.row_name}
+                        </p>
+                      </div>
                       {c.rows?.map((r: RegistrationRowData) => (
                         <TabsContent key={r.row_name} value={r.row_name}>
                           <div className="px-2">
@@ -210,9 +212,6 @@ export function RegistrationReportData({ data, currency }: props) {
                                       currency
                                     )} each`}
                               </p>
-                              <CardDescription>
-                                Report on: <strong>{r.row_name}</strong>
-                              </CardDescription>
                             </div>
                             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-2">
                               <div className="flex gap-4 *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs">
