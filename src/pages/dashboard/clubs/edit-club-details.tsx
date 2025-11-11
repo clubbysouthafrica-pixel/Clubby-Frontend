@@ -28,8 +28,6 @@ export default function EditClubDetails() {
     const [clubUrl, setClubUrl] = useState('')
     const [hideFromPublic, setHideFromPublic] = useState<boolean>(false)
 
-    console.log(hideFromPublic)
-
     const [registrationSubmissionEmailTemplate, setRegistrationSubmissionEmailTemplate] = useState<string>(REGISTRATION_SUBMISSION_EMAIL_TEMPLATE)
     const [registrationSuccessEmailTemplate, setRegistrationSuccessEmailTemplate] = useState<string>(REGISTRATION_SUCCESS_EMAIL_TEMPLATE)
     const [useSuccessEmailTemplate, setUseSuccessEmailTemplate] = useState<boolean>(false)
