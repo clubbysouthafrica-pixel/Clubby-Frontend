@@ -31,7 +31,7 @@ interface StandardFieldInputProps {
     ) => void
 }
 
-export default function StandardDopdown({
+export default function StandardDropdown({
     field,
     currentPageIndex,
     pages,

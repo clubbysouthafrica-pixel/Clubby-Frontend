@@ -19,14 +19,16 @@ import { useMemberRegistrationMutation } from "@/mutations/useMemberRegistration
 import { toast } from "sonner";
 import { formatAmount } from "@/data/currencies";
 import { AuthContext, AuthContextType } from "@/context/AuthContext";
-import StandardCheckbox from "./member/registration-form/standard-checkbox";
-import BillingDropdown from "./member/registration-form/billing-dropdown";
-import StandardDopdown from "./member/registration-form/standard-dropdown";
-import StandardText from "./member/registration-form/standard-text";
-import StandardSignature from "./member/registration-form/standard-signature";
-import BillingText from "./member/registration-form/billing-text";
-import { createValidRegistrationRequest } from "../helpers/members/registration/create-registration-request";
-import { getFieldName } from "../helpers/members/registration/get-field-name";
+import { 
+  StandardCheckbox,
+  BillingDropdown,
+  StandardDropdown,
+  StandardText,
+  StandardSignature,
+  BillingText,
+} from "../../shared/registration/registration_form_fields";
+import { createValidRegistrationRequest } from "../../../helpers/members/registration/create-registration-request";
+import { getFieldName } from "../../../helpers/members/registration/get-field-name";
 
 export type InputType =
   | "TEXT"
@@ -120,7 +122,7 @@ export function ClubRegisterForm() {
   useEffect(() => {
     const processPages = async () => {
       if (!(data as PagedFormPayload)?.pages) return;
-      
+
       const sorted = (data as PagedFormPayload).pages
         .sort((a, b) => a.page_index - b.page_index)
         .map((p, index) => ({
@@ -144,7 +146,10 @@ export function ClubRegisterForm() {
               if (!metaField) return field;
 
               if (metaField?.signature_type) {
-                const data = metaField.signature_type === "name" ? metaField.value : await presignedUrlToDataUrl(metaField.value);
+                const data =
+                  metaField.signature_type === "name"
+                    ? metaField.value
+                    : await presignedUrlToDataUrl(metaField.value);
                 return {
                   ...field,
                   value: data,
@@ -303,7 +308,7 @@ export function ClubRegisterForm() {
   const isLastPage = currentPageIndex === pages.length - 1;
 
   return (
-    <div className="flex justify-center items-center py-8">
+    <div className="flex justify-center items-center py-8 sm:max-w-[425px]">
       <Card className="w-[800px] border shadow-sm pt-0">
         <CardHeader className="border-b bg-muted/30 py-1 pb-1">
           {clubLoading && isLoading && (
@@ -330,7 +335,12 @@ export function ClubRegisterForm() {
                 <div className="grid gap-2">
                   {!user && (
                     <div className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg">
-                      <Label htmlFor="user_email" className="text-xs font-semibold text-muted-foreground">Email Address</Label>
+                      <Label
+                        htmlFor="user_email"
+                        className="text-xs font-semibold text-muted-foreground"
+                      >
+                        Email Address
+                      </Label>
                       <Input
                         id="user_email"
                         type="email"
@@ -350,7 +360,12 @@ export function ClubRegisterForm() {
                         <h2 className="text-base font-semibold mb-2">
                           Total Registration Fee:{" "}
                           <strong>
-                            {totalRegistrationFee === 0 ? "FREE" : formatAmount(totalRegistrationFee, club.currency)}
+                            {totalRegistrationFee === 0
+                              ? "FREE"
+                              : formatAmount(
+                                  totalRegistrationFee,
+                                  club.currency
+                                )}
                           </strong>
                         </h2>
                         <ul className="ml-6 list-disc space-y-1">
@@ -358,10 +373,12 @@ export function ClubRegisterForm() {
                             (f: FieldRequest) => (
                               <li key={f.field_id} className="text-xs">
                                 {getFieldName(pages, f.field_id)}:{" "}
-                                {f.value === 0 ? "FREE" : formatAmount(
-                                  f?.value as number,
-                                  club.currency
-                                )}
+                                {f.value === 0
+                                  ? "FREE"
+                                  : formatAmount(
+                                      f?.value as number,
+                                      club.currency
+                                    )}
                                 {f.label ? ` (${f.label})` : ""}
                               </li>
                             )
@@ -450,7 +467,7 @@ export function ClubRegisterForm() {
                             field.input_type === "DROPDOWN"
                           ) {
                             return (
-                              <StandardDopdown
+                              <StandardDropdown
                                 field={field}
                                 currentPageIndex={currentPageIndex}
                                 pages={pages}

@@ -6,12 +6,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useEffect, useState } from "react";
-import StandardCheckbox from "../../../member/registration-form/standard-checkbox";
-import BillingDropdown from "../../../member/registration-form/billing-dropdown";
-import StandardDopdown from "../../../member/registration-form/standard-dropdown";
-import StandardText from "../../../member/registration-form/standard-text";
-import BillingText from "@/components/member/registration-form/billing-text";
-import StandardSignature from "../../../member/registration-form/standard-signature";
+import { 
+  StandardCheckbox,
+  BillingDropdown,
+  StandardText,
+  StandardSignature,
+  BillingText,
+  StandardDropdown
+} from "../../../shared/registration/registration_form_fields";
 import { PageFormRegistration } from "@/interfaces/formRegistration";
 
 export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER" | "SIGNATURE";
@@ -164,7 +166,7 @@ export function PreviewForm({
 
                         if (field.field_type === "STANDARD" && field.input_type === "DROPDOWN") {
                           return (
-                            <StandardDopdown
+                            <StandardDropdown
                               key={field.field_id}
                               field={field as any}
                               currentPageIndex={currentPageIndex}

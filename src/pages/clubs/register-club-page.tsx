@@ -1,4 +1,4 @@
-import { ClubRegisterForm } from "@/components/club-onboard-form"
+import { ClubRegisterForm } from "@/components/member/register/registration_form"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { Link, useParams } from "react-router-dom"
 
