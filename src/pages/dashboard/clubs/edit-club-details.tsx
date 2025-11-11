@@ -22,7 +22,7 @@ import { countries } from "@/data/countries";
 import { currencies } from "@/data/currencies";
 import { useUpdateClubDetailsMutation } from "@/mutations/admin/club";
 import { useFetchClubDetails } from "@/queries/admin/clubs";
-import { Loader2 } from "lucide-react";
+import { Loader2, Mail, MapPin, Coins, CreditCard, Building2, CheckCircle2, XCircle } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -39,6 +39,7 @@ export default function EditClubDetails() {
   );
   const { mutate, isPending } = useUpdateClubDetailsMutation();
 
+  const [activeTab, setActiveTab] = useState("club-view");
   const [country, setCountry] = useState("");
   const [currency, setCurrency] = useState("");
   const [supportEmail, setSupportEmail] = useState("");
@@ -179,7 +180,7 @@ export default function EditClubDetails() {
     <div className="space-y-6">
       <div className="flex w-[80%] flex-col">
         {!isLoading && (
-          <Tabs defaultValue="club-view">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="club-view">Club View</TabsTrigger>
               <TabsTrigger value="account">Banking & Payments</TabsTrigger>
@@ -259,53 +260,166 @@ export default function EditClubDetails() {
                       </label>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border rounded-lg p-6 shadow-sm">
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">
-                        Support Email
-                      </Label>
-                      <p className="text-sm font-medium break-all">
-                        {supportEmail || "Not set"}
-                      </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Support Email */}
+                    <div
+                      onClick={() => setActiveTab("emailing")}
+                      className={`rounded-lg p-4 border-2 flex items-start gap-3 cursor-pointer transition-transform hover:scale-[1.02] ${
+                        supportEmail
+                          ? "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800"
+                          : "bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800"
+                      }`}
+                    >
+                      <Mail
+                        className={`h-5 w-5 mt-0.5 ${
+                          supportEmail
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-red-600 dark:text-red-400"
+                        }`}
+                      />
+                      <div className="space-y-1 flex-1 min-w-0">
+                        <Label className="text-xs font-semibold">
+                          Support Email
+                        </Label>
+                        <p className="text-sm font-medium break-all">
+                          {supportEmail || "Not set"}
+                        </p>
+                      </div>
+                      {supportEmail ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                      )}
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">
-                        Country of Operation
-                      </Label>
-                      <p className="text-sm font-medium">
-                        {country || "Not set"}
-                      </p>
+
+                    {/* Country */}
+                    <div
+                      onClick={() => setActiveTab("location")}
+                      className={`rounded-lg p-4 border-2 flex items-start gap-3 cursor-pointer transition-transform hover:scale-[1.02] ${
+                        country
+                          ? "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800"
+                          : "bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800"
+                      }`}
+                    >
+                      <MapPin
+                        className={`h-5 w-5 mt-0.5 ${
+                          country
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-red-600 dark:text-red-400"
+                        }`}
+                      />
+                      <div className="space-y-1 flex-1">
+                        <Label className="text-xs font-semibold">
+                          Country of Operation
+                        </Label>
+                        <p className="text-sm font-medium">
+                          {country || "Not set"}
+                        </p>
+                      </div>
+                      {country ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                      )}
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">
-                        Currency
-                      </Label>
-                      <p className="text-sm font-medium">
-                        {currency || "Not set"}
-                      </p>
+
+                    {/* Currency */}
+                    <div
+                      onClick={() => setActiveTab("location")}
+                      className={`rounded-lg p-4 border-2 flex items-start gap-3 cursor-pointer transition-transform hover:scale-[1.02] ${
+                        currency
+                          ? "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800"
+                          : "bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800"
+                      }`}
+                    >
+                      <Coins
+                        className={`h-5 w-5 mt-0.5 ${
+                          currency
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-red-600 dark:text-red-400"
+                        }`}
+                      />
+                      <div className="space-y-1 flex-1">
+                        <Label className="text-xs font-semibold">
+                          Currency
+                        </Label>
+                        <p className="text-sm font-medium">
+                          {currency || "Not set"}
+                        </p>
+                      </div>
+                      {currency ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                      )}
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">
-                        PayFast Enabled
-                      </Label>
-                      <p className="text-sm font-medium">
-                        {data?.payfast_enabled ? "Yes" : "No"}
-                      </p>
+
+                    {/* PayFast */}
+                    <div
+                      onClick={() => setActiveTab("account")}
+                      className={`rounded-lg p-4 border-2 flex items-start gap-3 cursor-pointer transition-transform hover:scale-[1.02] ${
+                        data?.payfast_enabled
+                          ? "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800"
+                          : "bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800"
+                      }`}
+                    >
+                      <CreditCard
+                        className={`h-5 w-5 mt-0.5 ${
+                          data?.payfast_enabled
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-red-600 dark:text-red-400"
+                        }`}
+                      />
+                      <div className="space-y-1 flex-1">
+                        <Label className="text-xs font-semibold">
+                          PayFast Enabled
+                        </Label>
+                        <p className="text-sm font-medium">
+                          {data?.payfast_enabled ? "Yes" : "No"}
+                        </p>
+                      </div>
+                      {data?.payfast_enabled ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                      )}
                     </div>
-                    <div className="space-y-1 md:col-span-2">
-                      <Label className="text-xs text-muted-foreground">
-                        Bank Details Set
-                      </Label>
-                      <p className="text-sm font-medium">
-                        {data?.bank_details ? "Configured" : "Missing"}
-                      </p>
+
+                    {/* Bank Details */}
+                    <div
+                      onClick={() => setActiveTab("account")}
+                      className={`rounded-lg p-4 border-2 flex items-start gap-3 md:col-span-2 cursor-pointer transition-transform hover:scale-[1.02] ${
+                        data?.bank_details
+                          ? "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800"
+                          : "bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800"
+                      }`}
+                    >
+                      <Building2
+                        className={`h-5 w-5 mt-0.5 ${
+                          data?.bank_details
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-red-600 dark:text-red-400"
+                        }`}
+                      />
+                      <div className="space-y-1 flex-1">
+                        <Label className="text-xs font-semibold">
+                          Bank Details
+                        </Label>
+                        <p className="text-sm font-medium">
+                          {data?.bank_details ? "Configured" : "Missing"}
+                        </p>
+                      </div>
+                      {data?.bank_details ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                      )}
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            {/* Banking & Payments Tab */}
             <TabsContent value="account">
               <BankingDetailsForm
                 club_account_id={club?.club_account_id as string}
