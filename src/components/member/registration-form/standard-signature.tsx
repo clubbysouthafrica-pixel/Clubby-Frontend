@@ -1,6 +1,7 @@
 import { Label } from "@/components/ui/label"
 import { useRef, useState } from "react";
 import SignaturePad from "react-signature-canvas";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Field {
     field_id: string
@@ -32,6 +33,7 @@ export default function StandardSignature({
 }: StandardFieldInputProps) {
     const [drawSignature, setDrawSignature] = useState(field?.signature_type === "name" ? false : true)
     const [name, setName] = useState(field?.signature_type === "name" && field?.value ? field.value : "")
+    const isMobile = useIsMobile()
 
     const sigPadRef = useRef<SignaturePad | null>(null);
 
@@ -73,15 +75,15 @@ export default function StandardSignature({
     };
 
     return (
-        <div className="grid gap-2" key={field.field_id}>
-            <div className="flex flex-row text-center gap-4 mt-2">
-                <Label onClick={save} className="text-l">
-                    {field.required ? <span className="text-red-500">*</span> : null} {field.field_name}:
-                </Label>
+        <div className="grid gap-2 w-full" key={field.field_id}>
+            <Label onClick={save} className={`${isMobile ? 'text-base' : 'text-l'} text-left mb-2`}>
+                {field.required ? <span className="text-red-500">*</span> : null} {field.field_name}:
+            </Label>
+            <div className={`${isMobile ? 'flex flex-col gap-3' : 'flex flex-row gap-4'} ${isMobile ? 'items-stretch' : 'text-center items-center'}`}>
                 {
                     drawSignature ?
                         (
-                            <div className="border-b-2 border-muted-foreground w-[300px] h-[70px]">
+                            <div className={`border-b-2 border-muted-foreground ${isMobile ? 'w-full max-w-full h-[100px]' : 'w-[300px] h-[70px]'} overflow-hidden`}>
                                 {field.value?.startsWith("data:image/png;base64,") ? (
                                     <img
                                         src={field.value}
@@ -92,13 +94,17 @@ export default function StandardSignature({
                                     <SignaturePad
                                         ref={sigPadRef}
                                         onEnd={save}
-                                        canvasProps={{ width: 300, height: 70, className: "w-full h-full" }}
+                                        canvasProps={{ 
+                                            width: isMobile ? 300 : 300, 
+                                            height: isMobile ? 100 : 70, 
+                                            className: "w-full h-full max-w-full" 
+                                        }}
                                     />
                                 )}
                             </div>
                         )
                         :
-                        <div>
+                        <div className={`${isMobile ? 'w-full' : ''}`}>
                             <input
                                 type="text"
                                 value={name}
@@ -116,17 +122,21 @@ export default function StandardSignature({
                                     );
                                 }}
                                 placeholder="Type your name as signature"
-                                className="w-[300px] rounded-none border-b-2 border-muted-foreground focus:border-black focus:outline-none"
-                                style={{ fontFamily: "cursive", fontSize: "1.2rem", height: "70px" }}
+                                className={`${isMobile ? 'w-full max-w-full' : 'w-[300px]'} rounded-none border-b-2 border-muted-foreground focus:border-black focus:outline-none`}
+                                style={{ 
+                                    fontFamily: "cursive", 
+                                    fontSize: isMobile ? "1.1rem" : "1.2rem", 
+                                    height: isMobile ? "60px" : "70px" 
+                                }}
                             />
                         </div>
                 }
-                <div className="flex flex-col justify-end h-full items-start space-y-2">
+                <div className={`flex ${isMobile ? 'flex-row justify-center gap-4' : 'flex-col justify-end h-full items-start space-y-2'}`}>
                     {drawSignature && (
                         <button
                             type="button"
                             onClick={clearSignature}
-                            className="text-sm font-medium text-gray-600 hover:text-gray-800 focus:outline-none cursor-pointer"
+                            className={`${isMobile ? 'text-base px-3 py-1 bg-gray-100 rounded' : 'text-sm'} font-medium text-gray-600 hover:text-gray-800 focus:outline-none cursor-pointer`}
                         >
                             Clear
                         </button>
@@ -138,7 +148,7 @@ export default function StandardSignature({
                             setDrawSignature(!drawSignature);
                             clearSignature();
                         }}
-                        className="text-sm font-medium text-gray-600 hover:text-gray-800 focus:outline-none cursor-pointer"
+                        className={`${isMobile ? 'text-base px-3 py-1 bg-gray-100 rounded' : 'text-sm'} font-medium text-gray-600 hover:text-gray-800 focus:outline-none cursor-pointer`}
                     >
                         {drawSignature ? "Type signature" : "Draw signature"}
                     </button>

@@ -12,6 +12,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { FormEvent, useContext, useEffect, useMemo, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useFetchRegistrationForm } from "@/queries/registration-form";
 import { useFetchClub } from "@/queries/clubs";
 import { RegistrationRequest } from "@/requests/registration-request";
@@ -96,6 +97,7 @@ export function ClubRegisterForm() {
   const { user } = useContext(AuthContext) as AuthContextType;
   const { clubId } = useParams();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const {
     mutate,
@@ -271,7 +273,9 @@ export function ClubRegisterForm() {
       clubId as string
     );
 
-    if (!user) (request as any).email = email;
+    if (!user) {
+      (request as RegistrationRequest & { email: string }).email = email;
+    }
     setRegistrationRequest(request);
 
     let total = 0;
@@ -303,34 +307,34 @@ export function ClubRegisterForm() {
   const isLastPage = currentPageIndex === pages.length - 1;
 
   return (
-    <div className="flex justify-center items-center py-8">
-      <Card className="w-[800px] border shadow-sm pt-0">
-        <CardHeader className="border-b bg-muted/30 py-1 pb-1">
+    <div className={`flex justify-center items-center ${isMobile ? 'p-4' : 'py-8'} ${isMobile ? 'overflow-x-hidden' : ''}`}>
+      <Card className={`${isMobile ? 'w-full max-w-full min-w-0' : 'w-[600px] max-w-xl'} border shadow-sm pt-0 ${isMobile ? 'overflow-hidden' : ''}`}>
+        <CardHeader className={`border-b bg-muted/30 ${isMobile ? 'py-3 px-4' : 'py-1 pb-1'}`}>
           {clubLoading && isLoading && (
             <div className="flex justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin" />
             </div>
           )}
           {!clubLoading && (
-            <CardTitle className="text-l text-center pt-4">
+            <CardTitle className={`${isMobile ? 'text-lg' : 'text-l'} text-center ${isMobile ? 'pt-2' : 'pt-4'}`}>
               {!isSuccess ? "Register to" : "Successfully Registered to"}{" "}
               {club?.club_name}
             </CardTitle>
           )}
-          <CardDescription className="text-center text-xs">
+          <CardDescription className={`text-center ${isMobile ? 'text-sm px-2' : 'text-xs'}`}>
             {!isSuccess
               ? "Finish the registration form below"
               : "Club will stay in contact with you once registration is completed."}
           </CardDescription>
         </CardHeader>
-        <CardContent className="py-2 px-4">
+        <CardContent className={`${isMobile ? 'py-4 px-4' : 'py-2 px-4'} ${isMobile ? 'overflow-hidden' : ''}`}>
           {!isSuccess && pages.length > 0 && (
             <form>
               <div className="space-y-2">
                 <div className="grid gap-2">
                   {!user && (
-                    <div className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg">
-                      <Label htmlFor="user_email" className="text-xs font-semibold text-muted-foreground">Email Address</Label>
+                    <div className={`flex flex-col ${isMobile ? 'gap-2 p-4' : 'gap-1.5 p-3'} bg-muted/20 rounded-lg`}>
+                      <Label htmlFor="user_email" className={`${isMobile ? 'text-sm' : 'text-xs'} font-semibold text-muted-foreground`}>Email Address</Label>
                       <Input
                         id="user_email"
                         type="email"
@@ -338,25 +342,25 @@ export function ClubRegisterForm() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        className="text-xs"
+                        className={`${isMobile ? 'text-base h-12' : 'text-xs'}`}
                       />
                     </div>
                   )}
 
                   {registrationRequest && (
-                    <div className="px-2 py-2 border rounded-lg space-y-2 bg-muted/10">
+                    <div className={`${isMobile ? 'px-3 py-3' : 'px-2 py-2'} border rounded-lg ${isMobile ? 'space-y-3' : 'space-y-2'} bg-muted/10`}>
                       {/* Total Registration Fee */}
-                      <div className="p-3 bg-muted/20 rounded-lg">
-                        <h2 className="text-base font-semibold mb-2">
+                      <div className={`${isMobile ? 'p-4' : 'p-3'} bg-muted/20 rounded-lg`}>
+                        <h2 className={`${isMobile ? 'text-lg' : 'text-base'} font-semibold ${isMobile ? 'mb-3' : 'mb-2'}`}>
                           Total Registration Fee:{" "}
                           <strong>
                             {totalRegistrationFee === 0 ? "FREE" : formatAmount(totalRegistrationFee, club.currency)}
                           </strong>
                         </h2>
-                        <ul className="ml-6 list-disc space-y-1">
+                        <ul className={`${isMobile ? 'ml-4' : 'ml-6'} list-disc ${isMobile ? 'space-y-2' : 'space-y-1'}`}>
                           {registrationRequest.billing_fields.map(
                             (f: FieldRequest) => (
-                              <li key={f.field_id} className="text-xs">
+                              <li key={f.field_id} className={`${isMobile ? 'text-sm' : 'text-xs'}`}>
                                 {getFieldName(pages, f.field_id)}:{" "}
                                 {f.value === 0 ? "FREE" : formatAmount(
                                   f?.value as number,
@@ -369,25 +373,25 @@ export function ClubRegisterForm() {
                         </ul>
                       </div>
 
-                      <div className="bg-muted/20 p-3 rounded-lg border space-y-2">
-                        <p className="text-xs font-semibold text-yellow-700">
+                      <div className={`bg-muted/20 ${isMobile ? 'p-4' : 'p-3'} rounded-lg border ${isMobile ? 'space-y-3' : 'space-y-2'}`}>
+                        <p className={`${isMobile ? 'text-sm' : 'text-xs'} font-semibold text-yellow-700`}>
                           ⚠️ Please review your membership information carefully
                           before submitting.
                         </p>
-                        <p className="text-xs">
+                        <p className={`${isMobile ? 'text-sm' : 'text-xs'}`}>
                           Once your registration is submitted, you must visit
                           the <strong>Payments & Billing</strong> tab in your
                           associated club profile to view available payment
                           methods and instructions for paying any outstanding
                           amounts.
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-muted-foreground`}>
                           Clubby is <strong>not responsible</strong> for any
                           incorrect payments, misdirected payments, or payment
                           errors. Please follow the instructions on the Payments
                           tab carefully.
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className={`${isMobile ? 'text-sm' : 'text-xs'} text-muted-foreground`}>
                           Ensure all billing information is correct to avoid
                           delays in processing your membership.
                         </p>
@@ -396,19 +400,19 @@ export function ClubRegisterForm() {
                   )}
 
                   {pages[currentPageIndex] && !registrationRequest && (
-                    <h3 className="text-base font-semibold text-center border-b pb-2">
+                    <h3 className={`${isMobile ? 'text-lg' : 'text-base'} font-semibold text-center border-b ${isMobile ? 'pb-3' : 'pb-2'}`}>
                       {pages[currentPageIndex].page_header}
                     </h3>
                   )}
                   {pages[currentPageIndex] && !registrationRequest && (
                     <div
                       key={pages[currentPageIndex].page_index}
-                      className="space-y-6 px-2 py-2"
+                      className={`${isMobile ? 'space-y-4 px-1 py-3' : 'space-y-6 px-2 py-2'} ${isMobile ? 'overflow-hidden w-full' : ''}`}
                     >
                       {pages[currentPageIndex].fields
                         .sort(
-                          (a: any, b: any) =>
-                            a.field_order_id - b.field_order_id
+                          (a: PageFieldBase, b: PageFieldBase) =>
+                            Number(a.field_order_id) - Number(b.field_order_id)
                         )
                         .map((field) => {
                           if (field.field_type === "TEXT" && field.field_text) {
@@ -425,7 +429,7 @@ export function ClubRegisterForm() {
                             return (
                               <div
                                 key={field.field_order_id}
-                                className="prose prose-sm max-w-none text-gray-700 p-3 bg-muted/10 rounded-lg text-xs [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5"
+                                className={`prose prose-sm ${isMobile ? 'max-w-full' : 'max-w-none'} text-gray-700 ${isMobile ? 'p-4' : 'p-3'} bg-muted/10 rounded-lg ${isMobile ? 'text-sm' : 'text-xs'} [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5 ${isMobile ? 'overflow-wrap-anywhere break-words' : ''}`}
                                 dangerouslySetInnerHTML={{ __html: cleaned }}
                               />
                             );
@@ -436,12 +440,14 @@ export function ClubRegisterForm() {
                             field.input_type === "CHECKBOX"
                           ) {
                             return (
-                              <StandardCheckbox
-                                key={field.field_id}
-                                field={field}
-                                currentPageIndex={currentPageIndex}
-                                setFieldValue={setFieldValue}
-                              />
+                              <div key={field.field_id} className={`${isMobile ? 'w-full overflow-hidden' : ''}`}>
+                                <StandardCheckbox
+                                  key={field.field_id}
+                                  field={field}
+                                  currentPageIndex={currentPageIndex}
+                                  setFieldValue={setFieldValue}
+                                />
+                              </div>
                             );
                           }
 
@@ -450,12 +456,14 @@ export function ClubRegisterForm() {
                             field.input_type === "DROPDOWN"
                           ) {
                             return (
-                              <StandardDopdown
-                                field={field}
-                                currentPageIndex={currentPageIndex}
-                                pages={pages}
-                                setFieldValue={setFieldValue}
-                              />
+                              <div key={field.field_id} className={`${isMobile ? 'w-full overflow-hidden' : ''}`}>
+                                <StandardDopdown
+                                  field={field}
+                                  currentPageIndex={currentPageIndex}
+                                  pages={pages}
+                                  setFieldValue={setFieldValue}
+                                />
+                              </div>
                             );
                           }
 
@@ -465,12 +473,14 @@ export function ClubRegisterForm() {
                               field.input_type === "NUMBER")
                           ) {
                             return (
-                              <StandardText
-                                field={field}
-                                currentPageIndex={currentPageIndex}
-                                pages={pages}
-                                setFieldValue={setFieldValue}
-                              />
+                              <div key={field.field_id} className={`${isMobile ? 'w-full overflow-hidden' : ''}`}>
+                                <StandardText
+                                  field={field}
+                                  currentPageIndex={currentPageIndex}
+                                  pages={pages}
+                                  setFieldValue={setFieldValue}
+                                />
+                              </div>
                             );
                           }
 
@@ -479,13 +489,18 @@ export function ClubRegisterForm() {
                             field.input_type === "SIGNATURE"
                           ) {
                             return (
-                              <StandardSignature
-                                key={field.field_id}
-                                field={field as any}
-                                currentPageIndex={currentPageIndex}
-                                pages={pages}
-                                setFieldValue={setFieldValue}
-                              />
+                              <div key={field.field_id} className={`${isMobile ? 'w-full overflow-hidden' : ''}`}>
+                                <StandardSignature
+                                  key={field.field_id}
+                                  field={{
+                                    ...field,
+                                    signature_type: field.signature_type || "signature"
+                                  }}
+                                  currentPageIndex={currentPageIndex}
+                                  pages={pages}
+                                  setFieldValue={setFieldValue}
+                                />
+                              </div>
                             );
                           }
 
@@ -494,13 +509,15 @@ export function ClubRegisterForm() {
                             field.input_type === "DROPDOWN"
                           ) {
                             return (
-                              <BillingDropdown
-                                field={field}
-                                clubCurrency={club.currency}
-                                currentPageIndex={currentPageIndex}
-                                pages={pages}
-                                setFieldValue={setFieldValue}
-                              />
+                              <div key={field.field_id} className={`${isMobile ? 'w-full overflow-hidden' : ''}`}>
+                                <BillingDropdown
+                                  field={field}
+                                  clubCurrency={club.currency}
+                                  currentPageIndex={currentPageIndex}
+                                  pages={pages}
+                                  setFieldValue={setFieldValue}
+                                />
+                              </div>
                             );
                           }
 
@@ -509,13 +526,15 @@ export function ClubRegisterForm() {
                             field.input_type === "TEXT"
                           ) {
                             return (
-                              <BillingText
-                                field={field}
-                                clubCurrency={club.currency}
-                                currentPageIndex={currentPageIndex}
-                                pages={pages}
-                                setFieldValue={setFieldValue}
-                              />
+                              <div key={field.field_id} className={`${isMobile ? 'w-full overflow-hidden' : ''}`}>
+                                <BillingText
+                                  field={field}
+                                  clubCurrency={club.currency}
+                                  currentPageIndex={currentPageIndex}
+                                  pages={pages}
+                                  setFieldValue={setFieldValue}
+                                />
+                              </div>
                             );
                           }
                           return null;
@@ -524,9 +543,9 @@ export function ClubRegisterForm() {
                   )}
 
                   {isError && (
-                    <Alert variant="destructive" className="mt-2">
+                    <Alert variant="destructive" className={isMobile ? "mt-4" : "mt-2"}>
                       <AlertCircle className="h-4 w-4" />
-                      <AlertDescription className="text-xs">
+                      <AlertDescription className={isMobile ? "text-sm" : "text-xs"}>
                         {registerError?.message}
                       </AlertDescription>
                     </Alert>
@@ -535,64 +554,126 @@ export function ClubRegisterForm() {
                   {pages.length === 1 && !registrationRequest ? (
                     <Button
                       type="button"
-                      onClick={(e) => registerUser(e as any)}
+                      onClick={() => {
+                        const fakeEvent = { preventDefault: () => {} } as FormEvent<HTMLFormElement>;
+                        registerUser(fakeEvent);
+                      }}
                       disabled={isPending}
-                      className="w-full mt-2"
-                      size="sm"
+                      className={`w-full ${isMobile ? 'mt-4' : 'mt-2'}`}
+                      size={isMobile ? "default" : "sm"}
                     >
                       {isPending ? "Registering..." : "Continue"}
                     </Button>
                   ) : !registrationRequest ? (
-                    <div className="flex justify-between items-center pt-3 border-t mt-2">
-                      {currentPageIndex > 0 ? (
-                        <Button
-                          variant={"outline"}
-                          type="button"
-                          size="sm"
-                          className="w-[90px]"
-                          onClick={() => {
-                            setCurrentPageIndex((i) => i - 1);
-                            window.scrollTo({ top: 0, behavior: "smooth" });
-                          }}
-                          disabled={isPending}
-                        >
-                          Previous
-                        </Button>
-                      ) : (
-                        <div className="w-[90px]" />
+                    <div className={`${isMobile ? 'flex flex-col gap-3' : 'flex justify-between items-center'} ${isMobile ? 'pt-4' : 'pt-3'} border-t ${isMobile ? 'mt-4' : 'mt-2'}`}>
+                      {!isMobile && (
+                        <div className={`${isMobile ? "flex-1" : "w-[90px]"}`}>
+                          {currentPageIndex > 0 && (
+                            <Button
+                              variant={"outline"}
+                              type="button"
+                              size="sm"
+                              className="w-[90px]"
+                              onClick={() => {
+                                setCurrentPageIndex((i) => i - 1);
+                                window.scrollTo({ top: 0, behavior: "smooth" });
+                              }}
+                              disabled={isPending}
+                            >
+                              Previous
+                            </Button>
+                          )}
+                        </div>
                       )}
-                      <div className="text-xs text-muted-foreground flex-1 text-center">
-                        Page {currentPageIndex + 1} of {pages.length}
-                      </div>
-                      {isLastPage ? (
-                        <Button
-                          type="button"
-                          size="sm"
-                          className="w-[90px]"
-                          onClick={(e) => registerUser(e as any)}
-                          disabled={isPending}
-                        >
-                          {isPending ? "..." : "Continue"}
-                        </Button>
-                      ) : (
-                        <Button
-                          type="button"
-                          size="sm"
-                          className="w-[90px]"
-                          onClick={handleNextPage}
-                          disabled={isPending}
-                        >
-                          Next
-                        </Button>
+                      {!isMobile && (
+                        <div className="text-xs text-muted-foreground flex-1 text-center">
+                          Page {currentPageIndex + 1} of {pages.length}
+                        </div>
+                      )}
+                      {!isMobile && (
+                        <div className="w-[90px]">
+                          {isLastPage ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              className="w-[90px]"
+                              onClick={() => {
+                                const fakeEvent = { preventDefault: () => {} } as FormEvent<HTMLFormElement>;
+                                registerUser(fakeEvent);
+                              }}
+                              disabled={isPending}
+                            >
+                              {isPending ? "..." : "Continue"}
+                            </Button>
+                          ) : (
+                            <Button
+                              type="button"
+                              size="sm"
+                              className="w-[90px]"
+                              onClick={handleNextPage}
+                              disabled={isPending}
+                            >
+                              Next
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                      {isMobile && (
+                        <div className="flex gap-3 justify-center">
+                          {currentPageIndex > 0 && (
+                            <Button
+                              variant={"outline"}
+                              type="button"
+                              size="default"
+                              className="flex-1 max-w-[120px]"
+                              onClick={() => {
+                                setCurrentPageIndex((i) => i - 1);
+                                window.scrollTo({ top: 0, behavior: "smooth" });
+                              }}
+                              disabled={isPending}
+                            >
+                              Previous
+                            </Button>
+                          )}
+                          {isLastPage ? (
+                            <Button
+                              type="button"
+                              size="default"
+                              className="flex-1 max-w-[120px]"
+                              onClick={() => {
+                                const fakeEvent = { preventDefault: () => {} } as FormEvent<HTMLFormElement>;
+                                registerUser(fakeEvent);
+                              }}
+                              disabled={isPending}
+                            >
+                              {isPending ? "..." : "Continue"}
+                            </Button>
+                          ) : (
+                            <Button
+                              type="button"
+                              size="default"
+                              className="flex-1 max-w-[120px]"
+                              onClick={handleNextPage}
+                              disabled={isPending}
+                            >
+                              Next
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                      {isMobile && (
+                        <div className="text-sm text-muted-foreground text-center">
+                          Page {currentPageIndex + 1} of {pages.length}
+                        </div>
                       )}
                     </div>
                   ) : (
-                    <div className="flex justify-between items-center pt-3 border-t mt-2">
+                    <div className={`${isMobile ? 'flex flex-col gap-3' : 'flex justify-between items-center'} ${isMobile ? 'pt-4' : 'pt-3'} border-t ${isMobile ? 'mt-4' : 'mt-2'}`}>
                       <Button
                         variant={"outline"}
                         type="button"
-                        size="sm"
-                        className="w-[110px]"
+                        size={isMobile ? "default" : "sm"}
+                        className={isMobile ? "w-full" : "w-[110px]"}
                         onClick={returnBackToRegistrationForm}
                         disabled={isPending}
                       >
@@ -600,7 +681,8 @@ export function ClubRegisterForm() {
                       </Button>
                       <Button
                         type="button"
-                        size="sm"
+                        size={isMobile ? "default" : "sm"}
+                        className={isMobile ? "w-full" : ""}
                         onClick={submitRegistration}
                         disabled={isPending}
                       >
@@ -612,16 +694,16 @@ export function ClubRegisterForm() {
                   )}
 
                   {requiredFieldsMissing && (
-                    <Alert className="border border-red-600 text-red-600 mt-2">
+                    <Alert className={`border border-red-600 text-red-600 ${isMobile ? 'mt-4' : 'mt-2'}`}>
                       <AlertCircle className="h-4 w-4 text-red-600" />
-                      <AlertDescription className="text-xs text-red-600">
+                      <AlertDescription className={`${isMobile ? 'text-sm' : 'text-xs'} text-red-600`}>
                         Please fill all required fields. These fields are marked
                         with (*).
                       </AlertDescription>
                     </Alert>
                   )}
 
-                  <div className="text-center text-xs mt-2 pt-2 border-t">
+                  <div className={`text-center ${isMobile ? 'text-sm mt-4 pt-3' : 'text-xs mt-2 pt-2'} border-t`}>
                     Go back to club?{" "}
                     <Link
                       to={`/clubs/${clubId}`}
@@ -637,10 +719,10 @@ export function ClubRegisterForm() {
 
           {isSuccess && (
             <div>
-              <div className="grid-2 gap-6">
-                <div className="grid gap-6">
+              <div className={`grid-2 ${isMobile ? 'gap-4' : 'gap-6'}`}>
+                <div className={`grid ${isMobile ? 'gap-4' : 'gap-6'}`}>
                   <Link to={`/clubs/${clubId}`}>
-                    <Button className="w-full">Back to club</Button>
+                    <Button className="w-full" size={isMobile ? "default" : "default"}>Back to club</Button>
                   </Link>
                 </div>
               </div>
