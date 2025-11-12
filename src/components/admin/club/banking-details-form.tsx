@@ -170,7 +170,7 @@ export function BankingDetailsForm({
                             </Dialog>
                         </>
                     ) : (
-                        <Button type="button" onClick={handleSavePayFast} disabled={updatePayFastLoading}>
+                        <Button type="button" variant="outline" onClick={handleSavePayFast} disabled={updatePayFastLoading}>
                             {updatePayFastLoading ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

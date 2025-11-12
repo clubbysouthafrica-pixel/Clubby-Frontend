@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 
-import { ClubRegisterForm } from "./club-onboard-form"
+import { ClubRegisterForm } from "./member/register/registration_form"
 
 
 export default function ClubOnboardDialog() {
@@ -13,7 +13,7 @@ const [openDialog, setOpenDialog] = useState<boolean>(false);
       <DialogTrigger asChild>
         <Button>Register</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent>
         <ClubRegisterForm/>
       </DialogContent>
     </Dialog>

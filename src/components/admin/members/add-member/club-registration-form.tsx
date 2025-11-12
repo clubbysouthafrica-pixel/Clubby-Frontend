@@ -16,15 +16,17 @@ import { AdminRegistrationRequest } from "@/requests/registration-request";
 import { useMemberRegistrationMutation } from "@/mutations/admin/useMemberRegistrationMutation";
 import { CheckCircle2Icon } from "lucide-react";
 import { formatAmount } from "@/data/currencies";
-import StandardCheckbox from "../../../member/registration-form/standard-checkbox";
-import BillingDropdown from "../../../member/registration-form/billing-dropdown";
-import StandardDopdown from "../../../member/registration-form/standard-dropdown";
-import StandardText from "../../../member/registration-form/standard-text";
-import BillingText from "../../../member/registration-form/billing-text";
+import { 
+  StandardCheckbox,
+  BillingDropdown,
+  StandardText,
+  StandardSignature,
+  BillingText,
+  StandardDropdown
+} from "../../../shared/registration/registration_form_fields";
 import { createValidRegistrationRequest } from "../../../../helpers/admin/registration/create-registration-request";
 import { getFieldName } from "../../../../helpers/members/registration/get-field-name";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
-import StandardSignature from "../../../member/registration-form/standard-signature";
 
 export type InputType =
   | "TEXT"
@@ -429,7 +431,7 @@ export function ClubRegisterForm({
                             field.input_type === "DROPDOWN"
                           ) {
                             return (
-                              <StandardDopdown
+                              <StandardDropdown
                                 field={field}
                                 currentPageIndex={currentPageIndex}
                                 pages={pages}

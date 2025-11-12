@@ -1,4 +1,4 @@
-import { PageFieldBase } from "@/components/club-onboard-form"
+import { PageFieldBase } from "@/components/shared/registration/reusable-registration-form"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 

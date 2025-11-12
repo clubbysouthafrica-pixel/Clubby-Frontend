@@ -3,12 +3,14 @@ import { useFetchRegistrationForm } from "@/queries/registration-form";
 import { AlertCircle, Loader2, CheckCircle2Icon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import StandardCheckbox from "@/components/member/registration-form/standard-checkbox";
-import BillingDropdown from "@/components/member/registration-form/billing-dropdown";
-import StandardDopdown from "@/components/member/registration-form/standard-dropdown";
-import StandardText from "@/components/member/registration-form/standard-text";
-import StandardSignature from "@/components/member/registration-form/standard-signature";
-import BillingText from "@/components/member/registration-form/billing-text";
+import { 
+  StandardCheckbox,
+  BillingDropdown,
+  StandardText,
+  StandardSignature,
+  BillingText,
+  StandardDropdown
+} from "../../shared/registration/registration_form_fields";
 import {
   createValidRegistrationRequest,
   type SubmitRegistrationRequest,
@@ -392,7 +394,7 @@ export function RegistrationForm({
                         field.input_type === "DROPDOWN"
                       ) {
                         return (
-                          <StandardDopdown
+                          <StandardDropdown
                             key={field.field_id}
                             field={field}
                             currentPageIndex={currentPageIndex}
