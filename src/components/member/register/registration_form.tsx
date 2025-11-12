@@ -2,16 +2,12 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { FormEvent, useContext, useEffect, useMemo, useState } from "react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useFetchRegistrationForm } from "@/queries/registration-form";
 import { useFetchClub } from "@/queries/clubs";
 import { RegistrationRequest } from "@/requests/registration-request";
@@ -19,69 +15,15 @@ import { useMemberRegistrationMutation } from "@/mutations/useMemberRegistration
 import { toast } from "sonner";
 import { formatAmount } from "@/data/currencies";
 import { AuthContext, AuthContextType } from "@/context/AuthContext";
-import { 
-  StandardCheckbox,
-  BillingDropdown,
-  StandardDropdown,
-  StandardText,
-  StandardSignature,
-  BillingText,
-} from "../../shared/registration/registration_form_fields";
 import { createValidRegistrationRequest } from "../../../helpers/members/registration/create-registration-request";
 import { getFieldName } from "../../../helpers/members/registration/get-field-name";
-
-export type InputType =
-  | "TEXT"
-  | "DROPDOWN"
-  | "CHECKBOX"
-  | "NUMBER"
-  | "SIGNATURE";
-export type FieldType = "TEXT" | "STANDARD" | "BILLING";
-
-export interface BillingOption {
-  option_order_id: string;
-  amount: number; // in cents
-  label: string;
-}
-
-export interface FieldRequest {
-  field_id: string;
-  value: string | number;
-  option_order_id?: string;
-  label?: string;
-}
-
-export interface PageFieldBase {
-  field_order_id: string;
-  field_id: string;
-  field_type: FieldType;
-  field_text?: string;
-  field_name: string;
-  required?: boolean;
-  input_type: InputType;
-  placeholder?: string;
-  multiplier?: boolean;
-  multiplier_value?: number;
-  options?: string[];
-  billingOptions?: BillingOption[];
-  currency?: string;
-  amount?: number;
-  value?: string;
-  signature_type?: string;
-  selectedAmountCents?: number;
-  option_order_id?: string;
-  label?: string;
-}
-
-export interface FormPage {
-  page_index: number;
-  page_header: string;
-  fields: PageFieldBase[];
-}
-
-export interface PagedFormPayload {
-  pages: FormPage[];
-}
+import { 
+  ReusableRegistrationForm,
+  FormPage,
+  PagedFormPayload,
+  FieldRequest,
+  PageFieldBase
+} from "../../shared/registration/reusable-registration-form";
 
 async function presignedUrlToDataUrl(url: string): Promise<string> {
   const response = await fetch(url);
@@ -300,369 +242,203 @@ export function ClubRegisterForm() {
     }
   };
 
+  const handleContinue = () => {
+    // Create a synthetic form event
+    const syntheticEvent = {
+      preventDefault: () => {},
+    } as FormEvent<HTMLFormElement>;
+    registerUser(syntheticEvent);
+  };
+
   const returnBackToRegistrationForm = () => {
     setRegistrationRequest(undefined);
     setTotalRegistrationFee(0);
   };
 
-  const isLastPage = currentPageIndex === pages.length - 1;
+  if (clubLoading && isLoading) {
+    return (
+      <div className="flex justify-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (isSuccess) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <Card className="w-[800px] border shadow-sm pt-0">
+          <CardContent className="py-6 px-4">
+            <div className="space-y-4">
+              <h2 className="text-l text-center font-semibold">
+                Successfully Registered to {club?.club_name}
+              </h2>
+              <p className="text-center text-xs text-muted-foreground">
+                Club will stay in contact with you once registration is completed.
+              </p>
+              <Link to={`/clubs/${clubId}`}>
+                <Button className="w-full">Back to club</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!registrationRequest) {
+    return (
+      <ReusableRegistrationForm
+        clubName={club?.club_name || ""}
+        clubCurrency={club?.currency || ""}
+        pages={pages}
+        currentPageIndex={currentPageIndex}
+        setCurrentPageIndex={setCurrentPageIndex}
+        setFieldValue={setFieldValue}
+        requiredFieldsMissing={requiredFieldsMissing}
+        headerTitle={`Register to ${club?.club_name}`}
+        headerDescription="Finish the registration form below"
+        showHeader={true}
+        topContent={
+          !user ? (
+            <div className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg">
+              <Label
+                htmlFor="user_email"
+                className="text-xs font-semibold text-muted-foreground"
+              >
+                Email Address
+              </Label>
+              <Input
+                id="user_email"
+                type="email"
+                placeholder="Enter your email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="text-xs"
+              />
+            </div>
+          ) : null
+        }
+        bottomContent={
+          <div className="text-center text-xs mt-2 pt-2 border-t">
+            Go back to club?{" "}
+            <Link
+              to={`/clubs/${clubId}`}
+              className="underline underline-offset-4"
+            >
+              Cancel
+            </Link>
+          </div>
+        }
+        onNext={handleNextPage}
+        onContinue={handleContinue}
+        isPending={isPending}
+        isError={isError}
+        errorMessage={registerError?.message}
+        showNavigation={true}
+      />
+    );
+  }
 
   return (
-    <div className="flex justify-center items-center py-8 sm:max-w-[425px]">
+    <div className="flex justify-center items-center py-8">
       <Card className="w-[800px] border shadow-sm pt-0">
-        <CardHeader className="border-b bg-muted/30 py-1 pb-1">
-          {clubLoading && isLoading && (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-          )}
-          {!clubLoading && (
-            <CardTitle className="text-l text-center pt-4">
-              {!isSuccess ? "Register to" : "Successfully Registered to"}{" "}
-              {club?.club_name}
-            </CardTitle>
-          )}
-          <CardDescription className="text-center text-xs">
-            {!isSuccess
-              ? "Finish the registration form below"
-              : "Club will stay in contact with you once registration is completed."}
-          </CardDescription>
-        </CardHeader>
         <CardContent className="py-2 px-4">
-          {!isSuccess && pages.length > 0 && (
-            <form>
-              <div className="space-y-2">
-                <div className="grid gap-2">
-                  {!user && (
-                    <div className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg">
-                      <Label
-                        htmlFor="user_email"
-                        className="text-xs font-semibold text-muted-foreground"
-                      >
-                        Email Address
-                      </Label>
-                      <Input
-                        id="user_email"
-                        type="email"
-                        placeholder="Enter your email address"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        className="text-xs"
-                      />
-                    </div>
-                  )}
-
-                  {registrationRequest && (
-                    <div className="px-2 py-2 border rounded-lg space-y-2 bg-muted/10">
-                      {/* Total Registration Fee */}
-                      <div className="p-3 bg-muted/20 rounded-lg">
-                        <h2 className="text-base font-semibold mb-2">
-                          Total Registration Fee:{" "}
-                          <strong>
-                            {totalRegistrationFee === 0
+          <form>
+            <div className="space-y-2">
+              <div className="grid gap-2">
+                <div className="px-2 py-2 border rounded-lg space-y-2 bg-muted/10">
+                  {/* Total Registration Fee */}
+                  <div className="p-3 bg-muted/20 rounded-lg">
+                    <h2 className="text-base font-semibold mb-2">
+                      Total Registration Fee:{" "}
+                      <strong>
+                        {totalRegistrationFee === 0
+                          ? "FREE"
+                          : formatAmount(
+                              totalRegistrationFee,
+                              club?.currency || ""
+                            )}
+                      </strong>
+                    </h2>
+                    <ul className="ml-6 list-disc space-y-1">
+                      {registrationRequest.billing_fields.map(
+                        (f: FieldRequest) => (
+                          <li key={f.field_id} className="text-xs">
+                            {getFieldName(pages, f.field_id)}:{" "}
+                            {f.value === 0
                               ? "FREE"
                               : formatAmount(
-                                  totalRegistrationFee,
-                                  club.currency
+                                  f?.value as number,
+                                  club?.currency || ""
                                 )}
-                          </strong>
-                        </h2>
-                        <ul className="ml-6 list-disc space-y-1">
-                          {registrationRequest.billing_fields.map(
-                            (f: FieldRequest) => (
-                              <li key={f.field_id} className="text-xs">
-                                {getFieldName(pages, f.field_id)}:{" "}
-                                {f.value === 0
-                                  ? "FREE"
-                                  : formatAmount(
-                                      f?.value as number,
-                                      club.currency
-                                    )}
-                                {f.label ? ` (${f.label})` : ""}
-                              </li>
-                            )
-                          )}
-                        </ul>
-                      </div>
-
-                      <div className="bg-muted/20 p-3 rounded-lg border space-y-2">
-                        <p className="text-xs font-semibold text-yellow-700">
-                          ⚠️ Please review your membership information carefully
-                          before submitting.
-                        </p>
-                        <p className="text-xs">
-                          Once your registration is submitted, you must visit
-                          the <strong>Payments & Billing</strong> tab in your
-                          associated club profile to view available payment
-                          methods and instructions for paying any outstanding
-                          amounts.
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Clubby is <strong>not responsible</strong> for any
-                          incorrect payments, misdirected payments, or payment
-                          errors. Please follow the instructions on the Payments
-                          tab carefully.
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Ensure all billing information is correct to avoid
-                          delays in processing your membership.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {pages[currentPageIndex] && !registrationRequest && (
-                    <h3 className="text-base font-semibold text-center border-b pb-2">
-                      {pages[currentPageIndex].page_header}
-                    </h3>
-                  )}
-                  {pages[currentPageIndex] && !registrationRequest && (
-                    <div
-                      key={pages[currentPageIndex].page_index}
-                      className="space-y-6 px-2 py-2"
-                    >
-                      {pages[currentPageIndex].fields
-                        .sort(
-                          (a: any, b: any) =>
-                            a.field_order_id - b.field_order_id
+                            {f.label ? ` (${f.label})` : ""}
+                          </li>
                         )
-                        .map((field) => {
-                          if (field.field_type === "TEXT" && field.field_text) {
-                            const cleaned = field.field_text
-                              .replace(
-                                /<ol>(\s*<li[^>]*data-list="bullet"[^>]*>[\s\S]*?)<\/ol>/g,
-                                "<ul>$1</ul>"
-                              )
-                              .replace(
-                                /<span class="ql-ui"[^>]*><\/span>/g,
-                                ""
-                              );
-
-                            return (
-                              <div
-                                key={field.field_order_id}
-                                className="prose prose-sm max-w-none text-gray-700 p-3 bg-muted/10 rounded-lg text-xs [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5"
-                                dangerouslySetInnerHTML={{ __html: cleaned }}
-                              />
-                            );
-                          }
-
-                          if (
-                            field.field_type === "STANDARD" &&
-                            field.input_type === "CHECKBOX"
-                          ) {
-                            return (
-                              <StandardCheckbox
-                                key={field.field_id}
-                                field={field}
-                                currentPageIndex={currentPageIndex}
-                                setFieldValue={setFieldValue}
-                              />
-                            );
-                          }
-
-                          if (
-                            field.field_type === "STANDARD" &&
-                            field.input_type === "DROPDOWN"
-                          ) {
-                            return (
-                              <StandardDropdown
-                                field={field}
-                                currentPageIndex={currentPageIndex}
-                                pages={pages}
-                                setFieldValue={setFieldValue}
-                              />
-                            );
-                          }
-
-                          if (
-                            field.field_type === "STANDARD" &&
-                            (field.input_type === "TEXT" ||
-                              field.input_type === "NUMBER")
-                          ) {
-                            return (
-                              <StandardText
-                                field={field}
-                                currentPageIndex={currentPageIndex}
-                                pages={pages}
-                                setFieldValue={setFieldValue}
-                              />
-                            );
-                          }
-
-                          if (
-                            field.field_type === "STANDARD" &&
-                            field.input_type === "SIGNATURE"
-                          ) {
-                            return (
-                              <StandardSignature
-                                key={field.field_id}
-                                field={field as any}
-                                currentPageIndex={currentPageIndex}
-                                pages={pages}
-                                setFieldValue={setFieldValue}
-                              />
-                            );
-                          }
-
-                          if (
-                            field.field_type === "BILLING" &&
-                            field.input_type === "DROPDOWN"
-                          ) {
-                            return (
-                              <BillingDropdown
-                                field={field}
-                                clubCurrency={club.currency}
-                                currentPageIndex={currentPageIndex}
-                                pages={pages}
-                                setFieldValue={setFieldValue}
-                              />
-                            );
-                          }
-
-                          if (
-                            field.field_type === "BILLING" &&
-                            field.input_type === "TEXT"
-                          ) {
-                            return (
-                              <BillingText
-                                field={field}
-                                clubCurrency={club.currency}
-                                currentPageIndex={currentPageIndex}
-                                pages={pages}
-                                setFieldValue={setFieldValue}
-                              />
-                            );
-                          }
-                          return null;
-                        })}
-                    </div>
-                  )}
-
-                  {isError && (
-                    <Alert variant="destructive" className="mt-2">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription className="text-xs">
-                        {registerError?.message}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  {pages.length === 1 && !registrationRequest ? (
-                    <Button
-                      type="button"
-                      onClick={(e) => registerUser(e as any)}
-                      disabled={isPending}
-                      className="w-full mt-2"
-                      size="sm"
-                    >
-                      {isPending ? "Registering..." : "Continue"}
-                    </Button>
-                  ) : !registrationRequest ? (
-                    <div className="flex justify-between items-center pt-3 border-t mt-2">
-                      {currentPageIndex > 0 ? (
-                        <Button
-                          variant={"outline"}
-                          type="button"
-                          size="sm"
-                          className="w-[90px]"
-                          onClick={() => {
-                            setCurrentPageIndex((i) => i - 1);
-                            window.scrollTo({ top: 0, behavior: "smooth" });
-                          }}
-                          disabled={isPending}
-                        >
-                          Previous
-                        </Button>
-                      ) : (
-                        <div className="w-[90px]" />
                       )}
-                      <div className="text-xs text-muted-foreground flex-1 text-center">
-                        Page {currentPageIndex + 1} of {pages.length}
-                      </div>
-                      {isLastPage ? (
-                        <Button
-                          type="button"
-                          size="sm"
-                          className="w-[90px]"
-                          onClick={(e) => registerUser(e as any)}
-                          disabled={isPending}
-                        >
-                          {isPending ? "..." : "Continue"}
-                        </Button>
-                      ) : (
-                        <Button
-                          type="button"
-                          size="sm"
-                          className="w-[90px]"
-                          onClick={handleNextPage}
-                          disabled={isPending}
-                        >
-                          Next
-                        </Button>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex justify-between items-center pt-3 border-t mt-2">
-                      <Button
-                        variant={"outline"}
-                        type="button"
-                        size="sm"
-                        className="w-[110px]"
-                        onClick={returnBackToRegistrationForm}
-                        disabled={isPending}
-                      >
-                        Back to form
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={submitRegistration}
-                        disabled={isPending}
-                      >
-                        {isRegistering
-                          ? "Registering..."
-                          : "Submit registration"}
-                      </Button>
-                    </div>
-                  )}
+                    </ul>
+                  </div>
 
-                  {requiredFieldsMissing && (
-                    <Alert className="border border-red-600 text-red-600 mt-2">
-                      <AlertCircle className="h-4 w-4 text-red-600" />
-                      <AlertDescription className="text-xs text-red-600">
-                        Please fill all required fields. These fields are marked
-                        with (*).
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  <div className="text-center text-xs mt-2 pt-2 border-t">
-                    Go back to club?{" "}
-                    <Link
-                      to={`/clubs/${clubId}`}
-                      className="underline underline-offset-4"
-                    >
-                      Cancel
-                    </Link>
+                  <div className="bg-muted/20 p-3 rounded-lg border space-y-2">
+                    <p className="text-xs font-semibold text-yellow-700">
+                      ⚠️ Please review your membership information carefully
+                      before submitting.
+                    </p>
+                    <p className="text-xs">
+                      Once your registration is submitted, you must visit
+                      the <strong>Payments & Billing</strong> tab in your
+                      associated club profile to view available payment
+                      methods and instructions for paying any outstanding
+                      amounts.
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Clubby is <strong>not responsible</strong> for any
+                      incorrect payments, misdirected payments, or payment
+                      errors. Please follow the instructions on the Payments
+                      tab carefully.
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Ensure all billing information is correct to avoid
+                      delays in processing your membership.
+                    </p>
                   </div>
                 </div>
-              </div>
-            </form>
-          )}
 
-          {isSuccess && (
-            <div>
-              <div className="grid-2 gap-6">
-                <div className="grid gap-6">
-                  <Link to={`/clubs/${clubId}`}>
-                    <Button className="w-full">Back to club</Button>
+                <div className="flex justify-between items-center pt-3 border-t mt-2">
+                  <Button
+                    variant="outline"
+                    type="button"
+                    size="sm"
+                    className="w-[110px]"
+                    onClick={returnBackToRegistrationForm}
+                    disabled={isPending}
+                  >
+                    Back to form
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={submitRegistration}
+                    disabled={isPending}
+                  >
+                    {isRegistering
+                      ? "Registering..."
+                      : "Submit registration"}
+                  </Button>
+                </div>
+
+                <div className="text-center text-xs mt-2 pt-2 border-t">
+                  Go back to club?{" "}
+                  <Link
+                    to={`/clubs/${clubId}`}
+                    className="underline underline-offset-4"
+                  >
+                    Cancel
                   </Link>
                 </div>
               </div>
             </div>
-          )}
+          </form>
         </CardContent>
       </Card>
     </div>

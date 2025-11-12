@@ -13,7 +13,7 @@ import {Link, useNavigate} from "react-router-dom";
 import {FormEvent, useContext, useState} from "react";
 import {AuthContext, AuthContextType} from "@/context/AuthContext.tsx";
 import {Alert, AlertDescription} from "@/components/ui/alert.tsx";
-import {AlertCircle} from "lucide-react";
+import {AlertCircle, Eye, EyeOff} from "lucide-react";
 import {AxiosError} from "axios";
 
 export function RegisterForm({
@@ -27,6 +27,7 @@ export function RegisterForm({
     const [ error, setError] = useState("")
     const [email, setEmail] = useState<string>("")
     const [password, setPassword] = useState<string>("")
+    const [showPassword, setShowPassword] = useState(false)
 
     const registerUser = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -82,13 +83,28 @@ export function RegisterForm({
                                         <div className="flex items-center">
                                             <Label htmlFor="password">Password</Label>
                                         </div>
-                                        <Input
-                                            id="password"
-                                            type="password"
-                                            placeholder="****"
-                                            value={password}
-                                            onChange={(event) => setPassword(event.target.value)}
-                                            required />
+                                        <div className="relative">
+                                            <Input
+                                                id="password"
+                                                type={showPassword ? "text" : "password"}
+                                                placeholder="****"
+                                                value={password}
+                                                onChange={(event) => setPassword(event.target.value)}
+                                                required
+                                                className="pr-10"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                            >
+                                                {showPassword ? (
+                                                    <EyeOff className="h-4 w-4" />
+                                                ) : (
+                                                    <Eye className="h-4 w-4" />
+                                                )}
+                                            </button>
+                                        </div>
                                     </div>
                                         {
                                             error &&
