@@ -49,6 +49,7 @@ import { MemberRegistration } from "@/components/member/current_registration/mem
 import { PayFastPayment } from "@/components/payments/payfast-payment";
 import { AuthContext } from "@/context/AuthContext";
 import { useContext } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 function epochToJoinedString(epoch: number): string {
   const date = new Date(epoch); // if epoch is in seconds, use new Date(epoch * 1000)
@@ -87,6 +88,7 @@ type Transaction = {
 export default function ViewClubPage() {
   const auth = useContext(AuthContext);
   const isLoggedIn = !!auth?.user;
+  const isMobile = useIsMobile();
 
   const navigate = useNavigate();
   const { clubId } = useParams();
@@ -252,9 +254,9 @@ export default function ViewClubPage() {
                 {data?.club_member_exists && !data.resubmission_required && (
                   <div className="flex flex-col justify-center items-center font-bold text-xl">
                     <div className="flex flex-row gap-2">
-                      <h1>Membership Status: </h1>
+                      <h1 className="text-base">Membership Status: </h1>
                       <h1
-                        className={`shadow-none ${
+                        className={`shadow-none text-base ${
                           data.registered
                             ? "text-green-700 border-green-700"
                             : "text-orange-700 border-orange-700"
@@ -265,7 +267,7 @@ export default function ViewClubPage() {
                     </div>
                     {!data.registered && (
                       <div className="flex flex-row gap-2">
-                        <h3>
+                        <h3 className="text-sm">
                           Outstanding amount:{" "}
                           {formatAmount(
                             bankDetails?.outstanding_amount,
@@ -290,16 +292,16 @@ export default function ViewClubPage() {
 
           <div className="mt-6 mb-6">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="justify-start h-10">
+              <TabsList className={`${isMobile ? 'flex flex-col h-auto w-full gap-1 p-1' : 'justify-start h-10'}`}>
                 <>
-                  <TabsTrigger className="w-[200px]" value="home">
+                  <TabsTrigger className={`${isMobile ? 'w-full justify-center text-sm' : 'w-[200px]'}`} value="home">
                     Home
                   </TabsTrigger>
                   {(data?.club_member_exists ||
                     data?.resubmission_required) && (
                     <>
-                      <TabsTrigger className="w-[200px]" value="bank">
-                        Payments & Billing
+                      <TabsTrigger className={`${isMobile ? 'w-full justify-center text-sm' : 'w-[200px]'}`} value="bank">
+                        {isMobile ? 'Payments' : 'Payments & Billing'}
                       </TabsTrigger>
                     </>
                   )}
@@ -307,7 +309,7 @@ export default function ViewClubPage() {
                     data?.resubmission_required) && (
                     <>
                       <TabsTrigger
-                        className="w-[200px]"
+                        className={`${isMobile ? 'w-full justify-center text-sm' : 'w-[200px]'}`}
                         value="member-registration"
                       >
                         Registration
