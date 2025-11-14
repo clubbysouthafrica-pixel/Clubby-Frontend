@@ -139,6 +139,53 @@ export default function ImageUploadDialog({
   const [compressedBlob, setCompressedBlob] = useState<Blob | null>(null);
   const [compressedMime, setCompressedMime] = useState<string | null>(null);
 
+  // Helper function to get compression settings based on aspect ratio and use case
+  const getCompressionSettings = (aspectRatio: string, isCropped: boolean = false) => {
+    switch (aspectRatio) {
+      case 'landscape':
+        // Cover photos need higher quality and resolution
+        return {
+          maxWidth: 2400,
+          maxHeight: 1350, // 16:9 aspect ratio
+          quality: 0.92,
+          targetBytes: 800_000, // 800KB for covers
+        };
+      case 'portrait':
+        // Portrait images for stories/posts
+        return {
+          maxWidth: 1080,
+          maxHeight: 1920, // 9:16 aspect ratio
+          quality: 0.88,
+          targetBytes: 600_000,
+        };
+      case 'original':
+        // Original size with high quality
+        return {
+          maxWidth: 2400,
+          maxHeight: 2400,
+          quality: 0.90,
+          targetBytes: 1_200_000, // 1.2MB for originals
+        };
+      case 'free':
+        // Free crop with good quality
+        return {
+          maxWidth: 1920,
+          maxHeight: 1920,
+          quality: 0.85,
+          targetBytes: 500_000,
+        };
+      case 'square':
+      default:
+        // Profile pictures and avatars
+        return {
+          maxWidth: isCropped ? 800 : 1600,
+          maxHeight: isCropped ? 800 : 1600,
+          quality: 0.85,
+          targetBytes: 300_000,
+        };
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -161,13 +208,10 @@ export default function ImageUploadDialog({
     if (!selectedFile) return;
 
     try {
-      // Compress the original image without cropping
-      const compressedBlob = await compressImage(selectedFile, {
-        maxWidth: selectedAspectRatio === 'original' ? 2400 : 1600,
-        maxHeight: selectedAspectRatio === 'original' ? 2400 : 1600,
-        quality: 0.8,
-        targetBytes: selectedAspectRatio === 'original' ? 1_000_000 : 300_000,
-      });
+      // Use optimized compression settings for the selected aspect ratio
+      const compressionSettings = getCompressionSettings(selectedAspectRatio, false);
+      
+      const compressedBlob = await compressImage(selectedFile, compressionSettings);
 
       setCompressedBlob(compressedBlob);
       setCompressedMime(compressedBlob.type || selectedFile.type);
@@ -223,13 +267,10 @@ export default function ImageUploadDialog({
         selectedFile.name
       );
 
-      // Compress the cropped image
-      const compressedBlob = await compressImage(new File([blob], selectedFile.name), {
-        maxWidth: 1600,
-        maxHeight: 1600,
-        quality: 0.8,
-        targetBytes: 300_000,
-      });
+      // Use optimized compression settings for the selected aspect ratio
+      const compressionSettings = getCompressionSettings(selectedAspectRatio, true);
+      
+      const compressedBlob = await compressImage(new File([blob], selectedFile.name), compressionSettings);
 
       setCompressedBlob(compressedBlob);
       setCompressedMime(compressedBlob.type || selectedFile.type);
@@ -240,7 +281,7 @@ export default function ImageUploadDialog({
     } catch (error) {
       console.error('Error cropping image:', error);
     }
-  }, [completedCrop, selectedFile]);
+  }, [completedCrop, selectedFile, selectedAspectRatio]);
 
   const handleRotate = (direction: 'left' | 'right') => {
     const newRotation = direction === 'left' ? rotation - 90 : rotation + 90;
