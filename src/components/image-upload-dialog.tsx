@@ -11,6 +11,13 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { 
   EditIcon, 
@@ -40,6 +47,25 @@ interface ImageProps {
   presignedUrl: string;
   imageUrl: string;
   className?: string;
+  aspectRatio?: 'square' | 'landscape' | 'portrait' | 'free' | 'original';
+  allowNoCrop?: boolean;
+}
+
+// Helper function to get aspect ratio value
+function getAspectRatioValue(aspectRatio: string): number | undefined {
+  switch (aspectRatio) {
+    case 'square':
+      return 1;
+    case 'landscape':
+      return 16 / 9;
+    case 'portrait':
+      return 9 / 16;
+    case 'free':
+    case 'original':
+      return undefined;
+    default:
+      return 1;
+  }
 }
 
 // Helper function to create image from crop
@@ -90,6 +116,8 @@ export default function ImageUploadDialog({
   className,
   presignedUrl,
   imageUrl,
+  aspectRatio = 'square',
+  allowNoCrop = false,
 }: ImageProps) {
   const queryClient = useQueryClient();
   const imgRef = useRef<HTMLImageElement>(null);
@@ -105,6 +133,8 @@ export default function ImageUploadDialog({
   const [croppedImageUrl, setCroppedImageUrl] = useState<string>("");
   const [showCropper, setShowCropper] = useState<boolean>(false);
   const [rotation, setRotation] = useState<number>(0);
+  const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>(aspectRatio);
+  const [skipCropping, setSkipCropping] = useState<boolean>(false);
 
   const [compressedBlob, setCompressedBlob] = useState<Blob | null>(null);
   const [compressedMime, setCompressedMime] = useState<string | null>(null);
@@ -119,33 +149,69 @@ export default function ImageUploadDialog({
     reader.onload = () => {
       const imageUrl = reader.result as string;
       setImagePreview(imageUrl);
-      setShowCropper(true);
+      setShowCropper(!allowNoCrop || selectedAspectRatio !== 'original');
       setCroppedImageUrl("");
       setRotation(0);
+      setSkipCropping(false);
     };
     reader.readAsDataURL(file);
   };
 
+  const handleSkipCropping = useCallback(async () => {
+    if (!selectedFile) return;
+
+    try {
+      // Compress the original image without cropping
+      const compressedBlob = await compressImage(selectedFile, {
+        maxWidth: selectedAspectRatio === 'original' ? 2400 : 1600,
+        maxHeight: selectedAspectRatio === 'original' ? 2400 : 1600,
+        quality: 0.8,
+        targetBytes: selectedAspectRatio === 'original' ? 1_000_000 : 300_000,
+      });
+
+      setCompressedBlob(compressedBlob);
+      setCompressedMime(compressedBlob.type || selectedFile.type);
+
+      const originalUrl = URL.createObjectURL(compressedBlob);
+      setCroppedImageUrl(originalUrl);
+      setShowCropper(false);
+      setSkipCropping(true);
+    } catch (error) {
+      console.error('Error processing image:', error);
+    }
+  }, [selectedFile, selectedAspectRatio]);
+
   const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
     const { width, height } = e.currentTarget;
+    const aspectRatioValue = getAspectRatioValue(selectedAspectRatio);
     
-    // Set a default crop that's centered and square
-    const crop = centerCrop(
-      makeAspectCrop(
-        {
-          unit: '%',
-          width: 90,
-        },
-        1, // 1:1 aspect ratio for square crop
+    if (aspectRatioValue) {
+      // Set a default crop with the selected aspect ratio
+      const crop = centerCrop(
+        makeAspectCrop(
+          {
+            unit: '%',
+            width: 90,
+          },
+          aspectRatioValue,
+          width,
+          height,
+        ),
         width,
         height,
-      ),
-      width,
-      height,
-    );
-    
-    setCrop(crop);
-  }, []);
+      );
+      setCrop(crop);
+    } else {
+      // For free crop, set a default rectangular crop
+      setCrop({
+        unit: '%',
+        x: 5,
+        y: 5,
+        width: 90,
+        height: 90,
+      });
+    }
+  }, [selectedAspectRatio]);
 
   const handleCropComplete = useCallback(async () => {
     if (!completedCrop || !imgRef.current || !selectedFile) return;
@@ -190,6 +256,8 @@ export default function ImageUploadDialog({
     setCrop(undefined);
     setCompletedCrop(undefined);
     setRotation(0);
+    setSelectedAspectRatio(aspectRatio);
+    setSkipCropping(false);
     
     // Reset file input
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
@@ -284,8 +352,8 @@ export default function ImageUploadDialog({
           </div>
           <DialogDescription className="text-muted-foreground">
             {currentStep === 'select' && description}
-            {currentStep === 'crop' && "Position and crop your image to get the perfect fit"}
-            {currentStep === 'preview' && "Review your image before uploading"}
+            {currentStep === 'crop' && `${selectedAspectRatio === 'original' ? 'Use the original image or crop' : 'Position and crop your image'} to get the perfect fit`}
+            {currentStep === 'preview' && `Perfect! Your ${skipCropping ? 'original' : 'cropped'} image is ready to upload`}
           </DialogDescription>
         </DialogHeader>
         
@@ -351,32 +419,62 @@ export default function ImageUploadDialog({
                   </Button>
                 </div>
               </div>
-              
-              <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-br from-muted/20 to-muted/10 p-4">
-                <ReactCrop
-                  crop={crop}
-                  onChange={(_, percentCrop) => setCrop(percentCrop)}
-                  onComplete={(c) => setCompletedCrop(c)}
-                  aspect={1}
-                  minWidth={50}
-                  minHeight={50}
-                  className="max-h-80"
-                >
-                  <img
-                    ref={imgRef}
-                    alt="Crop preview"
-                    src={imagePreview}
-                    style={{ 
-                      transform: `rotate(${rotation}deg)`,
-                      maxHeight: '320px',
-                      width: 'auto',
-                      borderRadius: '8px'
-                    }}
-                    onLoad={onImageLoad}
-                    className="shadow-lg"
-                  />
-                </ReactCrop>
+
+              {/* Aspect Ratio Selection */}
+              <div className="flex items-center space-x-4">
+                <span className="text-sm font-medium">Aspect Ratio:</span>
+                <Select value={selectedAspectRatio} onValueChange={setSelectedAspectRatio}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="square">Square (1:1)</SelectItem>
+                    <SelectItem value="landscape">Landscape (16:9)</SelectItem>
+                    <SelectItem value="portrait">Portrait (9:16)</SelectItem>
+                    <SelectItem value="free">Free Crop</SelectItem>
+                    {allowNoCrop && <SelectItem value="original">Original Size</SelectItem>}
+                  </SelectContent>
+                </Select>
+                {allowNoCrop && selectedAspectRatio === 'original' && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleSkipCropping}
+                    disabled={uploading}
+                    className="text-sm"
+                  >
+                    Use Original
+                  </Button>
+                )}
               </div>
+              
+              {selectedAspectRatio !== 'original' && (
+                <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-br from-muted/20 to-muted/10 p-4">
+                  <ReactCrop
+                    crop={crop}
+                    onChange={(_, percentCrop) => setCrop(percentCrop)}
+                    onComplete={(c) => setCompletedCrop(c)}
+                    aspect={getAspectRatioValue(selectedAspectRatio)}
+                    minWidth={50}
+                    minHeight={50}
+                    className="max-h-80"
+                  >
+                    <img
+                      ref={imgRef}
+                      alt="Crop preview"
+                      src={imagePreview}
+                      style={{ 
+                        transform: `rotate(${rotation}deg)`,
+                        maxHeight: '320px',
+                        width: 'auto',
+                        borderRadius: '8px'
+                      }}
+                      onLoad={onImageLoad}
+                      className="shadow-lg"
+                    />
+                  </ReactCrop>
+                </div>
+              )}
             </div>
           )}
 
@@ -385,12 +483,20 @@ export default function ImageUploadDialog({
             <div className="space-y-4 animate-in fade-in-50 duration-300">
               <div className="flex items-center space-x-2 mb-4">
                 <Check className="w-5 h-5 text-green-500" />
-                <span className="font-medium">Perfect! Ready to upload</span>
+                <span className="font-medium">
+                  Perfect! {skipCropping ? 'Original image' : 'Cropped image'} ready to upload
+                </span>
               </div>
               
               <div className="flex flex-col items-center space-y-4">
                 <div className="relative">
-                  <Avatar className="w-40 h-40 rounded-2xl shadow-2xl shadow-primary/20">
+                  <Avatar className={cn(
+                    "shadow-2xl shadow-primary/20",
+                    selectedAspectRatio === 'landscape' ? "w-60 h-36 rounded-2xl" :
+                    selectedAspectRatio === 'portrait' ? "w-36 h-60 rounded-2xl" :
+                    skipCropping ? "w-48 h-48 rounded-2xl" :
+                    "w-40 h-40 rounded-2xl"
+                  )}>
                     <AvatarImage
                       className="w-full h-full object-cover"
                       src={croppedImageUrl}
@@ -402,16 +508,36 @@ export default function ImageUploadDialog({
                   </div>
                 </div>
                 
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowCropper(true)}
-                  disabled={uploading}
-                  className="flex items-center space-x-2 hover:bg-primary/10 border-primary/30"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>Edit Crop</span>
-                </Button>
+                <div className="flex space-x-2">
+                  {!skipCropping && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowCropper(true)}
+                      disabled={uploading}
+                      className="flex items-center space-x-2 hover:bg-primary/10 border-primary/30"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                      <span>Edit Crop</span>
+                    </Button>
+                  )}
+                  {skipCropping && allowNoCrop && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowCropper(true);
+                        setSkipCropping(false);
+                        setCroppedImageUrl("");
+                      }}
+                      disabled={uploading}
+                      className="flex items-center space-x-2 hover:bg-primary/10 border-primary/30"
+                    >
+                      <CropIcon className="w-4 h-4" />
+                      <span>Add Cropping</span>
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -428,7 +554,7 @@ export default function ImageUploadDialog({
             </Button>
           </DialogClose>
           
-          {currentStep === 'crop' && (
+          {currentStep === 'crop' && selectedAspectRatio !== 'original' && (
             <Button
               onClick={handleCropComplete}
               disabled={uploading || !completedCrop}
