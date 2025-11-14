@@ -96,6 +96,7 @@ interface ReusableRegistrationFormProps {
   errorMessage?: string;
   showNavigation?: boolean;
   customActions?: ReactNode;
+  className?: string;
 }
 
 export function ReusableRegistrationForm({
@@ -119,6 +120,7 @@ export function ReusableRegistrationForm({
   errorMessage,
   showNavigation = true,
   customActions,
+  className,
 }: ReusableRegistrationFormProps) {
   const isLastPage = currentPageIndex === pages.length - 1;
 
@@ -141,8 +143,8 @@ export function ReusableRegistrationForm({
   };
 
   return (
-    <div className="flex justify-center items-center py-8">
-      <Card className="w-[800px] border shadow-sm pt-0">
+    <div className={`flex justify-center items-center ${className ?? "py-8"}`}>
+      <Card className={`w-[800px] gap-2 border shadow-sm pt-0 ${className}`}>
         {showHeader && (
           <CardHeader className="border-b bg-muted/30 py-1 pb-1">
             <CardTitle className="text-l text-center pt-4">

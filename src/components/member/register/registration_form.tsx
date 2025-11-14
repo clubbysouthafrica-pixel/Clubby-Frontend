@@ -13,7 +13,6 @@ import { useFetchClub } from "@/queries/clubs";
 import { RegistrationRequest } from "@/requests/registration-request";
 import { useMemberRegistrationMutation } from "@/mutations/useMemberRegistrationMutation";
 import { toast } from "sonner";
-import { formatAmount } from "@/data/currencies";
 import { AuthContext, AuthContextType } from "@/context/AuthContext";
 import { createValidRegistrationRequest } from "../../../helpers/members/registration/create-registration-request";
 import { getFieldName } from "../../../helpers/members/registration/get-field-name";
@@ -21,9 +20,9 @@ import {
   ReusableRegistrationForm,
   FormPage,
   PagedFormPayload,
-  FieldRequest,
   PageFieldBase
 } from "../../shared/registration/reusable-registration-form";
+import { ReusableSubmitRegistration } from "../../shared/registration/reusable-submit-registration";
 
 async function presignedUrlToDataUrl(url: string): Promise<string> {
   const response = await fetch(url);
@@ -59,7 +58,6 @@ export function ClubRegisterForm() {
     RegistrationRequest | undefined
   >(undefined);
   const [totalRegistrationFee, setTotalRegistrationFee] = useState(0);
-  const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
     const processPages = async () => {
@@ -218,7 +216,9 @@ export function ClubRegisterForm() {
       clubId as string
     );
 
-    if (!user) (request as any).email = email;
+    if (!user) {
+      (request as RegistrationRequest & { email?: string }).email = email;
+    }
     setRegistrationRequest(request);
 
     let total = 0;
@@ -229,12 +229,10 @@ export function ClubRegisterForm() {
   };
 
   const submitRegistration = () => {
-    setIsRegistering(true);
     if (registrationRequest) {
       mutate(registrationRequest, {
         onSuccess: () => {
           navigate(`/clubs/${clubId}`);
-          setIsRegistering(false);
           window.location.reload();
         },
         onError: () => toast(registerError?.message ?? "Registration failed"),
@@ -243,7 +241,6 @@ export function ClubRegisterForm() {
   };
 
   const handleContinue = () => {
-    // Create a synthetic form event
     const syntheticEvent = {
       preventDefault: () => {},
     } as FormEvent<HTMLFormElement>;
@@ -342,105 +339,33 @@ export function ClubRegisterForm() {
 
   return (
     <div className="flex justify-center items-center py-8">
-      <Card className="w-[800px] border shadow-sm pt-0">
-        <CardContent className="py-2 px-4">
-          <form>
-            <div className="space-y-2">
-              <div className="grid gap-2">
-                <div className="px-2 py-2 border rounded-lg space-y-2 bg-muted/10">
-                  {/* Total Registration Fee */}
-                  <div className="p-3 bg-muted/20 rounded-lg">
-                    <h2 className="text-base font-semibold mb-2">
-                      Total Registration Fee:{" "}
-                      <strong>
-                        {totalRegistrationFee === 0
-                          ? "FREE"
-                          : formatAmount(
-                              totalRegistrationFee,
-                              club?.currency || ""
-                            )}
-                      </strong>
-                    </h2>
-                    <ul className="ml-6 list-disc space-y-1">
-                      {registrationRequest.billing_fields.map(
-                        (f: FieldRequest) => (
-                          <li key={f.field_id} className="text-xs">
-                            {getFieldName(pages, f.field_id)}:{" "}
-                            {f.value === 0
-                              ? "FREE"
-                              : formatAmount(
-                                  f?.value as number,
-                                  club?.currency || ""
-                                )}
-                            {f.label ? ` (${f.label})` : ""}
-                          </li>
-                        )
-                      )}
-                    </ul>
-                  </div>
-
-                  <div className="bg-muted/20 p-3 rounded-lg border space-y-2">
-                    <p className="text-xs font-semibold text-yellow-700">
-                      ⚠️ Please review your membership information carefully
-                      before submitting.
-                    </p>
-                    <p className="text-xs">
-                      Once your registration is submitted, you must visit
-                      the <strong>Payments & Billing</strong> tab in your
-                      associated club profile to view available payment
-                      methods and instructions for paying any outstanding
-                      amounts.
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Clubby is <strong>not responsible</strong> for any
-                      incorrect payments, misdirected payments, or payment
-                      errors. Please follow the instructions on the Payments
-                      tab carefully.
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Ensure all billing information is correct to avoid
-                      delays in processing your membership.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center pt-3 border-t mt-2">
-                  <Button
-                    variant="outline"
-                    type="button"
-                    size="sm"
-                    className="w-[110px]"
-                    onClick={returnBackToRegistrationForm}
-                    disabled={isPending}
-                  >
-                    Back to form
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={submitRegistration}
-                    disabled={isPending}
-                  >
-                    {isRegistering
-                      ? "Registering..."
-                      : "Submit registration"}
-                  </Button>
-                </div>
-
-                <div className="text-center text-xs mt-2 pt-2 border-t">
-                  Go back to club?{" "}
-                  <Link
-                    to={`/clubs/${clubId}`}
-                    className="underline underline-offset-4"
-                  >
-                    Cancel
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+      <ReusableSubmitRegistration
+        showMemberInfo={false}
+        clubName={club?.club_name || ""}
+        clubCurrency={club?.currency || ""}
+        totalRegistrationFee={totalRegistrationFee}
+        billingFields={registrationRequest.billing_fields.map((f) => ({
+          field_id: f.field_id,
+          value: f.value,
+        }))}
+        getFieldName={(fieldId) => getFieldName(pages, fieldId)}
+        onBack={returnBackToRegistrationForm}
+        onSubmit={submitRegistration}
+        isSubmitting={isPending}
+        showPaymentWarning={true}
+        className="w-[800px] border shadow-sm"
+        bottomContent={
+          <div className="text-center text-xs mt-2 pt-2 border-t">
+            Go back to club?{" "}
+            <Link
+              to={`/clubs/${clubId}`}
+              className="underline underline-offset-4"
+            >
+              Cancel
+            </Link>
+          </div>
+        }
+      />
     </div>
   );
 }

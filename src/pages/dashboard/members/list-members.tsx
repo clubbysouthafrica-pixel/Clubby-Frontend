@@ -270,7 +270,7 @@ export default function ListMembersPage() {
                     <Badge variant="secondary">{unregisteredMembersLength}</Badge>
                   </TabsTrigger>
                   <TabsTrigger value="previous-members" className="w-[300px]">
-                    Deregistered Members {" "}
+                    Members Requiring Re-Registration {" "}
                     <Badge variant="secondary">{deregisteredMembersLength}</Badge>
                   </TabsTrigger>
                 </TabsList>
