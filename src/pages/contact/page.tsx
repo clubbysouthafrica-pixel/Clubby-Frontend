@@ -14,7 +14,6 @@ import {
   ArrowRight,
   CheckCircle
 } from "lucide-react";
-import Pager from "@/components/pager";
 
 export default function ContactPage() {
     return (

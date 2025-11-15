@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import Pager from "@/components/pager.tsx";
 import { Club } from "@/interfaces/club";
 import { useFetchClubsQuery } from "@/queries/clubs";
 import { 
