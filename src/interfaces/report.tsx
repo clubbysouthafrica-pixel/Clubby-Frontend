@@ -38,11 +38,6 @@ export interface RegistrationRowData {
   data: RegistrationReportRowDataItem[]
 }
 
-// A top-level registration report bucket can either contain nested rows (rows[])
-// or be an aggregate with its own data series (data[]) and summary totals.
-// The original code accessed properties like fee_amount, total, data on items
-// that were typed loosely as any. We model them here as optional so that
-// strict typing reflects the API shape without losing safety.
 export interface RegistrationReportDropDown {
   table_name: string
   field_id: string
