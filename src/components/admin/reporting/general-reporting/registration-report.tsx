@@ -13,7 +13,7 @@ interface props {
 
 export function RegistrationReport({ report, currency }: props) {
     return (
-        <div className="space-y-6 px-6 py-0">
+        <div className="space-y-6">
             <div className="text-center space-y-1">
                 <h1 className="text-xl font-semibold tracking-tight">Registration Report</h1>
                 <p className="text-sm text-muted-foreground">Registrations, deregistrations, and revenue over time.</p>
