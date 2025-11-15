@@ -1,5 +1,4 @@
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,8 +7,7 @@ import {
 } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { FormEvent, useContext, useEffect, useMemo, useState } from "react";
-import { Alert, AlertTitle } from "@/components/ui/alert";
-import { Loader2, CheckCircle2Icon } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useFetchRegistrationForm } from "@/queries/admin/registration-form";
 import { useFetchClub } from "@/queries/admin/clubs";
 import { AdminRegistrationRequest } from "@/requests/registration-request";
@@ -26,6 +24,7 @@ import {
 import {
   ReusableSubmitRegistration,
 } from "../../../shared/registration/reusable-submit-registration";
+import RegistrationSuccessful from "@/components/shared/registration/registration-successful";
 
 export function ClubRegisterForm({
   className,
@@ -265,25 +264,14 @@ export function ClubRegisterForm({
 
   if (isSuccess) {
     return (
-      <div className={cn("flex flex-col gap-6", className)} {...props}>
-        <Card className="w-[800px] border shadow-sm pt-0">
-          <CardHeader className="border-b bg-muted/30 py-1 pb-1">
-            <Alert className="flex items-center justify-center gap-2 text-center">
-              <CheckCircle2Icon color="green" className="w-6 h-6" />
-              <AlertTitle className="text-green-800 mt-2">
-                Registration successful!
-              </AlertTitle>
-            </Alert>
-          </CardHeader>
-          <CardContent className="py-6 px-4">
-            <Link
-              to="/manage/members/add"
-              onClick={() => setShowRegistrationForm(false)}
-            >
-              <Button className="w-full">Add another member</Button>
-            </Link>
-          </CardContent>
-        </Card>
+      <div className={cn("flex flex-col gap-6 items-start", className)} {...props}>
+        <RegistrationSuccessful
+          title={`Registration successful!`}
+          message={`The member has been registered. You can add another member or return.`}
+          onView={() => setShowRegistrationForm(false)}
+          onClose={() => setShowRegistrationForm(false)}
+          alignLeft
+        />
       </div>
     );
   }

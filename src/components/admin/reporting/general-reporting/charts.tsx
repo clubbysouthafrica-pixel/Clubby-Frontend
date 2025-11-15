@@ -150,7 +150,7 @@ export function RegistrationComboChart({ data, currency }: RegistrationComboChar
   const chartData = data.map((d) => ({
     name: formatMonthLabel(d.date),
     registered: d.total_registered_members,
-    deregistered: d.total_deregistered_members,
+    pendingMembers: d.total_pending_members,
     revenue: d.total_revenue,
     pending: d.total_pending_revenue,
   }));
@@ -177,7 +177,7 @@ export function RegistrationComboChart({ data, currency }: RegistrationComboChar
           <Tooltip content={<RegistrationCustomTooltip currency={currency} />} />
           <Legend />
           <Bar yAxisId="left" dataKey="registered" name="Completed Registrations" fill={CHART_COLORS.registered.fill} stroke={CHART_COLORS.registered.stroke} strokeWidth={1} radius={[4, 4, 0, 0]} label={{ position: "top", fill: CHART_COLORS.registered.stroke, fontSize: 11 }} />
-          <Bar yAxisId="left" dataKey="deregistered" name="Members Deregistered" fill={CHART_COLORS.deregistered.fill} stroke={CHART_COLORS.deregistered.stroke} strokeWidth={1} radius={[4, 4, 0, 0]} label={{ position: "top", fill: CHART_COLORS.deregistered.stroke, fontSize: 11 }} />
+          <Bar yAxisId="left" dataKey="pendingMembers" name="Pending Members" fill={CHART_COLORS.deregistered.fill} stroke={CHART_COLORS.deregistered.stroke} strokeWidth={1} radius={[4, 4, 0, 0]} label={{ position: "top", fill: CHART_COLORS.deregistered.stroke, fontSize: 11 }} />
           <Line yAxisId="right" type="monotone" dataKey="revenue" name="Revenue" stroke={CHART_COLORS.revenue.stroke} strokeWidth={2} dot={false} />
           <Line yAxisId="right" type="monotone" dataKey="pending" name="Pending Revenue" stroke={CHART_COLORS.pendingRevenue.stroke} strokeWidth={2} dot={false} strokeDasharray="5 5" />
         </ComposedChart>

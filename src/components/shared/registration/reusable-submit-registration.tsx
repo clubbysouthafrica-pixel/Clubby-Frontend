@@ -84,7 +84,7 @@ export function ReusableSubmitRegistration({
         <form>
           <div className="space-y-2">
             <div className="grid gap-2">
-              <div className="h-[350px] overflow-y-auto px-2 py-2 space-y-2 bg-muted/10">
+              <div className="px-2 py-2 space-y-2 bg-muted/10">
                 {/* Member Information (optional) */}
                 {showMemberInfo && firstName && surname && email && (
                   <div className="p-3">

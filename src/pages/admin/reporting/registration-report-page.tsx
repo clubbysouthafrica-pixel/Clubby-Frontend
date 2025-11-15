@@ -17,6 +17,7 @@ export default function RegistrationReportPage() {
       </div>
     )
   }
+  console.log('DATA: ', data)
   return (
     <div className="p-6 md:p-8 space-y-4">
       <div className="space-y-1 text-center">

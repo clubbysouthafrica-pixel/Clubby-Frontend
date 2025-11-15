@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import DynamicFormBuilder from "@/components/dynamic-page-form-builder";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { useCreateClubMutation } from "@/mutations/admin/useRegistrationMutation";
 import { toast } from "sonner";
@@ -27,6 +27,12 @@ export default function AdminRegistrationFormPage() {
     const [saving, setSaving] = useState(false);
 
     const [previewRegForm, setPreviewRegForm] = useState(false);
+    // controlled active tab so we can detect changes and scroll
+    const [activeTabIndex, setActiveTabIndex] = useState(0);
+    // ref to the scrollable content area below the header
+    const contentRef = useRef<HTMLDivElement | null>(null);
+    // track previous field counts per page to detect when a field is added (use ref to avoid re-renders)
+    const prevFieldCountsRef = useRef<Record<number, number>>({});
 
     const defaultPage = { page_index: 0, page_header: "Page 1", fields: [] }
 
@@ -42,6 +48,10 @@ export default function AdminRegistrationFormPage() {
             const sortedPages = data.pages.sort((a: any, b: any) => a.page_index - b.page_index)
             setOriginalPages(sortedPages)
             setPages(sortedPages)
+            // initialize prevFieldCounts map
+            const counts: Record<number, number> = {};
+            sortedPages.forEach((p: any) => (counts[p.page_index] = p.fields?.length ?? 0));
+            prevFieldCountsRef.current = counts;
         }
     }, [data])
 
@@ -93,8 +103,30 @@ export default function AdminRegistrationFormPage() {
     };
 
     const addPage = () => {
-        setPages((v: PageFormRegistration[]) => v.length > 0 ? [...v, { page_header: `Page ${v.length + 1}`, page_index: v.length, fields: [] }] : [defaultPage])
+        setPages((v: PageFormRegistration[]) => {
+            const next = v.length > 0 ? [...v, { page_header: `Page ${v.length + 1}`, page_index: v.length, fields: [] }] : [defaultPage];
+            // jump to the new page after it's added
+            setTimeout(() => setActiveTabIndex(next.length - 1), 0);
+            return next;
+        })
     }
+
+    // detect when fields are added to the current page and scroll to bottom
+    useEffect(() => {
+        if (!contentRef.current) return;
+        const counts: Record<number, number> = {};
+        pages.forEach((p) => (counts[p.page_index] = p.fields?.length ?? 0));
+
+        const prev = prevFieldCountsRef.current[activeTabIndex] ?? 0;
+        const current = counts[activeTabIndex] ?? 0;
+        if (current > prev) {
+            // scroll to bottom of content area so the newly added field is visible
+            contentRef.current.scrollTo({ top: contentRef.current.scrollHeight, behavior: "smooth" });
+        }
+
+        // update ref in-place (no state) to avoid triggering re-renders
+        prevFieldCountsRef.current = counts;
+    }, [pages, activeTabIndex]);
 
     const removePage = (pageIndex: number) => {
         setPages(
@@ -129,8 +161,8 @@ export default function AdminRegistrationFormPage() {
     }
 
     return (
-        <div className="px-5 pt-5 w-[90%] min-h-screen">
-            <div className="flex justify-between items-center mb-8">
+        <div className="px-5 pt-5 w-[90%] min-h-screen flex flex-col">
+            <div className="flex justify-between items-center mb-4 sticky top-0 bg-white z-20 py-4">
                 <div>
                     <h1 className="text-base font-bold">Create the member registration form</h1>
                     <p className="text-muted-foreground">
@@ -146,19 +178,19 @@ export default function AdminRegistrationFormPage() {
                     <Button onClick={saveRegistrationForm}>{"Save Form"}</Button>
                 </div>
             </div>
+            <div ref={contentRef} className="flex-1 overflow-auto">
+                {(saving || isLoading) && (
+                    <div className="flex justify-center py-8">
+                        <Loader2 className="h-8 w-8 animate-spin" />
+                    </div>
+                )}
 
-            {(saving || isLoading) && (
-                <div className="flex justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                </div>
-            )}
+                {
+                    !isLoading && !saving && previewRegForm && <PreviewForm clubName={club?.club_name ?? ""} currency={club?.currency ?? "ZAR"} formPages={pages} />
+                }
 
-            {
-                !isLoading && !saving && previewRegForm && <PreviewForm clubName={club?.club_name ?? ""} currency={club?.currency ?? "ZAR"} formPages={pages} />
-            }
-
-            {!isLoading && !saving && !previewRegForm &&
-                <Tabs defaultValue='0'>
+                {!isLoading && !saving && !previewRegForm &&
+                    <Tabs value={activeTabIndex.toString()} onValueChange={(v) => setActiveTabIndex(Number(v))}>
                     <TabsList className="flex items-center max-w-full">
                         <div className="flex-1 flex overflow-x-auto flex-nowrap custom-thin-scrollbar space-x-2 py-1">
                             {pages.map((p) => (
@@ -203,6 +235,7 @@ export default function AdminRegistrationFormPage() {
                     }
                 </Tabs>
             }
+            </div>
         </div>
     );
 }

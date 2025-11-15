@@ -43,7 +43,7 @@ export function CurrentMemberRegistration({
       </div>
     );
   }
-  
+  console.log(data.pages[currentPageIndex])
   return (
     <div className="w-full space-y-2 flex-1 min-h-0 flex flex-col">
       {/* Registration Timeline Info */}
@@ -136,10 +136,10 @@ export function CurrentMemberRegistration({
                 return (
                   <div key={field.label} className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg border">
                     <Label className="text-xs font-semibold text-muted-foreground">
-                      {field.label} {field.quantity ? `(x${field.quantity})` : null}
+                      {field.label}
                     </Label>
                     <Label className="text-xs font-medium border-b-2 border-gray-300 pb-1">
-                      {field.value}
+                      {field.value} {field.quantity ? `(${field.quantity})` : null}
                     </Label>
                   </div>
                 );

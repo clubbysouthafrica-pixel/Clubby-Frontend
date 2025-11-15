@@ -1,8 +1,7 @@
-import { Button } from "@/components/ui/button";
 import { useFetchRegistrationForm } from "@/queries/registration-form";
-import { Loader2, CheckCircle2Icon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Alert, AlertTitle } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
+import RegistrationSuccessful from "@/components/shared/registration/registration-successful";
 import {
   createValidRegistrationRequest,
   type SubmitRegistrationRequest,
@@ -217,37 +216,12 @@ export function PublicRegistrationForm({
   if (isSuccess) {
     return (
       <div className="space-y-2">
-        <div className="border-b py-1 mb-3">
-          <div className="flex justify-center items-center gap-4 text-sm text-center">
-            <span>
-              Name:{" "}
-              <strong>
-                {firstName} {surname}
-              </strong>
-            </span>
-            <span className="text-muted-foreground">|</span>
-            <span>
-              Email: <strong>{email}</strong>
-            </span>
-          </div>
-          <div className="mt-2">
-            <Alert className="flex items-center justify-center gap-2 text-center">
-              <CheckCircle2Icon color="green" className="w-6 h-6" />
-              <AlertTitle className="text-green-800 mt-2">
-                Registration successful!
-              </AlertTitle>
-            </Alert>
-          </div>
-        </div>
-        <div className="text-center space-y-4 py-8">
-          <p className="text-sm text-muted-foreground">
-            Your registration has been submitted. Please check your email for
-            further instructions.
-          </p>
-          <Button onClick={onEditDetails} variant="outline">
-            Back to club
-          </Button>
-        </div>
+        <RegistrationSuccessful
+          title={`Registration successful!`}
+          message={`Your registration has been submitted. Please check your email for further instructions.`}
+          onView={onEditDetails}
+          onClose={onEditDetails}
+        />
       </div>
     );
   }

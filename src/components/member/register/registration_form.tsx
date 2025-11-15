@@ -1,8 +1,4 @@
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+// UI primitives are used inside child components; keep imports minimal here
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -13,6 +9,7 @@ import { useFetchClub } from "@/queries/clubs";
 import { RegistrationRequest } from "@/requests/registration-request";
 import { useMemberRegistrationMutation } from "@/mutations/useMemberRegistrationMutation";
 import { toast } from "sonner";
+import RegistrationSuccessful from "@/components/shared/registration/registration-successful";
 import { AuthContext, AuthContextType } from "@/context/AuthContext";
 import { createValidRegistrationRequest } from "../../../helpers/members/registration/create-registration-request";
 import { getFieldName } from "../../../helpers/members/registration/get-field-name";
@@ -58,6 +55,7 @@ export function ClubRegisterForm() {
     RegistrationRequest | undefined
   >(undefined);
   const [totalRegistrationFee, setTotalRegistrationFee] = useState(0);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     const processPages = async () => {
@@ -232,8 +230,8 @@ export function ClubRegisterForm() {
     if (registrationRequest) {
       mutate(registrationRequest, {
         onSuccess: () => {
-          navigate(`/clubs/${clubId}`);
-          window.location.reload();
+          // show a friendly success screen instead of immediately redirecting
+          setShowSuccess(true);
         },
         onError: () => toast(registerError?.message ?? "Registration failed"),
       });
@@ -260,24 +258,15 @@ export function ClubRegisterForm() {
     );
   }
 
-  if (isSuccess) {
+  if (showSuccess || isSuccess) {
     return (
       <div className="flex justify-center items-center py-8">
-        <Card className="w-[800px] border shadow-sm pt-0">
-          <CardContent className="py-6 px-4">
-            <div className="space-y-4">
-              <h2 className="text-l text-center font-semibold">
-                Successfully Registered to {club?.club_name}
-              </h2>
-              <p className="text-center text-xs text-muted-foreground">
-                Club will stay in contact with you once registration is completed.
-              </p>
-              <Link to={`/clubs/${clubId}`}>
-                <Button className="w-full">Back to club</Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+        <RegistrationSuccessful
+          title={`Successfully Registered to ${club?.club_name}`}
+          message={`Club will stay in contact with you once registration is completed.`}
+          onView={() => navigate(`/clubs/${clubId}`)}
+          onClose={() => navigate(`/clubs/${clubId}`)}
+        />
       </div>
     );
   }
