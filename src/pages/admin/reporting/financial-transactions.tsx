@@ -107,10 +107,10 @@ export default function FinancialTransactionsPage() {
                     <TableHeader className="bg-muted sticky top-0 z-10">
                         <TableRow>
                             <TableHead className="text-center"></TableHead>
-                            <TableHead className="text-center w-1/5">Transaction ID</TableHead>
-                            <TableHead className="text-center w-1/5">Member ID</TableHead>
-                            <TableHead className="text-center w-1/5">Type</TableHead>
-                            <TableHead className="text-center w-1/5">Status</TableHead>
+                            <TableHead className="text-center w-1/4">Transaction ID</TableHead>
+                            <TableHead className="text-center w-1/4">Member ID</TableHead>
+                            <TableHead className="text-center w-1/4">Type</TableHead>
+                            <TableHead className="text-center w-1/4">Status</TableHead>
                         </TableRow>
                     </TableHeader>
 
