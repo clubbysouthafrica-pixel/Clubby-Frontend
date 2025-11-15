@@ -110,7 +110,6 @@ export default function FinancialTransactionsPage() {
                             <TableHead className="text-center w-1/5">Transaction ID</TableHead>
                             <TableHead className="text-center w-1/5">Member ID</TableHead>
                             <TableHead className="text-center w-1/5">Type</TableHead>
-                            <TableHead className="text-center w-1/5">Outstanding amount</TableHead>
                             <TableHead className="text-center w-1/5">Status</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -189,7 +188,6 @@ export default function FinancialTransactionsPage() {
                                         </button>
                                     </TableCell>
                                     <TableCell className="text-center">{tx.type}</TableCell>
-                                    <TableCell className="text-center">{formatAmount(tx.outstanding_amount, club?.currency)}</TableCell>
                                     <TableCell className={`text-center font-bold ${tx.status === "PENDING"
                                         ? "text-red-500"
                                         : tx.status === "PARTIALLY PAID"
