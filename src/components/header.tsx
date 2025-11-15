@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/navigation-menu"
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button.tsx";
-import { ChevronDown, Menu, X, User } from "lucide-react";
+import { ChevronDown, Menu, X, User, Sparkles } from "lucide-react";
 import { useContext, useState } from "react";
 import { AuthContext, AuthContextType } from "@/context/AuthContext.tsx";
 import {
@@ -79,16 +79,38 @@ export default function Header() {
 
 
     return (
-        <nav className="p-3 backdrop-blur-xl sticky top-0 z-50"
+        <nav className="p-3 backdrop-blur-xl border-b border-primary/10 sticky top-0 z-50"
             style={{
                 backgroundColor: "color-mix(in oklch, var(--background) 85%, transparent)",
             }}
         >
             <div className="container mx-auto flex justify-between items-center">
-                <Link to="/" className="font-bold flex space-x-2 content-center align-middle">
-                    <img src={Img} className="w-8 h-8" />
-                    <p className="self-center">{import.meta.env.VITE_BRAND_NAME}</p>
+                <Link 
+                    to="/" 
+                    className="flex items-center space-x-3 group transition-all duration-300 hover:scale-105"
+                >
+                    <div className="relative">
+                        <img 
+                            src={Img} 
+                            className="w-10 h-10 rounded-lg shadow-md group-hover:shadow-lg transition-shadow" 
+                            alt="Logo"
+                        />
+                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-primary to-primary/80 rounded-full flex items-center justify-center">
+                            <Sparkles className="w-2 h-2 text-primary-foreground" />
+                        </div>
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="font-bold text-lg bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                            {import.meta.env.VITE_BRAND_NAME}
+                        </span>
+                        <span className="text-xs text-muted-foreground -mt-1">
+                            Club Management
+                        </span>
+                    </div>
                 </Link>
+
+                
+
                 <NavigationMenu className="hidden md:flex">
                     <NavigationMenuList>
                         <NavigationMenuItem>
