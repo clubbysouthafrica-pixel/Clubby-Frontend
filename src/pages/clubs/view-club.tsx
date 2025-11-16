@@ -235,7 +235,9 @@ export default function ViewClubPage() {
                           />
                         ) : (
                           <AvatarFallback className="font-bold text-xl bg-gradient-to-br from-primary/20 to-primary/10 text-primary">
-                            {data?.club_name?.split(" ").map((i: string) => i[0])}
+                            {data?.club_name
+                              ?.split(" ")
+                              .map((i: string) => i[0])}
                           </AvatarFallback>
                         )}
                       </Avatar>
@@ -284,39 +286,50 @@ export default function ViewClubPage() {
                       {/* Membership Status */}
                       {data?.club_member_exists && (
                         <div className="text-center">
-                          <div className="flex items-center justify-center gap-2 mb-2">
-                            {data.registered ? (
-                              <CheckCircle className="w-5 h-5 text-green-600" />
-                            ) : (
-                              <Clock className="w-5 h-5 text-orange-600" />
-                            )}
-                            <Badge 
-                              variant={data.registered ? "default" : "secondary"}
-                              className={cn(
-                                "text-sm",
-                                data.registered 
-                                  ? "bg-green-100 text-green-800 border-green-200" 
-                                  : "bg-orange-100 text-orange-800 border-orange-200"
+                          {!data.resubmission_required && (
+                            <div className="flex items-center justify-center gap-2 mb-2">
+                              {data.registered ? (
+                                <CheckCircle className="w-5 h-5 text-green-600" />
+                              ) : (
+                                <Clock className="w-5 h-5 text-orange-600" />
                               )}
-                            >
-                              {data.registered ? "Active Member" : "Pending Member"}
-                            </Badge>
-                          </div>
-                          {!data.registered && bankDetails?.outstanding_amount > 0 && (
-                            <div className="text-center space-y-1">
-                              <p className="text-sm text-muted-foreground">
-                                Outstanding: {formatAmount(bankDetails.outstanding_amount, data.currency)}
-                              </p>
-                              <Button
-                                variant="link"
-                                size="sm"
-                                onClick={handlePayHereClick}
-                                className="text-xs h-auto p-0 text-destructive hover:text-destructive/80"
+                              <Badge
+                                variant={
+                                  data.registered ? "default" : "secondary"
+                                }
+                                className={cn(
+                                  "text-sm",
+                                  data.registered
+                                    ? "bg-green-100 text-green-800 border-green-200"
+                                    : "bg-orange-100 text-orange-800 border-orange-200"
+                                )}
                               >
-                                Pay Now
-                              </Button>
+                                {data.registered
+                                  ? "Active Member"
+                                  : "Pending Member"}
+                              </Badge>
                             </div>
                           )}
+                          {!data.registered &&
+                            bankDetails?.outstanding_amount > 0 && (
+                              <div className="text-center space-y-1">
+                                <p className="text-sm text-muted-foreground">
+                                  Outstanding:{" "}
+                                  {formatAmount(
+                                    bankDetails.outstanding_amount,
+                                    data.currency
+                                  )}
+                                </p>
+                                <Button
+                                  variant="link"
+                                  size="sm"
+                                  onClick={handlePayHereClick}
+                                  className="text-xs h-auto p-0 text-destructive hover:text-destructive/80"
+                                >
+                                  Pay Now
+                                </Button>
+                              </div>
+                            )}
                         </div>
                       )}
 
@@ -325,7 +338,9 @@ export default function ViewClubPage() {
                         {!data?.club_member_exists && isLoggedIn && (
                           <Button
                             className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300"
-                            onClick={() => navigate(`/clubs/${clubId}/register`)}
+                            onClick={() =>
+                              navigate(`/clubs/${clubId}/register`)
+                            }
                           >
                             <Users className="w-4 h-4 mr-2" />
                             Join Club
@@ -334,7 +349,9 @@ export default function ViewClubPage() {
                         {!data?.club_member_exists && !isLoggedIn && (
                           <Button
                             className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300"
-                            onClick={() => navigate(`/clubs/${clubId}/public/register`)}
+                            onClick={() =>
+                              navigate(`/clubs/${clubId}/public/register`)
+                            }
                           >
                             <Users className="w-4 h-4 mr-2" />
                             Join Club
@@ -344,7 +361,9 @@ export default function ViewClubPage() {
                           <Button
                             variant="destructive"
                             className="shadow-lg hover:shadow-xl transition-all duration-300"
-                            onClick={() => navigate(`/clubs/${clubId}/register`)}
+                            onClick={() =>
+                              navigate(`/clubs/${clubId}/register`)
+                            }
                           >
                             <AlertTriangle className="w-4 h-4 mr-2" />
                             Re-registration Required
@@ -361,37 +380,47 @@ export default function ViewClubPage() {
           {/* Navigation Tabs */}
           <div className="container mx-auto px-4 mt-8 mb-6">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className={cn(
-                "bg-background/50 backdrop-blur-sm border border-primary/20 shadow-lg",
-                isMobile ? 'flex flex-col h-auto w-full gap-1 p-1' : 'justify-start h-12'
-              )}>
-                <TabsTrigger 
+              <TabsList
+                className={cn(
+                  "bg-background/50 backdrop-blur-sm border border-primary/20 shadow-lg",
+                  isMobile
+                    ? "flex flex-col h-auto w-full gap-1 p-1"
+                    : "justify-start h-12"
+                )}
+              >
+                <TabsTrigger
                   className={cn(
                     "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium",
-                    isMobile ? 'w-full justify-center text-sm h-10' : 'w-[200px] h-10'
-                  )} 
+                    isMobile
+                      ? "w-full justify-center text-sm h-10"
+                      : "w-[200px] h-10"
+                  )}
                   value="home"
                 >
                   <Home className="w-4 h-4 mr-2" />
                   Home
                 </TabsTrigger>
                 {(data?.club_member_exists || data?.resubmission_required) && (
-                  <TabsTrigger 
+                  <TabsTrigger
                     className={cn(
                       "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium",
-                      isMobile ? 'w-full justify-center text-sm h-10' : 'w-[200px] h-10'
-                    )} 
+                      isMobile
+                        ? "w-full justify-center text-sm h-10"
+                        : "w-[200px] h-10"
+                    )}
                     value="bank"
                   >
                     <CreditCard className="w-4 h-4 mr-2" />
-                    {isMobile ? 'Payments' : 'Payments & Billing'}
+                    {isMobile ? "Payments" : "Payments & Billing"}
                   </TabsTrigger>
                 )}
                 {(data?.club_member_exists || data?.resubmission_required) && (
                   <TabsTrigger
                     className={cn(
                       "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium",
-                      isMobile ? 'w-full justify-center text-sm h-10' : 'w-[200px] h-10'
+                      isMobile
+                        ? "w-full justify-center text-sm h-10"
+                        : "w-[200px] h-10"
                     )}
                     value="member-registration"
                   >
@@ -427,14 +456,20 @@ export default function ViewClubPage() {
                             <div className="flex items-center gap-3">
                               <Globe className="w-5 h-5 text-primary" />
                               <div>
-                                <h3 className="font-semibold text-foreground">Club Website</h3>
-                                <p className="text-sm text-muted-foreground">Interactive club content</p>
+                                <h3 className="font-semibold text-foreground">
+                                  Club Website
+                                </h3>
+                                <p className="text-sm text-muted-foreground">
+                                  Interactive club content
+                                </p>
                               </div>
                             </div>
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => window.open(data.club_url!, "_blank")}
+                              onClick={() =>
+                                window.open(data.club_url!, "_blank")
+                              }
                               className="bg-background/50 backdrop-blur-sm border-primary/20 hover:bg-primary/5"
                             >
                               <ExternalLink className="h-4 w-4 mr-2" />
@@ -460,9 +495,12 @@ export default function ViewClubPage() {
                               <Sparkles className="w-6 h-6 text-primary" />
                             </div>
                             <div>
-                              <CardTitle className="text-xl">Welcome to {data.club_name}</CardTitle>
+                              <CardTitle className="text-xl">
+                                Welcome to {data.club_name}
+                              </CardTitle>
                               <CardDescription className="text-base">
-                                {data?.description ?? "Discover what this amazing club has to offer."}
+                                {data?.description ??
+                                  "Discover what this amazing club has to offer."}
                               </CardDescription>
                             </div>
                           </div>
@@ -481,22 +519,32 @@ export default function ViewClubPage() {
                           <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                             <Mail className="h-5 w-5 text-primary" />
                             <div>
-                              <p className="text-sm text-muted-foreground">Support Email</p>
-                              <p className="font-medium">{data.support_email}</p>
+                              <p className="text-sm text-muted-foreground">
+                                Support Email
+                              </p>
+                              <p className="font-medium">
+                                {data.support_email}
+                              </p>
                             </div>
                           </div>
                           <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                             <MapPin className="h-5 w-5 text-primary" />
                             <div>
-                              <p className="text-sm text-muted-foreground">Location</p>
+                              <p className="text-sm text-muted-foreground">
+                                Location
+                              </p>
                               <p className="font-medium">{countryName}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                             <Calendar className="h-5 w-5 text-primary" />
                             <div>
-                              <p className="text-sm text-muted-foreground">Established</p>
-                              <p className="font-medium">{epochToJoinedString(data.joined)}</p>
+                              <p className="text-sm text-muted-foreground">
+                                Established
+                              </p>
+                              <p className="font-medium">
+                                {epochToJoinedString(data.joined)}
+                              </p>
                             </div>
                           </div>
                         </CardContent>
@@ -520,7 +568,10 @@ export default function ViewClubPage() {
                             Outstanding Balance
                           </CardTitle>
                           <CardDescription className="text-lg">
-                            {formatAmount(bankDetails?.outstanding_amount, data.currency)}
+                            {formatAmount(
+                              bankDetails?.outstanding_amount,
+                              data.currency
+                            )}
                           </CardDescription>
                         </div>
                         {bankDetails?.outstanding_amount === 0 && (
@@ -532,8 +583,12 @@ export default function ViewClubPage() {
                       </div>
                       {bankDetails?.registration_payment_reference && (
                         <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                          <p className="text-sm text-muted-foreground mb-1">Payment Reference Number</p>
-                          <p className="font-mono font-semibold">{bankDetails.registration_payment_reference}</p>
+                          <p className="text-sm text-muted-foreground mb-1">
+                            Payment Reference Number
+                          </p>
+                          <p className="font-mono font-semibold">
+                            {bankDetails.registration_payment_reference}
+                          </p>
                         </div>
                       )}
                     </CardHeader>
@@ -552,9 +607,12 @@ export default function ViewClubPage() {
                             <CreditCard className="w-5 h-5 text-primary" />
                           </div>
                           <div>
-                            <CardTitle className="text-xl">Payment Options</CardTitle>
+                            <CardTitle className="text-xl">
+                              Payment Options
+                            </CardTitle>
                             <CardDescription className="text-base">
-                              Choose your preferred method to settle your outstanding balance
+                              Choose your preferred method to settle your
+                              outstanding balance
                             </CardDescription>
                           </div>
                         </div>
@@ -582,16 +640,22 @@ export default function ViewClubPage() {
                             <div className="text-center space-y-3">
                               <div className="flex items-center justify-center gap-2">
                                 <Building2 className="w-6 h-6 text-primary" />
-                                <h3 className="text-xl font-semibold">Bank Transfer (EFT)</h3>
+                                <h3 className="text-xl font-semibold">
+                                  Bank Transfer (EFT)
+                                </h3>
                               </div>
                               <div className="max-w-2xl mx-auto">
                                 <p className="text-muted-foreground leading-relaxed">
-                                  Transfer funds directly to the club's bank account using the details below.
+                                  Transfer funds directly to the club's bank
+                                  account using the details below.
                                 </p>
                                 <div className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
                                   <p className="text-sm">
-                                    <strong className="text-primary">Important:</strong>{" "}
-                                    Always include your payment reference number to ensure proper allocation of your payment.
+                                    <strong className="text-primary">
+                                      Important:
+                                    </strong>{" "}
+                                    Always include your payment reference number
+                                    to ensure proper allocation of your payment.
                                   </p>
                                 </div>
                               </div>
@@ -677,7 +741,7 @@ export default function ViewClubPage() {
                                     </div>
                                   </CardContent>
                                 </Card>
-                                
+
                                 <Card className="group hover:shadow-md transition-shadow border-primary/10">
                                   <CardContent className="p-4">
                                     <div className="flex items-center justify-between">
@@ -774,7 +838,8 @@ export default function ViewClubPage() {
                                               {bankDetails?.payment_reference}
                                             </p>
                                             <p className="text-xs text-muted-foreground mt-1">
-                                              Always include this reference with your payment
+                                              Always include this reference with
+                                              your payment
                                             </p>
                                           </div>
                                         </div>
@@ -783,7 +848,8 @@ export default function ViewClubPage() {
                                           size="sm"
                                           onClick={() =>
                                             copyToClipboard(
-                                              bankDetails?.payment_reference || "",
+                                              bankDetails?.payment_reference ||
+                                                "",
                                               "reference"
                                             )
                                           }
@@ -821,9 +887,12 @@ export default function ViewClubPage() {
                               <FileText className="w-5 h-5 text-primary" />
                             </div>
                             <div>
-                              <CardTitle className="text-xl">Transaction History</CardTitle>
+                              <CardTitle className="text-xl">
+                                Transaction History
+                              </CardTitle>
                               <CardDescription className="text-base">
-                                View your payment transactions and membership activity
+                                View your payment transactions and membership
+                                activity
                               </CardDescription>
                             </div>
                           </div>
@@ -874,7 +943,8 @@ export default function ViewClubPage() {
                                             <div className="flex items-center gap-2">
                                               <div className="w-2 h-2 rounded-full bg-primary/50" />
                                               <span className="font-mono text-sm bg-muted/50 px-2 py-1 rounded">
-                                                {tx.transaction_id.slice(0, 8)}...
+                                                {tx.transaction_id.slice(0, 8)}
+                                                ...
                                               </span>
                                             </div>
 
@@ -884,7 +954,9 @@ export default function ViewClubPage() {
                                               size="sm"
                                               onClick={(e) => {
                                                 e.stopPropagation();
-                                                navigator.clipboard.writeText(tx.transaction_id);
+                                                navigator.clipboard.writeText(
+                                                  tx.transaction_id
+                                                );
                                               }}
                                               title="Copy full Transaction ID"
                                               className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -913,12 +985,18 @@ export default function ViewClubPage() {
                                           </div>
                                         </TableCell>
                                         <TableCell className="text-center py-4">
-                                          <Badge variant="outline" className="font-medium">
+                                          <Badge
+                                            variant="outline"
+                                            className="font-medium"
+                                          >
                                             {tx.type}
                                           </Badge>
                                         </TableCell>
                                         <TableCell className="text-center py-4 font-semibold">
-                                          {formatAmount(tx.outstanding_amount, data.currency)}
+                                          {formatAmount(
+                                            tx.outstanding_amount,
+                                            data.currency
+                                          )}
                                         </TableCell>
                                         <TableCell className="text-center py-4">
                                           <Badge
