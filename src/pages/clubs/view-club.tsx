@@ -644,7 +644,7 @@ export default function ViewClubPage() {
                                   Bank Transfer (EFT)
                                 </h3>
                               </div>
-                              <div className="max-w-2xl mx-auto">
+                              <div className="flex flex-col items-center">
                                 <p className="text-muted-foreground leading-relaxed">
                                   Transfer funds directly to the club's bank
                                   account using the details below.
