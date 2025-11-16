@@ -168,7 +168,7 @@ export default function SelectedMember({
                                             </div>
 
                                             {/* City */}
-                                            <div className="flex flex-col gap-1 p-2 bg-muted/20 rounded-lg">
+                                            <div className="flex flex-col gap-1 p-4 bg-muted/20 rounded-lg">
                                                 <div className="flex items-center gap-2">
                                                     <MapPin className="h-4 w-4 text-muted-foreground" />
                                                     <Label className="text-sm font-semibold text-muted-foreground">City</Label>
@@ -179,7 +179,7 @@ export default function SelectedMember({
                                             </div>
 
                                             {/* Postal Code */}
-                                            <div className="flex flex-col gap-1 p-2 bg-muted/20 rounded-lg">
+                                            <div className="flex flex-col gap-1 p-4 bg-muted/20 rounded-lg">
                                                 <div className="flex items-center gap-2">
                                                     <MapPin className="h-4 w-4 text-muted-foreground" />
                                                     <Label className="text-sm font-semibold text-muted-foreground">Postal Code</Label>
