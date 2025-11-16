@@ -53,6 +53,7 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
                         <Button
                             onClick={() => setOpenDialog(true)}
                             aria-label="Deregister season"
+                            variant="outline"
                         >
                             <UserMinus />
                            Deregister Season

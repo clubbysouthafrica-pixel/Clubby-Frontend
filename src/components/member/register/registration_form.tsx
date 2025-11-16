@@ -74,7 +74,7 @@ export function ClubRegisterForm() {
       setPages(sorted);
 
       if (!club?.meta) return;
-
+      
       const updatedPages = await Promise.all(
         sorted.map(async (page) => ({
           ...page,
@@ -111,6 +111,7 @@ export function ClubRegisterForm() {
                 return {
                   ...field,
                   value: metaField.value,
+                  multiplier_value: metaField?.multiplier_value ?? undefined
                 };
               }
 
