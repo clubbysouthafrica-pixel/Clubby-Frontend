@@ -4,6 +4,13 @@ export interface InputBillingOption {
     option_order_id: string
 }
 
+export interface InputDiscountOption {
+    label: string
+    percentage: number
+    option_order_id: string
+    applicable_billing_fields: string[]
+}
+
 export interface InputFormRegistration {
     field_name: string
     field_text: string
@@ -17,6 +24,7 @@ export interface InputFormRegistration {
     multiplier?: boolean
     multiplier_value?: number
     billingOptions?: InputBillingOption[]
+    discountOptions?: InputDiscountOption[]
     amount?: number;
     options?: string[];
     value?: any

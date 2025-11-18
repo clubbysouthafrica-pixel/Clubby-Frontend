@@ -12,6 +12,7 @@ import { ReactNode } from "react";
 import {
   StandardCheckbox,
   BillingDropdown,
+  BillingDiscountDropdown,
   StandardDropdown,
   StandardText,
   StandardSignature,
@@ -23,7 +24,8 @@ export type InputType =
   | "DROPDOWN"
   | "CHECKBOX"
   | "NUMBER"
-  | "SIGNATURE";
+  | "SIGNATURE"
+  | "DISCOUNT";
 export type FieldType = "TEXT" | "STANDARD" | "BILLING";
 
 export interface BillingOption {
@@ -52,12 +54,21 @@ export interface PageFieldBase {
   multiplier_value?: number;
   options?: string[];
   billingOptions?: BillingOption[];
+  discountOptions?: Array<{
+    option_order_id: string;
+    percentage: number;
+    label: string;
+    applicable_billing_fields: string[];
+  }>;
   currency?: string;
   amount?: number;
   value?: string;
   signature_type?: string;
   selectedAmountCents?: number;
+  selectedDiscountPercentage?: number;
+  applicable_billing_fields?: string[];
   option_order_id?: string;
+  percentage?: number;
   label?: string;
 }
 
@@ -286,6 +297,21 @@ export function ReusableRegistrationForm({
                                 key={field.field_id}
                                 field={field}
                                 clubCurrency={clubCurrency}
+                                currentPageIndex={currentPageIndex}
+                                pages={pages}
+                                setFieldValue={setFieldValue}
+                              />
+                            );
+                          }
+
+                          if (
+                            field.field_type === "BILLING" &&
+                            field.input_type === "DISCOUNT"
+                          ) {
+                            return (
+                              <BillingDiscountDropdown
+                                key={field.field_id}
+                                field={field}
                                 currentPageIndex={currentPageIndex}
                                 pages={pages}
                                 setFieldValue={setFieldValue}

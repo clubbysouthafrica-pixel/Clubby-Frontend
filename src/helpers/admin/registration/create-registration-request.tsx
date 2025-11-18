@@ -1,4 +1,4 @@
-export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER" | "SIGNATURE";
+export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER" | "SIGNATURE" | "DISCOUNT";
 export type FieldType = "TEXT" | "STANDARD" | "BILLING";
 
 export interface BillingOption {
@@ -25,6 +25,8 @@ export interface PageFieldBase {
     multiplier_value?: number
     value?: string | number;
     selectedAmountCents?: number;
+    percentage?: number;
+    applicable_billing_fields?: string[];
     option_order_id?: string;
     label?: string;
 }
@@ -35,6 +37,8 @@ export interface FieldRequest {
     option_order_id?: string
     signature_type?: string
     multiplier_value?: number
+    percentage?: number
+    applicable_billing_fields?: string[];
     label?: string
 }
 
@@ -74,6 +78,10 @@ export function createValidRegistrationRequest(fields: PageFieldBase[], clubId: 
                 multiplier_value: f?.multiplier_value ?? 1,
                 option_order_id: f.option_order_id,
                 label: f.label
+            }
+            if (f.input_type === "DISCOUNT") {
+                field.percentage = f.percentage
+                field.applicable_billing_fields = f.applicable_billing_fields
             }
             request.billing_fields.push(field)
         }

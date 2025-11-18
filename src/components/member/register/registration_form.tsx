@@ -107,6 +107,14 @@ export function ClubRegisterForm() {
                     option_order_id: matchedOption.option_order_id,
                   };
                 }
+              } else if (field.input_type === "DISCOUNT") {
+                return {
+                  ...field,
+                  percentage: metaField.percentage,
+                  value: metaField.value,
+                  multiplier_value: metaField?.multiplier_value ?? undefined,
+                  applicable_billing_fields: metaField.applicable_billing_fields
+                };
               } else {
                 return {
                   ...field,
@@ -178,6 +186,8 @@ export function ClubRegisterForm() {
         if (f.field_type === "STANDARD") return !f.value?.trim();
         if (f.field_type === "BILLING" && f.input_type === "DROPDOWN")
           return f.value == null || f.selectedAmountCents == null;
+        if (f.field_type === "BILLING" && f.input_type === "DISCOUNT")
+          return f.value == null || f.percentage == null;
       }
       return false;
     });
@@ -196,7 +206,6 @@ export function ClubRegisterForm() {
     e.preventDefault();
     if (missingRequired.length > 0) {
       setRequiredFieldsMissing(true);
-      // Navigate to the first page that contains a missing required field
       try {
         const firstMissingPage = missingRequired[0]?.page;
         if (typeof firstMissingPage === "number") {
@@ -231,10 +240,12 @@ export function ClubRegisterForm() {
     if (registrationRequest) {
       mutate(registrationRequest, {
         onSuccess: () => {
-          // show a friendly success screen instead of immediately redirecting
           setShowSuccess(true);
         },
-        onError: () => toast(registerError?.message ?? "Registration failed"),
+        onError: () => {
+          console.log(registerError?.message ?? "Registration failed")
+          toast(registerError?.message ?? "Registration failed")
+        },
       });
     }
   };
