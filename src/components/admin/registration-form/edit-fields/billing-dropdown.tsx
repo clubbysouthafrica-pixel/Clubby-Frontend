@@ -18,13 +18,13 @@ interface Props {
     required?: boolean
     dropdownBillingOptions: BillingOption[]
     currency: string
-    multiplier: boolean
+    // multiplier: boolean
     onFieldNameChange: (val: string) => void
     onPlaceholderChange: (val: string) => void
     onRequiredChange?: (val: boolean) => void
     onAddBillingOption: (option: BillingOption) => void
     onRemoveBillingOption: (id: string) => void
-    onMultiplierChange: (val: boolean) => void
+    // onMultiplierChange: (val: boolean) => void
 }
 
 export default function EditBillingDropdown({
@@ -33,8 +33,8 @@ export default function EditBillingDropdown({
     placeholder,
     required = false,
     dropdownBillingOptions,
-    multiplier = false,
-    onMultiplierChange,
+    // multiplier = false,
+    // onMultiplierChange,
     onFieldNameChange,
     onRequiredChange,
     onPlaceholderChange,
@@ -47,7 +47,7 @@ export default function EditBillingDropdown({
     const [dropdownLabel, setDropdownLabel] = useState("")
     const [dropdownAmountRaw, setDropdownAmountRaw] = useState<number>(0)
     const [dropdownAmountDisplay, setDropdownAmountDisplay] = useState<string>(formatAmount(0, currency))
-    const [internalMultiplier, setInternalMultiplier] = useState(multiplier)
+    // const [internalMultiplier, setInternalMultiplier] = useState(multiplier)
 
     useEffect(() => setInternalFieldName(fieldName), [fieldName])
     useEffect(() => setInternalRequired(required), [required])
@@ -68,10 +68,10 @@ export default function EditBillingDropdown({
         onPlaceholderChange(e.target.value)
     }
 
-    const handleMultiplierChange = (checked: boolean) => {
-        setInternalMultiplier(checked)
-        if (onMultiplierChange) onMultiplierChange(checked)
-      }
+    // const handleMultiplierChange = (checked: boolean) => {
+    //     setInternalMultiplier(checked)
+    //     if (onMultiplierChange) onMultiplierChange(checked)
+    //   }
 
     const addDisabled = !dropdownLabel || dropdownAmountRaw < 0
 
@@ -105,10 +105,10 @@ export default function EditBillingDropdown({
                 <Checkbox checked={internalRequired} onCheckedChange={handleRequiredChange} />
                 <Label>Is required</Label>
             </div>
-            <div className="flex items-center gap-3 mt-2">
+            {/* <div className="flex items-center gap-3 mt-2">
                 <Checkbox checked={internalMultiplier} onCheckedChange={handleMultiplierChange} />
                 <Label>Multiplier</Label>
-            </div>
+            </div> */}
 
             <div>
                 <Label className="block text-sm font-medium my-4">Options</Label>

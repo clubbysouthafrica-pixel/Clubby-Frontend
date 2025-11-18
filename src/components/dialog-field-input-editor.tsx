@@ -226,8 +226,8 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
                                             placeholder={placeholder}
                                             required={required}
                                             dropdownBillingOptions={dropdownBillingOptions}
-                                            onMultiplierChange={setMultiplier}
-                                            multiplier={multiplier}
+                                            // onMultiplierChange={setMultiplier}
+                                            // multiplier={multiplier}
                                             onFieldNameChange={setFieldName}
                                             onPlaceholderChange={setPlaceholder}
                                             onRequiredChange={setRequired}
