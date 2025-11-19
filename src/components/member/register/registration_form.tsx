@@ -74,7 +74,7 @@ export function ClubRegisterForm() {
       setPages(sorted);
 
       if (!club?.meta) return;
-      
+
       const updatedPages = await Promise.all(
         sorted.map(async (page) => ({
           ...page,

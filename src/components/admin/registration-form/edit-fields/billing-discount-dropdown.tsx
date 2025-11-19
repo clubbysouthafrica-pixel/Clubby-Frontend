@@ -72,7 +72,7 @@ export default function EditBillingDiscountDropdown({
         )
     }
 
-    const addDisabled = !discountLabel || discountPercentage <= 0 || discountPercentage > 100 || selectedBillingFields.length === 0
+    const addDisabled = !discountLabel || discountPercentage < 0 || discountPercentage > 100 || selectedBillingFields.length === 0
 
     const handleAddOption = () => {
         if (addDisabled) return
