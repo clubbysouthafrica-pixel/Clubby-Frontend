@@ -582,13 +582,16 @@ export default function EditClubDetails() {
                         htmlFor="notify-registration"
                         className="cursor-pointer text-sm"
                       >
-                        <span className="font-medium">
-                          Send email notification on new member registration
-                        </span>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          The support email will receive a notification whenever
-                          a member successfully registers for a club activity.
-                        </p>
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            Send email notification on new member registration
+                          </span>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            The support email will receive a notification
+                            whenever a member successfully registers for a club
+                            activity.
+                          </p>
+                        </div>
                       </Label>
                     </div>
                   </TabsContent>
