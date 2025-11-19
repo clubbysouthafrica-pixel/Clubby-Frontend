@@ -91,7 +91,7 @@ export default function EditClubDetails() {
       );
       setUseSuccessEmailTemplate(data?.use_success_email_template ?? false);
       setNotifyOnMemberRegistration(
-        data?.notify_on_member_registration ?? false
+        data?.notify_on_member_registration ?? true
       );
     }
   }, [data]);
@@ -572,7 +572,7 @@ export default function EditClubDetails() {
                       <input
                         type="checkbox"
                         id="notify-registration"
-                        checked={notifyOnMemberRegistration}
+                        checked={notifyOnMemberRegistration !== false}
                         onChange={(e) =>
                           setNotifyOnMemberRegistration(e.target.checked)
                         }
