@@ -12,8 +12,8 @@ export async function compressImage(
   {
     maxWidth = 1600,
     maxHeight = 1600,
-    quality = 0.8,
-    mimeType,       // if not provided, we’ll keep file.type (fallback to 'image/jpeg')
+    quality = 0.92,
+    mimeType,       // if not provided, we'll keep file.type (fallback to 'image/jpeg')
     targetBytes,
   }: CompressOpts = {}
 ): Promise<Blob> {
@@ -39,8 +39,13 @@ export async function compressImage(
       ? new OffscreenCanvas(width, height)
       : Object.assign(document.createElement('canvas'), { width, height });
 
-  // Draw
+  // Draw with high-quality settings
   const ctx = (canvas as any).getContext('2d', { alpha: preferredType === 'image/png' });
+  
+  // Enable high-quality image smoothing
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  
   ctx.drawImage(bitmap, 0, 0, width, height);
 
   // Export with (optional) iterative quality trimming to try hit targetBytes
@@ -58,8 +63,8 @@ export async function compressImage(
   let out = await toBlob(q);
 
   if (targetBytes && out.size > targetBytes && /jpe?g|webp/.test(preferredType)) {
-    // Binary search the quality a few steps
-    let lo = 0.4, hi = quality, attempts = 5;
+    // Binary search the quality a few steps, but maintain minimum quality of 0.85
+    let lo = 0.85, hi = quality, attempts = 5;
     while (attempts-- > 0) {
       const mid = (lo + hi) / 2;
       const test = await toBlob(mid);

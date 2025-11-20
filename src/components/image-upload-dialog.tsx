@@ -72,7 +72,8 @@ function getAspectRatioValue(aspectRatio: string): number | undefined {
 function getCroppedImg(
   image: HTMLImageElement,
   crop: PixelCrop,
-  fileName: string
+  fileName: string,
+  mimeType: string = 'image/png'
 ): Promise<{ file: File; blob: Blob }> {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
@@ -100,14 +101,30 @@ function getCroppedImg(
   );
 
   return new Promise((resolve) => {
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        throw new Error('Canvas is empty');
-      }
-      const file = new File([blob], fileName, { type: blob.type });
-      resolve({ file, blob });
-    }, 'image/jpeg', 0.95);
+    if (mimeType === 'image/jpeg' || mimeType === 'image/webp') {
+      canvas.toBlob((blob) => {
+        if (!blob) throw new Error('Canvas is empty');
+        const file = new File([blob], fileName, { type: blob.type });
+        resolve({ file, blob });
+      }, mimeType, 1);
+    } else {
+      canvas.toBlob((blob) => {
+        if (!blob) throw new Error('Canvas is empty');
+        const file = new File([blob], fileName, { type: blob.type });
+        resolve({ file, blob });
+      }, mimeType);
+    }
   });
+
+  // return new Promise((resolve) => {
+  //   canvas.toBlob((blob) => {
+  //     if (!blob) {
+  //       throw new Error('Canvas is empty');
+  //     }
+  //     const file = new File([blob], fileName, { type: blob.type });
+  //     resolve({ file, blob });
+  //   }, 'image/jpeg', 1);
+  // });
 }
 
 export default function ImageUploadDialog({
@@ -143,45 +160,50 @@ export default function ImageUploadDialog({
   const getCompressionSettings = (aspectRatio: string, isCropped: boolean = false) => {
     switch (aspectRatio) {
       case 'landscape':
-        // Cover photos need higher quality and resolution
+        // Cover photos - preserve original resolution and quality
         return {
-          maxWidth: 2400,
-          maxHeight: 1350, // 16:9 aspect ratio
-          quality: 0.92,
-          targetBytes: 800_000, // 800KB for covers
+          maxWidth: 99999, // No resolution limit - keep original size
+          maxHeight: 99999,
+          quality: 0.95,
+          mimeType: 'image/webp', // WebP for better quality at same size
+          // No targetBytes - maintain quality at all costs
         };
       case 'portrait':
         // Portrait images for stories/posts
         return {
-          maxWidth: 1080,
-          maxHeight: 1920, // 9:16 aspect ratio
-          quality: 0.88,
-          targetBytes: 600_000,
+          maxWidth: 99999, // No resolution limit
+          maxHeight: 99999,
+          quality: 0.95,
+          mimeType: 'image/webp', // WebP for better quality
+          // No targetBytes - maintain quality
         };
       case 'original':
-        // Original size with high quality
+        // Original size with high quality - no compression
         return {
-          maxWidth: 2400,
-          maxHeight: 2400,
-          quality: 0.90,
-          targetBytes: 1_200_000, // 1.2MB for originals
+          maxWidth: 99999, // No resolution limit
+          maxHeight: 99999,
+          quality: 0.98,
+          mimeType: 'image/webp', // WebP for better quality
+          // No targetBytes - maintain quality
         };
       case 'free':
         // Free crop with good quality
         return {
-          maxWidth: 1920,
-          maxHeight: 1920,
-          quality: 0.85,
-          targetBytes: 500_000,
+          maxWidth: 99999, // No resolution limit
+          maxHeight: 99999,
+          quality: 0.95,
+          mimeType: 'image/webp', // WebP for better quality
+          // No targetBytes - maintain quality
         };
       case 'square':
       default:
         // Profile pictures and avatars
         return {
-          maxWidth: isCropped ? 800 : 1600,
-          maxHeight: isCropped ? 800 : 1600,
-          quality: 0.85,
-          targetBytes: 300_000,
+          maxWidth: 99999, // No resolution limit
+          maxHeight: 99999,
+          quality: 0.95,
+          mimeType: 'image/webp', // WebP for better quality
+          // No targetBytes - maintain quality
         };
     }
   };
@@ -235,7 +257,7 @@ export default function ImageUploadDialog({
         makeAspectCrop(
           {
             unit: '%',
-            width: 90,
+            width: 100,
           },
           aspectRatioValue,
           width,
@@ -264,7 +286,8 @@ export default function ImageUploadDialog({
       const { blob } = await getCroppedImg(
         imgRef.current,
         completedCrop,
-        selectedFile.name
+        selectedFile.name,
+        selectedFile.type
       );
 
       // Use optimized compression settings for the selected aspect ratio
