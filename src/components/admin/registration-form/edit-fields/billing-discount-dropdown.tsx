@@ -95,7 +95,7 @@ export default function EditBillingDiscountDropdown({
     }
 
     return (
-        <div className="flex flex-col h-full max-h-[80vh]">
+        <div className="flex flex-col h-full">
             {/* Fixed top section - basic field settings */}
             <div className="flex-shrink-0 space-y-4 pb-4">
                 <div>
