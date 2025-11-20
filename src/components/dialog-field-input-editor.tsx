@@ -182,8 +182,8 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
                     </Button>
                 </div>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] max-h-[80vh] flex flex-col overflow-hidden">
-                <div className="flex-1 overflow-y-auto pr-2">
+            <DialogContent className="sm:max-w-[450px] flex flex-col overflow-hidden">
+                <div className="flex-1 pr-2">
                 {
                     field.input_type === "SIGNATURE" ?
                         <EditStandardSignature
