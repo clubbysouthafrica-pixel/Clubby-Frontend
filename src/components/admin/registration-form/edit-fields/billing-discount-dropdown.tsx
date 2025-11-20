@@ -178,7 +178,7 @@ export default function EditBillingDiscountDropdown({
 
             {/* Scrollable section - configured discounts list */}
             {discountOptions.length > 0 && (
-                <div className="flex-1 min-h-[100px] overflow-y-auto pr-2 space-y-2 min-h-0 pt-4 border-t">
+                <div className="flex-1 max-h-[100px] overflow-y-auto pr-2 space-y-2 min-h-0 pt-4 border-t">
                     <Label className="block text-xs font-medium mb-2">Configured Discounts:</Label>
                     <div className="space-y-2">
                         {discountOptions.map((option) => (
