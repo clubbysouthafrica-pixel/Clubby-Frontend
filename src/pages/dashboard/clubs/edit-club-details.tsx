@@ -22,7 +22,16 @@ import { countries } from "@/data/countries";
 import { currencies } from "@/data/currencies";
 import { useUpdateClubDetailsMutation } from "@/mutations/admin/club";
 import { useFetchClubDetails } from "@/queries/admin/clubs";
-import { Loader2, Mail, MapPin, Coins, CreditCard, Building2, CheckCircle2, XCircle } from "lucide-react";
+import {
+  Loader2,
+  Mail,
+  MapPin,
+  Coins,
+  CreditCard,
+  Building2,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -58,6 +67,8 @@ export default function EditClubDetails() {
     useState<boolean>(false);
   const [useSubmissionEmailTemplate, setUseSubmissionEmailTemplate] =
     useState<boolean>(false);
+  const [notifyOnMemberRegistration, setNotifyOnMemberRegistration] =
+    useState<boolean>(false);
 
   useEffect(() => {
     if (data) {
@@ -79,6 +90,9 @@ export default function EditClubDetails() {
         data?.use_submission_email_template ?? false
       );
       setUseSuccessEmailTemplate(data?.use_success_email_template ?? false);
+      setNotifyOnMemberRegistration(
+        data?.notify_on_member_registration ?? true
+      );
     }
   }, [data]);
 
@@ -105,6 +119,7 @@ export default function EditClubDetails() {
           registrationSuccessEmailTemplate,
         use_success_email_template: useSuccessEmailTemplate,
         use_submission_email_template: useSubmissionEmailTemplate,
+        notify_on_member_registration: notifyOnMemberRegistration,
       },
       {
         onSuccess: () => toast.success("Successfully updated club details"),
@@ -123,7 +138,6 @@ export default function EditClubDetails() {
       }
     );
   };
-
   const update = () =>
     mutate(
       {
@@ -150,6 +164,7 @@ export default function EditClubDetails() {
           registrationSuccessEmailTemplate,
         use_success_email_template: useSuccessEmailTemplate,
         use_submission_email_template: useSubmissionEmailTemplate,
+        notify_on_member_registration: notifyOnMemberRegistration,
       },
       {
         onSuccess: () => toast.success("Successfully updated club details"),
@@ -553,6 +568,32 @@ export default function EditClubDetails() {
                       onChange={(e) => setSupportEmail(e.target.value)}
                       placeholder="Set support email"
                     />
+                    <div className="flex items-center gap-3 mt-4 p-4 bg-gray-50 rounded-lg dark:bg-gray-900">
+                      <input
+                        type="checkbox"
+                        id="notify-registration"
+                        checked={notifyOnMemberRegistration !== false}
+                        onChange={(e) =>
+                          setNotifyOnMemberRegistration(e.target.checked)
+                        }
+                        className="h-4 w-4 accent-primary rounded"
+                      />
+                      <Label
+                        htmlFor="notify-registration"
+                        className="cursor-pointer text-sm"
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            Send email notification on new member registration
+                          </span>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            The support email will receive a notification
+                            whenever a member successfully registers for a club
+                            activity.
+                          </p>
+                        </div>
+                      </Label>
+                    </div>
                   </TabsContent>
 
                   <TabsContent

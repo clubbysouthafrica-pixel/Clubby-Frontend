@@ -128,7 +128,7 @@ export function MemberRegistration({
       )}
 
       {/* Registration Form Card */}
-      <Card className="w-full border shadow-sm pt-0 flex-1 min-h-0 flex flex-col">
+      <Card className="w-full border shadow-sm pt-0 flex-1 min-h-0 flex flex-col gap-1" id="registration-card-header">
         <CardHeader className="border-b bg-muted/30 py-1 pb-1">
           <CardTitle className="text-l text-center pt-2">
             {clubName}
@@ -144,7 +144,7 @@ export function MemberRegistration({
             </h3>
             
             <div className="flex-none space-y-6 px-2 py-2">
-              {data.pages[currentPageIndex].fields.map((field: { type: string; label: string; value: string; signature_type?: string; quantity?: number }) => {
+              {data.pages[currentPageIndex].fields.map((field: { type: string; label: string; value: string; signature_type?: string; quantity?: number; discount?: number }) => {
 
                 if (field.type === "STANDARD_SIGNATURE") {
                   if (field.signature_type === "signature") {
@@ -184,9 +184,16 @@ export function MemberRegistration({
                 if (field.type === "BILLING") {
                   return (
                     <div key={field.label} className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg border">
-                      <Label className="text-xs font-semibold text-muted-foreground">
-                        {field.label} {field.quantity ? `(x${field.quantity})` : null}
-                      </Label>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-semibold text-muted-foreground">
+                          {field.label} {field.quantity ? `(x${field.quantity})` : null}
+                        </Label>
+                        {field.discount && (
+                          <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-1 rounded">
+                            {field.discount}% off
+                          </span>
+                        )}
+                      </div>
                       <Label className="text-sm font-medium border-b-2 border-gray-300 pb-1">
                         {field.value}
                       </Label>
@@ -237,7 +244,7 @@ export function MemberRegistration({
                     className="w-[90px]"
                     onClick={() => {
                       setCurrentPageIndex((i) => i - 1);
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                      document.getElementById('registration-card-header')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }}
                   >
                     Previous
@@ -257,7 +264,7 @@ export function MemberRegistration({
                     className="w-[90px]"
                     onClick={() => {
                       setCurrentPageIndex((i) => i + 1);
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                      document.getElementById('registration-card-header')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }}
                   >
                     Next

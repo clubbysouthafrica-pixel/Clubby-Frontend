@@ -50,12 +50,13 @@ interface FormBuilderProps {
   currency: string
   clubAccountId: string
   page: PageFormRegistration
+  allPages: PageFormRegistration[]
   deletedFields: string[],
   setFields: (pageIndex: number, fields: InputFormRegistration[]) => void,
   setDeletedFields: React.Dispatch<React.SetStateAction<string[]>>
 }
 
-export default function DynamicFormBuilder({ currency, clubAccountId, page, setFields, setDeletedFields }: FormBuilderProps) {
+export default function DynamicFormBuilder({ currency, clubAccountId, page, allPages, setFields, setDeletedFields }: FormBuilderProps) {
   if (!clubAccountId) return
 
   const [fieldItemType, setFieldItemType] = useState('')
@@ -97,6 +98,10 @@ export default function DynamicFormBuilder({ currency, clubAccountId, page, setF
     {
       value: "dropdown;billing",
       display: "Dropdown"
+    },
+    {
+      value: "discount;billing",
+      display: "Discount Dropdown"
     }
   ]
 
@@ -217,6 +222,7 @@ export default function DynamicFormBuilder({ currency, clubAccountId, page, setF
                         <FieldInputEditorDialog
                           currency={currency}
                           field={field}
+                          allPages={allPages}
                           update={updatePageInput}
                         />
                         <ConfirmDeleteDialog id={field.field_id} tooltipDescription="Remove input" removeFunc={removeFieldItem}/>

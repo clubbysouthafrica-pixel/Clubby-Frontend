@@ -115,6 +115,7 @@ export default function ViewClubPage() {
   const [highlightPayment, setHighlightPayment] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [iframeLoading, setIframeLoading] = useState(true);
 
   const toggleRow = (id: string) => {
     setExpandedRows((prev) => ({
@@ -220,12 +221,10 @@ export default function ViewClubPage() {
               )}
             </div>
 
-            {/* Club Info Card */}
             <div className="container mx-auto px-4 relative -mt-20">
               <Card className="backdrop-blur-sm bg-background/95 border-primary/20 shadow-2xl">
                 <CardContent className="p-8">
                   <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6">
-                    {/* Club Avatar */}
                     <div className="relative">
                       <Avatar className="w-24 h-24 border-4 border-background shadow-lg">
                         {profileImage ? (
@@ -379,7 +378,12 @@ export default function ViewClubPage() {
 
           {/* Navigation Tabs */}
           <div className="container mx-auto px-4 mt-8 mb-6">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <Tabs value={activeTab} onValueChange={(value) => {
+              setActiveTab(value);
+              if (value === "home" && data?.club_url) {
+                setIframeLoading(true);
+              }
+            }}>
               <TabsList
                 className={cn(
                   "bg-background/50 backdrop-blur-sm border border-primary/20 shadow-lg",
@@ -450,7 +454,6 @@ export default function ViewClubPage() {
                   {data?.club_url ? (
                     <Card className="border-primary/20 shadow-lg overflow-hidden">
                       <div className="relative group w-full overflow-hidden">
-                        {/* Enhanced header for embedded site */}
                         <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-4 border-b border-primary/20">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -477,12 +480,20 @@ export default function ViewClubPage() {
                             </Button>
                           </div>
                         </div>
-                        <iframe
-                          src={data.club_url}
-                          title="Club Website"
-                          className="w-full border-0 bg-background"
-                          style={{ height: "70vh" }}
-                        />
+                        <div className="relative w-full bg-background" style={{ height: "70vh" }}>
+                          {iframeLoading && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-50">
+                              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            </div>
+                          )}
+                          <iframe
+                            src={data.club_url}
+                            title="Club Website"
+                            className="w-full border-0 bg-background"
+                            style={{ height: "100%" }}
+                            onLoad={() => setIframeLoading(false)}
+                          />
+                        </div>
                       </div>
                     </Card>
                   ) : (

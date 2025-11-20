@@ -79,7 +79,7 @@ export function CurrentMemberRegistration({
       </div>
 
       {/* Registration Form Card */}
-      <Card className="w-full border shadow-sm pt-0 flex-1 min-h-0 flex flex-col">
+      <Card className="w-full border shadow-sm pt-0 flex-1 min-h-0 flex flex-col gap-1">
         <CardHeader className="border-b bg-muted/30 py-1 pb-1">
           <CardTitle className="text-l text-center pt-2">
             {clubName}
@@ -95,7 +95,7 @@ export function CurrentMemberRegistration({
             </h3>
             
             <div className="flex-1 min-h-0 overflow-y-auto space-y-1 px-2 py-2">
-              {data.pages[currentPageIndex].fields.map((field: { type: string; label: string; value: string; signature_type?: string; quantity?: number }) => {
+              {data.pages[currentPageIndex].fields.map((field: { type: string; label: string; value: string; signature_type?: string; quantity?: number; discount?: number }) => {
 
               if (field.type === "STANDARD_SIGNATURE") {
                 if (field.signature_type === "signature") {
@@ -133,17 +133,24 @@ export function CurrentMemberRegistration({
               }
 
               if (field.type === "BILLING") {
-                return (
-                  <div key={field.label} className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg border">
-                    <Label className="text-xs font-semibold text-muted-foreground">
-                      {field.label}
-                    </Label>
-                    <Label className="text-xs font-medium border-b-2 border-gray-300 pb-1">
-                      {field.value} {field.quantity ? `(${field.quantity})` : null}
-                    </Label>
-                  </div>
-                );
-              }
+                  return (
+                    <div key={field.label} className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg border">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-semibold text-muted-foreground">
+                          {field.label} {field.quantity ? `(x${field.quantity})` : null}
+                        </Label>
+                        {field.discount && (
+                          <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-1 rounded">
+                            {field.discount}% off
+                          </span>
+                        )}
+                      </div>
+                      <Label className="text-sm font-medium border-b-2 border-gray-300 pb-1">
+                        {field.value}
+                      </Label>
+                    </div>
+                  );
+                }
 
               if (field.type === "TEXT") {
                 const cleaned = field.label

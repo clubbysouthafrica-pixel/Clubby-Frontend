@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { Dialog, DialogTrigger, DialogContent, DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { PencilIcon, XIcon } from "lucide-react"
-import { InputBillingOption, InputFormRegistration } from "@/interfaces/formRegistration"
+import { InputBillingOption, InputDiscountOption, InputFormRegistration, PageFormRegistration } from "@/interfaces/formRegistration"
 import { Label } from "./ui/label"
 import { Input } from "./ui/input"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
@@ -11,7 +11,9 @@ import EditTextDisplay from "./admin/registration-form/edit-fields/text-display"
 import EditBillingText from "./admin/registration-form/edit-fields/billing-text"
 import DisplayBillingText from "./admin/registration-form/display-fields/billing-text";
 import EditBillingDropdown from './admin/registration-form/edit-fields/billing-dropdown';
+import EditBillingDiscountDropdown from './admin/registration-form/edit-fields/billing-discount-dropdown';
 import DisplayBillingDropdown from "./admin/registration-form/display-fields/billing-dropdown"
+import DisplayBillingDiscountDropdown from "./admin/registration-form/display-fields/billing-discount-dropdown"
 import EditStandardCheckbox from "./admin/registration-form/edit-fields/standard-checkbox"
 import DisplayStandardCheckbox from "./admin/registration-form/display-fields/standard-checkbox"
 import DisplayStandardText from "./admin/registration-form/display-fields/standard-text"
@@ -21,10 +23,11 @@ import EditStandardSignature from "./admin/registration-form/edit-fields/standar
 interface Props {
     currency: string;
     field: InputFormRegistration
+    allPages: PageFormRegistration[]
     update: (input: InputFormRegistration) => void
 }
 
-export default function FieldInputEditorDialog({ currency, field, update }: Props) {
+export default function FieldInputEditorDialog({ currency, field, allPages, update }: Props) {
     const [openDialog, setOpenDialog] = useState<boolean>(false);
 
     const [fieldText, setFieldText] = useState("")
@@ -37,6 +40,7 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
     const [amount, setAmount] = useState(0)
 
     const [dropdownBillingOptions, setDropdownBillingOptions] = useState<InputBillingOption[]>([])
+    const [dropdownDiscountOptions, setDropdownDiscountOptions] = useState<InputDiscountOption[]>([])
     const [dropdownOptions, setDropdownOptions] = useState<string[]>([])
 
     useEffect(() => {
@@ -50,6 +54,9 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
 
         if (field?.billingOptions?.length) {
             setDropdownBillingOptions(field.billingOptions)
+        }
+        if (field?.discountOptions?.length) {
+            setDropdownDiscountOptions(field.discountOptions)
         }
         if (field?.options?.length) {
             setDropdownOptions(field.options)
@@ -80,6 +87,10 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
             inputRequest.billingOptions = dropdownBillingOptions
         }
 
+        if (dropdownDiscountOptions.length > 0) {
+            inputRequest.discountOptions = dropdownDiscountOptions
+        }
+
         if (dropdownOptions.length > 0) {
             inputRequest.options = dropdownOptions
         }
@@ -94,6 +105,14 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
 
     const handleRemoveBillingOption = (id: string) => {
         setDropdownBillingOptions(prev => prev.filter(o => o.option_order_id !== id))
+    }
+
+    const handleAddDiscountOption = (option: InputDiscountOption) => {
+        setDropdownDiscountOptions(prev => [...prev, option])
+    }
+
+    const handleRemoveDiscountOption = (id: string) => {
+        setDropdownDiscountOptions(prev => prev.filter(o => o.option_order_id !== id))
     }
 
     const addOption = () => {
@@ -120,6 +139,8 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
                                 />
                                 : field.input_type === "DROPDOWN" && field.field_type === "BILLING" ?
                                     <DisplayBillingDropdown currency={currency} field={field} />
+                                    : field.input_type === "DISCOUNT" && field.field_type === "BILLING" ?
+                                        <DisplayBillingDiscountDropdown field={field} />
                                     : field.input_type === "CHECKBOX" && field.field_type === "STANDARD" ?
                                         <DisplayStandardCheckbox field={field} />
                                         : field.input_type === "TEXT" && field.field_type === "STANDARD" ?
@@ -161,7 +182,8 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
                     </Button>
                 </div>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] max-h-[80vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[450px] flex flex-col overflow-hidden">
+                <div className="flex-1 pr-2">
                 {
                     field.input_type === "SIGNATURE" ?
                         <EditStandardSignature
@@ -204,13 +226,26 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
                                             placeholder={placeholder}
                                             required={required}
                                             dropdownBillingOptions={dropdownBillingOptions}
-                                            onMultiplierChange={setMultiplier}
-                                            multiplier={multiplier}
+                                            // onMultiplierChange={setMultiplier}
+                                            // multiplier={multiplier}
                                             onFieldNameChange={setFieldName}
                                             onPlaceholderChange={setPlaceholder}
                                             onRequiredChange={setRequired}
                                             onAddBillingOption={handleAddBillingOption}
                                             onRemoveBillingOption={handleRemoveBillingOption}
+                                        />
+                                        : field.input_type === "DISCOUNT" && field.field_type === "BILLING" ?
+                                        <EditBillingDiscountDropdown
+                                            fieldName={fieldName}
+                                            placeholder={placeholder}
+                                            required={required}
+                                            discountOptions={dropdownDiscountOptions}
+                                            allBillingFields={allPages.flatMap(p => p.fields.filter(f => f.field_type === "BILLING" && f.input_type !== "DISCOUNT"))}
+                                            onFieldNameChange={setFieldName}
+                                            onPlaceholderChange={setPlaceholder}
+                                            onRequiredChange={setRequired}
+                                            onAddDiscountOption={handleAddDiscountOption}
+                                            onRemoveDiscountOption={handleRemoveDiscountOption}
                                         />
                                         : field.input_type ?
                                             <div>
@@ -297,7 +332,8 @@ export default function FieldInputEditorDialog({ currency, field, update }: Prop
                                                 </div>
                                             </div>
                 }
-                <DialogFooter>
+                </div>
+                <DialogFooter className="flex-shrink-0 pt-4 border-t">
                     <DialogClose asChild>
                         <Button variant="outline">Cancel</Button>
                     </DialogClose>

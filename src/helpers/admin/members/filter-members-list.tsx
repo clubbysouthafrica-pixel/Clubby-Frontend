@@ -17,7 +17,11 @@ export function filteredRegisteredMembers(
 
                 if (type === "standard") {
                     const field = member.meta_standard?.find((f: any) => f.field_name === fieldName);
-                    if (!field || field.value !== selectedValue) return false;
+                    if (!field) return false;
+                    // Text filter: check if field value includes the filter text
+                    if (typeof selectedValue === "string" && selectedValue.trim()) {
+                        if (!field.value?.toString().toLowerCase().includes(selectedValue.toLowerCase())) return false;
+                    }
                 }
 
                 if (type === "billing") {
@@ -50,7 +54,11 @@ export function previousRegisteredMembers(
 
                     if (type === "standard") {
                         const field = member.meta_standard?.find((f: any) => f.field_name === fieldName);
-                        if (!field || field.value !== selectedValue) return false;
+                        if (!field) return false;
+                        // Text filter: check if field value includes the filter text
+                        if (typeof selectedValue === "string" && selectedValue.trim()) {
+                            if (!field.value?.toString().toLowerCase().includes(selectedValue.toLowerCase())) return false;
+                        }
                     }
 
                     if (type === "billing") {
@@ -83,7 +91,11 @@ export function pendingRegisteredMembers(
 
                     if (type === "standard") {
                         const field = member.meta_standard?.find((f: any) => f.field_name === fieldName);
-                        if (!field || field.value !== selectedValue) return false;
+                        if (!field) return false;
+                        // Text filter: check if field value includes the filter text
+                        if (typeof selectedValue === "string" && selectedValue.trim()) {
+                            if (!field.value?.toString().toLowerCase().includes(selectedValue.toLowerCase())) return false;
+                        }
                     }
 
                     if (type === "billing") {

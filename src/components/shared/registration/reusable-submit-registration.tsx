@@ -9,7 +9,6 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { ReactNode } from "react";
-import { formatAmount } from "@/data/currencies";
 
 export interface BillingFieldItem {
   field_id: string;
@@ -56,10 +55,6 @@ export function ReusableSubmitRegistration({
   email,
   showMemberInfo = false,
   clubName,
-  clubCurrency,
-  totalRegistrationFee,
-  billingFields,
-  getFieldName,
   onBack,
   onSubmit,
   isSubmitting,
@@ -99,27 +94,6 @@ export function ReusableSubmitRegistration({
                     </h1>
                   </div>
                 )}
-
-                {/* Total Registration Fee */}
-                <div className="p-3 bg-muted/20 rounded-lg">
-                  <h2 className="text-base mb-2">
-                    Total Registration Fee:{" "}
-                    <strong>
-                      {formatAmount(totalRegistrationFee, clubCurrency)}
-                    </strong>
-                  </h2>
-                  <ul className="ml-6 list-disc space-y-1">
-                    {billingFields.map((f) => (
-                      <li key={f.field_id} className="text-m">
-                        {getFieldName(f.field_id)}:{" "}
-                        <strong>
-                          {formatAmount(f.value as number, clubCurrency)}
-                        </strong>
-                        {f.label ? ` (${f.label})` : ""}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
 
                 {/* Payment Warning */}
                 {showPaymentWarning && (

@@ -26,6 +26,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 import RegisteredMembersList from "@/components/admin/members/members/registered-members-list";
 import PendingMembersList from "@/components/admin/members/members/pending-members-list";
 import PreviousMembersList from "@/components/admin/members/members/previous-members-list";
@@ -75,6 +85,8 @@ export default function ListMembersPage() {
   const [availableDynamicFilters, setAvailableDynamicFilters] = useState<
     { key: string; field_name: string; type: string; options: string[] }[]
   >([]);
+  const [activeFilterKeys, setActiveFilterKeys] = useState<string[]>([]);
+  const [showFilterSelector, setShowFilterSelector] = useState(false);
 
   const handleFormattedInputChange = (
     e: React.ChangeEvent<HTMLInputElement>
@@ -181,7 +193,7 @@ export default function ListMembersPage() {
   const registerUser = (member: ClubMember) => {
     if (
       memberRegisterAmount > member.outstanding_amount ||
-      (memberRegisterAmount == 0 && member.outstanding_amount > 0) || 
+      (memberRegisterAmount == 0 && member.outstanding_amount > 0) ||
       memberRegisterAmount < 0
     ) {
       setInvalidRegistrationAmount(true);
@@ -220,6 +232,7 @@ export default function ListMembersPage() {
   const resetFilters = () => {
     setMemberNameFilter("");
     setDynamicFilters({});
+    setActiveFilterKeys([]);
   };
 
   if (clubMembersLoading || filterLoading) {
@@ -262,23 +275,25 @@ export default function ListMembersPage() {
               <div className="flex-1">
                 <TabsList className="m-w-90%">
                   <TabsTrigger value="registered-members" className="w-[300px]">
-                    Active Members {" "}
+                    Active Members{" "}
                     <Badge variant="secondary">{registeredMembersLength}</Badge>
                   </TabsTrigger>
                   <TabsTrigger value="pending-members" className="w-[300px]">
-                    Members Pending {" "}
-                    <Badge variant="secondary">{unregisteredMembersLength}</Badge>
+                    Members Pending{" "}
+                    <Badge variant="secondary">
+                      {unregisteredMembersLength}
+                    </Badge>
                   </TabsTrigger>
                   <TabsTrigger value="previous-members" className="w-[300px]">
-                    Members Requiring Re-Registration {" "}
-                    <Badge variant="secondary">{deregisteredMembersLength}</Badge>
+                    Members Requiring Re-Registration{" "}
+                    <Badge variant="secondary">
+                      {deregisteredMembersLength}
+                    </Badge>
                   </TabsTrigger>
                 </TabsList>
               </div>
               <div className="ml-4 flex-shrink-0">
-                <DeregisterSeasonDialog
-                  clubId={club?.club_account_id ?? ""}
-                />
+                <DeregisterSeasonDialog clubId={club?.club_account_id ?? ""} />
               </div>
             </div>
           </div>
@@ -288,8 +303,8 @@ export default function ListMembersPage() {
           >
             Reset filters
           </p>
-          <div className="flex flex-wrap justify-between gap-4">
-            <div className="flex flex-wrap gap-3 flex-1 min-w-[300px]">
+          <div className="flex flex-row flex-wrap gap-2 p-2">
+            <div className="flex flex-wrap gap-2 flex-1">
               <Input
                 placeholder="Filter by member name"
                 value={memberNameFilter}
@@ -302,35 +317,155 @@ export default function ListMembersPage() {
                 className="w-[300px]"
               />
               {availableDynamicFilters &&
-                availableDynamicFilters.map(({ key, field_name, options }) => (
-                  <Select
-                    key={key}
-                    onValueChange={(value) => {
-                      setDynamicFilters((prev) => ({ ...prev, [key]: value }));
-                      setlistActionItems([]);
-                      setDeregisterMembers([]);
-                      setAllMembersSelected(false);
-                    }}
-                    value={dynamicFilters[key] || ""}
-                  >
-                    <SelectTrigger className="w-[250px]">
-                      <span className="text-muted-foreground">
-                        {field_name}:
-                      </span>
-                      <SelectValue placeholder="All" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
-                      {options.map((opt) => (
-                        <SelectItem key={opt} value={opt}>
-                          {opt}
-                        </SelectItem>
+                (() => {
+                  const activeFilters = availableDynamicFilters.filter(({ key }) =>
+                    activeFilterKeys.includes(key)
+                  );
+
+                  // Sort filters by type: text first, then select, then boolean (checkbox)
+                  const sortedFilters = activeFilters.sort((a, b) => {
+                    const getType = (filter: typeof availableDynamicFilters[0]) => {
+                      if (!filter.options) return 0; // text filters
+                      if (
+                        filter.options.length === 2 &&
+                        filter.options.includes("true") &&
+                        filter.options.includes("false")
+                      )
+                        return 2; // boolean filters (checkbox) - last
+                      return 1; // select filters
+                    };
+                    return getType(a) - getType(b);
+                  });
+
+                  return sortedFilters.map(({ key, field_name, options }) => {
+                    if (!options) {
+                      return (
+                        <Input
+                          key={key}
+                          placeholder={`Filter by ${field_name}`}
+                          value={dynamicFilters[key] || ""}
+                          onChange={(e) => {
+                            setDynamicFilters((prev) => ({
+                              ...prev,
+                              [key]: e.target.value,
+                            }));
+                            setlistActionItems([]);
+                            setDeregisterMembers([]);
+                            setAllMembersSelected(false);
+                          }}
+                          className="w-[300px]"
+                        />
+                      );
+                    }
+
+                    if (
+                      options &&
+                      options.length === 2 &&
+                      options.includes("true") &&
+                      options.includes("false")
+                    ) {
+                      return (
+                        <div
+                          key={key}
+                          className="flex items-center gap-3 px-3 py-2 border rounded-md bg-background"
+                        >
+                          <Checkbox
+                            id={key}
+                            checked={dynamicFilters[key] === "true"}
+                            onCheckedChange={(checked) => {
+                              setDynamicFilters((prev) => ({
+                                ...prev,
+                                [key]: checked ? "true" : "",
+                              }));
+                              setlistActionItems([]);
+                              setDeregisterMembers([]);
+                              setAllMembersSelected(false);
+                            }}
+                          />
+                          <label
+                            htmlFor={key}
+                            className="text-sm font-medium cursor-pointer"
+                          >
+                            {field_name}
+                          </label>
+                        </div>
+                      );
+                    }
+
+                    // Select filter (options provided)
+                    return (
+                      <Select
+                        key={key}
+                        onValueChange={(value) => {
+                          setDynamicFilters((prev) => ({
+                            ...prev,
+                            [key]: value,
+                          }));
+                          setlistActionItems([]);
+                          setDeregisterMembers([]);
+                          setAllMembersSelected(false);
+                        }}
+                        value={dynamicFilters[key] || ""}
+                      >
+                        <SelectTrigger className="w-[250px]">
+                          <span className="text-muted-foreground">
+                            {field_name}:
+                          </span>
+                          <SelectValue placeholder="All" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All</SelectItem>
+                          {options.map((opt) => (
+                            <SelectItem key={opt} value={opt}>
+                              {opt}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    );
+                  });
+                })()}
+              <Dialog open={showFilterSelector} onOpenChange={setShowFilterSelector}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="w-[250px]">
+                    + Add Filter
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add Filters</DialogTitle>
+                    <DialogDescription>
+                      Select which filters you want to display
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {availableDynamicFilters &&
+                      availableDynamicFilters.map(({ key, field_name }) => (
+                        <div key={key} className="flex items-center gap-3">
+                          <Checkbox
+                            id={key}
+                            checked={activeFilterKeys.includes(key)}
+                            onCheckedChange={(checked) => {
+                              setActiveFilterKeys((prev) =>
+                                checked
+                                  ? [...prev, key]
+                                  : prev.filter((k) => k !== key)
+                              );
+                            }}
+                          />
+                          <label
+                            htmlFor={key}
+                            className="text-sm font-medium cursor-pointer flex-1"
+                          >
+                            {field_name}
+                          </label>
+                        </div>
                       ))}
-                    </SelectContent>
-                  </Select>
-                ))}
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
-            <div className="px-2 py-1 flex items-center gap-4">
+            <div className="flex items-end gap-4">
               {club?.club_account_id && (
                 <SendEmailDialog
                   clubId={club.club_account_id}
