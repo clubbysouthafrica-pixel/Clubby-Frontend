@@ -85,47 +85,47 @@ function getCroppedImg(
   const scaleX = image.naturalWidth / image.width;
   const scaleY = image.naturalHeight / image.height;
 
-  canvas.width = crop.width;
-  canvas.height = crop.height;
+  // Convert crop rect from rendered px -> natural px
+  const cropX = crop.x * scaleX;
+  const cropY = crop.y * scaleY;
+  const cropWidth = crop.width * scaleX;
+  const cropHeight = crop.height * scaleY;
+
+  // Make the output canvas match the natural-resolution crop
+  canvas.width = Math.round(cropWidth);
+  canvas.height = Math.round(cropHeight);
 
   ctx.drawImage(
     image,
-    crop.x * scaleX,
-    crop.y * scaleY,
-    crop.width * scaleX,
-    crop.height * scaleY,
+    cropX,
+    cropY,
+    cropWidth,
+    cropHeight,
     0,
     0,
-    crop.width,
-    crop.height
+    canvas.width,
+    canvas.height
   );
 
   return new Promise((resolve) => {
-    if (mimeType === 'image/jpeg' || mimeType === 'image/webp') {
-      canvas.toBlob((blob) => {
-        if (!blob) throw new Error('Canvas is empty');
-        const file = new File([blob], fileName, { type: blob.type });
-        resolve({ file, blob });
-      }, mimeType, 1);
+    const outType = mimeType === 'image/jpeg' || mimeType === 'image/webp'
+      ? mimeType
+      : 'image/png';
+
+    const callback = (blob: Blob | null) => {
+      if (!blob) throw new Error('Canvas is empty');
+      const file = new File([blob], fileName, { type: blob.type });
+      resolve({ file, blob });
+    };
+
+    if (outType === 'image/jpeg' || outType === 'image/webp') {
+      canvas.toBlob(callback, outType, 1);
     } else {
-      canvas.toBlob((blob) => {
-        if (!blob) throw new Error('Canvas is empty');
-        const file = new File([blob], fileName, { type: blob.type });
-        resolve({ file, blob });
-      }, mimeType);
+      canvas.toBlob(callback, outType);
     }
   });
-
-  // return new Promise((resolve) => {
-  //   canvas.toBlob((blob) => {
-  //     if (!blob) {
-  //       throw new Error('Canvas is empty');
-  //     }
-  //     const file = new File([blob], fileName, { type: blob.type });
-  //     resolve({ file, blob });
-  //   }, 'image/jpeg', 1);
-  // });
 }
+
 
 export default function ImageUploadDialog({
   title,
@@ -164,7 +164,7 @@ export default function ImageUploadDialog({
         return {
           maxWidth: 99999, // No resolution limit - keep original size
           maxHeight: 99999,
-          quality: 0.95,
+          quality: 0.90,
           mimeType: 'image/webp', // WebP for better quality at same size
           // No targetBytes - maintain quality at all costs
         };
@@ -173,7 +173,7 @@ export default function ImageUploadDialog({
         return {
           maxWidth: 99999, // No resolution limit
           maxHeight: 99999,
-          quality: 0.95,
+          quality: 0.90,
           mimeType: 'image/webp', // WebP for better quality
           // No targetBytes - maintain quality
         };
@@ -182,7 +182,7 @@ export default function ImageUploadDialog({
         return {
           maxWidth: 99999, // No resolution limit
           maxHeight: 99999,
-          quality: 0.98,
+          quality: 0.90,
           mimeType: 'image/webp', // WebP for better quality
           // No targetBytes - maintain quality
         };
@@ -191,7 +191,7 @@ export default function ImageUploadDialog({
         return {
           maxWidth: 99999, // No resolution limit
           maxHeight: 99999,
-          quality: 0.95,
+          quality: 0.90,
           mimeType: 'image/webp', // WebP for better quality
           // No targetBytes - maintain quality
         };
@@ -201,7 +201,7 @@ export default function ImageUploadDialog({
         return {
           maxWidth: 99999, // No resolution limit
           maxHeight: 99999,
-          quality: 0.95,
+          quality: 0.90,
           mimeType: 'image/webp', // WebP for better quality
           // No targetBytes - maintain quality
         };
