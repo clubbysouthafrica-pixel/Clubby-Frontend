@@ -19,7 +19,7 @@ import ClubProvider, { ClubContext, ClubContextType } from "@/context/ClubContex
 import { AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     const location = useLocation();
     const { club } = useContext(ClubContext) as ClubContextType;
 
@@ -27,18 +27,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const pathSegments = location.pathname.split("/").filter(Boolean);
 
     return (
-        <ClubProvider>
-            <SidebarProvider>
-                <AppSidebar />
-                <SidebarInset>
-                    {club?.deregistration_in_progress && (
-                        <Alert variant="destructive" className="m-4 mb-0">
-                            <AlertTriangle className="h-4 w-4" />
-                            <AlertDescription>
-                                This club is currently undergoing deregistration and cannot be interacted with. Please contact support for assistance.
-                            </AlertDescription>
-                        </Alert>
-                    )}
+        <SidebarProvider>
+            <AppSidebar />
+            <SidebarInset>
+                {club?.deregistration_in_progress && (
+                    <Alert variant="destructive" className="m-4 mb-0">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription>
+                            This club is currently undergoing deregistration and cannot be interacted with. Please contact support for assistance.
+                        </AlertDescription>
+                    </Alert>
+                )}
                     <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
                         <div className="flex items-center gap-2 px-4">
                             <SidebarTrigger className="-ml-1" />
@@ -89,6 +88,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </div>
                 </SidebarInset>
             </SidebarProvider>
+    );
+}
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+    return (
+        <ClubProvider>
+            <AdminLayoutContent>{children}</AdminLayoutContent>
         </ClubProvider>
-    )
+    );
 }
