@@ -13,11 +13,11 @@ import RegistrationSuccessful from "@/components/shared/registration/registratio
 import { AuthContext, AuthContextType } from "@/context/AuthContext";
 import { createValidRegistrationRequest } from "../../../helpers/members/registration/create-registration-request";
 import { getFieldName } from "../../../helpers/members/registration/get-field-name";
-import { 
+import {
   ReusableRegistrationForm,
   FormPage,
   PagedFormPayload,
-  PageFieldBase
+  PageFieldBase,
 } from "../../shared/registration/reusable-registration-form";
 import { ReusableSubmitRegistration } from "../../shared/registration/reusable-submit-registration";
 
@@ -106,22 +106,27 @@ export function ClubRegisterForm() {
                     option_order_id: matchedOption.option_order_id,
                   };
                 }
-              } else if (field.input_type === "DISCOUNT") {
+              } else if (field.input_type === "DISCOUNT" && field.discountOptions) {
+                const matchedOption = field.discountOptions.find(
+                  (opt) => opt.option_order_id === metaField.option_order_id
+                );
 
-                return {
-                  ...field,
-                  percentage: metaField.value,
-                  value: metaField.label_value,
-                  label: metaField.label_value,
-                  multiplier_value: metaField?.multiplier_value ?? undefined,
-                  option_order_id: metaField.option_order_id,
-                  applicable_billing_fields: field.applicable_billing_fields,
-                };
+                if (matchedOption) {
+                  return {
+                    ...field,
+                    percentage: metaField.value,
+                    value: metaField.label_value,
+                    label: metaField.label_value,
+                    multiplier_value: metaField?.multiplier_value ?? undefined,
+                    option_order_id: metaField.option_order_id,
+                    applicable_billing_fields: matchedOption.applicable_billing_fields,
+                  };
+                }
               } else {
                 return {
                   ...field,
                   value: metaField.value,
-                  multiplier_value: metaField?.multiplier_value ?? undefined
+                  multiplier_value: metaField?.multiplier_value ?? undefined,
                 };
               }
 
@@ -245,8 +250,8 @@ export function ClubRegisterForm() {
           setShowSuccess(true);
         },
         onError: () => {
-          console.log(registerError?.message ?? "Registration failed")
-          toast(registerError?.message ?? "Registration failed")
+          console.log(registerError?.message ?? "Registration failed");
+          toast(registerError?.message ?? "Registration failed");
         },
       });
     }
