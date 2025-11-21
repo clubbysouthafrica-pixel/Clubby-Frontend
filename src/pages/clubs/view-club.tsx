@@ -179,7 +179,7 @@ export default function ViewClubPage() {
       </div>
     );
   }
-  console.log(data)
+
   return (
     <Pager>
       {isError && <p> Something went wrong... </p>}
