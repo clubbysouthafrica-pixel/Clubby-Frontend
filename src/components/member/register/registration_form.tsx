@@ -107,6 +107,7 @@ export function ClubRegisterForm() {
                   };
                 }
               } else if (field.input_type === "DISCOUNT") {
+
                 return {
                   ...field,
                   percentage: metaField.value,
@@ -114,6 +115,7 @@ export function ClubRegisterForm() {
                   label: metaField.label_value,
                   multiplier_value: metaField?.multiplier_value ?? undefined,
                   option_order_id: metaField.option_order_id,
+                  applicable_billing_fields: field.applicable_billing_fields,
                 };
               } else {
                 return {
