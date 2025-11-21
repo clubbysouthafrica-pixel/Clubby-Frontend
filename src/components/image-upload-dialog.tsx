@@ -157,7 +157,7 @@ export default function ImageUploadDialog({
   const [compressedMime, setCompressedMime] = useState<string | null>(null);
 
   // Helper function to get compression settings based on aspect ratio and use case
-  const getCompressionSettings = (aspectRatio: string, isCropped: boolean = false) => {
+  const getCompressionSettings = (aspectRatio: string) => {
     switch (aspectRatio) {
       case 'landscape':
         // Cover photos - preserve original resolution and quality
@@ -231,7 +231,7 @@ export default function ImageUploadDialog({
 
     try {
       // Use optimized compression settings for the selected aspect ratio
-      const compressionSettings = getCompressionSettings(selectedAspectRatio, false);
+      const compressionSettings = getCompressionSettings(selectedAspectRatio);
       
       const compressedBlob = await compressImage(selectedFile, compressionSettings);
 
@@ -291,7 +291,7 @@ export default function ImageUploadDialog({
       );
 
       // Use optimized compression settings for the selected aspect ratio
-      const compressionSettings = getCompressionSettings(selectedAspectRatio, true);
+      const compressionSettings = getCompressionSettings(selectedAspectRatio);
       
       const compressedBlob = await compressImage(new File([blob], selectedFile.name), compressionSettings);
 
