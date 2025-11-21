@@ -22,14 +22,26 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     const location = useLocation();
     const { club } = useContext(ClubContext) as ClubContextType;
-    
+
     // Split the path into parts and filter out empty segments
     const pathSegments = location.pathname.split("/").filter(Boolean);
 
     return (
         <SidebarProvider>
-            <AppSidebar />
+            <div className={club?.deregistration_in_progress ? "pointer-events-none opacity-50" : ""}>
+                <AppSidebar />
+            </div>
             <SidebarInset>
+                {club?.deregistration_in_progress && (
+                    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 pointer-events-auto">
+                        <Alert variant="destructive" className="m-4 mb-0 max-w-2xl shadow-2xl">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertDescription>
+                                This club is currently undergoing deregistration and cannot be interacted with. Please contact support for assistance if this message persists longer than 10 minutes.
+                            </AlertDescription>
+                        </Alert>
+                    </div>
+                )}
                 {club?.deregistration_in_progress && (
                     <Alert variant="destructive" className="m-4 mb-0">
                         <AlertTriangle className="h-4 w-4" />
