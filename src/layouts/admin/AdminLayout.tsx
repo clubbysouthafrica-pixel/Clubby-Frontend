@@ -28,10 +28,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
     return (
         <SidebarProvider>
-            <div className={club?.deregistration_in_progress ? "pointer-events-none opacity-50" : ""}>
-                <AppSidebar />
-            </div>
-            <SidebarInset>
+            <AppSidebar />
+            <SidebarInset className={club?.deregistration_in_progress ? "pointer-events-none opacity-50" : ""}>
                 {club?.deregistration_in_progress && (
                     <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 pointer-events-auto">
                         <Alert variant="destructive" className="m-4 mb-0 max-w-2xl shadow-2xl">
