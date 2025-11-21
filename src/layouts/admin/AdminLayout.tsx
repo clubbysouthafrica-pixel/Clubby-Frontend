@@ -22,7 +22,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     const location = useLocation();
     const { club } = useContext(ClubContext) as ClubContextType;
-
+    
     // Split the path into parts and filter out empty segments
     const pathSegments = location.pathname.split("/").filter(Boolean);
 
@@ -34,7 +34,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                     <Alert variant="destructive" className="m-4 mb-0">
                         <AlertTriangle className="h-4 w-4" />
                         <AlertDescription>
-                            This club is currently undergoing deregistration and cannot be interacted with. Please contact support for assistance.
+                            This club is currently undergoing deregistration and cannot be interacted with. Please contact support for assistance if this message persists longer than 10 minutes.
                         </AlertDescription>
                     </Alert>
                 )}

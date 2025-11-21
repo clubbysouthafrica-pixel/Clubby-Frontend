@@ -13,7 +13,7 @@ export interface Club {
     club_type: string,
     currency: string
     onboarded: boolean
-    deregistration_in_progress?: boolean
+    deregistration_in_progress: boolean
 }
 
 interface ClubProviderProps {
