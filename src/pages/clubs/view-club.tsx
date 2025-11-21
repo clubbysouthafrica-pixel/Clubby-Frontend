@@ -179,7 +179,7 @@ export default function ViewClubPage() {
       </div>
     );
   }
-
+  console.log(data)
   return (
     <Pager>
       {isError && <p> Something went wrong... </p>}
@@ -197,15 +197,22 @@ export default function ViewClubPage() {
       {!isLoading && data && data?.deregistration_in_progress === true && (
         <div className="mt-10 flex items-start justify-center min-h-screen">
           <div className="text-center px-4">
-            <Label className="w-[700px]">
-              This club is currently undergoing deregistration and will no
-              longer accept new members or process transactions. Please check
-              back once the deregistration process is complete.
-            </Label>
+            <div className="text-center space-y-4">
+              This club is currently undergoing deregistration and
+              <div>
+                <h2 className="text-2xl font-bold text-foreground mb-2">Club Deregistration in Progress</h2>
+                <p className="text-muted-foreground max-w-md mx-auto leading-relaxed">
+                  This club is currently undergoing deregistration and cannot accept new members or process member interactions at this time.
+                </p>
+                <p className="text-sm text-muted-foreground mt-3">
+                  Please check back once the deregistration process is complete.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       )}
-      {!isLoading && !isError && data?.onboarded && (
+      {!isLoading && !isError && data?.onboarded && data?.deregistration_in_progress !== true && (
         <div className="min-h-screen bg-gradient-to-br from-background via-muted/10 to-background">
           {/* Hero Section */}
           <div className="relative">
