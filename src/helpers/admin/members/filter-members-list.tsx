@@ -4,12 +4,16 @@ export function filteredRegisteredMembers(
     selectedTab: string,
     clubMembers: any,
     memberNameFilter: string,
+    memberIdFilter: string,
     dynamicFilters: any
 ): any {
     return selectedTab === "registered-members"
         ? clubMembers?.registered?.filter((member: ClubMember) => {
             const fullName = (member.member_first_name + " " + member.member_surname).toLowerCase();
             if (!fullName.includes(memberNameFilter.toLowerCase())) return false;
+            
+            const memberId = member.member_id?.toString().toLowerCase() || "";
+            if (memberIdFilter && !memberId.includes(memberIdFilter.toLowerCase())) return false;
 
             for (const [fullKey, selectedValue] of Object.entries(dynamicFilters)) {
                 if (!selectedValue || selectedValue === "all") continue;
@@ -39,12 +43,16 @@ export function previousRegisteredMembers(
     selectedTab: string,
     clubMembers: any,
     memberNameFilter: string,
+    memberIdFilter: string,
     dynamicFilters: any
 ): any {
     return selectedTab === "previous-members"
             ? clubMembers?.unregistered?.filter((member: ClubMember) => {
                 const fullName = (member.member_first_name + " " + member.member_surname).toLowerCase();
                 if (!fullName.includes(memberNameFilter.toLowerCase())) return false;
+                
+                const memberId = member.member_id?.toString().toLowerCase() || "";
+                if (memberIdFilter && !memberId.includes(memberIdFilter.toLowerCase())) return false;
 
                 if (!member?.resubmission_required) return false
 
@@ -76,12 +84,16 @@ export function pendingRegisteredMembers(
     selectedTab: string,
     clubMembers: any,
     memberNameFilter: string,
+    memberIdFilter: string,
     dynamicFilters: any
 ): any {
     return selectedTab === "pending-members"
             ? clubMembers?.unregistered?.filter((member: ClubMember) => {
                 const fullName = (member.member_first_name + " " + member.member_surname).toLowerCase();
                 if (!fullName.includes(memberNameFilter.toLowerCase())) return false;
+                
+                const memberId = member.member_id?.toString().toLowerCase() || "";
+                if (memberIdFilter && !memberId.includes(memberIdFilter.toLowerCase())) return false;
 
                 if (member?.resubmission_required) return false
 

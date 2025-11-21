@@ -69,6 +69,7 @@ export default function ListMembersPage() {
   const [invalidRegistrationAmount, setInvalidRegistrationAmount] =
     useState(false);
   const [memberNameFilter, setMemberNameFilter] = useState("");
+  const [memberIdFilter, setMemberIdFilter] = useState("");
   const [dynamicFilters, setDynamicFilters] = useState<Record<string, string>>(
     {}
   );
@@ -141,6 +142,7 @@ export default function ListMembersPage() {
       selectedTab,
       clubMembers,
       memberNameFilter,
+      memberIdFilter,
       dynamicFilters
     );
     setRegisteredMembersLength(regMembersFiltered.length);
@@ -149,6 +151,7 @@ export default function ListMembersPage() {
       selectedTab,
       clubMembers,
       memberNameFilter,
+      memberIdFilter,
       dynamicFilters
     );
     setDeregisteredMembersLength(prevMembersFiltered.length);
@@ -157,6 +160,7 @@ export default function ListMembersPage() {
       selectedTab,
       clubMembers,
       memberNameFilter,
+      memberIdFilter,
       dynamicFilters
     );
     setUnregisteredMembersLength(pendingMembersFiltered.length);
@@ -231,6 +235,7 @@ export default function ListMembersPage() {
 
   const resetFilters = () => {
     setMemberNameFilter("");
+    setMemberIdFilter("");
     setDynamicFilters({});
     setActiveFilterKeys([]);
   };
@@ -263,6 +268,7 @@ export default function ListMembersPage() {
             );
 
             setMemberNameFilter("");
+            setMemberIdFilter("");
             setDynamicFilters({});
           }}
           className="w-full flex-col justify-start gap-1 mt-2"
@@ -310,6 +316,17 @@ export default function ListMembersPage() {
                 value={memberNameFilter}
                 onChange={(e) => {
                   setMemberNameFilter(e.target.value);
+                  setlistActionItems([]);
+                  setDeregisterMembers([]);
+                  setAllMembersSelected(false);
+                }}
+                className="w-[300px]"
+              />
+              <Input
+                placeholder="Filter by member ID"
+                value={memberIdFilter}
+                onChange={(e) => {
+                  setMemberIdFilter(e.target.value);
                   setlistActionItems([]);
                   setDeregisterMembers([]);
                   setAllMembersSelected(false);
