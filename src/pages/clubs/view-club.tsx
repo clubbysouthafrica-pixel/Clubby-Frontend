@@ -183,13 +183,24 @@ export default function ViewClubPage() {
   return (
     <Pager>
       {isError && <p> Something went wrong... </p>}
-      {data && !data?.onboarded && (
+      {!isLoading && data && !data?.onboarded && (
         <div className="mt-10 flex items-start justify-center min-h-screen">
           <div className="text-center px-4">
             <Label className="w-[700px]">
               The club administrator has not yet completed setting up the club
               account for member registration. For urgent enquiries, please
               contact: {data?.support_email}.
+            </Label>
+          </div>
+        </div>
+      )}
+      {!isLoading && data && data?.deregistration_in_progress === true && (
+        <div className="mt-10 flex items-start justify-center min-h-screen">
+          <div className="text-center px-4">
+            <Label className="w-[700px]">
+              This club is currently undergoing deregistration and will no
+              longer accept new members or process transactions. Please check
+              back once the deregistration process is complete.
             </Label>
           </div>
         </div>
@@ -378,12 +389,15 @@ export default function ViewClubPage() {
 
           {/* Navigation Tabs */}
           <div className="container mx-auto px-4 mt-8 mb-6">
-            <Tabs value={activeTab} onValueChange={(value) => {
-              setActiveTab(value);
-              if (value === "home" && data?.club_url) {
-                setIframeLoading(true);
-              }
-            }}>
+            <Tabs
+              value={activeTab}
+              onValueChange={(value) => {
+                setActiveTab(value);
+                if (value === "home" && data?.club_url) {
+                  setIframeLoading(true);
+                }
+              }}
+            >
               <TabsList
                 className={cn(
                   "bg-background/50 backdrop-blur-sm border border-primary/20 shadow-lg",
@@ -480,7 +494,10 @@ export default function ViewClubPage() {
                             </Button>
                           </div>
                         </div>
-                        <div className="relative w-full bg-background" style={{ height: "70vh" }}>
+                        <div
+                          className="relative w-full bg-background"
+                          style={{ height: "70vh" }}
+                        >
                           {iframeLoading && (
                             <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-50">
                               <Loader2 className="h-8 w-8 animate-spin text-primary" />
