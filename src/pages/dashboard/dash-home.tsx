@@ -2,17 +2,28 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useGeneralReportingQuery } from "@/queries/admin/useReporting";
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { HomeSectionCards } from "@/components/admin/club/home/section-cards";
 import { Loader2 } from "lucide-react";
 import { CardDescription } from "@/components/ui/card";
+import { useFetchClub } from "@/queries/admin/clubs";
 
 export default function HomeDashboardPage() {
-    const { club } = useContext(ClubContext) as ClubContextType
+    const { club, setClub } = useContext(ClubContext) as ClubContextType
+    const { data: fetchedClub } = useFetchClub(club?.club_account_id as string);
     const { data: report, isLoading: reportLoading } = useGeneralReportingQuery(club?.club_account_id as string);
 
     const navigate = useNavigate()
+    
+    useEffect(() => {
+        if (fetchedClub && club) {
+            if (fetchedClub.season_cycle !== club.season_cycle || 
+                JSON.stringify(fetchedClub) !== JSON.stringify(club)) {
+                setClub(fetchedClub);
+            }
+        }
+    }, [fetchedClub, club, setClub]);
     const manageRoutes = [
         {
             name: "Club",
