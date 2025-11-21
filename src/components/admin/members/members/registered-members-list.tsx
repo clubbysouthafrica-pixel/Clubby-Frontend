@@ -14,6 +14,7 @@ interface ImageProps {
     selectedTab: string
     clubMembers: any
     memberNameFilter: string
+    memberIdFilter: string
     dynamicFilters: Record<string, string>
     dereigsterMembers: { user_id: string, name: string }[]
     setAllListActionItems: (members: ClubMember[]) => void
@@ -32,6 +33,7 @@ export default function RegisteredMembersList({
     selectedTab,
     clubMembers,
     memberNameFilter,
+    memberIdFilter,
     dynamicFilters,
     dereigsterMembers,
     setAllListActionItems,
@@ -42,7 +44,7 @@ export default function RegisteredMembersList({
     setRegisteredMembersLength,
 }: ImageProps) {
 
-    const filteredRegisteredMembers = frg(selectedTab, clubMembers, memberNameFilter, dynamicFilters)
+    const filteredRegisteredMembers = frg(selectedTab, clubMembers, memberNameFilter, memberIdFilter, dynamicFilters)
     const [regSortAsc, setRegSortAsc] = useState<boolean | null>(null);
 
     const sortedRegisteredMembers = useMemo(() => {

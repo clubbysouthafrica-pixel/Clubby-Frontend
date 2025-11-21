@@ -12,8 +12,9 @@ export function filteredRegisteredMembers(
             const fullName = (member.member_first_name + " " + member.member_surname).toLowerCase();
             if (!fullName.includes(memberNameFilter.toLowerCase())) return false;
             
-            const memberId = member.member_id?.toString().toLowerCase() || "";
-            if (memberIdFilter && !memberId.includes(memberIdFilter.toLowerCase())) return false;
+            const memberId = member.user_id?.toString().toLowerCase() || "";
+            const idFilterStr = String(memberIdFilter || "").toLowerCase();
+            if (idFilterStr && !memberId.includes(idFilterStr)) return false;
 
             for (const [fullKey, selectedValue] of Object.entries(dynamicFilters)) {
                 if (!selectedValue || selectedValue === "all") continue;
@@ -51,8 +52,9 @@ export function previousRegisteredMembers(
                 const fullName = (member.member_first_name + " " + member.member_surname).toLowerCase();
                 if (!fullName.includes(memberNameFilter.toLowerCase())) return false;
                 
-                const memberId = member.member_id?.toString().toLowerCase() || "";
-                if (memberIdFilter && !memberId.includes(memberIdFilter.toLowerCase())) return false;
+                const memberId = member.user_id?.toString().toLowerCase() || "";
+                const idFilterStr = String(memberIdFilter || "").toLowerCase();
+                if (idFilterStr && !memberId.includes(idFilterStr)) return false;
 
                 if (!member?.resubmission_required) return false
 
@@ -92,8 +94,9 @@ export function pendingRegisteredMembers(
                 const fullName = (member.member_first_name + " " + member.member_surname).toLowerCase();
                 if (!fullName.includes(memberNameFilter.toLowerCase())) return false;
                 
-                const memberId = member.member_id?.toString().toLowerCase() || "";
-                if (memberIdFilter && !memberId.includes(memberIdFilter.toLowerCase())) return false;
+                const memberId = member.user_id?.toString().toLowerCase() || "";
+                const idFilterStr = String(memberIdFilter || "").toLowerCase();
+                if (idFilterStr && !memberId.includes(idFilterStr)) return false;
 
                 if (member?.resubmission_required) return false
 

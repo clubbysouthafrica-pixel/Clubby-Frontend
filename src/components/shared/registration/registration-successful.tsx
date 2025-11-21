@@ -5,8 +5,6 @@ interface RegistrationSuccessfulProps {
   title?: string;
   message?: string;
   onClose?: () => void;
-  onView?: () => void;
-  /** if true, align content to the left instead of centered */
   alignLeft?: boolean;
 }
 
@@ -14,7 +12,6 @@ export default function RegistrationSuccessful({
   title = "Registration Successful",
   message = "Thank you! Your registration has been received. A confirmation email has been sent to the address you provided.",
   onClose,
-  onView,
   alignLeft = false,
 }: RegistrationSuccessfulProps) {
   const containerAlignment = alignLeft ? "items-start text-left mx-0" : "items-center text-center mx-auto";
@@ -30,10 +27,7 @@ export default function RegistrationSuccessful({
       <p className="mt-2 text-sm text-muted-foreground max-w-xl">{message}</p>
 
       <div className="mt-6 flex gap-3">
-        <Button variant="default" onClick={onView} className="px-6">
-          View registrations
-        </Button>
-        <Button variant="ghost" onClick={onClose} className="px-6">
+        <Button variant="outline" onClick={onClose} className="px-4">
           Close
         </Button>
       </div>

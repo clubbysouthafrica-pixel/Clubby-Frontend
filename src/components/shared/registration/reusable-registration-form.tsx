@@ -103,8 +103,6 @@ interface ReusableRegistrationFormProps {
   onNext?: () => void;
   onContinue?: () => void;
   isPending?: boolean;
-  isError?: boolean;
-  errorMessage?: string;
   showNavigation?: boolean;
   customActions?: ReactNode;
   className?: string;
@@ -127,8 +125,6 @@ export function ReusableRegistrationForm({
   onNext,
   onContinue,
   isPending = false,
-  isError = false,
-  errorMessage,
   showNavigation = true,
   customActions,
   className,
@@ -321,15 +317,6 @@ export function ReusableRegistrationForm({
                           return null;
                         })}
                     </div>
-                  )}
-
-                  {isError && errorMessage && (
-                    <Alert variant="destructive" className="mt-2">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription className="text-xs">
-                        {errorMessage}
-                      </AlertDescription>
-                    </Alert>
                   )}
 
                   {customActions ? (

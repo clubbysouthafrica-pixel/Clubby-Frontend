@@ -14,13 +14,9 @@ import {
   PagedFormPayload,
   PageFieldBase,
 } from "../../shared/registration/reusable-registration-form";
-import {
-  ReusableSubmitRegistration,
-} from "../../shared/registration/reusable-submit-registration";
-import {
-  CardHeader,
-} from "@/components/ui/card";
-
+import { ReusableSubmitRegistration } from "../../shared/registration/reusable-submit-registration";
+import { CardHeader } from "@/components/ui/card";
+import { toast } from "sonner";
 interface RegistrationFormProps {
   clubName: string;
   email: string;
@@ -46,10 +42,7 @@ export function PublicRegistrationForm({
 
   const firstName = _firstName;
   const surname = _surname;
-
-  const [submitRegistrationError, setSubmitRegistrationError] = useState<
-    string | undefined
-  >(undefined);
+  
   const [pages, setPages] = useState<FormPage[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [requiredFieldsMissing, setRequiredFieldsMissing] = useState(false);
@@ -178,7 +171,6 @@ export function PublicRegistrationForm({
 
   const submitRegistration = () => {
     setIsRegistering(true);
-    setSubmitRegistrationError(undefined);
     if (registrationRequest) {
       mutate(registrationRequest, {
         onSuccess: () => {
@@ -193,7 +185,7 @@ export function PublicRegistrationForm({
             };
             message = err.response?.data?.message ?? err.message ?? message;
           }
-          setSubmitRegistrationError(message);
+          toast.error(message);
           setIsRegistering(false);
         },
       });
@@ -219,7 +211,6 @@ export function PublicRegistrationForm({
         <RegistrationSuccessful
           title={`Registration successful!`}
           message={`Your registration has been submitted. Please check your email for further instructions.`}
-          onView={onEditDetails}
           onClose={onEditDetails}
         />
       </div>
@@ -246,7 +237,6 @@ export function PublicRegistrationForm({
         onBack={returnBackToRegistrationForm}
         onSubmit={submitRegistration}
         isSubmitting={isRegistering}
-        errorMessage={submitRegistrationError}
         showPaymentWarning={true}
         bottomContent={
           <div className="text-center text-xs mt-2 pt-2 border-t mx-4">

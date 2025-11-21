@@ -6,8 +6,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
 import { ReactNode } from "react";
 
 export interface BillingFieldItem {
@@ -35,9 +33,6 @@ export interface ReusableSubmitRegistrationProps {
   onSubmit: () => void;
   isSubmitting: boolean;
 
-  // Error handling
-  errorMessage?: string;
-
   // Optional customization
   headerDescription?: string;
   submitButtonText?: string;
@@ -58,7 +53,6 @@ export function ReusableSubmitRegistration({
   onBack,
   onSubmit,
   isSubmitting,
-  errorMessage,
   headerDescription = "Submit your registration by reviewing and confirming the details below.",
   submitButtonText = "Submit registration",
   backButtonText = "Back to form",
@@ -144,18 +138,6 @@ export function ReusableSubmitRegistration({
                 </Button>
               </div>
             </div>
-
-            {/* Error Message */}
-            {errorMessage && (
-              <Alert variant="destructive" className="mt-2">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="text-xs">
-                  {errorMessage}
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {/* Bottom Content */}
             {bottomContent}
           </div>
         </form>

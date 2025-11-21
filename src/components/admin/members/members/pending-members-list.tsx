@@ -41,6 +41,7 @@ interface ImageProps {
   selectedTab: string;
   clubMembers: any;
   memberNameFilter: string;
+  memberIdFilter: string;
   dynamicFilters: Record<string, string>;
   allMembersSelected: boolean;
   listActionItems: { email: string; name: string }[];
@@ -70,6 +71,7 @@ export default function PendingMembersList({
   selectedTab,
   clubMembers,
   memberNameFilter,
+  memberIdFilter,
   dynamicFilters,
   allMembersSelected,
   listActionItems,
@@ -89,6 +91,11 @@ export default function PendingMembersList({
       ? clubMembers?.unregistered?.filter((member: ClubMember) => {
           const fullName = (member.member_first_name + " " + member.member_surname).toLowerCase();
           if (!fullName.includes(memberNameFilter.toLowerCase())) return false;
+          
+          const memberId = member.user_id?.toString().toLowerCase() || "";
+          const idFilterStr = String(memberIdFilter || "").toLowerCase();
+          if (idFilterStr && !memberId.includes(idFilterStr)) return false;
+          
           if (member?.resubmission_required) return false;
 
           for (const [fullKey, selectedValue] of Object.entries(dynamicFilters)) {
@@ -108,7 +115,7 @@ export default function PendingMembersList({
         }) ?? []
       : clubMembers?.unregistered?.filter((member: ClubMember) => !member?.resubmission_required) ?? [];
     return base;
-  }, [selectedTab, clubMembers, memberNameFilter, dynamicFilters]);
+  }, [selectedTab, clubMembers, memberNameFilter, memberIdFilter, dynamicFilters]);
 
   const [submittedSortAsc, setSubmittedSortAsc] = useState<boolean | null>(null);
 

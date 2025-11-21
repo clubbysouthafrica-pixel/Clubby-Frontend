@@ -517,6 +517,7 @@ export default function ListMembersPage() {
               selectedTab={selectedTab}
               clubMembers={clubMembers}
               memberNameFilter={memberNameFilter}
+              memberIdFilter={memberIdFilter}
               dynamicFilters={dynamicFilters}
               dereigsterMembers={dereigsterMembers}
               setAllListActionItems={setAllListActionItems}
@@ -546,6 +547,7 @@ export default function ListMembersPage() {
               clubMembers={clubMembers}
               listActionItems={listActionItems}
               memberNameFilter={memberNameFilter}
+              memberIdFilter={memberIdFilter}
               dynamicFilters={dynamicFilters}
               allMembersSelected={allMembersSelected}
               handleFormattedInputChange={handleFormattedInputChange}
@@ -572,6 +574,7 @@ export default function ListMembersPage() {
               clubMembers={clubMembers}
               allMembersSelected={allMembersSelected}
               memberNameFilter={memberNameFilter}
+              memberIdFilter={memberIdFilter}
               dynamicFilters={dynamicFilters}
               listActionItems={listActionItems}
               setAllListActionItems={setAllListActionItems}

@@ -21,10 +21,9 @@ import {
   PagedFormPayload,
   PageFieldBase,
 } from "../../../shared/registration/reusable-registration-form";
-import {
-  ReusableSubmitRegistration,
-} from "../../../shared/registration/reusable-submit-registration";
+import { ReusableSubmitRegistration } from "../../../shared/registration/reusable-submit-registration";
 import RegistrationSuccessful from "@/components/shared/registration/registration-successful";
+import { toast } from "sonner";
 
 export function ClubRegisterForm({
   className,
@@ -47,10 +46,6 @@ export function ClubRegisterForm({
   const { data: clubDetails, isLoading: clubLoading } = useFetchClub(
     club?.club_account_id as string
   );
-
-  const [submitRegistrationError, setSubmitRegistrationError] = useState<
-    string | undefined
-  >(undefined);
 
   const [pages, setPages] = useState<FormPage[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
@@ -215,7 +210,6 @@ export function ClubRegisterForm({
 
   const submitRegistration = () => {
     setIsRegistering(true);
-    setSubmitRegistrationError(undefined);
     if (registrationRequest) {
       mutate(registrationRequest, {
         onSuccess: () => {
@@ -229,7 +223,7 @@ export function ClubRegisterForm({
                 message?: string;
               }
             )?.response?.data?.message || "Registration failed";
-          setSubmitRegistrationError(errorMessage);
+          toast.error(errorMessage);
           setIsRegistering(false);
         },
       });
@@ -264,11 +258,13 @@ export function ClubRegisterForm({
 
   if (isSuccess) {
     return (
-      <div className={cn("flex flex-col gap-6 items-start", className)} {...props}>
+      <div
+        className={cn("flex flex-col gap-6 items-start", className)}
+        {...props}
+      >
         <RegistrationSuccessful
           title={`Registration successful!`}
           message={`The member has been registered. You can add another member or return.`}
-          onView={() => setShowRegistrationForm(false)}
           onClose={() => setShowRegistrationForm(false)}
           alignLeft
         />
@@ -318,8 +314,6 @@ export function ClubRegisterForm({
               onNext={handleNextPage}
               onContinue={handleContinue}
               isPending={isPending}
-              isError={!!submitRegistrationError}
-              errorMessage={submitRegistrationError}
               showNavigation={true}
               className="border-none shadow-none py-0"
             />
@@ -347,7 +341,6 @@ export function ClubRegisterForm({
         onBack={returnBackToRegistrationForm}
         onSubmit={submitRegistration}
         isSubmitting={isRegistering}
-        errorMessage={submitRegistrationError}
         headerDescription="Review and submit the registration"
         submitButtonText="Register member"
         showPaymentWarning={true}

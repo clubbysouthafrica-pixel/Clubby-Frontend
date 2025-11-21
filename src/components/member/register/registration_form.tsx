@@ -40,7 +40,6 @@ export function ClubRegisterForm() {
   const {
     mutate,
     isPending,
-    isError,
     error: registerError,
     isSuccess,
   } = useMemberRegistrationMutation();
@@ -110,10 +109,11 @@ export function ClubRegisterForm() {
               } else if (field.input_type === "DISCOUNT") {
                 return {
                   ...field,
-                  percentage: metaField.percentage,
-                  value: metaField.value,
+                  percentage: metaField.value,
+                  value: metaField.label_value,
+                  label: metaField.label_value,
                   multiplier_value: metaField?.multiplier_value ?? undefined,
-                  applicable_billing_fields: metaField.applicable_billing_fields
+                  option_order_id: metaField.option_order_id,
                 };
               } else {
                 return {
@@ -276,7 +276,6 @@ export function ClubRegisterForm() {
         <RegistrationSuccessful
           title={`Successfully Registered to ${club?.club_name}`}
           message={`Club will stay in contact with you once registration is completed.`}
-          onView={() => navigate(`/clubs/${clubId}`)}
           onClose={() => navigate(`/clubs/${clubId}`)}
         />
       </div>
@@ -331,8 +330,6 @@ export function ClubRegisterForm() {
         onNext={handleNextPage}
         onContinue={handleContinue}
         isPending={isPending}
-        isError={isError}
-        errorMessage={registerError?.message}
         showNavigation={true}
       />
     );

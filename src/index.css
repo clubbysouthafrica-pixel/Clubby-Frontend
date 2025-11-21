@@ -160,3 +160,33 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  /* Sonner toast styling */
+  .sonner-toaster {
+    --toast-width: 500px;
+  }
+
+  .sonner-toast {
+    width: 500px !important;
+    min-width: 500px !important;
+    max-width: 500px !important;
+  }
+
+  .toaster {
+    --toast-width: 500px;
+  }
+
+  .toast {
+    width: 500px !important;
+    min-width: 500px !important;
+    max-width: 500px !important;
+  }
+
+  /* Fallback for any toast container */
+  [data-sonner-toast] {
+    width: 500px !important;
+    min-width: 500px !important;
+    max-width: 500px !important;
+  }
+}

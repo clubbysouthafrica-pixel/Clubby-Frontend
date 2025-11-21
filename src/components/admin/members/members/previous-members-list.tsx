@@ -16,6 +16,7 @@ interface ImageProps {
     listActionItems: { email: string, name: string }[]
     allMembersSelected: boolean
     memberNameFilter: string
+    memberIdFilter: string
     dynamicFilters: Record<string, string>
     setAllMembersSelected: React.Dispatch<React.SetStateAction<boolean>>
     setlistActionItems: React.Dispatch<React.SetStateAction<{ email: string, name: string }[]>>
@@ -30,6 +31,7 @@ export default function PreviousMembersList({
     selectedTab,
     clubMembers,
     memberNameFilter,
+    memberIdFilter,
     allMembersSelected,
     dynamicFilters,
     listActionItems,
@@ -40,7 +42,7 @@ export default function PreviousMembersList({
     setAllMembersSelected,
 }: ImageProps) {
 
-    const filteredDeregisteredMembers = previousRegisteredMembers(selectedTab, clubMembers, memberNameFilter, dynamicFilters);
+    const filteredDeregisteredMembers = previousRegisteredMembers(selectedTab, clubMembers, memberNameFilter, memberIdFilter, dynamicFilters);
     const [deregSortAsc, setDeregSortAsc] = useState<boolean | null>(null);
 
     const sortedDeregisteredMembers = useMemo(() => {
