@@ -48,3 +48,12 @@ export const updateAdminNotes = (registrationId: string, member_id: string, admi
     })
         .then(res => res.data)
 }
+
+export const removeAdminNotes = (memberId: string, registrationId: string, noteIds: string[]): Promise<any> => {
+    return api.post('/registration/removeAdminNotes', {
+        member_id: memberId,
+        registration_id: registrationId,
+        note_ids: noteIds
+    })
+        .then(res => res.data)
+}

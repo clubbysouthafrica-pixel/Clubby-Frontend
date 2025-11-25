@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { useState } from "react";
 import { useFetchMemberRegisteration } from "@/queries/admin/registration-form";
-import { Loader2, Edit } from "lucide-react";
+import { Loader2, Edit, Trash2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -20,8 +20,14 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useMutation } from "@tanstack/react-query";
-import { updateAdminNotes } from "@/services/admin/registration-form";
+import { updateAdminNotes, removeAdminNotes } from "@/services/admin/registration-form";
 import { toast } from "sonner";
 import { useEffect } from "react";
 
@@ -66,6 +72,18 @@ export function CurrentMemberRegistration({
     },
     onError: () => {
       toast.error("Failed to update admin notes");
+    }
+  });
+
+  const removeNotesMutation = useMutation({
+    mutationFn: (noteIds: string[]) =>
+      removeAdminNotes(data.member_id, data.registration_id, noteIds),
+    onSuccess: (_, noteIds) => {
+      setAdminNotes(adminNotes.filter(note => !noteIds.includes(note.id)));
+      toast.success("Admin note removed successfully");
+    },
+    onError: () => {
+      toast.error("Failed to remove admin note");
     }
   });
 
@@ -197,9 +215,27 @@ export function CurrentMemberRegistration({
               {isNotesOpen && (
                 <div className="bg-blue-50 border-t border-blue-200 p-3 space-y-3">
                   {adminNotes.map((note) => (
-                    <div key={note.id} className="pb-3 border-b last:border-b-0 last:pb-0">
-                      <p className="text-sm font-semibold text-blue-900 mb-1">{note.title}</p>
-                      <p className="text-xs text-blue-800 whitespace-pre-wrap">{note.content}</p>
+                    <div key={note.id} className="pb-3 border-b last:border-b-0 last:pb-0 flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-blue-900 mb-1">{note.title}</p>
+                        <p className="text-xs text-blue-800 whitespace-pre-wrap">{note.content}</p>
+                      </div>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={() => removeNotesMutation.mutate([note.id])}
+                              disabled={removeNotesMutation.isPending}
+                              className="flex-shrink-0 p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="left">
+                            Delete this note
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   ))}
                 </div>
