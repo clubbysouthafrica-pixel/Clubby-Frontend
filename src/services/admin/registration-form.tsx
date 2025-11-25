@@ -39,3 +39,12 @@ export const createMemberRegistrationForm = (registrationFromRequest: AdminRegis
     return api.post('/clubMember/submitRegistration', registrationFromRequest)
         .then(res => res.data)
 }
+
+export const updateAdminNotes = (registrationId: string, member_id: string, adminNotes: Array<{ id: string; title: string; content: string }>): Promise<any> => {
+    return api.post('/registration/updateAdminNotes', {
+        registration_id: registrationId,
+        member_id: member_id,
+        admin_notes: adminNotes
+    })
+        .then(res => res.data)
+}

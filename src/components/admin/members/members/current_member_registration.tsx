@@ -8,8 +8,22 @@ import {
 } from "@/components/ui/card";
 import { useState } from "react";
 import { useFetchMemberRegisteration } from "@/queries/admin/registration-form";
-import { Loader2 } from "lucide-react";
+import { Loader2, Edit } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { useMutation } from "@tanstack/react-query";
+import { updateAdminNotes } from "@/services/admin/registration-form";
+import { toast } from "sonner";
+import { useEffect } from "react";
 
 function formatEpoch(epoch: number) {
   const date = new Date(epoch);
@@ -29,12 +43,37 @@ export function CurrentMemberRegistration({
   clubName,
 }: { userId: string, clubAccountId: string, currency: string, clubName: string }) {
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [adminNotes, setAdminNotes] = useState<Array<{ id: string; title: string; content: string }>>([]);
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
+  const [noteTitle, setNoteTitle] = useState("");
+  const [noteContent, setNoteContent] = useState("");
 
   const { data, isLoading } = useFetchMemberRegisteration(
     clubAccountId,
     userId,
     currency
   );
+
+  const updateNotesMutation = useMutation({
+    mutationFn: (notes: Array<{ id: string; title: string; content: string }>) =>
+      updateAdminNotes(data.registration_id, data.member_id, notes),
+    onSuccess: (_, newNotes) => {
+      setAdminNotes(newNotes);
+      setNoteTitle("");
+      setNoteContent("");
+      toast.success("Admin notes updated successfully");
+    },
+    onError: () => {
+      toast.error("Failed to update admin notes");
+    }
+  });
+
+  useEffect(() => {
+    if (data?.admin_notes && Array.isArray(data.admin_notes)) {
+      setAdminNotes(data.admin_notes);
+    }
+  }, [data?.admin_notes]);
 
   if (isLoading || !data) {
     return (
@@ -43,7 +82,7 @@ export function CurrentMemberRegistration({
       </div>
     );
   }
-  console.log(data.pages[currentPageIndex])
+
   return (
     <div className="w-full space-y-2 flex-1 min-h-0 flex flex-col">
       {/* Registration Timeline Info */}
@@ -80,15 +119,93 @@ export function CurrentMemberRegistration({
 
       {/* Registration Form Card */}
       <Card className="w-full border shadow-sm pt-0 flex-1 min-h-0 flex flex-col gap-1">
-        <CardHeader className="border-b bg-muted/30 py-1 pb-1">
-          <CardTitle className="text-l text-center pt-2">
-            {clubName}
-          </CardTitle>
-          <CardDescription className="text-center text-xs">
-            Member Registration Form
-          </CardDescription>
+        <CardHeader className="border-b bg-muted/30 py-1 pb-1 flex flex-row items-center justify-center relative">
+          <div className="text-center">
+            <CardTitle className="text-l pt-2">
+              {clubName}
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Member Registration Form
+            </CardDescription>
+          </div>
+          <div className="absolute right-4">
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Edit className="h-4 w-4" />
+                Admin Notes
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Add Admin Notes</DialogTitle>
+                <DialogDescription>
+                  Add additional information or notes to this member's registration
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="note-title">Note Title</Label>
+                  <Input
+                    id="note-title"
+                    placeholder="e.g., Special Request, Health Information"
+                    value={noteTitle}
+                    onChange={(e) => setNoteTitle(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="note-content">Note Content</Label>
+                  <Textarea
+                    id="note-content"
+                    placeholder="Enter your additional information here..."
+                    className="min-h-[200px]"
+                    value={noteContent}
+                    onChange={(e) => setNoteContent(e.target.value)}
+                  />
+                </div>
+                <Button
+                  onClick={() => {
+                    if (noteTitle.trim() && noteContent.trim()) {
+                      const id = `note-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                      const newNotes = [...adminNotes, { id, title: noteTitle, content: noteContent }];
+                      updateNotesMutation.mutate(newNotes);
+                    }
+                  }}
+                  disabled={updateNotesMutation.isPending}
+                  className="w-full"
+                >
+                  {updateNotesMutation.isPending ? "Saving..." : "Add Note"}
+                </Button>
+                <Button onClick={() => setIsEditDialogOpen(false)} variant="outline" className="w-full">
+                  Done
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+          </div>
         </CardHeader>
         <CardContent className="py-2 px-4 flex-1 min-h-0 flex flex-col">
+          {adminNotes.length > 0 && (
+            <div className="mb-3 border rounded-lg">
+              <button
+                onClick={() => setIsNotesOpen(!isNotesOpen)}
+                className="w-full flex items-center justify-between p-3 hover:bg-blue-50 transition-colors"
+              >
+                <span className="font-semibold text-sm text-blue-900">Admin Notes ({adminNotes.length})</span>
+                <span className="text-lg">{isNotesOpen ? "▼" : "▶"}</span>
+              </button>
+              {isNotesOpen && (
+                <div className="bg-blue-50 border-t border-blue-200 p-3 space-y-3">
+                  {adminNotes.map((note) => (
+                    <div key={note.id} className="pb-3 border-b last:border-b-0 last:pb-0">
+                      <p className="text-sm font-semibold text-blue-900 mb-1">{note.title}</p>
+                      <p className="text-xs text-blue-800 whitespace-pre-wrap">{note.content}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           <div key={data.pages[currentPageIndex].page_index} className="flex-1 min-h-0 flex flex-col">
             <h3 className="text-base font-semibold text-center border-b pb-2">
               {data.pages[currentPageIndex].page_header}
