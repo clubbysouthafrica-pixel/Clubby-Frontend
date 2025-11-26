@@ -142,7 +142,7 @@ export function CurrentMemberRegistration({
             <CardTitle className="text-l pt-2">
               {clubName}
             </CardTitle>
-            <CardDescription className="text-xs">
+            <CardDescription className="text-xs pt-2">
               Member Registration Form
             </CardDescription>
           </div>
