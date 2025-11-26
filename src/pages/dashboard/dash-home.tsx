@@ -59,7 +59,7 @@ export default function HomeDashboardPage() {
         <div className="p-5">
             <h1 className="text-xl font-bold">Current Season: {club?.season_cycle}</h1>
             <CardDescription className="mb-4">
-                To view reports from previous seasons, please visit the Historical Reporting section.
+                To view reports from the current or previous seasons, please visit the Reporting section.
             </CardDescription>
             {
                 !reportLoading &&
