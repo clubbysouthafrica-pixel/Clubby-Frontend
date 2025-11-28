@@ -111,7 +111,6 @@ export function CurrentMemberRegistration({
           <button
             onClick={() => {
               navigator.clipboard.writeText(data.transaction_id);
-              toast.success("Transaction ID copied");
             }}
             className="p-1 hover:bg-muted rounded transition-colors"
             title="Copy transaction ID"
