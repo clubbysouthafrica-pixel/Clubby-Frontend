@@ -944,9 +944,9 @@ export default function ViewClubPage() {
                                     <TableHead className="text-center w-1/4 font-semibold">
                                       Type
                                     </TableHead>
-                                    <TableHead className="text-center w-1/4 font-semibold">
+                                    {/* <TableHead className="text-center w-1/4 font-semibold">
                                       Outstanding Amount
-                                    </TableHead>
+                                    </TableHead> */}
                                     <TableHead className="text-center w-1/4 font-semibold">
                                       Status
                                     </TableHead>
@@ -1033,12 +1033,12 @@ export default function ViewClubPage() {
                                               {tx.type}
                                             </Badge>
                                           </TableCell>
-                                          <TableCell className="text-center py-4 font-semibold">
+                                          {/* <TableCell className="text-center py-4 font-semibold">
                                             {formatAmount(
                                               tx.outstanding_amount,
                                               data.currency
                                             )}
-                                          </TableCell>
+                                          </TableCell> */}
                                           <TableCell className="text-center py-4">
                                             <Badge
                                               className={cn(
@@ -1140,7 +1140,7 @@ export default function ViewClubPage() {
                                                             >
                                                               {entry.type ===
                                                               "SUBMISSION"
-                                                                ? "-"
+                                                                ? ""
                                                                 : "+"}
                                                               {formatAmount(
                                                                 entry.amount,
