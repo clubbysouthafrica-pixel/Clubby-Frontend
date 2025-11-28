@@ -326,6 +326,7 @@ export default function ViewClubPage() {
                               </div>
                             )}
                             {!data.registered &&
+                              !data.resubmission_required &&
                               bankDetails?.outstanding_amount > 0 && (
                                 <div className="text-center space-y-1">
                                   <p className="text-sm text-muted-foreground">
@@ -589,7 +590,7 @@ export default function ViewClubPage() {
                   </div>
                 </TabsContent>
 
-                {data?.club_member_exists && (
+                {data?.club_member_exists && !data?.resubmission_required && (
                   <TabsContent value="bank" className="mt-6">
                     {/* Outstanding Balance Card */}
                     <Card className="border-primary/20 shadow-lg mb-6">
