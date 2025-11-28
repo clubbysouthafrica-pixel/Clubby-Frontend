@@ -47,16 +47,12 @@ export default function HomeDashboardPage() {
     ];
 
     if (reportLoading || clubLoading) {
-        console.log('CLUB: ', club)
-        
         return (
             <div className="p-5 min-h-screen">
                 <Loader2 className="h-8 w-8 animate-spin" />
             </div>
         )
     }
-
-    console.log('CLUB1: ', club)
 
     return (
         <div className="p-5">

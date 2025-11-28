@@ -8,12 +8,13 @@ import EditClubDetails from "./edit-club-details";
 import { Loader2 } from "lucide-react";
 
 export default function ManageClubDashboard() {
-  const { club } = useContext(ClubContext) as ClubContextType;
-  const { data: clubDetails, isLoading: clubLoading } = useFetchClub(
-    club?.club_account_id as string
+  const { club, isLoading: clubLoading } = useContext(ClubContext) as ClubContextType;
+  const { data: clubDetails, isLoading: detailsLoading } = useFetchClub(
+    club?.club_account_id as string,
+    { includeImages: true }
   );
 
-  if (clubLoading || !clubDetails || !clubDetails?.images?.cover || !clubDetails?.images?.profile) {
+  if (clubLoading || detailsLoading || !clubDetails || !clubDetails?.images?.cover || !clubDetails?.images?.profile) {
     return (
       <div className="flex justify-center py-8">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -24,7 +25,7 @@ export default function ManageClubDashboard() {
   return (
     <div className="p-6 space-y-6 min-h-screen">
       <h1 className="text-base font-bold">Manage Club Page</h1>
-      {!clubLoading && club?.club_account_id && (
+      {!detailsLoading && club?.club_account_id && (
         <div className="w-full">
           <ImageUploadDialog
             title="Cover Image"
@@ -48,7 +49,7 @@ export default function ManageClubDashboard() {
           </div>
         </div>
       )}
-      {!clubLoading && (
+      {!detailsLoading && (
         <div className="flex space-x-4 content-center">
           <div className="text-4xl">{clubDetails?.club_name}</div>
           <div className="content-ceter self-center">

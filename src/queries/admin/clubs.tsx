@@ -9,12 +9,12 @@ export const useFetchAdminClubs = () => {
       })
 }
 
-export const useFetchClub = (clubAccountId: string) => {
+export const useFetchClub = (clubAccountId: string, options?: { includeImages?: boolean }) => {
     return useQuery({
-      queryKey: ['getClub', clubAccountId],
+      queryKey: ['getClub', clubAccountId, options?.includeImages],
       queryFn: ({ queryKey }) => {
         const [_key, clubId] = queryKey;
-        return fetchClub(clubId);
+        return fetchClub(clubId as string, options);
       },
       enabled: !!clubAccountId,
     });
