@@ -13,7 +13,6 @@ export default function HomeDashboardPage() {
     const { club, setClub, isLoading: clubLoading } = useContext(ClubContext) as ClubContextType
     const { data: fetchedClub } = useFetchClub(club?.club_account_id as string);
     const { data: report, isLoading: reportLoading } = useGeneralReportingQuery(club?.club_account_id as string);
-
     const navigate = useNavigate()
     
     useEffect(() => {
@@ -48,6 +47,8 @@ export default function HomeDashboardPage() {
     ];
 
     if (reportLoading || clubLoading) {
+        console.log('CLUB: ', club)
+        
         return (
             <div className="p-5 min-h-screen">
                 <Loader2 className="h-8 w-8 animate-spin" />
