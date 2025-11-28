@@ -2,7 +2,8 @@ import {createContext, ReactNode, useEffect, useState} from 'react';
 
 export interface ClubContextType {
     club: Club | null;
-    setClub: (club: Club) => void
+    setClub: (club: Club) => void;
+    isLoading: boolean;
 }
 
 export interface Club {
@@ -26,6 +27,7 @@ const activeClub = "activeClub"
 
 const ClubProvider: React.FC<ClubProviderProps> = ({ children }) => {
     const [club, setActiveClub] = useState<Club | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const hasActiveClub = localStorage.getItem(activeClub)
@@ -33,6 +35,7 @@ const ClubProvider: React.FC<ClubProviderProps> = ({ children }) => {
         if (hasActiveClub) {
             setActiveClub(JSON.parse(hasActiveClub))
         }
+        setIsLoading(false);
     }, [])
 
     const setClub = (club: Club) => {
@@ -41,7 +44,7 @@ const ClubProvider: React.FC<ClubProviderProps> = ({ children }) => {
     }
 
     return (
-        <ClubContext.Provider value={{ club, setClub }}>
+        <ClubContext.Provider value={{ club, setClub, isLoading }}>
             {children}
         </ClubContext.Provider>
     );

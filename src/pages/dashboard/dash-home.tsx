@@ -10,7 +10,7 @@ import { CardDescription } from "@/components/ui/card";
 import { useFetchClub } from "@/queries/admin/clubs";
 
 export default function HomeDashboardPage() {
-    const { club, setClub } = useContext(ClubContext) as ClubContextType
+    const { club, setClub, isLoading: clubLoading } = useContext(ClubContext) as ClubContextType
     const { data: fetchedClub } = useFetchClub(club?.club_account_id as string);
     const { data: report, isLoading: reportLoading } = useGeneralReportingQuery(club?.club_account_id as string);
 
@@ -45,9 +45,9 @@ export default function HomeDashboardPage() {
             description: "View financial and general reports for your club.",
             route: "/reporting/general"
         }
-    ]
+    ];
 
-    if (reportLoading) {
+    if (reportLoading || clubLoading) {
         return (
             <div className="p-5 min-h-screen">
                 <Loader2 className="h-8 w-8 animate-spin" />

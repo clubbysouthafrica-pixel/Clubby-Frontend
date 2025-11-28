@@ -47,7 +47,7 @@ import {
 import { Loader2 } from "lucide-react";
 
 export default function ListMembersPage() {
-  const { club } = useContext(ClubContext) as ClubContextType;
+  const { club, isLoading: clubLoading } = useContext(ClubContext) as ClubContextType;
   const { data: clubMembers, isLoading: clubMembersLoading } =
     useFetchClubMembers(club?.club_account_id as string);
   const { mutate, isPending, isSuccess, isError, reset } =
@@ -251,7 +251,12 @@ export default function ListMembersPage() {
   return (
     <div className="p-5">
       <h1 className="text-base font-bold">Club Members</h1>
-      {!clubMembersLoading && !filterLoading && (
+      {clubLoading && (
+        <div className="flex justify-center items-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      )}
+      {!clubLoading && !clubMembersLoading && !filterLoading && (
         <Tabs
           defaultValue="registered-members"
           onValueChange={(value: string) => {

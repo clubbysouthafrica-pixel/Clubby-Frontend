@@ -22,7 +22,7 @@ import * as React from "react";
 import { Loader2 } from "lucide-react";
 
 export default function FinancialTransactionsPage() {
-    const { club } = useContext(ClubContext) as ClubContextType;
+    const { club, isLoading: clubLoading } = useContext(ClubContext) as ClubContextType;
     const { data: transactions, isLoading } = useFetchClubTransactions(club?.club_account_id as string);
 
     const [memberIdSearch, setMemberIdSearch] = useState("");
@@ -50,6 +50,14 @@ export default function FinancialTransactionsPage() {
             return matchesName && matchesStatus && matchesType && matchesTxId;
         });
     }, [transactions, memberIdSearch, statusFilter, transactionType, txIdSearch]);
+
+    if (clubLoading) {
+        return (
+            <div className="flex justify-center items-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        );
+    }
 
     if (isLoading) {
         return (
@@ -231,7 +239,7 @@ export default function FinancialTransactionsPage() {
                                                                     </TableCell>
                                                                     <TableCell className="text-center">{entry.type}</TableCell>
                                                                     <TableCell className="text-center">{entry.description}</TableCell>
-                                                                    <TableCell className={`text-center ${entry.type === "SUBMISSION" ? "text-red-500" : "text-green-500"} font-bold`}>{entry.type === "SUBMISSION" ? "" : "+"}{formatAmount(entry.amount, club?.currency)}</TableCell>
+                                                                    <TableCell className={`text-center ${entry.type === "SUBMISSION" ? "text-red-500" : "text-green-500"} font-bold`}>{entry.type === "SUBMISSION" ? "" : "+"}{formatAmount(entry.amount, club?.currency || "")}</TableCell>
                                                                     <TableCell className="text-center">{entry.payment_type || "N/A"}</TableCell>
                                                                 </TableRow>
                                                             ))}

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 
 export default function RegistrationReportPage() {
-  const { club } = useContext(ClubContext) as ClubContextType;
+  const { club, isLoading: clubLoading } = useContext(ClubContext) as ClubContextType;
   const [selectedSeason, setSelectedSeason] = useState<string>("current");
 
   const seasonToFetch = selectedSeason === "current" ? undefined : parseInt(selectedSeason);
@@ -29,6 +29,14 @@ export default function RegistrationReportPage() {
   ) : [];
 
   const hasPreviousSeasons = availableSeasons.length > 0;
+
+  if (clubLoading) {
+    return (
+      <div className="flex justify-center items-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 md:p-8 space-y-4">
