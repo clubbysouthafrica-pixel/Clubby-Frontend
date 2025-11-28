@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { useState } from "react";
 import { useFetchMemberRegisteration } from "@/queries/admin/registration-form";
-import { Loader2, Edit, Trash2 } from "lucide-react";
+import { Loader2, Edit, Trash2, Copy } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -100,9 +100,27 @@ export function CurrentMemberRegistration({
       </div>
     );
   }
-
+  console.log('DATA: ', data);
   return (
     <div className="w-full space-y-2 flex-1 min-h-0 flex flex-col">
+      {/* Transaction ID */}
+      {data?.transaction_id && (
+        <div className="flex items-center gap-2 text-sm bg-transparent p-2">
+          <span className="text-muted-foreground text-xs">Transaction ID:</span>
+          <strong className="text-xs font-mono">{data.transaction_id}</strong>
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(data.transaction_id);
+              toast.success("Transaction ID copied");
+            }}
+            className="p-1 hover:bg-muted rounded transition-colors"
+            title="Copy transaction ID"
+          >
+            <Copy className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-pointer" />
+          </button>
+        </div>
+      )}
+
       {/* Registration Timeline Info */}
       <div className="flex flex-wrap items-center gap-4 text-sm bg-muted/30 p-2 rounded-lg border">
         {data?.registration_submitted_on && (
@@ -135,7 +153,6 @@ export function CurrentMemberRegistration({
         )}
       </div>
 
-      {/* Registration Form Card */}
       <Card className="w-full border shadow-sm pt-0 flex-1 min-h-0 flex flex-col gap-1">
         <CardHeader className="border-b bg-muted/30 py-1 pb-1 flex flex-row items-center justify-center relative">
           <div className="text-center">
