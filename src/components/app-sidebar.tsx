@@ -87,7 +87,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         items: [
           { title: "Club financials", url: "/reporting/general" },
           { title: "Registration fees", url: "/reporting/registration" },
-          { title: "Financial transactions", url: "/reporting/transactions" },
+          { title: "Income & Payments", url: "/reporting/transactions" },
         ],
       },
     ]

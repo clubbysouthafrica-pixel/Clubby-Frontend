@@ -60,7 +60,7 @@ export default function FinancialTransactionsPage() {
     }
     return (
         <div className="p-5">
-            <h1 className="text-base font-bold mb-4">Financial Transactions</h1>
+            <h1 className="text-base font-bold mb-4">Revenue Transactions</h1>
 
             <div className="flex flex-wrap gap-4 mb-6">
                 <Input
@@ -231,7 +231,7 @@ export default function FinancialTransactionsPage() {
                                                                     </TableCell>
                                                                     <TableCell className="text-center">{entry.type}</TableCell>
                                                                     <TableCell className="text-center">{entry.description}</TableCell>
-                                                                    <TableCell className={`text-center ${entry.type === "SUBMISSION" ? "text-red-500" : "text-green-500"} font-bold`}>{entry.type === "SUBMISSION" ? "-" : "+"}{formatAmount(entry.amount, club?.currency)}</TableCell>
+                                                                    <TableCell className={`text-center ${entry.type === "SUBMISSION" ? "text-red-500" : "text-green-500"} font-bold`}>{entry.type === "SUBMISSION" ? "" : "+"}{formatAmount(entry.amount, club?.currency)}</TableCell>
                                                                     <TableCell className="text-center">{entry.payment_type || "N/A"}</TableCell>
                                                                 </TableRow>
                                                             ))}
