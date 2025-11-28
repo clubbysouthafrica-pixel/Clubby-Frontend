@@ -198,7 +198,10 @@ export function BankingDetailsForm({
                     {activeTab === 'payfast' && (
                         <p className="mt-2 text-sm text-muted-foreground">
                             PayFast is a South African payment gateway that enables secure online payments
-                            (card, Instant EFT, more). Connect your merchant to accept online payments for your club.
+                            (card, Instant EFT, more). Connect your merchant to accept online payments for your club.{' '}
+                            <a href="https://www.payfast.io" target="_blank" rel="noopener noreferrer" className="text-primary font-medium hover:underline">
+                                Create a merchant account
+                            </a>.
                         </p>
                     )}
                     <TabsContent value="eft" className="space-y-4 mt-4">
