@@ -125,7 +125,6 @@ export default function ViewClubPage() {
   };
 
   const handlePayHereClick = () => {
-    // Navigate to the Payments & Billing tab
     setActiveTab("bank");
 
     setTimeout(() => {
@@ -590,9 +589,9 @@ export default function ViewClubPage() {
                   </div>
                 </TabsContent>
 
-                {data?.club_member_exists && !data?.resubmission_required && (
+                {data?.club_member_exists && (
                   <TabsContent value="bank" className="mt-6">
-                    {/* Outstanding Balance Card */}
+                    {!data?.resubmission_required && (
                     <Card className="border-primary/20 shadow-lg mb-6">
                       <CardHeader className="pb-4">
                         <div className="flex items-center gap-3">
@@ -629,7 +628,9 @@ export default function ViewClubPage() {
                         )}
                       </CardHeader>
                     </Card>
+                    )}
                     <div className="flex flex-col w-full gap-6">
+                      {!data?.resubmission_required && (
                       <Card
                         id="payment-options-section"
                         className={cn(
@@ -916,6 +917,7 @@ export default function ViewClubPage() {
                           </TabsContent>
                         </Tabs>
                       </Card>
+                      )}
                       {!isUserTransactionsLoading && transactions && (
                         <Card className="border-primary/20 shadow-lg">
                           <CardHeader>
