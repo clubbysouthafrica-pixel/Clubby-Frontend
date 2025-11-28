@@ -56,6 +56,8 @@ export default function HomeDashboardPage() {
         )
     }
 
+    console.log('CLUB1: ', club)
+
     return (
         <div className="p-5">
             <h1 className="text-xl font-bold">Current Season: {club?.season_cycle}</h1>
