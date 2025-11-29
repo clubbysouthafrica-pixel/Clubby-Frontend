@@ -154,7 +154,7 @@ export default function PreviousMembersList({
                                 </TableCell>
                                 <TableCell className="text-center w-1/4">
                                     <div className="flex justify-center gap-2">
-                                        <TooltipProvider>
+                                        {/* <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <Button
@@ -169,7 +169,7 @@ export default function PreviousMembersList({
                                                     <p>Re-register member</p>
                                                 </TooltipContent>
                                             </Tooltip>
-                                        </TooltipProvider>
+                                        </TooltipProvider> */}
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>

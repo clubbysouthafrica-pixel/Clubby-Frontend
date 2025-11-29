@@ -197,10 +197,10 @@ export default function FinancialTransactionsPage() {
                                     </TableCell>
                                     <TableCell className="text-center">{tx.type}</TableCell>
                                     <TableCell className={`text-center font-bold ${tx.status === "PENDING"
-                                        ? "text-red-500"
+                                        ? "text-red-700"
                                         : tx.status === "PARTIALLY PAID"
-                                            ? "text-orange-500"
-                                            : "text-green-500"
+                                            ? "text-orange-700"
+                                            : "text-green-700"
                                         }`}>
                                         {tx.status}
                                     </TableCell>
@@ -239,7 +239,7 @@ export default function FinancialTransactionsPage() {
                                                                     </TableCell>
                                                                     <TableCell className="text-center">{entry.type}</TableCell>
                                                                     <TableCell className="text-center">{entry.description}</TableCell>
-                                                                    <TableCell className={`text-center ${entry.type === "SUBMISSION" ? "text-red-500" : "text-green-500"} font-bold`}>{entry.type === "SUBMISSION" ? "" : "+"}{formatAmount(entry.amount, club?.currency || "")}</TableCell>
+                                                                    <TableCell className={`text-center ${entry.type === "SUBMISSION" ? "text-black-700" : "text-green-700"}`}>{entry.type === "SUBMISSION" ? "" : "+"}{formatAmount(entry.amount, club?.currency || "")}</TableCell>
                                                                     <TableCell className="text-center">{entry.payment_type || "N/A"}</TableCell>
                                                                 </TableRow>
                                                             ))}

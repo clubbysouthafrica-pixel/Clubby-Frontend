@@ -72,9 +72,9 @@ export default function RegisteredMembersList({
                 <Table>
                     <TableHeader className="bg-muted sticky top-0 z-10">
                         <TableRow>
-                            <TableHead className="text-center w-1/4">Member name</TableHead>
-                            <TableHead className="text-center w-1/4">Member ID</TableHead>
-                            <TableHead className="text-center w-1/4">
+                            <TableHead className="text-center w-1/3">Member name</TableHead>
+                            <TableHead className="text-center w-1/3">Member ID</TableHead>
+                            <TableHead className="text-center w-1/3">
                                 <button
                                     type="button"
                                     className="inline-flex items-center gap-1 hover:underline"
@@ -89,10 +89,10 @@ export default function RegisteredMembersList({
                                     )}
                                 </button>
                             </TableHead>
-                            <TableHead className="text-center w-1/4">
+                            {/* <TableHead className="text-center w-1/3">
                                 Action
-                            </TableHead>
-                            <TableHead className="text-center w-1/5 !pr-4 py-3">
+                            </TableHead> */}
+                            <TableHead className="text-center w-1/4 !pr-4 py-3">
                                 <div className="flex justify-center">
                                     <Checkbox
                                         className="bg-white"
@@ -106,7 +106,7 @@ export default function RegisteredMembersList({
                     <TableBody>
                         {sortedRegisteredMembers.length ? sortedRegisteredMembers.map((member: ClubMember) => (
                             <TableRow key={member.user_id}>
-                                <TableCell className="text-center w-1/4">
+                                <TableCell className="text-center w-1/3">
                                     <a
                                         onClick={() => setSelectedMember(member)}
                                         href={`#${member.user_id}`}
@@ -115,7 +115,7 @@ export default function RegisteredMembersList({
                                         {member.member_first_name + " " + member.member_surname}
                                     </a>
                                 </TableCell>
-                                <TableCell className="text-center w-1/4">
+                                <TableCell className="text-center w-1/3">
                                     <div className="inline-flex items-center gap-2 justify-center">
                                         <span className="font-mono">{member.user_id.slice(0, 8)}...</span>
 
@@ -144,12 +144,12 @@ export default function RegisteredMembersList({
                                         </button>
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-center w-1/4">
+                                <TableCell className="text-center w-1/3">
                                     {member.registered_on ? new Date(member.registered_on).toLocaleString() : "-"}
                                 </TableCell>
-                                <TableCell className="text-center w-1/4">
-                                </TableCell>
-                                <TableCell className="text-center w-1/5 !pr-4 py-3">
+                                {/* <TableCell className="text-center w-1/3">
+                                </TableCell> */}
+                                <TableCell className="text-center w-1/4 !pr-4 py-3">
                                     <div className="flex justify-center">
                                         <Checkbox
                                         checked={listActionItems.some(
