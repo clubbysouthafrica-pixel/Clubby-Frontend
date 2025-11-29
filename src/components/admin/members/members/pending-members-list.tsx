@@ -144,7 +144,7 @@ export default function PendingMembersList({
         <Table>
           <TableHeader className="bg-muted sticky top-0 z-10">
             <TableRow>
-              <TableHead className="text-center w-1/6">Display Name</TableHead>
+              <TableHead className="text-center w-1/6">Member Name</TableHead>
               <TableHead className="text-center w-1/6">Member ID</TableHead>
               <TableHead className="text-center w-1/6">
                 <button

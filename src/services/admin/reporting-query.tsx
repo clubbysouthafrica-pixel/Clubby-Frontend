@@ -18,7 +18,11 @@ export const getRegistrationBillingReporting = (clubId: string, seasonCycle?: nu
         .then(res => res.data);
 }
 
-export const getMcsBillingReporting = (clubId: string) => {
-    return api.get(`/reporting/mcsBilling?club_account_id=${clubId}`)
+export const getMcsBillingReporting = (clubId: string, seasonCycle?: number) => {
+    const params = new URLSearchParams({ club_account_id: clubId });
+    if (seasonCycle !== undefined) {
+        params.append('season_cycle', seasonCycle.toString());
+    }
+    return api.get(`/reporting/mcsBilling?${params.toString()}`)
         .then(res => res.data);
 }

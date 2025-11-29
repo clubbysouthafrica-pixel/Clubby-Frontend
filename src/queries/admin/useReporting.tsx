@@ -23,12 +23,12 @@ export const useRegistrationBillingReportingQuery = (clubAccountId: string, seas
   });
 };
 
-export const useMcsBillingReportingQuery = (clubAccountId: string) => {
+export const useMcsBillingReportingQuery = (clubAccountId: string, seasonCycle?: number) => {
   return useQuery({
-    queryKey: ['queryMcsBillingReporting', clubAccountId],
+    queryKey: ['queryMcsBillingReporting', clubAccountId, seasonCycle],
     queryFn: ({ queryKey }) => {
-      const [_key, clubId] = queryKey;
-      return getMcsBillingReporting(clubId);
+      const [_key, clubId, season] = queryKey as [string, string, number | undefined];
+      return getMcsBillingReporting(clubId, season);
     },
     enabled: !!clubAccountId,
   });
