@@ -79,14 +79,20 @@ export default function BillingPage() {
           </div>
         </div>
       )}
-      <div className="@container/main flex flex-1 flex-col gap-1">
-        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-2">
-          <ClubUsageAndCharges
-            data={data.report ?? {}}
-            currency={club?.currency ?? "ZAR"}
-          />
+      {isLoading || !data ? (
+        <div className="flex justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" />
         </div>
-      </div>
+      ) : (
+        <div className="@container/main flex flex-1 flex-col gap-1">
+          <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-2">
+            <ClubUsageAndCharges
+              data={data.report ?? {}}
+              currency={club?.currency ?? "ZAR"}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
