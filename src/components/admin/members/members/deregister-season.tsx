@@ -19,6 +19,7 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
 
     const [openDialog, setOpenDialog] = useState<boolean>(false);
     const [confirmed, setConfirmed] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const { mutate, isPending, isSuccess } = useDeregisterAllMutation()
 
@@ -32,8 +33,14 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
             onError: (error: unknown) => {
                 const errObj = error as Record<string, unknown> | undefined;
                 const resp = errObj?.response as Record<string, unknown> | undefined;
-                const msg = (resp && (resp.message as string | undefined)) ?? String(error ?? "An error occurred");
-                toast.error(msg);
+                const statusCode = resp?.status as number | undefined;
+                
+                if (statusCode === 410) {
+                    setErrorMessage("You have an outstanding balance with Clubby that needs to be paid before you can start a new season.");
+                } else {
+                    const msg = (resp?.data as Record<string, unknown> | undefined)?.message as string | undefined ?? String(error ?? "An error occurred");
+                    setErrorMessage(msg);
+                }
             }
         })
     }
@@ -42,6 +49,7 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
         setOpenDialog(open);
         if (!open) {
             setConfirmed(false);
+            setErrorMessage(null);
         }
     };
 
@@ -68,42 +76,62 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
                 <DialogHeader>
                     <DialogTitle>Start New Club Season</DialogTitle>
                     <DialogDescription>
-                        <span>
-                            Starting a new season will archive all current season data and deregister all existing club members.
-                        </span>
-                        <br />
-                        <br />
-                        <span>
-                            This action is intended to prepare the club for a fresh season with new member registrations and updated data.
-                        </span>
-                        <br />
-                        <br />
-                        <span className="text-red-600">
-                            ⚠️ This process is irreversible. Archived data will remain accessible in a read-only format, but current members will lose access and must register again for the new season.
-                        </span>
+                        {errorMessage ? (
+                            <div className="text-red-600">
+                                <p>{errorMessage}</p>
+                                {errorMessage.includes("outstanding balance") && (
+                                    <button
+                                        onClick={() => navigate("/billing&usage")}
+                                        className="mt-3 underline text-blue-600 hover:text-blue-800 font-semibold cursor-pointer"
+                                    >
+                                        Click here to see outstanding balances
+                                    </button>
+                                )}
+                            </div>
+                        ) : (
+                            <div>
+                                <span>
+                                    Starting a new season will archive all current season data and deregister all existing club members.
+                                </span>
+                                <br />
+                                <br />
+                                <span>
+                                    This action is intended to prepare the club for a fresh season with new member registrations and updated data.
+                                </span>
+                                <br />
+                                <br />
+                                <span className="text-red-600">
+                                    ⚠️ This process is irreversible. Archived data will remain accessible in a read-only format, but current members will lose access and must register again for the new season.
+                                </span>
+                            </div>
+                        )}
                     </DialogDescription>
                 </DialogHeader>
-                <div className="flex items-center gap-1">
-                    <Checkbox
-                        id="consent"
-                        onCheckedChange={(checked: boolean) => setConfirmed(!!checked)}
-                    />
-                    <DialogDescription className="text-black">I understand that starting a new season will archive all existing season data and permanently remove all registered members.</DialogDescription>
-                </div>
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button variant="outline">Cancel</Button>
-                    </DialogClose>
-                    <Button
-                        type="submit"
-                        variant="destructive"
-                        className="bg-red-700 hover:bg-red-800 text-white"
-                        disabled={!confirmed || isPending || isSuccess}
-                        onClick={send}
-                    >
-                        {isPending ? "loading..." : "Start new season"}
-                    </Button>
-                </DialogFooter>
+                {!errorMessage && (
+                    <>
+                        <div className="flex items-center gap-1">
+                            <Checkbox
+                                id="consent"
+                                onCheckedChange={(checked: boolean) => setConfirmed(!!checked)}
+                            />
+                            <DialogDescription className="text-black">I understand that starting a new season will archive all existing season data and permanently remove all registered members.</DialogDescription>
+                        </div>
+                        <DialogFooter>
+                            <DialogClose asChild>
+                                <Button variant="outline">Cancel</Button>
+                            </DialogClose>
+                            <Button
+                                type="submit"
+                                variant="destructive"
+                                className="bg-red-700 hover:bg-red-800 text-white"
+                                disabled={!confirmed || isPending || isSuccess}
+                                onClick={send}
+                            >
+                                {isPending ? "loading..." : "Start new season"}
+                            </Button>
+                        </DialogFooter>
+                    </>
+                )}
             </DialogContent>
         </Dialog>
     )

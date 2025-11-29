@@ -1,6 +1,6 @@
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronsUpDown } from "lucide-react";
+import { ChevronsUpDown, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import {
@@ -28,6 +28,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Club } from "@/context/ClubContext";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ImageProps {
   club: Club | null;
@@ -144,9 +150,9 @@ export default function PendingMembersList({
         <Table>
           <TableHeader className="bg-muted sticky top-0 z-10">
             <TableRow>
-              <TableHead className="text-center w-1/6">Member Name</TableHead>
-              <TableHead className="text-center w-1/6">Member ID</TableHead>
-              <TableHead className="text-center w-1/6">
+              <TableHead className="text-center w-1/5">Member Name</TableHead>
+              <TableHead className="text-center w-1/5">Member ID</TableHead>
+              <TableHead className="text-center w-1/5">
                 <button
                   type="button"
                   className="inline-flex items-center gap-1 hover:underline"
@@ -161,15 +167,14 @@ export default function PendingMembersList({
                   )}
                 </button>
               </TableHead>
-              <TableHead className="text-center w-1/6">
+              <TableHead className="text-center w-1/5">
                 Outstanding Reg. Amount
               </TableHead>
-              <TableHead className="text-center w-1/6">
-                Register member
+              <TableHead className="text-center w-1/5">
+                Actions
               </TableHead>
-              <TableHead className="text-center w-1/6">
-                <div className="flex items-center justify-center gap-2">
-                  Action
+              <TableHead className="text-center w-1/5 !pr-4 py-3">
+                <div className="flex justify-center">
                   <Checkbox
                     className="bg-white"
                     onCheckedChange={() =>
@@ -185,7 +190,7 @@ export default function PendingMembersList({
             {filteredUnregisteredMembers.length ? (
               sortedUnregisteredMembers.map((member: ClubMember) => (
                 <TableRow key={member.user_id}>
-                  <TableCell className="text-center w-1/6">
+                  <TableCell className="text-center w-1/5">
                     <a
                       onClick={() => setSelectedMember(member)}
                       href={`#${member.user_id}`}
@@ -194,7 +199,7 @@ export default function PendingMembersList({
                       {member.member_first_name + " " + member.member_surname}
                     </a>
                   </TableCell>
-                  <TableCell className="text-center w-1/6">
+                  <TableCell className="text-center w-1/5">
                     <div className="inline-flex items-center gap-2 justify-center">
                       <span className="font-mono">
                         {member.user_id.slice(0, 8)}...
@@ -225,34 +230,15 @@ export default function PendingMembersList({
                       </button>
                     </div>
                   </TableCell>
-                  <TableCell className="text-center w-1/6">
+                  <TableCell className="text-center w-1/5">
                     {member.registration_submitted_on
-                      ? (() => {
-                          const date = new Date(
-                            member.registration_submitted_on
-                          );
-                          const now = new Date();
-                          const diffTime = Math.abs(
-                            now.getTime() - date.getTime()
-                          );
-                          const diffDays = Math.floor(
-                            diffTime / (1000 * 60 * 60 * 24)
-                          );
-
-                          return `${date.toLocaleString()} (${
-                            diffDays === 0
-                              ? "today"
-                              : diffDays === 1
-                              ? "1 day ago"
-                              : `${diffDays} days ago`
-                          })`;
-                        })()
+                      ? new Date(member.registration_submitted_on).toLocaleString()
                       : "-"}
                   </TableCell>
-                  <TableCell className="text-center w-1/6">
+                  <TableCell className="text-center w-1/5">
                     {formatAmount(member.outstanding_amount, club?.currency)}
                   </TableCell>
-                  <TableCell className="text-center w-1/6">
+                  <TableCell className="text-center w-1/5">
                     <div>
                       <Dialog
                         open={openDialogUserId === member.user_id}
@@ -269,14 +255,25 @@ export default function PendingMembersList({
                                 Member resubmission required
                               </Label>
                             ) : (
-                              <Button
-                                variant="outline"
-                                onClick={() => {
-                                  setOpenDialogUserId(member.user_id);
-                                }}
-                              >
-                                Register
-                              </Button>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="rounded-full border border-black hover:bg-gray-100 hover:text-black"
+                                      onClick={() => {
+                                        setOpenDialogUserId(member.user_id);
+                                      }}
+                                    >
+                                      <CheckCircle2 className="h-6 w-6" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Click to register member</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             )}
                           </DialogTrigger>
                         </div>
@@ -352,45 +349,47 @@ export default function PendingMembersList({
                       </Dialog>
                     </div>
                   </TableCell>
-                  <TableCell className="text-center w-1/6">
-                    <Checkbox
-                      checked={listActionItems.some(
-                        (item) =>
-                          item.email === member.member_email &&
-                          item.name ===
-                            `${member.member_first_name} ${member.member_surname}`
-                      )}
-                      onCheckedChange={(checked: boolean) => {
-                        if (checked) {
-                          const updatedList = [
-                            ...listActionItems,
-                            {
-                              email: member.member_email,
-                              name: `${member.member_first_name} ${member.member_surname}`,
-                            },
-                          ];
-                          setlistActionItems(updatedList);
-                          if (
-                            updatedList.length ===
-                            filteredUnregisteredMembers.length
-                          ) {
-                            setAllMembersSelected(true);
+                  <TableCell className="text-center w-1/5 !pr-4 py-3">
+                    <div className="flex justify-center">
+                      <Checkbox
+                        checked={listActionItems.some(
+                          (item) =>
+                            item.email === member.member_email &&
+                            item.name ===
+                              `${member.member_first_name} ${member.member_surname}`
+                        )}
+                        onCheckedChange={(checked: boolean) => {
+                          if (checked) {
+                            const updatedList = [
+                              ...listActionItems,
+                              {
+                                email: member.member_email,
+                                name: `${member.member_first_name} ${member.member_surname}`,
+                              },
+                            ];
+                            setlistActionItems(updatedList);
+                            if (
+                              updatedList.length ===
+                              filteredUnregisteredMembers.length
+                            ) {
+                              setAllMembersSelected(true);
+                            }
+                          } else {
+                            const updatedList = listActionItems.filter(
+                              (item) => item.email !== member.member_email
+                            );
+                            setlistActionItems(updatedList);
+                            setAllMembersSelected(false);
                           }
-                        } else {
-                          const updatedList = listActionItems.filter(
-                            (item) => item.email !== member.member_email
-                          );
-                          setlistActionItems(updatedList);
-                          setAllMembersSelected(false);
-                        }
-                      }}
-                    />
+                        }}
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
+                <TableCell colSpan={6} className="h-24 text-center">
                   No results.
                 </TableCell>
               </TableRow>

@@ -100,7 +100,7 @@ export function CurrentMemberRegistration({
       </div>
     );
   }
-  console.log('DATA: ', data);
+
   return (
     <div className="w-full space-y-2 flex-1 min-h-0 flex flex-col">
       {/* Transaction ID */}

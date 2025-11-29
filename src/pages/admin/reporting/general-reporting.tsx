@@ -36,7 +36,7 @@ export default function GeneralReportingPage() {
         <div className="p-6 md:p-8 space-y-6">
             <div className="space-y-1 text-center">
                 <h1 className="text-2xl font-semibold tracking-tight">Club Reporting</h1>
-                <p className="text-sm text-muted-foreground max-w-2xl mx-auto">Track your club's financial and registration performance with interactive summaries, charts and detailed monthly breakdowns.</p>
+                <p className="text-sm text-muted-foreground mx-auto">Track your club's financial and registration performance with interactive summaries, charts and detailed monthly breakdowns.</p>
             </div>
 
             {hasPreviousSeasons && (

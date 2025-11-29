@@ -2,9 +2,16 @@ import { DndContext, closestCenter } from "@dnd-kit/core";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ClubMember } from "@/interfaces/club"
 import { useEffect, useMemo, useState } from "react";
-import { ChevronsUpDown } from "lucide-react";
+import { ChevronsUpDown, RotateCcw, Trash2 } from "lucide-react";
 import { Club } from "@/context/ClubContext"
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { previousRegisteredMembers } from "@/helpers/admin/members/filter-members-list";
 
 interface ImageProps {
@@ -70,9 +77,9 @@ export default function PreviousMembersList({
                 <Table>
                     <TableHeader className="bg-muted sticky top-0 z-10">
                         <TableRow>
-                            <TableHead className="text-center w-1/6">Member Name</TableHead>
-                            <TableHead className="text-center w-1/6">Member ID</TableHead>
-                            <TableHead className="text-center w-1/6">
+                            <TableHead className="text-center w-1/4">Member Name</TableHead>
+                            <TableHead className="text-center w-1/4">Member ID</TableHead>
+                            <TableHead className="text-center w-1/4">
                                 <button
                                     type="button"
                                     className="inline-flex items-center gap-1 hover:underline"
@@ -87,9 +94,11 @@ export default function PreviousMembersList({
                                     )}
                                 </button>
                             </TableHead>
-                            <TableHead className="text-center w-1/5">
-                                <div className="flex items-center justify-center gap-2">
-                                    Action
+                            <TableHead className="text-center w-1/4">
+                                Actions
+                            </TableHead>
+                            <TableHead className="text-center w-1/4 !pr-4 py-3">
+                                <div className="flex justify-center">
                                     <Checkbox
                                         className="bg-white"
                                         onCheckedChange={() => setAllListActionItems(filteredDeregisteredMembers)}
@@ -102,7 +111,7 @@ export default function PreviousMembersList({
                     <TableBody>
                         {sortedDeregisteredMembers.length ? sortedDeregisteredMembers.map((member: ClubMember) => (
                             <TableRow key={member.user_id}>
-                                <TableCell className="text-center w-1/6">
+                                <TableCell className="text-center w-1/4">
                                     <a
                                         onClick={() => setSelectedMember(member)}
                                         href={`#${member.user_id}`}
@@ -111,7 +120,7 @@ export default function PreviousMembersList({
                                         {member.member_first_name + " " + member.member_surname}
                                     </a>
                                 </TableCell>
-                                <TableCell className="text-center w-1/6">
+                                <TableCell className="text-center w-1/4">
                                     <div className="inline-flex items-center gap-2 justify-center">
                                         <span className="font-mono">{member.user_id.slice(0, 8)}...</span>
 
@@ -140,39 +149,70 @@ export default function PreviousMembersList({
                                         </button>
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-center w-1/6">
-                                    {member.deregistered_on ? (() => {
-                                        const date = new Date(member.deregistered_on);
-                                        const now = new Date();
-                                        const diffTime = Math.abs(now.getTime() - date.getTime());
-                                        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-                                        return `${date.toLocaleString()} (${diffDays === 0 ? 'today' : diffDays === 1 ? '1 day ago' : `${diffDays} days ago`})`;
-                                    })() : "-"}
+                                <TableCell className="text-center w-1/4">
+                                    {member.deregistered_on ? new Date(member.deregistered_on).toLocaleString() : "-"}
                                 </TableCell>
-                                <TableCell className="text-center w-1/7">
-                                    <Checkbox
-                                        checked={listActionItems.some(
-                                            (item) =>
-                                                item.email === member.member_email &&
-                                                item.name === `${member.member_first_name} ${member.member_surname}`
-                                        )}
-                                        onCheckedChange={(checked: boolean) => {
-                                            if (checked) {
-                                                const updatedList = [...listActionItems, { email: member.member_email, name: `${member.member_first_name} ${member.member_surname}` }];
-                                                setlistActionItems(updatedList);
-                                                if (updatedList.length === filteredDeregisteredMembers.length) {
-                                                    setAllMembersSelected(true);
+                                <TableCell className="text-center w-1/4">
+                                    <div className="flex justify-center gap-2">
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="rounded-full border border-black hover:bg-gray-100 hover:text-black"
+                                                    >
+                                                        <RotateCcw className="h-6 w-6" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Re-register member</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="rounded-full border border-black hover:bg-gray-100 hover:text-black"
+                                                    >
+                                                        <Trash2 className="h-6 w-6" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Remove member</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-center w-1/4 !pr-4 py-3">
+                                    <div className="flex justify-center">
+                                        <Checkbox
+                                            checked={listActionItems.some(
+                                                (item) =>
+                                                    item.email === member.member_email &&
+                                                    item.name === `${member.member_first_name} ${member.member_surname}`
+                                            )}
+                                            onCheckedChange={(checked: boolean) => {
+                                                if (checked) {
+                                                    const updatedList = [...listActionItems, { email: member.member_email, name: `${member.member_first_name} ${member.member_surname}` }];
+                                                    setlistActionItems(updatedList);
+                                                    if (updatedList.length === filteredDeregisteredMembers.length) {
+                                                        setAllMembersSelected(true);
+                                                    }
+                                                } else {
+                                                    const updatedList = listActionItems.filter(
+                                                        (item) => item.email !== member.member_email
+                                                    );
+                                                    setlistActionItems(updatedList);
+                                                    setAllMembersSelected(false);
                                                 }
-                                            } else {
-                                                const updatedList = listActionItems.filter(
-                                                    (item) => item.email !== member.member_email
-                                                );
-                                                setlistActionItems(updatedList);
-                                                setAllMembersSelected(false);
-                                            }
-                                        }}
-                                    />
+                                            }}
+                                        />
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         )) : (

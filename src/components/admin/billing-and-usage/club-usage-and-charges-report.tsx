@@ -1,19 +1,43 @@
 import { useState } from "react";
 import {
-  BarChart, Bar, XAxis, YAxis,
-  CartesianGrid, Tooltip, Legend, ResponsiveContainer
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
 } from "recharts";
-import { Label } from "@/components/ui/label"
+import { Label } from "@/components/ui/label";
 import { formatAmount } from "@/data/currencies";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  Card, CardDescription, CardHeader, CardTitle
-} from "@/components/ui/card"
-import { DndContext, KeyboardSensor, MouseSensor, TouchSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  DndContext,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import * as React from "react";
 
-const REPORTING_METRICS = ["Registrations", "Emails"]
+const REPORTING_METRICS = ["Registrations", "Emails"];
 
 export default function ClubUsageAndCharges({ data, currency }: any) {
   const [selectedTab, setSelectedTab] = useState("Registrations");
@@ -22,59 +46,28 @@ export default function ClubUsageAndCharges({ data, currency }: any) {
     useSensor(MouseSensor, {}),
     useSensor(TouchSensor, {}),
     useSensor(KeyboardSensor, {})
-  )
-  const sortableId = React.useId()
+  );
+  const sortableId = React.useId();
 
   return (
     <div className="space-y-10">
-      <h2 className="text-l font-semibold mb-2">Billing Summary</h2>
-      <div className="overflow-hidden rounded-lg border">
-        <DndContext
-          collisionDetection={closestCenter}
-          sensors={sensors}
-          id={sortableId}>
-          <Table>
-            <TableHeader className="bg-muted sticky top-0 z-10">
-              <TableRow>
-                <TableHead className="text-center w-1/4">Month</TableHead>
-                <TableHead className="text-center w-1/4">Total Charge</TableHead>
-                <TableHead className="text-center w-1/4">Registrations</TableHead>
-                <TableHead className="text-center w-1/4">Emails</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {Object.keys(data.overall_month_data || {}).map((key) => (
-                <TableRow key={key}>
-                  <TableCell className="text-center w-1/4">{key}</TableCell>
-                  <TableCell className="text-center w-1/4">
-                    {formatAmount(data.overall_month_data[key].total_amount, currency)}
-                  </TableCell>
-                  <TableCell className="text-center w-1/4">
-                    {formatAmount(data.overall_month_data[key].registration_amount, currency)}
-                  </TableCell>
-                  <TableCell className="text-center w-1/4">
-                    {formatAmount(data.overall_month_data[key].email_amount, currency)}
-                  </TableCell>
-                </TableRow>
-              ))}
-              <TableRow className="font-semibold bg-gray-50">
-                <TableCell className="text-center w-1/4">Total</TableCell>
-                <TableCell className="text-center w-1/4">{formatAmount(data.total_charge, currency)}</TableCell>
-                <TableCell className="text-center w-1/4">{formatAmount(data.total_registration_amount, currency)}</TableCell>
-                <TableCell className="text-center w-1/4">{formatAmount(data.total_email_amount, currency)}</TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </DndContext>
-      </div>
-
       <Card className="p-5 w-full gap-2">
-        <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full flex-col gap-6">
+        <Tabs
+          value={selectedTab}
+          onValueChange={setSelectedTab}
+          className="w-full flex-col gap-6"
+        >
           <div className="flex items-center justify-between">
-            <Label htmlFor="view-selector" className="sr-only">View</Label>
+            <Label htmlFor="view-selector" className="sr-only">
+              View
+            </Label>
             <TabsList>
-              <TabsTrigger value="Registrations" className="w-[150px]">Registrations</TabsTrigger>
-              <TabsTrigger value="Emails" className="w-[150px]">Emails</TabsTrigger>
+              <TabsTrigger value="Registrations" className="w-[150px]">
+                Registrations
+              </TabsTrigger>
+              <TabsTrigger value="Emails" className="w-[150px]">
+                Emails
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -104,23 +97,35 @@ export default function ClubUsageAndCharges({ data, currency }: any) {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis yAxisId="left" />
-                    <YAxis yAxisId="right" orientation="right" 
-                      tickFormatter={(value) => formatAmount(value, currency)} />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      tickFormatter={(value) => formatAmount(value, currency)}
+                    />
                     <Tooltip
                       formatter={(value, name) => {
                         if (name === "Charges" || name === "Email Charges") {
-                          return [formatAmount(value as number, currency), name];
+                          return [
+                            formatAmount(value as number, currency),
+                            name,
+                          ];
                         }
                         return [value, name];
                       }}
                     />
                     <Legend />
-                    <Bar yAxisId="left"
+                    <Bar
+                      yAxisId="left"
                       dataKey={key === "Registrations" ? "users" : "emails"}
                       fill="#4caf50"
                       name={key === "Registrations" ? "Users" : "Emails Sent"}
                     />
-                    <Bar yAxisId="right" dataKey="charge" fill="#ff9800" name="Charges" />
+                    <Bar
+                      yAxisId="right"
+                      dataKey="charge"
+                      fill="#ff9800"
+                      name="Charges"
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -128,6 +133,66 @@ export default function ClubUsageAndCharges({ data, currency }: any) {
           })}
         </Tabs>
       </Card>
+
+      <div className="overflow-hidden rounded-lg border">
+        <DndContext
+          collisionDetection={closestCenter}
+          sensors={sensors}
+          id={sortableId}
+        >
+          <Table>
+            <TableHeader className="bg-muted sticky top-0 z-10">
+              <TableRow>
+                <TableHead className="text-center w-1/4">Month</TableHead>
+                <TableHead className="text-center w-1/4">
+                  Total Charge
+                </TableHead>
+                <TableHead className="text-center w-1/4">
+                  Registrations
+                </TableHead>
+                <TableHead className="text-center w-1/4">Emails</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Object.keys(data.overall_month_data || {}).map((key) => (
+                <TableRow key={key}>
+                  <TableCell className="text-center w-1/4">{key}</TableCell>
+                  <TableCell className="text-center w-1/4">
+                    {formatAmount(
+                      data.overall_month_data[key].total_amount,
+                      currency
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center w-1/4">
+                    {formatAmount(
+                      data.overall_month_data[key].registration_amount,
+                      currency
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center w-1/4">
+                    {formatAmount(
+                      data.overall_month_data[key].email_amount,
+                      currency
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+              <TableRow className="font-semibold bg-gray-50">
+                <TableCell className="text-center w-1/4">Total</TableCell>
+                <TableCell className="text-center w-1/4">
+                  {formatAmount(data.total_charge, currency)}
+                </TableCell>
+                <TableCell className="text-center w-1/4">
+                  {formatAmount(data.total_registration_amount, currency)}
+                </TableCell>
+                <TableCell className="text-center w-1/4">
+                  {formatAmount(data.total_email_amount, currency)}
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </DndContext>
+      </div>
     </div>
   );
 }

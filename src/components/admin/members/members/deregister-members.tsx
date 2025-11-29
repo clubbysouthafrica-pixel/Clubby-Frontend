@@ -111,17 +111,17 @@ export default function DeregisterMembersDialog({ selectedTab, dereigsterMembers
           </div>
           <DialogDescription>
             <span>
-              This action will remove all currently registered club members from the system. Member access will be revoked, and they will no longer be able to log in or participate in club activities.
+              This action will remove all currently registered club members and place them in the <strong>members requiring re-registration</strong> table. The member will then be required to re-register with the club to regain access by submitting a new registration form.
             </span>
             <br />
             <br />
             <span>
-              Use this action if you need to reset your member list, clean up inactive accounts, or prepare for new registrations.
+              The associated registration fee that the member paid will be retained in the reporting section for the clubs database and financial records.
             </span>
             <br />
             <br />
             <span className="text-red-600">
-              ⚠️ This action is irreversible. All member associations will be removed. You may re-invite or members may re-register manually afterward.
+              ⚠️ This action is irreversible.
             </span>
           </DialogDescription>
           <div className="mt-3 space-y-1">

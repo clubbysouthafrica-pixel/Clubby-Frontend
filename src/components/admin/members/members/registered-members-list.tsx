@@ -74,7 +74,7 @@ export default function RegisteredMembersList({
                         <TableRow>
                             <TableHead className="text-center w-1/4">Member name</TableHead>
                             <TableHead className="text-center w-1/4">Member ID</TableHead>
-                            <TableHead className="text-center w-1/5">
+                            <TableHead className="text-center w-1/4">
                                 <button
                                     type="button"
                                     className="inline-flex items-center gap-1 hover:underline"
@@ -90,8 +90,10 @@ export default function RegisteredMembersList({
                                 </button>
                             </TableHead>
                             <TableHead className="text-center w-1/4">
-                                <div className="flex items-center justify-center gap-2">
-                                    Action
+                                Action
+                            </TableHead>
+                            <TableHead className="text-center w-1/5 !pr-4 py-3">
+                                <div className="flex justify-center">
                                     <Checkbox
                                         className="bg-white"
                                         onCheckedChange={() => setAllListActionItems(filteredRegisteredMembers)}
@@ -142,18 +144,14 @@ export default function RegisteredMembersList({
                                         </button>
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-center w-1/5">
-                                    {member.registered_on ? (() => {
-                                        const date = new Date(member.registered_on);
-                                        const now = new Date();
-                                        const diffTime = Math.abs(now.getTime() - date.getTime());
-                                        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-                                        return `${date.toLocaleString()} (${diffDays === 0 ? 'today' : diffDays === 1 ? '1 day ago' : `${diffDays} days ago`})`;
-                                    })() : "-"}
+                                <TableCell className="text-center w-1/4">
+                                    {member.registered_on ? new Date(member.registered_on).toLocaleString() : "-"}
                                 </TableCell>
                                 <TableCell className="text-center w-1/4">
-                                    <Checkbox
+                                </TableCell>
+                                <TableCell className="text-center w-1/5 !pr-4 py-3">
+                                    <div className="flex justify-center">
+                                        <Checkbox
                                         checked={listActionItems.some(
                                             (item) =>
                                                 item.email === member.member_email &&
@@ -183,12 +181,13 @@ export default function RegisteredMembersList({
                                             }
                                         }}
                                     />
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         )) : (
                             <TableRow>
                                 <TableCell
-                                    colSpan={4}
+                                    colSpan={5}
                                     className="h-24 text-center"
                                 >
                                     No results.

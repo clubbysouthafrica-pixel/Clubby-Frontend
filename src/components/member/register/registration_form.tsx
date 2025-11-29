@@ -250,7 +250,6 @@ export function ClubRegisterForm() {
           setShowSuccess(true);
         },
         onError: () => {
-          console.log(registerError?.message ?? "Registration failed");
           toast(registerError?.message ?? "Registration failed");
         },
       });
