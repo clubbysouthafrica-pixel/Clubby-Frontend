@@ -58,7 +58,7 @@ export function RegistrationReportingSectionCards({ report, currency }: props) {
 
         <Card className="@container/card py-3 w-[100%]">
           <CardHeader className="flex flex-col items-center justify-center text-center">
-            <CardDescription>Completed Registrations</CardDescription>
+            <CardDescription>Fully Paid Registrations</CardDescription>
             <CardTitle className="text-l font-semibold tabular-nums">
               {report.total_registered_members}
             </CardTitle>
@@ -67,7 +67,7 @@ export function RegistrationReportingSectionCards({ report, currency }: props) {
 
         <Card className="@container/card py-3 w-[100%]">
           <CardHeader className="flex flex-col items-center justify-center text-center">
-            <CardDescription>Members Deregistered</CardDescription>
+            <CardDescription>De-registrations</CardDescription>
             <CardTitle className="text-l font-semibold tabular-nums">
               {report.total_deregistered_members}
             </CardTitle>
