@@ -113,7 +113,7 @@ export default function PreviousMembersList({
                     </TableHeader>
                     <TableBody>
                         {sortedDeregisteredMembers.length ? sortedDeregisteredMembers.map((member: ClubMember) => (
-                            <TableRow key={member.user_id}>
+                            <TableRow key={member.user_id} className={listActionItems.some((item) => item.email === member.member_email && item.name === `${member.member_first_name} ${member.member_surname}`) ? "bg-blue-50" : ""}>
                                 <TableCell className="text-center w-1/5">
                                     <a
                                         onClick={() => setSelectedMember(member)}
