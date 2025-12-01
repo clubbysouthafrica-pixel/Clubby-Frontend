@@ -37,8 +37,8 @@ export function RegistrationReport({ report, currency }: props) {
                                 <TableHead className="text-center font-medium w-1/5">Month</TableHead>
                                 <TableHead className="text-center font-medium w-1/5">Registration Revenue</TableHead>
                                 <TableHead className="text-center font-medium w-1/5">Pending Registration Revenue</TableHead>
-                                <TableHead className="text-center font-medium w-1/5">Completed Registrations</TableHead>
-                                <TableHead className="text-center font-medium w-1/5">Members deregistered</TableHead>
+                                <TableHead className="text-center font-medium w-1/5">Fully Paid Registrations</TableHead>
+                                <TableHead className="text-center font-medium w-1/5">De-registrations</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
