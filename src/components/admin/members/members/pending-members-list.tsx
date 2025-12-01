@@ -273,7 +273,7 @@ export default function PendingMembersList({
                                     </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    <p>Click to register member</p>
+                                    <p>Register member</p>
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
