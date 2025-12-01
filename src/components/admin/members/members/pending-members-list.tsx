@@ -1,6 +1,6 @@
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronsUpDown, CheckCircle2 } from "lucide-react";
+import { ChevronsUpDown, CheckCircle2, Trash2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import {
@@ -34,6 +34,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import RemoveMemberDialog from "./remove-member-dialog";
 
 interface ImageProps {
   club: Club | null;
@@ -124,6 +125,8 @@ export default function PendingMembersList({
   }, [selectedTab, clubMembers, memberNameFilter, memberIdFilter, dynamicFilters]);
 
   const [submittedSortAsc, setSubmittedSortAsc] = useState<boolean | null>(null);
+  const [openRemoveDialog, setOpenRemoveDialog] = useState<boolean>(false);
+  const [selectedMemberToRemove, setSelectedMemberToRemove] = useState<ClubMember | null>(null);
 
   const sortedUnregisteredMembers = useMemo(() => {
     if (submittedSortAsc === null) return filteredUnregisteredMembers;
@@ -150,16 +153,16 @@ export default function PendingMembersList({
         <Table>
           <TableHeader className="bg-muted sticky top-0 z-10">
             <TableRow>
-              <TableHead className="text-center w-1/5">Member Name</TableHead>
-              <TableHead className="text-center w-1/5">Member ID</TableHead>
-              <TableHead className="text-center w-1/5">
+              <TableHead className="text-center w-1/6">Member Name</TableHead>
+              <TableHead className="text-center w-1/6">Member ID</TableHead>
+              <TableHead className="text-center w-1/6">
                 <button
                   type="button"
                   className="inline-flex items-center gap-1 hover:underline"
                   onClick={() => setSubmittedSortAsc((prev) => (prev === null ? true : !prev))}
                   title="Toggle sort by Registration Submitted On"
                 >
-                  Registration Submitted On
+                  Registration Submitted
                   {submittedSortAsc === null ? (
                     <ChevronsUpDown className="h-3 w-3 opacity-60" />
                   ) : (
@@ -167,13 +170,13 @@ export default function PendingMembersList({
                   )}
                 </button>
               </TableHead>
-              <TableHead className="text-center w-1/5">
+              <TableHead className="text-center w-1/6">
                 Outstanding Reg. Amount
               </TableHead>
-              <TableHead className="text-center w-1/5">
+              <TableHead className="text-center w-1/6">
                 Actions
               </TableHead>
-              <TableHead className="text-center w-1/5 !pr-4 py-3">
+              <TableHead className="text-center w-1/6">
                 <div className="flex justify-center">
                   <Checkbox
                     className="bg-white"
@@ -189,7 +192,7 @@ export default function PendingMembersList({
           <TableBody>
             {filteredUnregisteredMembers.length ? (
               sortedUnregisteredMembers.map((member: ClubMember) => (
-                <TableRow key={member.user_id}>
+                <TableRow key={member.user_id} className={listActionItems.some((item) => item.email === member.member_email && item.name === `${member.member_first_name} ${member.member_surname}`) ? "bg-blue-50" : ""}>
                   <TableCell className="text-center w-1/5">
                     <a
                       onClick={() => setSelectedMember(member)}
@@ -199,7 +202,7 @@ export default function PendingMembersList({
                       {member.member_first_name + " " + member.member_surname}
                     </a>
                   </TableCell>
-                  <TableCell className="text-center w-1/5">
+                  <TableCell className="text-center w-1/6">
                     <div className="inline-flex items-center gap-2 justify-center">
                       <span className="font-mono">
                         {member.user_id.slice(0, 8)}...
@@ -230,16 +233,16 @@ export default function PendingMembersList({
                       </button>
                     </div>
                   </TableCell>
-                  <TableCell className="text-center w-1/5">
+                  <TableCell className="text-center w-1/6">
                     {member.registration_submitted_on
                       ? new Date(member.registration_submitted_on).toLocaleString()
                       : "-"}
                   </TableCell>
-                  <TableCell className="text-center w-1/5">
+                  <TableCell className="text-center w-1/6">
                     {formatAmount(member.outstanding_amount, club?.currency)}
                   </TableCell>
-                  <TableCell className="text-center w-1/5">
-                    <div>
+                  <TableCell className="text-center w-1/6">
+                    <div className="flex justify-center gap-2">
                       <Dialog
                         open={openDialogUserId === member.user_id}
                         onOpenChange={(open) => {
@@ -347,9 +350,29 @@ export default function PendingMembersList({
                           )}
                         </DialogContent>
                       </Dialog>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="rounded-full border border-black hover:bg-gray-100 hover:text-black"
+                              onClick={() => {
+                                setSelectedMemberToRemove(member);
+                                setOpenRemoveDialog(true);
+                              }}
+                            >
+                              <Trash2 className="h-6 w-6" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Remove member</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   </TableCell>
-                  <TableCell className="text-center w-1/5 !pr-4 py-3">
+                  <TableCell className="text-center w-1/6">
                     <div className="flex justify-center">
                       <Checkbox
                         checked={listActionItems.some(
@@ -397,6 +420,16 @@ export default function PendingMembersList({
           </TableBody>
         </Table>
       </DndContext>
+
+      <RemoveMemberDialog
+        open={openRemoveDialog}
+        onOpenChange={setOpenRemoveDialog}
+        member={selectedMemberToRemove}
+        onRemoveSuccess={() => {
+          setlistActionItems(listActionItems.filter(item => item.email !== selectedMemberToRemove?.member_email));
+          setSelectedMemberToRemove(null);
+        }}
+      />
     </div>
   );
 }

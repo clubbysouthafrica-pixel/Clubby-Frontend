@@ -2,7 +2,7 @@ import { DndContext, closestCenter } from "@dnd-kit/core";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ClubMember } from "@/interfaces/club"
 import { useEffect, useMemo, useState } from "react";
-import { ChevronsUpDown, RotateCcw, Trash2 } from "lucide-react";
+import { ChevronsUpDown, Trash2 } from "lucide-react";
 import { Club } from "@/context/ClubContext"
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { previousRegisteredMembers } from "@/helpers/admin/members/filter-members-list";
+import RemoveMemberDialog from "./remove-member-dialog";
 
 interface ImageProps {
     club: Club | null
@@ -51,6 +52,8 @@ export default function PreviousMembersList({
 
     const filteredDeregisteredMembers = previousRegisteredMembers(selectedTab, clubMembers, memberNameFilter, memberIdFilter, dynamicFilters);
     const [deregSortAsc, setDeregSortAsc] = useState<boolean | null>(null);
+    const [openRemoveDialog, setOpenRemoveDialog] = useState<boolean>(false);
+    const [selectedMemberToRemove, setSelectedMemberToRemove] = useState<ClubMember | null>(null);
 
     const sortedDeregisteredMembers = useMemo(() => {
         if (deregSortAsc === null) return filteredDeregisteredMembers;
@@ -77,9 +80,9 @@ export default function PreviousMembersList({
                 <Table>
                     <TableHeader className="bg-muted sticky top-0 z-10">
                         <TableRow>
-                            <TableHead className="text-center w-1/4">Member Name</TableHead>
-                            <TableHead className="text-center w-1/4">Member ID</TableHead>
-                            <TableHead className="text-center w-1/4">
+                            <TableHead className="text-center w-1/5">Member Name</TableHead>
+                            <TableHead className="text-center w-1/5">Member ID</TableHead>
+                            <TableHead className="text-center w-1/5">
                                 <button
                                     type="button"
                                     className="inline-flex items-center gap-1 hover:underline"
@@ -94,10 +97,10 @@ export default function PreviousMembersList({
                                     )}
                                 </button>
                             </TableHead>
-                            <TableHead className="text-center w-1/4">
+                            <TableHead className="text-center w-1/5">
                                 Actions
                             </TableHead>
-                            <TableHead className="text-center w-1/4 !pr-4 py-3">
+                            <TableHead className="text-center w-1/5">
                                 <div className="flex justify-center">
                                     <Checkbox
                                         className="bg-white"
@@ -111,7 +114,7 @@ export default function PreviousMembersList({
                     <TableBody>
                         {sortedDeregisteredMembers.length ? sortedDeregisteredMembers.map((member: ClubMember) => (
                             <TableRow key={member.user_id}>
-                                <TableCell className="text-center w-1/4">
+                                <TableCell className="text-center w-1/5">
                                     <a
                                         onClick={() => setSelectedMember(member)}
                                         href={`#${member.user_id}`}
@@ -120,7 +123,7 @@ export default function PreviousMembersList({
                                         {member.member_first_name + " " + member.member_surname}
                                     </a>
                                 </TableCell>
-                                <TableCell className="text-center w-1/4">
+                                <TableCell className="text-center w-1/5">
                                     <div className="inline-flex items-center gap-2 justify-center">
                                         <span className="font-mono">{member.user_id.slice(0, 8)}...</span>
 
@@ -149,10 +152,10 @@ export default function PreviousMembersList({
                                         </button>
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-center w-1/4">
+                                <TableCell className="text-center w-1/5">
                                     {member.deregistered_on ? new Date(member.deregistered_on).toLocaleString() : "-"}
                                 </TableCell>
-                                <TableCell className="text-center w-1/4">
+                                <TableCell className="text-center w-1/5">
                                     <div className="flex justify-center gap-2">
                                         {/* <TooltipProvider>
                                             <Tooltip>
@@ -177,6 +180,10 @@ export default function PreviousMembersList({
                                                         variant="ghost"
                                                         size="icon"
                                                         className="rounded-full border border-black hover:bg-gray-100 hover:text-black"
+                                                        onClick={() => {
+                                                            setSelectedMemberToRemove(member);
+                                                            setOpenRemoveDialog(true);
+                                                        }}
                                                     >
                                                         <Trash2 className="h-6 w-6" />
                                                     </Button>
@@ -188,7 +195,7 @@ export default function PreviousMembersList({
                                         </TooltipProvider>
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-center w-1/4 !pr-4 py-3">
+                                <TableCell className="text-center w-1/5">
                                     <div className="flex justify-center">
                                         <Checkbox
                                             checked={listActionItems.some(
@@ -228,6 +235,16 @@ export default function PreviousMembersList({
                     </TableBody>
                 </Table>
             </DndContext>
+
+            <RemoveMemberDialog
+                open={openRemoveDialog}
+                onOpenChange={setOpenRemoveDialog}
+                member={selectedMemberToRemove}
+                onRemoveSuccess={() => {
+                    setlistActionItems(listActionItems.filter(item => item.email !== selectedMemberToRemove?.member_email));
+                    setSelectedMemberToRemove(null);
+                }}
+            />
         </div>
     )
 }

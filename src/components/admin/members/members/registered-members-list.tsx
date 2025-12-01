@@ -1,10 +1,18 @@
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronsUpDown } from "lucide-react";
+import { ChevronsUpDown, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ClubMember } from "@/interfaces/club"
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { filteredRegisteredMembers as frg } from "@/helpers/admin/members/filter-members-list";
+import RemoveMemberDialog from "./remove-member-dialog";
 
 interface ImageProps {
     sensors: any
@@ -46,6 +54,8 @@ export default function RegisteredMembersList({
 
     const filteredRegisteredMembers = frg(selectedTab, clubMembers, memberNameFilter, memberIdFilter, dynamicFilters)
     const [regSortAsc, setRegSortAsc] = useState<boolean | null>(null);
+    const [openRemoveDialog, setOpenRemoveDialog] = useState<boolean>(false);
+    const [selectedMemberToRemove, setSelectedMemberToRemove] = useState<ClubMember | null>(null);
 
     const sortedRegisteredMembers = useMemo(() => {
         if (regSortAsc === null) return filteredRegisteredMembers;
@@ -72,9 +82,9 @@ export default function RegisteredMembersList({
                 <Table>
                     <TableHeader className="bg-muted sticky top-0 z-10">
                         <TableRow>
-                            <TableHead className="text-center w-1/3">Member name</TableHead>
-                            <TableHead className="text-center w-1/3">Member ID</TableHead>
-                            <TableHead className="text-center w-1/3">
+                            <TableHead className="text-center w-1/5">Member name</TableHead>
+                            <TableHead className="text-center w-1/5">Member ID</TableHead>
+                            <TableHead className="text-center w-1/5">
                                 <button
                                     type="button"
                                     className="inline-flex items-center gap-1 hover:underline"
@@ -89,10 +99,10 @@ export default function RegisteredMembersList({
                                     )}
                                 </button>
                             </TableHead>
-                            {/* <TableHead className="text-center w-1/3">
-                                Action
-                            </TableHead> */}
-                            <TableHead className="text-center w-1/4 !pr-4 py-3">
+                            <TableHead className="text-center w-1/5">
+                                Actions
+                            </TableHead>
+                            <TableHead className="text-center w-1/5">
                                 <div className="flex justify-center">
                                     <Checkbox
                                         className="bg-white"
@@ -106,7 +116,7 @@ export default function RegisteredMembersList({
                     <TableBody>
                         {sortedRegisteredMembers.length ? sortedRegisteredMembers.map((member: ClubMember) => (
                             <TableRow key={member.user_id}>
-                                <TableCell className="text-center w-1/3">
+                                <TableCell className="text-center w-1/5">
                                     <a
                                         onClick={() => setSelectedMember(member)}
                                         href={`#${member.user_id}`}
@@ -115,7 +125,7 @@ export default function RegisteredMembersList({
                                         {member.member_first_name + " " + member.member_surname}
                                     </a>
                                 </TableCell>
-                                <TableCell className="text-center w-1/3">
+                                <TableCell className="text-center w-1/5">
                                     <div className="inline-flex items-center gap-2 justify-center">
                                         <span className="font-mono">{member.user_id.slice(0, 8)}...</span>
 
@@ -144,12 +154,34 @@ export default function RegisteredMembersList({
                                         </button>
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-center w-1/3">
+                                <TableCell className="text-center w-1/5">
                                     {member.registered_on ? new Date(member.registered_on).toLocaleString() : "-"}
                                 </TableCell>
-                                {/* <TableCell className="text-center w-1/3">
-                                </TableCell> */}
-                                <TableCell className="text-center w-1/4 !pr-4 py-3">
+                                <TableCell className="text-center w-1/5">
+                                    <div className="flex justify-center gap-2">
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="rounded-full border border-black hover:bg-gray-100 hover:text-black"
+                                                        onClick={() => {
+                                                            setSelectedMemberToRemove(member);
+                                                            setOpenRemoveDialog(true);
+                                                        }}
+                                                    >
+                                                        <Trash2 className="h-6 w-6" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Remove member</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-center w-1/5">
                                     <div className="flex justify-center">
                                         <Checkbox
                                         checked={listActionItems.some(
@@ -197,6 +229,16 @@ export default function RegisteredMembersList({
                     </TableBody>
                 </Table>
             </DndContext>
+
+            <RemoveMemberDialog
+                open={openRemoveDialog}
+                onOpenChange={setOpenRemoveDialog}
+                member={selectedMemberToRemove}
+                onRemoveSuccess={() => {
+                    setlistActionItems(listActionItems.filter(item => item.email !== selectedMemberToRemove?.member_email));
+                    setSelectedMemberToRemove(null);
+                }}
+            />
         </div>
     )
 }

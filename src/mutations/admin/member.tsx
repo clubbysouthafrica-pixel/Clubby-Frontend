@@ -1,4 +1,4 @@
-import { registerMemberToClub } from "@/services/admin/club-members";
+import { registerMemberToClub, removeMember } from "@/services/admin/club-members";
 import { useMutation } from "@tanstack/react-query";
 
 export const useRegisterUserToClubMutation = () => {
@@ -6,4 +6,11 @@ export const useRegisterUserToClubMutation = () => {
         mutationFn: registerMemberToClub
       });
     
+}
+
+export const useRemoveMemberMutation = () => {
+    return useMutation({
+        mutationFn: ({ clubAccountId, memberId }: { clubAccountId: string; memberId: string }) =>
+            removeMember(clubAccountId, memberId)
+    });
 }

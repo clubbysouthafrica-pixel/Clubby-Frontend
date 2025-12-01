@@ -278,7 +278,6 @@ export default function ViewClubPage() {
                           )}
                         </div>
 
-                        {/* Club Meta Information */}
                         <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <MapPin className="w-4 h-4" />
@@ -295,9 +294,7 @@ export default function ViewClubPage() {
                         </div>
                       </div>
 
-                      {/* Action Buttons & Status */}
                       <div className="flex flex-col gap-4 min-w-fit">
-                        {/* Membership Status */}
                         {data?.club_member_exists && (
                           <div className="text-center">
                             {!data.resubmission_required && (
