@@ -228,7 +228,7 @@ export default function PreviousMembersList({
                                     colSpan={5}
                                     className="h-24 text-center"
                                 >
-                                    No results.
+                                    This member does not exist or was removed.
                                 </TableCell>
                             </TableRow>
                         )}
