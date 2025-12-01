@@ -1137,9 +1137,9 @@ export default function ViewClubPage() {
                                                               className={`text-center ${
                                                                 entry.type ===
                                                                 "SUBMISSION"
-                                                                  ? "text-red-500"
-                                                                  : "text-green-500"
-                                                              } font-bold`}
+                                                                  ? "text-black-700"
+                                                                  : "text-green-700"
+                                                              }`}
                                                             >
                                                               {entry.type ===
                                                               "SUBMISSION"

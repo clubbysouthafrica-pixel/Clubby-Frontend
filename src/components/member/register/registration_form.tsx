@@ -5,7 +5,6 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { FormEvent, useContext, useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useFetchRegistrationForm } from "@/queries/registration-form";
-import { useFetchClub } from "@/queries/clubs";
 import { RegistrationRequest } from "@/requests/registration-request";
 import { useMemberRegistrationMutation } from "@/mutations/useMemberRegistrationMutation";
 import { toast } from "sonner";
@@ -16,7 +15,6 @@ import { getFieldName } from "../../../helpers/members/registration/get-field-na
 import {
   ReusableRegistrationForm,
   FormPage,
-  PagedFormPayload,
   PageFieldBase,
 } from "../../shared/registration/reusable-registration-form";
 import { ReusableSubmitRegistration } from "../../shared/registration/reusable-submit-registration";
@@ -44,7 +42,6 @@ export function ClubRegisterForm() {
     isSuccess,
   } = useMemberRegistrationMutation();
   const { data, isLoading } = useFetchRegistrationForm(clubId as string);
-  const { data: club, isLoading: clubLoading } = useFetchClub(clubId as string);
 
   const [email, setEmail] = useState("");
   const [pages, setPages] = useState<FormPage[]>([]);
@@ -55,92 +52,36 @@ export function ClubRegisterForm() {
   >(undefined);
   const [totalRegistrationFee, setTotalRegistrationFee] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
-
+  
   useEffect(() => {
-    const processPages = async () => {
-      if (!(data as PagedFormPayload)?.pages) return;
-
-      const sorted = (data as PagedFormPayload).pages
-        .sort((a, b) => a.page_index - b.page_index)
-        .map((p, index) => ({
-          ...p,
-          page_index: index,
-          fields: p.fields
-            .sort((a, b) => Number(a.field_order_id) - Number(b.field_order_id))
-            .map((f) => ({ ...f })),
-        }));
-
-      setPages(sorted);
-
-      if (!club?.meta) return;
-
+    const processSignatures = async () => {
+      if (!data?.pages) return;
+      
       const updatedPages = await Promise.all(
-        sorted.map(async (page) => ({
+        data.pages.map(async (page: FormPage) => ({
           ...page,
           fields: await Promise.all(
-            page.fields.map(async (field) => {
-              const metaField = club.meta[field.field_id];
-              if (!metaField) return field;
-
-              if (metaField?.signature_type) {
-                const data =
-                  metaField.signature_type === "name"
-                    ? metaField.value
-                    : await presignedUrlToDataUrl(metaField.value);
-                return {
-                  ...field,
-                  value: data,
-                  signature_type: metaField.signature_type,
-                };
-              } else if (field.billingOptions) {
-                const matchedOption = field.billingOptions.find(
-                  (opt) => opt.option_order_id === metaField.option_order_id
-                );
-
-                if (matchedOption) {
-                  return {
-                    ...field,
-                    value: matchedOption.label,
-                    label: matchedOption.label,
-                    selectedAmountCents: matchedOption.amount,
-                    option_order_id: matchedOption.option_order_id,
-                  };
-                }
-              } else if (field.input_type === "DISCOUNT" && field.discountOptions) {
-                const matchedOption = field.discountOptions.find(
-                  (opt) => opt.option_order_id === metaField.option_order_id
-                );
-
-                if (matchedOption) {
-                  return {
-                    ...field,
-                    percentage: metaField.value,
-                    value: metaField.label_value,
-                    label: metaField.label_value,
-                    multiplier_value: metaField?.multiplier_value ?? undefined,
-                    option_order_id: metaField.option_order_id,
-                    applicable_billing_fields: matchedOption.applicable_billing_fields,
-                  };
-                }
-              } else {
-                return {
-                  ...field,
-                  value: metaField.value,
-                  multiplier_value: metaField?.multiplier_value ?? undefined,
-                };
+            page.fields.map(async (field: PageFieldBase) => {
+              if (
+                field?.field_type === "STANDARD" &&
+                field?.input_type === "SIGNATURE" &&
+                field?.signature_type === "signature" &&
+                field.value
+              ) {
+                const dataUrl = await presignedUrlToDataUrl(field.value);
+                return { ...field, value: dataUrl };
               }
-
               return field;
             })
           ),
         }))
       );
-
+      
       setPages(updatedPages);
     };
-
-    processPages();
-  }, [data, club]);
+    
+    processSignatures();
+  }, [data]);
 
   const setFieldValue = (
     pageIndex: number,
@@ -268,7 +209,7 @@ export function ClubRegisterForm() {
     setTotalRegistrationFee(0);
   };
 
-  if (clubLoading && isLoading) {
+  if (isLoading || !data?.pages) {
     return (
       <div className="flex justify-center py-8">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -280,7 +221,7 @@ export function ClubRegisterForm() {
     return (
       <div className="flex justify-center items-center py-8">
         <RegistrationSuccessful
-          title={`Successfully Registered to ${club?.club_name}`}
+          title={`Successfully Registered to ${data?.club_name}`}
           message={`Club will stay in contact with you once registration is completed.`}
           onClose={() => navigate(`/clubs/${clubId}`)}
         />
@@ -291,14 +232,14 @@ export function ClubRegisterForm() {
   if (!registrationRequest) {
     return (
       <ReusableRegistrationForm
-        clubName={club?.club_name || ""}
-        clubCurrency={club?.currency || ""}
+        clubName={data?.club_name || ""}
+        clubCurrency={data?.currency || ""}
         pages={pages}
         currentPageIndex={currentPageIndex}
         setCurrentPageIndex={setCurrentPageIndex}
         setFieldValue={setFieldValue}
         requiredFieldsMissing={requiredFieldsMissing}
-        headerTitle={`Register to ${club?.club_name}`}
+        headerTitle={`Register to ${data?.club_name}`}
         headerDescription="Finish the registration form below"
         showHeader={true}
         topContent={
@@ -345,8 +286,8 @@ export function ClubRegisterForm() {
     <div className="flex justify-center items-center py-8">
       <ReusableSubmitRegistration
         showMemberInfo={false}
-        clubName={club?.club_name || ""}
-        clubCurrency={club?.currency || ""}
+        clubName={data?.club_name || ""}
+        clubCurrency={data?.currency || ""}
         totalRegistrationFee={totalRegistrationFee}
         billingFields={registrationRequest.billing_fields.map((f) => ({
           field_id: f.field_id,
