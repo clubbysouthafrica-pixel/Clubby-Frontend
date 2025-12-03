@@ -221,7 +221,7 @@ export function ClubRegisterForm() {
     return (
       <div className="flex justify-center items-center py-8">
         <RegistrationSuccessful
-          title={`Successfully Registered to ${data?.club_name}`}
+          title={`Successfully Registered ${data?.club_name ? `to ${data?.club_name}` : ""}`}
           message={`Club will stay in contact with you once registration is completed.`}
           onClose={() => navigate(`/clubs/${clubId}`)}
         />
