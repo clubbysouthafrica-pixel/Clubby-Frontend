@@ -171,6 +171,41 @@ export default function ViewClubPage() {
     }
   }, [data]);
 
+  const getStatusIcon = (isRegistered: boolean, resubmissionRequired: boolean) => {
+    if (resubmissionRequired) {
+      return <AlertTriangle className="h-4 w-4 text-red-600" />;
+    }
+    return isRegistered ? (
+      <CheckCircle className="h-4 w-4 text-green-600" />
+    ) : (
+      <Clock className="h-4 w-4 text-orange-600" />
+    );
+  };
+
+  const getStatusColor = (isRegistered: boolean, resubmissionRequired: boolean) => {
+    if (resubmissionRequired) {
+      return "text-red-600";
+    }
+    return isRegistered ? "text-green-600" : "text-orange-600";
+  };
+
+  const getStatusTitle = (isRegistered: boolean, resubmissionRequired: boolean) => {
+    if (resubmissionRequired) {
+      return "Resubmission Required";
+    }
+    return isRegistered ? "Registration Confirmed" : "Registration Pending";
+  };
+
+  const getStatusDescription = (isRegistered: boolean, resubmissionRequired: boolean) => {
+    if (resubmissionRequired) {
+      return "Your registration requires a resubmission. This may be due to reasons such as your membership expiring, the club starting a new season, or invalid information in your previous submission. Please resubmit your registration form.";
+    }
+    if (isRegistered) {
+      return `Your registration has been successfully accepted, and your payment has been confirmed by the admin. You are now officially a member of ${data?.club_name}.`;
+    }
+    return "Your registration is currently pending. The club admin still needs to verify your submitted registration and confirm if your registration fee has been paid. If you haven't paid yet, please visit Payments & Billing to complete the outstanding payment using a supported method.";
+  };
+
   if (isLoading || isUserTransactionsLoading) {
     return (
       <div className="flex justify-center py-8">
@@ -237,7 +272,7 @@ export default function ViewClubPage() {
               </div>
 
               <div className="container mx-auto px-4 relative -mt-20">
-                <Card className="backdrop-blur-sm bg-background/95 border-primary/20 shadow-2xl">
+                <Card className="backdrop-blur-sm bg-background/95 border-primary/20 shadow-2xl gap-0">
                   <CardContent className="p-8">
                     <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6">
                       <div className="relative">
@@ -345,7 +380,6 @@ export default function ViewClubPage() {
                           </div>
                         )}
 
-                        {/* Action Buttons */}
                         <div className="flex flex-col gap-2">
                           {!data?.club_member_exists && isLoggedIn && (
                             <Button
@@ -385,6 +419,19 @@ export default function ViewClubPage() {
                       </div>
                     </div>
                   </CardContent>
+                  {data?.club_member_exists && (
+                    <CardHeader className="pb-0 border-t border-primary/10 space-y-3 pt-4">
+                      <div className="flex items-center gap-2 mb-0">
+                        {getStatusIcon(data.registered, data.resubmission_required)}
+                        <h3 className={`text-sm font-semibold ${getStatusColor(data.registered, data.resubmission_required)}`}>
+                          {getStatusTitle(data.registered, data.resubmission_required)}
+                        </h3>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {getStatusDescription(data.registered, data.resubmission_required)}
+                      </p>
+                    </CardHeader>
+                  )}
                 </Card>
               </div>
             </div>
@@ -589,292 +636,138 @@ export default function ViewClubPage() {
                 {data?.club_member_exists && (
                   <TabsContent value="bank" className="mt-6">
                     {!data?.resubmission_required && (
-                    <Card className="border-primary/20 shadow-lg mb-6">
-                      <CardHeader className="pb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                            <CreditCard className="w-6 h-6 text-primary" />
+                      <Card className="border-primary/20 shadow-lg mb-6">
+                        <CardHeader className="pb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                              <CreditCard className="w-6 h-6 text-primary" />
+                            </div>
+                            <div className="flex-1">
+                              <CardTitle className="text-2xl">
+                                Outstanding Balance
+                              </CardTitle>
+                              <CardDescription className="text-lg">
+                                {formatAmount(
+                                  bankDetails?.outstanding_amount,
+                                  data.currency
+                                )}
+                              </CardDescription>
+                            </div>
+                            {bankDetails?.outstanding_amount === 0 && (
+                              <Badge className="bg-green-100 text-green-800 border-green-200">
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Paid in Full
+                              </Badge>
+                            )}
                           </div>
-                          <div className="flex-1">
-                            <CardTitle className="text-2xl">
-                              Outstanding Balance
-                            </CardTitle>
-                            <CardDescription className="text-lg">
-                              {formatAmount(
-                                bankDetails?.outstanding_amount,
-                                data.currency
-                              )}
-                            </CardDescription>
-                          </div>
-                          {bankDetails?.outstanding_amount === 0 && (
-                            <Badge className="bg-green-100 text-green-800 border-green-200">
-                              <CheckCircle className="w-4 h-4 mr-1" />
-                              Paid in Full
-                            </Badge>
+                          {bankDetails?.registration_payment_reference && (
+                            <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                              <p className="text-sm text-muted-foreground mb-1">
+                                Payment Reference Number
+                              </p>
+                              <p className="font-mono font-semibold">
+                                {bankDetails.registration_payment_reference}
+                              </p>
+                            </div>
                           )}
-                        </div>
-                        {bankDetails?.registration_payment_reference && (
-                          <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                            <p className="text-sm text-muted-foreground mb-1">
-                              Payment Reference Number
-                            </p>
-                            <p className="font-mono font-semibold">
-                              {bankDetails.registration_payment_reference}
-                            </p>
-                          </div>
-                        )}
-                      </CardHeader>
-                    </Card>
+                        </CardHeader>
+                      </Card>
                     )}
                     <div className="flex flex-col w-full gap-6">
                       {!data?.resubmission_required && (
-                      <Card
-                        id="payment-options-section"
-                        className={cn(
-                          "border-primary/20 shadow-lg transition-all duration-300",
-                          highlightPayment && "ring-2 ring-primary/50 shadow-xl"
-                        )}
-                      >
-                        <CardHeader className="pb-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                              <CreditCard className="w-5 h-5 text-primary" />
+                        <Card
+                          id="payment-options-section"
+                          className={cn(
+                            "border-primary/20 shadow-lg transition-all duration-300",
+                            highlightPayment &&
+                              "ring-2 ring-primary/50 shadow-xl"
+                          )}
+                        >
+                          <CardHeader className="pb-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                                <CreditCard className="w-5 h-5 text-primary" />
+                              </div>
+                              <div>
+                                <CardTitle className="text-xl">
+                                  Payment Options
+                                </CardTitle>
+                                <CardDescription className="text-base">
+                                  Choose your preferred method to settle your
+                                  outstanding balance
+                                </CardDescription>
+                              </div>
                             </div>
-                            <div>
-                              <CardTitle className="text-xl">
-                                Payment Options
-                              </CardTitle>
-                              <CardDescription className="text-base">
-                                Choose your preferred method to settle your
-                                outstanding balance
-                              </CardDescription>
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <Tabs defaultValue="eft" className="px-6 pb-6">
-                          <TabsList
-                            className={`grid w-full ${
-                              data?.payfast_enabled && data?.club_member_exists
-                                ? "grid-cols-2"
-                                : "grid-cols-1"
-                            }`}
-                          >
-                            <TabsTrigger value="eft">
-                              Bank Transfer (EFT)
-                            </TabsTrigger>
-                            {data?.payfast_enabled &&
-                              data?.club_member_exists && (
-                                <TabsTrigger value="online">
-                                  Online Payment
-                                </TabsTrigger>
-                              )}
-                          </TabsList>
-                          <TabsContent value="eft" className="pt-4">
-                            <div className="space-y-6">
-                              <div className="text-center space-y-3">
-                                <div className="flex items-center justify-center gap-2">
-                                  <Building2 className="w-6 h-6 text-primary" />
-                                  <h3 className="text-xl font-semibold">
-                                    Bank Transfer (EFT)
-                                  </h3>
-                                </div>
-                                <div className="flex flex-col items-center">
-                                  <p className="text-muted-foreground leading-relaxed">
-                                    Transfer funds directly to the club's bank
-                                    account using the details below.
-                                  </p>
-                                  <div className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
-                                    <p className="text-sm">
-                                      <strong className="text-primary">
-                                        Important:
-                                      </strong>{" "}
-                                      Always include your payment reference
-                                      number to ensure proper allocation of your
-                                      payment.
+                          </CardHeader>
+                          <Tabs defaultValue="eft" className="px-6 pb-6">
+                            <TabsList
+                              className={`grid w-full ${
+                                data?.payfast_enabled &&
+                                data?.club_member_exists &&
+                                (bankDetails?.outstanding_amount ?? 0) > 0
+                                  ? "grid-cols-2"
+                                  : "grid-cols-1"
+                              }`}
+                            >
+                              <TabsTrigger value="eft">
+                                Bank Transfer (EFT)
+                              </TabsTrigger>
+                              {data?.payfast_enabled &&
+                                data?.club_member_exists &&
+                                (bankDetails?.outstanding_amount ?? 0) > 0 && (
+                                  <TabsTrigger value="online">
+                                    Online Payment
+                                  </TabsTrigger>
+                                )}
+                            </TabsList>
+                            <TabsContent value="eft" className="pt-4">
+                              <div className="space-y-6">
+                                <div className="text-center space-y-3">
+                                  <div className="flex items-center justify-center gap-2">
+                                    <Building2 className="w-6 h-6 text-primary" />
+                                    <h3 className="text-xl font-semibold">
+                                      Bank Transfer (EFT)
+                                    </h3>
+                                  </div>
+                                  <div className="flex flex-col items-center">
+                                    <p className="text-muted-foreground leading-relaxed">
+                                      Transfer funds directly to the club's bank
+                                      account using the details below.
                                     </p>
+                                    <div className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                                      <p className="text-sm">
+                                        <strong className="text-primary">
+                                          Important:
+                                        </strong>{" "}
+                                        Always include your payment reference
+                                        number to ensure proper allocation of
+                                        your payment.
+                                      </p>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
 
-                              {bankDetailsLoading && (
-                                <div className="flex justify-center py-8">
-                                  <Loader2 className="h-8 w-8 animate-spin" />
-                                </div>
-                              )}
+                                {bankDetailsLoading && (
+                                  <div className="flex justify-center py-8">
+                                    <Loader2 className="h-8 w-8 animate-spin" />
+                                  </div>
+                                )}
 
-                              {!bankDetailsLoading && (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                  <Card className="group hover:shadow-md transition-shadow border-primary/10">
-                                    <CardContent className="p-4">
-                                      <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3 flex-1">
-                                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                            <Building2 className="h-5 w-5 text-primary" />
-                                          </div>
-                                          <div>
-                                            <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                                              Bank Name
-                                            </p>
-                                            <p className="font-semibold text-lg">
-                                              {bankDetails?.bank}
-                                            </p>
-                                          </div>
-                                        </div>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() =>
-                                            copyToClipboard(
-                                              bankDetails?.bank || "",
-                                              "bank"
-                                            )
-                                          }
-                                          className="opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                          {copiedField === "bank" ? (
-                                            <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                          ) : (
-                                            <Copy className="h-4 w-4" />
-                                          )}
-                                        </Button>
-                                      </div>
-                                    </CardContent>
-                                  </Card>
-                                  <Card className="group hover:shadow-md transition-shadow border-primary/10">
-                                    <CardContent className="p-4">
-                                      <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3 flex-1">
-                                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                            <Hash className="h-5 w-5 text-primary" />
-                                          </div>
-                                          <div>
-                                            <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                                              Account Number
-                                            </p>
-                                            <p className="font-semibold font-mono text-lg">
-                                              {bankDetails?.account_number}
-                                            </p>
-                                          </div>
-                                        </div>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() =>
-                                            copyToClipboard(
-                                              bankDetails?.account_number || "",
-                                              "account"
-                                            )
-                                          }
-                                          className="opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                          {copiedField === "account" ? (
-                                            <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                          ) : (
-                                            <Copy className="h-4 w-4" />
-                                          )}
-                                        </Button>
-                                      </div>
-                                    </CardContent>
-                                  </Card>
-
-                                  <Card className="group hover:shadow-md transition-shadow border-primary/10">
-                                    <CardContent className="p-4">
-                                      <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3 flex-1">
-                                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                            <Hash className="h-5 w-5 text-primary" />
-                                          </div>
-                                          <div>
-                                            <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                                              Branch Code
-                                            </p>
-                                            <p className="font-semibold font-mono text-lg">
-                                              {bankDetails?.branch_code}
-                                            </p>
-                                          </div>
-                                        </div>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() =>
-                                            copyToClipboard(
-                                              bankDetails?.branch_code || "",
-                                              "branch"
-                                            )
-                                          }
-                                          className="opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                          {copiedField === "branch" ? (
-                                            <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                          ) : (
-                                            <Copy className="h-4 w-4" />
-                                          )}
-                                        </Button>
-                                      </div>
-                                    </CardContent>
-                                  </Card>
-
-                                  <Card className="group hover:shadow-md transition-shadow border-primary/10">
-                                    <CardContent className="p-4">
-                                      <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3 flex-1">
-                                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                            <Building2 className="h-5 w-5 text-primary" />
-                                          </div>
-                                          <div>
-                                            <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                                              Account Type
-                                            </p>
-                                            <p className="font-semibold text-lg">
-                                              {bankDetails?.account_type}
-                                            </p>
-                                          </div>
-                                        </div>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() =>
-                                            copyToClipboard(
-                                              bankDetails?.account_type || "",
-                                              "type"
-                                            )
-                                          }
-                                          className="opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                          {copiedField === "type" ? (
-                                            <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                          ) : (
-                                            <Copy className="h-4 w-4" />
-                                          )}
-                                        </Button>
-                                      </div>
-                                    </CardContent>
-                                  </Card>
-
-                                  {/* Payment Reference - Highlighted */}
-                                  {bankDetails?.payment_reference && (
-                                    <Card className="group hover:shadow-lg transition-shadow sm:col-span-2 border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
-                                      <CardContent className="p-6">
+                                {!bankDetailsLoading && (
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <Card className="group hover:shadow-md transition-shadow border-primary/10">
+                                      <CardContent className="p-4">
                                         <div className="flex items-center justify-between">
-                                          <div className="flex items-center gap-4 flex-1">
-                                            <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                                              <Hash className="h-6 w-6 text-primary" />
+                                          <div className="flex items-center gap-3 flex-1">
+                                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                              <Building2 className="h-5 w-5 text-primary" />
                                             </div>
                                             <div>
-                                              <div className="flex items-center gap-2 mb-1">
-                                                <p className="text-sm text-muted-foreground uppercase tracking-wide">
-                                                  Payment Reference
-                                                </p>
-                                                <Badge className="bg-primary/20 text-primary text-xs">
-                                                  Important!
-                                                </Badge>
-                                              </div>
-                                              <p className="font-bold font-mono text-xl text-primary">
-                                                {bankDetails?.payment_reference}
+                                              <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                                                Bank Name
                                               </p>
-                                              <p className="text-xs text-muted-foreground mt-1">
-                                                Always include this reference
-                                                with your payment
+                                              <p className="font-semibold text-lg">
+                                                {bankDetails?.bank}
                                               </p>
                                             </div>
                                           </div>
@@ -883,14 +776,13 @@ export default function ViewClubPage() {
                                             size="sm"
                                             onClick={() =>
                                               copyToClipboard(
-                                                bankDetails?.payment_reference ||
-                                                  "",
-                                                "reference"
+                                                bankDetails?.bank || "",
+                                                "bank"
                                               )
                                             }
                                             className="opacity-0 group-hover:opacity-100 transition-opacity"
                                           >
-                                            {copiedField === "reference" ? (
+                                            {copiedField === "bank" ? (
                                               <CheckCircle2 className="h-4 w-4 text-green-600" />
                                             ) : (
                                               <Copy className="h-4 w-4" />
@@ -899,21 +791,190 @@ export default function ViewClubPage() {
                                         </div>
                                       </CardContent>
                                     </Card>
-                                  )}
-                                </div>
+                                    <Card className="group hover:shadow-md transition-shadow border-primary/10">
+                                      <CardContent className="p-4">
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-3 flex-1">
+                                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                              <Hash className="h-5 w-5 text-primary" />
+                                            </div>
+                                            <div>
+                                              <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                                                Account Number
+                                              </p>
+                                              <p className="font-semibold font-mono text-lg">
+                                                {bankDetails?.account_number}
+                                              </p>
+                                            </div>
+                                          </div>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() =>
+                                              copyToClipboard(
+                                                bankDetails?.account_number ||
+                                                  "",
+                                                "account"
+                                              )
+                                            }
+                                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                          >
+                                            {copiedField === "account" ? (
+                                              <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                            ) : (
+                                              <Copy className="h-4 w-4" />
+                                            )}
+                                          </Button>
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+
+                                    <Card className="group hover:shadow-md transition-shadow border-primary/10">
+                                      <CardContent className="p-4">
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-3 flex-1">
+                                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                              <Hash className="h-5 w-5 text-primary" />
+                                            </div>
+                                            <div>
+                                              <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                                                Branch Code
+                                              </p>
+                                              <p className="font-semibold font-mono text-lg">
+                                                {bankDetails?.branch_code}
+                                              </p>
+                                            </div>
+                                          </div>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() =>
+                                              copyToClipboard(
+                                                bankDetails?.branch_code || "",
+                                                "branch"
+                                              )
+                                            }
+                                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                          >
+                                            {copiedField === "branch" ? (
+                                              <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                            ) : (
+                                              <Copy className="h-4 w-4" />
+                                            )}
+                                          </Button>
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+
+                                    <Card className="group hover:shadow-md transition-shadow border-primary/10">
+                                      <CardContent className="p-4">
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-3 flex-1">
+                                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                              <Building2 className="h-5 w-5 text-primary" />
+                                            </div>
+                                            <div>
+                                              <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                                                Account Type
+                                              </p>
+                                              <p className="font-semibold text-lg">
+                                                {bankDetails?.account_type}
+                                              </p>
+                                            </div>
+                                          </div>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() =>
+                                              copyToClipboard(
+                                                bankDetails?.account_type || "",
+                                                "type"
+                                              )
+                                            }
+                                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                          >
+                                            {copiedField === "type" ? (
+                                              <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                            ) : (
+                                              <Copy className="h-4 w-4" />
+                                            )}
+                                          </Button>
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+
+                                    {/* Payment Reference - Highlighted */}
+                                    {bankDetails?.payment_reference && (
+                                      <Card className="group hover:shadow-lg transition-shadow sm:col-span-2 border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
+                                        <CardContent className="p-6">
+                                          <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-4 flex-1">
+                                              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+                                                <Hash className="h-6 w-6 text-primary" />
+                                              </div>
+                                              <div>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                  <p className="text-sm text-muted-foreground uppercase tracking-wide">
+                                                    Payment Reference
+                                                  </p>
+                                                  <Badge className="bg-primary/20 text-primary text-xs">
+                                                    Important!
+                                                  </Badge>
+                                                </div>
+                                                <p className="font-bold font-mono text-xl text-primary">
+                                                  {
+                                                    bankDetails?.payment_reference
+                                                  }
+                                                </p>
+                                                <p className="text-xs text-muted-foreground mt-1">
+                                                  Always include this reference
+                                                  with your payment
+                                                </p>
+                                              </div>
+                                            </div>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() =>
+                                                copyToClipboard(
+                                                  bankDetails?.payment_reference ||
+                                                    "",
+                                                  "reference"
+                                                )
+                                              }
+                                              className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                              {copiedField === "reference" ? (
+                                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                              ) : (
+                                                <Copy className="h-4 w-4" />
+                                              )}
+                                            </Button>
+                                          </div>
+                                        </CardContent>
+                                      </Card>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </TabsContent>
+                            {data?.payfast_enabled &&
+                              data?.club_member_exists &&
+                              (bankDetails?.outstanding_amount ?? 0) > 0 && (
+                                <TabsContent
+                                  value="online"
+                                  className="px-6 py-8"
+                                >
+                                  <PayFastPayment
+                                    clubAccountId={data?.club_account_id ?? ""}
+                                    outstandingAmount={
+                                      bankDetails?.outstanding_amount ?? 0
+                                    }
+                                  />
+                                </TabsContent>
                               )}
-                            </div>
-                          </TabsContent>
-                          <TabsContent value="online" className="px-6 py-8">
-                            <PayFastPayment
-                              clubAccountId={data?.club_account_id ?? ""}
-                              outstandingAmount={
-                                bankDetails?.outstanding_amount ?? 0
-                              }
-                            />
-                          </TabsContent>
-                        </Tabs>
-                      </Card>
+                          </Tabs>
+                        </Card>
                       )}
                       {!isUserTransactionsLoading && transactions && (
                         <Card className="border-primary/20 shadow-lg">
@@ -944,9 +1005,6 @@ export default function ViewClubPage() {
                                     <TableHead className="text-center w-1/4 font-semibold">
                                       Type
                                     </TableHead>
-                                    {/* <TableHead className="text-center w-1/4 font-semibold">
-                                      Outstanding Amount
-                                    </TableHead> */}
                                     <TableHead className="text-center w-1/4 font-semibold">
                                       Status
                                     </TableHead>

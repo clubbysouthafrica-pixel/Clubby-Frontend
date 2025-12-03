@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { useState } from "react";
 import { useFetchMemberRegisteration } from "@/queries/registration-form";
-import { Loader2, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
 export function MemberRegistration({
@@ -41,79 +41,8 @@ export function MemberRegistration({
     );
   }
 
-  const getStatusConfig = () => {
-    switch (membershipStatus) {
-      case "Registered":
-        return {
-          icon: <CheckCircle2 className="h-4 w-4" />,
-          color: "text-green-600",
-          bgColor: "bg-green-50",
-          borderColor: "border-green-200",
-          title: "Registration Confirmed",
-        };
-      case "Pending":
-        return {
-          icon: <Clock className="h-4 w-4" />,
-          color: "text-orange-600",
-          bgColor: "bg-orange-50",
-          borderColor: "border-orange-200",
-          title: "Registration Pending",
-        };
-      case "Resubmission required":
-        return {
-          icon: <AlertCircle className="h-4 w-4" />,
-          color: "text-red-600",
-          bgColor: "bg-red-50",
-          borderColor: "border-red-200",
-          title: "Resubmission Required",
-        };
-      default:
-        return {
-          icon: <Clock className="h-4 w-4" />,
-          color: "text-gray-600",
-          bgColor: "bg-gray-50",
-          borderColor: "border-gray-200",
-          title: "Registration Status",
-        };
-    }
-  };
-
-  const statusConfig = getStatusConfig();
-
   return (
-    <div className="w-full space-y-2 flex-1 min-h-0 flex flex-col">
-      {/* Status Alert Banner */}
-      <div className={`${statusConfig.bgColor} ${statusConfig.borderColor} border rounded-lg p-3 space-y-2`}>
-        {/* Title row with icon */}
-        <div className="flex items-center gap-2">
-          <div className={statusConfig.color}>{statusConfig.icon}</div>
-          <h3 className={`text-xs font-semibold ${statusConfig.color}`}>
-            {statusConfig.title}
-          </h3>
-        </div>
-        
-        {/* Description text full width */}
-        <div className="text-xs text-gray-700 leading-relaxed">
-          {membershipStatus === "Pending" ? (
-            <>
-              Your registration is currently <strong>pending</strong>. The club admin still needs to verify your submitted registration and confirm if your registration fee has been paid.
-              {" "}
-              If you haven't paid yet, please visit <strong>Payments & Billing</strong> to complete the outstanding payment using a supported method.
-              {" "}
-              If your payment has already been made, please be patient while the admin completes the verification process.
-            </>
-          ) : membershipStatus === "Resubmission required" ? (
-            <>
-              Your registration requires a <strong>resubmission</strong>. This may be due to reasons such as your membership expiring, the club starting a new season, or invalid information in your previous submission. Please resubmit your registration form.
-            </>
-          ) : (
-            <>
-              Your registration has been <strong>successfully accepted</strong>, and your payment has been confirmed by the admin. You are now officially a member of {clubName}.
-            </>
-          )}
-        </div>
-      </div>
-
+    <div className="w-full space-y-2 flex-1 min-h-0 flex flex-col mt-6">
       {/* Deregistration reason (when provided by the club) */}
       {deregReason && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 space-y-2">

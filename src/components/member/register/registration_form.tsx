@@ -52,7 +52,7 @@ export function ClubRegisterForm() {
   >(undefined);
   const [totalRegistrationFee, setTotalRegistrationFee] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
-  
+
   useEffect(() => {
     const processSignatures = async () => {
       if (!data?.pages) return;
