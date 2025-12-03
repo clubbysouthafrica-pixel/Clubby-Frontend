@@ -12,6 +12,7 @@ import { formatAmount } from "@/data/currencies"
 interface BillingOption {
   label: string
   amount: number
+  multiplier?: boolean
 }
 
 interface Field {
@@ -47,7 +48,12 @@ export default function DisplayBillingDropdown({ currency, field }: BillingSelec
           <SelectGroup>
             {field.billingOptions?.map((option) => (
               <SelectItem key={option.label} value={option.label}>
-                {option.label} <strong>({option.amount == 0 ? "FREE" : formatAmount(option.amount, currency)})</strong>
+                <div className="flex items-center gap-2">
+                  <span>
+                    {option.label} <strong>({option.amount == 0 ? "FREE" : formatAmount(option.amount, currency)})</strong>
+                  </span>
+                  {option.multiplier && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">Multiplier</span>}
+                </div>
               </SelectItem>
             ))}
           </SelectGroup>
@@ -55,8 +61,6 @@ export default function DisplayBillingDropdown({ currency, field }: BillingSelec
       </Select>
       <div className="flex items-center space-x-2 text-xs">
         <p>Is Required: {field.required ? "true" : "false"}</p>
-        <span className="text-gray-400">|</span>
-        <p>Multiplier: {field.multiplier ? "true" : "false"}</p>
       </div>
     </div>
   )

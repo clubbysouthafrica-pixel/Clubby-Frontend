@@ -10,6 +10,7 @@ export interface BillingOption {
     option_order_id: string
     label: string
     amount: number
+    multiplier?: boolean
 }
 
 interface Props {
@@ -24,6 +25,7 @@ interface Props {
     onRequiredChange?: (val: boolean) => void
     onAddBillingOption: (option: BillingOption) => void
     onRemoveBillingOption: (id: string) => void
+    onUpdateBillingOption?: (option: BillingOption) => void
     // onMultiplierChange: (val: boolean) => void
 }
 
@@ -40,6 +42,7 @@ export default function EditBillingDropdown({
     onPlaceholderChange,
     onAddBillingOption,
     onRemoveBillingOption,
+    onUpdateBillingOption,
 }: Props) {
     const [internalFieldName, setInternalFieldName] = useState(fieldName)
     const [internalRequired, setInternalRequired] = useState(required)
@@ -47,7 +50,7 @@ export default function EditBillingDropdown({
     const [dropdownLabel, setDropdownLabel] = useState("")
     const [dropdownAmountRaw, setDropdownAmountRaw] = useState<number>(0)
     const [dropdownAmountDisplay, setDropdownAmountDisplay] = useState<string>(formatAmount(0, currency))
-    // const [internalMultiplier, setInternalMultiplier] = useState(multiplier)
+    const [dropdownMultiplier, setDropdownMultiplier] = useState(false)
 
     useEffect(() => setInternalFieldName(fieldName), [fieldName])
     useEffect(() => setInternalRequired(required), [required])
@@ -68,11 +71,6 @@ export default function EditBillingDropdown({
         onPlaceholderChange(e.target.value)
     }
 
-    // const handleMultiplierChange = (checked: boolean) => {
-    //     setInternalMultiplier(checked)
-    //     if (onMultiplierChange) onMultiplierChange(checked)
-    //   }
-
     const addDisabled = !dropdownLabel || dropdownAmountRaw < 0
 
     const handleAddOption = () => {
@@ -82,11 +80,13 @@ export default function EditBillingDropdown({
             option_order_id: crypto.randomUUID(),
             label: dropdownLabel,
             amount: dropdownAmountRaw,
+            multiplier: dropdownMultiplier,
         })
 
         setDropdownLabel("")
         setDropdownAmountRaw(0)
         setDropdownAmountDisplay(formatAmount(0, currency))
+        setDropdownMultiplier(false)
     }
 
     return (
@@ -142,16 +142,40 @@ export default function EditBillingDropdown({
                     </Button>
                 </div>
 
+                <div className="flex items-center gap-2 mt-3 ml-2">
+                    <Checkbox 
+                        checked={dropdownMultiplier} 
+                        onCheckedChange={(checked) => setDropdownMultiplier(checked === true)}
+                    />
+                    <Label className="text-xs cursor-pointer">Multiplier</Label>
+                </div>
+
                 {dropdownBillingOptions.length > 0 && (
-                    <div className="mt-2 space-y-1">
+                    <div className="mt-2 space-y-2">
                         {dropdownBillingOptions.map((option) => (
                             <div
                                 key={option.option_order_id}
-                                className="flex items-center justify-between bg-gray-50 px-3 py-1 rounded-lg"
+                                className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg gap-3"
                             >
-                                <span>
-                                    {option.label} <strong>({option.amount == 0 ? "FREE" : formatAmount(option.amount, currency)})</strong>
-                                </span>
+                                <div className="flex-1">
+                                    <span>
+                                        {option.label} <strong>({option.amount == 0 ? "FREE" : formatAmount(option.amount, currency)})</strong>
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                    <Checkbox 
+                                        checked={option.multiplier || false} 
+                                        onCheckedChange={(checked) => {
+                                            if (onUpdateBillingOption) {
+                                                onUpdateBillingOption({
+                                                    ...option,
+                                                    multiplier: checked === true
+                                                })
+                                            }
+                                        }} 
+                                    />
+                                    <Label className="text-xs whitespace-nowrap cursor-pointer">Multiplier</Label>
+                                </div>
                                 <Button
                                     variant="destructive"
                                     size="sm"
