@@ -413,7 +413,7 @@ export default function PendingMembersList({
             ) : (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
-                  This member does not exist or was removed.
+                  No results.
                 </TableCell>
               </TableRow>
             )}
