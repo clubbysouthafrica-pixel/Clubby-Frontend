@@ -1,4 +1,4 @@
-import {Route, Routes} from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import HomePage from "@/pages/home/page.tsx";
 import LoginPage from "@/pages/authentication/login/page.tsx";
 import RegisterPage from "@/pages/authentication/register/page.tsx";
@@ -19,33 +19,92 @@ import BrowseClubsPage from "@/pages/clubs/browse-clubs";
 import PublicJoinRegisterPage from "@/pages/clubs/public-join-register";
 import ActivateAccount from "@/pages/authentication/temporary-password/ActivateAccount";
 import { ClubRegisterForm } from "@/components/member/register/registration_form";
+import AdminLoginPage from "@/pages/authentication/login/admin-page";
 export default function MarketRoutes() {
-    return (
-        <Routes>
-            <Route path="/" element={<HomePage />}></Route>
-            <Route path="/login" element={<LoginPage />}></Route>
-            <Route path="/admin/login" element={<LoginPage />}></Route>
-            <Route path="/register" element={<RegisterPage />}></Route>
-            <Route path="/forgotpassword" element={<ForgotPasswordPage />}></Route>
-            <Route path="/activateAccount" element={<ActivateAccount />}></Route>
-            <Route path="/resetpassword" element={<PasswordResetPage />}></Route>
-            <Route path="/otp" element={<OTPPage />}></Route>
-            <Route path="/about" element={<AboutPage />}></Route>
-            <Route path="/getstarted" element={<GetStartedPage />}></Route>
-            <Route path="/contactus" element={<ContactPage />}></Route>
-            <Route path="/onboardMember" element={<ProtectedRoute><OnboardMember /></ProtectedRoute>}></Route>
+  return (
+    <Routes>
+      <Route path="/" element={<HomePage />}></Route>
+      <Route path="/login" element={<LoginPage />}></Route>
+      <Route path="/register" element={<RegisterPage />}></Route>
+      <Route path="/forgotpassword" element={<ForgotPasswordPage />}></Route>
+      <Route path="/activateAccount" element={<ActivateAccount />}></Route>
+      <Route path="/resetpassword" element={<PasswordResetPage />}></Route>
+      <Route path="/otp" element={<OTPPage />}></Route>
+      <Route path="/about" element={<AboutPage />}></Route>
+      <Route path="/getstarted" element={<GetStartedPage />}></Route>
+      <Route path="/contactus" element={<ContactPage />}></Route>
+      <Route
+        path="/onboardMember"
+        element={
+          <ProtectedRoute>
+            <OnboardMember />
+          </ProtectedRoute>
+        }
+      ></Route>
 
-            <Route path="/clubs" element={<BrowseClubsPage />}></Route>
-            <Route path="/clubs/:clubId" element={<ViewClubPage />}></Route>
-            <Route path="/clubs/:clubId/public/register" element={<PublicJoinRegisterPage />}></Route>
-            <Route path="/clubs/:clubId/register" element={<ProtectedRoute><ClubRegisterForm /></ProtectedRoute>}></Route>
+      <Route path="/clubs" element={<BrowseClubsPage />}></Route>
+      <Route path="/clubs/:clubId" element={<ViewClubPage />}></Route>
+      <Route
+        path="/clubs/:clubId/public/register"
+        element={<PublicJoinRegisterPage />}
+      ></Route>
+      <Route
+        path="/clubs/:clubId/register"
+        element={
+          <ProtectedRoute>
+            <ClubRegisterForm />
+          </ProtectedRoute>
+        }
+      ></Route>
 
-            <Route path="/myclubs" element={<ProtectedRoute><MyClubsPage /></ProtectedRoute>}></Route>
-            <Route path="/myclubs/:clubId" element={<ProtectedRoute><ViewClubPage /></ProtectedRoute>}></Route>
-            <Route path="/myclubs/:clubId/invite" element={<ProtectedRoute><ViewClubPage /></ProtectedRoute>}></Route>
-            <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>}></Route>
-            <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>}></Route>
-            <Route path="/manage/registrations/forms" element={<><AdminRegistrationFormPage /></>}></Route>
-        </Routes>
-    )
+      <Route
+        path="/myclubs"
+        element={
+          <ProtectedRoute>
+            <MyClubsPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/myclubs/:clubId"
+        element={
+          <ProtectedRoute>
+            <ViewClubPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/myclubs/:clubId/invite"
+        element={
+          <ProtectedRoute>
+            <ViewClubPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <SettingsPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/manage/registrations/forms"
+        element={
+          <>
+            <AdminRegistrationFormPage />
+          </>
+        }
+      ></Route>
+    </Routes>
+  );
 }

@@ -1,5 +1,4 @@
-import {Route, Routes} from "react-router-dom";
-import LoginPage from "@/pages/authentication/login/page.tsx";
+import { Route, Routes } from "react-router-dom";
 import RegisterPage from "@/pages/authentication/register/page.tsx";
 import MyClubsPage from "@/pages/clubs/my-clubs.tsx";
 import OTPPage from "@/pages/authentication/otp/page.tsx";
@@ -22,34 +21,126 @@ import GeneralReportingPage from "@/pages/admin/reporting/general-reporting";
 import FinancialTransactionsPage from "@/pages/admin/reporting/financial-transactions";
 import OnboardClubPage from "@/pages/authentication/onboard-club";
 import AddMemberPage from "@/pages/dashboard/members/add-member";
+import AdminLoginPage from "@/pages/authentication/login/admin-page";
 
 export default function AdminRoutes() {
-    return (
-        <Routes>
-            <Route path="/" element={<ProtectedRoute><HomeDashboardPage/></ProtectedRoute>}></Route>
-            <Route path="/admin/login" element={<LoginPage />}></Route>
-            <Route path="/register" element={<RegisterPage />}></Route>
-            <Route path="/forgotpassword" element={<ForgotPasswordPage />}></Route>
-            <Route path="/resetpassword" element={<PasswordResetPage />}></Route>
-            <Route path="/otp" element={<OTPPage />}></Route>
-            <Route path="/about" element={<AboutPage />}></Route>
-            <Route path="/getstarted" element={<GetStartedPage />}></Route>
-            <Route path="/contactus" element={<ContactPage />}></Route>
-            <Route path="/onboard" element={<OnboardClubPage/>}></Route>
+  return (
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <HomeDashboardPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route path="/login" element={<AdminLoginPage />}></Route>
+      <Route path="/register" element={<RegisterPage />}></Route>
+      <Route path="/forgotpassword" element={<ForgotPasswordPage />}></Route>
+      <Route path="/resetpassword" element={<PasswordResetPage />}></Route>
+      <Route path="/otp" element={<OTPPage />}></Route>
+      <Route path="/about" element={<AboutPage />}></Route>
+      <Route path="/getstarted" element={<GetStartedPage />}></Route>
+      <Route path="/contactus" element={<ContactPage />}></Route>
+      <Route path="/onboard" element={<OnboardClubPage />}></Route>
 
-            <Route path="/myclubs" element={<ProtectedRoute><MyClubsPage /></ProtectedRoute>}></Route>
-            <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>}></Route>
-            <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>}></Route>
-            <Route path="/billing&usage" element={<ProtectedRoute><BillingPage /></ProtectedRoute>}></Route>
-            
-            <Route path="/manage" element={<ProtectedRoute><ManagePage/></ProtectedRoute>}></Route>
-            <Route path="/manage/members" element={<ProtectedRoute><ListMembersPage/></ProtectedRoute>}></Route>
-            <Route path="/manage/members/add" element={<ProtectedRoute><AddMemberPage/></ProtectedRoute>}></Route>
-            <Route path="/manage/club" element={<ProtectedRoute><ManageClubDashboard/></ProtectedRoute>}></Route>
-            <Route path="/manage/registrations/forms" element={<ProtectedRoute><AdminRegistrationFormPage /></ProtectedRoute>}></Route>
-            <Route path="/reporting/registration" element={<ProtectedRoute><RegistrationReportPage/></ProtectedRoute>}></Route>
-            <Route path="/reporting/general" element={<ProtectedRoute><GeneralReportingPage/></ProtectedRoute>}></Route>
-            <Route path="/reporting/transactions" element={<ProtectedRoute><FinancialTransactionsPage/></ProtectedRoute>}></Route>
-        </Routes>
-    )
+      <Route
+        path="/myclubs"
+        element={
+          <ProtectedRoute>
+            <MyClubsPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <SettingsPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/billing&usage"
+        element={
+          <ProtectedRoute>
+            <BillingPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+
+      <Route
+        path="/manage"
+        element={
+          <ProtectedRoute>
+            <ManagePage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/manage/members"
+        element={
+          <ProtectedRoute>
+            <ListMembersPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/manage/members/add"
+        element={
+          <ProtectedRoute>
+            <AddMemberPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/manage/club"
+        element={
+          <ProtectedRoute>
+            <ManageClubDashboard />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/manage/registrations/forms"
+        element={
+          <ProtectedRoute>
+            <AdminRegistrationFormPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/reporting/registration"
+        element={
+          <ProtectedRoute>
+            <RegistrationReportPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/reporting/general"
+        element={
+          <ProtectedRoute>
+            <GeneralReportingPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/reporting/transactions"
+        element={
+          <ProtectedRoute>
+            <FinancialTransactionsPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+    </Routes>
+  );
 }

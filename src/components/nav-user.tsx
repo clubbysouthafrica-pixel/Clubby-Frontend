@@ -1,13 +1,14 @@
-"use client"
+"use client";
 
 import {
   ChevronsUpDown,
-  LogOut, SettingsIcon, CreditCard, User
-} from "lucide-react"
+  LogOut,
+  SettingsIcon,
+  CreditCard,
+  User,
+} from "lucide-react";
 
-import {
-  Avatar,
-} from "@/components/ui/avatar"
+import { Avatar } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,34 +17,34 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 import { useNavigate } from "react-router-dom";
-import { useContext } from "react"
-import { AuthContext, AuthContextType } from "@/context/AuthContext"
+import { useContext } from "react";
+import { AuthContext, AuthContextType } from "@/context/AuthContext";
 
 export function NavUser({
   user,
 }: {
   user: {
-    name: string
-    email: string
-    avatar: string
-  }
+    name: string;
+    email: string;
+    avatar: string;
+  };
 }) {
   const { logout } = useContext(AuthContext) as AuthContextType;
-  const { isMobile } = useSidebar()
-  const navigate = useNavigate()
+  const { isMobile } = useSidebar();
+  const navigate = useNavigate();
 
   const logOut = () => {
-    logout()
-    navigate("/admin/login")
-  }
+    logout();
+    navigate("/login");
+  };
 
   return (
     <SidebarMenu>
@@ -101,5 +102,5 @@ export function NavUser({
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
-  )
+  );
 }
