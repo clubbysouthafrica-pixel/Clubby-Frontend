@@ -19,7 +19,6 @@ import BrowseClubsPage from "@/pages/clubs/browse-clubs";
 import PublicJoinRegisterPage from "@/pages/clubs/public-join-register";
 import ActivateAccount from "@/pages/authentication/temporary-password/ActivateAccount";
 import { ClubRegisterForm } from "@/components/member/register/registration_form";
-import AdminLoginPage from "@/pages/authentication/login/admin-page";
 export default function MarketRoutes() {
   return (
     <Routes>

@@ -21,7 +21,7 @@ import GeneralReportingPage from "@/pages/admin/reporting/general-reporting";
 import FinancialTransactionsPage from "@/pages/admin/reporting/financial-transactions";
 import OnboardClubPage from "@/pages/authentication/onboard-club";
 import AddMemberPage from "@/pages/dashboard/members/add-member";
-import AdminLoginPage from "@/pages/authentication/login/admin-page";
+import LoginPage from "@/pages/authentication/login/page";
 
 export default function AdminRoutes() {
   return (
@@ -34,7 +34,7 @@ export default function AdminRoutes() {
           </ProtectedRoute>
         }
       ></Route>
-      <Route path="/login" element={<AdminLoginPage />}></Route>
+      <Route path="/login" element={<LoginPage />}></Route>
       <Route path="/register" element={<RegisterPage />}></Route>
       <Route path="/forgotpassword" element={<ForgotPasswordPage />}></Route>
       <Route path="/resetpassword" element={<PasswordResetPage />}></Route>
