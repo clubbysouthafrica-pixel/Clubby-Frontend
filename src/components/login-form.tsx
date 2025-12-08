@@ -9,12 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Link,
-  useLocation,
-  useNavigate,
-  useSearchParams,
-} from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useContext, useState } from "react";
 import { AuthContext, AuthContextType } from "@/context/AuthContext.tsx";
 import { Alert, AlertDescription } from "@/components/ui/alert.tsx";
