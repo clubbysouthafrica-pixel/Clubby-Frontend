@@ -153,7 +153,7 @@ export default function PreviousMembersList({
                                     </div>
                                 </TableCell>
                                 <TableCell className="text-center w-1/5">
-                                    {member.deregistered_on ? new Date(member.deregistered_on).toLocaleString() : "-"}
+                                    {member.deregistered_on ? new Date(member.deregistered_on).toLocaleString() : "Previous season registration"}
                                 </TableCell>
                                 <TableCell className="text-center w-1/5">
                                     <div className="flex justify-center gap-2">
