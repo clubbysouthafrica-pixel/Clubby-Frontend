@@ -12,8 +12,10 @@ import EditBillingText from "./admin/registration-form/edit-fields/billing-text"
 import DisplayBillingText from "./admin/registration-form/display-fields/billing-text";
 import EditBillingDropdown from './admin/registration-form/edit-fields/billing-dropdown';
 import EditBillingDiscountDropdown from './admin/registration-form/edit-fields/billing-discount-dropdown';
+import EditBillingNumber from './admin/registration-form/edit-fields/billing-number';
 import DisplayBillingDropdown from "./admin/registration-form/display-fields/billing-dropdown"
 import DisplayBillingDiscountDropdown from "./admin/registration-form/display-fields/billing-discount-dropdown"
+import DisplayBillingNumber from "./admin/registration-form/display-fields/billing-number"
 import EditStandardCheckbox from "./admin/registration-form/edit-fields/standard-checkbox"
 import DisplayStandardCheckbox from "./admin/registration-form/display-fields/standard-checkbox"
 import DisplayStandardText from "./admin/registration-form/display-fields/standard-text"
@@ -139,6 +141,8 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
                                 />
                                 : field.input_type === "DROPDOWN" && field.field_type === "BILLING" ?
                                     <DisplayBillingDropdown currency={currency} field={field} />
+                                    : field.input_type === "NUMBER" && field.field_type === "BILLING" ?
+                                        <DisplayBillingNumber field={field} />
                                     : field.input_type === "DISCOUNT" && field.field_type === "BILLING" ?
                                         <DisplayBillingDiscountDropdown field={field} />
                                     : field.input_type === "CHECKBOX" && field.field_type === "STANDARD" ?
@@ -246,6 +250,15 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
                                             onRequiredChange={setRequired}
                                             onAddDiscountOption={handleAddDiscountOption}
                                             onRemoveDiscountOption={handleRemoveDiscountOption}
+                                        />
+                                        : field.input_type === "NUMBER" && field.field_type === "BILLING" ?
+                                        <EditBillingNumber
+                                            fieldName={fieldName}
+                                            placeholder={placeholder}
+                                            required={required}
+                                            onFieldNameChange={setFieldName}
+                                            onPlaceholderChange={setPlaceholder}
+                                            onRequiredChange={setRequired}
                                         />
                                         : field.input_type ?
                                             <div>

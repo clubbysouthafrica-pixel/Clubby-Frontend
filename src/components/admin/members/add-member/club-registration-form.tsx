@@ -154,8 +154,8 @@ export function ClubRegisterForm({
     const missingOnCurrent = currentPage.fields.filter((f) => {
       if (f.required) {
         if (f.field_type === "STANDARD") return !f.value?.trim();
-        if (f.field_type === "BILLING" && f.input_type === "DROPDOWN")
-          return f.value == null || f.selectedAmountCents == null;
+        if (f.field_type === "BILLING" && f.input_type === "DROPDOWN") return f.value == null || f.selectedAmountCents == null;
+        if (f.field_type === "BILLING" && f.input_type === "NUMBER") return f.value == null || (typeof f.value === "number" && f.value <= 0);
       }
       return false;
     });
