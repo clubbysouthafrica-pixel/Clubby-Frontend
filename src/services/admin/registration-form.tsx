@@ -57,3 +57,13 @@ export const removeAdminNotes = (memberId: string, registrationId: string, noteI
     })
         .then(res => res.data)
 }
+
+export const fetchRegistrationField = (clubAccountId: string, fieldId: string): Promise<any> => {
+    if (!clubAccountId || !fieldId) throw new Error("clubAccountId and fieldId are required")
+
+    return api.get(`/registration/getRegistrationField?club_account_id=${clubAccountId}&field_id=${fieldId}`)
+        .then(res => {
+            console.log("Registration field data:", res.data);
+            return res.data;
+        })
+}
