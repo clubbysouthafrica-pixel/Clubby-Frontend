@@ -8,8 +8,18 @@ import {
 } from "@/components/ui/card";
 import { useState } from "react";
 import { useFetchMemberRegisteration } from "@/queries/registration-form";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, PencilIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 export function MemberRegistration({
   clubAccountId,
@@ -18,6 +28,8 @@ export function MemberRegistration({
   membershipStatus
 }: { clubAccountId: string, currency: string, clubName: string, membershipStatus: string }) {
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState<string>("");
 
   const { data, isLoading } = useFetchMemberRegisteration(
     clubAccountId,
@@ -101,11 +113,28 @@ export function MemberRegistration({
 
                 if (field.type === "STANDARD_OTHER") {
                   return (
-                    <div key={field.label} className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg">
-                      <Label className="text-xs font-semibold text-muted-foreground">{field.label}</Label>
-                      <Label className="text-sm border-b-2 border-gray-300 pb-1">
-                        {field.value}
-                      </Label>
+                    <div key={field.label} className="flex items-center justify-between group">
+                      <div className="flex-1 flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg">
+                        <Label className="text-xs font-semibold text-muted-foreground">{field.label}</Label>
+                        <Label className="text-sm border-b-2 border-gray-300 pb-1">
+                          {field.value}
+                        </Label>
+                      </div>
+                      {membershipStatus !== "Resubmission required" && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingFieldId(field.label);
+                            setEditValue(field.value);
+                          }}
+                          className="h-8 w-8 p-0 ml-2 opacity-30 group-hover:opacity-100 transition-opacity"
+                          title="Update this field"
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   );
                 }
@@ -161,6 +190,43 @@ export function MemberRegistration({
 
               })}
             </div>
+
+            {/* Update Field Dialog */}
+            <Dialog open={!!editingFieldId} onOpenChange={(open) => {
+              if (!open) setEditingFieldId(null);
+            }}>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Update {editingFieldId}</DialogTitle>
+                  <DialogDescription>
+                    Edit the value for this field
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                  <Label htmlFor="edit-input" className="text-sm font-medium mb-2 block">
+                    {editingFieldId}
+                  </Label>
+                  <Input
+                    id="edit-input"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    placeholder="Enter new value"
+                    className="w-full"
+                  />
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline">Cancel</Button>
+                  </DialogClose>
+                  <Button onClick={() => {
+                    // TODO: Call API to update the field
+                    setEditingFieldId(null);
+                  }}>
+                    Save Changes
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
 
             {/* Pagination Controls */}
             {data.pages.length > 1 && (

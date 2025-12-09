@@ -20,7 +20,7 @@ export function useKeyboardShortcut(shortcut: ShortcutDefinition) {
         const isMac = isMacOs();
 
         // Check if the pressed key matches
-        const isKeyMatch = event.key.toLowerCase() === shortcut.key.toLowerCase();
+        const isKeyMatch = shortcut.key && event.key.toLowerCase() === shortcut.key.toLowerCase();
 
         // Check modifiers
         const modifiersMatch = shortcut.modifiers?.every(modifier => {

@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { useState } from "react";
 import { useFetchMemberRegisteration } from "@/queries/admin/registration-form";
-import { Loader2, Edit, Trash2, Copy } from "lucide-react";
+import { Loader2, Edit, Trash2, Copy, PencilIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -17,6 +17,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -54,6 +56,8 @@ export function CurrentMemberRegistration({
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [noteTitle, setNoteTitle] = useState("");
   const [noteContent, setNoteContent] = useState("");
+  const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState<string>("");
 
   const { data, isLoading } = useFetchMemberRegisteration(
     clubAccountId,
@@ -292,11 +296,28 @@ export function CurrentMemberRegistration({
 
               if (field.type === "STANDARD_OTHER") {
                 return (
-                  <div key={field.label} className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg">
-                    <Label className="text-xs font-semibold text-muted-foreground">{field.label}</Label>
-                    <Label className="text-xs border-b-2 border-gray-300 pb-1">
-                      {field.value}
-                    </Label>
+                  <div key={field.label} className="flex items-center justify-between group">
+                    <div className="flex-1 flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg">
+                      <Label className="text-xs font-semibold text-muted-foreground">{field.label}</Label>
+                      <Label className="text-xs border-b-2 border-gray-300 pb-1">
+                        {field.value}
+                      </Label>
+                    </div>
+                    {!data?.deregistered_on && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setEditingFieldId(field.label);
+                          setEditValue(field.value);
+                        }}
+                        className="h-8 w-8 p-0 ml-2 opacity-30 group-hover:opacity-100 transition-opacity"
+                        title="Update this field"
+                      >
+                        <PencilIcon className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 );
               }
@@ -351,6 +372,43 @@ export function CurrentMemberRegistration({
 
             })}
           </div>
+
+          {/* Update Field Dialog */}
+          <Dialog open={!!editingFieldId} onOpenChange={(open) => {
+            if (!open) setEditingFieldId(null);
+          }}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Update {editingFieldId}</DialogTitle>
+                <DialogDescription>
+                  Edit the value for this field
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4">
+                <Label htmlFor="edit-input" className="text-sm font-medium mb-2 block">
+                  {editingFieldId}
+                </Label>
+                <Input
+                  id="edit-input"
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  placeholder="Enter new value"
+                  className="w-full"
+                />
+              </div>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline">Cancel</Button>
+                </DialogClose>
+                <Button onClick={() => {
+                  // TODO: Call API to update the field
+                  setEditingFieldId(null);
+                }}>
+                  Save Changes
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           {/* Pagination Controls */}
           {data.pages.length > 1 && (
