@@ -8,18 +8,20 @@ import {
 } from "@/components/ui/card";
 import { useState } from "react";
 import { useFetchMemberRegisteration } from "@/queries/registration-form";
-import { Loader2, AlertCircle, PencilIcon } from "lucide-react";
+import { Loader2, AlertCircle, PencilIcon, Check, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
+import { fetchMemberRegistrationField, updateMemberRegistrationField } from "@/services/registration-form";
+import { validateFieldValue, getStandardFieldType } from "@/utils/fieldValidation";
 
 export function MemberRegistration({
   clubAccountId,
@@ -30,6 +32,9 @@ export function MemberRegistration({
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>("");
+  const [updatedFieldValues, setUpdatedFieldValues] = useState<Record<string, string>>({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [fieldMetadata, setFieldMetadata] = useState<Record<string, { input_type: string; options?: string[]; required?: boolean, placeholder?: string }>>({});
 
   const { data, isLoading } = useFetchMemberRegisteration(
     clubAccountId,
@@ -85,7 +90,7 @@ export function MemberRegistration({
             </h3>
             
             <div className="flex-none space-y-6 px-2 py-2">
-              {data.pages[currentPageIndex].fields.map((field: { type: string; label: string; value: string; signature_type?: string; quantity?: number; discount?: number }) => {
+              {data.pages[currentPageIndex].fields.map((field: { type: string; label: string; value: string; field_id?: string; signature_type?: string; quantity?: number; discount?: number }) => {
 
                 if (field.type === "STANDARD_SIGNATURE") {
                   if (field.signature_type === "signature") {
@@ -112,28 +117,195 @@ export function MemberRegistration({
                 }
 
                 if (field.type === "STANDARD_OTHER") {
+                  const isEditing = editingFieldId === field.label;
+                  const displayValue = isEditing ? editValue : (updatedFieldValues[field.label] ?? field.value);
+                  const metadata = fieldMetadata[field.label];
+                  
+                  const handleSave = async () => {
+                    setIsSaving(true);
+                    try {
+                      const fieldType = metadata?.input_type || "TEXT";
+                      
+                      // Validate required fields
+                      const validationError = validateFieldValue(field.label, editValue, metadata);
+                      if (validationError) {
+                        toast.error(validationError, {
+                          duration: 3000,
+                        });
+                        setIsSaving(false);
+                        return;
+                      }
+                      
+                      const typeParam = getStandardFieldType(fieldType);
+
+                      await updateMemberRegistrationField(
+                        data.registration_id,
+                        field.field_id || "",
+                        field.label,
+                        typeParam,
+                        editValue
+                      );
+                      
+                      toast.success(`${field.label} updated successfully`, {
+                        duration: 3000,
+                      });
+                      setUpdatedFieldValues((prev) => ({
+                        ...prev,
+                        [field.label]: editValue,
+                      }));
+                      setEditingFieldId(null);
+                    } catch (error) {
+                      console.error("Error updating field:", error);
+                      toast.error("Failed to update field", {
+                        duration: 3000,
+                      });
+                    } finally {
+                      setIsSaving(false);
+                    }
+                  };
+
+                  const handleEdit = async () => {
+                    setEditingFieldId(field.label);
+                    setEditValue(field.value);
+                    
+                    if (!metadata && field.field_id) {
+                      try {
+                        const data = await fetchMemberRegistrationField(clubAccountId, field.field_id);
+                        setFieldMetadata((prev) => ({
+                          ...prev,
+                          [field.label]: data.field,
+                        }));
+                      } catch (error) {
+                        console.error("Error loading field metadata:", error);
+                      }
+                    }
+                  };
+
+                  const renderInput = () => {
+                    const inputType = metadata?.input_type || "TEXT";
+                    const options = metadata?.options || [];
+
+                    if (inputType === "DROPDOWN") {
+                      return (
+                        <Select value={editValue} onValueChange={setEditValue}>
+                          <SelectTrigger className="w-full text-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {options.map((option: string) => (
+                              <SelectItem key={option} value={option}>
+                                {option}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      );
+                    } else if (inputType === "CHECKBOX") {
+
+                      return (
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            checked={editValue === "true"}
+                            onCheckedChange={(checked) =>
+                              setEditValue(checked ? "true" : "")
+                            }
+                          />
+                          {metadata?.placeholder}
+                        </div>
+                      );
+                    } else if (inputType === "NUMBER") {
+                      return (
+                        <Input
+                          autoFocus
+                          type="number"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          className="text-sm"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              handleSave();
+                            } else if (e.key === "Escape") {
+                              setEditingFieldId(null);
+                              setEditValue("");
+                            }
+                          }}
+                        />
+                      );
+                    } else {
+                      return (
+                        <Input
+                          autoFocus
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          className="text-sm"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              handleSave();
+                            } else if (e.key === "Escape") {
+                              setEditingFieldId(null);
+                              setEditValue("");
+                            }
+                          }}
+                        />
+                      );
+                    }
+                  };
+
                   return (
                     <div key={field.label} className="flex items-center justify-between group">
                       <div className="flex-1 flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg">
                         <Label className="text-xs font-semibold text-muted-foreground">{field.label}</Label>
-                        <Label className="text-sm border-b-2 border-gray-300 pb-1">
-                          {field.value}
-                        </Label>
+                        {isEditing ? (
+                          renderInput()
+                        ) : (
+                          <Label className="text-sm border-b-2 border-gray-300 pb-1">
+                            {displayValue}
+                          </Label>
+                        )}
                       </div>
-                      {membershipStatus !== "Resubmission required" && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setEditingFieldId(field.label);
-                            setEditValue(field.value);
-                          }}
-                          className="h-8 w-8 p-0 ml-2 opacity-30 group-hover:opacity-100 transition-opacity"
-                          title="Update this field"
-                        >
-                          <PencilIcon className="h-4 w-4" />
-                        </Button>
+                      {membershipStatus !== "Resubmission required" && field.field_id && (
+                        <div className="flex gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {isEditing ? (
+                            <>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleSave}
+                                disabled={isSaving}
+                                className="h-8 w-8 p-0"
+                                title="Save"
+                              >
+                                <Check className="h-4 w-4 text-green-600" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingFieldId(null);
+                                  setEditValue("");
+                                }}
+                                disabled={isSaving}
+                                className="h-8 w-8 p-0"
+                                title="Cancel"
+                              >
+                                <X className="h-4 w-4 text-red-600" />
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={handleEdit}
+                              className="h-8 w-8 p-0"
+                              title="Update this field"
+                            >
+                              <PencilIcon className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       )}
                     </div>
                   );
@@ -190,43 +362,6 @@ export function MemberRegistration({
 
               })}
             </div>
-
-            {/* Update Field Dialog */}
-            <Dialog open={!!editingFieldId} onOpenChange={(open) => {
-              if (!open) setEditingFieldId(null);
-            }}>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Update {editingFieldId}</DialogTitle>
-                  <DialogDescription>
-                    Edit the value for this field
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="py-4">
-                  <Label htmlFor="edit-input" className="text-sm font-medium mb-2 block">
-                    {editingFieldId}
-                  </Label>
-                  <Input
-                    id="edit-input"
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    placeholder="Enter new value"
-                    className="w-full"
-                  />
-                </div>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button variant="outline">Cancel</Button>
-                  </DialogClose>
-                  <Button onClick={() => {
-                    // TODO: Call API to update the field
-                    setEditingFieldId(null);
-                  }}>
-                    Save Changes
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
 
             {/* Pagination Controls */}
             {data.pages.length > 1 && (

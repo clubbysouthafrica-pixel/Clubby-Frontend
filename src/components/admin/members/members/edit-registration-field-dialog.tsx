@@ -19,7 +19,8 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import { fetchRegistrationField } from "@/services/admin/registration-form";
+import { fetchRegistrationField, updateRegistrationField } from "@/services/admin/registration-form";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
 interface FieldData {
@@ -44,6 +45,8 @@ interface EditRegistrationFieldDialogProps {
   fieldValue: string;
   fieldDbId: string | null;
   clubAccountId: string;
+  registrationId: string;
+  userId: string;
   onSave: (fieldId: string | null, newValue: string) => void;
 }
 
@@ -54,10 +57,13 @@ export function EditRegistrationFieldDialog({
   fieldValue,
   fieldDbId,
   clubAccountId,
+  registrationId,
+  userId,
   onSave,
 }: EditRegistrationFieldDialogProps) {
   const [editValue, setEditValue] = useState<string>(fieldValue);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [fieldData, setFieldData] = useState<FieldData | null>(null);
 
   useEffect(() => {
@@ -70,14 +76,16 @@ export function EditRegistrationFieldDialog({
     setIsLoading(true);
     try {
       const data = await fetchRegistrationField(clubAccountId, fieldDbId);
-      setFieldData(data);
+      setFieldData(data.field);
       // Auto-populate with current value if exists
       if (fieldValue) {
         setEditValue(fieldValue);
       }
     } catch (error) {
       console.error("Error fetching field info:", error);
-      toast.error("Error loading field information");
+      toast.error("Error loading field information", {
+        duration: 3000,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -89,27 +97,103 @@ export function EditRegistrationFieldDialog({
     }
   }, [isOpen, fieldDbId, loadFieldData]);
 
-  const handleSave = () => {
-    // TODO: Call API to update the field using fieldDbId
-    console.log("Saving field:", {
-      fieldDbId,
-      oldValue: fieldValue,
-      newValue: editValue,
-    });
-    onSave(fieldDbId, editValue);
-    onOpenChange(false);
+  const handleSave = async () => {
+    // Validate required fields
+    if (fieldData?.required) {
+      const inputType = fieldData.input_type?.toUpperCase();
+      
+      // Check for undefined
+      if (editValue === undefined) {
+        toast.error(`${fieldData.field_name} is required`, {
+          duration: 3000,
+        });
+        return;
+      }
+      
+      // Check for empty string (TEXT fields)
+      if (inputType === "TEXT" || inputType === "DROPDOWN") {
+        if (editValue.trim() === "") {
+          toast.error(`${fieldData.field_name} cannot be empty`, {
+            duration: 3000,
+          });
+          return;
+        }
+      }
+      
+      // Check for 0 (NUMBER fields)
+      if (inputType === "NUMBER") {
+        if (editValue === undefined || editValue === "") {
+          toast.error(`${fieldData.field_name} is required`, {
+            duration: 3000,
+          });
+          return;
+        }
+      }
+      
+      // Check for unchecked (CHECKBOX fields)
+      if (inputType === "CHECKBOX") {
+        if (editValue !== "true") {
+          toast.error(`${fieldData.field_name} must be checked`, {
+            duration: 3000,
+          });
+          return;
+        }
+      }
+    }
+
+    setIsSaving(true);
+    try {
+      let type = ""
+      if (fieldData?.input_type === "DROPDOWN") {
+        type = "STANDARD_DROPDOWN"
+      } else if (fieldData?.input_type === "CHECKBOX") {
+        type = "STANDARD_CHECKBOX"
+      } else if (fieldData?.input_type === "NUMBER") {
+        type = "STANDARD_NUMBER"
+      } else {
+        type = "STANDARD_TEXT"
+      }
+
+      await updateRegistrationField(
+        registrationId,
+        userId,
+        fieldDbId!,
+        fieldData?.field_name || fieldLabel || "",
+        type,
+        editValue
+      );
+      
+      toast.success(`${fieldData?.field_name || fieldLabel} updated successfully`, {
+        duration: 3000,
+      });
+      onSave(fieldDbId, editValue);
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error updating field:", error);
+      toast.error("Failed to update field", {
+        duration: 3000,
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       setEditValue(fieldValue);
       setFieldData(null);
+      // Move focus away from dialog when closing
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
     }
     onOpenChange(open);
   };
 
   const renderFieldInput = () => {
     if (!fieldData) return null;
+
+
 
     const { input_type, options, placeholder } = fieldData;
 
@@ -128,6 +212,18 @@ export function EditRegistrationFieldDialog({
               ))}
             </SelectContent>
           </Select>
+        );
+      case "CHECKBOX":
+        return (
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={editValue === "true"}
+              onCheckedChange={(checked) =>
+                setEditValue(checked ? "true" : "")
+              }
+            />
+            <Label>{fieldData.field_name}</Label>
+          </div>
         );
       case "TEXT":
       case "NUMBER":
@@ -151,7 +247,7 @@ export function EditRegistrationFieldDialog({
         <DialogHeader>
           <DialogTitle>Update {fieldLabel}</DialogTitle>
           <DialogDescription>
-            Edit the value for this field
+            {fieldData?.placeholder ?? "Edit the value for this field"}
           </DialogDescription>
         </DialogHeader>
         {isLoading ? (
@@ -174,10 +270,17 @@ export function EditRegistrationFieldDialog({
             </div>
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
+                <Button variant="outline" disabled={isSaving}>Cancel</Button>
               </DialogClose>
-              <Button onClick={handleSave}>
-                Save Changes
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
               </Button>
             </DialogFooter>
           </>

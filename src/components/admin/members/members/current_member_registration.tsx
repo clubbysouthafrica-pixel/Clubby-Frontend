@@ -30,10 +30,21 @@ import { useMutation } from "@tanstack/react-query";
 import {
   updateAdminNotes,
   removeAdminNotes,
+  fetchRegistrationField,
+  updateRegistrationField,
 } from "@/services/admin/registration-form";
-import { EditRegistrationFieldDialog } from "./edit-registration-field-dialog";
 import { toast } from "sonner";
 import { useEffect } from "react";
+import { validateFieldValue, getStandardFieldType, FieldMetadata } from "@/utils/fieldValidation";
+import { Check, X } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 function formatEpoch(epoch: number) {
   const date = new Date(epoch);
@@ -67,8 +78,9 @@ export function CurrentMemberRegistration({
   const [noteContent, setNoteContent] = useState("");
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>("");
-  const [editingFieldDbId, setEditingFieldDbId] = useState<string | null>(null);
-  const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
+  const [updatedFieldValues, setUpdatedFieldValues] = useState<Record<string, string>>({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [fieldMetadata, setFieldMetadata] = useState<Record<string, FieldMetadata>>({});
 
   const { data, isLoading } = useFetchMemberRegisteration(
     clubAccountId,
@@ -136,7 +148,6 @@ export function CurrentMemberRegistration({
         </div>
       )}
 
-      {/* Registration Timeline Info */}
       <div className="flex flex-wrap items-center gap-4 text-sm bg-muted/30 p-2 rounded-lg border">
         {data?.registration_submitted_on && (
           <div className="flex items-center gap-1">
@@ -354,35 +365,195 @@ export function CurrentMemberRegistration({
                   }
 
                   if (field.type === "STANDARD_OTHER") {
+                    const isEditing = editingFieldId === field.label;
+                    const displayValue = isEditing ? editValue : (updatedFieldValues[field.label] ?? field.value);
+                    const metadata = fieldMetadata[field.label];
+                    
+                    const handleSave = async () => {
+                      setIsSaving(true);
+                      try {
+                        const fieldType = metadata?.input_type || "TEXT";
+                        
+                        // Validate required fields
+                        const validationError = validateFieldValue(field.label, editValue, metadata);
+                        if (validationError) {
+                          toast.error(validationError, {
+                            duration: 3000,
+                          });
+                          setIsSaving(false);
+                          return;
+                        }
+                        
+                        const typeParam = getStandardFieldType(fieldType);
+
+                        await updateRegistrationField(
+                          data.registration_id,
+                          field.field_id || "",
+                          field.label,
+                          typeParam,
+                          editValue,
+                          userId
+                        );
+                        
+                        toast.success(`${field.label} updated successfully`, {
+                          duration: 3000,
+                        });
+                        setUpdatedFieldValues((prev) => ({
+                          ...prev,
+                          [field.label]: editValue,
+                        }));
+                        setEditingFieldId(null);
+                      } catch (error) {
+                        console.error("Error updating field:", error);
+                        toast.error("Failed to update field", {
+                          duration: 3000,
+                        });
+                      } finally {
+                        setIsSaving(false);
+                      }
+                    };
+
+                    const handleEdit = async () => {
+                      setEditingFieldId(field.label);
+                      setEditValue(field.value);
+                      
+                      // Load field metadata if not already loaded
+                      if (!metadata && field.field_id) {
+                        try {
+                          const response = await fetchRegistrationField(clubAccountId, field.field_id);
+                          setFieldMetadata((prev) => ({
+                            ...prev,
+                            [field.label]: response.field,
+                          }));
+                        } catch (error) {
+                          console.error("Error loading field metadata:", error);
+                        }
+                      }
+                    };
+
+                    const renderInput = () => {
+                      const inputType = metadata?.input_type || "TEXT";
+                      const options = metadata?.options || [];
+
+                      if (inputType === "DROPDOWN") {
+                        return (
+                          <Select value={editValue} onValueChange={setEditValue}>
+                            <SelectTrigger className="w-full text-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {options.map((option: string) => (
+                                <SelectItem key={option} value={option}>
+                                  {option}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        );
+                      } else if (inputType === "CHECKBOX") {
+                        return (
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              checked={editValue === "true"}
+                              onCheckedChange={(checked) =>
+                                setEditValue(checked ? "true" : "")
+                              }
+                            />
+                          </div>
+                        );
+                      } else if (inputType === "NUMBER") {
+                        return (
+                          <Input
+                            autoFocus
+                            type="number"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            className="text-sm"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                handleSave();
+                              } else if (e.key === "Escape") {
+                                setEditingFieldId(null);
+                                setEditValue("");
+                              }
+                            }}
+                          />
+                        );
+                      } else {
+                        return (
+                          <Input
+                            autoFocus
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            className="text-sm"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                handleSave();
+                              } else if (e.key === "Escape") {
+                                setEditingFieldId(null);
+                                setEditValue("");
+                              }
+                            }}
+                          />
+                        );
+                      }
+                    };
+
                     return (
-                      <div
-                        key={field.label}
-                        className="flex items-center justify-between group"
-                      >
+                      <div key={field.label} className="flex items-center justify-between group">
                         <div className="flex-1 flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg">
-                          <Label className="text-xs font-semibold text-muted-foreground">
-                            {field.label}
-                          </Label>
-                          <Label className="text-xs border-b-2 border-gray-300 pb-1">
-                            {field.value}
-                          </Label>
+                          <Label className="text-xs font-semibold text-muted-foreground">{field.label}</Label>
+                          {isEditing ? (
+                            renderInput()
+                          ) : (
+                            <Label className="text-xs border-b-2 border-gray-300 pb-1">
+                              {displayValue}
+                            </Label>
+                          )}
                         </div>
                         {!data?.deregistered_on && field.field_id && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setEditingFieldId(field.label);
-                              setEditValue(field.value);
-                              setEditingFieldDbId(field.field_id || null);
-                              setIsFieldDialogOpen(true);
-                            }}
-                            className="h-8 w-8 p-0 ml-2 opacity-30 group-hover:opacity-100 transition-opacity"
-                            title="Update this field"
-                          >
-                            <PencilIcon className="h-4 w-4" />
-                          </Button>
+                          <div className="flex gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {isEditing ? (
+                              <>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={handleSave}
+                                  disabled={isSaving}
+                                  className="h-8 w-8 p-0"
+                                  title="Save"
+                                >
+                                  <Check className="h-4 w-4 text-green-600" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setEditingFieldId(null);
+                                    setEditValue("");
+                                  }}
+                                  disabled={isSaving}
+                                  className="h-8 w-8 p-0"
+                                  title="Cancel"
+                                >
+                                  <X className="h-4 w-4 text-red-600" />
+                                </Button>
+                              </>
+                            ) : (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={handleEdit}
+                                className="h-8 w-8 p-0"
+                                title="Update this field"
+                              >
+                                <PencilIcon className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
                         )}
                       </div>
                     );
@@ -447,22 +618,6 @@ export function CurrentMemberRegistration({
                 }
               )}
             </div>
-
-            {/* Update Field Dialog */}
-            <EditRegistrationFieldDialog
-              isOpen={isFieldDialogOpen}
-              onOpenChange={(open) => {
-                setIsFieldDialogOpen(open);
-                if (!open) setEditingFieldId(null);
-              }}
-              fieldLabel={editingFieldId}
-              fieldValue={editValue}
-              fieldDbId={editingFieldDbId}
-              clubAccountId={clubAccountId}
-              onSave={(fieldId, newValue) => {
-                console.log("Field updated:", { fieldId, newValue });
-              }}
-            />
 
             {/* Pagination Controls */}
             {data.pages.length > 1 && (
