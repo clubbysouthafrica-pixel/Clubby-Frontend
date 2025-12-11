@@ -373,6 +373,9 @@ export function CurrentMemberRegistration({
                   quantity?: number;
                   discount?: number;
                 }) => {
+                  
+                  if (!field.value) console.log("Empty field value for:", field.label); 
+
                   if (field.type === "STANDARD_SIGNATURE") {
                     if (field.signature_type === "signature") {
                       return (
