@@ -550,8 +550,10 @@ export function CurrentMemberRegistration({
                                     </div>
                                   ) : (
                                     <div className="flex items-center gap-2">
-                                      <div className="w-5 h-5 rounded border-2 border-gray-300 bg-gray-50"></div>
-                                      <span className="text-sm text-gray-500 font-medium">No</span>
+                                      <div className="w-5 h-5 rounded border-2 border-red-600 bg-red-100 flex items-center justify-center">
+                                        <span className="text-red-700 font-bold text-xs">✗</span>
+                                      </div>
+                                      <span className="text-sm text-red-500 font-medium">No</span>
                                     </div>
                                   )}
                                 </div>
