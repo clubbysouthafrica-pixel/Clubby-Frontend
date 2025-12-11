@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFetchMemberRegisteration } from "@/queries/registration-form";
 import { Loader2, AlertCircle, PencilIcon, Check, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
@@ -49,6 +49,33 @@ export function MemberRegistration({
     return undefined;
   };
   const deregReason = getDeregReason(data);
+
+  // Preload metadata for all STANDARD_OTHER fields on initial load
+  useEffect(() => {
+    if (!data) return;
+
+    const loadMetadata = async () => {
+      const allFields = data.pages.flatMap((page: { fields: Array<{ type: string; label: string; field_id?: string }> }) =>
+        page.fields.filter((field: { type: string; field_id?: string }) => field.type === "STANDARD_OTHER" && field.field_id)
+      );
+
+      for (const field of allFields) {
+        if (!fieldMetadata[field.label]) {
+          try {
+            const fieldData = await fetchMemberRegistrationField(clubAccountId, field.field_id);
+            setFieldMetadata((prev) => ({
+              ...prev,
+              [field.label]: fieldData.field,
+            }));
+          } catch (error) {
+            console.error(`Error loading metadata for ${field.label}:`, error);
+          }
+        }
+      }
+    };
+
+    loadMetadata();
+  }, [data, clubAccountId, fieldMetadata]);
 
   if (isLoading || !data) {
     return (
@@ -215,9 +242,6 @@ export function MemberRegistration({
                             checked={editValue === "true"}
                             onCheckedChange={(checked) => {
                               setEditValue(checked ? "true" : "false");
-                              if (!checked) {
-                                handleSave();
-                              }
                             }}
                           />
                           {metadata?.placeholder}
@@ -268,9 +292,29 @@ export function MemberRegistration({
                         {isEditing ? (
                           renderInput()
                         ) : (
-                          <Label className="text-sm border-b-2 border-gray-300 pb-1">
-                            {displayValue}
-                          </Label>
+                          <>
+                            {metadata?.input_type === "CHECKBOX" ? (
+                              <div className="flex items-center gap-2">
+                                {displayValue === "true" ? (
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 rounded border-2 border-green-600 bg-green-100 flex items-center justify-center">
+                                      <span className="text-green-700 font-bold text-xs">✓</span>
+                                    </div>
+                                    <span className="text-sm text-green-700 font-medium">Yes</span>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 rounded border-2 border-gray-300 bg-gray-50"></div>
+                                    <span className="text-sm text-gray-500 font-medium">No</span>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <Label className="text-sm border-b-2 border-gray-300 pb-1">
+                                {displayValue}
+                              </Label>
+                            )}
+                          </>
                         )}
                       </div>
                       {membershipStatus !== "Resubmission required" && field.field_id && (
