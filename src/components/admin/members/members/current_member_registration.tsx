@@ -34,7 +34,11 @@ import {
   updateRegistrationField,
 } from "@/services/admin/registration-form";
 import { toast } from "sonner";
-import { validateFieldValue, getStandardFieldType, FieldMetadata } from "@/utils/fieldValidation";
+import {
+  validateFieldValue,
+  getStandardFieldType,
+  FieldMetadata,
+} from "@/utils/fieldValidation";
 import { Check, X } from "lucide-react";
 import {
   Select,
@@ -77,9 +81,13 @@ export function CurrentMemberRegistration({
   const [noteContent, setNoteContent] = useState("");
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>("");
-  const [updatedFieldValues, setUpdatedFieldValues] = useState<Record<string, string>>({});
+  const [updatedFieldValues, setUpdatedFieldValues] = useState<
+    Record<string, string>
+  >({});
   const [isSaving, setIsSaving] = useState(false);
-  const [fieldMetadata, setFieldMetadata] = useState<Record<string, FieldMetadata>>({});
+  const [fieldMetadata, setFieldMetadata] = useState<
+    Record<string, FieldMetadata>
+  >({});
 
   const { data, isLoading } = useFetchMemberRegisteration(
     clubAccountId,
@@ -119,14 +127,23 @@ export function CurrentMemberRegistration({
     if (!data) return;
 
     const loadMetadata = async () => {
-      const allFields = data.pages.flatMap((page: { fields: Array<{ type: string; label: string; field_id?: string }> }) =>
-        page.fields.filter((field: { type: string; field_id?: string }) => field.type === "STANDARD_OTHER" && field.field_id)
+      const allFields = data.pages.flatMap(
+        (page: {
+          fields: Array<{ type: string; label: string; field_id?: string }>;
+        }) =>
+          page.fields.filter(
+            (field: { type: string; field_id?: string }) =>
+              field.type === "STANDARD_OTHER" && field.field_id
+          )
       );
 
       for (const field of allFields) {
         if (!fieldMetadata[field.label]) {
           try {
-            const fieldData = await fetchRegistrationField(clubAccountId, field.field_id);
+            const fieldData = await fetchRegistrationField(
+              clubAccountId,
+              field.field_id
+            );
             setFieldMetadata((prev) => ({
               ...prev,
               [field.label]: fieldData.field,
@@ -392,16 +409,22 @@ export function CurrentMemberRegistration({
 
                   if (field.type === "STANDARD_OTHER") {
                     const isEditing = editingFieldId === field.label;
-                    const displayValue = isEditing ? editValue : (updatedFieldValues[field.label] ?? field.value);
+                    const displayValue = isEditing
+                      ? editValue
+                      : updatedFieldValues[field.label] ?? field.value;
                     const metadata = fieldMetadata[field.label];
-                    
+
                     const handleSave = async () => {
                       setIsSaving(true);
                       try {
                         const fieldType = metadata?.input_type || "TEXT";
-                        
+
                         // Validate required fields
-                        const validationError = validateFieldValue(field.label, editValue, metadata);
+                        const validationError = validateFieldValue(
+                          field.label,
+                          editValue,
+                          metadata
+                        );
                         if (validationError) {
                           toast.error(validationError, {
                             duration: 3000,
@@ -409,7 +432,7 @@ export function CurrentMemberRegistration({
                           setIsSaving(false);
                           return;
                         }
-                        
+
                         const typeParam = getStandardFieldType(fieldType);
 
                         await updateRegistrationField(
@@ -420,7 +443,7 @@ export function CurrentMemberRegistration({
                           editValue,
                           userId
                         );
-                        
+
                         toast.success(`${field.label} updated successfully`, {
                           duration: 3000,
                         });
@@ -443,7 +466,10 @@ export function CurrentMemberRegistration({
                       // Load metadata first if not already loaded
                       if (!metadata && field.field_id) {
                         try {
-                          const response = await fetchRegistrationField(clubAccountId, field.field_id);
+                          const response = await fetchRegistrationField(
+                            clubAccountId,
+                            field.field_id
+                          );
                           setFieldMetadata((prev) => ({
                             ...prev,
                             [field.label]: response.field,
@@ -451,7 +477,9 @@ export function CurrentMemberRegistration({
                           // Set editing state after metadata is loaded
                           setEditingFieldId(field.label);
                           // Use the updated value if it exists, otherwise use the original
-                          setEditValue(updatedFieldValues[field.label] ?? field.value);
+                          setEditValue(
+                            updatedFieldValues[field.label] ?? field.value
+                          );
                         } catch (error) {
                           console.error("Error loading field metadata:", error);
                         }
@@ -459,7 +487,9 @@ export function CurrentMemberRegistration({
                         // Metadata already exists, set editing state immediately
                         setEditingFieldId(field.label);
                         // Use the updated value if it exists, otherwise use the original
-                        setEditValue(updatedFieldValues[field.label] ?? field.value);
+                        setEditValue(
+                          updatedFieldValues[field.label] ?? field.value
+                        );
                       }
                     };
 
@@ -469,7 +499,10 @@ export function CurrentMemberRegistration({
 
                       if (inputType === "DROPDOWN") {
                         return (
-                          <Select value={editValue} onValueChange={setEditValue}>
+                          <Select
+                            value={editValue}
+                            onValueChange={setEditValue}
+                          >
                             <SelectTrigger className="w-full text-sm">
                               <SelectValue />
                             </SelectTrigger>
@@ -532,9 +565,14 @@ export function CurrentMemberRegistration({
                     };
 
                     return (
-                      <div key={field.label} className="flex items-center justify-between group">
+                      <div
+                        key={field.label}
+                        className="flex items-center justify-between group"
+                      >
                         <div className="flex-1 flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg">
-                          <Label className="text-xs font-semibold text-muted-foreground">{field.label}</Label>
+                          <Label className="text-xs font-semibold text-muted-foreground">
+                            {field.label}
+                          </Label>
                           {isEditing ? (
                             renderInput()
                           ) : (
@@ -544,16 +582,24 @@ export function CurrentMemberRegistration({
                                   {displayValue === "true" ? (
                                     <div className="flex items-center gap-2">
                                       <div className="w-5 h-5 rounded border-2 border-green-600 bg-green-100 flex items-center justify-center">
-                                        <span className="text-green-700 font-bold text-xs">✓</span>
+                                        <span className="text-green-700 font-bold text-xs">
+                                          ✓
+                                        </span>
                                       </div>
-                                      <span className="text-sm text-green-700 font-medium">Yes</span>
+                                      <span className="text-sm text-green-700 font-medium">
+                                        Yes
+                                      </span>
                                     </div>
                                   ) : (
                                     <div className="flex items-center gap-2">
                                       <div className="w-5 h-5 rounded border-2 border-red-600 bg-red-100 flex items-center justify-center">
-                                        <span className="text-red-700 font-bold text-xs">✗</span>
+                                        <span className="text-red-700 font-bold text-xs">
+                                          ✗
+                                        </span>
                                       </div>
-                                      <span className="text-sm text-red-500 font-medium">No</span>
+                                      <span className="text-sm text-red-500 font-medium">
+                                        No
+                                      </span>
                                     </div>
                                   )}
                                 </div>
