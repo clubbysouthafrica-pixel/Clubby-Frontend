@@ -88,7 +88,6 @@ export const updateRegistrationField = (
         user_id: user_id
     })
         .then(res => {
-            console.log("Field updated successfully:", res.data);
             return res.data;
         })
 }
