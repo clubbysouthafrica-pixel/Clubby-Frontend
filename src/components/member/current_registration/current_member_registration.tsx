@@ -165,9 +165,7 @@ export function MemberRegistration({
                   };
 
                   const handleEdit = async () => {
-                    setEditingFieldId(field.label);
-                    setEditValue(field.value);
-                    
+                    // Load metadata first if not already loaded
                     if (!metadata && field.field_id) {
                       try {
                         const data = await fetchMemberRegistrationField(clubAccountId, field.field_id);
@@ -175,9 +173,16 @@ export function MemberRegistration({
                           ...prev,
                           [field.label]: data.field,
                         }));
+                        // Set editing state after metadata is loaded
+                        setEditingFieldId(field.label);
+                        setEditValue(field.value);
                       } catch (error) {
                         console.error("Error loading field metadata:", error);
                       }
+                    } else {
+                      // Metadata already exists, set editing state immediately
+                      setEditingFieldId(field.label);
+                      setEditValue(field.value);
                     }
                   };
 
