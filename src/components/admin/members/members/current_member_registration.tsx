@@ -459,9 +459,12 @@ export function CurrentMemberRegistration({
                           <div className="flex items-center gap-2">
                             <Checkbox
                               checked={editValue === "true"}
-                              onCheckedChange={(checked) =>
-                                setEditValue(checked ? "true" : "")
-                              }
+                              onCheckedChange={(checked) => {
+                                setEditValue(checked ? "true" : "false");
+                                if (!checked) {
+                                  handleSave();
+                                }
+                              }}
                             />
                           </div>
                         );
