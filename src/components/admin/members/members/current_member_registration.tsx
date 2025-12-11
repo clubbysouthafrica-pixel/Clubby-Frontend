@@ -424,14 +424,16 @@ export function CurrentMemberRegistration({
                           }));
                           // Set editing state after metadata is loaded
                           setEditingFieldId(field.label);
-                          setEditValue(field.value);
+                          // Use the updated value if it exists, otherwise use the original
+                          setEditValue(updatedFieldValues[field.label] ?? field.value);
                         } catch (error) {
                           console.error("Error loading field metadata:", error);
                         }
                       } else {
                         // Metadata already exists, set editing state immediately
                         setEditingFieldId(field.label);
-                        setEditValue(field.value);
+                        // Use the updated value if it exists, otherwise use the original
+                        setEditValue(updatedFieldValues[field.label] ?? field.value);
                       }
                     };
 
