@@ -57,7 +57,12 @@ export function OnboardMemberForm({
         }
         
         const dialingCode = countryCodes.find(c => c.code === countryCode)?.dialingCode || ""
-        const digitsOnly = phoneNumber.replace(/\D/g, "")
+        let digitsOnly = phoneNumber.replace(/\D/g, "")
+        
+        if (digitsOnly.startsWith("0")) {
+            digitsOnly = digitsOnly.substring(1)
+        }
+        
         const fullPhoneNumber = dialingCode + digitsOnly
         
         setPhoneError("")
@@ -169,7 +174,7 @@ export function OnboardMemberForm({
                                         <Button type="submit" className="w-full" disabled={isPending}>
                                             {isPending ? <><Loader2 className="h-8 w-8 animate-spin" /> Saving</> : "Save"}
                                         </Button>
-                                    </div>
+                                    </div>+270727187289
                                 </div>
                             </form>
                         </CardContent>
