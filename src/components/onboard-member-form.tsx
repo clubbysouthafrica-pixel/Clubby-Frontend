@@ -106,7 +106,7 @@ export function OnboardMemberForm({
                                             <Input
                                                 required
                                                 type="text"
-                                                placeholder="Enter your phone number +27"
+                                                placeholder="Enter your phone number: +27123456278"
                                                 value={phoneNumber}
                                                 onChange={(e) => setPhoneNumber(e.target.value)}
                                             />
