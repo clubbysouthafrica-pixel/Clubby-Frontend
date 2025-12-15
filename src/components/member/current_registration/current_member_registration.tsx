@@ -56,6 +56,7 @@ export function MemberRegistration({
         options?: string[];
         required?: boolean;
         placeholder?: string;
+        editable?: boolean;
       }
     >
   >({});
@@ -197,6 +198,7 @@ export function MemberRegistration({
                   signature_type?: string;
                   quantity?: number;
                   discount?: number;
+                  editable?: boolean;
                 }) => {
                   if (field.type === "STANDARD_SIGNATURE") {
                     if (field.signature_type === "signature") {
@@ -287,7 +289,6 @@ export function MemberRegistration({
                     };
 
                     const handleEdit = async () => {
-                      // Load metadata first if not already loaded
                       if (!metadata && field.field_id) {
                         try {
                           const data = await fetchMemberRegistrationField(
@@ -298,9 +299,7 @@ export function MemberRegistration({
                             ...prev,
                             [field.label]: data.field,
                           }));
-                          // Set editing state after metadata is loaded
                           setEditingFieldId(field.label);
-                          // Use the updated value if it exists, otherwise use the original
                           setEditValue(
                             updatedFieldValues[field.label] ?? field.value
                           );
@@ -308,9 +307,7 @@ export function MemberRegistration({
                           console.error("Error loading field metadata:", error);
                         }
                       } else {
-                        // Metadata already exists, set editing state immediately
                         setEditingFieldId(field.label);
-                        // Use the updated value if it exists, otherwise use the original
                         setEditValue(
                           updatedFieldValues[field.label] ?? field.value
                         );
@@ -437,7 +434,7 @@ export function MemberRegistration({
                           )}
                         </div>
                         {membershipStatus !== "Resubmission required" &&
-                          field.field_id && (
+                          field.field_id && field?.editable && (
                             <div className="flex gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
                               {isEditing ? (
                                 <>
@@ -545,7 +542,6 @@ export function MemberRegistration({
               )}
             </div>
 
-            {/* Pagination Controls */}
             {data.pages.length > 1 && (
               <div className="flex justify-between items-center pt-3 border-t">
                 {currentPageIndex > 0 ? (

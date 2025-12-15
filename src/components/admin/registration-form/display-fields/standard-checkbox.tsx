@@ -7,6 +7,7 @@ interface Field {
   field_type: string
   placeholder?: string
   required?: boolean
+  editable_by_member?: boolean
 }
 
 interface CheckboxFieldProps {
@@ -28,7 +29,7 @@ export default function DisplayStandardCheckbox({ field }: CheckboxFieldProps) {
         <Label>{field.placeholder}</Label>
       </div>
       <p className="text-xs mt-1">
-        Is Required: {field.required ? "true" : "false"}
+        Is Required: {field.required ? "true" : "false"} | Editable by Member: {field.editable_by_member ? "true" : "false"}
       </p>
     </div>
   )

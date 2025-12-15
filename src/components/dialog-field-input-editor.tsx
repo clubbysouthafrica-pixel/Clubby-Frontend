@@ -37,6 +37,7 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
     const [fieldId, setFieldId] = useState("")
     const [placeholder, setPlaceholder] = useState("")
     const [required, setRequired] = useState(false)
+    const [editable_by_member, setEditable_by_member] = useState(false)
     const [multiplier, setMultiplier] = useState(false)
     const [dropdownOptionField, setDropdownOptionField] = useState("")
     const [amount, setAmount] = useState(0)
@@ -49,6 +50,7 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
         setFieldName(field.field_name)
         setPlaceholder(field.placeholder)
         setRequired(field.required)
+        setEditable_by_member(field.editable_by_member ?? false)
         setFieldId(field?.field_id ?? crypto.randomUUID())
         setFieldText(field?.field_text ?? "")
         setAmount(field?.amount ?? 0)
@@ -65,6 +67,13 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
         }
     }, [field])
 
+    // Auto-disable editable_by_member when required is true ONLY for CHECKBOX fields
+    useEffect(() => {
+        if (required && field.input_type?.toUpperCase() === "CHECKBOX") {
+            setEditable_by_member(false)
+        }
+    }, [required, field.input_type])
+
     const isInputType = () => field.input_type?.toUpperCase() === "TEXT" ||
         field.input_type?.toUpperCase() === "NUMBER"
 
@@ -79,6 +88,7 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
             field_id: fieldId,
             amount: amount > 0 ? amount : undefined,
             multiplier: multiplier,
+            editable_by_member: editable_by_member,
         }
 
         if (field.input_type === "TEXT" && field.field_type === "BILLING") {
@@ -178,7 +188,14 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
                                                         </SelectContent>
                                                     </Select>
                                                 }
-                                                {field.input_type !== "DISPLAY" && field.input_type ? <p className="text-xs mt-1">Is Required: {field.required ? "true" : "false"} </p> : undefined}
+                                                {field.input_type !== "DISPLAY" && field.input_type ? (
+                                                    <p className="text-xs mt-1">
+                                                        Is Required: {field.required ? "true" : "false"}
+                                                        {field.field_type === "STANDARD" && (field.input_type?.toUpperCase() === "TEXT" || field.input_type?.toUpperCase() === "NUMBER" || field.input_type?.toUpperCase() === "DROPDOWN" || field.input_type?.toUpperCase() === "CHECKBOX") && (
+                                                            <> | Editable by Member: {field.editable_by_member ? "true" : "false"}</>
+                                                        )}
+                                                    </p>
+                                                ) : undefined}
                                             </div>
                     }
                     <Button>
@@ -207,9 +224,11 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
                                     fieldName={fieldName}
                                     placeholder={placeholder}
                                     required={required}
+                                    editable_by_member={editable_by_member}
                                     onFieldNameChange={setFieldName}
                                     onPlaceholderChange={setPlaceholder}
                                     onRequiredChange={setRequired}
+                                    onEditable_by_memberChange={setEditable_by_member}
                                 />
                                 : field.input_type === "TEXT" && field.field_type === "BILLING" ?
                                     <EditBillingText
@@ -293,6 +312,16 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
                                                     />
                                                     <Label htmlFor="terms">Is required</Label>
                                                 </div>
+                                                {field.field_type === "STANDARD" && (field.input_type?.toUpperCase() === "TEXT" || field.input_type?.toUpperCase() === "NUMBER" || field.input_type?.toUpperCase() === "DROPDOWN" || field.input_type?.toUpperCase() === "CHECKBOX") && (
+                                                    <div className="flex items-center gap-3 mt-4">
+                                                        <Checkbox
+                                                            checked={editable_by_member}
+                                                            onCheckedChange={(checked: boolean) => setEditable_by_member(checked)}
+                                                            disabled={required && field.input_type?.toUpperCase() === "CHECKBOX"}
+                                                        />
+                                                        <Label className={required && field.input_type?.toUpperCase() === "CHECKBOX" ? "text-gray-400" : ""}>Editable by member post registration</Label>
+                                                    </div>
+                                                )}
                                                 {
                                                     field.input_type?.toLowerCase() === "dropdown" && (
                                                         <div className="mt-4">
