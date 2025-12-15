@@ -52,7 +52,12 @@ export default function SendEmailDialog({
   } = useEmailerProcessMutation();
 
   useEffect(() => {
-    setIsSuccess(mutationSuccess);
+    if (mutationSuccess) {
+      setIsSuccess(true);
+      // Reset form fields but keep dialog open and show success message
+      setSubject("");
+      setBody("");
+    }
   }, [mutationSuccess]);
 
   const send = () => {
@@ -74,7 +79,7 @@ export default function SendEmailDialog({
 
   const handleOpenChange = (open: boolean) => {
     setOpenDialog(open);
-    if (!open && isSuccess) {
+    if (!open) {
       setSubject("");
       setBody("");
       setIsSuccess(false);
