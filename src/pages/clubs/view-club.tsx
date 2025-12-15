@@ -575,7 +575,7 @@ export default function ViewClubPage() {
                               </div>
                               <div>
                                 <CardTitle className="text-xl">
-                                  Welcome to {data.club_name}
+                                  Welome to {data.club_name}
                                 </CardTitle>
                                 <CardDescription className="text-base">
                                   {data?.description ??
