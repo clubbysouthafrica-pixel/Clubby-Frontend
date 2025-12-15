@@ -649,8 +649,8 @@ export function CurrentMemberRegistration({
                             </>
                           )}
                         </div>
-                        {!data?.deregistered_on && field.field_id && (
-                          <div className="flex gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {!data?.deregistered_on && field.field_id && !(metadata?.input_type === "CHECKBOX" && metadata?.required) && (
+                          <div className="flex gap-1 ml-2 opacity-30 group-hover:opacity-100 transition-opacity">
                             {isEditing ? (
                               <>
                                 <Button

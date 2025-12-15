@@ -56,7 +56,7 @@ export function MemberRegistration({
         options?: string[];
         required?: boolean;
         placeholder?: string;
-        editable?: boolean;
+        editable_by_member?: boolean;
       }
     >
   >({});
@@ -198,7 +198,7 @@ export function MemberRegistration({
                   signature_type?: string;
                   quantity?: number;
                   discount?: number;
-                  editable?: boolean;
+                  editable_by_member?: boolean;
                 }) => {
                   if (field.type === "STANDARD_SIGNATURE") {
                     if (field.signature_type === "signature") {
@@ -434,8 +434,8 @@ export function MemberRegistration({
                           )}
                         </div>
                         {membershipStatus !== "Resubmission required" &&
-                          field.field_id && field?.editable && (
-                            <div className="flex gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          field.field_id && metadata?.editable_by_member && (
+                            <div className="flex gap-1 ml-2 opacity-30 group-hover:opacity-100 transition-opacity">
                               {isEditing ? (
                                 <>
                                   <Button

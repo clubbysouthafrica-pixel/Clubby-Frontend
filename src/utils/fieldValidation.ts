@@ -20,10 +20,12 @@ export function validateFieldValue(
   editValue: string,
   metadata: FieldMetadata | undefined
 ): string | null {
+  // Skip validation if field is not required
   if (!metadata?.required) {
     return null;
   }
 
+  // If field is required (and editable), validate that it has a value
   const fieldType = metadata.input_type || "TEXT";
 
   if (fieldType === "TEXT" || fieldType === "DROPDOWN") {
