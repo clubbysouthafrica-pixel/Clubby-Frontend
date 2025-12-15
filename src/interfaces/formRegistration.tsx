@@ -28,6 +28,7 @@ export interface InputFormRegistration {
     amount?: number;
     options?: string[];
     value?: any
+    editable_by_member?: boolean
 }
 
 export interface PageFormRegistration {

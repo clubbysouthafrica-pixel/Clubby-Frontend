@@ -19,3 +19,36 @@ export const createMemberRegistrationForm = (registrationFromRequest: Registrati
     return api.put('/clubMember/submitRegistration', registrationFromRequest)
         .then(res => res.data)
 }
+
+export const fetchMemberRegistrationField = (clubAccountId: string, fieldId: string): Promise<any> => {
+    if (!clubAccountId || !fieldId) throw new Error("clubAccountId and fieldId are required")
+
+    return api.get(`/registration/getRegistrationField?club_account_id=${clubAccountId}&field_id=${fieldId}`)
+        .then(res => {
+            return res.data;
+        })
+}
+
+export const updateMemberRegistrationField = (
+    registrationId: string,
+    fieldId: string,
+    fieldName: string,
+    type: string,
+    value: string
+): Promise<any> => {
+    if (!registrationId || !fieldId || !fieldName || !type) {
+        throw new Error("registrationId, fieldId, fieldName, and type are required");
+    }
+
+    return api.post("/registration/updateRegistrationField", {
+        registration_id: registrationId,
+        field_id: fieldId,
+        field_name: fieldName,
+        type: type,
+        value: value
+    })
+        .then(res => {
+            console.log("Member field updated successfully:", res.data);
+            return res.data;
+        })
+}

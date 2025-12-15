@@ -57,3 +57,37 @@ export const removeAdminNotes = (memberId: string, registrationId: string, noteI
     })
         .then(res => res.data)
 }
+
+export const fetchRegistrationField = (clubAccountId: string, fieldId: string): Promise<any> => {
+    if (!clubAccountId || !fieldId) throw new Error("clubAccountId and fieldId are required")
+
+    return api.get(`/registration/getRegistrationField?club_account_id=${clubAccountId}&field_id=${fieldId}`)
+        .then(res => {
+            return res.data;
+        })
+}
+
+export const updateRegistrationField = (
+    registrationId: string,
+    fieldId: string,
+    fieldName: string,
+    type: string,
+    value: string,
+    user_id: string
+): Promise<any> => {
+    if (!registrationId || !fieldId || !fieldName || !type || !user_id) {
+        throw new Error("registrationId, fieldId, fieldName, type, and user_id are required");
+    }
+
+    return api.post("/registration/updateRegistrationField", {
+        registration_id: registrationId,
+        field_id: fieldId,
+        field_name: fieldName,
+        type: type,
+        value: value,
+        user_id: user_id
+    })
+        .then(res => {
+            return res.data;
+        })
+}

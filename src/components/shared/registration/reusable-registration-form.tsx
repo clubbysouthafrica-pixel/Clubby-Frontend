@@ -17,6 +17,7 @@ import {
   StandardText,
   StandardSignature,
   BillingText,
+  BillingNumber,
 } from "./registration_form_fields";
 
 export type InputType =
@@ -308,6 +309,22 @@ export function ReusableRegistrationForm({
                               <BillingDiscountDropdown
                                 key={field.field_id}
                                 field={field}
+                                currentPageIndex={currentPageIndex}
+                                pages={pages}
+                                setFieldValue={setFieldValue}
+                              />
+                            );
+                          }
+
+                          if (
+                            field.field_type === "BILLING" &&
+                            field.input_type === "NUMBER"
+                          ) {
+                            return (
+                              <BillingNumber
+                                key={field.field_id}
+                                field={field}
+                                clubCurrency={clubCurrency}
                                 currentPageIndex={currentPageIndex}
                                 pages={pages}
                                 setFieldValue={setFieldValue}

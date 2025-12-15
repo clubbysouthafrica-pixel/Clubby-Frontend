@@ -7,39 +7,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useState, useEffect } from "react";
-import { useFetchMemberRegisteration } from "@/queries/admin/registration-form";
-import { Loader2, Edit, Trash2, Copy, PencilIcon } from "lucide-react";
+import { useFetchMemberRegisteration } from "@/queries/registration-form";
+import { Loader2, AlertCircle, PencilIcon, Check, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useMutation } from "@tanstack/react-query";
-import {
-  updateAdminNotes,
-  removeAdminNotes,
-  fetchRegistrationField,
-  updateRegistrationField,
-} from "@/services/admin/registration-form";
-import { toast } from "sonner";
-import {
-  validateFieldValue,
-  getStandardFieldType,
-  FieldMetadata,
-} from "@/utils/fieldValidation";
-import { Check, X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -48,38 +19,29 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
+import {
+  fetchMemberRegistrationField,
+  updateMemberRegistrationField,
+} from "@/services/registration-form";
+import {
+  validateFieldValue,
+  getStandardFieldType,
+} from "@/utils/fieldValidation";
 
-function formatEpoch(epoch: number) {
-  const date = new Date(epoch);
-  const yyyy = date.getFullYear();
-  const mm = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
-  const dd = String(date.getDate()).padStart(2, "0");
-  const hh = String(date.getHours()).padStart(2, "0");
-  const min = String(date.getMinutes()).padStart(2, "0");
-
-  return `${yyyy}/${mm}/${dd} ${hh}:${min}`;
-}
-
-export function CurrentMemberRegistration({
-  userId,
+export function MemberRegistration({
   clubAccountId,
-  currency,
   clubName,
+  currency,
+  membershipStatus,
 }: {
-  userId: string;
   clubAccountId: string;
   currency: string;
   clubName: string;
+  membershipStatus: string;
 }) {
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [adminNotes, setAdminNotes] = useState<
-    Array<{ id: string; title: string; content: string; visibleToMember: boolean }>
-  >([]);
-  const [isNotesOpen, setIsNotesOpen] = useState(false);
-  const [noteTitle, setNoteTitle] = useState("");
-  const [noteContent, setNoteContent] = useState("");
-  const [noteVisibleToMember, setNoteVisibleToMember] = useState(false);
+  const [isAdminNotesOpen, setIsAdminNotesOpen] = useState(true);
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>("");
   const [updatedFieldValues, setUpdatedFieldValues] = useState<
@@ -87,42 +49,32 @@ export function CurrentMemberRegistration({
   >({});
   const [isSaving, setIsSaving] = useState(false);
   const [fieldMetadata, setFieldMetadata] = useState<
-    Record<string, FieldMetadata>
+    Record<
+      string,
+      {
+        input_type: string;
+        options?: string[];
+        required?: boolean;
+        placeholder?: string;
+        editable_by_member?: boolean;
+      }
+    >
   >({});
 
   const { data, isLoading } = useFetchMemberRegisteration(
     clubAccountId,
-    userId,
     currency
   );
 
-  const updateNotesMutation = useMutation({
-    mutationFn: (
-      notes: Array<{ id: string; title: string; content: string; visibleToMember: boolean }>
-    ) => updateAdminNotes(data.registration_id, data.member_id, notes),
-    onSuccess: (_, newNotes) => {
-      setAdminNotes(newNotes);
-      setNoteTitle("");
-      setNoteContent("");
-      setNoteVisibleToMember(false);
-      toast.success("Admin notes updated successfully");
-    },
-    onError: () => {
-      toast.error("Failed to update admin notes");
-    },
-  });
-
-  const removeNotesMutation = useMutation({
-    mutationFn: (noteIds: string[]) =>
-      removeAdminNotes(data.member_id, data.registration_id, noteIds),
-    onSuccess: (_, noteIds) => {
-      setAdminNotes(adminNotes.filter((note) => !noteIds.includes(note.id)));
-      toast.success("Admin note removed successfully");
-    },
-    onError: () => {
-      toast.error("Failed to remove admin note");
-    },
-  });
+  const getDeregReason = (d: unknown): string | undefined => {
+    if (typeof d === "object" && d !== null && "deregistration_reason" in d) {
+      const val = (d as { deregistration_reason?: unknown })
+        .deregistration_reason;
+      if (typeof val === "string" && val.trim()) return val;
+    }
+    return undefined;
+  };
+  const deregReason = getDeregReason(data);
 
   // Preload metadata for all STANDARD_OTHER fields on initial load
   useEffect(() => {
@@ -142,7 +94,7 @@ export function CurrentMemberRegistration({
       for (const field of allFields) {
         if (!fieldMetadata[field.label]) {
           try {
-            const fieldData = await fetchRegistrationField(
+            const fieldData = await fetchMemberRegistrationField(
               clubAccountId,
               field.field_id
             );
@@ -160,18 +112,6 @@ export function CurrentMemberRegistration({
     loadMetadata();
   }, [data, clubAccountId, fieldMetadata]);
 
-  useEffect(() => {
-    if (data?.admin_notes && Array.isArray(data.admin_notes)) {
-      const notesWithVisibility = data.admin_notes.map(
-        (note: { id: string; title: string; content: string; visibleToMember?: boolean }) => ({
-          ...note,
-          visibleToMember: note.visibleToMember ?? false,
-        })
-      );
-      setAdminNotes(notesWithVisibility);
-    }
-  }, [data?.admin_notes]);
-
   if (isLoading || !data) {
     return (
       <div className="flex justify-center items-center p-5 min-h-[400px]">
@@ -181,214 +121,65 @@ export function CurrentMemberRegistration({
   }
 
   return (
-    <div className="w-full space-y-2 flex-1 min-h-0 flex flex-col">
-      {/* Transaction ID */}
-      {data?.transaction_id && (
-        <div className="flex items-center gap-2 text-sm bg-transparent p-2">
-          <span className="text-muted-foreground text-xs">Transaction ID:</span>
-          <strong className="text-xs font-mono">{data.transaction_id}</strong>
-          <button
-            onClick={() => {
-              navigator.clipboard.writeText(data.transaction_id);
-            }}
-            className="p-1 hover:bg-muted rounded transition-colors"
-            title="Copy transaction ID"
-          >
-            <Copy className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-pointer" />
-          </button>
+    <div className="w-full space-y-2 flex-1 min-h-0 flex flex-col mt-6">
+      {/* Deregistration reason (when provided by the club) */}
+      {deregReason && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 space-y-2">
+          <div className="flex items-center gap-2 text-yellow-700">
+            <AlertCircle className="h-4 w-4" />
+            <h3 className="text-xs font-semibold">Why was I deregistered?</h3>
+          </div>
+          <div className="text-xs text-gray-700 whitespace-pre-wrap">
+            {deregReason}
+          </div>
         </div>
       )}
 
-      <div className="flex flex-wrap justify-center items-center gap-4 text-sm bg-muted/30 p-2 rounded-lg border">
-        {data?.registration_submitted_on && (
-          <div className="flex items-center gap-1">
-            <span className="text-muted-foreground text-xs">Submitted:</span>
-            <strong className="text-xs">
-              {formatEpoch(data.registration_submitted_on)}
-            </strong>
-          </div>
-        )}
-
-        {data?.registration_submitted_on && data?.registered_on && (
-          <span className="text-gray-300">|</span>
-        )}
-
-        {data?.registered_on && (
-          <div className="flex items-center gap-1">
-            <span className="text-muted-foreground text-xs">Registered:</span>
-            <strong className="text-green-600 text-xs">
-              {formatEpoch(data.registered_on)}
-            </strong>
-          </div>
-        )}
-
-        {(data?.registered_on && data?.deregistered_on) ||
-        (data?.registration_submitted_on && data?.deregistered_on) ? (
-          <span className="text-gray-300">|</span>
-        ) : null}
-
-        {data?.deregistered_on && (
-          <div className="flex items-center gap-1">
-            <span className="text-muted-foreground text-xs">Deregistered:</span>
-            <strong className="text-red-600 text-xs">
-              {formatEpoch(data.deregistered_on)}
-            </strong>
-          </div>
-        )}
-      </div>
-
-      <Card className="w-full border shadow-sm pt-0 flex-1 min-h-0 flex flex-col gap-1">
-        <CardHeader className="border-b bg-muted/30 py-1 pb-1 flex flex-row items-center justify-center relative">
-          <div className="text-center">
-            <CardTitle className="text-l pt-2">{clubName}</CardTitle>
-            <CardDescription className="text-xs pt-2">
-              Member Registration Form
-            </CardDescription>
-          </div>
-          <div className="absolute right-4">
-            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Edit className="h-4 w-4" />
-                  Admin Notes
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Add Admin Notes</DialogTitle>
-                  <DialogDescription>
-                    Add additional information or notes to this member's
-                    registration
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="note-title">Note Title</Label>
-                    <Input
-                      id="note-title"
-                      placeholder="e.g., Special Request, Health Information"
-                      value={noteTitle}
-                      onChange={(e) => setNoteTitle(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="note-content">Note Content</Label>
-                    <Textarea
-                      id="note-content"
-                      placeholder="Enter your additional information here..."
-                      className="min-h-[200px]"
-                      value={noteContent}
-                      onChange={(e) => setNoteContent(e.target.value)}
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="visible-to-member"
-                      checked={noteVisibleToMember}
-                      onCheckedChange={(checked) =>
-                        setNoteVisibleToMember(checked as boolean)
-                      }
-                    />
-                    <Label htmlFor="visible-to-member" className="font-normal cursor-pointer">
-                      Visible to Member
-                    </Label>
-                  </div>
-                  <Button
-                    onClick={() => {
-                      if (noteTitle.trim() && noteContent.trim()) {
-                        const id = `note-${Date.now()}-${Math.random()
-                          .toString(36)
-                          .substr(2, 9)}`;
-                        const newNotes = [
-                          ...adminNotes,
-                          {
-                            id,
-                            title: noteTitle,
-                            content: noteContent,
-                            visibleToMember: noteVisibleToMember,
-                          },
-                        ];
-                        updateNotesMutation.mutate(newNotes);
-                        setNoteTitle("");
-                        setNoteContent("");
-                        setNoteVisibleToMember(false);
-                      }
-                    }}
-                    disabled={updateNotesMutation.isPending}
-                    className="w-full"
-                  >
-                    {updateNotesMutation.isPending ? "Saving..." : "Add Note"}
-                  </Button>
-                  <Button
-                    onClick={() => setIsEditDialogOpen(false)}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    Done
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
+      {/* Registration Form Card */}
+      <Card
+        className="w-full border shadow-sm pt-0 flex-1 min-h-0 flex flex-col gap-1"
+        id="registration-card-header"
+      >
+        <CardHeader className="border-b bg-muted/30 py-1 pb-1">
+          <CardTitle className="text-l text-center pt-2">{clubName}</CardTitle>
+          <CardDescription className="text-center text-xs">
+            {membershipStatus === "Resubmission required"
+              ? "Deregistered Registration Form"
+              : "Submitted Registration Form"}
+          </CardDescription>
         </CardHeader>
-        <CardContent className="py-2 px-4 flex-1 min-h-0 flex flex-col">
-          {adminNotes.length > 0 && (
-            <div className="mb-3 border rounded-lg">
-              <button
-                onClick={() => setIsNotesOpen(!isNotesOpen)}
-                className="w-full flex items-center justify-between p-3 hover:bg-blue-50 transition-colors"
-              >
-                <span className="font-semibold text-sm text-blue-900">
-                  Admin Notes ({adminNotes.length})
-                </span>
-                <span className="text-lg">{isNotesOpen ? "▼" : "▶"}</span>
-              </button>
-              {isNotesOpen && (
-                <div className="bg-blue-50 border-t border-blue-200 p-3 space-y-3">
-                  {adminNotes.map((note) => (
-                    <div
-                      key={note.id}
-                      className="pb-3 border-b last:border-b-0 last:pb-0"
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-blue-900 mb-1">
-                            {note.title}
-                          </p>
-                          {note.visibleToMember && (
-                            <span className="inline-block px-2 py-1 text-xs bg-green-100 text-green-800 rounded mb-2">
-                              Visible to Member
-                            </span>
-                          )}
-                          <p className="text-xs text-blue-800 whitespace-pre-wrap">
-                            {note.content}
-                          </p>
-                        </div>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                onClick={() =>
-                                  removeNotesMutation.mutate([note.id])
-                                }
-                                disabled={removeNotesMutation.isPending}
-                                className="flex-shrink-0 p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="left">
-                              Delete this note
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
+        {data.admin_notes && data.admin_notes.length > 0 && (
+          <div className="bg-amber-50 border-b border-amber-200 px-4 py-3">
+            <button
+              onClick={() => setIsAdminNotesOpen(!isAdminNotesOpen)}
+              className="w-full flex items-center justify-between hover:bg-amber-100 transition-colors -mx-4 -my-3 px-4 py-3 rounded cursor-pointer"
+            >
+              <h4 className="text-sm font-semibold text-amber-900">
+                📝 Notes from Club Staff ({data.admin_notes.filter((note: { visibleToMember: boolean }) => note.visibleToMember).length})
+              </h4>
+              <span className="text-lg text-amber-900">
+                {isAdminNotesOpen ? "▼" : "▶"}
+              </span>
+            </button>
+            {isAdminNotesOpen && (
+              <div className="space-y-3 mt-3">
+                {data.admin_notes
+                  .filter((note: { visibleToMember: boolean }) => note.visibleToMember)
+                  .map((note: { id: string; title: string; content: string }) => (
+                    <div key={note.id} className="pb-3 border-b border-amber-100 last:border-b-0 last:pb-0">
+                      <p className="text-sm font-semibold text-amber-900 mb-1">
+                        {note.title}
+                      </p>
+                      <p className="text-xs text-amber-800 whitespace-pre-wrap">
+                        {note.content}
+                      </p>
                     </div>
                   ))}
-                </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
+        )}
+        <CardContent className="py-2 px-4 flex-1 min-h-0 flex flex-col">
           <div
             key={data.pages[currentPageIndex].page_index}
             className="flex-1 min-h-0 flex flex-col"
@@ -397,7 +188,7 @@ export function CurrentMemberRegistration({
               {data.pages[currentPageIndex].page_header}
             </h3>
 
-            <div className="flex-1 min-h-0 overflow-y-auto space-y-1 px-2 py-2">
+            <div className="flex-none space-y-6 px-2 py-2">
               {data.pages[currentPageIndex].fields.map(
                 (field: {
                   type: string;
@@ -407,10 +198,8 @@ export function CurrentMemberRegistration({
                   signature_type?: string;
                   quantity?: number;
                   discount?: number;
+                  editable_by_member?: boolean;
                 }) => {
-                  
-                  if (!field.value) console.log("Empty field value for:", field.label); 
-
                   if (field.type === "STANDARD_SIGNATURE") {
                     if (field.signature_type === "signature") {
                       return (
@@ -437,7 +226,7 @@ export function CurrentMemberRegistration({
                           <Label className="text-xs font-semibold text-muted-foreground">
                             {field.label}
                           </Label>
-                          <Label className="text-xs font-[cursive] border-b-2 border-gray-400 pb-1">
+                          <Label className="text-sm font-[cursive] border-b-2 border-gray-400 pb-1">
                             {field.value}
                           </Label>
                         </div>
@@ -473,13 +262,12 @@ export function CurrentMemberRegistration({
 
                         const typeParam = getStandardFieldType(fieldType);
 
-                        await updateRegistrationField(
+                        await updateMemberRegistrationField(
                           data.registration_id,
                           field.field_id || "",
                           field.label,
                           typeParam,
-                          editValue,
-                          userId
+                          editValue
                         );
 
                         toast.success(`${field.label} updated successfully`, {
@@ -501,20 +289,17 @@ export function CurrentMemberRegistration({
                     };
 
                     const handleEdit = async () => {
-                      // Load metadata first if not already loaded
                       if (!metadata && field.field_id) {
                         try {
-                          const response = await fetchRegistrationField(
+                          const data = await fetchMemberRegistrationField(
                             clubAccountId,
                             field.field_id
                           );
                           setFieldMetadata((prev) => ({
                             ...prev,
-                            [field.label]: response.field,
+                            [field.label]: data.field,
                           }));
-                          // Set editing state after metadata is loaded
                           setEditingFieldId(field.label);
-                          // Use the updated value if it exists, otherwise use the original
                           setEditValue(
                             updatedFieldValues[field.label] ?? field.value
                           );
@@ -522,9 +307,7 @@ export function CurrentMemberRegistration({
                           console.error("Error loading field metadata:", error);
                         }
                       } else {
-                        // Metadata already exists, set editing state immediately
                         setEditingFieldId(field.label);
-                        // Use the updated value if it exists, otherwise use the original
                         setEditValue(
                           updatedFieldValues[field.label] ?? field.value
                         );
@@ -562,6 +345,7 @@ export function CurrentMemberRegistration({
                                 setEditValue(checked ? "true" : "false");
                               }}
                             />
+                            {metadata?.placeholder}
                           </div>
                         );
                       } else if (inputType === "NUMBER") {
@@ -642,57 +426,58 @@ export function CurrentMemberRegistration({
                                   )}
                                 </div>
                               ) : (
-                                <Label className="text-xs border-b-2 border-gray-300 pb-1">
+                                <Label className="text-sm border-b-2 border-gray-300 pb-1">
                                   {displayValue}
                                 </Label>
                               )}
                             </>
                           )}
                         </div>
-                        {!data?.deregistered_on && field.field_id && !(metadata?.input_type === "CHECKBOX" && metadata?.required) && (
-                          <div className="flex gap-1 ml-2 opacity-30 group-hover:opacity-100 transition-opacity">
-                            {isEditing ? (
-                              <>
+                        {membershipStatus !== "Resubmission required" &&
+                          field.field_id && metadata?.editable_by_member && (
+                            <div className="flex gap-1 ml-2 opacity-30 group-hover:opacity-100 transition-opacity">
+                              {isEditing ? (
+                                <>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={handleSave}
+                                    disabled={isSaving}
+                                    className="h-8 w-8 p-0"
+                                    title="Save"
+                                  >
+                                    <Check className="h-4 w-4 text-green-600" />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      setEditingFieldId(null);
+                                      setEditValue("");
+                                    }}
+                                    disabled={isSaving}
+                                    className="h-8 w-8 p-0"
+                                    title="Cancel"
+                                  >
+                                    <X className="h-4 w-4 text-red-600" />
+                                  </Button>
+                                </>
+                              ) : (
                                 <Button
                                   type="button"
-                                  variant="ghost"
+                                  variant="outline"
                                   size="sm"
-                                  onClick={handleSave}
-                                  disabled={isSaving}
+                                  onClick={handleEdit}
                                   className="h-8 w-8 p-0"
-                                  title="Save"
+                                  title="Update this field"
                                 >
-                                  <Check className="h-4 w-4 text-green-600" />
+                                  <PencilIcon className="h-4 w-4" />
                                 </Button>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setEditingFieldId(null);
-                                    setEditValue("");
-                                  }}
-                                  disabled={isSaving}
-                                  className="h-8 w-8 p-0"
-                                  title="Cancel"
-                                >
-                                  <X className="h-4 w-4 text-red-600" />
-                                </Button>
-                              </>
-                            ) : (
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={handleEdit}
-                                className="h-8 w-8 p-0"
-                                title="Update this field"
-                              >
-                                <PencilIcon className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
-                        )}
+                              )}
+                            </div>
+                          )}
                       </div>
                     );
                   }
@@ -732,7 +517,7 @@ export function CurrentMemberRegistration({
                     return (
                       <div
                         key={field.label}
-                        className="prose prose-sm max-w-none text-gray-700 p-3 bg-muted/10 rounded-lg text-xs [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5"
+                        className="prose prose-sm max-w-none text-gray-700 p-3 bg-muted/10 rounded-lg text-sm [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5"
                         dangerouslySetInnerHTML={{ __html: cleaned }}
                       />
                     );
@@ -757,16 +542,23 @@ export function CurrentMemberRegistration({
               )}
             </div>
 
-            {/* Pagination Controls */}
             {data.pages.length > 1 && (
-              <div className="flex justify-between items-center pt-3 border-t mt-2">
+              <div className="flex justify-between items-center pt-3 border-t">
                 {currentPageIndex > 0 ? (
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     className="w-[90px]"
-                    onClick={() => setCurrentPageIndex((i) => i - 1)}
+                    onClick={() => {
+                      setCurrentPageIndex((i) => i - 1);
+                      document
+                        .getElementById("registration-card-header")
+                        ?.scrollIntoView({
+                          behavior: "smooth",
+                          block: "start",
+                        });
+                    }}
                   >
                     Previous
                   </Button>
@@ -783,7 +575,15 @@ export function CurrentMemberRegistration({
                     type="button"
                     size="sm"
                     className="w-[90px]"
-                    onClick={() => setCurrentPageIndex((i) => i + 1)}
+                    onClick={() => {
+                      setCurrentPageIndex((i) => i + 1);
+                      document
+                        .getElementById("registration-card-header")
+                        ?.scrollIntoView({
+                          behavior: "smooth",
+                          block: "start",
+                        });
+                    }}
                   >
                     Next
                   </Button>

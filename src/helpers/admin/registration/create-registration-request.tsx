@@ -71,12 +71,16 @@ export function createValidRegistrationRequest(fields: PageFieldBase[], clubId: 
             f.multiplier_value = 1
         }
 
+        if (f.input_type === "NUMBER" && typeof f.value === "number" && f.value <= 0) {
+            return;
+        }
+
         if (f.value) {
             const field: FieldRequest = {
                 field_id: f.field_id,
                 value: f?.selectedAmountCents ?? f.value,
                 multiplier_value: f?.multiplier_value ?? 1,
-                option_order_id: f.option_order_id,
+                option_order_id: f?.option_order_id,
                 label: f.label
             }
             if (f.input_type === "DISCOUNT") {

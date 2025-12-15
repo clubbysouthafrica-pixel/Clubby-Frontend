@@ -57,7 +57,7 @@ import { formatAmount } from "@/data/currencies";
 import { useFetchUserTransactions } from "@/queries/transactions";
 import * as React from "react";
 import { Label } from "@/components/ui/label";
-import { MemberRegistration } from "@/components/member/current_registration/member_registration";
+import { MemberRegistration } from "@/components/member/current_registration/current_member_registration";
 import { PayFastPayment } from "@/components/payments/payfast-payment";
 import { AuthContext } from "@/context/AuthContext";
 import { useContext } from "react";

@@ -25,6 +25,17 @@ interface props {
 }
 
 export function RegistrationReportData({ data, currency }: props) {
+
+  const isCustomAmount = (total: any, fee_amount: number | null | undefined) => {
+    if (fee_amount && fee_amount > 0) return false;
+    return total && (total.paid_to_club > 0 || total.due_to_club > 0);
+  };
+
+  const isFree = (total: any, fee_amount: number | null | undefined) => {
+    if (fee_amount && fee_amount > 0) return false;
+    return fee_amount === null || fee_amount === 0 || fee_amount === undefined || (total && total.paid_to_club === 0 && total.due_to_club === 0 && total.total === 0);
+  };
+
   if (
     !data ||
     !data.report ||
@@ -32,7 +43,7 @@ export function RegistrationReportData({ data, currency }: props) {
   ) {
     return <Label>No data to display yet</Label>;
   }
-
+  console.log(data);
   return (
     <div>
       <Tabs
@@ -66,7 +77,9 @@ export function RegistrationReportData({ data, currency }: props) {
                     <div className="flex flex-col w-full items-center pb-4">
                       <p className="font-bold">
                         {c.table_name} -{" "}
-                        {(c.fee_amount ?? 0) === 0
+                        {isCustomAmount(c.total, c.fee_amount)
+                          ? "Custom Amount"
+                          : isFree(c.total, c.fee_amount)
                           ? "Free"
                           : `${formatAmount(c.fee_amount ?? 0, currency)} each`}
                       </p>
@@ -83,9 +96,15 @@ export function RegistrationReportData({ data, currency }: props) {
                         </Card>
                         <Card className="@container/card py-3 w-[100%]">
                           <CardHeader className="flex flex-col items-center justify-center text-center">
-                            <CardDescription>Paid to Club</CardDescription>
+                            <CardDescription>
+                              {isCustomAmount(c.total, c.fee_amount)
+                                ? "Total Collected"
+                                : "Paid to Club"}
+                            </CardDescription>
                             <CardTitle className="text-l font-semibold tabular-nums">
-                              {(c.fee_amount ?? 0) === 0
+                              {isCustomAmount(c.total, c.fee_amount)
+                                ? formatAmount(c.total?.paid_to_club ?? 0, currency)
+                                : isFree(c.total, c.fee_amount)
                                 ? "Free"
                                 : formatAmount(
                                     c.total?.paid_to_club ?? 0,
@@ -104,9 +123,15 @@ export function RegistrationReportData({ data, currency }: props) {
                         </Card>
                         <Card className="@container/card py-3 w-[100%]">
                           <CardHeader className="flex flex-col items-center justify-center text-center">
-                            <CardDescription>Due to Club</CardDescription>
+                            <CardDescription>
+                              {isCustomAmount(c.total, c.fee_amount)
+                                ? "Pending Collection"
+                                : "Due to Club"}
+                            </CardDescription>
                             <CardTitle className="text-l font-semibold tabular-nums">
-                              {(c.fee_amount ?? 0) === 0
+                              {isCustomAmount(c.total, c.fee_amount)
+                                ? formatAmount(c.total?.due_to_club ?? 0, currency)
+                                : isFree(c.total, c.fee_amount)
                                 ? "Free"
                                 : formatAmount(
                                     c.total?.due_to_club ?? 0,
@@ -205,7 +230,9 @@ export function RegistrationReportData({ data, currency }: props) {
                             <div className="flex flex-col w-full items-center py-4">
                               <p className="font-bold w-full text-center">
                                 {r.row_name} -{" "}
-                                {r.fee_amount == 0
+                                {isCustomAmount(r.total, r.fee_amount)
+                                  ? "Custom Amount"
+                                  : isFree(r.total, r.fee_amount)
                                   ? "Free"
                                   : `${formatAmount(
                                       r.fee_amount,
@@ -226,10 +253,14 @@ export function RegistrationReportData({ data, currency }: props) {
                                 <Card className="@container/card py-3 w-[100%]">
                                   <CardHeader className="flex flex-col items-center justify-center text-center">
                                     <CardDescription>
-                                      Paid to Club
+                                      {isCustomAmount(r.total, r.fee_amount)
+                                        ? "Total Collected"
+                                        : "Paid to Club"}
                                     </CardDescription>
                                     <CardTitle className="text-l font-semibold tabular-nums">
-                                      {r.fee_amount == 0
+                                      {isCustomAmount(r.total, r.fee_amount)
+                                        ? formatAmount(r.total.paid_to_club, currency)
+                                        : isFree(r.total, r.fee_amount)
                                         ? "Free"
                                         : formatAmount(
                                             r.total.paid_to_club,
@@ -249,10 +280,14 @@ export function RegistrationReportData({ data, currency }: props) {
                                 <Card className="@container/card py-3 w-[100%]">
                                   <CardHeader className="flex flex-col items-center justify-center text-center">
                                     <CardDescription>
-                                      Due to Club
+                                      {isCustomAmount(r.total, r.fee_amount)
+                                        ? "Pending Collection"
+                                        : "Due to Club"}
                                     </CardDescription>
                                     <CardTitle className="text-l font-semibold tabular-nums">
-                                      {r.fee_amount == 0
+                                      {isCustomAmount(r.total, r.fee_amount)
+                                        ? formatAmount(r.total.due_to_club, currency)
+                                        : isFree(r.total, r.fee_amount)
                                         ? "Free"
                                         : formatAmount(
                                             r.total.due_to_club,

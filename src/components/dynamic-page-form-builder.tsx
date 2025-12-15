@@ -100,6 +100,10 @@ export default function DynamicFormBuilder({ currency, clubAccountId, page, allP
       display: "Dropdown"
     },
     {
+      value: "number;billing",
+      display: "Number"
+    },
+    {
       value: "discount;billing",
       display: "Discount Dropdown"
     }
@@ -123,8 +127,11 @@ export default function DynamicFormBuilder({ currency, clubAccountId, page, allP
     if (fieldType === "standard" && inputType === "signature") {
       type.field_name = "Signature"
       type.placeholder = "Sign field with your name"
+    } else if (fieldType === "billing" && inputType === "number") {
+      type.field_name = "Custom Amount"
+      type.placeholder = "Enter amount"
     } else {
-      type.field_name = fieldType === "text" ? "" : `Field ${page?.fields?.length ?? "Field" + 1}`,
+      type.field_name = fieldType === "text" ? "" : `Field ${page?.fields?.length ?? "Field" + 1}`
       type.placeholder = "Default placeholder"
     }
 
@@ -151,7 +158,6 @@ export default function DynamicFormBuilder({ currency, clubAccountId, page, allP
     const field_to_delete = page.fields?.find(f => f.field_id === id);
     if (!field_to_delete) return;
   
-    // Filter out the deleted field and reindex field_order_id
     const updatedFields = page.fields
       ?.filter(f => f.field_id !== id)
       .map((f, index) => ({ ...f, field_order_id: index + 1 }));

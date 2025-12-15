@@ -12,6 +12,7 @@ interface Field {
   input_type?: string
   placeholder?: string
   required?: boolean
+  editable_by_member?: boolean
 }
 
 interface DropdownFieldProps {
@@ -39,7 +40,7 @@ export default function DisplayStandardText({ field }: DropdownFieldProps) {
       </Select>
 
       <p className="text-xs mt-1">
-        Is Required: {field.required ? "true" : "false"}
+        Is Required: {field.required ? "true" : "false"} | Editable by Member: {field.editable_by_member ? "true" : "false"}
       </p>
     </div>
   )
