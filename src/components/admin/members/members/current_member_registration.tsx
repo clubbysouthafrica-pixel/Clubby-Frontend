@@ -199,7 +199,7 @@ export function CurrentMemberRegistration({
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-4 text-sm bg-muted/30 p-2 rounded-lg border">
+      <div className="flex flex-wrap justify-center items-center gap-4 text-sm bg-muted/30 p-2 rounded-lg border">
         {data?.registration_submitted_on && (
           <div className="flex items-center gap-1">
             <span className="text-muted-foreground text-xs">Submitted:</span>
