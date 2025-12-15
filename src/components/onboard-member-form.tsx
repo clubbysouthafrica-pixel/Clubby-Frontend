@@ -140,12 +140,12 @@ export function OnboardMemberForm({
                                             <div className="flex gap-3">
                                                 <Select value={countryCode} onValueChange={setCountryCode}>
                                                     <SelectTrigger className="w-[140px]">
-                                                        <SelectValue />
+                                                        <SelectValue placeholder="Select code" />
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {countryCodes.map((country) => (
                                                             <SelectItem key={country.code} value={country.code}>
-                                                                {country.name} {country.dialingCode}
+                                                                {country.dialingCode} {country.name}
                                                             </SelectItem>
                                                         ))}
                                                     </SelectContent>
