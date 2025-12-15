@@ -9,12 +9,20 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { FormEvent, useState, useEffect } from "react";
 import { useOnboardProfileMutation } from "@/mutations/profile"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { useGetProfileQuery } from "@/queries/profile";
+import { countryCodes, validatePhoneNumber } from "@/data/country-codes";
 
 export function OnboardMemberForm({
     className,
@@ -26,7 +34,9 @@ export function OnboardMemberForm({
     const [firstName, setFirstName] = useState("")
     const [surname, setSurname] = useState("")
     const [dob, setDob] = useState("")
+    const [countryCode, setCountryCode] = useState("ZA")
     const [phoneNumber, setPhoneNumber] = useState("")
+    const [phoneError, setPhoneError] = useState("")
 
     const { data, isLoading } = useGetProfileQuery(false)
 
@@ -35,14 +45,38 @@ export function OnboardMemberForm({
         setSurname(data?.surname ?? "")
     }, [data]);
 
+    const validateAndFormatPhoneNumber = (): string => {
+        if (!phoneNumber.trim()) {
+            setPhoneError("Phone number is required")
+            return ""
+        }
+        
+        if (!validatePhoneNumber(phoneNumber)) {
+            setPhoneError("Phone number must be between 7 and 15 digits")
+            return ""
+        }
+        
+        const dialingCode = countryCodes.find(c => c.code === countryCode)?.dialingCode || ""
+        const digitsOnly = phoneNumber.replace(/\D/g, "")
+        const fullPhoneNumber = dialingCode + digitsOnly
+        
+        setPhoneError("")
+        return fullPhoneNumber
+    }
+
     const registerUser = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
+
+        const fullPhoneNumber = validateAndFormatPhoneNumber()
+        if (!fullPhoneNumber) {
+            return
+        }
 
         mutate({
             first_name: firstName,
             surname: surname,
             date_of_birth: dob,
-            phone_number: phoneNumber,
+            phone_number: fullPhoneNumber,
         }, {
             onSuccess: () => navigate("/"),
             onError: (error: any) => {
@@ -103,13 +137,34 @@ export function OnboardMemberForm({
 
                                         <div className="grid gap-3">
                                             <Label>Phone Number</Label>
-                                            <Input
-                                                required
-                                                type="text"
-                                                placeholder="Enter your phone number: +27123456278"
-                                                value={phoneNumber}
-                                                onChange={(e) => setPhoneNumber(e.target.value)}
-                                            />
+                                            <div className="flex gap-3">
+                                                <Select value={countryCode} onValueChange={setCountryCode}>
+                                                    <SelectTrigger className="w-[140px]">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {countryCodes.map((country) => (
+                                                            <SelectItem key={country.code} value={country.code}>
+                                                                {country.name} {country.dialingCode}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <Input
+                                                    required
+                                                    type="tel"
+                                                    placeholder="Enter phone number"
+                                                    value={phoneNumber}
+                                                    onChange={(e) => {
+                                                        setPhoneNumber(e.target.value)
+                                                        setPhoneError("")
+                                                    }}
+                                                    className={phoneError ? "border-red-500" : ""}
+                                                />
+                                            </div>
+                                            {phoneError && (
+                                                <p className="text-sm text-red-500">{phoneError}</p>
+                                            )}
                                         </div>
                                         <Button type="submit" className="w-full" disabled={isPending}>
                                             {isPending ? <><Loader2 className="h-8 w-8 animate-spin" /> Saving</> : "Save"}
