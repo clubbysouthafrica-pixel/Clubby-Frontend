@@ -73,14 +73,14 @@ export default function BrowseClubsPage() {
                         />
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button
+                        {/* <Button
                             variant="outline"
                             size="sm"
                             className="h-12 px-4 border-primary/20 hover:bg-primary/5"
                         >
                             <Filter className="w-4 h-4 mr-2" />
                             Filters
-                        </Button>
+                        </Button> */}
                         <div className="flex border border-primary/20 rounded-lg overflow-hidden">
                             <Button
                                 variant={viewMode === 'grid' ? 'default' : 'ghost'}

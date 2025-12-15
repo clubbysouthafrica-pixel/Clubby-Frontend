@@ -148,13 +148,13 @@ export default function SettingsPage() {
                             <User className="w-4 h-4 mr-2" />
                             Account
                         </TabsTrigger>
-                        <TabsTrigger 
+                        {/* <TabsTrigger 
                             value="notifications" 
                             className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium h-12 px-6"
                         >
                             <Bell className="w-4 h-4 mr-2" />
                             Notifications
-                        </TabsTrigger>
+                        </TabsTrigger> */}
                         {/* <TabsTrigger 
                             value="security" 
                             className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium h-12 px-6"
