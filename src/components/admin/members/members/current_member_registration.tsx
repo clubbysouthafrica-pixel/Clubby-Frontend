@@ -74,11 +74,12 @@ export function CurrentMemberRegistration({
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [adminNotes, setAdminNotes] = useState<
-    Array<{ id: string; title: string; content: string }>
+    Array<{ id: string; title: string; content: string; visibleToMember: boolean }>
   >([]);
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [noteTitle, setNoteTitle] = useState("");
   const [noteContent, setNoteContent] = useState("");
+  const [noteVisibleToMember, setNoteVisibleToMember] = useState(false);
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>("");
   const [updatedFieldValues, setUpdatedFieldValues] = useState<
@@ -97,12 +98,13 @@ export function CurrentMemberRegistration({
 
   const updateNotesMutation = useMutation({
     mutationFn: (
-      notes: Array<{ id: string; title: string; content: string }>
+      notes: Array<{ id: string; title: string; content: string; visibleToMember: boolean }>
     ) => updateAdminNotes(data.registration_id, data.member_id, notes),
     onSuccess: (_, newNotes) => {
       setAdminNotes(newNotes);
       setNoteTitle("");
       setNoteContent("");
+      setNoteVisibleToMember(false);
       toast.success("Admin notes updated successfully");
     },
     onError: () => {
@@ -160,7 +162,13 @@ export function CurrentMemberRegistration({
 
   useEffect(() => {
     if (data?.admin_notes && Array.isArray(data.admin_notes)) {
-      setAdminNotes(data.admin_notes);
+      const notesWithVisibility = data.admin_notes.map(
+        (note: { id: string; title: string; content: string; visibleToMember?: boolean }) => ({
+          ...note,
+          visibleToMember: note.visibleToMember ?? false,
+        })
+      );
+      setAdminNotes(notesWithVisibility);
     }
   }, [data?.admin_notes]);
 
@@ -273,6 +281,18 @@ export function CurrentMemberRegistration({
                       onChange={(e) => setNoteContent(e.target.value)}
                     />
                   </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="visible-to-member"
+                      checked={noteVisibleToMember}
+                      onCheckedChange={(checked) =>
+                        setNoteVisibleToMember(checked as boolean)
+                      }
+                    />
+                    <Label htmlFor="visible-to-member" className="font-normal cursor-pointer">
+                      Visible to Member
+                    </Label>
+                  </div>
                   <Button
                     onClick={() => {
                       if (noteTitle.trim() && noteContent.trim()) {
@@ -281,9 +301,17 @@ export function CurrentMemberRegistration({
                           .substr(2, 9)}`;
                         const newNotes = [
                           ...adminNotes,
-                          { id, title: noteTitle, content: noteContent },
+                          {
+                            id,
+                            title: noteTitle,
+                            content: noteContent,
+                            visibleToMember: noteVisibleToMember,
+                          },
                         ];
                         updateNotesMutation.mutate(newNotes);
+                        setNoteTitle("");
+                        setNoteContent("");
+                        setNoteVisibleToMember(false);
                       }
                     }}
                     disabled={updateNotesMutation.isPending}
@@ -320,34 +348,41 @@ export function CurrentMemberRegistration({
                   {adminNotes.map((note) => (
                     <div
                       key={note.id}
-                      className="pb-3 border-b last:border-b-0 last:pb-0 flex items-start justify-between gap-2"
+                      className="pb-3 border-b last:border-b-0 last:pb-0"
                     >
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-blue-900 mb-1">
-                          {note.title}
-                        </p>
-                        <p className="text-xs text-blue-800 whitespace-pre-wrap">
-                          {note.content}
-                        </p>
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-blue-900 mb-1">
+                            {note.title}
+                          </p>
+                          {note.visibleToMember && (
+                            <span className="inline-block px-2 py-1 text-xs bg-green-100 text-green-800 rounded mb-2">
+                              Visible to Member
+                            </span>
+                          )}
+                          <p className="text-xs text-blue-800 whitespace-pre-wrap">
+                            {note.content}
+                          </p>
+                        </div>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={() =>
+                                  removeNotesMutation.mutate([note.id])
+                                }
+                                disabled={removeNotesMutation.isPending}
+                                className="flex-shrink-0 p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="left">
+                              Delete this note
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={() =>
-                                removeNotesMutation.mutate([note.id])
-                              }
-                              disabled={removeNotesMutation.isPending}
-                              className="flex-shrink-0 p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="left">
-                            Delete this note
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
                     </div>
                   ))}
                 </div>

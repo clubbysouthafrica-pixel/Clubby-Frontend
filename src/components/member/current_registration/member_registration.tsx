@@ -22,7 +22,7 @@ export function MemberRegistration({
     clubAccountId,
     currency
   );
-
+  
   if (isLoading || !data) {
     return (
       <div className="p-5 min-h-screen">

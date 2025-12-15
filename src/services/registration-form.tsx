@@ -25,7 +25,6 @@ export const fetchMemberRegistrationField = (clubAccountId: string, fieldId: str
 
     return api.get(`/registration/getRegistrationField?club_account_id=${clubAccountId}&field_id=${fieldId}`)
         .then(res => {
-            console.log("Member registration field data:", res.data);
             return res.data;
         })
 }

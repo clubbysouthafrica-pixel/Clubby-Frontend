@@ -41,6 +41,7 @@ export function MemberRegistration({
   membershipStatus: string;
 }) {
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const [isAdminNotesOpen, setIsAdminNotesOpen] = useState(true);
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>("");
   const [updatedFieldValues, setUpdatedFieldValues] = useState<
@@ -146,6 +147,37 @@ export function MemberRegistration({
               : "Submitted Registration Form"}
           </CardDescription>
         </CardHeader>
+        {data.admin_notes && data.admin_notes.length > 0 && (
+          <div className="bg-amber-50 border-b border-amber-200 px-4 py-3">
+            <button
+              onClick={() => setIsAdminNotesOpen(!isAdminNotesOpen)}
+              className="w-full flex items-center justify-between hover:bg-amber-100 transition-colors -mx-4 -my-3 px-4 py-3 rounded cursor-pointer"
+            >
+              <h4 className="text-sm font-semibold text-amber-900">
+                📝 Notes from Club Staff ({data.admin_notes.filter((note: { visibleToMember: boolean }) => note.visibleToMember).length})
+              </h4>
+              <span className="text-lg text-amber-900">
+                {isAdminNotesOpen ? "▼" : "▶"}
+              </span>
+            </button>
+            {isAdminNotesOpen && (
+              <div className="space-y-3 mt-3">
+                {data.admin_notes
+                  .filter((note: { visibleToMember: boolean }) => note.visibleToMember)
+                  .map((note: { id: string; title: string; content: string }) => (
+                    <div key={note.id} className="pb-3 border-b border-amber-100 last:border-b-0 last:pb-0">
+                      <p className="text-sm font-semibold text-amber-900 mb-1">
+                        {note.title}
+                      </p>
+                      <p className="text-xs text-amber-800 whitespace-pre-wrap">
+                        {note.content}
+                      </p>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        )}
         <CardContent className="py-2 px-4 flex-1 min-h-0 flex flex-col">
           <div
             key={data.pages[currentPageIndex].page_index}
