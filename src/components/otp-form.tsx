@@ -71,7 +71,7 @@ export function OTPForm({
         <div className={cn("flex flex-col gap-6", className)} {...props}>
             <Card>
                 <CardHeader className="text-center">
-                    <CardTitle className="text-xl">Welcome to {import.meta.env.VITE_BRAND_NAME}</CardTitle>
+                    <CardTitle className="text-xl">Welcme to {import.meta.env.VITE_BRAND_NAME}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={verifyOTP}>
