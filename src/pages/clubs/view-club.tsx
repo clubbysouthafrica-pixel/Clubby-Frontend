@@ -630,7 +630,7 @@ export default function ViewClubPage() {
                     ) : (
                       <div className="grid gap-6 md:grid-cols-2">
                         {/* Welcome Card */}
-                        <Card className="border-primary/20 shadow-lg">
+                        {/* <Card className="border-primary/20 shadow-lg">
                           <CardHeader className="pb-4">
                             <div className="flex items-center gap-3">
                               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
@@ -647,7 +647,7 @@ export default function ViewClubPage() {
                               </div>
                             </div>
                           </CardHeader>
-                        </Card>
+                        </Card> */}
 
                         {/* Contact Information Card */}
                         <Card className="border-primary/20 shadow-lg">
