@@ -45,7 +45,6 @@ import {
   Clock,
   CheckCircle,
   Globe,
-  Sparkles,
 } from "lucide-react";
 import { useFetchClub, useFetchClubBankDetails } from "@/queries/clubs";
 import { useNavigate, useParams } from "react-router-dom";
