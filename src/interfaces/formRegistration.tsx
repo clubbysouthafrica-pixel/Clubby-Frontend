@@ -29,6 +29,7 @@ export interface InputFormRegistration {
     options?: string[];
     value?: any
     editable_by_member?: boolean
+    phone_number_input?: boolean
 }
 
 export interface PageFormRegistration {

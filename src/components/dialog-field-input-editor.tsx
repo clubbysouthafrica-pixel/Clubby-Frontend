@@ -39,6 +39,7 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
     const [required, setRequired] = useState(false)
     const [editable_by_member, setEditable_by_member] = useState(false)
     const [multiplier, setMultiplier] = useState(false)
+    const [phone_number_input, setPhoneNumberInput] = useState(false)
     const [dropdownOptionField, setDropdownOptionField] = useState("")
     const [amount, setAmount] = useState(0)
 
@@ -55,6 +56,7 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
         setFieldText(field?.field_text ?? "")
         setAmount(field?.amount ?? 0)
         setMultiplier(field?.multiplier ?? false)
+        setPhoneNumberInput(field?.phone_number_input ?? false)
 
         if (field?.billingOptions?.length) {
             setDropdownBillingOptions(field.billingOptions)
@@ -89,6 +91,7 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
             amount: amount > 0 ? amount : undefined,
             multiplier: multiplier,
             editable_by_member: editable_by_member,
+            phone_number_input: field.field_type === "STANDARD" && field.input_type?.toUpperCase() === "TEXT" ? phone_number_input : undefined,
         }
 
         if (field.input_type === "TEXT" && field.field_type === "BILLING") {
@@ -193,6 +196,9 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
                                                         Is Required: {field.required ? "true" : "false"}
                                                         {field.field_type === "STANDARD" && (field.input_type?.toUpperCase() === "TEXT" || field.input_type?.toUpperCase() === "NUMBER" || field.input_type?.toUpperCase() === "DROPDOWN" || field.input_type?.toUpperCase() === "CHECKBOX") && (
                                                             <> | Editable by Member: {field.editable_by_member ? "true" : "false"}</>
+                                                        )}
+                                                        {field.field_type === "STANDARD" && field.input_type?.toUpperCase() === "TEXT" && (
+                                                            <> | Phone Number: {field.phone_number_input ? "true" : "false"}</>
                                                         )}
                                                     </p>
                                                 ) : undefined}
@@ -320,6 +326,18 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
                                                             disabled={required && field.input_type?.toUpperCase() === "CHECKBOX"}
                                                         />
                                                         <Label className={required && field.input_type?.toUpperCase() === "CHECKBOX" ? "text-gray-400" : ""}>Editable by member post registration</Label>
+                                                    </div>
+                                                )}
+                                                {field.input_type?.toUpperCase() === "TEXT" && (
+                                                    <div className="space-y-3 mt-4 border-t pt-4">
+                                                        <Label className="text-sm font-semibold block">Field Validations</Label>
+                                                        <div className="flex items-center gap-3">
+                                                            <Checkbox
+                                                                checked={phone_number_input}
+                                                                onCheckedChange={(checked: boolean) => setPhoneNumberInput(checked)}
+                                                            />
+                                                            <Label>Validate as phone number</Label>
+                                                        </div>
                                                     </div>
                                                 )}
                                                 {

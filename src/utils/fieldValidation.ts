@@ -6,6 +6,7 @@ export interface FieldMetadata {
   options?: string[];
   required?: boolean;
   placeholder?: string;
+  phone_number_input?: boolean;
 }
 
 /**
@@ -27,10 +28,18 @@ export function validateFieldValue(
 
   // If field is required (and editable), validate that it has a value
   const fieldType = metadata.input_type || "TEXT";
+  const isPhoneNumber = metadata.phone_number_input === true;
 
   if (fieldType === "TEXT" || fieldType === "DROPDOWN") {
     if (editValue.trim() === "") {
       return `${fieldName} cannot be empty`;
+    }
+    // Validate phone number if it's a phone field
+    if (isPhoneNumber) {
+      const digitsOnly = editValue.replace(/\D/g, "");
+      if (digitsOnly.length < 7 || digitsOnly.length > 15) {
+        return `${fieldName} must contain between 7 and 15 digits`;
+      }
     }
   } else if (fieldType === "NUMBER") {
     if (editValue === undefined || editValue === "" || editValue === "0") {

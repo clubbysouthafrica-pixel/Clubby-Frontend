@@ -39,6 +39,7 @@ import {
   getStandardFieldType,
   FieldMetadata,
 } from "@/utils/fieldValidation";
+import { countryCodes, getDialingCode } from "@/data/country-codes";
 import { Check, X } from "lucide-react";
 import {
   Select,
@@ -82,6 +83,7 @@ export function CurrentMemberRegistration({
   const [noteVisibleToMember, setNoteVisibleToMember] = useState(false);
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>("");
+  const [countryCode, setCountryCode] = useState<string>("ZA");
   const [updatedFieldValues, setUpdatedFieldValues] = useState<
     Record<string, string>
   >({});
@@ -408,8 +410,6 @@ export function CurrentMemberRegistration({
                   quantity?: number;
                   discount?: number;
                 }) => {
-                  
-                  if (!field.value) console.log("Empty field value for:", field.label); 
 
                   if (field.type === "STANDARD_SIGNATURE") {
                     if (field.signature_type === "signature") {
@@ -456,6 +456,7 @@ export function CurrentMemberRegistration({
                       setIsSaving(true);
                       try {
                         const fieldType = metadata?.input_type || "TEXT";
+                        const isPhoneNumber = metadata?.phone_number_input === true;
 
                         // Validate required fields
                         const validationError = validateFieldValue(
@@ -472,13 +473,27 @@ export function CurrentMemberRegistration({
                         }
 
                         const typeParam = getStandardFieldType(fieldType);
+                        
+                        // For phone numbers, prepend the country dialing code
+                        let valueToSave = editValue;
+                        if (isPhoneNumber) {
+                          // Allow clearing the phone number if field is not required
+                          if (editValue.trim() === "") {
+                            valueToSave = "";
+                          } else {
+                            const dialingCode = getDialingCode(countryCode);
+                            // Remove leading 0 if present and combine without space
+                            const phoneWithoutLeadingZero = editValue.replace(/^0+/, '');
+                            valueToSave = `${dialingCode}${phoneWithoutLeadingZero}`;
+                          }
+                        }
 
                         await updateRegistrationField(
                           data.registration_id,
                           field.field_id || "",
                           field.label,
                           typeParam,
-                          editValue,
+                          valueToSave,
                           userId
                         );
 
@@ -487,7 +502,7 @@ export function CurrentMemberRegistration({
                         });
                         setUpdatedFieldValues((prev) => ({
                           ...prev,
-                          [field.label]: editValue,
+                          [field.label]: valueToSave,
                         }));
                         setEditingFieldId(null);
                       } catch (error) {
@@ -515,25 +530,71 @@ export function CurrentMemberRegistration({
                           // Set editing state after metadata is loaded
                           setEditingFieldId(field.label);
                           // Use the updated value if it exists, otherwise use the original
-                          setEditValue(
-                            updatedFieldValues[field.label] ?? field.value
-                          );
+                          const valueToSet = updatedFieldValues[field.label] ?? field.value;
+                          
+                          // If it's a phone number, parse out the country code and number
+                          if (response.field?.phone_number_input === true) {
+                            // Try to match the phone number by checking against known dialing codes
+                            let dialingCode = "";
+                            let phoneNumber = valueToSet;
+                            
+                            // Sort by dialing code length (longest first) to match longest first
+                            const sortedCodes = [...countryCodes].sort((a, b) => b.dialingCode.length - a.dialingCode.length);
+                            
+                            for (const country of sortedCodes) {
+                              if (valueToSet.startsWith(country.dialingCode)) {
+                                dialingCode = country.dialingCode;
+                                phoneNumber = valueToSet.substring(country.dialingCode.length);
+                                setCountryCode(country.code);
+                                break;
+                              }
+                            }
+                            
+                            setEditValue(phoneNumber);
+                          } else {
+                            setEditValue(valueToSet);
+                          }
                         } catch (error) {
                           console.error("Error loading field metadata:", error);
+                          // Still set editing state even if metadata fetch fails
+                          setEditingFieldId(field.label);
+                          setEditValue(updatedFieldValues[field.label] ?? field.value);
                         }
                       } else {
                         // Metadata already exists, set editing state immediately
                         setEditingFieldId(field.label);
                         // Use the updated value if it exists, otherwise use the original
-                        setEditValue(
-                          updatedFieldValues[field.label] ?? field.value
-                        );
+                        const valueToSet = updatedFieldValues[field.label] ?? field.value;
+                        
+                        // If it's a phone number, parse out the country code and number
+                        if (metadata?.phone_number_input === true) {
+                          // Try to match the phone number by checking against known dialing codes
+                          let dialingCode = "";
+                          let phoneNumber = valueToSet;
+                          
+                          // Sort by dialing code length (longest first) to match longest first
+                          const sortedCodes = [...countryCodes].sort((a, b) => b.dialingCode.length - a.dialingCode.length);
+                          
+                          for (const country of sortedCodes) {
+                            if (valueToSet.startsWith(country.dialingCode)) {
+                              dialingCode = country.dialingCode;
+                              phoneNumber = valueToSet.substring(country.dialingCode.length);
+                              setCountryCode(country.code);
+                              break;
+                            }
+                          }
+                          
+                          setEditValue(phoneNumber);
+                        } else {
+                          setEditValue(valueToSet);
+                        }
                       }
                     };
 
                     const renderInput = () => {
                       const inputType = metadata?.input_type || "TEXT";
                       const options = metadata?.options || [];
+                      const isPhoneNumber = metadata?.phone_number_input === true;
 
                       if (inputType === "DROPDOWN") {
                         return (
@@ -581,6 +642,54 @@ export function CurrentMemberRegistration({
                               }
                             }}
                           />
+                        );
+                      } else if (isPhoneNumber) {
+                        return (
+                          <div className="flex gap-2">
+                            <Select
+                              value={countryCode}
+                              onValueChange={setCountryCode}
+                            >
+                              <SelectTrigger className="w-[130px] text-sm">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {countryCodes.map((country) => (
+                                  <SelectItem key={country.code} value={country.code}>
+                                    {country.dialingCode} {country.code}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Input
+                              autoFocus
+                              type="tel"
+                              value={editValue}
+                              onChange={(e) => {
+                                let value = e.target.value;
+                                // Remove leading 0 if the user starts with it
+                                if (value.startsWith("0") && value.length > 1) {
+                                  value = value.substring(1);
+                                }
+                                const digitsOnly = value.replace(/\D/g, "");
+                                // Allow max 15 digits for phone numbers
+                                if (digitsOnly.length <= 15) {
+                                  setEditValue(value);
+                                }
+                              }}
+                              placeholder="Phone number"
+                              className="text-sm flex-1"
+                              maxLength={20}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  handleSave();
+                                } else if (e.key === "Escape") {
+                                  setEditingFieldId(null);
+                                  setEditValue("");
+                                }
+                              }}
+                            />
+                          </div>
                         );
                       } else {
                         return (
@@ -739,7 +848,6 @@ export function CurrentMemberRegistration({
                   }
                   
                   if (field.type === "DNE") {
-                    console.log(field)
                     return (
                       <div
                         key={field.label}

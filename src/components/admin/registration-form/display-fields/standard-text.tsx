@@ -13,6 +13,7 @@ interface Field {
   placeholder?: string
   required?: boolean
   editable_by_member?: boolean
+  phone_number_input?: boolean
 }
 
 interface DropdownFieldProps {
@@ -40,7 +41,7 @@ export default function DisplayStandardText({ field }: DropdownFieldProps) {
       </Select>
 
       <p className="text-xs mt-1">
-        Is Required: {field.required ? "true" : "false"} | Editable by Member: {field.editable_by_member ? "true" : "false"}
+        Is Required: {field.required ? "true" : "false"} | Editable by Member: {field.editable_by_member ? "true" : "false"} | Phone Number: {field.phone_number_input ? "true" : "false"}
       </p>
     </div>
   )

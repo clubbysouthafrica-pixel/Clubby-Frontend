@@ -144,8 +144,10 @@ export function OnboardMemberForm({
                                             <Label>Phone Number</Label>
                                             <div className="flex gap-3">
                                                 <Select value={countryCode} onValueChange={setCountryCode}>
-                                                    <SelectTrigger className="w-[140px]">
-                                                        <SelectValue placeholder="Select code" />
+                                                    <SelectTrigger className="w-[80px]">
+                                                        <SelectValue>
+                                                            {countryCodes.find(c => c.code === countryCode)?.dialingCode}
+                                                        </SelectValue>
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {countryCodes.map((country) => (
