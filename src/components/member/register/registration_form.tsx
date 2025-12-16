@@ -53,13 +53,18 @@ export function ClubRegisterForm() {
   const [totalRegistrationFee, setTotalRegistrationFee] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
   const [clubCurrency, setClubCurrency] = useState("");
+  const [clubName, setClubName] = useState("");
 
   useEffect(() => {
     const processSignatures = async () => {
       if (!data?.pages) return;
       
+      // Set currency and club name when data is loaded
       if (data?.currency && !clubCurrency) {
         setClubCurrency(data.currency);
+      }
+      if (data?.club_name && !clubName) {
+        setClubName(data.club_name);
       }
       
       const updatedPages = await Promise.all(
@@ -227,7 +232,7 @@ export function ClubRegisterForm() {
     return (
       <div className="flex justify-center items-center py-8">
         <RegistrationSuccessful
-          title={`Successfully Registered ${data?.club_name ? `to ${data?.club_name}` : ""}`}
+          title={`Successfully Registered ${clubName ? `to ${clubName}` : ""}`}
           message={`Club will stay in contact with you once registration is completed.`}
           onClose={() => navigate(`/clubs/${clubId}`)}
         />
@@ -238,14 +243,14 @@ export function ClubRegisterForm() {
   if (!registrationRequest) {
     return (
       <ReusableRegistrationForm
-        clubName={data?.club_name || ""}
+        clubName={clubName || data?.club_name || ""}
         clubCurrency={clubCurrency || data?.currency || ""}
         pages={pages}
         currentPageIndex={currentPageIndex}
         setCurrentPageIndex={setCurrentPageIndex}
         setFieldValue={setFieldValue}
         requiredFieldsMissing={requiredFieldsMissing}
-        headerTitle={`Register to ${data?.club_name}`}
+        headerTitle={`Register to ${clubName || data?.club_name || ""}`}
         headerDescription="Finish the registration form below"
         showHeader={true}
         topContent={
@@ -292,7 +297,7 @@ export function ClubRegisterForm() {
     <div className="flex justify-center items-center py-8">
       <ReusableSubmitRegistration
         showMemberInfo={false}
-        clubName={data?.club_name || ""}
+        clubName={clubName || data?.club_name || ""}
         clubCurrency={clubCurrency || data?.currency || ""}
         totalRegistrationFee={totalRegistrationFee}
         billingFields={registrationRequest.billing_fields.map((f) => ({
