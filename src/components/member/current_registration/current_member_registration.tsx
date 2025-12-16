@@ -59,6 +59,7 @@ export function MemberRegistration({
         required?: boolean;
         placeholder?: string;
         editable_by_member?: boolean;
+        phone_number_input?: boolean;
       }
     >
   >({});
@@ -322,7 +323,6 @@ export function MemberRegistration({
                           // If it's a phone number, parse out the country code and number
                           if (data.field?.phone_number_input === true) {
                             // Try to match the phone number by checking against known dialing codes
-                            let dialingCode = "";
                             let phoneNumber = valueToSet;
                             
                             // Sort by dialing code length (longest first) to match longest first
@@ -330,7 +330,6 @@ export function MemberRegistration({
                             
                             for (const country of sortedCodes) {
                               if (valueToSet.startsWith(country.dialingCode)) {
-                                dialingCode = country.dialingCode;
                                 phoneNumber = valueToSet.substring(country.dialingCode.length);
                                 setCountryCode(country.code);
                                 break;
@@ -351,7 +350,6 @@ export function MemberRegistration({
                         // If it's a phone number, parse out the country code and number
                         if (metadata?.phone_number_input === true) {
                           // Try to match the phone number by checking against known dialing codes
-                          let dialingCode = "";
                           let phoneNumber = valueToSet;
                           
                           // Sort by dialing code length (longest first) to match longest first
@@ -359,7 +357,6 @@ export function MemberRegistration({
                           
                           for (const country of sortedCodes) {
                             if (valueToSet.startsWith(country.dialingCode)) {
-                              dialingCode = country.dialingCode;
                               phoneNumber = valueToSet.substring(country.dialingCode.length);
                               setCountryCode(country.code);
                               break;

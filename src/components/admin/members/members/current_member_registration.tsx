@@ -535,7 +535,6 @@ export function CurrentMemberRegistration({
                           // If it's a phone number, parse out the country code and number
                           if (response.field?.phone_number_input === true) {
                             // Try to match the phone number by checking against known dialing codes
-                            let dialingCode = "";
                             let phoneNumber = valueToSet;
                             
                             // Sort by dialing code length (longest first) to match longest first
@@ -543,7 +542,6 @@ export function CurrentMemberRegistration({
                             
                             for (const country of sortedCodes) {
                               if (valueToSet.startsWith(country.dialingCode)) {
-                                dialingCode = country.dialingCode;
                                 phoneNumber = valueToSet.substring(country.dialingCode.length);
                                 setCountryCode(country.code);
                                 break;
@@ -569,7 +567,6 @@ export function CurrentMemberRegistration({
                         // If it's a phone number, parse out the country code and number
                         if (metadata?.phone_number_input === true) {
                           // Try to match the phone number by checking against known dialing codes
-                          let dialingCode = "";
                           let phoneNumber = valueToSet;
                           
                           // Sort by dialing code length (longest first) to match longest first
@@ -577,7 +574,6 @@ export function CurrentMemberRegistration({
                           
                           for (const country of sortedCodes) {
                             if (valueToSet.startsWith(country.dialingCode)) {
-                              dialingCode = country.dialingCode;
                               phoneNumber = valueToSet.substring(country.dialingCode.length);
                               setCountryCode(country.code);
                               break;

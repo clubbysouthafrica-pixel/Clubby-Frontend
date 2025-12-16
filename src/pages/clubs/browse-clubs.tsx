@@ -8,7 +8,6 @@ import {
   MapPin, 
   Calendar,
   ArrowRight,
-  Filter,
   Grid3X3,
   List,
   Star
