@@ -52,10 +52,15 @@ export function ClubRegisterForm() {
   >(undefined);
   const [totalRegistrationFee, setTotalRegistrationFee] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [clubCurrency, setClubCurrency] = useState("");
 
   useEffect(() => {
     const processSignatures = async () => {
       if (!data?.pages) return;
+      
+      if (data?.currency && !clubCurrency) {
+        setClubCurrency(data.currency);
+      }
       
       const updatedPages = await Promise.all(
         data.pages.map(async (page: FormPage) => ({
@@ -234,7 +239,7 @@ export function ClubRegisterForm() {
     return (
       <ReusableRegistrationForm
         clubName={data?.club_name || ""}
-        clubCurrency={data?.currency || ""}
+        clubCurrency={clubCurrency || data?.currency || ""}
         pages={pages}
         currentPageIndex={currentPageIndex}
         setCurrentPageIndex={setCurrentPageIndex}
@@ -288,7 +293,7 @@ export function ClubRegisterForm() {
       <ReusableSubmitRegistration
         showMemberInfo={false}
         clubName={data?.club_name || ""}
-        clubCurrency={data?.currency || ""}
+        clubCurrency={clubCurrency || data?.currency || ""}
         totalRegistrationFee={totalRegistrationFee}
         billingFields={registrationRequest.billing_fields.map((f) => ({
           field_id: f.field_id,
