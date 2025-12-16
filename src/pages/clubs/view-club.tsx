@@ -20,6 +20,13 @@ import {
   CardTitle,
 } from "@/components/ui/card.tsx";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog.tsx";
+import {
   Calendar,
   Loader2,
   Mail,
@@ -111,17 +118,19 @@ export default function ViewClubPage() {
   const { data, isLoading, isError } = useFetchClub(clubId as string);
   const { data: bankDetails, isLoading: bankDetailsLoading } =
     useFetchClubBankDetails(clubId as string, !!data?.club_member_exists);
-
+  console.log("Bank details:", bankDetails);
   const { data: transactions, isLoading: isUserTransactionsLoading } =
     useFetchUserTransactions(data?.club_account_id ?? "", data?.user_id ?? "");
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
-  const [highlightPayment, setHighlightPayment] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [iframeLoading, setIframeLoading] = useState(true);
   const [editingReference, setEditingReference] = useState(false);
-  const [newReference, setNewReference] = useState(bankDetails?.registration_payment_reference || "");
+  const [newReference, setNewReference] = useState(
+    bankDetails?.registration_payment_reference || ""
+  );
   const [savingReference, setSavingReference] = useState(false);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
 
   const toggleRow = (id: string) => {
     setExpandedRows((prev) => ({
@@ -131,21 +140,11 @@ export default function ViewClubPage() {
   };
 
   const handlePayHereClick = () => {
-    setActiveTab("bank");
-
-    setTimeout(() => {
-      const paymentOptionsSection = document.getElementById(
-        "payment-options-section"
-      );
-      if (paymentOptionsSection) {
-        paymentOptionsSection.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-        setHighlightPayment(true);
-        setTimeout(() => setHighlightPayment(false), 3000);
-      }
-    }, 100);
+    if (!bankDetailsLoading && bankDetails) {
+      setPaymentDialogOpen(true);
+    } else {
+      toast.error("Payment details are still loading. Please wait...");
+    }
   };
 
   const copyToClipboard = (text: string, field: string) => {
@@ -157,7 +156,10 @@ export default function ViewClubPage() {
   const handleSaveReference = async () => {
     setSavingReference(true);
     try {
-      await updatePaymentReferenceService(data?.club_account_id ?? "", newReference);
+      await updatePaymentReferenceService(
+        data?.club_account_id ?? "",
+        newReference
+      );
       // Update the local bankDetails state
       if (bankDetails) {
         bankDetails.registration_payment_reference = newReference;
@@ -206,7 +208,10 @@ export default function ViewClubPage() {
     setNewReference(bankDetails?.registration_payment_reference || "");
   }, [bankDetails?.registration_payment_reference]);
 
-  const getStatusIcon = (isRegistered: boolean, resubmissionRequired: boolean) => {
+  const getStatusIcon = (
+    isRegistered: boolean,
+    resubmissionRequired: boolean
+  ) => {
     if (resubmissionRequired) {
       return <AlertTriangle className="h-4 w-4 text-red-600" />;
     }
@@ -217,21 +222,30 @@ export default function ViewClubPage() {
     );
   };
 
-  const getStatusColor = (isRegistered: boolean, resubmissionRequired: boolean) => {
+  const getStatusColor = (
+    isRegistered: boolean,
+    resubmissionRequired: boolean
+  ) => {
     if (resubmissionRequired) {
       return "text-red-600";
     }
     return isRegistered ? "text-green-600" : "text-orange-600";
   };
 
-  const getStatusTitle = (isRegistered: boolean, resubmissionRequired: boolean) => {
+  const getStatusTitle = (
+    isRegistered: boolean,
+    resubmissionRequired: boolean
+  ) => {
     if (resubmissionRequired) {
       return "Resubmission Required";
     }
     return isRegistered ? "Registration Confirmed" : "Registration Pending";
   };
 
-  const getStatusDescription = (isRegistered: boolean, resubmissionRequired: boolean) => {
+  const getStatusDescription = (
+    isRegistered: boolean,
+    resubmissionRequired: boolean
+  ) => {
     if (resubmissionRequired) {
       return "Your registration requires a resubmission. This may be due to reasons such as your membership expiring, the club starting a new season, or invalid information in your previous submission. Please resubmit your registration form.";
     }
@@ -457,13 +471,27 @@ export default function ViewClubPage() {
                   {data?.club_member_exists && (
                     <CardHeader className="pb-0 border-t border-primary/10 space-y-3 pt-4">
                       <div className="flex items-center gap-2 mb-0">
-                        {getStatusIcon(data.registered, data.resubmission_required)}
-                        <h3 className={`text-sm font-semibold ${getStatusColor(data.registered, data.resubmission_required)}`}>
-                          {getStatusTitle(data.registered, data.resubmission_required)}
+                        {getStatusIcon(
+                          data.registered,
+                          data.resubmission_required
+                        )}
+                        <h3
+                          className={`text-sm font-semibold ${getStatusColor(
+                            data.registered,
+                            data.resubmission_required
+                          )}`}
+                        >
+                          {getStatusTitle(
+                            data.registered,
+                            data.resubmission_required
+                          )}
                         </h3>
                       </div>
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        {getStatusDescription(data.registered, data.resubmission_required)}
+                        {getStatusDescription(
+                          data.registered,
+                          data.resubmission_required
+                        )}
                       </p>
                     </CardHeader>
                   )}
@@ -694,6 +722,14 @@ export default function ViewClubPage() {
                                 Paid in Full
                               </Badge>
                             )}
+                            {bankDetails?.outstanding_amount > 0 && (
+                              <Button
+                                onClick={handlePayHereClick}
+                                className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300"
+                              >
+                                Pay Now
+                              </Button>
+                            )}
                           </div>
                           {bankDetails?.registration_payment_reference && (
                             <div className="mt-4 p-3 bg-muted/50 rounded-lg">
@@ -719,19 +755,28 @@ export default function ViewClubPage() {
                                     {bankDetails.registration_payment_reference}
                                   </p>
                                   <p className="text-xs text-muted-foreground leading-relaxed mt-2">
-                                    This reference number is displayed on the admin side. When you make a payment (e.g., via EFT), include this number as your proof of reference so the admin can verify and match your payment to your account.
+                                    This reference number is displayed on the
+                                    admin side. When you make a payment (e.g.,
+                                    via EFT), include this number as your proof
+                                    of reference so the admin can verify and
+                                    match your payment to your account.
                                   </p>
                                 </>
                               ) : (
                                 <div className="space-y-3">
                                   <div className="space-y-1">
-                                    <Label htmlFor="reference-input" className="text-xs">
+                                    <Label
+                                      htmlFor="reference-input"
+                                      className="text-xs"
+                                    >
                                       New Reference Number
                                     </Label>
                                     <Input
                                       id="reference-input"
                                       value={newReference}
-                                      onChange={(e) => setNewReference(e.target.value)}
+                                      onChange={(e) =>
+                                        setNewReference(e.target.value)
+                                      }
                                       placeholder="Enter new reference number"
                                       className="font-mono"
                                     />
@@ -740,7 +785,9 @@ export default function ViewClubPage() {
                                     <Button
                                       size="sm"
                                       onClick={handleSaveReference}
-                                      disabled={savingReference || !newReference.trim()}
+                                      disabled={
+                                        savingReference || !newReference.trim()
+                                      }
                                       className="flex-1"
                                     >
                                       {savingReference && (
@@ -766,354 +813,6 @@ export default function ViewClubPage() {
                       </Card>
                     )}
                     <div className="flex flex-col w-full gap-6">
-                      {!data?.resubmission_required && (
-                        <Card
-                          id="payment-options-section"
-                          className={cn(
-                            "border-primary/20 shadow-lg transition-all duration-300",
-                            highlightPayment &&
-                              "ring-2 ring-primary/50 shadow-xl"
-                          )}
-                        >
-                          <CardHeader className="pb-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                                <CreditCard className="w-5 h-5 text-primary" />
-                              </div>
-                              <div>
-                                <CardTitle className="text-xl">
-                                  Payment Options
-                                </CardTitle>
-                                <CardDescription className="text-base">
-                                  Choose your preferred method to settle your
-                                  outstanding balance
-                                </CardDescription>
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <Tabs defaultValue="eft" className="px-6 pb-6">
-                            <TabsList
-                              className={`grid w-full ${
-                                (() => {
-                                  let cols = 1;
-                                  if (data?.payfast_enabled &&
-                                    data?.club_member_exists &&
-                                    (bankDetails?.outstanding_amount ?? 0) > 0) {
-                                    cols++;
-                                  }
-                                  if (data?.custom_payment_methods && data.custom_payment_methods.length > 0) {
-                                    cols += data.custom_payment_methods.length;
-                                  }
-                                  return `grid-cols-${cols}`;
-                                })()
-                              }`}
-                            >
-                              <TabsTrigger value="eft">
-                                Bank Transfer (EFT)
-                              </TabsTrigger>
-                              {data?.payfast_enabled &&
-                                data?.club_member_exists &&
-                                (bankDetails?.outstanding_amount ?? 0) > 0 && (
-                                  <TabsTrigger value="online">
-                                    Online Payment
-                                  </TabsTrigger>
-                                )}
-                              {data?.custom_payment_methods && data.custom_payment_methods.map((method: any, index: number) => (
-                                <TabsTrigger key={index} value={`custom-${index}`}>
-                                  {method.name}
-                                </TabsTrigger>
-                              ))}
-                            </TabsList>
-                            <TabsContent value="eft" className="pt-4">
-                              <div className="space-y-6">
-                                <div className="text-center space-y-3">
-                                  <div className="flex items-center justify-center gap-2">
-                                    <Building2 className="w-6 h-6 text-primary" />
-                                    <h3 className="text-xl font-semibold">
-                                      Bank Transfer (EFT)
-                                    </h3>
-                                  </div>
-                                  <div className="flex flex-col items-center">
-                                    <p className="text-muted-foreground leading-relaxed">
-                                      Transfer funds directly to the club's bank
-                                      account using the details below.
-                                    </p>
-                                    <div className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
-                                      <p className="text-sm">
-                                        <strong className="text-primary">
-                                          Important:
-                                        </strong>{" "}
-                                        Always include your payment reference
-                                        number to ensure proper allocation of
-                                        your payment.
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {bankDetailsLoading && (
-                                  <div className="flex justify-center py-8">
-                                    <Loader2 className="h-8 w-8 animate-spin" />
-                                  </div>
-                                )}
-
-                                {!bankDetailsLoading && (
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <Card className="group hover:shadow-md transition-shadow border-primary/10">
-                                      <CardContent className="p-4">
-                                        <div className="flex items-center justify-between">
-                                          <div className="flex items-center gap-3 flex-1">
-                                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                              <Building2 className="h-5 w-5 text-primary" />
-                                            </div>
-                                            <div>
-                                              <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                                                Bank Name
-                                              </p>
-                                              <p className="font-semibold text-lg">
-                                                {bankDetails?.bank}
-                                              </p>
-                                            </div>
-                                          </div>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() =>
-                                              copyToClipboard(
-                                                bankDetails?.bank || "",
-                                                "bank"
-                                              )
-                                            }
-                                            className="opacity-0 group-hover:opacity-100 transition-opacity"
-                                          >
-                                            {copiedField === "bank" ? (
-                                              <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                            ) : (
-                                              <Copy className="h-4 w-4" />
-                                            )}
-                                          </Button>
-                                        </div>
-                                      </CardContent>
-                                    </Card>
-                                    <Card className="group hover:shadow-md transition-shadow border-primary/10">
-                                      <CardContent className="p-4">
-                                        <div className="flex items-center justify-between">
-                                          <div className="flex items-center gap-3 flex-1">
-                                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                              <Hash className="h-5 w-5 text-primary" />
-                                            </div>
-                                            <div>
-                                              <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                                                Account Number
-                                              </p>
-                                              <p className="font-semibold font-mono text-lg">
-                                                {bankDetails?.account_number}
-                                              </p>
-                                            </div>
-                                          </div>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() =>
-                                              copyToClipboard(
-                                                bankDetails?.account_number ||
-                                                  "",
-                                                "account"
-                                              )
-                                            }
-                                            className="opacity-0 group-hover:opacity-100 transition-opacity"
-                                          >
-                                            {copiedField === "account" ? (
-                                              <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                            ) : (
-                                              <Copy className="h-4 w-4" />
-                                            )}
-                                          </Button>
-                                        </div>
-                                      </CardContent>
-                                    </Card>
-
-                                    <Card className="group hover:shadow-md transition-shadow border-primary/10">
-                                      <CardContent className="p-4">
-                                        <div className="flex items-center justify-between">
-                                          <div className="flex items-center gap-3 flex-1">
-                                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                              <Hash className="h-5 w-5 text-primary" />
-                                            </div>
-                                            <div>
-                                              <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                                                Branch Code
-                                              </p>
-                                              <p className="font-semibold font-mono text-lg">
-                                                {bankDetails?.branch_code}
-                                              </p>
-                                            </div>
-                                          </div>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() =>
-                                              copyToClipboard(
-                                                bankDetails?.branch_code || "",
-                                                "branch"
-                                              )
-                                            }
-                                            className="opacity-0 group-hover:opacity-100 transition-opacity"
-                                          >
-                                            {copiedField === "branch" ? (
-                                              <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                            ) : (
-                                              <Copy className="h-4 w-4" />
-                                            )}
-                                          </Button>
-                                        </div>
-                                      </CardContent>
-                                    </Card>
-
-                                    <Card className="group hover:shadow-md transition-shadow border-primary/10">
-                                      <CardContent className="p-4">
-                                        <div className="flex items-center justify-between">
-                                          <div className="flex items-center gap-3 flex-1">
-                                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                              <Building2 className="h-5 w-5 text-primary" />
-                                            </div>
-                                            <div>
-                                              <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                                                Account Type
-                                              </p>
-                                              <p className="font-semibold text-lg">
-                                                {bankDetails?.account_type}
-                                              </p>
-                                            </div>
-                                          </div>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() =>
-                                              copyToClipboard(
-                                                bankDetails?.account_type || "",
-                                                "type"
-                                              )
-                                            }
-                                            className="opacity-0 group-hover:opacity-100 transition-opacity"
-                                          >
-                                            {copiedField === "type" ? (
-                                              <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                            ) : (
-                                              <Copy className="h-4 w-4" />
-                                            )}
-                                          </Button>
-                                        </div>
-                                      </CardContent>
-                                    </Card>
-
-                                    {bankDetails?.payment_reference && (
-                                      <Card className="group hover:shadow-lg transition-shadow sm:col-span-2 border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
-                                        <CardContent className="p-6">
-                                          <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-4 flex-1">
-                                              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                                                <Hash className="h-6 w-6 text-primary" />
-                                              </div>
-                                              <div>
-                                                <div className="flex items-center gap-2 mb-1">
-                                                  <p className="text-sm text-muted-foreground uppercase tracking-wide">
-                                                    Payment Reference
-                                                  </p>
-                                                  <Badge className="bg-primary/20 text-primary text-xs">
-                                                    Important!
-                                                  </Badge>
-                                                </div>
-                                                <p className="font-bold font-mono text-xl text-primary">
-                                                  {
-                                                    bankDetails?.payment_reference
-                                                  }
-                                                </p>
-                                                <div className="mt-3 space-y-1">
-                                                  <p className="text-xs text-muted-foreground">
-                                                    Always include this reference with your payment
-                                                  </p>
-                                                  <p className="text-xs text-muted-foreground leading-relaxed">
-                                                    <strong>Note:</strong> This reference number is displayed on the admin side. When you make a payment (e.g., via EFT), include this number as your proof of reference so the admin can verify and match your payment to your account.
-                                                  </p>
-                                                </div>
-                                              </div>
-                                            </div>
-                                            <Button
-                                              variant="ghost"
-                                              size="sm"
-                                              onClick={() =>
-                                                copyToClipboard(
-                                                  bankDetails?.payment_reference ||
-                                                    "",
-                                                  "reference"
-                                                )
-                                              }
-                                              className="opacity-0 group-hover:opacity-100 transition-opacity"
-                                            >
-                                              {copiedField === "reference" ? (
-                                                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                              ) : (
-                                                <Copy className="h-4 w-4" />
-                                              )}
-                                            </Button>
-                                          </div>
-                                        </CardContent>
-                                      </Card>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </TabsContent>
-                            {data?.payfast_enabled &&
-                              data?.club_member_exists &&
-                              (bankDetails?.outstanding_amount ?? 0) > 0 && (
-                                <TabsContent
-                                  value="online"
-                                  className="px-6 py-8"
-                                >
-                                  <PayFastPayment
-                                    clubAccountId={data?.club_account_id ?? ""}
-                                    outstandingAmount={
-                                      bankDetails?.outstanding_amount ?? 0
-                                    }
-                                  />
-                                </TabsContent>
-                              )}
-                            {data?.custom_payment_methods && data.custom_payment_methods.map((method: any, index: number) => (
-                              <TabsContent
-                                key={index}
-                                value={`custom-${index}`}
-                                className="px-6 py-8"
-                              >
-                                <div className="space-y-6">
-                                  <div className="text-center space-y-4">
-                                    <div className="flex items-center justify-center gap-2">
-                                      <CreditCard className="w-6 h-6 text-primary" />
-                                      <h3 className="text-xl font-semibold">
-                                        {method.name}
-                                      </h3>
-                                    </div>
-                                    <p className="text-muted-foreground">
-                                      Click the button below to proceed to {method.name} for payment
-                                    </p>
-                                  </div>
-                                  <div className="flex justify-center">
-                                    <Button
-                                      size="lg"
-                                      onClick={() => window.open(method.url, "_blank")}
-                                      className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300"
-                                    >
-                                      <ExternalLink className="w-4 h-4 mr-2" />
-                                      Pay with {method.name}
-                                    </Button>
-                                  </div>
-                                </div>
-                              </TabsContent>
-                            ))}
-                          </Tabs>
-                        </Card>
-                      )}
                       {!isUserTransactionsLoading && transactions && (
                         <Card className="border-primary/20 shadow-lg">
                           <CardHeader>
@@ -1372,6 +1071,362 @@ export default function ViewClubPage() {
             </div>
           </div>
         )}
+
+      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+        <DialogContent className="!w-[1000px] !h-[800px] !max-w-none !max-h-none p-5 gap-4 flex flex-col min-h-0">
+          <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4 space-y-2">
+            <DialogTitle className="flex items-center gap-2 text-2xl">
+              <CreditCard className="w-6 h-6 text-primary" />
+              Payment Options
+            </DialogTitle>
+            <div className="space-y-1">
+              <DialogDescription className="text-base">
+                Outstanding Balance:{" "}
+                <span className="font-semibold text-foreground">
+                  {formatAmount(
+                    bankDetails?.outstanding_amount,
+                    data?.currency
+                  )}
+                </span>
+              </DialogDescription>
+              {bankDetails?.registration_payment_reference && (
+                <DialogDescription className="text-base">
+                  Payment Reference:{" "}
+                  <span className="font-semibold text-foreground">
+                    {bankDetails?.registration_payment_reference}
+                  </span>
+                </DialogDescription>
+              )}
+            </div>
+          </DialogHeader>
+          <Tabs
+            defaultValue="eft"
+            className="w-full flex flex-col flex-1 overflow-hidden px-6"
+          >
+            <TabsList
+              className={`grid w-full flex-shrink-0 ${(() => {
+                let cols = 1;
+                if (
+                  data?.payfast_enabled &&
+                  data?.club_member_exists &&
+                  (bankDetails?.outstanding_amount ?? 0) > 0
+                ) {
+                  cols++;
+                }
+                if (
+                  data?.custom_payment_methods &&
+                  data.custom_payment_methods.length > 0
+                ) {
+                  cols += data.custom_payment_methods.length;
+                }
+                return `grid-cols-${cols}`;
+              })()}`}
+            >
+              <TabsTrigger value="eft">Bank Transfer (EFT)</TabsTrigger>
+              {data?.payfast_enabled &&
+                data?.club_member_exists &&
+                (bankDetails?.outstanding_amount ?? 0) > 0 && (
+                  <TabsTrigger value="online">Online Payment</TabsTrigger>
+                )}
+              {data?.custom_payment_methods &&
+                data.custom_payment_methods.map(
+                  (method: any, index: number) => (
+                    <TabsTrigger key={index} value={`custom-${index}`}>
+                      {method.name}
+                    </TabsTrigger>
+                  )
+                )}
+            </TabsList>
+            <TabsContent value="eft" className="pt-4 flex-1 overflow-y-auto">
+              <div className="space-y-6 pr-4">
+                <div className="text-center space-y-3">
+                  <div className="flex items-center justify-center gap-2">
+                    <Building2 className="w-6 h-6 text-primary" />
+                    <h3 className="text-xl font-semibold">
+                      Bank Transfer (EFT)
+                    </h3>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <p className="text-muted-foreground leading-relaxed">
+                      Transfer funds directly to the club's bank account using
+                      the details below.
+                    </p>
+                    <div className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                      <p className="text-sm">
+                        <strong className="text-primary">Important:</strong>{" "}
+                        Always include your payment reference number to ensure
+                        proper allocation of your payment.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {bankDetailsLoading && (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                )}
+
+                {!bankDetailsLoading && (
+                  <div className="flex justify-center">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl w-full">
+                      <Card className="group hover:shadow-md transition-shadow border-primary/10">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3 flex-1">
+                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                <Building2 className="h-5 w-5 text-primary" />
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                                  Bank Name
+                                </p>
+                                <p className="font-semibold text-lg">
+                                  {bankDetails?.bank}
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                copyToClipboard(bankDetails?.bank || "", "bank")
+                              }
+                              className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              {copiedField === "bank" ? (
+                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                              ) : (
+                                <Copy className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      <Card className="group hover:shadow-md transition-shadow border-primary/10">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3 flex-1">
+                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                <Hash className="h-5 w-5 text-primary" />
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                                  Account Number
+                                </p>
+                                <p className="font-semibold font-mono text-lg">
+                                  {bankDetails?.account_number}
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                copyToClipboard(
+                                  bankDetails?.account_number || "",
+                                  "account"
+                                )
+                              }
+                              className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              {copiedField === "account" ? (
+                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                              ) : (
+                                <Copy className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="group hover:shadow-md transition-shadow border-primary/10">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3 flex-1">
+                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                <Hash className="h-5 w-5 text-primary" />
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                                  Branch Code
+                                </p>
+                                <p className="font-semibold font-mono text-lg">
+                                  {bankDetails?.branch_code}
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                copyToClipboard(
+                                  bankDetails?.branch_code || "",
+                                  "branch"
+                                )
+                              }
+                              className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              {copiedField === "branch" ? (
+                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                              ) : (
+                                <Copy className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="group hover:shadow-md transition-shadow border-primary/10">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3 flex-1">
+                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                <Building2 className="h-5 w-5 text-primary" />
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                                  Account Type
+                                </p>
+                                <p className="font-semibold text-lg">
+                                  {bankDetails?.account_type}
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                copyToClipboard(
+                                  bankDetails?.account_type || "",
+                                  "type"
+                                )
+                              }
+                              className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              {copiedField === "type" ? (
+                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                              ) : (
+                                <Copy className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {bankDetails?.payment_reference && (
+                        <Card className="group hover:shadow-lg transition-shadow sm:col-span-2 border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
+                          <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4 flex-1">
+                                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+                                  <Hash className="h-6 w-6 text-primary" />
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <p className="text-sm text-muted-foreground uppercase tracking-wide">
+                                      Payment Reference
+                                    </p>
+                                    <Badge className="bg-primary/20 text-primary text-xs">
+                                      Important!
+                                    </Badge>
+                                  </div>
+                                  <p className="font-bold font-mono text-xl text-primary">
+                                    {bankDetails?.payment_reference}
+                                  </p>
+                                  <div className="mt-3 space-y-1">
+                                    <p className="text-xs text-muted-foreground">
+                                      Always include this reference with your
+                                      payment
+                                    </p>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                      <strong>Note:</strong> This reference
+                                      number is displayed on the admin side.
+                                      When you make a payment (e.g., via EFT),
+                                      include this number as your proof of
+                                      reference so the admin can verify and
+                                      match your payment to your account.
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  copyToClipboard(
+                                    bankDetails?.payment_reference || "",
+                                    "reference"
+                                  )
+                                }
+                                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                {copiedField === "reference" ? (
+                                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                ) : (
+                                  <Copy className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+            {data?.payfast_enabled &&
+              data?.club_member_exists &&
+              (bankDetails?.outstanding_amount ?? 0) > 0 && (
+                <TabsContent
+                  value="online"
+                  className="pt-4 flex-1 overflow-y-auto"
+                >
+                  <div className="flex justify-center pr-4">
+                    <div className="max-w-2xl w-full">
+                      <PayFastPayment
+                        clubAccountId={data?.club_account_id ?? ""}
+                        outstandingAmount={bankDetails?.outstanding_amount ?? 0}
+                      />
+                    </div>
+                  </div>
+                </TabsContent>
+              )}
+            {data?.custom_payment_methods &&
+              data.custom_payment_methods.map((method: any, index: number) => (
+                <TabsContent
+                  key={index}
+                  value={`custom-${index}`}
+                  className="pt-4 flex-1 overflow-y-auto"
+                >
+                  <div className="space-y-6">
+                    <div className="text-center space-y-4">
+                      <div className="flex items-center justify-center gap-2">
+                        <CreditCard className="w-6 h-6 text-primary" />
+                        <h3 className="text-xl font-semibold">{method.name}</h3>
+                      </div>
+                      <p className="text-muted-foreground">
+                        Click the button below to proceed to {method.name} for
+                        payment
+                      </p>
+                    </div>
+                    <div className="flex justify-center">
+                      <Button
+                        size="lg"
+                        onClick={() => window.open(method.url, "_blank")}
+                        className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Pay with {method.name}
+                      </Button>
+                    </div>
+                  </div>
+                </TabsContent>
+              ))}
+          </Tabs>
+        </DialogContent>
+      </Dialog>
     </Pager>
   );
 }

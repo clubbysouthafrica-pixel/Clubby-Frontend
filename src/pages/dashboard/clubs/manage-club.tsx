@@ -29,20 +29,19 @@ export default function ManageClubDashboard() {
         <div className="w-full">
           <ImageUploadDialog
             title="Cover Image"
-            className="h-28 md:h-28 bg-muted/30"
+            className="h-28 md:h-28"
             description="Upload a new cover image."
             presignedUrl={clubDetails.images.cover.uploadUrl}
             imageUrl={clubDetails.images.cover?.fetchUrl ?? ""}
           />
           <div className="flex content-center">
-            <div className="rounded-full overflow-hidden w-28 h-28 -mt-14 ml-6 cursor-pointer hover:shadow-xl z-10">
-              <ImageUploadDialog
-                title="Profile Image"
-                description="Upload a new profile image."
-                presignedUrl={clubDetails.images.profile.uploadUrl}
-                imageUrl={clubDetails.images.profile?.fetchUrl ?? ""}
-              />
-            </div>
+            <ImageUploadDialog
+              title="Profile Image"
+              description="Upload a new profile image."
+              presignedUrl={clubDetails.images.profile.uploadUrl}
+              imageUrl={clubDetails.images.profile?.fetchUrl ?? ""}
+              className="rounded-full w-28 h-28 -mt-14 ml-6 border-4 border-background shadow-lg"
+            />
             <div className="mt-2 ml-auto">
               <ShareClubDialog clubId={club.club_account_id} />
             </div>

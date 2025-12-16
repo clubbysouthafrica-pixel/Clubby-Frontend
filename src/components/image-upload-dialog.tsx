@@ -370,19 +370,19 @@ export default function ImageUploadDialog({
         <div className="group relative">
           <Avatar
             className={cn(
-              "w-full h-full rounded-xl overflow-hidden cursor-pointer transition-all duration-500",
+              "w-full h-full rounded-xl cursor-pointer transition-all duration-500 bg-gray-200",
               "group-hover:scale-[1.02] group-hover:shadow-2xl group-hover:shadow-primary/25",
               "ring-2 ring-transparent group-hover:ring-primary/20",
               className
             )}
           >
-            <AvatarImage
-              className={cn("w-full h-full object-center object-cover transition-all duration-500 group-hover:scale-105")}
-              src={imageUrl}
-            />
-            <AvatarFallback className="w-full h-full object-center object-cover rounded-xl bg-gradient-to-br from-muted/50 to-muted/30 flex items-center justify-center">
-              <ImageIcon className="w-8 h-8 text-muted-foreground/50" />
-            </AvatarFallback>
+            <div className="overflow-hidden w-full h-full">
+              <AvatarImage
+                className={cn("w-full h-full object-center object-cover transition-all duration-500 group-hover:scale-105")}
+                src={imageUrl}
+              />
+            </div>
+            <AvatarFallback className="w-full h-full object-center object-cover rounded-xl bg-gray-200" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center">
               <div className="bg-white/95 backdrop-blur-md rounded-full p-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-100 scale-75 shadow-xl border border-primary/20">
                 <EditIcon className="w-5 h-5 text-primary" />

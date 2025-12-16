@@ -737,8 +737,9 @@ export function CurrentMemberRegistration({
                       />
                     );
                   }
-
+                  
                   if (field.type === "DNE") {
+                    console.log(field)
                     return (
                       <div
                         key={field.label}
@@ -757,7 +758,7 @@ export function CurrentMemberRegistration({
               )}
             </div>
 
-            {/* Pagination Controls */}
+            
             {data.pages.length > 1 && (
               <div className="flex justify-between items-center pt-3 border-t mt-2">
                 {currentPageIndex > 0 ? (
