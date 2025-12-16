@@ -440,6 +440,7 @@ export default function EditClubDetails() {
                 club_account_id={club?.club_account_id as string}
                 bankDetails={data?.bank_details}
                 payfastEnabled={data?.payfast_enabled}
+                customPaymentMethods={data?.custom_payment_methods}
                 onSave={handleBankingDetailsSave}
                 isPending={isPending}
               />

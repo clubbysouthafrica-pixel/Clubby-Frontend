@@ -22,3 +22,10 @@ export const fetchClubDetails = (clubId: string) => {
 export const updateClubDetails = (clubDetailsRequest: ClubDetailsRequest) => {
     return api.post("club/updateClubDetails", clubDetailsRequest).then(res => res.data)
 }
+
+export const updateCustomPaymentMethods = (clubAccountId: string, customPaymentMethods: Array<{ name: string; url: string }>) => {
+    return api.post("club/updateCustomPaymentMethods", {
+        club_account_id: clubAccountId,
+        custom_payment_methods: customPaymentMethods
+    }).then(res => res.data)
+}
