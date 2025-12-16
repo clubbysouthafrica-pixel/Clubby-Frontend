@@ -222,7 +222,7 @@ export function ClubRegisterForm() {
     setTotalRegistrationFee(0);
   };
 
-  if (isLoading || !data?.pages) {
+  if (isLoading || !data?.pages || !data?.currency  || !data?.club_name) {
     return (
       <div className="flex justify-center py-8">
         <Loader2 className="h-8 w-8 animate-spin" />
