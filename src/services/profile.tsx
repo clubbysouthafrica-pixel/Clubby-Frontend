@@ -16,3 +16,11 @@ export const getProfileService = () => {
     return api.get("/user/getUser")
         .then(res => res.data)
 }
+
+export const updatePaymentReferenceService = (club_account_id: string, registration_payment_reference: string): Promise<any> => {
+    return api.post('/clubMember/updatePaymentReference', {
+        club_account_id,
+        registration_payment_reference
+    })
+        .then(res => res.data)
+}

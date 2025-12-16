@@ -57,11 +57,14 @@ import { formatAmount } from "@/data/currencies";
 import { useFetchUserTransactions } from "@/queries/transactions";
 import * as React from "react";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { MemberRegistration } from "@/components/member/current_registration/current_member_registration";
 import { PayFastPayment } from "@/components/payments/payfast-payment";
 import { AuthContext } from "@/context/AuthContext";
 import { useContext } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { updatePaymentReferenceService } from "@/services/profile";
+import { toast } from "sonner";
 
 function epochToJoinedString(epoch: number): string {
   const date = new Date(epoch); // if epoch is in seconds, use new Date(epoch * 1000)
@@ -116,6 +119,9 @@ export default function ViewClubPage() {
   const [activeTab, setActiveTab] = useState("home");
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [iframeLoading, setIframeLoading] = useState(true);
+  const [editingReference, setEditingReference] = useState(false);
+  const [newReference, setNewReference] = useState(bankDetails?.registration_payment_reference || "");
+  const [savingReference, setSavingReference] = useState(false);
 
   const toggleRow = (id: string) => {
     setExpandedRows((prev) => ({
@@ -148,6 +154,31 @@ export default function ViewClubPage() {
     setTimeout(() => setCopiedField(null), 2000);
   };
 
+  const handleSaveReference = async () => {
+    setSavingReference(true);
+    try {
+      await updatePaymentReferenceService(data?.club_account_id ?? "", newReference);
+      // Update the local bankDetails state
+      if (bankDetails) {
+        bankDetails.registration_payment_reference = newReference;
+      }
+      setEditingReference(false);
+      toast.success("Payment reference updated successfully");
+    } catch (error) {
+      console.error("Failed to update payment reference:", error);
+      toast.error("Failed to update payment reference");
+      // Reset to original value on error
+      setNewReference(bankDetails?.registration_payment_reference || "");
+    } finally {
+      setSavingReference(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setNewReference(bankDetails?.registration_payment_reference || "");
+    setEditingReference(false);
+  };
+
   const [coverImage, setCoverImage] = useState("");
   const [profileImage, setProfileImage] = useState("");
 
@@ -170,6 +201,10 @@ export default function ViewClubPage() {
       getImg();
     }
   }, [data]);
+
+  useEffect(() => {
+    setNewReference(bankDetails?.registration_payment_reference || "");
+  }, [bankDetails?.registration_payment_reference]);
 
   const getStatusIcon = (isRegistered: boolean, resubmissionRequired: boolean) => {
     if (resubmissionRequired) {
@@ -662,12 +697,69 @@ export default function ViewClubPage() {
                           </div>
                           {bankDetails?.registration_payment_reference && (
                             <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                              <p className="text-sm text-muted-foreground mb-1">
-                                Payment Reference Number
-                              </p>
-                              <p className="font-mono font-semibold">
-                                {bankDetails.registration_payment_reference}
-                              </p>
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="text-sm text-muted-foreground">
+                                  Payment Reference Number
+                                </p>
+                                {!editingReference && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setEditingReference(true)}
+                                    className="h-6 px-2 text-xs"
+                                  >
+                                    Edit
+                                  </Button>
+                                )}
+                              </div>
+
+                              {!editingReference ? (
+                                <>
+                                  <p className="font-mono font-semibold">
+                                    {bankDetails.registration_payment_reference}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground leading-relaxed mt-2">
+                                    This reference number is displayed on the admin side. When you make a payment (e.g., via EFT), include this number as your proof of reference so the admin can verify and match your payment to your account.
+                                  </p>
+                                </>
+                              ) : (
+                                <div className="space-y-3">
+                                  <div className="space-y-1">
+                                    <Label htmlFor="reference-input" className="text-xs">
+                                      New Reference Number
+                                    </Label>
+                                    <Input
+                                      id="reference-input"
+                                      value={newReference}
+                                      onChange={(e) => setNewReference(e.target.value)}
+                                      placeholder="Enter new reference number"
+                                      className="font-mono"
+                                    />
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      onClick={handleSaveReference}
+                                      disabled={savingReference || !newReference.trim()}
+                                      className="flex-1"
+                                    >
+                                      {savingReference && (
+                                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                      )}
+                                      Save
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={handleCancelEdit}
+                                      disabled={savingReference}
+                                      className="flex-1"
+                                    >
+                                      Cancel
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
                         </CardHeader>
@@ -702,11 +794,18 @@ export default function ViewClubPage() {
                           <Tabs defaultValue="eft" className="px-6 pb-6">
                             <TabsList
                               className={`grid w-full ${
-                                data?.payfast_enabled &&
-                                data?.club_member_exists &&
-                                (bankDetails?.outstanding_amount ?? 0) > 0
-                                  ? "grid-cols-2"
-                                  : "grid-cols-1"
+                                (() => {
+                                  let cols = 1;
+                                  if (data?.payfast_enabled &&
+                                    data?.club_member_exists &&
+                                    (bankDetails?.outstanding_amount ?? 0) > 0) {
+                                    cols++;
+                                  }
+                                  if (data?.custom_payment_methods && data.custom_payment_methods.length > 0) {
+                                    cols += data.custom_payment_methods.length;
+                                  }
+                                  return `grid-cols-${cols}`;
+                                })()
                               }`}
                             >
                               <TabsTrigger value="eft">
@@ -719,6 +818,11 @@ export default function ViewClubPage() {
                                     Online Payment
                                   </TabsTrigger>
                                 )}
+                              {data?.custom_payment_methods && data.custom_payment_methods.map((method: any, index: number) => (
+                                <TabsTrigger key={index} value={`custom-${index}`}>
+                                  {method.name}
+                                </TabsTrigger>
+                              ))}
                             </TabsList>
                             <TabsContent value="eft" className="pt-4">
                               <div className="space-y-6">
@@ -903,7 +1007,6 @@ export default function ViewClubPage() {
                                       </CardContent>
                                     </Card>
 
-                                    {/* Payment Reference - Highlighted */}
                                     {bankDetails?.payment_reference && (
                                       <Card className="group hover:shadow-lg transition-shadow sm:col-span-2 border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
                                         <CardContent className="p-6">
@@ -926,10 +1029,14 @@ export default function ViewClubPage() {
                                                     bankDetails?.payment_reference
                                                   }
                                                 </p>
-                                                <p className="text-xs text-muted-foreground mt-1">
-                                                  Always include this reference
-                                                  with your payment
-                                                </p>
+                                                <div className="mt-3 space-y-1">
+                                                  <p className="text-xs text-muted-foreground">
+                                                    Always include this reference with your payment
+                                                  </p>
+                                                  <p className="text-xs text-muted-foreground leading-relaxed">
+                                                    <strong>Note:</strong> This reference number is displayed on the admin side. When you make a payment (e.g., via EFT), include this number as your proof of reference so the admin can verify and match your payment to your account.
+                                                  </p>
+                                                </div>
                                               </div>
                                             </div>
                                             <Button
@@ -973,6 +1080,37 @@ export default function ViewClubPage() {
                                   />
                                 </TabsContent>
                               )}
+                            {data?.custom_payment_methods && data.custom_payment_methods.map((method: any, index: number) => (
+                              <TabsContent
+                                key={index}
+                                value={`custom-${index}`}
+                                className="px-6 py-8"
+                              >
+                                <div className="space-y-6">
+                                  <div className="text-center space-y-4">
+                                    <div className="flex items-center justify-center gap-2">
+                                      <CreditCard className="w-6 h-6 text-primary" />
+                                      <h3 className="text-xl font-semibold">
+                                        {method.name}
+                                      </h3>
+                                    </div>
+                                    <p className="text-muted-foreground">
+                                      Click the button below to proceed to {method.name} for payment
+                                    </p>
+                                  </div>
+                                  <div className="flex justify-center">
+                                    <Button
+                                      size="lg"
+                                      onClick={() => window.open(method.url, "_blank")}
+                                      className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300"
+                                    >
+                                      <ExternalLink className="w-4 h-4 mr-2" />
+                                      Pay with {method.name}
+                                    </Button>
+                                  </div>
+                                </div>
+                              </TabsContent>
+                            ))}
                           </Tabs>
                         </Card>
                       )}
