@@ -176,7 +176,7 @@ export function OnboardMemberForm({
                                         <Button type="submit" className="w-full" disabled={isPending}>
                                             {isPending ? <><Loader2 className="h-8 w-8 animate-spin" /> Saving</> : "Save"}
                                         </Button>
-                                    </div>+270727187289
+                                    </div>
                                 </div>
                             </form>
                         </CardContent>
