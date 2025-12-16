@@ -56,16 +56,18 @@ export function ClubRegisterForm() {
   const [clubName, setClubName] = useState("");
 
   useEffect(() => {
+    // Set currency and club name immediately when data is loaded
+    if (data?.currency) {
+      setClubCurrency(data.currency);
+    }
+    if (data?.club_name) {
+      setClubName(data.club_name);
+    }
+  }, [data?.currency, data?.club_name]);
+
+  useEffect(() => {
     const processSignatures = async () => {
       if (!data?.pages) return;
-      
-      // Set currency and club name when data is loaded
-      if (data?.currency && !clubCurrency) {
-        setClubCurrency(data.currency);
-      }
-      if (data?.club_name && !clubName) {
-        setClubName(data.club_name);
-      }
       
       const updatedPages = await Promise.all(
         data.pages.map(async (page: FormPage) => ({
@@ -91,7 +93,7 @@ export function ClubRegisterForm() {
     };
     
     processSignatures();
-  }, [data]);
+  }, [data?.pages]);
 
   const setFieldValue = (
     pageIndex: number,
