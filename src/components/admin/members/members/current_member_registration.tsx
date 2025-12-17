@@ -494,7 +494,8 @@ export function CurrentMemberRegistration({
                           field.label,
                           typeParam,
                           valueToSave,
-                          userId
+                          userId,
+                          metadata?.sensitive_information
                         );
 
                         toast.success(`${field.label} updated successfully`, {

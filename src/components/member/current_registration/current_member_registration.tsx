@@ -60,6 +60,7 @@ export function MemberRegistration({
         placeholder?: string;
         editable_by_member?: boolean;
         phone_number_input?: boolean;
+        sensitive_information?: boolean;
       }
     >
   >({});
@@ -285,7 +286,8 @@ export function MemberRegistration({
                           field.field_id || "",
                           field.label,
                           typeParam,
-                          valueToSave
+                          valueToSave,
+                          metadata?.sensitive_information
                         );
 
                         toast.success(`${field.label} updated successfully`, {

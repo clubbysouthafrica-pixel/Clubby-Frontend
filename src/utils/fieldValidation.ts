@@ -7,6 +7,7 @@ export interface FieldMetadata {
   required?: boolean;
   placeholder?: string;
   phone_number_input?: boolean;
+  sensitive_information?: boolean;
 }
 
 /**

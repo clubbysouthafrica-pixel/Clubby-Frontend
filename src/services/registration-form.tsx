@@ -34,7 +34,8 @@ export const updateMemberRegistrationField = (
     fieldId: string,
     fieldName: string,
     type: string,
-    value: string
+    value: string,
+    sensitive_information?: boolean
 ): Promise<any> => {
     if (!registrationId || !fieldId || !fieldName || !type) {
         throw new Error("registrationId, fieldId, fieldName, and type are required");
@@ -45,7 +46,8 @@ export const updateMemberRegistrationField = (
         field_id: fieldId,
         field_name: fieldName,
         type: type,
-        value: value
+        value: value,
+        sensitive_information: sensitive_information
     })
         .then(res => {
             console.log("Member field updated successfully:", res.data);
