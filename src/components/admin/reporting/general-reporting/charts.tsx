@@ -167,19 +167,19 @@ export function RegistrationComboChart({ data, currency }: RegistrationComboChar
           <YAxis
             yAxisId="left"
             tick={{ fontSize: 12 }}
+            tickFormatter={(v) => formatAmount(Number(v), currency)}
           />
           <YAxis
             yAxisId="right"
             orientation="right"
             tick={{ fontSize: 12 }}
-            tickFormatter={(v) => formatAmount(Number(v), currency)}
           />
           <Tooltip content={<RegistrationCustomTooltip currency={currency} />} />
           <Legend />
-          <Bar yAxisId="left" dataKey="registered" name="Completed Registrations" fill={CHART_COLORS.registered.fill} stroke={CHART_COLORS.registered.stroke} strokeWidth={1} radius={[4, 4, 0, 0]} label={{ position: "top", fill: CHART_COLORS.registered.stroke, fontSize: 11 }} />
-          <Bar yAxisId="left" dataKey="pendingMembers" name="Pending Members" fill={CHART_COLORS.deregistered.fill} stroke={CHART_COLORS.deregistered.stroke} strokeWidth={1} radius={[4, 4, 0, 0]} label={{ position: "top", fill: CHART_COLORS.deregistered.stroke, fontSize: 11 }} />
-          <Line yAxisId="right" type="monotone" dataKey="revenue" name="Revenue" stroke={CHART_COLORS.revenue.stroke} strokeWidth={2} dot={false} />
-          <Line yAxisId="right" type="monotone" dataKey="pending" name="Pending Revenue" stroke={CHART_COLORS.pendingRevenue.stroke} strokeWidth={2} dot={false} strokeDasharray="5 5" />
+          <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill={CHART_COLORS.registered.fill} stroke={CHART_COLORS.registered.stroke} strokeWidth={1} radius={[4, 4, 0, 0]} />
+          <Bar yAxisId="left" dataKey="pending" name="Pending Revenue" fill={CHART_COLORS.deregistered.fill} stroke={CHART_COLORS.deregistered.stroke} strokeWidth={1} radius={[4, 4, 0, 0]} />
+          <Line yAxisId="right" type="monotone" dataKey="registered" name="Completed Registrations" stroke={CHART_COLORS.revenue.stroke} strokeWidth={2} dot={false} />
+          <Line yAxisId="right" type="monotone" dataKey="pendingMembers" name="Pending Members" stroke={CHART_COLORS.pendingRevenue.stroke} strokeWidth={2} dot={false} strokeDasharray="5 5" />
         </ComposedChart>
       </ResponsiveContainer>
     </div>
@@ -295,15 +295,15 @@ export function RegistrationBillingChart({ data, currency }: RegistrationBilling
         <ComposedChart data={chartData} margin={{ top: 10, right: 56, left: 56, bottom: 40 }}>
           <CartesianGrid strokeDasharray="4 4" className="stroke-muted" />
           <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-          <YAxis yAxisId="left" tick={{ fontSize: 11 }} />
-          <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} tickFormatter={(v) => formatAmount(Number(v), currency)} />
+          <YAxis yAxisId="left" tick={{ fontSize: 11 }} tickFormatter={(v) => formatAmount(Number(v), currency)} />
+          <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} />
           <Tooltip content={<RegistrationBillingTooltip currency={currency} />} />
           <Legend />
-          {/* Use same bar colors as general reporting: green for primary metric, red for the adverse/pending metric */}
-          <Bar yAxisId="left" dataKey="total" name="Total" fill={CHART_COLORS.registered.fill} stroke={CHART_COLORS.registered.stroke} strokeWidth={1} radius={[4,4,0,0]} />
-          <Bar yAxisId="left" dataKey="pending" name="Pending" fill={CHART_COLORS.deregistered.fill} stroke={CHART_COLORS.deregistered.stroke} strokeWidth={1} radius={[4,4,0,0]} />
-          <Line yAxisId="right" type="monotone" dataKey="paid" name="Paid" stroke={CHART_COLORS.paid.stroke} strokeWidth={2} dot={false} />
-          <Line yAxisId="right" type="monotone" dataKey="due" name="Due" stroke={CHART_COLORS.due.stroke} strokeWidth={2} dot={false} strokeDasharray="5 5" />
+          {/* Bars showing paid (green) and due (red) amounts */}
+          <Bar yAxisId="left" dataKey="paid" name="Paid" fill={CHART_COLORS.registered.fill} stroke={CHART_COLORS.registered.stroke} strokeWidth={1} radius={[4,4,0,0]} />
+          <Bar yAxisId="left" dataKey="due" name="Due" fill={CHART_COLORS.deregistered.fill} stroke={CHART_COLORS.deregistered.stroke} strokeWidth={1} radius={[4,4,0,0]} />
+          <Line yAxisId="right" type="monotone" dataKey="total" name="Total" stroke={CHART_COLORS.paid.stroke} strokeWidth={2} dot={false} />
+          <Line yAxisId="right" type="monotone" dataKey="pending" name="Pending" stroke={CHART_COLORS.due.stroke} strokeWidth={2} dot={false} strokeDasharray="5 5" />
         </ComposedChart>
       </ResponsiveContainer>
     </div>
