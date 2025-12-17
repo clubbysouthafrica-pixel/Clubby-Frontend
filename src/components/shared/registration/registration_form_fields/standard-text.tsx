@@ -34,7 +34,30 @@ export default function StandardText({
 }: StandardFieldInputProps) {
   const isNumber = field.input_type?.toLowerCase() === "number"
   const isPhoneNumber = field.phone_number_input === true
-  const [countryCode, setCountryCode] = useState("ZA")
+  
+  // Parse prefilled phone number if it exists
+  const parsePhoneNumber = () => {
+    if (!isPhoneNumber || !field.value) {
+      return { country: "ZA", number: field.value ?? "" }
+    }
+    
+    // Sort by longest dialing code first to avoid conflicts (e.g., +2 vs +27)
+    const sortedCodes = [...countryCodes].sort((a, b) => b.dialingCode.length - a.dialingCode.length)
+    
+    for (const country of sortedCodes) {
+      if (field.value.startsWith(country.dialingCode)) {
+        const numberOnly = field.value.substring(country.dialingCode.length)
+        return { country: country.code, number: numberOnly }
+      }
+    }
+    
+    // If no match found, default to ZA and return the whole value
+    return { country: "ZA", number: field.value }
+  }
+  
+  const parsed = parsePhoneNumber()
+  const [countryCode, setCountryCode] = useState(parsed.country)
+  const [phoneNumber, setPhoneNumber] = useState(parsed.number)
   const [phoneError, setPhoneError] = useState("")
 
   const onChange = (val: string) => {
@@ -52,8 +75,6 @@ export default function StandardText({
       )
     }
   }
-
-  const [phoneNumber, setPhoneNumber] = useState(field.value ?? "")
 
   const validateAndFormatPhoneNumber = (): string => {
     if (!phoneNumber.trim()) {
