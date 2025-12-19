@@ -4,11 +4,11 @@ import { MdOutlineFormatListBulleted } from 'react-icons/md';
 import { FaUserPlus } from 'react-icons/fa';
 import { HiOutlineMailOpen } from 'react-icons/hi';
 import { FaRegMoneyBillAlt } from 'react-icons/fa';
-import {
-    Award,
-    Clock,
-    Users,
-} from "lucide-react";
+// import {
+//     Award,
+//     Clock,
+//     Users,
+// } from "lucide-react";
 import Pager from "@/components/pager";
 
 const values = [
