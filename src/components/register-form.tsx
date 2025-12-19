@@ -22,6 +22,8 @@ export function RegisterForm({
 }: React.ComponentProps<"div">) {
   const { register } = (useContext(AuthContext) as AuthContextType) || {};
 
+  const [agreed, setAgreed] = useState(false);
+
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -106,6 +108,33 @@ export function RegisterForm({
                       )}
                     </button>
                   </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="terms"
+                    type="checkbox"
+                    checked={agreed}
+                    onChange={(e) => setAgreed(e.target.checked)}
+                    required
+                  />
+                  <Label htmlFor="terms" className="text-xs">
+                    I agree to the{" "}
+                    <a
+                      target="_blank"
+                      href="/terms"
+                      className="underline underline-offset-4 text-primary hover:text-primary/80"
+                    >
+                      Terms of service
+                    </a>{" "}
+                    and{" "}
+                    <a
+                      target="_blank"
+                      href="/privacy"
+                      className="underline underline-offset-4 text-primary hover:text-primary/80"
+                    >
+                      Privacy Policy
+                    </a>
+                  </Label>
                 </div>
                 {error && (
                   <Alert variant="destructive">
