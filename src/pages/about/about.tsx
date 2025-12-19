@@ -38,23 +38,23 @@ const values = [
     },
 ];
 
-const achievements = [
-    {
-        number: "10k",
-        label: "Active Users",
-        icon: <Users className="w-6 h-6" />,
-    },
-    {
-        number: "10+",
-        label: "Clubs",
-        icon: <Award className="w-6 h-6" />,
-    },
-    {
-        number: "24/7",
-        label: "Support",
-        icon: <Clock className="w-6 h-6" />,
-    },
-];
+// const achievements = [
+//     {
+//         number: "10k",
+//         label: "Active Users",
+//         icon: <Users className="w-6 h-6" />,
+//     },
+//     {
+//         number: "10+",
+//         label: "Clubs",
+//         icon: <Award className="w-6 h-6" />,
+//     },
+//     {
+//         number: "24/7",
+//         label: "Support",
+//         icon: <Clock className="w-6 h-6" />,
+//     },
+// ];
 
 export default function AboutPage() {
     return (
