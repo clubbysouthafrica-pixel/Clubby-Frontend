@@ -99,7 +99,7 @@ export default function AboutPage() {
                     </div>
                 </div>
 
-                <div className="mb-24 bg-primary/5 rounded-3xl py-16">
+                {/* <div className="mb-24 bg-primary/5 rounded-3xl py-16">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
                         {achievements.map((achievement, index) => (
                             <motion.div
@@ -117,7 +117,7 @@ export default function AboutPage() {
                             </motion.div>
                         ))}
                     </div>
-                </div>
+                </div> */}
 
                 <div className="max-w-3xl mx-auto text-center">
                     <Card>
