@@ -36,6 +36,7 @@ interface FieldData {
   options?: string[];
   input_type: string;
   page_header: string;
+  sensitive_information?: boolean;
 }
 
 interface EditRegistrationFieldDialogProps {
@@ -156,11 +157,12 @@ export function EditRegistrationFieldDialog({
 
       await updateRegistrationField(
         registrationId,
-        userId,
         fieldDbId!,
         fieldData?.field_name || fieldLabel || "",
         type,
-        editValue
+        editValue,
+        userId,
+        fieldData?.sensitive_information
       );
       
       toast.success(`${fieldData?.field_name || fieldLabel} updated successfully`, {

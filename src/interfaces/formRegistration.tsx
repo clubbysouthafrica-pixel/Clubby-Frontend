@@ -30,6 +30,7 @@ export interface InputFormRegistration {
     value?: any
     editable_by_member?: boolean
     phone_number_input?: boolean
+    sensitive_information?: boolean
 }
 
 export interface PageFormRegistration {

@@ -4,11 +4,11 @@ import { MdOutlineFormatListBulleted } from 'react-icons/md';
 import { FaUserPlus } from 'react-icons/fa';
 import { HiOutlineMailOpen } from 'react-icons/hi';
 import { FaRegMoneyBillAlt } from 'react-icons/fa';
-import {
-    Award,
-    Clock,
-    Users,
-} from "lucide-react";
+// import {
+//     Award,
+//     Clock,
+//     Users,
+// } from "lucide-react";
 import Pager from "@/components/pager";
 
 const values = [
@@ -38,23 +38,23 @@ const values = [
     },
 ];
 
-const achievements = [
-    {
-        number: "10k",
-        label: "Active Users",
-        icon: <Users className="w-6 h-6" />,
-    },
-    {
-        number: "10+",
-        label: "Clubs",
-        icon: <Award className="w-6 h-6" />,
-    },
-    {
-        number: "24/7",
-        label: "Support",
-        icon: <Clock className="w-6 h-6" />,
-    },
-];
+// const achievements = [
+//     {
+//         number: "10k",
+//         label: "Active Users",
+//         icon: <Users className="w-6 h-6" />,
+//     },
+//     {
+//         number: "10+",
+//         label: "Clubs",
+//         icon: <Award className="w-6 h-6" />,
+//     },
+//     {
+//         number: "24/7",
+//         label: "Support",
+//         icon: <Clock className="w-6 h-6" />,
+//     },
+// ];
 
 export default function AboutPage() {
     return (
@@ -99,7 +99,7 @@ export default function AboutPage() {
                     </div>
                 </div>
 
-                <div className="mb-24 bg-primary/5 rounded-3xl py-16">
+                {/* <div className="mb-24 bg-primary/5 rounded-3xl py-16">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
                         {achievements.map((achievement, index) => (
                             <motion.div
@@ -117,7 +117,7 @@ export default function AboutPage() {
                             </motion.div>
                         ))}
                     </div>
-                </div>
+                </div> */}
 
                 <div className="max-w-3xl mx-auto text-center">
                     <Card>

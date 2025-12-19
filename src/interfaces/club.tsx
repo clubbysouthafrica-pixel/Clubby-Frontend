@@ -35,4 +35,5 @@ export interface RegisterClubMember {
     clubId: string
     userId: string
     payment_amount: number
+    payment_method?: string
 }

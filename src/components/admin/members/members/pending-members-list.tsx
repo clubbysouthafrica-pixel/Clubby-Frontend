@@ -54,7 +54,7 @@ interface ImageProps {
   listActionItems: { email: string; name: string }[];
   reset: () => void;
   handleFormattedInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  registerUser: (member: ClubMember) => void;
+  registerUser: (member: ClubMember, paymentMethod?: string) => void;
   setSelectedMember: React.Dispatch<React.SetStateAction<object>>;
   setOpenDialogUserId: React.Dispatch<React.SetStateAction<string | null>>;
   setlistActionItems: React.Dispatch<
@@ -93,6 +93,8 @@ export default function PendingMembersList({
   setUnregisteredMembersLength,
   setAllListActionItems,
 }: ImageProps) {
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("EFT/Cash");
+
   const filteredUnregisteredMembers = useMemo(() => {
     const base = selectedTab === "pending-members"
       ? clubMembers?.unregistered?.filter((member: ClubMember) => {
@@ -307,7 +309,7 @@ export default function PendingMembersList({
                               </Label>
                             </div>
                             {member.outstanding_amount > 0 && (
-                              <div className="grid gap-3">
+                              <div className="grid gap-3 my-4">
                                 <Label htmlFor="pay">Payment Amount</Label>
                                 <Input
                                   id="pay"
@@ -316,6 +318,29 @@ export default function PendingMembersList({
                                   value={displayAmount}
                                   onChange={handleFormattedInputChange}
                                 />
+                              </div>
+                            )}
+                            {clubMembers?.payment_methods && clubMembers.payment_methods.length > 0 && (
+                              <div className="grid gap-4 pt-2">
+                                <div>
+                                  <Label className="text-sm font-semibold mb-2 block">Payment Method</Label>
+                                  <div className="space-y-3 bg-muted/40 p-4 rounded-lg">
+                                    {clubMembers.payment_methods.map((method: string) => (
+                                      <div key={method} className="flex items-center gap-3">
+                                        <Checkbox
+                                          id={`payment-${method}`}
+                                          checked={selectedPaymentMethod === method}
+                                          onCheckedChange={(checked) => {
+                                            setSelectedPaymentMethod(checked ? method : "");
+                                          }}
+                                        />
+                                        <Label htmlFor={`payment-${method}`} className="cursor-pointer font-normal text-sm">
+                                          {method}
+                                        </Label>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
                               </div>
                             )}
                             {isError && (
@@ -332,7 +357,7 @@ export default function PendingMembersList({
                               <Button variant="outline">Cancel</Button>
                             </DialogClose>
                             <Button
-                              onClick={() => registerUser(member)}
+                              onClick={() => registerUser(member, selectedPaymentMethod)}
                               disabled={isPending}
                             >
                               {isPending ? "Registering..." : "Register Member"}

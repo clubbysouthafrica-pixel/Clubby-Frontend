@@ -10,7 +10,8 @@ export const registerMemberToClub = (request: RegisterClubMember) =>
     api.post("/clubMember/registerMember", {
         club_account_id: request.clubId,
         member_id: request.userId,
-        payment_amount: request.payment_amount
+        payment_amount: request.payment_amount,
+        payment_method: request.payment_method
     }).then(res => res.data)
 
 export const removeMember = (clubAccountId: string, memberId: string) =>

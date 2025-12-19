@@ -62,14 +62,16 @@ export default function BillingDropdown({
     }, [field?.multiplier_value, field?.value])
 
     const onBillingSelect = (label: string) => {
-        const option = field.billingOptions?.find((o) => o.label === label)
+        // If "undefined" is selected, set value to empty string
+        const valueToSet = label === "undefined" ? "" : label
+        const option = field.billingOptions?.find((o) => o.label === valueToSet)
         setMultiplier(1)
         setFieldValue(
             pages[currentPageIndex].page_index,
             field.field_id,
             (f) => ({
                 ...f,
-                value: label,
+                value: valueToSet,
                 selectedAmountCents: option?.amount,
                 label: option?.label,
                 option_order_id: option?.option_order_id,
@@ -109,14 +111,17 @@ export default function BillingDropdown({
             </Label>
 
             <div className="space-y-0">
-                <Select onValueChange={onBillingSelect} value={field.value || ""} open={isOpen} onOpenChange={setIsOpen}>
+                <Select onValueChange={onBillingSelect} value={field.value || "undefined"} open={isOpen} onOpenChange={setIsOpen}>
                     <SelectTrigger className={selectedOption?.multiplier && field.value ? "w-full rounded-b-none border-b-0" : "w-full"}>
                         <SelectValue placeholder={field.placeholder ?? "Select membership type"} />
                     </SelectTrigger>
 
                     <SelectContent>
                         <SelectGroup>
-                            <SelectLabel>{field.field_name}</SelectLabel>
+                            <SelectItem value="undefined" className="text-muted-foreground">
+                                -- Not Selected --
+                            </SelectItem>
+                            <SelectLabel className="text-muted-foreground/60">{field.field_name}</SelectLabel>
                             {field.billingOptions?.map((opt) => (
                                 <SelectItem key={opt.option_order_id} value={opt.label}>
                                     <div className="flex flex-col gap-1 py-2 w-full">

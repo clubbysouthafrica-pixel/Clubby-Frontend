@@ -47,7 +47,9 @@ import {
 import { Loader2 } from "lucide-react";
 
 export default function ListMembersPage() {
-  const { club, isLoading: clubLoading } = useContext(ClubContext) as ClubContextType;
+  const { club, isLoading: clubLoading } = useContext(
+    ClubContext
+  ) as ClubContextType;
   const { data: clubMembers, isLoading: clubMembersLoading } =
     useFetchClubMembers(club?.club_account_id as string);
   const { mutate, isPending, isSuccess, isError, reset } =
@@ -55,6 +57,7 @@ export default function ListMembersPage() {
   const [listActionItems, setlistActionItems] = useState<
     { email: string; name: string }[]
   >([]);
+  console.log("Club Members:", clubMembers);
   const [allMembersSelected, setAllMembersSelected] = useState(false);
   const [openDialogUserId, setOpenDialogUserId] = useState<string | null>(null);
   const [dereigsterMembers, setDeregisterMembers] = useState<
@@ -194,7 +197,7 @@ export default function ListMembersPage() {
     };
   }, []);
 
-  const registerUser = (member: ClubMember) => {
+  const registerUser = (member: ClubMember, paymentMethod?: string) => {
     if (
       memberRegisterAmount > member.outstanding_amount ||
       (memberRegisterAmount == 0 && member.outstanding_amount > 0) ||
@@ -209,6 +212,7 @@ export default function ListMembersPage() {
         clubId: club?.club_account_id as string,
         userId: member.user_id,
         payment_amount: memberRegisterAmount,
+        payment_method: paymentMethod,
       },
       {
         onSuccess: (response: any) => {
@@ -340,13 +344,15 @@ export default function ListMembersPage() {
               />
               {availableDynamicFilters &&
                 (() => {
-                  const activeFilters = availableDynamicFilters.filter(({ key }) =>
-                    activeFilterKeys.includes(key)
+                  const activeFilters = availableDynamicFilters.filter(
+                    ({ key }) => activeFilterKeys.includes(key)
                   );
 
                   // Sort filters by type: text first, then select, then boolean (checkbox)
                   const sortedFilters = activeFilters.sort((a, b) => {
-                    const getType = (filter: typeof availableDynamicFilters[0]) => {
+                    const getType = (
+                      filter: (typeof availableDynamicFilters)[0]
+                    ) => {
                       if (!filter.options) return 0; // text filters
                       if (
                         filter.options.length === 2 &&
@@ -447,7 +453,10 @@ export default function ListMembersPage() {
                     );
                   });
                 })()}
-              <Dialog open={showFilterSelector} onOpenChange={setShowFilterSelector}>
+              <Dialog
+                open={showFilterSelector}
+                onOpenChange={setShowFilterSelector}
+              >
                 <DialogTrigger asChild>
                   <Button variant="outline" className="w-[250px]">
                     + Add Filter

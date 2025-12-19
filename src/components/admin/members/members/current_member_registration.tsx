@@ -494,7 +494,8 @@ export function CurrentMemberRegistration({
                           field.label,
                           typeParam,
                           valueToSave,
-                          userId
+                          userId,
+                          metadata?.sensitive_information
                         );
 
                         toast.success(`${field.label} updated successfully`, {
@@ -593,15 +594,26 @@ export function CurrentMemberRegistration({
                       const isPhoneNumber = metadata?.phone_number_input === true;
 
                       if (inputType === "DROPDOWN") {
+                        const handleDropdownChange = (val: string) => {
+                          // If "undefined" is selected and field is not required, clear the value
+                          const valueToSet = val === "undefined" ? "" : val
+                          setEditValue(valueToSet)
+                        }
+
                         return (
                           <Select
-                            value={editValue}
-                            onValueChange={setEditValue}
+                            value={editValue || "undefined"}
+                            onValueChange={handleDropdownChange}
                           >
                             <SelectTrigger className="w-full text-sm">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
+                              {!metadata?.required && (
+                                <SelectItem value="undefined" className="text-muted-foreground">
+                                  -- Not Selected --
+                                </SelectItem>
+                              )}
                               {options.map((option: string) => (
                                 <SelectItem key={option} value={option}>
                                   {option}

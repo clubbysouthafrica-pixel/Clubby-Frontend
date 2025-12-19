@@ -73,7 +73,8 @@ export const updateRegistrationField = (
     fieldName: string,
     type: string,
     value: string,
-    user_id: string
+    user_id: string,
+    sensitive_information?: boolean,
 ): Promise<any> => {
     if (!registrationId || !fieldId || !fieldName || !type || !user_id) {
         throw new Error("registrationId, fieldId, fieldName, type, and user_id are required");
@@ -85,7 +86,8 @@ export const updateRegistrationField = (
         field_name: fieldName,
         type: type,
         value: value,
-        user_id: user_id
+        user_id: user_id,
+        sensitive_information: sensitive_information,
     })
         .then(res => {
             return res.data;

@@ -37,15 +37,20 @@ export default function StandardDropdown({
     pages,
     setFieldValue,
 }: StandardFieldInputProps) {
-    const onChange = (val: string) =>
+    const onChange = (val: string) => {
+        // If "undefined" is selected, set value to undefined (empty)
+        const valueToSet = val === "undefined" ? "" : val
         setFieldValue(
             pages[currentPageIndex].page_index,
             field.field_id,
             (f) => ({
                 ...f,
-                value: val,
+                value: valueToSet,
             })
         )
+    }
+
+    console.log(field)
 
     return (
         <div className="grid gap-2" key={field.field_id}>
@@ -55,14 +60,17 @@ export default function StandardDropdown({
             </Label>
 
 
-            <Select onValueChange={onChange} value={field.value}>
+            <Select onValueChange={onChange} value={field.value || "undefined"}>
                 <SelectTrigger className="w-full">
                     <SelectValue placeholder={field.placeholder ?? "Select an option"} />
                 </SelectTrigger>
 
                 <SelectContent>
                     <SelectGroup>
-                        <SelectLabel>Options</SelectLabel>
+                        <SelectItem value="undefined" className="text-muted-foreground">
+                            -- Select an option --
+                        </SelectItem>
+                        <SelectLabel className="text-muted-foreground/60">Options</SelectLabel>
                         {field.options?.map((opt) => (
                             <SelectItem key={opt} value={opt}>
                                 {opt}

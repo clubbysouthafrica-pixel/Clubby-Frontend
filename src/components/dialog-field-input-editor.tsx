@@ -40,6 +40,7 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
     const [editable_by_member, setEditable_by_member] = useState(false)
     const [multiplier, setMultiplier] = useState(false)
     const [phone_number_input, setPhoneNumberInput] = useState(false)
+    const [sensitive_information, setSensitiveInformation] = useState(false)
     const [dropdownOptionField, setDropdownOptionField] = useState("")
     const [amount, setAmount] = useState(0)
 
@@ -57,6 +58,7 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
         setAmount(field?.amount ?? 0)
         setMultiplier(field?.multiplier ?? false)
         setPhoneNumberInput(field?.phone_number_input ?? false)
+        setSensitiveInformation(field?.sensitive_information ?? false)
 
         if (field?.billingOptions?.length) {
             setDropdownBillingOptions(field.billingOptions)
@@ -92,6 +94,7 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
             multiplier: multiplier,
             editable_by_member: editable_by_member,
             phone_number_input: field.field_type === "STANDARD" && field.input_type?.toUpperCase() === "TEXT" ? phone_number_input : undefined,
+            sensitive_information: (field.field_type === "STANDARD" && (field.input_type?.toUpperCase() === "TEXT" || field.input_type?.toUpperCase() === "NUMBER")) ? sensitive_information : undefined,
         }
 
         if (field.input_type === "TEXT" && field.field_type === "BILLING") {
@@ -199,6 +202,9 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
                                                         )}
                                                         {field.field_type === "STANDARD" && field.input_type?.toUpperCase() === "TEXT" && (
                                                             <> | Phone Number: {field.phone_number_input ? "true" : "false"}</>
+                                                        )}
+                                                        {field.field_type === "STANDARD" && (field.input_type?.toUpperCase() === "TEXT" || field.input_type?.toUpperCase() === "NUMBER") && (
+                                                            <> | Sensitive: {field.sensitive_information ? "true" : "false"}</>
                                                         )}
                                                     </p>
                                                 ) : undefined}
@@ -328,15 +334,24 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
                                                         <Label className={required && field.input_type?.toUpperCase() === "CHECKBOX" ? "text-gray-400" : ""}>Editable by member post registration</Label>
                                                     </div>
                                                 )}
-                                                {field.input_type?.toUpperCase() === "TEXT" && (
+                                                {(field.input_type?.toUpperCase() === "TEXT" || field.input_type?.toUpperCase() === "NUMBER") && (
                                                     <div className="space-y-3 mt-4 border-t pt-4">
-                                                        <Label className="text-sm font-semibold block">Field Validations</Label>
+                                                        <Label className="text-sm font-semibold block">Field Settings</Label>
+                                                        {field.input_type?.toUpperCase() === "TEXT" && (
+                                                            <div className="flex items-center gap-3">
+                                                                <Checkbox
+                                                                    checked={phone_number_input}
+                                                                    onCheckedChange={(checked: boolean) => setPhoneNumberInput(checked)}
+                                                                />
+                                                                <Label>Validate as phone number</Label>
+                                                            </div>
+                                                        )}
                                                         <div className="flex items-center gap-3">
                                                             <Checkbox
-                                                                checked={phone_number_input}
-                                                                onCheckedChange={(checked: boolean) => setPhoneNumberInput(checked)}
+                                                                checked={sensitive_information}
+                                                                onCheckedChange={(checked: boolean) => setSensitiveInformation(checked)}
                                                             />
-                                                            <Label>Validate as phone number</Label>
+                                                            <Label>Contains sensitive information</Label>
                                                         </div>
                                                     </div>
                                                 )}
