@@ -22,6 +22,8 @@ import FinancialTransactionsPage from "@/pages/admin/reporting/financial-transac
 import OnboardClubPage from "@/pages/authentication/onboard-club";
 import AddMemberPage from "@/pages/dashboard/members/add-member";
 import LoginPage from "@/pages/authentication/login/page";
+import TermsPage from "@/pages/policies/terms";
+import PrivacyPage from "@/pages/policies/privacy";
 
 export default function AdminRoutes() {
   return (
@@ -34,6 +36,8 @@ export default function AdminRoutes() {
           </ProtectedRoute>
         }
       ></Route>
+      <Route path="/terms" element={<TermsPage />}></Route>
+      <Route path="/privacy" element={<PrivacyPage />}></Route>
       <Route path="/login" element={<LoginPage />}></Route>
       <Route path="/register" element={<RegisterPage />}></Route>
       <Route path="/forgotpassword" element={<ForgotPasswordPage />}></Route>
