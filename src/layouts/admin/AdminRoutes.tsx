@@ -24,6 +24,7 @@ import AddMemberPage from "@/pages/dashboard/members/add-member";
 import LoginPage from "@/pages/authentication/login/page";
 import TermsPage from "@/pages/policies/terms";
 import PrivacyPage from "@/pages/policies/privacy";
+import AdminPolicyPage from "@/pages/registrations/admin-policy-page";
 
 export default function AdminRoutes() {
   return (
@@ -118,6 +119,14 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <AdminRegistrationFormPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/manage/registrations/policy"
+        element={
+          <ProtectedRoute>
+            <AdminPolicyPage />
           </ProtectedRoute>
         }
       ></Route>

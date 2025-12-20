@@ -41,7 +41,10 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       >
         {club?.deregistration_in_progress && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 pointer-events-auto">
-            <Alert variant="destructive" className="w-full max-w-2xl mx-4 border-2 border-red-600 shadow-2xl">
+            <Alert
+              variant="destructive"
+              className="w-full max-w-2xl mx-4 border-2 border-red-600 shadow-2xl"
+            >
               <AlertTriangle className="h-6 w-6" />
               <AlertDescription className="ml-2 text-lg">
                 This club is currently undergoing deregistration and cannot be
@@ -94,7 +97,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </Breadcrumb>
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
+        <div className="flex flex-1 flex-col gap-4 pt-0">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   );
