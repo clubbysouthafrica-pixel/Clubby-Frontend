@@ -4,8 +4,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FileText, UploadCloud } from "lucide-react";
-// import ReactQuill from "react-quill"; // Uncomment if using react-quill
-// import "react-quill/dist/quill.snow.css";
 
 export default function AdminPolicyPage() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
