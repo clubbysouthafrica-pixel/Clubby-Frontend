@@ -110,7 +110,7 @@ export default function FinancialTransactionsPage() {
                 </Select>
             </div>
 
-            <div className="overflow-hidden rounded-lg border">
+            <div className={`overflow-hidden rounded-lg border ${filteredTransactions.length > 10 ? "max-h-[600px] overflow-y-auto" : ""}`}>
                 <Table>
                     <TableHeader className="bg-muted sticky top-0 z-10">
                         <TableRow>

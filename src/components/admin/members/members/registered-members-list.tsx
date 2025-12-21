@@ -65,7 +65,7 @@ export default function RegisteredMembersList({
     }, [filteredRegisteredMembers, setRegisteredMembersLength]);
 
     return (
-        <div className="overflow-hidden rounded-lg border">
+        <div className={`overflow-hidden rounded-lg border ${filteredRegisteredMembers.length > 10 ? "max-h-[600px] overflow-y-auto" : ""}`}>
             <DndContext
                 collisionDetection={closestCenter}
                 sensors={sensors}

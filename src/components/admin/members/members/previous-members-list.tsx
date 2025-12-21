@@ -71,7 +71,7 @@ export default function PreviousMembersList({
     }, [filteredDeregisteredMembers, setDeregisteredMembersLength]);
 
     return (
-        <div className="overflow-hidden rounded-lg border">
+        <div className={`overflow-hidden rounded-lg border ${filteredDeregisteredMembers.length > 10 ? "max-h-[600px] overflow-y-auto" : ""}`}>
             <DndContext
                 collisionDetection={closestCenter}
                 sensors={sensors}

@@ -194,7 +194,7 @@ export default function PendingMembersList({
   }, [filteredUnregisteredMembers, setUnregisteredMembersLength]);
 
   return (
-    <div className="overflow-hidden rounded-lg border">
+    <div className={`overflow-hidden rounded-lg border ${filteredUnregisteredMembers.length > 10 ? "max-h-[600px] overflow-y-auto" : ""}`}>
       <DndContext
         collisionDetection={closestCenter}
         sensors={sensors}
