@@ -1,6 +1,6 @@
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronsUpDown, CheckCircle2, Trash2, ChevronDown } from "lucide-react";
+import { ChevronsUpDown, CheckCircle2, ChevronDown } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import {
@@ -34,7 +34,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import RemoveMemberDialog from "./remove-member-dialog";
+// import RemoveMemberDialog from "./remove-member-dialog";
 
 interface ImageProps {
   club: Club | null;
@@ -177,8 +177,6 @@ export default function PendingMembersList({
   }, [selectedTab, clubMembers, memberNameFilter, memberIdFilter, dynamicFilters]);
 
   const [submittedSortAsc, setSubmittedSortAsc] = useState<boolean | null>(null);
-  const [openRemoveDialog, setOpenRemoveDialog] = useState<boolean>(false);
-  const [selectedMemberToRemove, setSelectedMemberToRemove] = useState<ClubMember | null>(null);
 
   const sortedUnregisteredMembers = useMemo(() => {
     if (submittedSortAsc === null) return filteredUnregisteredMembers;
@@ -511,10 +509,10 @@ export default function PendingMembersList({
                           )}
                         </DialogContent>
                       </Dialog>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            {member.resubmission_required && (
+                      {/* {member.resubmission_required && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -526,13 +524,13 @@ export default function PendingMembersList({
                               >
                                 <Trash2 className="h-6 w-6" />
                               </Button>
-                            )}
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Remove member</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Remove member</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )} */}
                     </div>
                   </TableCell>
                   <TableCell className="text-center w-1/6">
@@ -584,7 +582,7 @@ export default function PendingMembersList({
         </Table>
       </DndContext>
 
-      <RemoveMemberDialog
+      {/* <RemoveMemberDialog
         open={openRemoveDialog}
         onOpenChange={setOpenRemoveDialog}
         member={selectedMemberToRemove}
@@ -592,7 +590,7 @@ export default function PendingMembersList({
           setlistActionItems(listActionItems.filter(item => item.email !== selectedMemberToRemove?.member_email));
           setSelectedMemberToRemove(null);
         }}
-      />
+      /> */}
     </div>
   );
 }
