@@ -11,7 +11,8 @@ export const registerMemberToClub = (request: RegisterClubMember) =>
         club_account_id: request.clubId,
         member_id: request.userId,
         payment_amount: request.payment_amount,
-        payment_method: request.payment_method
+        payment_method: request.payment_method,
+        template_variables: request.template_variables
     }).then(res => res.data)
 
 export const removeMember = (clubAccountId: string, memberId: string) =>

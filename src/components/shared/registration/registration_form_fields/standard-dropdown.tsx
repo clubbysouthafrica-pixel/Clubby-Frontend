@@ -50,8 +50,6 @@ export default function StandardDropdown({
         )
     }
 
-    console.log(field)
-
     return (
         <div className="grid gap-2" key={field.field_id}>
             <Label htmlFor={field.field_id}>

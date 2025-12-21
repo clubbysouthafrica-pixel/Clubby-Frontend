@@ -43,7 +43,7 @@ export function RegistrationReportData({ data, currency }: props) {
   ) {
     return <Label>No data to display yet</Label>;
   }
-  console.log(data);
+
   return (
     <div>
       <Tabs

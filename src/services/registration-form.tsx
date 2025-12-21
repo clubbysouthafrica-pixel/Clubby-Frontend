@@ -50,7 +50,6 @@ export const updateMemberRegistrationField = (
         sensitive_information: sensitive_information
     })
         .then(res => {
-            console.log("Member field updated successfully:", res.data);
             return res.data;
         })
 }
