@@ -116,7 +116,7 @@ export default function BillingDropdown({
                         <SelectValue placeholder={field.placeholder ?? "Select membership type"} />
                     </SelectTrigger>
 
-                    <SelectContent>
+                    <SelectContent className={(field.billingOptions?.length ?? 0) > 5 ? "max-h-[400px] overflow-y-auto" : ""}>
                         <SelectGroup>
                             <SelectItem value="undefined" className="text-muted-foreground">
                                 -- Not Selected --

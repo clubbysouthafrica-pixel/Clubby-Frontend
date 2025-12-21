@@ -63,7 +63,7 @@ export default function StandardDropdown({
                     <SelectValue placeholder={field.placeholder ?? "Select an option"} />
                 </SelectTrigger>
 
-                <SelectContent>
+                <SelectContent className={(field.options?.length ?? 0) > 5 ? "max-h-[400px] overflow-y-auto" : ""}>
                     <SelectGroup>
                         <SelectItem value="undefined" className="text-muted-foreground">
                             -- Select an option --
