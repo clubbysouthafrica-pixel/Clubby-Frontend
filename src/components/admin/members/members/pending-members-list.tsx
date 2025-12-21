@@ -514,17 +514,19 @@ export default function PendingMembersList({
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="rounded-full border border-black hover:bg-gray-100 hover:text-black"
-                              onClick={() => {
-                                setSelectedMemberToRemove(member);
-                                setOpenRemoveDialog(true);
-                              }}
-                            >
-                              <Trash2 className="h-6 w-6" />
-                            </Button>
+                            {member.resubmission_required && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="rounded-full border border-black hover:bg-gray-100 hover:text-black"
+                                onClick={() => {
+                                  setSelectedMemberToRemove(member);
+                                  setOpenRemoveDialog(true);
+                                }}
+                              >
+                                <Trash2 className="h-6 w-6" />
+                              </Button>
+                            )}
                           </TooltipTrigger>
                           <TooltipContent>
                             <p>Remove member</p>
