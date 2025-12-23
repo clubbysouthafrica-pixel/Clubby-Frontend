@@ -73,7 +73,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: UserPlusIcon,
         items: [
           { title: "Create Form", url: "/manage/registrations/forms" },
-          { title: "Add Policy", url: "/manage/registrations/policy" },
+          // { title: "Add Policy", url: "/manage/registrations/policy" },
         ],
       },
       {
