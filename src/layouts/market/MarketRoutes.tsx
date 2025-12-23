@@ -21,12 +21,14 @@ import ActivateAccount from "@/pages/authentication/temporary-password/ActivateA
 import { ClubRegisterForm } from "@/components/member/register/registration_form";
 import TermsPage from "@/pages/policies/terms";
 import PrivacyPage from "@/pages/policies/privacy";
+import RegistrationPolicy from "@/pages/policies/privacy-clubs";
 export default function MarketRoutes() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />}></Route>
       <Route path="/terms" element={<TermsPage />}></Route>
       <Route path="/privacy" element={<PrivacyPage />}></Route>
+      <Route path="/legal" element={<RegistrationPolicy />}></Route>
       <Route path="/login" element={<LoginPage />}></Route>
       <Route path="/register" element={<RegisterPage />}></Route>
       <Route path="/forgotpassword" element={<ForgotPasswordPage />}></Route>

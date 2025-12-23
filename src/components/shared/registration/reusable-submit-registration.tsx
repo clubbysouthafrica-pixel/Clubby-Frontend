@@ -139,7 +139,7 @@ export function ReusableSubmitRegistration({
                   and{" "}
                   <a
                     target="_blank"
-                    href="/privacy"
+                    href="/legal"
                     className="underline underline-offset-4 text-primary hover:text-primary/80"
                   >
                     Privacy Policy
