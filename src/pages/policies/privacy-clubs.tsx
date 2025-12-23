@@ -2,7 +2,6 @@ import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Button } from "@/components/ui/button";
 import { CheckCircle2 } from "lucide-react";
 
 // Drop this component into your routes, e.g. /legal/registration-policy

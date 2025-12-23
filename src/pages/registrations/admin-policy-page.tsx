@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { FileText, UploadCloud } from "lucide-react";
 
 export default function AdminPolicyPage() {
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [_pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfPreview, setPdfPreview] = useState<string | null>(null);
   const [policyText, setPolicyText] = useState<string>("");
 
