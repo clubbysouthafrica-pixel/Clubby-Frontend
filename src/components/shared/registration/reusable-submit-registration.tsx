@@ -6,7 +6,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ReactNode } from "react";
+import { Label } from "@/components/ui/label";
+import { ReactNode, useState } from "react";
 
 export interface BillingFieldItem {
   field_id: string;
@@ -60,6 +61,8 @@ export function ReusableSubmitRegistration({
   showPaymentWarning = true,
   className = "",
 }: ReusableSubmitRegistrationProps) {
+  const [agreed, setAgreed] = useState(false);
+
   return (
     <Card className={`pt-0 gap-0 ${className}`}>
       <CardHeader className="border-b bg-muted/30 py-1 pb-1">
@@ -116,6 +119,34 @@ export function ReusableSubmitRegistration({
                 )}
               </div>
 
+              <div className="px-2 flex items-center gap-2">
+                <input
+                  id="terms"
+                  type="checkbox"
+                  checked={agreed}
+                  onChange={(e) => setAgreed(e.target.checked)}
+                  required
+                />
+                <Label htmlFor="terms" className="text-xs">
+                  I agree to the{" "}
+                  <a
+                    target="_blank"
+                    href="/terms"
+                    className="underline underline-offset-4 text-primary hover:text-primary/80"
+                  >
+                    Terms of service
+                  </a>{" "}
+                  and{" "}
+                  <a
+                    target="_blank"
+                    href="/privacy"
+                    className="underline underline-offset-4 text-primary hover:text-primary/80"
+                  >
+                    Privacy Policy
+                  </a>
+                </Label>
+              </div>
+
               {/* Action Buttons */}
               <div className="flex justify-between items-center pt-3 border-t my-2">
                 <Button
@@ -132,7 +163,7 @@ export function ReusableSubmitRegistration({
                   type="button"
                   size="sm"
                   onClick={onSubmit}
-                  disabled={isSubmitting}
+                  disabled={(isSubmitting && !agreed) || !agreed}
                 >
                   {isSubmitting ? "Submitting..." : submitButtonText}
                 </Button>
