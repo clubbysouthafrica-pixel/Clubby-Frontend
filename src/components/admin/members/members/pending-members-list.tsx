@@ -1,6 +1,6 @@
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronsUpDown, CheckCircle2, Trash2 } from "lucide-react";
+import { ChevronsUpDown, CheckCircle2, ChevronDown } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import {
@@ -34,7 +34,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import RemoveMemberDialog from "./remove-member-dialog";
+// import RemoveMemberDialog from "./remove-member-dialog";
 
 interface ImageProps {
   club: Club | null;
@@ -54,7 +54,7 @@ interface ImageProps {
   listActionItems: { email: string; name: string }[];
   reset: () => void;
   handleFormattedInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  registerUser: (member: ClubMember, paymentMethod?: string) => void;
+  registerUser: (member: ClubMember, paymentMethod?: string, templateVariables?: Array<{ name: string; value: string }>) => void;
   setSelectedMember: React.Dispatch<React.SetStateAction<object>>;
   setOpenDialogUserId: React.Dispatch<React.SetStateAction<string | null>>;
   setlistActionItems: React.Dispatch<
@@ -94,6 +94,56 @@ export default function PendingMembersList({
   setAllListActionItems,
 }: ImageProps) {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("EFT/Cash");
+  const [templateVariables, setTemplateVariables] = useState<Record<string, string>>({});
+  const [templateVariablesError, setTemplateVariablesError] = useState<string>("");
+  const [isTemplateVariablesOpen, setIsTemplateVariablesOpen] = useState<boolean>(true);
+  const [isPaymentMethodsOpen, setIsPaymentMethodsOpen] = useState<boolean>(true);
+
+  const validateTemplateVariables = (): boolean => {
+    if (!clubMembers?.template_variables || !Array.isArray(clubMembers.template_variables)) {
+      return true;
+    }
+
+    const emptyFields = clubMembers.template_variables.filter((variable: any) => {
+      const varName = variable?.name || variable;
+      const varTitle = variable?.title || variable;
+      const value = templateVariables[varName];
+      
+      // "Member Name" has a default value so it's never empty
+      if (varTitle === "Member Name") {
+        return false;
+      }
+      
+      return !value || (typeof value === 'string' && value.trim() === "");
+    });
+
+    if (emptyFields.length > 0) {
+      setTemplateVariablesError("All email template fields are required.");
+      return false;
+    }
+
+    setTemplateVariablesError("");
+    return true;
+  };
+
+  const buildTemplateVariablesWithValues = (member: ClubMember) => {
+    if (!clubMembers?.template_variables || !Array.isArray(clubMembers.template_variables)) {
+      return [];
+    }
+
+    return clubMembers.template_variables.map((variable: any) => {
+      const varName = variable?.name || variable;
+      const varTitle = variable?.title || variable;
+      const value = varTitle === "Member Name" 
+        ? (templateVariables[varName] || (member.member_first_name + " " + member.member_surname))
+        : templateVariables[varName];
+      
+      return {
+        name: varName,
+        value: value
+      };
+    });
+  };
 
   const filteredUnregisteredMembers = useMemo(() => {
     const base = selectedTab === "pending-members"
@@ -127,8 +177,6 @@ export default function PendingMembersList({
   }, [selectedTab, clubMembers, memberNameFilter, memberIdFilter, dynamicFilters]);
 
   const [submittedSortAsc, setSubmittedSortAsc] = useState<boolean | null>(null);
-  const [openRemoveDialog, setOpenRemoveDialog] = useState<boolean>(false);
-  const [selectedMemberToRemove, setSelectedMemberToRemove] = useState<ClubMember | null>(null);
 
   const sortedUnregisteredMembers = useMemo(() => {
     if (submittedSortAsc === null) return filteredUnregisteredMembers;
@@ -146,7 +194,7 @@ export default function PendingMembersList({
   }, [filteredUnregisteredMembers, setUnregisteredMembersLength]);
 
   return (
-    <div className="overflow-hidden rounded-lg border">
+    <div className={`overflow-hidden rounded-lg border ${filteredUnregisteredMembers.length > 10 ? "max-h-[600px] overflow-y-auto" : ""}`}>
       <DndContext
         collisionDetection={closestCenter}
         sensors={sensors}
@@ -251,6 +299,17 @@ export default function PendingMembersList({
                           reset();
                           setOpenDialogUserId(open ? member.user_id : null);
                           setMemberRegisterAmount(0);
+                          if (open) {
+                            setTemplateVariables({ member_name: member.member_first_name + " " + member.member_surname });
+                            setIsTemplateVariablesOpen(true);
+                            setIsPaymentMethodsOpen(true);
+                          } else {
+                            setTemplateVariables({});
+                            setSelectedPaymentMethod("EFT/Cash");
+                            setTemplateVariablesError("");
+                            setIsTemplateVariablesOpen(true);
+                            setIsPaymentMethodsOpen(true);
+                          }
                         }}
                       >
                         <div className="flex justify-center items-center">
@@ -293,7 +352,7 @@ export default function PendingMembersList({
                               </strong>
                             </DialogTitle>
                             <DialogDescription>
-                              Confirm payment amount and register member
+                              Confirm payment details and provide required information
                             </DialogDescription>
                             <div className="flex flex-col gap-1 my-4">
                               <Label className="text-l">
@@ -323,23 +382,83 @@ export default function PendingMembersList({
                             {clubMembers?.payment_methods && clubMembers.payment_methods.length > 0 && (
                               <div className="grid gap-4 pt-2">
                                 <div>
-                                  <Label className="text-sm font-semibold mb-2 block">Payment Method</Label>
-                                  <div className="space-y-3 bg-muted/40 p-4 rounded-lg">
-                                    {clubMembers.payment_methods.map((method: string) => (
-                                      <div key={method} className="flex items-center gap-3">
-                                        <Checkbox
-                                          id={`payment-${method}`}
-                                          checked={selectedPaymentMethod === method}
-                                          onCheckedChange={(checked) => {
-                                            setSelectedPaymentMethod(checked ? method : "");
-                                          }}
-                                        />
-                                        <Label htmlFor={`payment-${method}`} className="cursor-pointer font-normal text-sm">
-                                          {method}
-                                        </Label>
-                                      </div>
-                                    ))}
-                                  </div>
+                                  <button
+                                    onClick={() => setIsPaymentMethodsOpen(!isPaymentMethodsOpen)}
+                                    className="flex items-center justify-between w-full p-3 bg-muted/40 rounded-lg hover:bg-muted/50 transition-colors"
+                                  >
+                                    <Label className="text-sm font-semibold mb-0 cursor-pointer">Payment Method</Label>
+                                    <ChevronDown
+                                      className={`h-4 w-4 transition-transform ${isPaymentMethodsOpen ? "rotate-180" : ""}`}
+                                    />
+                                  </button>
+                                  {isPaymentMethodsOpen && (
+                                    <div className="space-y-3 bg-muted/40 p-4 rounded-lg mt-2">
+                                      {clubMembers.payment_methods.map((method: string) => (
+                                        <div key={method} className="flex items-center gap-3">
+                                          <Checkbox
+                                            id={`payment-${method}`}
+                                            checked={selectedPaymentMethod === method}
+                                            onCheckedChange={(checked) => {
+                                              setSelectedPaymentMethod(checked ? method : "");
+                                            }}
+                                          />
+                                          <Label htmlFor={`payment-${method}`} className="cursor-pointer font-normal text-sm">
+                                            {method}
+                                          </Label>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                            {clubMembers?.template_variables && Array.isArray(clubMembers.template_variables) && clubMembers.template_variables.length > 0 && (
+                              <div className="grid gap-4 pt-2">
+                                <div>
+                                  <button
+                                    onClick={() => setIsTemplateVariablesOpen(!isTemplateVariablesOpen)}
+                                    className="flex items-center justify-between w-full p-3 bg-muted/40 rounded-lg hover:bg-muted/50 transition-colors"
+                                  >
+                                    <Label className="text-sm font-semibold mb-0 cursor-pointer">Email Template Fields</Label>
+                                    <ChevronDown
+                                      className={`h-4 w-4 transition-transform ${isTemplateVariablesOpen ? "rotate-180" : ""}`}
+                                    />
+                                  </button>
+                                  {isTemplateVariablesOpen && (
+                                    <div className="space-y-3 bg-muted/40 p-4 rounded-lg mt-2">
+                                      {clubMembers.template_variables.map((variable: any) => {
+                                        const varName = variable?.name || variable;
+                                        const varTitle = variable?.title || variable;
+                                        const isMemberNameField = varTitle === "Member Name";
+                                        
+                                        return (
+                                          <div key={varName} className="grid gap-2">
+                                            <Label htmlFor={`template-${varName}`} className="text-sm font-normal">
+                                              {varTitle}
+                                            </Label>
+                                            <Input
+                                              id={`template-${varName}`}
+                                              type="text"
+                                              placeholder={`Enter ${varTitle?.toLowerCase?.() || ''}`}
+                                              value={
+                                                isMemberNameField
+                                                  ? (templateVariables[varName] || (member.member_first_name + " " + member.member_surname))
+                                                  : (templateVariables[varName] || "")
+                                              }
+                                              onChange={(e) => {
+                                                setTemplateVariables((prev) => ({
+                                                  ...prev,
+                                                  [varName]: e.target.value,
+                                                }));
+                                                setTemplateVariablesError("");
+                                              }}
+                                              className=""
+                                            />
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             )}
@@ -357,12 +476,27 @@ export default function PendingMembersList({
                               <Button variant="outline">Cancel</Button>
                             </DialogClose>
                             <Button
-                              onClick={() => registerUser(member, selectedPaymentMethod)}
+                              onClick={() => {
+                                if (!validateTemplateVariables()) {
+                                  setIsTemplateVariablesOpen(true);
+                                } else {
+                                  const structuredTemplateVariables = buildTemplateVariablesWithValues(member);
+                                  registerUser(member, selectedPaymentMethod, structuredTemplateVariables);
+                                }
+                              }}
                               disabled={isPending}
                             >
                               {isPending ? "Registering..." : "Register Member"}
                             </Button>
                           </DialogFooter>
+                          {templateVariablesError && (
+                            <Alert className="border border-red-600 text-red-600">
+                              <AlertCircle className="h-4 w-4 text-red-600" />
+                              <AlertDescription className="text-xs text-red-600">
+                                {templateVariablesError}
+                              </AlertDescription>
+                            </Alert>
+                          )}
                           {invalidRegistrationAmount && (
                             <Alert className="border border-red-600 text-red-600">
                               <AlertCircle className="h-4 w-4 text-red-600" />
@@ -375,26 +509,28 @@ export default function PendingMembersList({
                           )}
                         </DialogContent>
                       </Dialog>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="rounded-full border border-black hover:bg-gray-100 hover:text-black"
-                              onClick={() => {
-                                setSelectedMemberToRemove(member);
-                                setOpenRemoveDialog(true);
-                              }}
-                            >
-                              <Trash2 className="h-6 w-6" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Remove member</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                      {/* {member.resubmission_required && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="rounded-full border border-black hover:bg-gray-100 hover:text-black"
+                                onClick={() => {
+                                  setSelectedMemberToRemove(member);
+                                  setOpenRemoveDialog(true);
+                                }}
+                              >
+                                <Trash2 className="h-6 w-6" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Remove member</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )} */}
                     </div>
                   </TableCell>
                   <TableCell className="text-center w-1/6">
@@ -446,7 +582,7 @@ export default function PendingMembersList({
         </Table>
       </DndContext>
 
-      <RemoveMemberDialog
+      {/* <RemoveMemberDialog
         open={openRemoveDialog}
         onOpenChange={setOpenRemoveDialog}
         member={selectedMemberToRemove}
@@ -454,7 +590,7 @@ export default function PendingMembersList({
           setlistActionItems(listActionItems.filter(item => item.email !== selectedMemberToRemove?.member_email));
           setSelectedMemberToRemove(null);
         }}
-      />
+      /> */}
     </div>
   );
 }

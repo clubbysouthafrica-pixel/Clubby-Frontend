@@ -1,18 +1,10 @@
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronsUpDown, Trash2 } from "lucide-react";
+import { ChevronsUpDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ClubMember } from "@/interfaces/club"
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { filteredRegisteredMembers as frg } from "@/helpers/admin/members/filter-members-list";
-import RemoveMemberDialog from "./remove-member-dialog";
 
 interface ImageProps {
     sensors: any
@@ -54,8 +46,8 @@ export default function RegisteredMembersList({
 
     const filteredRegisteredMembers = frg(selectedTab, clubMembers, memberNameFilter, memberIdFilter, dynamicFilters)
     const [regSortAsc, setRegSortAsc] = useState<boolean | null>(null);
-    const [openRemoveDialog, setOpenRemoveDialog] = useState<boolean>(false);
-    const [selectedMemberToRemove, setSelectedMemberToRemove] = useState<ClubMember | null>(null);
+    // const [openRemoveDialog, setOpenRemoveDialog] = useState<boolean>(false);
+    // const [selectedMemberToRemove, setSelectedMemberToRemove] = useState<ClubMember | null>(null);
 
     const sortedRegisteredMembers = useMemo(() => {
         if (regSortAsc === null) return filteredRegisteredMembers;
@@ -73,7 +65,7 @@ export default function RegisteredMembersList({
     }, [filteredRegisteredMembers, setRegisteredMembersLength]);
 
     return (
-        <div className="overflow-hidden rounded-lg border">
+        <div className={`overflow-hidden rounded-lg border ${filteredRegisteredMembers.length > 10 ? "max-h-[600px] overflow-y-auto" : ""}`}>
             <DndContext
                 collisionDetection={closestCenter}
                 sensors={sensors}
@@ -159,26 +151,7 @@ export default function RegisteredMembersList({
                                 </TableCell>
                                 <TableCell className="text-center w-1/5">
                                     <div className="flex justify-center gap-2">
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="rounded-full border border-black hover:bg-gray-100 hover:text-black"
-                                                        onClick={() => {
-                                                            setSelectedMemberToRemove(member);
-                                                            setOpenRemoveDialog(true);
-                                                        }}
-                                                    >
-                                                        <Trash2 className="h-6 w-6" />
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>Remove member</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
+                                        -
                                     </div>
                                 </TableCell>
                                 <TableCell className="text-center w-1/5">
@@ -230,7 +203,7 @@ export default function RegisteredMembersList({
                 </Table>
             </DndContext>
 
-            <RemoveMemberDialog
+            {/* <RemoveMemberDialog
                 open={openRemoveDialog}
                 onOpenChange={setOpenRemoveDialog}
                 member={selectedMemberToRemove}
@@ -238,7 +211,7 @@ export default function RegisteredMembersList({
                     setlistActionItems(listActionItems.filter(item => item.email !== selectedMemberToRemove?.member_email));
                     setSelectedMemberToRemove(null);
                 }}
-            />
+            /> */}
         </div>
     )
 }

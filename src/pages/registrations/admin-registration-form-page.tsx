@@ -83,7 +83,6 @@ export default function AdminRegistrationFormPage() {
 
     const saveRegistrationForm = () => {
         setSaving(true);
-        console.log(createPagesRequest(pages))
         mutate(
             {
                 pages: createPagesRequest(pages),

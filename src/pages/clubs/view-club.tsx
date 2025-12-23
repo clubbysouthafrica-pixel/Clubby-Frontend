@@ -117,7 +117,6 @@ export default function ViewClubPage() {
   const { data, isLoading, isError } = useFetchClub(clubId as string);
   const { data: bankDetails, isLoading: bankDetailsLoading } =
     useFetchClubBankDetails(clubId as string, !!data?.club_member_exists);
-  console.log("Bank details:", bankDetails);
   const { data: transactions, isLoading: isUserTransactionsLoading } =
     useFetchUserTransactions(data?.club_account_id ?? "", data?.user_id ?? "");
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});

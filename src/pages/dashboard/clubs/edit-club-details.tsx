@@ -623,9 +623,7 @@ export default function EditClubDetails() {
                   >
                     <CardTitle>Registration Success Email</CardTitle>
                     <CardDescription>
-                      This is an editable draft of the email sent to a member
-                      upon successful registration by the admin. To insert the
-                      member’s name, use <strong>{"{{member_name}}"}</strong>.
+                      Customize the email template sent to members upon successful registration. Use <strong>{"{{member_name}}"}</strong> to include the member's name and <strong>{"{{custom_field}}"}</strong> to reference custom registration fields (use lowercase with underscores between words). Custom field values will be requested during member registration.
                     </CardDescription>
                     <EditableEmailTemplate
                       template={registrationSuccessEmailTemplate}

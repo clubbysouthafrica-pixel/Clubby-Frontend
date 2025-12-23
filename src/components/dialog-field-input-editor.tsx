@@ -377,7 +377,7 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
 
                                                 {field.input_type?.toLowerCase() === "dropdown" &&
                                                     (dropdownOptions?.length > 0) && (
-                                                        <div className="mt-2 space-y-1">
+                                                        <div className={dropdownOptions.length > 5 ? "mt-2 space-y-1 max-h-[400px] overflow-y-auto" : "mt-2 space-y-1"}>
                                                             {dropdownOptions.map((o) => (
                                                                 <div key={o} className="flex items-center justify-between bg-gray-50 px-3 py-1 rounded-lg">
                                                                     <span>{o}</span>

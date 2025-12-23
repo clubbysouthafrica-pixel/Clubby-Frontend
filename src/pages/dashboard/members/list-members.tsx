@@ -57,7 +57,6 @@ export default function ListMembersPage() {
   const [listActionItems, setlistActionItems] = useState<
     { email: string; name: string }[]
   >([]);
-  console.log("Club Members:", clubMembers);
   const [allMembersSelected, setAllMembersSelected] = useState(false);
   const [openDialogUserId, setOpenDialogUserId] = useState<string | null>(null);
   const [dereigsterMembers, setDeregisterMembers] = useState<
@@ -197,7 +196,7 @@ export default function ListMembersPage() {
     };
   }, []);
 
-  const registerUser = (member: ClubMember, paymentMethod?: string) => {
+  const registerUser = (member: ClubMember, paymentMethod?: string, templateVariables?: Array<{ name: string; value: string }>) => {
     if (
       memberRegisterAmount > member.outstanding_amount ||
       (memberRegisterAmount == 0 && member.outstanding_amount > 0) ||
@@ -213,6 +212,7 @@ export default function ListMembersPage() {
         userId: member.user_id,
         payment_amount: memberRegisterAmount,
         payment_method: paymentMethod,
+        template_variables: templateVariables,
       },
       {
         onSuccess: (response: any) => {

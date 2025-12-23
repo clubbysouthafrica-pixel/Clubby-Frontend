@@ -151,7 +151,7 @@ export default function EditBillingDropdown({
                 </div>
 
                 {dropdownBillingOptions.length > 0 && (
-                    <div className="mt-2 space-y-2">
+                    <div className={dropdownBillingOptions.length > 5 ? "mt-2 space-y-2 max-h-[400px] overflow-y-auto" : "mt-2 space-y-2"}>
                         {dropdownBillingOptions.map((option) => (
                             <div
                                 key={option.option_order_id}

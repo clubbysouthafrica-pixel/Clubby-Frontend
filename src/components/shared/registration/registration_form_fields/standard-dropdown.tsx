@@ -50,8 +50,6 @@ export default function StandardDropdown({
         )
     }
 
-    console.log(field)
-
     return (
         <div className="grid gap-2" key={field.field_id}>
             <Label htmlFor={field.field_id}>
@@ -65,7 +63,7 @@ export default function StandardDropdown({
                     <SelectValue placeholder={field.placeholder ?? "Select an option"} />
                 </SelectTrigger>
 
-                <SelectContent>
+                <SelectContent className={(field.options?.length ?? 0) > 5 ? "max-h-[400px] overflow-y-auto" : ""}>
                     <SelectGroup>
                         <SelectItem value="undefined" className="text-muted-foreground">
                             -- Select an option --
