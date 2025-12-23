@@ -1,39 +1,34 @@
-import * as React from "react"
-import {
-  HomeIcon,
-  UserPlusIcon,
-  UsersIcon,
-  BarChart
-} from "lucide-react"
-import { NavMain } from "@/components/nav-main"
-import { NavUser } from "@/components/nav-user"
-import { ClubSwitcher } from "@/components/club-switcher.tsx"
+import * as React from "react";
+import { HomeIcon, UserPlusIcon, UsersIcon, BarChart } from "lucide-react";
+import { NavMain } from "@/components/nav-main";
+import { NavUser } from "@/components/nav-user";
+import { ClubSwitcher } from "@/components/club-switcher.tsx";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from "@/components/ui/sidebar"
-import { useFetchAdminClubs } from "@/queries/admin/clubs"
-import { ClubContext, ClubContextType } from "@/context/ClubContext"
+} from "@/components/ui/sidebar";
+import { useFetchAdminClubs } from "@/queries/admin/clubs";
+import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { AuthContext, AuthContextType } from "@/context/AuthContext";
-import { useGetProfileQuery } from "@/queries/profile"
-import { useNavigate, useLocation } from "react-router-dom"
+import { useGetProfileQuery } from "@/queries/profile";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const navigate = useNavigate()
-  const { club } = React.useContext(ClubContext) as ClubContextType
-  const { data: clubData, isLoading: loadingClubs } = useFetchAdminClubs()
+  const navigate = useNavigate();
+  const { club } = React.useContext(ClubContext) as ClubContextType;
+  const { data: clubData, isLoading: loadingClubs } = useFetchAdminClubs();
 
-  const { isAdmin } = React.useContext(AuthContext) as AuthContextType
-  const { data: profile } = useGetProfileQuery(isAdmin)
+  const { isAdmin } = React.useContext(AuthContext) as AuthContextType;
+  const { data: profile } = useGetProfileQuery(isAdmin);
 
   const [userData, setUserData] = React.useState({
     name: "",
     email: "",
     avatar: "/avatars/shadcn.jpg",
-  })
+  });
 
   React.useEffect(() => {
     // if (club != null && !club.onboarded) {
@@ -45,12 +40,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         name: `${profile?.first_name ?? ""} ${profile?.surfname ?? ""}`,
         email: profile.email ?? "",
         avatar: "/avatars/shadcn.jpg",
-      })
+      });
     }
-  }, [profile, club, navigate])
+  }, [profile, club, navigate]);
 
-  const location = useLocation()
-  const pathname = location.pathname
+  const location = useLocation();
+  const pathname = location.pathname;
 
   const navItems = React.useMemo(() => {
     const baseItems = [
@@ -78,6 +73,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: UserPlusIcon,
         items: [
           { title: "Create Form", url: "/manage/registrations/forms" },
+          // { title: "Add Policy", url: "/manage/registrations/policy" },
         ],
       },
       {
@@ -90,31 +86,32 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           { title: "Income & Payments", url: "/reporting/transactions" },
         ],
       },
-    ]
+    ];
 
     const matchesUrl = (url: string | undefined) => {
-      if (!url) return false
+      if (!url) return false;
       // root path must match exactly — otherwise startsWith("/") will match everything
-      if (url === "/") return pathname === url
-      return pathname === url || pathname.startsWith(url)
-    }
+      if (url === "/") return pathname === url;
+      return pathname === url || pathname.startsWith(url);
+    };
 
     return baseItems.map((item) => {
-      const matched = matchesUrl(item.url) || item.items?.some((s) => matchesUrl(s.url))
+      const matched =
+        matchesUrl(item.url) || item.items?.some((s) => matchesUrl(s.url));
 
       return {
         ...item,
         isActive: Boolean(matched),
-      }
-    })
-  }, [pathname])
+      };
+    });
+  }, [pathname]);
 
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        {!loadingClubs &&
+        {!loadingClubs && (
           <ClubSwitcher clubs={((clubData as any).data as any)?.items} />
-        }
+        )}
       </SidebarHeader>
       <SidebarContent>
         {club?.club_account_id && <NavMain items={navItems} />}
@@ -124,5 +121,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }
