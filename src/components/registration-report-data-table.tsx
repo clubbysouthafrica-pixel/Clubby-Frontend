@@ -101,16 +101,6 @@ export function RegistrationReportData({ data, currency }: props) {
                             ? "Free"
                             : `${formatAmount(c.fee_amount ?? 0, currency)} each`}
                         </p>
-                        {(c.old_field || c.old_option) && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Badge variant="destructive">Old Field</Badge>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              This field no longer exists in the current registration form
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
                       </div>
                     </div>
                     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-2">
