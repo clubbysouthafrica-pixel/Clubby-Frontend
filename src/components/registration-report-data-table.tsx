@@ -24,9 +24,10 @@ import "../index.css";
 interface props {
   data: RegistrationReport;
   currency: string;
+  showOldFields?: boolean;
 }
 
-export function RegistrationReportData({ data, currency }: props) {
+export function RegistrationReportData({ data, currency, showOldFields = true }: props) {
 
   const isCustomAmount = (total: any, fee_amount: number | null | undefined) => {
     if (fee_amount && fee_amount > 0) return false;
@@ -38,10 +39,15 @@ export function RegistrationReportData({ data, currency }: props) {
     return fee_amount === null || fee_amount === 0 || fee_amount === undefined || (total && total.paid_to_club === 0 && total.due_to_club === 0 && total.total === 0);
   };
 
+  // Filter out old fields if showOldFields is false
+  const filteredReport = showOldFields
+    ? (data?.report as RegistrationReportDropDown[])
+    : (data?.report as RegistrationReportDropDown[]).filter((c) => !c.old_field && !c.old_option);
+
   if (
     !data ||
     !data.report ||
-    (data.report as RegistrationReportDropDown[]).length === 0
+    filteredReport.length === 0
   ) {
     return <Label>No data to display yet</Label>;
   }
@@ -51,11 +57,11 @@ export function RegistrationReportData({ data, currency }: props) {
       <div>
         <Tabs
         defaultValue={
-          (data?.report as RegistrationReportDropDown[])[0]?.field_id
+          filteredReport[0]?.field_id
         }
       >
         <TabsList className="flex justify-center flex-wrap gap-2 h-10 mx-auto">
-          {(data?.report as RegistrationReportDropDown[]).map(
+          {filteredReport.map(
             (c: RegistrationReportDropDown) => (
               <TabsTrigger
                 className="px-3 h-8 text-sm whitespace-nowrap truncate w-[240px] relative"
@@ -84,7 +90,7 @@ export function RegistrationReportData({ data, currency }: props) {
           )}
         </TabsList>
 
-        {(data?.report as RegistrationReportDropDown[]).map(
+        {filteredReport.map(
           (c: RegistrationReportDropDown) => (
             <TabsContent key={c.field_id} value={c.field_id}>
               <Card className="p-4 border-none shadow-none">
@@ -241,9 +247,12 @@ export function RegistrationReportData({ data, currency }: props) {
                         )}
                       </div>
                     </div>
-                    <Tabs defaultValue={c.rows[0]?.option_order_id}>
+                    {(() => {
+                      const filteredRows = showOldFields ? c.rows : c.rows.filter((r) => !r.old_field);
+                      return filteredRows.length > 0 ? (
+                    <Tabs defaultValue={filteredRows[0]?.option_order_id}>
                       <TabsList className="flex justify-center h-10 flex-wrap gap-2 mx-auto py-1">
-                        {c.rows.map((r: RegistrationRowData) => (
+                        {filteredRows.map((r: RegistrationRowData) => (
                           <TabsTrigger
                             key={r.option_order_id}
                             value={r.option_order_id}
@@ -269,7 +278,7 @@ export function RegistrationReportData({ data, currency }: props) {
                           </TabsTrigger>
                         ))}
                       </TabsList>
-                      {c.rows?.map((r: RegistrationRowData) => (
+                      {filteredRows?.map((r: RegistrationRowData) => (
                         <TabsContent key={r.option_order_id} value={r.option_order_id}>
                           <div className="px-2">
                             <div className="flex flex-col w-full items-center py-4">
@@ -416,6 +425,10 @@ export function RegistrationReportData({ data, currency }: props) {
                         </TabsContent>
                       ))}
                     </Tabs>
+                      ) : (
+                        <div className="text-center py-4">No active fields to display</div>
+                      );
+                    })()}
                   </div>
                 )}
               </Card>

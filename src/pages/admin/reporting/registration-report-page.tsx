@@ -4,6 +4,8 @@ import { useRegistrationBillingReportingQuery } from "@/queries/admin/useReporti
 import { RegistrationReportData } from "@/components/registration-report-data-table";
 import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -15,6 +17,7 @@ import {
 export default function RegistrationReportPage() {
   const { club, isLoading: clubLoading } = useContext(ClubContext) as ClubContextType;
   const [selectedSeason, setSelectedSeason] = useState<string>("current");
+  const [showOldFields, setShowOldFields] = useState<boolean>(true);
 
   const seasonToFetch = selectedSeason === "current" ? undefined : parseInt(selectedSeason);
 
@@ -67,6 +70,19 @@ export default function RegistrationReportPage() {
         </div>
       )}
 
+      <div className="flex justify-center">
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="show-old-fields"
+            checked={showOldFields}
+            onCheckedChange={(checked) => setShowOldFields(checked as boolean)}
+          />
+          <Label htmlFor="show-old-fields" className="cursor-pointer">
+            Show old fields
+          </Label>
+        </div>
+      </div>
+
       {isLoading && (
         <div className="flex justify-center">
           <Loader2 className="h-8 w-8 animate-spin" />
@@ -75,7 +91,7 @@ export default function RegistrationReportPage() {
 
       {!isLoading && (
         <Card className="p-6 shadow-sm border-none shadow-none">
-          {data && <RegistrationReportData data={data} currency={club?.currency as string} />}
+          {data && <RegistrationReportData data={data} currency={club?.currency as string} showOldFields={showOldFields} />}
         </Card>
       )}
     </div>
