@@ -51,7 +51,7 @@ export function RegistrationReportData({ data, currency }: props) {
       <div>
         <Tabs
         defaultValue={
-          (data?.report as RegistrationReportDropDown[])[0]?.table_name
+          (data?.report as RegistrationReportDropDown[])[0]?.field_id
         }
       >
         <TabsList className="flex justify-center flex-wrap gap-2 h-10 mx-auto">
@@ -59,8 +59,8 @@ export function RegistrationReportData({ data, currency }: props) {
             (c: RegistrationReportDropDown) => (
               <TabsTrigger
                 className="px-3 h-8 text-sm whitespace-nowrap truncate w-[240px] relative"
-                key={c.table_name}
-                value={c.table_name}
+                key={c.field_id}
+                value={c.field_id}
               >
                 <span className="flex items-center gap-2">
                   {c.table_name.length > 20
@@ -86,7 +86,7 @@ export function RegistrationReportData({ data, currency }: props) {
 
         {(data?.report as RegistrationReportDropDown[]).map(
           (c: RegistrationReportDropDown) => (
-            <TabsContent key={c.table_name} value={c.table_name}>
+            <TabsContent key={c.field_id} value={c.field_id}>
               <Card className="p-4 border-none shadow-none">
                 {!c.rows?.length && !c?.data && <div>No data to report</div>}
                 {c?.data && (
@@ -241,12 +241,12 @@ export function RegistrationReportData({ data, currency }: props) {
                         )}
                       </div>
                     </div>
-                    <Tabs defaultValue={c.rows[0]?.row_name}>
+                    <Tabs defaultValue={c.rows[0]?.option_order_id}>
                       <TabsList className="flex justify-center h-10 flex-wrap gap-2 mx-auto py-1">
                         {c.rows.map((r: RegistrationRowData) => (
                           <TabsTrigger
-                            key={r.row_name}
-                            value={r.row_name}
+                            key={r.option_order_id}
+                            value={r.option_order_id}
                             className="px-3 h-8 text-sm whitespace-nowrap truncate w-[240px]"
                           >
                             <span className="flex items-center gap-2">
@@ -270,7 +270,7 @@ export function RegistrationReportData({ data, currency }: props) {
                         ))}
                       </TabsList>
                       {c.rows?.map((r: RegistrationRowData) => (
-                        <TabsContent key={r.row_name} value={r.row_name}>
+                        <TabsContent key={r.option_order_id} value={r.option_order_id}>
                           <div className="px-2">
                             <div className="flex flex-col w-full items-center py-4">
                               <div className="flex items-center gap-2 justify-center">

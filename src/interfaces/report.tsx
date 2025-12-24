@@ -28,6 +28,7 @@ export interface RegistrationReportRowDataItem {
 }
 export interface RegistrationRowData {
   row_name: string
+  option_order_id: string
   fee_amount: number
   total: {
     total: number
