@@ -42,45 +42,53 @@ export default function RegistrationReportPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 space-y-4">
+    <div className="p-6 md:p-8 space-y-6">
       <div className="space-y-1 text-center">
         <h1 className="text-2xl font-semibold tracking-tight">Registration Billing</h1>
         <p className="text-sm text-muted-foreground max-w-2xl mx-auto">Analyze each registration fee with monthly totals, pending counts, paid amounts and amounts due to your club.</p>
       </div>
 
-      {hasPreviousSeasons && (
-        <div className="flex justify-center">
-          <div className="w-full max-w-xs">
-            <Select value={selectedSeason} onValueChange={setSelectedSeason}>
-              <SelectTrigger className="w-full">
-                <div className="flex-1 text-center">
-                  <SelectValue />
-                </div>
-              </SelectTrigger>
-              <SelectContent className="text-center">
-                <SelectItem value="current" className="text-center">Current Season</SelectItem>
-                {availableSeasons.map((season) => (
-                  <SelectItem key={season.value} value={season.value} className="text-center">
-                    {season.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      )}
-
+      {/* Filters Section */}
       <div className="flex justify-center">
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="show-old-fields"
-            checked={showOldFields}
-            onCheckedChange={(checked) => setShowOldFields(checked as boolean)}
-          />
-          <Label htmlFor="show-old-fields" className="cursor-pointer">
-            Show old fields
-          </Label>
-        </div>
+        <Card className="p-4 shadow-sm border w-fit">
+          <div className="space-y-4">
+            <div className="space-y-4">
+              {/* Season Filter */}
+              {hasPreviousSeasons && (
+                <div className="space-y-2">
+                  <Label htmlFor="season-select" className="text-sm font-medium text-center block w-full">Season</Label>
+                  <Select value={selectedSeason} onValueChange={setSelectedSeason}>
+                    <SelectTrigger id="season-select" className="w-full text-center">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="current">Current Season</SelectItem>
+                      {availableSeasons.map((season) => (
+                        <SelectItem key={season.value} value={season.value}>
+                          {season.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Show Old Fields Filter */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 p-3 rounded-md border border-transparent hover:border-input hover:bg-muted/50 transition-colors">
+                  <Checkbox
+                    id="show-old-fields"
+                    checked={showOldFields}
+                    onCheckedChange={(checked) => setShowOldFields(checked as boolean)}
+                  />
+                  <Label htmlFor="show-old-fields" className="cursor-pointer text-sm font-medium">
+                    Show old fields
+                  </Label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
       </div>
 
       {isLoading && (
