@@ -36,6 +36,7 @@ export interface RegistrationRowData {
     due_to_club: number
   }
   data: RegistrationReportRowDataItem[]
+  old_field?: boolean
 }
 
 export interface RegistrationReportDropDown {
@@ -50,6 +51,8 @@ export interface RegistrationReportDropDown {
     due_to_club: number
   }
   data?: RegistrationReportRowDataItem[]
+  old_field?: boolean
+  old_option?: boolean
 }
 
 export interface RegistrationReportText {
