@@ -18,7 +18,6 @@ import {
 import { formatAmount } from "@/data/currencies";
 import { Label } from "./ui/label";
 import { Badge } from "./ui/badge";
-import { Alert, AlertDescription } from "./ui/alert";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "./ui/tooltip";
 import "../index.css";
 
@@ -296,16 +295,6 @@ export function RegistrationReportData({ data, currency }: props) {
                                         currency
                                       )} each`}
                                 </p>
-                                {r.old_field && (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Badge variant="destructive">Old Field</Badge>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      This field no longer exists in the current registration form
-                                    </TooltipContent>
-                                  </Tooltip>
-                                )}
                               </div>
                             </div>
                             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-2">
