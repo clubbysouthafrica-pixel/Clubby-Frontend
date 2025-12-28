@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { UserMinus } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../../../ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../../../../ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDeregisterAllMutation } from "@/mutations/admin/useDeregisterMutation";
 import { toast } from "sonner";
@@ -110,21 +110,8 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
             ) : (
               <div>
                 <span>
-                  Starting a new season will archive all current season data and
-                  deregister all existing club members.
-                </span>
-                <br />
-                <br />
-                <span>
                   This action is intended to prepare the club for a fresh season
                   with new member registrations and updated data.
-                </span>
-                <br />
-                <br />
-                <span className="text-red-600">
-                  ⚠️ This process is irreversible. Archived data will remain
-                  accessible in a read-only format, but current members will
-                  lose access and must register again for the new season.
                 </span>
               </div>
             )}
@@ -132,15 +119,30 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
         </DialogHeader>
         {!errorMessage && (
           <>
+            <div className="space-y-2 bg-blue-50 p-3 rounded-lg border border-blue-200">
+              <p className="text-sm font-semibold text-blue-900">What happens next:</p>
+              <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+                <li>All members will be placed in the members requiring re registration table</li>
+                <li>All members will need to resubmit registrations to join the club again</li>
+                <li>All reporting for the current season is set to 0</li>
+                <li>The previous season reporting can still be found under the reporting season but is historical</li>
+              </ul>
+            </div>
+            <div>
+              <span className="text-red-600">
+                  ⚠️ This process is irreversible. Archived data will remain
+                  accessible in a read-only format, but current members will
+                  lose access and must register again for the new season.
+                </span>
+            </div>
             <div className="flex items-center gap-1">
               <Checkbox
                 id="consent"
                 onCheckedChange={(checked: boolean) => setConfirmed(!!checked)}
               />
+              
               <DialogDescription className="text-black">
-                I understand that starting a new season will archive all
-                existing season data and permanently remove all registered
-                members.
+                I understand want to start a new season and deregister all current members.
               </DialogDescription>
             </div>
             <DialogFooter>

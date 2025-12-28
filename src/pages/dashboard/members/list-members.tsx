@@ -13,10 +13,8 @@ import {
 } from "@dnd-kit/core";
 import { ClubMember } from "@/interfaces/club";
 import { useRegisterUserToClubMutation } from "@/mutations/admin/member";
-import SendEmailDialog from "@/components/admin/members/members/send-email";
-import DeregisterMembersDialog from "@/components/admin/members/members/deregister-members";
-import SelectedMember from "@/components/admin/members/members/selected-members";
-import DeregisterSeasonDialog from "@/components/admin/members/members/deregister-season";
+import SelectedMember from "@/components/admin/members/members/features/selected-members";
+import DeregisterSeasonDialog from "@/components/admin/members/members/features/deregister-season";
 import { formatAmount } from "@/data/currencies";
 import { Input } from "@/components/ui/input";
 import {
@@ -420,7 +418,6 @@ export default function ListMembersPage() {
                       );
                     }
 
-                    // Select filter (options provided)
                     return (
                       <Select
                         key={key}
@@ -496,34 +493,13 @@ export default function ListMembersPage() {
                 </DialogContent>
               </Dialog>
             </div>
-            <div className="flex items-end gap-4">
-              {club?.club_account_id && (
-                <SendEmailDialog
-                  clubId={club.club_account_id}
-                  contacts={listActionItems}
-                  setlistActionItems={setlistActionItems}
-                  setDeregisterMembers={setDeregisterMembers}
-                  setAllMembersSelected={setAllMembersSelected}
-                />
-              )}
-              {club?.club_account_id &&
-                selectedTab === "registered-members" && (
-                  <DeregisterMembersDialog
-                    dereigsterMembers={dereigsterMembers}
-                    clubId={club.club_account_id}
-                    setlistActionItems={setlistActionItems}
-                    setDeregisterMembers={setDeregisterMembers}
-                    setAllMembersSelected={setAllMembersSelected}
-                    selectedTab={selectedTab}
-                  />
-                )}
-            </div>
           </div>
           <TabsContent
             value="registered-members"
             className="relative flex flex-col gap-4 overflow-auto"
           >
             <RegisteredMembersList
+              clubId={club?.club_account_id || ""}
               sensors={sensors}
               sortableId={sortableId}
               allMembersSelected={allMembersSelected}
@@ -548,6 +524,7 @@ export default function ListMembersPage() {
             className="relative flex flex-col gap-4 overflow-auto"
           >
             <PendingMembersList
+              clubId={club?.club_account_id || ""}
               club={club}
               sensors={sensors}
               sortableId={sortableId}
@@ -581,6 +558,7 @@ export default function ListMembersPage() {
             className="relative flex flex-col gap-4 overflow-auto"
           >
             <PreviousMembersList
+              clubId={club?.club_account_id || ""}
               club={club}
               sensors={sensors}
               sortableId={sortableId}

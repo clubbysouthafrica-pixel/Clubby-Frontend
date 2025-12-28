@@ -2,18 +2,21 @@ import { DndContext, closestCenter } from "@dnd-kit/core";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ClubMember } from "@/interfaces/club"
 import { useEffect, useMemo, useState } from "react";
-import { ChevronsUpDown, Trash2 } from "lucide-react";
+import { ChevronsUpDown, ChevronDown, Check } from "lucide-react";
 import { Club } from "@/context/ClubContext"
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu"
 import { previousRegisteredMembers } from "@/helpers/admin/members/filter-members-list";
-import RemoveMemberDialog from "./remove-member-dialog";
+import RemoveMemberDialog from "./features/remove-member-dialog";
+import ReusableSendEmailDialog from "./features/reusable-send-email-dialog";
 
 interface ImageProps {
     club: Club | null
@@ -21,6 +24,7 @@ interface ImageProps {
     sortableId: any
     selectedTab: string
     clubMembers: any
+    clubId: string
     listActionItems: { email: string, name: string }[]
     allMembersSelected: boolean
     memberNameFilter: string
@@ -38,6 +42,7 @@ export default function PreviousMembersList({
     sortableId,
     selectedTab,
     clubMembers,
+    clubId,
     memberNameFilter,
     memberIdFilter,
     allMembersSelected,
@@ -54,6 +59,7 @@ export default function PreviousMembersList({
     const [deregSortAsc, setDeregSortAsc] = useState<boolean | null>(null);
     const [openRemoveDialog, setOpenRemoveDialog] = useState<boolean>(false);
     const [selectedMemberToRemove, setSelectedMemberToRemove] = useState<ClubMember | null>(null);
+    const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
 
     const sortedDeregisteredMembers = useMemo(() => {
         if (deregSortAsc === null) return filteredDeregisteredMembers;
@@ -97,16 +103,56 @@ export default function PreviousMembersList({
                                     )}
                                 </button>
                             </TableHead>
-                            <TableHead className="text-center w-1/5">
-                                Actions
-                            </TableHead>
-                            <TableHead className="text-center w-1/5">
-                                <div className="flex justify-center">
+                            <TableHead className="text-center w-1/5 py-2">
+                                <div className="flex justify-center items-center border rounded-[10px] pl-3 pr-1 border-gray-300 border-1 w-fit mx-auto hover:border-gray-400 transition-colors">
                                     <Checkbox
-                                        className="bg-white"
-                                        onCheckedChange={() => setAllListActionItems(filteredDeregisteredMembers)}
                                         checked={allMembersSelected}
+                                        onCheckedChange={(checked: boolean) => {
+                                            if (checked) {
+                                                setAllListActionItems(filteredDeregisteredMembers);
+                                                setAllMembersSelected(true);
+                                            } else {
+                                                setlistActionItems([]);
+                                                setAllMembersSelected(false);
+                                            }
+                                        }}
+                                        className="w-4 h-4 border-gray-300 border-1 hover:border-gray-400 transition-colors"
                                     />
+                                    <DropdownMenu modal={false}>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm" 
+                                                className="h-8"
+                                            >
+                                                <ChevronDown className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-48">
+                                            <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
+                                                Actions
+                                            </DropdownMenuLabel>
+                                            <DropdownMenuItem
+                                                onClick={() => {
+                                                    setIsEmailDialogOpen(true);
+                                                }}
+                                                disabled={!listActionItems.length}
+                                            >
+                                                Send Email
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={() => {
+                                                    if (listActionItems.length > 0) {
+                                                        setOpenRemoveDialog(true);
+                                                    }
+                                                }}
+                                                disabled={!listActionItems.length}
+                                                className="text-red-600"
+                                            >
+                                                Remove Members
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </div>
                             </TableHead>
                         </TableRow>
@@ -156,46 +202,6 @@ export default function PreviousMembersList({
                                     {member.deregistered_on ? new Date(member.deregistered_on).toLocaleString() : "Previous season registration"}
                                 </TableCell>
                                 <TableCell className="text-center w-1/5">
-                                    <div className="flex justify-center gap-2">
-                                        {/* <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="rounded-full border border-black hover:bg-gray-100 hover:text-black"
-                                                    >
-                                                        <RotateCcw className="h-6 w-6" />
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>Re-register member</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider> */}
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="rounded-full border border-black hover:bg-gray-100 hover:text-black"
-                                                        onClick={() => {
-                                                            setSelectedMemberToRemove(member);
-                                                            setOpenRemoveDialog(true);
-                                                        }}
-                                                    >
-                                                        <Trash2 className="h-6 w-6" />
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>Remove member</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-center w-1/5">
                                     <div className="flex justify-center">
                                         <Checkbox
                                             checked={listActionItems.some(
@@ -243,6 +249,19 @@ export default function PreviousMembersList({
                 onRemoveSuccess={() => {
                     setlistActionItems(listActionItems.filter(item => item.email !== selectedMemberToRemove?.member_email));
                     setSelectedMemberToRemove(null);
+                }}
+            />
+
+            <ReusableSendEmailDialog
+                isOpen={isEmailDialogOpen}
+                onOpenChange={setIsEmailDialogOpen}
+                title="Send Email"
+                description="Mailing list"
+                contactsList={listActionItems}
+                clubId={clubId}
+                onSuccessClose={() => {
+                    setlistActionItems([]);
+                    setAllMembersSelected(false);
                 }}
             />
         </div>

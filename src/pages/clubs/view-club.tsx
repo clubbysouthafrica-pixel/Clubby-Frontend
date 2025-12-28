@@ -926,21 +926,17 @@ export default function ViewClubPage() {
                                               {tx.type}
                                             </Badge>
                                           </TableCell>
-                                          {/* <TableCell className="text-center py-4 font-semibold">
-                                            {formatAmount(
-                                              tx.outstanding_amount,
-                                              data.currency
-                                            )}
-                                          </TableCell> */}
                                           <TableCell className="text-center py-4">
                                             <Badge
                                               className={cn(
                                                 "font-medium",
                                                 tx.status === "PENDING"
-                                                  ? "bg-red-100 text-red-800 border-red-200"
+                                                  ? "bg-blue-100 text-blue-800 border-blue-200"
                                                   : tx.status ===
                                                     "PARTIALLY PAID"
                                                   ? "bg-orange-100 text-orange-800 border-orange-200"
+                                                  : tx.status === "CANCELLED"
+                                                  ? "bg-red-100 text-red-800 border-red-200"
                                                   : "bg-green-100 text-green-800 border-green-200"
                                               )}
                                             >
@@ -1028,14 +1024,19 @@ export default function ViewClubPage() {
                                                                 entry.type ===
                                                                 "SUBMISSION"
                                                                   ? "text-black-700"
+                                                                  : entry.type ===
+                                                                    "CANCELLATION"
+                                                                  ? "text-red-700"
                                                                   : "text-green-700"
                                                               }`}
                                                             >
                                                               {entry.type ===
                                                               "SUBMISSION"
                                                                 ? ""
+                                                                : entry.type === "CANCELLATION"
+                                                                ? "N/A"
                                                                 : "+"}
-                                                              {formatAmount(
+                                                              {entry.type !== "CANCELLATION" && formatAmount(
                                                                 entry.amount,
                                                                 data.currency
                                                               )}

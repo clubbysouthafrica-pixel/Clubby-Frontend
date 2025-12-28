@@ -41,12 +41,10 @@ export default function GeneralReportingPage() {
 
             {hasPreviousSeasons && (
                 <div className="flex justify-center">
-                    <div className="w-full max-w-xs">
+                    <div className="bg-gray-100 rounded-lg p-3 w-[200px]">
                         <Select value={selectedSeason} onValueChange={setSelectedSeason}>
-                            <SelectTrigger className="w-full">
-                                <div className="flex-1 text-center">
-                                    <SelectValue />
-                                </div>
+                            <SelectTrigger className="w-full text-center border-0 bg-white">
+                                <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="text-center">
                                 <SelectItem value="current" className="text-center">Current Season</SelectItem>
