@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ChevronsUpDown,
   ChevronDown,
-  Check,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -36,7 +35,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import ReusableDeregisterDialog from "./features/reusable-deregister-dialog";

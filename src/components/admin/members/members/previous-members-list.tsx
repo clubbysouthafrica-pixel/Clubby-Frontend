@@ -2,7 +2,7 @@ import { DndContext, closestCenter } from "@dnd-kit/core";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ClubMember } from "@/interfaces/club"
 import { useEffect, useMemo, useState } from "react";
-import { ChevronsUpDown, ChevronDown, Check } from "lucide-react";
+import { ChevronsUpDown, ChevronDown } from "lucide-react";
 import { Club } from "@/context/ClubContext"
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu"
 import { previousRegisteredMembers } from "@/helpers/admin/members/filter-members-list";

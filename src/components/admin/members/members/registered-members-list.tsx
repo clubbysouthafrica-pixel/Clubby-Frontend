@@ -1,11 +1,11 @@
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronsUpDown, ChevronDown, Check } from "lucide-react";
+import { ChevronsUpDown, ChevronDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ClubMember } from "@/interfaces/club"
 import { filteredRegisteredMembers as frg } from "@/helpers/admin/members/filter-members-list";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import ReusableDeregisterDialog from "./features/reusable-deregister-dialog"
 import ReusableSendEmailDialog from "./features/reusable-send-email-dialog";
