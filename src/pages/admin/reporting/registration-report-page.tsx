@@ -19,7 +19,7 @@ export default function RegistrationReportPage() {
     ClubContext
   ) as ClubContextType;
   const [selectedSeason, setSelectedSeason] = useState<string>("current");
-  const [showOldFields, setShowOldFields] = useState<boolean>(true);
+  const [showOldFields, setShowOldFields] = useState<boolean>(false);
 
   const seasonToFetch =
     selectedSeason === "current" ? undefined : parseInt(selectedSeason);
