@@ -200,7 +200,7 @@ export function BankingDetailsForm({
     }
 
     return (
-        <Card className="h-[630px] border-0 shadow-none">
+        <Card className="h-[630px] border-0 shadow-none pb-5">
             <CardHeader className="flex flex-row items-start justify-between space-y-0">
                 <div className="space-y-1.5">
                     <CardTitle>Banking Details</CardTitle>
