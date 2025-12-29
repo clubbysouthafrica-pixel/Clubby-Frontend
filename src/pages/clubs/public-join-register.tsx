@@ -28,7 +28,7 @@ export default function PublicJoinRegisterPage() {
     <div className="flex flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div className={`w-full ${showSummary ? 'max-w-3xl' : 'max-w-md'}`}>
         <Card className="border-none shadow-none pt-0">
-          <CardContent className="py-4 px-6 space-y-4">
+          <CardContent className="py-4 px-2 md:px-6 space-y-4">
             {!showSummary && (
               <CollectUserDetails onContinue={handleUserDetailsContinue} />
             )}

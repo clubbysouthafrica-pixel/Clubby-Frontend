@@ -151,7 +151,7 @@ export function ReusableRegistrationForm({
   };
 
   return (
-    <div className={`flex justify-center items-center px-4 lg:px-0 ${className ?? "py-4 lg:py-8"}`}>
+    <div className={`flex justify-center items-center px-0 lg:px-0 ${className ?? "py-4 lg:py-8"}`}>
       <Card className={`w-full lg:w-[800px] gap-2 border shadow-sm pt-0 ${className}`}>
         {showHeader && (
           <CardHeader className="border-b bg-muted/30 py-2 lg:py-1 pb-2 lg:pb-1">
@@ -165,11 +165,11 @@ export function ReusableRegistrationForm({
             )}
           </CardHeader>
         )}
-        <CardContent className="py-3 lg:py-2 px-3 lg:px-4">
+        <CardContent className="py-3 lg:py-2 px-2 lg:px-4 overflow-x-hidden">
           {pages.length > 0 && (
             <form>
-              <div className="space-y-2 lg:space-y-2">
-                <div className="grid gap-2 lg:gap-2">
+              <div className="space-y-2 lg:space-y-2 min-w-0">
+                <div className="grid gap-2 lg:gap-2 min-w-0">
                   {topContent}
 
                   {pages[currentPageIndex] && (
@@ -203,7 +203,7 @@ export function ReusableRegistrationForm({
                             return (
                               <div
                                 key={field.field_order_id}
-                                className="prose prose-sm max-w-none bg-muted/10 rounded-lg [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-semibold [&_h4]:text-base [&_h4]:font-semibold [&_h5]:text-sm [&_h5]:font-semibold [&_h6]:text-xs [&_h6]:font-semibold"
+                                className="prose prose-sm max-w-none bg-muted/10 rounded-lg break-words overflow-hidden [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-semibold [&_h4]:text-base [&_h4]:font-semibold [&_h5]:text-sm [&_h5]:font-semibold [&_h6]:text-xs [&_h6]:font-semibold"
                                 dangerouslySetInnerHTML={{ __html: cleaned }}
                               />
                             );

@@ -256,7 +256,7 @@ export function PublicRegistrationForm({
 
   return (
     <div className="space-y-2">
-      <CardHeader className=" pb-1">
+      <CardHeader className="pb-1">
         <h1 className="text-l text-center pt-2">
           Name:{" "}
           <strong>
