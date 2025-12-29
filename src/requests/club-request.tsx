@@ -25,7 +25,9 @@ export interface ClubDetailsRequest {
     club_url?: string
     hide_from_public?: boolean
     registration_submission_email_template_body: string
+    registration_submission_email_subject: string
     registration_success_email_template_body: string
+    registration_success_email_subject: string
     use_success_email_template: boolean
     use_submission_email_template: boolean
     notify_on_member_registration?: boolean
