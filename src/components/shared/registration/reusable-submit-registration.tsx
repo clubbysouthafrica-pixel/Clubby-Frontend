@@ -23,6 +23,7 @@ export interface ReusableSubmitRegistrationProps {
 
   // Club and billing
   clubName: string;
+  clubProfileUrl?: string;
   clubCurrency: string;
   totalRegistrationFee: number;
   billingFields: BillingFieldItem[];
@@ -50,6 +51,7 @@ export function ReusableSubmitRegistration({
   email,
   showMemberInfo = false,
   clubName,
+  clubProfileUrl,
   onBack,
   onSubmit,
   isSubmitting,
@@ -65,11 +67,20 @@ export function ReusableSubmitRegistration({
   return (
     <div className="flex justify-center items-center px-4 lg:px-0">
       <Card className={`w-full lg:w-[800px] pt-0 gap-0 ${className}`}>
-        <CardHeader className="border-b bg-muted/30 py-2 lg:py-1 pb-2 lg:pb-1">
-          <CardTitle className="text-base lg:text-lg text-center pt-2 lg:pt-4">{clubName}</CardTitle>
-          <CardDescription className="text-center text-xs lg:text-xs">
-            {headerDescription}
-          </CardDescription>
+        <CardHeader className="border-b bg-muted/30 py-4 lg:py-6 pb-4 lg:pb-6 flex flex-col items-center gap-3">
+          {clubProfileUrl && (
+            <img
+              src={clubProfileUrl}
+              alt="Club Profile"
+              className="w-24 h-24 rounded-full object-cover border-3 border-white shadow-md"
+            />
+          )}
+          <div className="flex flex-col items-center gap-2">
+            <CardTitle className="text-2xl lg:text-3xl text-center">{clubName}</CardTitle>
+            <CardDescription className="text-center text-xs lg:text-xs">
+              {headerDescription}
+            </CardDescription>
+          </div>
         </CardHeader>
 
         <CardContent className="py-4 lg:py-3 px-4 lg:px-4">

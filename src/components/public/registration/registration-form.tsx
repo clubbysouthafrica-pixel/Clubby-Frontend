@@ -19,6 +19,7 @@ import { CardHeader } from "@/components/ui/card";
 import { toast } from "sonner";
 interface RegistrationFormProps {
   clubName: string;
+  clubProfileUrl?: string;
   email: string;
   firstName: string;
   surname: string;
@@ -30,6 +31,7 @@ interface RegistrationFormProps {
 
 export function PublicRegistrationForm({
   clubName,
+  clubProfileUrl,
   email,
   firstName: _firstName,
   surname: _surname,
@@ -212,6 +214,8 @@ export function PublicRegistrationForm({
         <RegistrationSuccessful
           title={`Registration successful!`}
           message={`Your registration has been submitted. Please check your email for further instructions.`}
+          clubName={clubName}
+          clubProfileUrl={clubProfileUrl}
           onClose={onEditDetails}
         />
       </div>
@@ -227,6 +231,7 @@ export function PublicRegistrationForm({
         email={email}
         showMemberInfo={true}
         clubName={clubName}
+        clubProfileUrl={clubProfileUrl}
         clubCurrency={clubCurrency}
         totalRegistrationFee={totalRegistrationFee}
         billingFields={registrationRequest.billing_fields.map((f) => ({
@@ -271,6 +276,7 @@ export function PublicRegistrationForm({
       {pages.length > 0 && (
         <ReusableRegistrationForm
           clubName={clubName}
+          clubProfileUrl={clubProfileUrl}
           clubCurrency={clubCurrency}
           headerDescription={
             "Please complete all required fields to proceed with your registration."

@@ -86,6 +86,7 @@ export interface PagedFormPayload {
 interface ReusableRegistrationFormProps {
   clubName: string;
   clubCurrency: string;
+  clubProfileUrl?: string;
   pages: FormPage[];
   currentPageIndex: number;
   setCurrentPageIndex: (index: number | ((prev: number) => number)) => void;
@@ -112,6 +113,7 @@ interface ReusableRegistrationFormProps {
 export function ReusableRegistrationForm({
   clubName,
   clubCurrency,
+  clubProfileUrl,
   pages,
   currentPageIndex,
   setCurrentPageIndex,
@@ -154,15 +156,24 @@ export function ReusableRegistrationForm({
     <div className={`flex justify-center items-center px-0 lg:px-0 ${className ?? "py-4 lg:py-8"}`}>
       <Card className={`w-full lg:w-[800px] gap-2 border shadow-sm pt-0 ${className}`}>
         {showHeader && (
-          <CardHeader className="border-b bg-muted/30 py-2 lg:py-1 pb-2 lg:pb-1">
-            <CardTitle className="text-base lg:text-lg text-center pt-2 lg:pt-4">
-              {headerTitle || clubName}
-            </CardTitle>
-            {headerDescription && (
-              <CardDescription className="text-center text-xs lg:text-xs">
-                {headerDescription}
-              </CardDescription>
+          <CardHeader className="border-b bg-muted/30 py-4 lg:py-6 pb-4 lg:pb-6 flex flex-col items-center gap-3">
+            {clubProfileUrl && (
+              <img
+                src={clubProfileUrl}
+                alt="Club Profile"
+                className="w-24 h-24 rounded-full object-cover border-3 border-white shadow-md"
+              />
             )}
+            <div className="flex flex-col items-center gap-2">
+              <CardTitle className="text-base lg:text-3xl text-center">
+                {headerTitle || clubName}
+              </CardTitle>
+              {headerDescription && (
+                <CardDescription className="text-center text-xs lg:text-xs">
+                  {headerDescription}
+                </CardDescription>
+              )}
+            </div>
           </CardHeader>
         )}
         <CardContent className="py-3 lg:py-2 px-2 lg:px-4 overflow-x-hidden">
@@ -173,7 +184,7 @@ export function ReusableRegistrationForm({
                   {topContent}
 
                   {pages[currentPageIndex] && (
-                    <h3 className="text-sm lg:text-base font-semibold text-center border-b pb-2">
+                    <h3 className="text-2xl lg:text-2xl font-semibold text-center border-b pb-4">
                       {pages[currentPageIndex].page_header}
                     </h3>
                   )}

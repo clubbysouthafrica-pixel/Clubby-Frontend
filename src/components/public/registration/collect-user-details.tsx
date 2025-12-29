@@ -7,10 +7,12 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 interface CollectUserDetailsProps {
+  clubName?: string;
+  clubProfileUrl?: string;
   onContinue: (email: string, firstName: string, surname: string) => void;
 }
 
-export function CollectUserDetails({ onContinue }: CollectUserDetailsProps) {
+export function CollectUserDetails({ clubName, clubProfileUrl, onContinue }: CollectUserDetailsProps) {
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [surname, setSurname] = useState("");
@@ -35,6 +37,18 @@ export function CollectUserDetails({ onContinue }: CollectUserDetailsProps) {
 
   return (
     <div className="space-y-3">
+      {clubProfileUrl && (
+        <div className="flex flex-col items-center pb-2 gap-2">
+          <img
+            src={clubProfileUrl}
+            alt="Club Profile"
+            className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover border-4 border-muted"
+          />
+          {clubName && (
+            <h2 className="text-lg md:text-xl font-semibold text-center">{clubName}</h2>
+          )}
+        </div>
+      )}
       <div className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg">
         <Label htmlFor="public_email" className="text-xs font-semibold text-muted-foreground">
           Email Address

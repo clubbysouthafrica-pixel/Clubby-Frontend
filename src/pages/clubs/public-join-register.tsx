@@ -30,11 +30,16 @@ export default function PublicJoinRegisterPage() {
         <Card className="border-none shadow-none pt-0">
           <CardContent className="py-4 px-2 md:px-6 space-y-4">
             {!showSummary && (
-              <CollectUserDetails onContinue={handleUserDetailsContinue} />
+              <CollectUserDetails 
+                clubName={data?.club_name}
+                clubProfileUrl={data?.club_profile_url}
+                onContinue={handleUserDetailsContinue} 
+              />
             )}
             {showSummary && (
               <PublicRegistrationForm 
                 clubName={data?.club_name as string}
+                clubProfileUrl={data?.club_profile_url}
                 email={email}
                 firstName={firstName}
                 surname={surname}

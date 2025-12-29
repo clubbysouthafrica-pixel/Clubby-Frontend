@@ -54,16 +54,21 @@ export function ClubRegisterForm() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [clubCurrency, setClubCurrency] = useState("");
   const [clubName, setClubName] = useState("");
+  const [clubProfileUrl, setClubProfileUrl] = useState("");
+
+  console.log("Registration Form Data:", data);
 
   useEffect(() => {
-    // Set currency and club name immediately when data is loaded
     if (data?.currency) {
       setClubCurrency(data.currency);
     }
     if (data?.club_name) {
       setClubName(data.club_name);
     }
-  }, [data?.currency, data?.club_name]);
+    if (data?.club_profile_url) {
+      setClubProfileUrl(data.club_profile_url);
+    }
+  }, [data?.currency, data?.club_name, data?.club_profile_url]);
 
   useEffect(() => {
     const processSignatures = async () => {
@@ -236,6 +241,8 @@ export function ClubRegisterForm() {
         <RegistrationSuccessful
           title={`Successfully Registered ${clubName ? `to ${clubName}` : ""}`}
           message={`Club will stay in contact with you once registration is completed.`}
+          clubName={clubName}
+          clubProfileUrl={clubProfileUrl}
           onClose={() => navigate(`/clubs/${clubId}`)}
         />
       </div>
@@ -246,6 +253,7 @@ export function ClubRegisterForm() {
     return (
       <ReusableRegistrationForm
         clubName={clubName || data?.club_name || ""}
+        clubProfileUrl={clubProfileUrl}
         clubCurrency={clubCurrency || data?.currency || ""}
         pages={pages}
         currentPageIndex={currentPageIndex}
@@ -300,6 +308,7 @@ export function ClubRegisterForm() {
       <ReusableSubmitRegistration
         showMemberInfo={false}
         clubName={clubName || data?.club_name || ""}
+        clubProfileUrl={clubProfileUrl}
         clubCurrency={clubCurrency || data?.currency || ""}
         totalRegistrationFee={totalRegistrationFee}
         billingFields={registrationRequest.billing_fields.map((f) => ({
