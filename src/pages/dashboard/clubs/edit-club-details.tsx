@@ -60,9 +60,17 @@ export default function EditClubDetails() {
     setRegistrationSubmissionEmailTemplate,
   ] = useState<string>(REGISTRATION_SUBMISSION_EMAIL_TEMPLATE);
   const [
+    registrationSubmissionEmailSubject,
+    setRegistrationSubmissionEmailSubject,
+  ] = useState<string>("Registration Submission");
+  const [
     registrationSuccessEmailTemplate,
     setRegistrationSuccessEmailTemplate,
   ] = useState<string>(REGISTRATION_SUCCESS_EMAIL_TEMPLATE);
+  const [
+    registrationSuccessEmailSubject,
+    setRegistrationSuccessEmailSubject,
+  ] = useState<string>("Registration Confirmed");
   const [useSuccessEmailTemplate, setUseSuccessEmailTemplate] =
     useState<boolean>(false);
   const [useSubmissionEmailTemplate, setUseSubmissionEmailTemplate] =
@@ -82,9 +90,15 @@ export default function EditClubDetails() {
         data?.registration_submission_email_template_body ??
           REGISTRATION_SUBMISSION_EMAIL_TEMPLATE
       );
+      setRegistrationSubmissionEmailSubject(
+        data?.registration_submission_email_subject ?? "Registration Submission"
+      );
       setRegistrationSuccessEmailTemplate(
         data?.registration_success_email_template_body ??
           REGISTRATION_SUCCESS_EMAIL_TEMPLATE
+      );
+      setRegistrationSuccessEmailSubject(
+        data?.registration_success_email_subject ?? "Registration Confirmed"
       );
       setUseSubmissionEmailTemplate(
         data?.use_submission_email_template ?? false
@@ -115,8 +129,12 @@ export default function EditClubDetails() {
         hide_from_public: hideFromPublic,
         registration_submission_email_template_body:
           registrationSubmissionEmailTemplate,
+        registration_submission_email_subject:
+          registrationSubmissionEmailSubject,
         registration_success_email_template_body:
           registrationSuccessEmailTemplate,
+        registration_success_email_subject:
+          registrationSuccessEmailSubject,
         use_success_email_template: useSuccessEmailTemplate,
         use_submission_email_template: useSubmissionEmailTemplate,
         notify_on_member_registration: notifyOnMemberRegistration,
@@ -160,8 +178,12 @@ export default function EditClubDetails() {
         hide_from_public: hideFromPublic,
         registration_submission_email_template_body:
           registrationSubmissionEmailTemplate,
+        registration_submission_email_subject:
+          registrationSubmissionEmailSubject,
         registration_success_email_template_body:
           registrationSuccessEmailTemplate,
+        registration_success_email_subject:
+          registrationSuccessEmailSubject,
         use_success_email_template: useSuccessEmailTemplate,
         use_submission_email_template: useSubmissionEmailTemplate,
         notify_on_member_registration: notifyOnMemberRegistration,
@@ -609,9 +631,11 @@ export default function EditClubDetails() {
                     </CardDescription>
                     <EditableEmailTemplate
                       template={registrationSubmissionEmailTemplate}
+                      subject={registrationSubmissionEmailSubject}
                       clubName={club?.club_name ?? ""}
                       supportEmail={supportEmail}
                       setTemplate={setRegistrationSubmissionEmailTemplate}
+                      setSubject={setRegistrationSubmissionEmailSubject}
                       useTemplate={useSubmissionEmailTemplate}
                       setUseTemplate={setUseSubmissionEmailTemplate}
                     />
@@ -627,9 +651,11 @@ export default function EditClubDetails() {
                     </CardDescription>
                     <EditableEmailTemplate
                       template={registrationSuccessEmailTemplate}
+                      subject={registrationSuccessEmailSubject}
                       clubName={club?.club_name ?? ""}
                       supportEmail={supportEmail}
                       setTemplate={setRegistrationSuccessEmailTemplate}
+                      setSubject={setRegistrationSuccessEmailSubject}
                       useTemplate={useSuccessEmailTemplate}
                       setUseTemplate={setUseSuccessEmailTemplate}
                     />
