@@ -151,29 +151,29 @@ export function ReusableRegistrationForm({
   };
 
   return (
-    <div className={`flex justify-center items-center ${className ?? "py-8"}`}>
-      <Card className={`w-[800px] gap-2 border shadow-sm pt-0 ${className}`}>
+    <div className={`flex justify-center items-center px-4 lg:px-0 ${className ?? "py-4 lg:py-8"}`}>
+      <Card className={`w-full lg:w-[800px] gap-2 border shadow-sm pt-0 ${className}`}>
         {showHeader && (
-          <CardHeader className="border-b bg-muted/30 py-1 pb-1">
-            <CardTitle className="text-l text-center pt-4">
+          <CardHeader className="border-b bg-muted/30 py-2 lg:py-1 pb-2 lg:pb-1">
+            <CardTitle className="text-base lg:text-lg text-center pt-2 lg:pt-4">
               {headerTitle || clubName}
             </CardTitle>
             {headerDescription && (
-              <CardDescription className="text-center text-xs">
+              <CardDescription className="text-center text-xs lg:text-xs">
                 {headerDescription}
               </CardDescription>
             )}
           </CardHeader>
         )}
-        <CardContent className="py-2 px-4">
+        <CardContent className="py-3 lg:py-2 px-3 lg:px-4">
           {pages.length > 0 && (
             <form>
-              <div className="space-y-2">
-                <div className="grid gap-2">
+              <div className="space-y-2 lg:space-y-2">
+                <div className="grid gap-2 lg:gap-2">
                   {topContent}
 
                   {pages[currentPageIndex] && (
-                    <h3 className="text-base font-semibold text-center border-b pb-2">
+                    <h3 className="text-sm lg:text-base font-semibold text-center border-b pb-2">
                       {pages[currentPageIndex].page_header}
                     </h3>
                   )}
@@ -181,7 +181,7 @@ export function ReusableRegistrationForm({
                   {pages[currentPageIndex] && (
                     <div
                       key={pages[currentPageIndex].page_index}
-                      className="space-y-6 px-2 py-2"
+                      className="space-y-4 lg:space-y-6 px-1 lg:px-2 py-2 lg:py-2"
                     >
                       {pages[currentPageIndex].fields
                         .sort(
@@ -350,29 +350,29 @@ export function ReusableRegistrationForm({
                         {isPending ? "Processing..." : "Continue"}
                       </Button>
                     ) : (
-                      <div className="flex justify-between items-center pt-3 border-t mt-2">
+                      <div className="flex flex-col lg:flex-row justify-between items-center gap-2 lg:gap-0 pt-3 border-t mt-2">
                         {currentPageIndex > 0 ? (
                           <Button
                             variant="outline"
                             type="button"
                             size="sm"
-                            className="w-[90px]"
+                            className="w-full lg:w-[90px]"
                             onClick={handlePrevious}
                             disabled={isPending}
                           >
                             Previous
                           </Button>
                         ) : (
-                          <div className="w-[90px]" />
+                          <div className="w-full lg:w-[90px]" />
                         )}
-                        <div className="text-xs text-muted-foreground flex-1 text-center">
+                        <div className="text-xs lg:text-xs text-muted-foreground flex-1 text-center order-first lg:order-none">
                           Page {currentPageIndex + 1} of {pages.length}
                         </div>
                         {isLastPage ? (
                           <Button
                             type="button"
                             size="sm"
-                            className="w-[90px]"
+                            className="w-full lg:w-[90px]"
                             onClick={onContinue}
                             disabled={isPending}
                           >
@@ -382,7 +382,7 @@ export function ReusableRegistrationForm({
                           <Button
                             type="button"
                             size="sm"
-                            className="w-[90px]"
+                            className="w-full lg:w-[90px]"
                             onClick={handleNext}
                             disabled={isPending}
                           >
@@ -396,7 +396,7 @@ export function ReusableRegistrationForm({
                   {requiredFieldsMissing && (
                     <Alert className="border border-red-600 text-red-600 mt-2">
                       <AlertCircle className="h-4 w-4 text-red-600" />
-                      <AlertDescription className="text-xs text-red-600">
+                      <AlertDescription className="text-xs lg:text-xs text-red-600">
                         Please fill all required fields. These fields are marked
                         with (*).
                       </AlertDescription>

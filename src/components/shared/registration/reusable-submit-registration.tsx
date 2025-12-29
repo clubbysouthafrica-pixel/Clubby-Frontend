@@ -64,29 +64,29 @@ export function ReusableSubmitRegistration({
   const [agreed, setAgreed] = useState(false);
 
   return (
-    <Card className={`pt-0 gap-0 ${className}`}>
-      <CardHeader className="border-b bg-muted/30 py-1 pb-1">
-        <CardTitle className="text-l text-center pt-4">{clubName}</CardTitle>
-        <CardDescription className="text-center text-xs">
-          {headerDescription}
-        </CardDescription>
-      </CardHeader>
+    <div className="flex justify-center items-center px-4 lg:px-0">
+      <Card className={`w-full lg:w-[800px] pt-0 gap-0 ${className}`}>
+        <CardHeader className="border-b bg-muted/30 py-2 lg:py-1 pb-2 lg:pb-1">
+          <CardTitle className="text-base lg:text-lg text-center pt-2 lg:pt-4">{clubName}</CardTitle>
+          <CardDescription className="text-center text-xs lg:text-xs">
+            {headerDescription}
+          </CardDescription>
+        </CardHeader>
 
-      <CardContent className="py-2 px-4">
-        <form>
-          <div className="space-y-2">
-            <div className="grid gap-2">
-              <div className="px-2 py-2 space-y-2 bg-muted/10">
+        <CardContent className="py-4 lg:py-3 px-4 lg:px-4">
+          <form>
+            <div className="space-y-4">
+              <div className="px-0 py-2 space-y-3 bg-muted/10 rounded p-3">
                 {/* Member Information (optional) */}
                 {showMemberInfo && firstName && surname && email && (
-                  <div className="p-3">
-                    <h1 className="text-l pt-2">
+                  <div>
+                    <h1 className="text-xs lg:text-sm font-semibold">
                       Name:{" "}
                       <strong>
                         {firstName} {surname}
                       </strong>
                     </h1>
-                    <h1 className="text-l">
+                    <h1 className="text-xs lg:text-sm">
                       Email: <strong>{email}</strong>
                     </h1>
                   </div>
@@ -94,7 +94,7 @@ export function ReusableSubmitRegistration({
 
                 {/* Payment Warning */}
                 {showPaymentWarning && (
-                  <div className="bg-muted/20 p-3 rounded-lg border space-y-2">
+                  <div className="bg-muted/20 p-3 rounded border space-y-2">
                     <p className="text-xs font-semibold text-yellow-700">
                       ⚠️ Please review your membership information carefully
                       before submitting.
@@ -119,41 +119,27 @@ export function ReusableSubmitRegistration({
                 )}
               </div>
 
-              <div className="px-2 flex items-center gap-2">
+              <div className="flex items-start gap-2">
                 <input
                   id="terms"
                   type="checkbox"
                   checked={agreed}
                   onChange={(e) => setAgreed(e.target.checked)}
                   required
+                  className="mt-0.5 flex-shrink-0"
                 />
-                <Label htmlFor="terms" className="text-xs">
-                  I agree to the{" "}
-                  <a
-                    target="_blank"
-                    href="/terms"
-                    className="underline underline-offset-4 text-primary hover:text-primary/80"
-                  >
-                    Terms of service
-                  </a>{" "}
-                  and{" "}
-                  <a
-                    target="_blank"
-                    href="/legal"
-                    className="underline underline-offset-4 text-primary hover:text-primary/80"
-                  >
-                    Privacy Policy
-                  </a>
-                </Label>
+                <p className="text-[11px] lg:text-sm">
+                  I agree to the <a target="_blank" href="/terms" className="underline underline-offset-4 text-primary hover:text-primary/80">Terms of service</a> and the <a target="_blank" href="/legal" className="underline underline-offset-4 text-primary hover:text-primary/80">Privacy Policy</a>
+                </p>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-between items-center pt-3 border-t my-2">
+              <div className="flex flex-col gap-3 pt-4 border-t">
                 <Button
                   variant="outline"
                   type="button"
                   size="sm"
-                  className="w-[110px]"
+                  className="w-full"
                   disabled={isSubmitting}
                   onClick={onBack}
                 >
@@ -162,17 +148,19 @@ export function ReusableSubmitRegistration({
                 <Button
                   type="button"
                   size="sm"
+                  className="w-full"
                   onClick={onSubmit}
                   disabled={(isSubmitting && !agreed) || !agreed}
                 >
                   {isSubmitting ? "Submitting..." : submitButtonText}
                 </Button>
               </div>
+
+              {bottomContent}
             </div>
-            {bottomContent}
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

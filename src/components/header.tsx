@@ -220,10 +220,10 @@ export default function Header() {
             {/* Mobile Menu */}
             {menuOpen && (
                 <div className="md:hidden flex flex-col space-y-4 mt-4">
-                    <Link to="/" className="hover:text-blue-500">Home</Link>
-                    <Link to="/myclubs" className="hover:text-blue-500">My Clubs</Link>
-                    <Link to="/clubs" className="hover:text-blue-500">Browse Clubs</Link>
-                    <Link to="/contactus" className="hover:text-blue-500">Contact Us</Link>
+                    <Link to="/" className="hover:text-blue-500" onClick={() => setMenuOpen(false)}>Home</Link>
+                    <Link to="/myclubs" className="hover:text-blue-500" onClick={() => setMenuOpen(false)}>My Clubs</Link>
+                    <Link to="/clubs" className="hover:text-blue-500" onClick={() => setMenuOpen(false)}>Browse Clubs</Link>
+                    <Link to="/contactus" className="hover:text-blue-500" onClick={() => setMenuOpen(false)}>Contact Us</Link>
                 </div>
             )}
         </nav>
