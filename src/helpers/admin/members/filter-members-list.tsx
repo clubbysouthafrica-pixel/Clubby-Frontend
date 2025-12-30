@@ -100,6 +100,11 @@ export function filteredRegisteredMembers(
                     } else if (!field && typeof selectedValue === "object" && selectedValue !== null && (selectedValue as { value?: any }).value) {
                         // Field not found but we're trying to filter by billing:number with a non-empty value - exclude this member
                         return false;
+                    } else if (field && typeof selectedValue === "string" && selectedValue.trim()) {
+                        // Handle billing dropdown filter (non-numeric field)
+                        if (field.label_value !== selectedValue) {
+                            return false;
+                        }
                     }
                 }
 
