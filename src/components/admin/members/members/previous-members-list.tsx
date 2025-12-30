@@ -142,7 +142,15 @@ export default function PreviousMembersList({
                                             <DropdownMenuItem
                                                 onClick={() => {
                                                     if (listActionItems.length > 0) {
-                                                        setOpenRemoveDialog(true);
+                                                        const firstMemberToRemove = sortedDeregisteredMembers.find(
+                                                            (member: any) => listActionItems.some(
+                                                                item => item.email === member.member_email && item.name === `${member.member_first_name} ${member.member_surname}`
+                                                            )
+                                                        );
+                                                        if (firstMemberToRemove) {
+                                                            setSelectedMemberToRemove(firstMemberToRemove);
+                                                            setOpenRemoveDialog(true);
+                                                        }
                                                     }
                                                 }}
                                                 disabled={!listActionItems.length}
@@ -248,6 +256,7 @@ export default function PreviousMembersList({
                 onRemoveSuccess={() => {
                     setlistActionItems(listActionItems.filter(item => item.email !== selectedMemberToRemove?.member_email));
                     setSelectedMemberToRemove(null);
+                    window.location.reload();
                 }}
             />
 
