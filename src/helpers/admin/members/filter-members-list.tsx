@@ -97,7 +97,7 @@ export function filteredRegisteredMembers(
                                     break;
                             }
                         }
-                    } else if (!field && typeof selectedValue === "object" && selectedValue !== null && selectedValue.value) {
+                    }} else if (!field && typeof selectedValue === "object" && selectedValue !== null && (selectedValue as { value?: any }).value) {{
                         // Field not found but we're trying to filter by billing:number with a non-empty value - exclude this member
                         return false;
                     } else if (field && field.label_value !== selectedValue) {
@@ -398,7 +398,7 @@ export function pendingRegisteredMembers(
                                         break;
                                 }
                             }
-                        } else if (!field && typeof selectedValue === "object" && selectedValue !== null && selectedValue.value) {
+                        } else if (!field && typeof selectedValue === "object" && selectedValue !== null && (selectedValue as { value?: any }).value) {
                             // Field not found but we're trying to filter by billing:number with a non-empty value - exclude this member
                             return false;
                         } else if (field && field.label_value !== selectedValue) {
