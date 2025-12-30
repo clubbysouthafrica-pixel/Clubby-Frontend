@@ -9,6 +9,7 @@ export function filteredRegisteredMembers(
 ): any {
     return selectedTab === "registered-members"
         ? clubMembers?.registered?.filter((member: ClubMember) => {
+            
             const fullName = (member.member_first_name + " " + member.member_surname).toLowerCase();
             if (!fullName.includes(memberNameFilter.toLowerCase())) return false;
             
@@ -17,7 +18,9 @@ export function filteredRegisteredMembers(
             if (idFilterStr && !memberId.includes(idFilterStr)) return false;
 
             for (const [fullKey, selectedValue] of Object.entries(dynamicFilters)) {
-                if (!selectedValue || selectedValue === "all") continue;
+                if (!selectedValue || selectedValue === "all") {
+                    continue;
+                }
                 
                 // Parse type and fieldName - handle "billing:number" as a single type
                 let type: string;
@@ -48,8 +51,14 @@ export function filteredRegisteredMembers(
                         // Handle as numeric billing field with operator
                         if (typeof selectedValue === "object" && selectedValue !== null) {
                             const { operator, value } = selectedValue as { operator: string; value: string };
+                            
                             if (!value || value === "") {
                                 continue;
+                            }
+                            
+                            // If field doesn't exist or has no value, exclude the member
+                            if (!field || field.value === null || field.value === undefined || field.value === "") {
+                                return false;
                             }
                             
                             const fieldValue = parseFloat(field.value) || 0;
@@ -88,6 +97,9 @@ export function filteredRegisteredMembers(
                                     break;
                             }
                         }
+                    } else if (!field && typeof selectedValue === "object" && selectedValue !== null && selectedValue.value) {
+                        // Field not found but we're trying to filter by billing:number with a non-empty value - exclude this member
+                        return false;
                     } else if (field && field.label_value !== selectedValue) {
                         return false;
                     }
@@ -104,8 +116,8 @@ export function filteredRegisteredMembers(
                             continue;
                         }
                         
-                        // If field doesn't exist, exclude the member
-                        if (!field) {
+                        // If field doesn't exist or has no value, exclude the member
+                        if (!field || field.value === null || field.value === undefined || field.value === "") {
                             return false;
                         }
                         
@@ -148,7 +160,6 @@ export function filteredRegisteredMembers(
                 }
             }
 
-            return true;
             return true;
         }) ?? []
         : clubMembers?.registered ?? [];
@@ -243,30 +254,44 @@ export function previousRegisteredMembers(
                             // Skip if value is empty
                             if (!value || value === "") continue;
                             
-                            // If field doesn't exist, exclude the member
-                            if (!field) return false;
+                            // If field doesn't exist or has no value, exclude the member
+                            if (!field || field.value === null || field.value === undefined || field.value === "") {
+                                return false;
+                            }
                             
                             const fieldValue = parseFloat(field.value) || 0;
                             const compareValue = parseFloat(value) || 0;
                             
                             switch (operator) {
                                 case "eq":
-                                    if (fieldValue !== compareValue) return false;
+                                    if (fieldValue !== compareValue) {
+                                        return false;
+                                    }
                                     break;
                                 case "gt":
-                                    if (fieldValue <= compareValue) return false;
+                                    if (fieldValue <= compareValue) {
+                                        return false;
+                                    }
                                     break;
                                 case "gte":
-                                    if (fieldValue < compareValue) return false;
+                                    if (fieldValue < compareValue) {
+                                        return false;
+                                    }
                                     break;
                                 case "lt":
-                                    if (fieldValue >= compareValue) return false;
+                                    if (fieldValue >= compareValue) {
+                                        return false;
+                                    }
                                     break;
                                 case "lte":
-                                    if (fieldValue > compareValue) return false;
+                                    if (fieldValue > compareValue) {
+                                        return false;
+                                    }
                                     break;
                                 case "neq":
-                                    if (fieldValue === compareValue) return false;
+                                    if (fieldValue === compareValue) {
+                                        return false;
+                                    }
                                     break;
                             }
                         }
@@ -332,6 +357,11 @@ export function pendingRegisteredMembers(
                                     continue;
                                 }
                                 
+                                // If field doesn't exist or has no value, exclude the member
+                                if (!field || field.value === null || field.value === undefined || field.value === "") {
+                                    return false;
+                                }
+                                
                                 const fieldValue = parseFloat(field.value) || 0;
                                 const compareValue = parseFloat(value) || 0;
                                 
@@ -368,6 +398,9 @@ export function pendingRegisteredMembers(
                                         break;
                                 }
                             }
+                        } else if (!field && typeof selectedValue === "object" && selectedValue !== null && selectedValue.value) {
+                            // Field not found but we're trying to filter by billing:number with a non-empty value - exclude this member
+                            return false;
                         } else if (field && field.label_value !== selectedValue) {
                             return false;
                         }
@@ -385,8 +418,8 @@ export function pendingRegisteredMembers(
                                 continue;
                             }
                             
-                            // If field doesn't exist, exclude the member
-                            if (!field) {
+                            // If field doesn't exist or has no value, exclude the member
+                            if (!field || field.value === null || field.value === undefined || field.value === "") {
                                 return false;
                             }
                             
