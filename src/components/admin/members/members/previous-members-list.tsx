@@ -29,6 +29,7 @@ interface ImageProps {
     memberNameFilter: string
     memberIdFilter: string
     dynamicFilters: Record<string, string>
+    activeColumnKeys?: string[]
     setAllMembersSelected: React.Dispatch<React.SetStateAction<boolean>>
     setlistActionItems: React.Dispatch<React.SetStateAction<{ email: string, name: string }[]>>
     setSelectedMember: React.Dispatch<React.SetStateAction<object>>
@@ -46,6 +47,7 @@ export default function PreviousMembersList({
     memberIdFilter,
     allMembersSelected,
     dynamicFilters,
+    activeColumnKeys = [],
     listActionItems,
     setSelectedMember,
     setAllListActionItems,
@@ -57,7 +59,7 @@ export default function PreviousMembersList({
     const filteredDeregisteredMembers = previousRegisteredMembers(selectedTab, clubMembers, memberNameFilter, memberIdFilter, dynamicFilters);
     const [deregSortAsc, setDeregSortAsc] = useState<boolean | null>(null);
     const [openRemoveDialog, setOpenRemoveDialog] = useState<boolean>(false);
-    const [selectedMemberToRemove, setSelectedMemberToRemove] = useState<ClubMember | null>(null);
+    const [selectedMembersToRemove, setSelectedMembersToRemove] = useState<ClubMember[]>([]);
     const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
 
     const sortedDeregisteredMembers = useMemo(() => {
@@ -76,7 +78,8 @@ export default function PreviousMembersList({
     }, [filteredDeregisteredMembers, setDeregisteredMembersLength]);
 
     return (
-        <div className={`overflow-hidden rounded-lg border ${filteredDeregisteredMembers.length > 10 ? "max-h-[600px] overflow-y-auto" : ""}`}>
+        <>
+            <div className={`overflow-hidden rounded-lg border ${filteredDeregisteredMembers.length > 10 ? "max-h-[600px] overflow-y-auto" : ""}`}>
             <DndContext
                 collisionDetection={closestCenter}
                 sensors={sensors}
@@ -85,24 +88,7 @@ export default function PreviousMembersList({
                 <Table>
                     <TableHeader className="bg-muted sticky top-0 z-10">
                         <TableRow>
-                            <TableHead className="text-center w-1/5">Member Name</TableHead>
-                            <TableHead className="text-center w-1/5">Member ID</TableHead>
-                            <TableHead className="text-center w-1/5">
-                                <button
-                                    type="button"
-                                    className="inline-flex items-center gap-1 hover:underline"
-                                    onClick={() => setDeregSortAsc(prev => prev === null ? true : !prev)}
-                                    title="Toggle sort by Deregistered On"
-                                >
-                                    Deregistered On
-                                    {deregSortAsc === null ? (
-                                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
-                                    ) : (
-                                        <span className="text-xs">{deregSortAsc ? "▲" : "▼"}</span>
-                                    )}
-                                </button>
-                            </TableHead>
-                            <TableHead className="text-center w-1/5 py-2">
+                            <TableHead className="text-center w-[80px] py-2 flex-shrink-0">
                                 <div className="flex justify-center items-center border rounded-[10px] pl-3 pr-1 border-gray-300 border-1 w-fit mx-auto hover:border-gray-400 transition-colors">
                                     <Checkbox
                                         checked={allMembersSelected}
@@ -142,13 +128,13 @@ export default function PreviousMembersList({
                                             <DropdownMenuItem
                                                 onClick={() => {
                                                     if (listActionItems.length > 0) {
-                                                        const firstMemberToRemove = sortedDeregisteredMembers.find(
+                                                        const membersToRemove = sortedDeregisteredMembers.filter(
                                                             (member: any) => listActionItems.some(
                                                                 item => item.email === member.member_email && item.name === `${member.member_first_name} ${member.member_surname}`
                                                             )
                                                         );
-                                                        if (firstMemberToRemove) {
-                                                            setSelectedMemberToRemove(firstMemberToRemove);
+                                                        if (membersToRemove.length > 0) {
+                                                            setSelectedMembersToRemove(membersToRemove);
                                                             setOpenRemoveDialog(true);
                                                         }
                                                     }
@@ -162,12 +148,62 @@ export default function PreviousMembersList({
                                     </DropdownMenu>
                                 </div>
                             </TableHead>
+                            <TableHead className="text-center w-[150px]">Member Name</TableHead>
+                            <TableHead className="text-center w-[150px]">Member ID</TableHead>
+                            <TableHead className="text-center w-[150px]">
+                                <button
+                                    type="button"
+                                    className="inline-flex items-center gap-1 hover:underline"
+                                    onClick={() => setDeregSortAsc(prev => prev === null ? true : !prev)}
+                                    title="Toggle sort by Deregistered On"
+                                >
+                                    Deregistered On
+                                    {deregSortAsc === null ? (
+                                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                                    ) : (
+                                        <span className="text-xs">{deregSortAsc ? "▲" : "▼"}</span>
+                                    )}
+                                </button>
+                            </TableHead>
+                            {clubMembers?.filters
+                              ?.filter((col: any) => activeColumnKeys.includes(col.key))
+                              .map((column: any) => (
+                                <TableHead key={column.key} className="text-center w-[150px]">
+                                  {column.field_name}
+                                </TableHead>
+                              ))}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {sortedDeregisteredMembers.length ? sortedDeregisteredMembers.map((member: ClubMember) => (
                             <TableRow key={member.user_id} className={listActionItems.some((item) => item.email === member.member_email && item.name === `${member.member_first_name} ${member.member_surname}`) ? "bg-blue-50" : ""}>
-                                <TableCell className="text-center w-1/5">
+                                <TableCell className="text-center w-[80px] flex-shrink-0">
+                                    <div className="flex justify-center">
+                                        <Checkbox
+                                            checked={listActionItems.some(
+                                                (item) =>
+                                                    item.email === member.member_email &&
+                                                    item.name === `${member.member_first_name} ${member.member_surname}`
+                                            )}
+                                            onCheckedChange={(checked: boolean) => {
+                                                if (checked) {
+                                                    const updatedList = [...listActionItems, { email: member.member_email, name: `${member.member_first_name} ${member.member_surname}` }];
+                                                    setlistActionItems(updatedList);
+                                                    if (updatedList.length === filteredDeregisteredMembers.length) {
+                                                        setAllMembersSelected(true);
+                                                    }
+                                                } else {
+                                                    const updatedList = listActionItems.filter(
+                                                        (item) => item.email !== member.member_email
+                                                    );
+                                                    setlistActionItems(updatedList);
+                                                    setAllMembersSelected(false);
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-center w-[150px]">
                                     <a
                                         onClick={() => setSelectedMember(member)}
                                         href={`#${member.user_id}`}
@@ -176,7 +212,7 @@ export default function PreviousMembersList({
                                         {member.member_first_name + " " + member.member_surname}
                                     </a>
                                 </TableCell>
-                                <TableCell className="text-center w-1/5">
+                                <TableCell className="text-center w-[150px]">
                                     <div className="inline-flex items-center gap-2 justify-center">
                                         <span className="font-mono">{member.user_id.slice(0, 8)}...</span>
 
@@ -205,40 +241,46 @@ export default function PreviousMembersList({
                                         </button>
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-center w-1/5">
+                                <TableCell className="text-center w-[150px]">
                                     {member.deregistered_on ? new Date(member.deregistered_on).toLocaleString() : "Previous season registration"}
                                 </TableCell>
-                                <TableCell className="text-center w-1/5">
-                                    <div className="flex justify-center">
-                                        <Checkbox
-                                            checked={listActionItems.some(
-                                                (item) =>
-                                                    item.email === member.member_email &&
-                                                    item.name === `${member.member_first_name} ${member.member_surname}`
-                                            )}
-                                            onCheckedChange={(checked: boolean) => {
-                                                if (checked) {
-                                                    const updatedList = [...listActionItems, { email: member.member_email, name: `${member.member_first_name} ${member.member_surname}` }];
-                                                    setlistActionItems(updatedList);
-                                                    if (updatedList.length === filteredDeregisteredMembers.length) {
-                                                        setAllMembersSelected(true);
-                                                    }
-                                                } else {
-                                                    const updatedList = listActionItems.filter(
-                                                        (item) => item.email !== member.member_email
-                                                    );
-                                                    setlistActionItems(updatedList);
-                                                    setAllMembersSelected(false);
-                                                }
-                                            }}
-                                        />
-                                    </div>
-                                </TableCell>
+                                {clubMembers?.filters
+                                  ?.filter((col: any) => activeColumnKeys.includes(col.key))
+                                  .map((column: any) => {
+                                    let columnValue = "N/A";
+                                    
+                                    if (column.type === "billing") {
+                                      const billingField = member.meta_billing?.find(
+                                        (f: any) => f.field_name === column.field_name
+                                      );
+                                      columnValue = billingField?.label_value || "N/A";
+                                    }
+
+                                    if (column.type === "billing:number") {
+                                      const customField = member.meta_billing?.find(
+                                        (f: any) => f.field_name === column.field_name
+                                      );
+                                      columnValue = customField?.value || "N/A";
+                                    }
+
+                                    if (column.type === "standard") {
+                                      const standardField = member.meta_standard?.find(
+                                        (f: any) => f.field_name === column.field_name
+                                      );
+                                      columnValue = standardField?.value || "N/A";
+                                    }
+                                    
+                                    return (
+                                      <TableCell key={column.key} className="text-center w-[150px]">
+                                        {columnValue}
+                                      </TableCell>
+                                    );
+                                  })}
                             </TableRow>
                         )) : (
                             <TableRow>
                                 <TableCell
-                                    colSpan={5}
+                                    colSpan={4 + (activeColumnKeys?.length ?? 0)}
                                     className="h-24 text-center"
                                 >
                                     No results.
@@ -252,10 +294,12 @@ export default function PreviousMembersList({
             <RemoveMemberDialog
                 open={openRemoveDialog}
                 onOpenChange={setOpenRemoveDialog}
-                member={selectedMemberToRemove}
+                members={selectedMembersToRemove}
                 onRemoveSuccess={() => {
-                    setlistActionItems(listActionItems.filter(item => item.email !== selectedMemberToRemove?.member_email));
-                    setSelectedMemberToRemove(null);
+                    setlistActionItems(listActionItems.filter(item => 
+                        !selectedMembersToRemove.some(member => member.member_email === item.email)
+                    ));
+                    setSelectedMembersToRemove([]);
                     window.location.reload();
                 }}
             />
@@ -272,6 +316,7 @@ export default function PreviousMembersList({
                     setAllMembersSelected(false);
                 }}
             />
-        </div>
+            </div>
+        </>
     )
 }

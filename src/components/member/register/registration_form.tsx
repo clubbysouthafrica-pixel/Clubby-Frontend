@@ -56,8 +56,6 @@ export function ClubRegisterForm() {
   const [clubName, setClubName] = useState("");
   const [clubProfileUrl, setClubProfileUrl] = useState("");
 
-  console.log("Registration Form Data:", data);
-
   useEffect(() => {
     if (data?.currency) {
       setClubCurrency(data.currency);
