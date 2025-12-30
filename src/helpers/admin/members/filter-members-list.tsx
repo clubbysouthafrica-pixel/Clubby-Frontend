@@ -97,11 +97,16 @@ export function filteredRegisteredMembers(
                     const field = member.meta_billing?.find((f: any) => f.field_name === fieldName);
                     
                     // selectedValue should be an object like { operator: "gt", value: "100" }
-                    if (field && typeof selectedValue === "object" && selectedValue !== null) {
+                    if (typeof selectedValue === "object" && selectedValue !== null) {
                         const { operator, value } = selectedValue as { operator: string; value: string };
                         // Skip if value is empty
                         if (!value || value === "") {
                             continue;
+                        }
+                        
+                        // If field doesn't exist, exclude the member
+                        if (!field) {
+                            return false;
                         }
                         
                         const fieldValue = parseFloat(field.value) || 0;
@@ -233,10 +238,14 @@ export function previousRegisteredMembers(
                         const field = member.meta_billing?.find((f: any) => f.field_name === fieldName);
                         
                         // selectedValue should be an object like { operator: "gt", value: "100" }
-                        if (field && typeof selectedValue === "object" && selectedValue !== null) {
+                        if (typeof selectedValue === "object" && selectedValue !== null) {
                             const { operator, value } = selectedValue as { operator: string; value: string };
                             // Skip if value is empty
                             if (!value || value === "") continue;
+                            
+                            // If field doesn't exist, exclude the member
+                            if (!field) return false;
+                            
                             const fieldValue = parseFloat(field.value) || 0;
                             const compareValue = parseFloat(value) || 0;
                             
@@ -368,12 +377,17 @@ export function pendingRegisteredMembers(
                         const field = member.meta_billing?.find((f: any) => f.field_name === fieldName);
                         
                         // selectedValue should be an object like { operator: "gt", value: "100" }
-                        if (field && typeof selectedValue === "object" && selectedValue !== null) {
+                        if (typeof selectedValue === "object" && selectedValue !== null) {
                             const { operator, value } = selectedValue as { operator: string; value: string };
                             
                             // Skip if value is empty
                             if (!value || value === "") {
                                 continue;
+                            }
+                            
+                            // If field doesn't exist, exclude the member
+                            if (!field) {
+                                return false;
                             }
                             
                             const fieldValue = parseFloat(field.value) || 0;
