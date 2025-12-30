@@ -24,25 +24,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
 import RegisteredMembersList from "@/components/admin/members/members/registered-members-list";
 import PendingMembersList from "@/components/admin/members/members/pending-members-list";
 import PreviousMembersList from "@/components/admin/members/members/previous-members-list";
+import AddColumnsDialog from "@/components/admin/members/members/features/add-columns-dialog";
+import AddFiltersDialog from "@/components/admin/members/members/features/add-filters-dialog";
 import {
   filteredRegisteredMembers,
   previousRegisteredMembers,
   pendingRegisteredMembers,
 } from "@/helpers/admin/members/filter-members-list";
-import { Loader2 } from "lucide-react";
+import { Loader2, X, Download } from "lucide-react";
+import { exportTableData } from "@/helpers/admin/members/csv-export";
 
 export default function ListMembersPage() {
   const { club, isLoading: clubLoading } = useContext(
@@ -70,7 +64,7 @@ export default function ListMembersPage() {
     useState(false);
   const [memberNameFilter, setMemberNameFilter] = useState("");
   const [memberIdFilter, setMemberIdFilter] = useState("");
-  const [dynamicFilters, setDynamicFilters] = useState<Record<string, string>>(
+  const [dynamicFilters, setDynamicFilters] = useState<Record<string, any>>(
     {}
   );
   const [filterLoading, setFilterLoading] = useState(true);
@@ -88,6 +82,14 @@ export default function ListMembersPage() {
   >([]);
   const [activeFilterKeys, setActiveFilterKeys] = useState<string[]>([]);
   const [showFilterSelector, setShowFilterSelector] = useState(false);
+  
+  // Column keys for each tab
+  const [activeColumnKeysRegistered, setActiveColumnKeysRegistered] = useState<string[]>([]);
+  const [showColumnSelectorRegistered, setShowColumnSelectorRegistered] = useState(false);
+  const [activeColumnKeysPending, setActiveColumnKeysPending] = useState<string[]>([]);
+  const [showColumnSelectorPending, setShowColumnSelectorPending] = useState(false);
+  const [activeColumnKeysPrevious, setActiveColumnKeysPrevious] = useState<string[]>([]);
+  const [showColumnSelectorPrevious, setShowColumnSelectorPrevious] = useState(false);
 
   const handleFormattedInputChange = (
     e: React.ChangeEvent<HTMLInputElement>
@@ -242,6 +244,69 @@ export default function ListMembersPage() {
     setActiveFilterKeys([]);
   };
 
+  const handleDownloadRegisteredMembers = () => {
+    const membersToDownload = filteredRegisteredMembers(
+      "registered-members",
+      clubMembers,
+      memberNameFilter,
+      memberIdFilter,
+      dynamicFilters
+    );
+
+    const customCols = clubMembers?.filters?.filter((f: any) =>
+      activeColumnKeysRegistered.includes(f.key)
+    ) || [];
+
+    exportTableData({
+      members: membersToDownload,
+      tableName: "Active_Members",
+      defaultColumns: ["Member Name", "Member ID", "Registered On"],
+      customColumns: customCols,
+    });
+  };
+
+  const handleDownloadPendingMembers = () => {
+    const membersToDownload = pendingRegisteredMembers(
+      "pending-members",
+      clubMembers,
+      memberNameFilter,
+      memberIdFilter,
+      dynamicFilters
+    );
+
+    const customCols = clubMembers?.filters?.filter((f: any) =>
+      activeColumnKeysPending.includes(f.key)
+    ) || [];
+
+    exportTableData({
+      members: membersToDownload,
+      tableName: "Pending_Members",
+      defaultColumns: ["Member Name", "Member ID", "Registration Submitted On", "Outstanding Amount"],
+      customColumns: customCols,
+    });
+  };
+
+  const handleDownloadPreviousMembers = () => {
+    const membersToDownload = previousRegisteredMembers(
+      "previous-members",
+      clubMembers,
+      memberNameFilter,
+      memberIdFilter,
+      dynamicFilters
+    );
+
+    const customCols = clubMembers?.filters?.filter((f: any) =>
+      activeColumnKeysPrevious.includes(f.key)
+    ) || [];
+
+    exportTableData({
+      members: membersToDownload,
+      tableName: "Previous_Members",
+      defaultColumns: ["Member Name", "Member ID", "Deregistered On"],
+      customColumns: customCols,
+    });
+  };
+
   if (clubMembersLoading || filterLoading) {
     return (
       <div className="p-5 min-h-screen">
@@ -277,6 +342,11 @@ export default function ListMembersPage() {
             setMemberNameFilter("");
             setMemberIdFilter("");
             setDynamicFilters({});
+            
+            // Reset custom columns for all tabs
+            setActiveColumnKeysRegistered([]);
+            setActiveColumnKeysPending([]);
+            setActiveColumnKeysPrevious([]);
           }}
           className="w-full flex-col justify-start gap-1 mt-2"
         >
@@ -317,70 +387,162 @@ export default function ListMembersPage() {
             Reset filters
           </p>
           <div className="flex flex-row flex-wrap gap-2 p-2">
-            <div className="flex flex-wrap gap-2 flex-1">
-              <Input
-                placeholder="Filter by member name"
-                value={memberNameFilter}
-                onChange={(e) => {
-                  setMemberNameFilter(e.target.value);
-                  setlistActionItems([]);
-                  setDeregisterMembers([]);
-                  setAllMembersSelected(false);
-                }}
-                className="w-[300px]"
-              />
-              <Input
-                placeholder="Filter by member ID"
-                value={memberIdFilter}
-                onChange={(e) => {
-                  setMemberIdFilter(e.target.value);
-                  setlistActionItems([]);
-                  setDeregisterMembers([]);
-                  setAllMembersSelected(false);
-                }}
-                className="w-[300px]"
-              />
-              {availableDynamicFilters &&
-                (() => {
-                  const activeFilters = availableDynamicFilters.filter(
-                    ({ key }) => activeFilterKeys.includes(key)
-                  );
+            <Input
+              placeholder="Filter by member name"
+              value={memberNameFilter}
+              onChange={(e) => {
+                setMemberNameFilter(e.target.value);
+                setlistActionItems([]);
+                setDeregisterMembers([]);
+                setAllMembersSelected(false);
+              }}
+              className="w-[300px]"
+            />
+            <Input
+              placeholder="Filter by member ID"
+              value={memberIdFilter}
+              onChange={(e) => {
+                setMemberIdFilter(e.target.value);
+                setlistActionItems([]);
+                setDeregisterMembers([]);
+                setAllMembersSelected(false);
+              }}
+              className="w-[300px]"
+            />
+          </div>
+          
+          {availableDynamicFilters && activeFilterKeys.length > 0 && (() => {
+            const activeFilters = availableDynamicFilters.filter(
+              ({ key }) => activeFilterKeys.includes(key)
+            );
 
-                  // Sort filters by type: text first, then select, then boolean (checkbox)
-                  const sortedFilters = activeFilters.sort((a, b) => {
-                    const getType = (
-                      filter: (typeof availableDynamicFilters)[0]
-                    ) => {
-                      if (!filter.options) return 0; // text filters
-                      if (
-                        filter.options.length === 2 &&
-                        filter.options.includes("true") &&
-                        filter.options.includes("false")
-                      )
-                        return 2; // boolean filters (checkbox) - last
-                      return 1; // select filters
-                    };
-                    return getType(a) - getType(b);
-                  });
+            const sortedFilters = activeFilters.sort((a, b) => {
+              const getType = (
+                filter: (typeof availableDynamicFilters)[0]
+              ) => {
+                if (!filter.options) return 0;
+                if (
+                  filter.options.length === 2 &&
+                  filter.options.includes("true") &&
+                  filter.options.includes("false")
+                )
+                  return 2;
+                return 1;
+              };
+              return getType(a) - getType(b);
+            });
 
-                  return sortedFilters.map(({ key, field_name, options }) => {
+            return (
+              <div className="flex flex-col gap-2 p-2">
+                <span className="text-xs font-semibold text-muted-foreground">Custom Filters</span>
+                <div className="flex flex-wrap gap-2">
+                  {sortedFilters.map(({ key, field_name, options, type }) => {
+                    // Handle billing:number type with comparison operators
+                    if (type === "billing:number") {
+                      const filterValue = dynamicFilters[key] || {};
+                      const operator = typeof filterValue === "object" ? filterValue.operator || "gte" : "gte";
+                      const rawValue = typeof filterValue === "object" ? filterValue.value || "" : "";
+                      const displayValue = rawValue ? formatAmount(parseInt(rawValue) || 0, club?.currency) : "";
+                      
+                      return (
+                        <div key={key} className="border rounded-lg p-3 bg-white">
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <Label className="text-xs font-semibold">{field_name}</Label>
+                            <button
+                              onClick={() => {
+                                setActiveFilterKeys(prev => prev.filter(k => k !== key));
+                                setDynamicFilters(prev => {
+                                  const newFilters = { ...prev };
+                                  delete newFilters[key];
+                                  return newFilters;
+                                });
+                              }}
+                              className="p-0.5 hover:bg-gray-200 rounded"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                          <div className="flex gap-2 items-center">
+                            <Select
+                              onValueChange={(newOperator) => {
+                                setDynamicFilters((prev) => ({
+                                  ...prev,
+                                  [key]: { operator: newOperator, value: rawValue },
+                                }));
+                                setlistActionItems([]);
+                                setDeregisterMembers([]);
+                                setAllMembersSelected(false);
+                              }}
+                              value={operator}
+                            >
+                              <SelectTrigger className="w-[200px] text-sm">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="eq">Equal to</SelectItem>
+                                <SelectItem value="neq">Not equal to</SelectItem>
+                                <SelectItem value="gt">Greater than</SelectItem>
+                                <SelectItem value="gte">Greater or equal</SelectItem>
+                                <SelectItem value="lt">Less than</SelectItem>
+                                <SelectItem value="lte">Less or equal</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Input
+                              type="text"
+                              placeholder="Enter amount"
+                              value={displayValue}
+                              onChange={(e) => {
+                                const inputValue = e.target.value.replace(/[^\d]/g, "");
+                                const numericValue = inputValue || "";
+                                setDynamicFilters((prev) => ({
+                                  ...prev,
+                                  [key]: { operator, value: numericValue },
+                                }));
+                                setlistActionItems([]);
+                                setDeregisterMembers([]);
+                                setAllMembersSelected(false);
+                              }}
+                              className="w-[150px] text-sm"
+                            />
+                          </div>
+                        </div>
+                      );
+                    }
+
                     if (!options) {
                       return (
-                        <Input
-                          key={key}
-                          placeholder={`Filter by ${field_name}`}
-                          value={dynamicFilters[key] || ""}
-                          onChange={(e) => {
-                            setDynamicFilters((prev) => ({
-                              ...prev,
-                              [key]: e.target.value,
-                            }));
-                            setlistActionItems([]);
-                            setDeregisterMembers([]);
-                            setAllMembersSelected(false);
-                          }}
-                          className="w-[300px]"
-                        />
+                        <div key={key} className="border rounded-lg p-3 bg-white">
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <Label className="text-xs font-semibold">{field_name}</Label>
+                            <button
+                              onClick={() => {
+                                setActiveFilterKeys(prev => prev.filter(k => k !== key));
+                                setDynamicFilters(prev => {
+                                  const newFilters = { ...prev };
+                                  delete newFilters[key];
+                                  return newFilters;
+                                });
+                              }}
+                              className="p-0.5 hover:bg-gray-200 rounded"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                          <Input
+                            placeholder={`Filter by ${field_name}`}
+                            value={dynamicFilters[key] || ""}
+                            onChange={(e) => {
+                              setDynamicFilters((prev) => ({
+                                ...prev,
+                                [key]: e.target.value,
+                              }));
+                              setlistActionItems([]);
+                              setDeregisterMembers([]);
+                              setAllMembersSelected(false);
+                            }}
+                            className="w-[280px] text-sm"
+                          />
+                        </div>
                       );
                     }
 
@@ -391,10 +553,23 @@ export default function ListMembersPage() {
                       options.includes("false")
                     ) {
                       return (
-                        <div
-                          key={key}
-                          className="flex items-center gap-3 px-3 py-2 border rounded-md bg-background"
-                        >
+                        <div key={key} className="border rounded-lg p-3 bg-white">
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <Label className="text-xs font-semibold">{field_name}</Label>
+                            <button
+                              onClick={() => {
+                                setActiveFilterKeys(prev => prev.filter(k => k !== key));
+                                setDynamicFilters(prev => {
+                                  const newFilters = { ...prev };
+                                  delete newFilters[key];
+                                  return newFilters;
+                                });
+                              }}
+                              className="p-0.5 hover:bg-gray-200 rounded"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
                           <Checkbox
                             id={key}
                             checked={dynamicFilters[key] === "true"}
@@ -410,95 +585,105 @@ export default function ListMembersPage() {
                           />
                           <label
                             htmlFor={key}
-                            className="text-sm font-medium cursor-pointer"
+                            className="text-sm font-medium cursor-pointer ml-2"
                           >
-                            {field_name}
+                            Enabled
                           </label>
                         </div>
                       );
                     }
 
                     return (
-                      <Select
-                        key={key}
-                        onValueChange={(value) => {
-                          setDynamicFilters((prev) => ({
-                            ...prev,
-                            [key]: value,
-                          }));
-                          setlistActionItems([]);
-                          setDeregisterMembers([]);
-                          setAllMembersSelected(false);
-                        }}
-                        value={dynamicFilters[key] || ""}
-                      >
-                        <SelectTrigger className="w-[250px]">
-                          <span className="text-muted-foreground">
-                            {field_name}:
-                          </span>
-                          <SelectValue placeholder="All" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All</SelectItem>
-                          {options.map((opt) => (
-                            <SelectItem key={opt} value={opt}>
-                              {opt}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    );
-                  });
-                })()}
-              <Dialog
-                open={showFilterSelector}
-                onOpenChange={setShowFilterSelector}
-              >
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="w-[250px]">
-                    + Add Filter
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add Filters</DialogTitle>
-                    <DialogDescription>
-                      Select which filters you want to display
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {availableDynamicFilters &&
-                      availableDynamicFilters.map(({ key, field_name }) => (
-                        <div key={key} className="flex items-center gap-3">
-                          <Checkbox
-                            id={key}
-                            checked={activeFilterKeys.includes(key)}
-                            onCheckedChange={(checked) => {
-                              setActiveFilterKeys((prev) =>
-                                checked
-                                  ? [...prev, key]
-                                  : prev.filter((k) => k !== key)
-                              );
+                      <div key={key} className="border rounded-lg p-3 bg-white">
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <Label className="text-xs font-semibold">{field_name}</Label>
+                          <button
+                            onClick={() => {
+                              setActiveFilterKeys(prev => prev.filter(k => k !== key));
+                              setDynamicFilters(prev => {
+                                const newFilters = { ...prev };
+                                delete newFilters[key];
+                                return newFilters;
+                              });
                             }}
-                          />
-                          <label
-                            htmlFor={key}
-                            className="text-sm font-medium cursor-pointer flex-1"
+                            className="p-0.5 hover:bg-gray-200 rounded"
                           >
-                            {field_name}
-                          </label>
+                            <X className="h-3 w-3" />
+                          </button>
                         </div>
-                      ))}
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
+                        <Select
+                          onValueChange={(value) => {
+                            setDynamicFilters((prev) => ({
+                              ...prev,
+                              [key]: value,
+                            }));
+                            setlistActionItems([]);
+                            setDeregisterMembers([]);
+                            setAllMembersSelected(false);
+                          }}
+                          value={dynamicFilters[key] || ""}
+                        >
+                          <SelectTrigger className="w-[280px] text-sm">
+                            <SelectValue placeholder="All" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All</SelectItem>
+                            {options.map((opt) => (
+                              <SelectItem key={opt} value={opt}>
+                                {opt}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+          <div className="flex gap-2 p-2 justify-between items-center">
+            <AddFiltersDialog
+              open={showFilterSelector}
+              onOpenChange={setShowFilterSelector}
+              availableFields={availableDynamicFilters}
+              activeFilterKeys={activeFilterKeys}
+              onFilterKeysChange={setActiveFilterKeys}
+            />
+            {selectedTab === "registered-members" && import.meta.env.VITE_ENVIRONMENT === "Dev" && (
+              <AddColumnsDialog
+                open={showColumnSelectorRegistered}
+                onOpenChange={setShowColumnSelectorRegistered}
+                availableFields={availableDynamicFilters}
+                activeColumnKeys={activeColumnKeysRegistered}
+                onColumnKeysChange={setActiveColumnKeysRegistered}
+              />
+            )}
+            {selectedTab === "pending-members" && import.meta.env.VITE_ENVIRONMENT === "Dev" && (
+              <AddColumnsDialog
+                open={showColumnSelectorPending}
+                onOpenChange={setShowColumnSelectorPending}
+                availableFields={availableDynamicFilters}
+                activeColumnKeys={activeColumnKeysPending}
+                onColumnKeysChange={setActiveColumnKeysPending}
+              />
+            )}
+            {selectedTab === "previous-members" && import.meta.env.VITE_ENVIRONMENT === "Dev" && (
+              <AddColumnsDialog
+                open={showColumnSelectorPrevious}
+                onOpenChange={setShowColumnSelectorPrevious}
+                availableFields={availableDynamicFilters}
+                activeColumnKeys={activeColumnKeysPrevious}
+                onColumnKeysChange={setActiveColumnKeysPrevious}
+              />
+            )}
           </div>
           <TabsContent
             value="registered-members"
             className="relative flex flex-col gap-4 overflow-auto"
           >
-            <RegisteredMembersList
+            <div className="flex flex-col">
+              <RegisteredMembersList
               clubId={club?.club_account_id || ""}
               sensors={sensors}
               sortableId={sortableId}
@@ -509,6 +694,7 @@ export default function ListMembersPage() {
               memberNameFilter={memberNameFilter}
               memberIdFilter={memberIdFilter}
               dynamicFilters={dynamicFilters}
+              activeColumnKeys={activeColumnKeysRegistered}
               dereigsterMembers={dereigsterMembers}
               setAllListActionItems={setAllListActionItems}
               setSelectedMember={setSelectedMember}
@@ -517,13 +703,22 @@ export default function ListMembersPage() {
               setAllMembersSelected={setAllMembersSelected}
               setRegisteredMembersLength={setRegisteredMembersLength}
             />
+              <button
+                onClick={handleDownloadRegisteredMembers}
+                className="mt-4 p-2 w-fit bg-transparent cursor-pointer hover:bg-gray-100 transition rounded-md disabled:bg-gray-400 disabled:cursor-not-allowed"
+                title="Download table data as CSV"
+              >
+                <Download className="h-5 w-5 text-green-600" />
+              </button>
+            </div>
           </TabsContent>
 
           <TabsContent
             value="pending-members"
             className="relative flex flex-col gap-4 overflow-auto"
           >
-            <PendingMembersList
+            <div className="flex flex-col">
+              <PendingMembersList
               clubId={club?.club_account_id || ""}
               club={club}
               sensors={sensors}
@@ -541,6 +736,7 @@ export default function ListMembersPage() {
               memberIdFilter={memberIdFilter}
               dynamicFilters={dynamicFilters}
               allMembersSelected={allMembersSelected}
+              activeColumnKeys={activeColumnKeysPending}
               handleFormattedInputChange={handleFormattedInputChange}
               registerUser={registerUser}
               setlistActionItems={setlistActionItems}
@@ -551,13 +747,22 @@ export default function ListMembersPage() {
               setAllListActionItems={setAllListActionItems}
               setAllMembersSelected={setAllMembersSelected}
             />
+              <button
+                onClick={handleDownloadPendingMembers}
+                className="mt-4 p-2 w-fit bg-transparent cursor-pointer hover:bg-gray-100 transition rounded-md disabled:bg-gray-400 disabled:cursor-not-allowed"
+                title="Download table data as CSV"
+              >
+                <Download className="h-5 w-5 text-green-600" />
+              </button>
+            </div>
           </TabsContent>
 
           <TabsContent
             value="previous-members"
             className="relative flex flex-col gap-4 overflow-auto"
           >
-            <PreviousMembersList
+            <div className="flex flex-col">
+              <PreviousMembersList
               clubId={club?.club_account_id || ""}
               club={club}
               sensors={sensors}
@@ -569,12 +774,21 @@ export default function ListMembersPage() {
               memberIdFilter={memberIdFilter}
               dynamicFilters={dynamicFilters}
               listActionItems={listActionItems}
+              activeColumnKeys={activeColumnKeysPrevious}
               setAllListActionItems={setAllListActionItems}
               setSelectedMember={setSelectedMember}
               setlistActionItems={setlistActionItems}
               setAllMembersSelected={setAllMembersSelected}
               setDeregisteredMembersLength={setDeregisteredMembersLength}
             />
+              <button
+                onClick={handleDownloadPreviousMembers}
+                className="mt-4 p-2 w-fit bg-transparent cursor-pointer hover:bg-gray-100 transition rounded-md disabled:bg-gray-400 disabled:cursor-not-allowed"
+                title="Download table data as CSV"
+              >
+                <Download className="h-5 w-5 text-green-600" />
+              </button>
+            </div>
           </TabsContent>
         </Tabs>
       )}

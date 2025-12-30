@@ -20,6 +20,7 @@ interface ImageProps {
     memberNameFilter: string
     memberIdFilter: string
     dynamicFilters: Record<string, string>
+    activeColumnKeys?: string[]
     dereigsterMembers: { user_id: string, name: string }[]
     clubId: string
     setAllListActionItems: (members: ClubMember[]) => void
@@ -40,6 +41,7 @@ export default function RegisteredMembersList({
     memberNameFilter,
     memberIdFilter,
     dynamicFilters,
+    activeColumnKeys = [],
     dereigsterMembers,
     clubId,
     setAllListActionItems,
@@ -83,24 +85,7 @@ export default function RegisteredMembersList({
                     <Table>
                     <TableHeader className="bg-muted sticky top-0 z-10">
                         <TableRow>
-                            <TableHead className="text-center w-1/5">Member name</TableHead>
-                            <TableHead className="text-center w-1/5">Member ID</TableHead>
-                            <TableHead className="text-center w-1/5">
-                                <button
-                                    type="button"
-                                    className="inline-flex items-center gap-1 hover:underline"
-                                    onClick={() => setRegSortAsc((prev) => (prev === null ? true : !prev))}
-                                    title="Toggle sort by Registered On"
-                                >
-                                    Registered On
-                                    {regSortAsc === null ? (
-                                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
-                                    ) : (
-                                        <span className="text-xs">{regSortAsc ? "▲" : "▼"}</span>
-                                    )}
-                                </button>
-                            </TableHead>
-                            <TableHead className="text-center w-1/5 py-2">
+                            <TableHead className="text-center w-[80px] py-2 flex-shrink-0">
                                 <div className="flex justify-center items-center border rounded-[10px] pl-3 pr-1 border-gray-300 border-1 w-fit mx-auto hover:border-gray-400 transition-colors">
                                     <Checkbox
                                         checked={allMembersSelected}
@@ -146,53 +131,36 @@ export default function RegisteredMembersList({
                                     </DropdownMenu>
                                 </div>
                             </TableHead>
+                            <TableHead className="text-center w-[150px]">Member name</TableHead>
+                            <TableHead className="text-center w-[150px]">Member ID</TableHead>
+                            <TableHead className="text-center w-[150px]">
+                                <button
+                                    type="button"
+                                    className="inline-flex items-center gap-1 hover:underline"
+                                    onClick={() => setRegSortAsc((prev) => (prev === null ? true : !prev))}
+                                    title="Toggle sort by Registered On"
+                                >
+                                    Registered On
+                                    {regSortAsc === null ? (
+                                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                                    ) : (
+                                        <span className="text-xs">{regSortAsc ? "▲" : "▼"}</span>
+                                    )}
+                                </button>
+                            </TableHead>
+                            {clubMembers?.filters
+                              ?.filter((col: any) => activeColumnKeys.includes(col.key))
+                              .map((column: any) => (
+                                <TableHead key={column.key} className="text-center w-[150px]">
+                                  {column.field_name}
+                                </TableHead>
+                              ))}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {sortedRegisteredMembers.length ? sortedRegisteredMembers.map((member: ClubMember) => (
                             <TableRow key={member.user_id} className={listActionItems.some((item) => item.email === member.member_email && item.name === `${member.member_first_name} ${member.member_surname}`) ? "bg-blue-50" : ""}>
-                                <TableCell className="text-center w-1/5">
-                                    <a
-                                        onClick={() => setSelectedMember(member)}
-                                        href={`#${member.user_id}`}
-                                        className="underline hover:text-blue-800 cursor-pointer"
-                                    >
-                                        {member.member_first_name + " " + member.member_surname}
-                                    </a>
-                                </TableCell>
-                                <TableCell className="text-center w-1/5">
-                                    <div className="inline-flex items-center gap-2 justify-center">
-                                        <span className="font-mono">{member.user_id.slice(0, 8)}...</span>
-
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                navigator.clipboard.writeText(member.user_id);
-                                            }}
-                                            title="Click to copy full Transaction ID"
-                                            className="hover:text-primary cursor-pointer"
-                                        >
-                                            <svg
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                className="h-4 w-4 text-muted-foreground hover:text-foreground transition"
-                                                fill="none"
-                                                viewBox="0 0 24 24"
-                                                stroke="currentColor"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth={2}
-                                                    d="M8 16h8m2 0a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v8a2 2 0 002 2zM8 16v2a2 2 0 002 2h8a2 2 0 002-2v-2"
-                                                />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-center w-1/5">
-                                    {member.registered_on ? new Date(member.registered_on).toLocaleString() : "-"}
-                                </TableCell>
-                                <TableCell className="text-center w-1/5">
+                                <TableCell className="text-center w-[80px] flex-shrink-0">
                                     <div className="flex justify-center">
                                         <Checkbox
                                         checked={listActionItems.some(
@@ -226,11 +194,84 @@ export default function RegisteredMembersList({
                                     />
                                     </div>
                                 </TableCell>
+                                <TableCell className="text-center w-[150px]">
+                                    <a
+                                        onClick={() => setSelectedMember(member)}
+                                        href={`#${member.user_id}`}
+                                        className="underline hover:text-blue-800 cursor-pointer"
+                                    >
+                                        {member.member_first_name + " " + member.member_surname}
+                                    </a>
+                                </TableCell>
+                                <TableCell className="text-center w-[150px]">
+                                    <div className="inline-flex items-center gap-2 justify-center">
+                                        <span className="font-mono">{member.user_id.slice(0, 8)}...</span>
+
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                navigator.clipboard.writeText(member.user_id);
+                                            }}
+                                            title="Click to copy full Transaction ID"
+                                            className="hover:text-primary cursor-pointer"
+                                        >
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                className="h-4 w-4 text-muted-foreground hover:text-foreground transition"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M8 16h8m2 0a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v8a2 2 0 002 2zM8 16v2a2 2 0 002 2h8a2 2 0 002-2v-2"
+                                                />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-center w-[150px]">
+                                    {member.registered_on ? new Date(member.registered_on).toLocaleString() : "-"}
+                                </TableCell>
+                                {clubMembers?.filters
+                                  ?.filter((col: any) => activeColumnKeys.includes(col.key))
+                                  .map((column: any) => {
+                                    let columnValue = "N/A";
+                                    
+                                    if (column.type === "billing") {
+                                      const billingField = member.meta_billing?.find(
+                                        (f: any) => f.field_name === column.field_name
+                                      );
+                                      columnValue = billingField?.label_value || "N/A";
+                                    }
+
+                                    if (column.type === "billing:number") {
+                                      const customField = member.meta_billing?.find(
+                                        (f: any) => f.field_name === column.field_name
+                                      );
+                                      columnValue = customField?.value || "N/A";
+                                    }
+
+                                    if (column.type === "standard") {
+                                      const standardField = member.meta_standard?.find(
+                                        (f: any) => f.field_name === column.field_name
+                                      );
+                                      columnValue = standardField?.value || "N/A";
+                                    }
+                                    
+                                    return (
+                                      <TableCell key={column.key} className="text-center w-[150px]">
+                                        {columnValue}
+                                      </TableCell>
+                                    );
+                                  })}
                             </TableRow>
                         )) : (
                             <TableRow>
                                 <TableCell
-                                    colSpan={5}
+                                    colSpan={4 + (activeColumnKeys?.length ?? 0)}
                                     className="h-24 text-center"
                                 >
                                     No results.

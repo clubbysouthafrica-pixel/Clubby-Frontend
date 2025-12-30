@@ -4,6 +4,7 @@ import {
   ChevronsUpDown,
   ChevronDown,
 } from "lucide-react";
+import { pendingRegisteredMembers } from "@/helpers/admin/members/filter-members-list";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import {
@@ -57,6 +58,7 @@ interface ImageProps {
   allMembersSelected: boolean;
   listActionItems: { email: string; name: string }[];
   clubId: string;
+  activeColumnKeys?: string[];
   reset: () => void;
   handleFormattedInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   registerUser: (
@@ -92,6 +94,7 @@ export default function PendingMembersList({
   allMembersSelected,
   listActionItems,
   clubId,
+  activeColumnKeys = [],
   reset,
   handleFormattedInputChange,
   registerUser,
@@ -177,48 +180,7 @@ export default function PendingMembersList({
   };
 
   const filteredUnregisteredMembers = useMemo(() => {
-    const base =
-      selectedTab === "pending-members"
-        ? clubMembers?.unregistered?.filter((member: ClubMember) => {
-            const fullName = (
-              member.member_first_name +
-              " " +
-              member.member_surname
-            ).toLowerCase();
-            if (!fullName.includes(memberNameFilter.toLowerCase()))
-              return false;
-
-            const memberId = member.user_id?.toString().toLowerCase() || "";
-            const idFilterStr = String(memberIdFilter || "").toLowerCase();
-            if (idFilterStr && !memberId.includes(idFilterStr)) return false;
-
-            if (member?.resubmission_required) return false;
-
-            for (const [fullKey, selectedValue] of Object.entries(
-              dynamicFilters
-            )) {
-              if (!selectedValue || selectedValue === "all") continue;
-              const [type, fieldName] = fullKey.split(":");
-
-              if (type === "standard") {
-                const field = member.meta_standard?.find(
-                  (f: any) => f.field_name === fieldName
-                );
-                if (!field || field.value !== selectedValue) return false;
-              }
-              if (type === "billing") {
-                const field = member.meta_billing?.find(
-                  (f: any) => f.field_name === fieldName
-                );
-                if (!field || field.label_value !== selectedValue) return false;
-              }
-            }
-            return true;
-          }) ?? []
-        : clubMembers?.unregistered?.filter(
-            (member: ClubMember) => !member?.resubmission_required
-          ) ?? [];
-    return base;
+    return pendingRegisteredMembers(selectedTab, clubMembers, memberNameFilter, memberIdFilter, dynamicFilters);
   }, [
     selectedTab,
     clubMembers,
@@ -251,49 +213,24 @@ export default function PendingMembersList({
   }, [filteredUnregisteredMembers, setUnregisteredMembersLength]);
 
   return (
-    <div
-      className={`overflow-hidden rounded-lg border ${
-        filteredUnregisteredMembers.length > 10
-          ? "max-h-[600px] overflow-y-auto"
-          : ""
-      }`}
-    >
-      <DndContext
-        collisionDetection={closestCenter}
-        sensors={sensors}
-        id={sortableId}
+    <div className="flex flex-col gap-4">
+      <div
+        className={`rounded-lg border w-full overflow-hidden ${
+          filteredUnregisteredMembers.length > 10
+            ? "max-h-[600px] flex flex-col"
+            : ""
+        }`}
       >
-        <Table>
+        <div className={`${filteredUnregisteredMembers.length > 10 ? "overflow-y-auto" : ""} overflow-x-auto flex-1`}>
+          <DndContext
+            collisionDetection={closestCenter}
+            sensors={sensors}
+            id={sortableId}
+          >
+            <Table style={{ minWidth: "1080px" }}>
           <TableHeader className="bg-muted sticky top-0 z-10">
             <TableRow>
-              <TableHead className="text-center w-1/6">Member Name</TableHead>
-              <TableHead className="text-center w-1/6">Member ID</TableHead>
-              <TableHead className="text-center w-1/6">
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1 hover:underline"
-                  onClick={() =>
-                    setSubmittedSortAsc((prev) =>
-                      prev === null ? true : !prev
-                    )
-                  }
-                  title="Toggle sort by Registration Submitted On"
-                >
-                  Registration Submitted
-                  {submittedSortAsc === null ? (
-                    <ChevronsUpDown className="h-3 w-3 opacity-60" />
-                  ) : (
-                    <span className="text-xs">
-                      {submittedSortAsc ? "▲" : "▼"}
-                    </span>
-                  )}
-                </button>
-              </TableHead>
-              <TableHead className="text-center w-1/6">
-                Outstanding Reg. Amount
-              </TableHead>
-              <TableHead className="text-center w-1/6">Register Member</TableHead>
-              <TableHead className="text-center w-1/6 py-2">
+              <TableHead className="text-center w-[80px] py-2 flex-shrink-0">
                 <div className="flex justify-center items-center border rounded-[10px] pl-3 pr-1 border-gray-300 border-1 w-fit mx-auto hover:border-gray-400 transition-colors">
                   <Checkbox
                     checked={allMembersSelected}
@@ -350,6 +287,40 @@ export default function PendingMembersList({
                   </DropdownMenu>
                 </div>
               </TableHead>
+              <TableHead className="text-center w-[150px]">Member Name</TableHead>
+              <TableHead className="text-center w-[150px]">Member ID</TableHead>
+              <TableHead className="text-center w-[150px]">
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 hover:underline"
+                  onClick={() =>
+                    setSubmittedSortAsc((prev) =>
+                      prev === null ? true : !prev
+                    )
+                  }
+                  title="Toggle sort by Registration Submitted On"
+                >
+                  Registration Submitted
+                  {submittedSortAsc === null ? (
+                    <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                  ) : (
+                    <span className="text-xs">
+                      {submittedSortAsc ? "▲" : "▼"}
+                    </span>
+                  )}
+                </button>
+              </TableHead>
+              <TableHead className="text-center w-[150px]">
+                Outstanding Reg. Amount
+              </TableHead>
+              <TableHead className="text-center w-[150px]">Register Member</TableHead>
+              {clubMembers?.filters
+                ?.filter((col: any) => activeColumnKeys.includes(col.key))
+                .map((column: any) => (
+                  <TableHead key={column.key} className="text-center w-[150px]">
+                    {column.field_name}
+                  </TableHead>
+                ))}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -368,7 +339,58 @@ export default function PendingMembersList({
                       : ""
                   }
                 >
-                  <TableCell className="text-center w-1/5">
+                  <TableCell className="text-center w-[80px] flex-shrink-0">
+                    <div className="flex justify-center">
+                      <Checkbox
+                        checked={listActionItems.some(
+                          (item) =>
+                            item.email === member.member_email &&
+                            item.name ===
+                              `${member.member_first_name} ${member.member_surname}`
+                        )}
+                        onCheckedChange={(checked: boolean) => {
+                          if (checked) {
+                            const updatedDeregisterMembers = [
+                              ...deregisterMembers,
+                              {
+                                user_id: member.user_id,
+                                name: `${member.member_first_name} ${member.member_surname}`,
+                              },
+                            ];
+                            setDeregisterMembers(updatedDeregisterMembers);
+
+                            const updatedList = [
+                              ...listActionItems,
+                              {
+                                email: member.member_email,
+                                name: `${member.member_first_name} ${member.member_surname}`,
+                              },
+                            ];
+                            setlistActionItems(updatedList);
+                            if (
+                              updatedList.length ===
+                              filteredUnregisteredMembers.length
+                            ) {
+                              setAllMembersSelected(true);
+                            }
+                          } else {
+                            const updatedDeregisterMembers =
+                              deregisterMembers.filter(
+                                (item) => item.user_id !== member.user_id
+                              );
+                            setDeregisterMembers(updatedDeregisterMembers);
+
+                            const updatedList = listActionItems.filter(
+                              (item) => item.email !== member.member_email
+                            );
+                            setlistActionItems(updatedList);
+                            setAllMembersSelected(false);
+                          }
+                        }}
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-center w-[150px]">
                     <a
                       onClick={() => setSelectedMember(member)}
                       href={`#${member.user_id}`}
@@ -377,7 +399,7 @@ export default function PendingMembersList({
                       {member.member_first_name + " " + member.member_surname}
                     </a>
                   </TableCell>
-                  <TableCell className="text-center w-1/6">
+                  <TableCell className="text-center w-[150px]">
                     <div className="inline-flex items-center gap-2 justify-center">
                       <span className="font-mono">
                         {member.user_id.slice(0, 8)}...
@@ -408,17 +430,17 @@ export default function PendingMembersList({
                       </button>
                     </div>
                   </TableCell>
-                  <TableCell className="text-center w-1/6">
+                  <TableCell className="text-center w-[150px]">
                     {member.registration_submitted_on
                       ? new Date(
                           member.registration_submitted_on
                         ).toLocaleString()
                       : "-"}
                   </TableCell>
-                  <TableCell className="text-center w-1/6">
+                  <TableCell className="text-center w-[150px]">
                     {formatAmount(member.outstanding_amount, club?.currency)}
                   </TableCell>
-                  <TableCell className="text-center w-1/6">
+                  <TableCell className="text-center w-[150px]">
                     <div className="flex justify-center gap-2">
                       <Dialog
                         open={openDialogUserId === member.user_id}
@@ -715,69 +737,52 @@ export default function PendingMembersList({
                       )} */}
                     </div>
                   </TableCell>
-                  <TableCell className="text-center w-1/6">
-                    <div className="flex justify-center">
-                      <Checkbox
-                        checked={listActionItems.some(
-                          (item) =>
-                            item.email === member.member_email &&
-                            item.name ===
-                              `${member.member_first_name} ${member.member_surname}`
-                        )}
-                        onCheckedChange={(checked: boolean) => {
-                          if (checked) {
-                            const updatedDeregisterMembers = [
-                              ...deregisterMembers,
-                              {
-                                user_id: member.user_id,
-                                name: `${member.member_first_name} ${member.member_surname}`,
-                              },
-                            ];
-                            setDeregisterMembers(updatedDeregisterMembers);
+                  {clubMembers?.filters
+                    ?.filter((col: any) => activeColumnKeys.includes(col.key))
+                    .map((column: any) => {
+                      let columnValue = "N/A";
+                      
+                      if (column.type === "billing") {
+                        const billingField = member.meta_billing?.find(
+                          (f: any) => f.field_name === column.field_name
+                        );
+                        columnValue = billingField?.label_value || "N/A";
+                      }
 
-                            const updatedList = [
-                              ...listActionItems,
-                              {
-                                email: member.member_email,
-                                name: `${member.member_first_name} ${member.member_surname}`,
-                              },
-                            ];
-                            setlistActionItems(updatedList);
-                            if (
-                              updatedList.length ===
-                              filteredUnregisteredMembers.length
-                            ) {
-                              setAllMembersSelected(true);
-                            }
-                          } else {
-                            const updatedDeregisterMembers =
-                              deregisterMembers.filter(
-                                (item) => item.user_id !== member.user_id
-                              );
-                            setDeregisterMembers(updatedDeregisterMembers);
+                      if (column.type === "billing:number") {
+                        const customField = member.meta_billing?.find(
+                          (f: any) => f.field_name === column.field_name
+                        );
+                        columnValue = formatAmount(customField?.value || 0, club?.currency) || "N/A";
+                      }
 
-                            const updatedList = listActionItems.filter(
-                              (item) => item.email !== member.member_email
-                            );
-                            setlistActionItems(updatedList);
-                            setAllMembersSelected(false);
-                          }
-                        }}
-                      />
-                    </div>
-                  </TableCell>
+                      if (column.type === "standard") {
+                        const standardField = member.meta_standard?.find(
+                          (f: any) => f.field_name === column.field_name
+                        );
+                        columnValue = standardField?.value || "N/A";
+                      }
+                      
+                      return (
+                        <TableCell key={column.key} className="text-center w-[150px]">
+                          {columnValue}
+                        </TableCell>
+                      );
+                    })}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={6 + (activeColumnKeys?.length ?? 0)} className="h-24 text-center">
                   No results.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
-        </Table>
-      </DndContext>
+            </Table>
+          </DndContext>
+        </div>
+      </div>
 
       <ReusableDeregisterDialog
         isOpen={isDeregisterDialogOpen}
