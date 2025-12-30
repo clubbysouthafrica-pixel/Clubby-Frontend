@@ -57,7 +57,7 @@ export default function PreviousMembersList({
     const filteredDeregisteredMembers = previousRegisteredMembers(selectedTab, clubMembers, memberNameFilter, memberIdFilter, dynamicFilters);
     const [deregSortAsc, setDeregSortAsc] = useState<boolean | null>(null);
     const [openRemoveDialog, setOpenRemoveDialog] = useState<boolean>(false);
-    const [selectedMemberToRemove, setSelectedMemberToRemove] = useState<ClubMember | null>(null);
+    const [selectedMembersToRemove, setSelectedMembersToRemove] = useState<ClubMember[]>([]);
     const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
 
     const sortedDeregisteredMembers = useMemo(() => {
@@ -142,13 +142,13 @@ export default function PreviousMembersList({
                                             <DropdownMenuItem
                                                 onClick={() => {
                                                     if (listActionItems.length > 0) {
-                                                        const firstMemberToRemove = sortedDeregisteredMembers.find(
+                                                        const membersToRemove = sortedDeregisteredMembers.filter(
                                                             (member: any) => listActionItems.some(
                                                                 item => item.email === member.member_email && item.name === `${member.member_first_name} ${member.member_surname}`
                                                             )
                                                         );
-                                                        if (firstMemberToRemove) {
-                                                            setSelectedMemberToRemove(firstMemberToRemove);
+                                                        if (membersToRemove.length > 0) {
+                                                            setSelectedMembersToRemove(membersToRemove);
                                                             setOpenRemoveDialog(true);
                                                         }
                                                     }
@@ -252,10 +252,12 @@ export default function PreviousMembersList({
             <RemoveMemberDialog
                 open={openRemoveDialog}
                 onOpenChange={setOpenRemoveDialog}
-                member={selectedMemberToRemove}
+                members={selectedMembersToRemove}
                 onRemoveSuccess={() => {
-                    setlistActionItems(listActionItems.filter(item => item.email !== selectedMemberToRemove?.member_email));
-                    setSelectedMemberToRemove(null);
+                    setlistActionItems(listActionItems.filter(item => 
+                        !selectedMembersToRemove.some(member => member.member_email === item.email)
+                    ));
+                    setSelectedMembersToRemove([]);
                     window.location.reload();
                 }}
             />

@@ -15,7 +15,7 @@ export const registerMemberToClub = (request: RegisterClubMember) =>
         template_variables: request.template_variables
     }).then(res => res.data)
 
-export const removeMember = (clubAccountId: string, memberId: string) =>
+export const removeMember = (clubAccountId: string, memberIds: string[]) =>
     api.post(`/clubMember/removeMember?club_account_id=${clubAccountId}`, {
-        member_id: memberId
+        member_ids: memberIds
     }).then(res => res.data)

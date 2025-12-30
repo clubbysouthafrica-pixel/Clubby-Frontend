@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Check, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -18,13 +18,22 @@ export function CollectUserDetails({
   onContinue,
 }: CollectUserDetailsProps) {
   const [email, setEmail] = useState("");
+  const [confirmEmail, setConfirmEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [surname, setSurname] = useState("");
   const [error, setError] = useState<string | undefined>(undefined);
 
+  const isEmailValid = email && email.includes("@") && email.includes(".");
+  const emailsMatch = email === confirmEmail && isEmailValid;
+  const isFormValid = emailsMatch && firstName.trim() && surname.trim();
+
   const handleContinue = () => {
-    if (!email || !email.includes("@") || !email.includes(".")) {
+    if (!isEmailValid) {
       setError("Invalid email provided.");
+      return;
+    }
+    if (!emailsMatch) {
+      setError("Email addresses do not match.");
       return;
     }
     if (!firstName.trim()) {
@@ -62,18 +71,57 @@ export function CollectUserDetails({
         >
           Email Address
         </Label>
-        <Input
-          id="public_email"
-          type="email"
-          placeholder="Enter your email address"
-          value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            setError(undefined);
-          }}
-          className="text-sm"
-          required
-        />
+        <div className="relative">
+          <Input
+            id="public_email"
+            type="email"
+            placeholder="Enter your email address"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setError(undefined);
+            }}
+            className="text-sm pr-10"
+            required
+          />
+          {email && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              {isEmailValid ? (
+                <Check className="h-5 w-5 text-green-600" />
+              ) : (
+                <X className="h-5 w-5 text-red-600" />
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg">
+        <Label htmlFor="public_confirm_email" className="text-xs font-semibold text-muted-foreground">
+          Confirm Email Address
+        </Label>
+        <div className="relative">
+          <Input
+            id="public_confirm_email"
+            type="email"
+            placeholder="Re-enter your email address"
+            value={confirmEmail}
+            onChange={(e) => {
+              setConfirmEmail(e.target.value);
+              setError(undefined);
+            }}
+            className="text-sm pr-10"
+            required
+          />
+          {confirmEmail && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              {emailsMatch ? (
+                <Check className="h-5 w-5 text-green-600" />
+              ) : (
+                <X className="h-5 w-5 text-red-600" />
+              )}
+            </div>
+          )}
+        </div>
       </div>
       <div className="flex flex-col gap-1.5 p-3 rounded-lg">
         <Label
@@ -122,7 +170,7 @@ export function CollectUserDetails({
         </Alert>
       )}
       <div className="flex flex-col gap-1.5 p-3 rounded-lg">
-        <Button size="sm" className="w-full" onClick={handleContinue}>
+        <Button size="sm" className="w-full" onClick={handleContinue} disabled={!isFormValid}>
           Continue
         </Button>
       </div>

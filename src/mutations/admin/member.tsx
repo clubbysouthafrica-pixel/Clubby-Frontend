@@ -10,7 +10,7 @@ export const useRegisterUserToClubMutation = () => {
 
 export const useRemoveMemberMutation = () => {
     return useMutation({
-        mutationFn: ({ clubAccountId, memberId }: { clubAccountId: string; memberId: string }) =>
-            removeMember(clubAccountId, memberId)
+        mutationFn: ({ clubAccountId, memberIds }: { clubAccountId: string; memberIds: string[] }) =>
+            removeMember(clubAccountId, memberIds)
     });
 }
