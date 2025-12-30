@@ -12,7 +12,11 @@ interface CollectUserDetailsProps {
   onContinue: (email: string, firstName: string, surname: string) => void;
 }
 
-export function CollectUserDetails({ clubName, clubProfileUrl, onContinue }: CollectUserDetailsProps) {
+export function CollectUserDetails({
+  clubName,
+  clubProfileUrl,
+  onContinue,
+}: CollectUserDetailsProps) {
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [surname, setSurname] = useState("");
@@ -45,12 +49,17 @@ export function CollectUserDetails({ clubName, clubProfileUrl, onContinue }: Col
             className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover border-4 border-muted"
           />
           {clubName && (
-            <h2 className="text-lg md:text-xl font-semibold text-center">{clubName}</h2>
+            <h2 className="text-lg md:text-xl font-semibold text-center">
+              {clubName}
+            </h2>
           )}
         </div>
       )}
-      <div className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg">
-        <Label htmlFor="public_email" className="text-xs font-semibold text-muted-foreground">
+      <div className="flex flex-col gap-1.5 p-3 rounded-lg">
+        <Label
+          htmlFor="public_email"
+          className="text-xs font-semibold text-muted-foreground"
+        >
           Email Address
         </Label>
         <Input
@@ -66,8 +75,11 @@ export function CollectUserDetails({ clubName, clubProfileUrl, onContinue }: Col
           required
         />
       </div>
-      <div className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg">
-        <Label htmlFor="public_firstname" className="text-xs font-semibold text-muted-foreground">
+      <div className="flex flex-col gap-1.5 p-3 rounded-lg">
+        <Label
+          htmlFor="public_firstname"
+          className="text-xs font-semibold text-muted-foreground"
+        >
           First Name
         </Label>
         <Input
@@ -83,8 +95,11 @@ export function CollectUserDetails({ clubName, clubProfileUrl, onContinue }: Col
           required
         />
       </div>
-      <div className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg">
-        <Label htmlFor="public_surname" className="text-xs font-semibold text-muted-foreground">
+      <div className="flex flex-col gap-1.5 p-3 rounded-lg">
+        <Label
+          htmlFor="public_surname"
+          className="text-xs font-semibold text-muted-foreground"
+        >
           Surname
         </Label>
         <Input
@@ -106,9 +121,11 @@ export function CollectUserDetails({ clubName, clubProfileUrl, onContinue }: Col
           <AlertDescription className="text-xs">{error}</AlertDescription>
         </Alert>
       )}
-      <Button size="sm" className="w-full" onClick={handleContinue}>
-        Continue
-      </Button>
+      <div className="flex flex-col gap-1.5 p-3 rounded-lg">
+        <Button size="sm" className="w-full" onClick={handleContinue}>
+          Continue
+        </Button>
+      </div>
       <div className="text-center text-xs">
         Already a member?{" "}
         <Link to="/login" className="underline underline-offset-4">

@@ -17,7 +17,11 @@ export default function PublicJoinRegisterPage() {
   const [surname, setSurname] = useState("");
   const [showSummary, setShowSummary] = useState(false);
 
-  const handleUserDetailsContinue = (email: string, firstName: string, surname: string) => {
+  const handleUserDetailsContinue = (
+    email: string,
+    firstName: string,
+    surname: string,
+  ) => {
     setEmail(email);
     setFirstName(firstName);
     setSurname(surname);
@@ -25,19 +29,19 @@ export default function PublicJoinRegisterPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center gap-6 p-6 md:p-10">
-      <div className={`w-full ${showSummary ? 'max-w-3xl' : 'max-w-md'}`}>
+    <div className="flex flex-col items-center justify-center gap-6 md:p-10">
+      <div className={`w-full ${showSummary ? "max-w-3xl" : "max-w-md"}`}>
         <Card className="border-none shadow-none pt-0">
           <CardContent className="py-4 px-2 md:px-6 space-y-4">
             {!showSummary && (
-              <CollectUserDetails 
+              <CollectUserDetails
                 clubName={data?.club_name}
                 clubProfileUrl={data?.club_profile_url}
-                onContinue={handleUserDetailsContinue} 
+                onContinue={handleUserDetailsContinue}
               />
             )}
             {showSummary && (
-              <PublicRegistrationForm 
+              <PublicRegistrationForm
                 clubName={data?.club_name as string}
                 clubProfileUrl={data?.club_profile_url}
                 email={email}
@@ -45,11 +49,15 @@ export default function PublicJoinRegisterPage() {
                 surname={surname}
                 clubAccountId={data?.club_account_id as string}
                 clubCurrency={data?.currency}
-                onEditDetails={() => setShowSummary(false)} 
+                onEditDetails={() => setShowSummary(false)}
               />
             )}
             <div className="flex items-center justify-center gap-3 pt-2">
-              <Button variant="ghost" size="sm" onClick={() => navigate(`/clubs/${clubId}`)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate(`/clubs/${clubId}`)}
+              >
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to Club
               </Button>
             </div>
