@@ -61,6 +61,14 @@ function formatEpoch(epoch: number) {
   return `${yyyy}/${mm}/${dd} ${hh}:${min}`;
 }
 
+function formatVariableName(name: string): string {
+  return name
+    .replace(/_/g, " ")
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
 export function CurrentMemberRegistration({
   userId,
   clubAccountId,
@@ -77,8 +85,7 @@ export function CurrentMemberRegistration({
   const [adminNotes, setAdminNotes] = useState<
     Array<{ id: string; title: string; content: string; visibleToMember: boolean }>
   >([]);
-  const [isNotesOpen, setIsNotesOpen] = useState(false);
-  const [noteTitle, setNoteTitle] = useState("");
+  const [isNotesOpen, setIsNotesOpen] = useState(false);  const [isVariablesOpen, setIsVariablesOpen] = useState(false);  const [noteTitle, setNoteTitle] = useState("");
   const [noteContent, setNoteContent] = useState("");
   const [noteVisibleToMember, setNoteVisibleToMember] = useState(false);
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
@@ -198,6 +205,35 @@ export function CurrentMemberRegistration({
           >
             <Copy className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-pointer" />
           </button>
+        </div>
+      )}
+
+      {/* Additional Variables Dropdown */}
+      {data?.variables && data.variables.length > 0 && (
+        <div className="border rounded-lg bg-transparent">
+          <button
+            onClick={() => setIsVariablesOpen(!isVariablesOpen)}
+            className="w-full flex items-center justify-between p-2 hover:bg-muted/50 transition-colors"
+          >
+            <span className="font-semibold text-sm text-foreground">
+              Additional Information
+            </span>
+            <span className="text-lg pr-2">{isVariablesOpen ? "▼" : "▶"}</span>
+          </button>
+          {isVariablesOpen && (
+            <div className="bg-muted/20 border-t p-3 space-y-2">
+              {data.variables.map(
+                (variable: { name: string; value: string | number | boolean | null | undefined }, index: number) => (
+                  <div key={index} className="flex items-start gap-2 py-2 border-b last:border-b-0">
+                    <span className="text-sm font-semibold text-muted-foreground">{formatVariableName(variable.name)}:</span>
+                    <span className="text-sm text-foreground text-right">
+                      {variable.value ? variable.value : <span className="italic text-gray-500">Does not exist for this member</span>}
+                    </span>
+                  </div>
+                )
+              )}
+            </div>
+          )}
         </div>
       )}
 

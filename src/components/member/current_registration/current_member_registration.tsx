@@ -30,6 +30,14 @@ import {
 } from "@/utils/fieldValidation";
 import { countryCodes, getDialingCode } from "@/data/country-codes";
 
+function formatVariableName(name: string): string {
+  return name
+    .replace(/_/g, " ")
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
 export function MemberRegistration({
   clubAccountId,
   clubName,
@@ -43,6 +51,7 @@ export function MemberRegistration({
 }) {
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [isAdminNotesOpen, setIsAdminNotesOpen] = useState(true);
+  const [isVariablesOpen, setIsVariablesOpen] = useState(false);
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>("");
   const [countryCode, setCountryCode] = useState<string>("ZA");
@@ -136,6 +145,35 @@ export function MemberRegistration({
           <div className="text-xs text-gray-700 whitespace-pre-wrap">
             {deregReason}
           </div>
+        </div>
+      )}
+
+      {/* Additional Variables Dropdown */}
+      {data?.variables && data.variables.length > 0 && (
+        <div className="border rounded-lg bg-transparent">
+          <button
+            onClick={() => setIsVariablesOpen(!isVariablesOpen)}
+            className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+          >
+            <span className="font-semibold text-sm text-foreground">
+              Additional Information
+            </span>
+            <span className="text-lg pr-2">{isVariablesOpen ? "▼" : "▶"}</span>
+          </button>
+          {isVariablesOpen && (
+            <div className="bg-muted/20 border-t p-3 space-y-2">
+              {data.variables.map(
+                (variable: { name: string; value: string | number | boolean | null | undefined }, index: number) => (
+                  <div key={index} className="flex items-start gap-2 py-2 border-b last:border-b-0">
+                    <span className="text-sm font-semibold text-muted-foreground">{formatVariableName(variable.name)}:</span>
+                    <span className="text-sm text-foreground text-right">
+                      {variable.value ? variable.value : <span className="italic text-gray-500">Does not exist for this member</span>}
+                    </span>
+                  </div>
+                )
+              )}
+            </div>
+          )}
         </div>
       )}
 
