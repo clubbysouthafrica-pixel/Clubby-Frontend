@@ -52,14 +52,16 @@ export default function RegistrationReportPage() {
         csvSections.push("");
       }
       
-      // Section header with field name
-      csvSections.push(`"========== ${item.table_name} =========="`);
+      // Section header with field name and old field indicator
+      const fieldName = item.table_name + (item.old_field ? " (OLD FIELD - PREVIOUSLY EXISTED)" : "");
+      csvSections.push(`"========== ${fieldName} =========="`);
       csvSections.push("");
       
       if (item.rows && item.rows.length > 0) {
         // Handle dropdown fields with rows
         item.rows.forEach((row: any) => {
-          csvSections.push(`"Option: ${row.row_name}","Fee: ${row.fee_amount || "Custom/Free"}"`);
+          const optionName = row.row_name + (row.old_field ? " (OLD)" : "");
+          csvSections.push(`"Option: ${optionName}","Fee: ${row.fee_amount || "Custom/Free"}"`);
           csvSections.push(`"Date","Total","Paid to Club","Pending","Due to Club"`);
           
           if (row.data && row.data.length > 0) {
