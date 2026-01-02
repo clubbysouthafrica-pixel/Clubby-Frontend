@@ -1,8 +1,15 @@
 import { RegisterClubMember } from "@/interfaces/club";
 import { api } from "./api";
 
-export const fetchClubMembers = (clubId: string) => {
-    return api.get(`/clubMember/getAllClubMembers?club_account_id=${clubId}`)
+export const fetchClubMembers = (clubId: string, activeKeys?: string[], memberType?: string) => {
+    let url = `/clubMember/getAllClubMembers?club_account_id=${clubId}`;
+    if (memberType) {
+        url += `&memberType=${memberType}`;
+    }
+    if (activeKeys && activeKeys.length > 0) {
+        url += `&activeKeys=${activeKeys.join(',')}`;
+    }
+    return api.get(url)
         .then(res => res.data);
 } 
 

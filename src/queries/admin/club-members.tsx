@@ -1,12 +1,12 @@
 import { fetchClubMembers } from "@/services/admin/club-members"
 import { useQuery } from "@tanstack/react-query"
 
-export const useFetchClubMembers = (clubId: string) => {
+export const useFetchClubMembers = (clubId: string, activeKeys?: string[], memberType?: string) => {
     return useQuery({
-        queryKey: ['adminClubMembers', clubId],
+        queryKey: ['adminClubMembers', clubId, activeKeys, memberType],
         queryFn: ({ queryKey }) => {
-            const [_key, clubId] = queryKey;
-            return fetchClubMembers(clubId);
+            const [_key, clubId, activeKeys, memberType] = queryKey as [string, string, string[] | undefined, string | undefined];
+            return fetchClubMembers(clubId, activeKeys, memberType);
           },
         enabled: !!clubId,
       })
