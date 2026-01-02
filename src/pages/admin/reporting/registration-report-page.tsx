@@ -3,7 +3,7 @@ import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { useRegistrationBillingReportingQuery } from "@/queries/admin/useReporting";
 import { RegistrationReportData } from "@/components/registration-report-data-table";
 import { Card } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, Download } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
@@ -37,6 +37,73 @@ export default function RegistrationReportPage() {
     : [];
 
   const hasPreviousSeasons = availableSeasons.length > 0;
+
+  const handleDownloadReport = () => {
+    if (!data) return;
+
+    // Build CSV content from registration report data
+    const report = Array.isArray(data.report) ? data.report : [];
+    
+    const csvSections: string[] = [];
+
+    report.forEach((item: any, index: number) => {
+      if (index > 0) {
+        csvSections.push("");
+        csvSections.push("");
+      }
+      
+      // Section header with field name
+      csvSections.push(`"========== ${item.table_name} =========="`);
+      csvSections.push("");
+      
+      if (item.rows && item.rows.length > 0) {
+        // Handle dropdown fields with rows
+        item.rows.forEach((row: any) => {
+          csvSections.push(`"Option: ${row.row_name}","Fee: ${row.fee_amount || "Custom/Free"}"`);
+          csvSections.push(`"Date","Total","Paid to Club","Pending","Due to Club"`);
+          
+          if (row.data && row.data.length > 0) {
+            row.data.forEach((dataItem: any) => {
+              csvSections.push(
+                `"${dataItem.date}","${dataItem.total}","${dataItem.paid_to_club}","${dataItem.pending}","${dataItem.due_to_club}"`
+              );
+            });
+          }
+
+          // Summary for this option
+          csvSections.push(`"TOTAL","${row.total.total}","${row.total.paid_to_club}","${row.total.pending}","${row.total.due_to_club}"`);
+          csvSections.push(""); // Blank line between options
+        });
+      } else if (item.data && item.data.length > 0) {
+        // Handle direct fields with data
+        csvSections.push(`"Fee: ${item.fee_amount || "Custom/Free"}"`);
+        csvSections.push(`"Date","Total","Paid to Club","Pending","Due to Club"`);
+        
+        item.data.forEach((dataItem: any) => {
+          csvSections.push(
+            `"${dataItem.date}","${dataItem.total}","${dataItem.paid_to_club}","${dataItem.pending}","${dataItem.due_to_club}"`
+          );
+        });
+
+        // Summary for this field
+        csvSections.push(`"TOTAL","${item.total?.total || 0}","${item.total?.paid_to_club || 0}","${item.total?.pending || 0}","${item.total?.due_to_club || 0}"`);
+      }
+    });
+
+    // Build final CSV content
+    const csvContent = csvSections.join("\n");
+    
+    // Download CSV
+    const element = document.createElement("a");
+    const file = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    element.href = URL.createObjectURL(file);
+    const timestamp = new Date().toISOString().split("T")[0];
+    element.download = `Registration_Billing_Report_${timestamp}.csv`;
+    element.style.display = "none";
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
 
   if (clubLoading) {
     return (
@@ -117,15 +184,26 @@ export default function RegistrationReportPage() {
       )}
 
       {!isLoading && (
-        <Card className="p-6 shadow-sm border-none shadow-none">
-          {data && (
-            <RegistrationReportData
-              data={data}
-              currency={club?.currency as string}
-              showOldFields={showOldFields}
-            />
-          )}
-        </Card>
+        <>
+          <Card className="gap-0 shadow-sm border-none shadow-none">
+            {data && (
+              <>
+                <RegistrationReportData
+                  data={data}
+                  currency={club?.currency as string}
+                  showOldFields={showOldFields}
+                />
+                <button
+                  onClick={handleDownloadReport}
+                  className="p-2 w-fit bg-transparent cursor-pointer hover:bg-gray-100 transition rounded-md"
+                  title="Download report data as CSV"
+                >
+                  <Download className="h-5 w-5 text-green-600" />
+                </button>
+              </>
+            )}
+          </Card>
+        </>
       )}
     </div>
   );

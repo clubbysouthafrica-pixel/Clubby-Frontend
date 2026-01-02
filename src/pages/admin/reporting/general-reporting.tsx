@@ -4,7 +4,7 @@ import { useGeneralReportingQuery } from "@/queries/admin/useReporting";
 import { OverallReport } from "@/components/admin/reporting/general-reporting/overall-report";
 import { RegistrationReport } from "@/components/admin/reporting/general-reporting/registration-report";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
+import { Loader2, Download } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import {
   Select,
@@ -31,6 +31,48 @@ export default function GeneralReportingPage() {
     ) : [];
 
     const hasPreviousSeasons = availableSeasons.length > 0;
+
+    const handleDownloadOverallReport = () => {
+        if (!report?.data) return;
+
+        const headers = ["Month", "Revenue", "Pending Revenue"];
+        const rows = report.data.map((month: any) => 
+            `"${month.date}","${month.total_revenue || 0}","${month.total_pending_revenue || 0}"`
+        );
+
+        const csvContent = [headers.map((h) => `"${h}"`).join(","), ...rows].join("\n");
+        
+        const element = document.createElement("a");
+        const file = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        element.href = URL.createObjectURL(file);
+        const timestamp = new Date().toISOString().split("T")[0];
+        element.download = `Overall_Report_${timestamp}.csv`;
+        element.style.display = "none";
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+    };
+
+    const handleDownloadRegistrationReport = () => {
+        if (!report?.data) return;
+
+        const headers = ["Month", "Registration Revenue", "Pending Registration Revenue", "Fully Paid Registrations", "De-registrations"];
+        const rows = report.data.map((month: any) => 
+            `"${month.date}","${month.total_revenue || 0}","${month.total_pending_revenue || 0}","${month.total_registered_members || 0}","${month.total_deregistered_members || 0}"`
+        );
+
+        const csvContent = [headers.map((h) => `"${h}"`).join(","), ...rows].join("\n");
+        
+        const element = document.createElement("a");
+        const file = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        element.href = URL.createObjectURL(file);
+        const timestamp = new Date().toISOString().split("T")[0];
+        element.download = `Registration_Report_${timestamp}.csv`;
+        element.style.display = "none";
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+    };
     
     return (
         <div className="p-6 md:p-8 space-y-6">
@@ -75,11 +117,25 @@ export default function GeneralReportingPage() {
                         <Card className="px-6 py-0 shadow-sm border border-none shadow-none">
                             {report && <OverallReport report={report} currency={club?.currency ?? "ZAR"} />}
                         </Card>
+                        <button
+                            onClick={handleDownloadOverallReport}
+                            className="p-2 w-fit bg-transparent cursor-pointer hover:bg-gray-100 transition rounded-md"
+                            title="Download report data as CSV"
+                        >
+                            <Download className="h-5 w-5 text-green-600" />
+                        </button>
                     </TabsContent>
                     <TabsContent key="registration" value="registration" className="space-y-4">
                         <Card className="px-6 py-0 shadow-sm border-none shadow-none">
                             {report && <RegistrationReport report={report} currency={club?.currency ?? "ZAR"} />}
                         </Card>
+                        <button
+                            onClick={handleDownloadRegistrationReport}
+                            className="p-2 w-fit bg-transparent cursor-pointer hover:bg-gray-100 transition rounded-md"
+                            title="Download report data as CSV"
+                        >
+                            <Download className="h-5 w-5 text-green-600" />
+                        </button>
                     </TabsContent>
                 </Tabs>
             )}
