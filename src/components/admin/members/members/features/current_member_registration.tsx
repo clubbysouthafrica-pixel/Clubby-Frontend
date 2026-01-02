@@ -33,6 +33,7 @@ import {
   fetchRegistrationField,
   updateRegistrationField,
 } from "@/services/admin/registration-form";
+import { updateMemberVariable } from "@/services/admin/club-members";
 import { toast } from "sonner";
 import {
   validateFieldValue,
@@ -85,7 +86,12 @@ export function CurrentMemberRegistration({
   const [adminNotes, setAdminNotes] = useState<
     Array<{ id: string; title: string; content: string; visibleToMember: boolean }>
   >([]);
-  const [isNotesOpen, setIsNotesOpen] = useState(false);  const [isVariablesOpen, setIsVariablesOpen] = useState(false);  const [noteTitle, setNoteTitle] = useState("");
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
+  const [isVariablesOpen, setIsVariablesOpen] = useState(false);
+  const [editingVariableIndex, setEditingVariableIndex] = useState<number | null>(null);
+  const [editVariableValue, setEditVariableValue] = useState<string>("");
+  const [isSavingVariable, setIsSavingVariable] = useState(false);
+  const [noteTitle, setNoteTitle] = useState("");
   const [noteContent, setNoteContent] = useState("");
   const [noteVisibleToMember, setNoteVisibleToMember] = useState(false);
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
@@ -215,7 +221,7 @@ export function CurrentMemberRegistration({
             onClick={() => setIsVariablesOpen(!isVariablesOpen)}
             className="w-full flex items-center justify-between p-2 hover:bg-muted/50 transition-colors"
           >
-            <span className="font-semibold text-sm text-foreground">
+            <span className="px-2 font-semibold text-sm text-foreground">
               Additional Information
             </span>
             <span className="text-lg pr-2">{isVariablesOpen ? "▼" : "▶"}</span>
@@ -223,14 +229,114 @@ export function CurrentMemberRegistration({
           {isVariablesOpen && (
             <div className="bg-muted/20 border-t p-3 space-y-2">
               {data.variables.map(
-                (variable: { name: string; value: string | number | boolean | null | undefined }, index: number) => (
-                  <div key={index} className="flex items-start gap-2 py-2 border-b last:border-b-0">
-                    <span className="text-sm font-semibold text-muted-foreground">{formatVariableName(variable.name)}:</span>
-                    <span className="text-sm text-foreground text-right">
-                      {variable.value ? variable.value : <span className="italic text-gray-500">Does not exist for this member</span>}
-                    </span>
-                  </div>
-                )
+                (variable: { name: string; value: string | number | boolean | null | undefined }, index: number) => {
+                  const isEditing = editingVariableIndex === index;
+                  
+                  const handleEdit = () => {
+                    setEditingVariableIndex(index);
+                    setEditVariableValue(variable.value?.toString() || "");
+                  };
+                  
+                  const handleSave = async () => {
+                    setIsSavingVariable(true);
+                    try {
+                      await updateMemberVariable(
+                        clubAccountId,
+                        userId,
+                        variable.name,
+                        editVariableValue
+                      );
+                      
+                      toast.success(`${formatVariableName(variable.name)} updated successfully`, {
+                        duration: 3000,
+                      });
+                      
+                      // Update local data
+                      variable.value = editVariableValue;
+                      setEditingVariableIndex(null);
+                    } catch (error) {
+                      console.error("Error updating variable:", error);
+                      toast.error("Failed to update variable", {
+                        duration: 3000,
+                      });
+                    } finally {
+                      setIsSavingVariable(false);
+                    }
+                  };
+                  
+                  const handleCancel = () => {
+                    setEditingVariableIndex(null);
+                    setEditVariableValue("");
+                  };
+                  
+                  return (
+                    <div key={index} className="flex items-center justify-between group py-2 border-b last:border-b-0">
+                      <div className="flex-1 flex flex-row gap-2 py-1 px-2 bg-transparent rounded-lg">
+                        <Label className="text-xs font-semibold text-muted-foreground w-fit whitespace-nowrap">
+                          {formatVariableName(variable.name)}:
+                        </Label>
+                        {isEditing ? (
+                          <Input
+                            autoFocus
+                            value={editVariableValue}
+                            onChange={(e) => setEditVariableValue(e.target.value)}
+                            className="text-sm"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                handleSave();
+                              } else if (e.key === "Escape") {
+                                handleCancel();
+                              }
+                            }}
+                          />
+                        ) : (
+                          <span className="text-xs text-foreground">
+                            {variable.value ? variable.value : <span className="italic text-gray-500">Does not exist for this member</span>}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex gap-1 ml-2 opacity-30 group-hover:opacity-100 transition-opacity">
+                        {isEditing ? (
+                          <>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleSave}
+                              disabled={isSavingVariable}
+                              className="h-8 w-8 p-0"
+                              title="Save"
+                            >
+                              <Check className="h-4 w-4 text-green-600" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleCancel}
+                              disabled={isSavingVariable}
+                              className="h-8 w-8 p-0"
+                              title="Cancel"
+                            >
+                              <X className="h-4 w-4 text-red-600" />
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleEdit}
+                            className="h-8 w-8 p-0"
+                            title="Update this variable"
+                          >
+                            <PencilIcon className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }
               )}
             </div>
           )}

@@ -19,3 +19,18 @@ export const removeMember = (clubAccountId: string, memberIds: string[]) =>
     api.post(`/clubMember/removeMember?club_account_id=${clubAccountId}`, {
         member_ids: memberIds
     }).then(res => res.data)
+
+export const updateMemberVariable = (
+    clubAccountId: string,
+    userId: string,
+    variableName: string,
+    variableValue: string | number | boolean
+) => {
+    return api.post(
+        `/clubMember/updateVariables?club_account_id=${clubAccountId}&user_id=${userId}`,
+        {
+            variable_name: variableName,
+            variable_value: variableValue
+        }
+    ).then(res => res.data);
+}
