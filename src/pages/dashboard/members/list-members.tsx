@@ -170,7 +170,8 @@ export default function ListMembersPage() {
       clubMembers,
       memberNameFilter,
       memberIdFilter,
-      dynamicFilters
+      dynamicFilters,
+      availableDynamicFilters
     );
     setRegisteredMembersLength(regMembersFiltered.length);
 
@@ -179,7 +180,8 @@ export default function ListMembersPage() {
       clubMembers,
       memberNameFilter,
       memberIdFilter,
-      dynamicFilters
+      dynamicFilters,
+      availableDynamicFilters
     );
     setDeregisteredMembersLength(prevMembersFiltered.length);
 
@@ -188,7 +190,8 @@ export default function ListMembersPage() {
       clubMembers,
       memberNameFilter,
       memberIdFilter,
-      dynamicFilters
+      dynamicFilters,
+      availableDynamicFilters
     );
     setUnregisteredMembersLength(pendingMembersFiltered.length);
   }, [clubMembers]);
@@ -307,7 +310,8 @@ export default function ListMembersPage() {
       clubMembers,
       memberNameFilter,
       memberIdFilter,
-      dynamicFilters
+      dynamicFilters,
+      availableDynamicFilters
     );
 
     const customCols =
@@ -329,7 +333,8 @@ export default function ListMembersPage() {
       clubMembers,
       memberNameFilter,
       memberIdFilter,
-      dynamicFilters
+      dynamicFilters,
+      availableDynamicFilters
     );
 
     const customCols =
@@ -356,7 +361,8 @@ export default function ListMembersPage() {
       clubMembers,
       memberNameFilter,
       memberIdFilter,
-      dynamicFilters
+      dynamicFilters,
+      availableDynamicFilters
     );
 
     const customCols =

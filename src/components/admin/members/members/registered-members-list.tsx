@@ -52,7 +52,7 @@ export default function RegisteredMembersList({
     setRegisteredMembersLength,
 }: ImageProps) {
 
-    const filteredRegisteredMembers = frg(selectedTab, clubMembers, memberNameFilter, memberIdFilter, dynamicFilters)
+    const filteredRegisteredMembers = frg(selectedTab, clubMembers, memberNameFilter, memberIdFilter, dynamicFilters, clubMembers?.filters)
     const [regSortAsc, setRegSortAsc] = useState<boolean | null>(null);
     const [isDeregisterDialogOpen, setIsDeregisterDialogOpen] = useState(false);
     const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);

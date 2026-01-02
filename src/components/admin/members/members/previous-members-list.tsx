@@ -56,7 +56,7 @@ export default function PreviousMembersList({
     setAllMembersSelected,
 }: ImageProps) {
 
-    const filteredDeregisteredMembers = previousRegisteredMembers(selectedTab, clubMembers, memberNameFilter, memberIdFilter, dynamicFilters);
+    const filteredDeregisteredMembers = previousRegisteredMembers(selectedTab, clubMembers, memberNameFilter, memberIdFilter, dynamicFilters, clubMembers?.filters);
     const [deregSortAsc, setDeregSortAsc] = useState<boolean | null>(null);
     const [openRemoveDialog, setOpenRemoveDialog] = useState<boolean>(false);
     const [selectedMembersToRemove, setSelectedMembersToRemove] = useState<ClubMember[]>([]);

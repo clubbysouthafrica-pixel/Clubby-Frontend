@@ -180,7 +180,7 @@ export default function PendingMembersList({
   };
 
   const filteredUnregisteredMembers = useMemo(() => {
-    return pendingRegisteredMembers(selectedTab, clubMembers, memberNameFilter, memberIdFilter, dynamicFilters);
+    return pendingRegisteredMembers(selectedTab, clubMembers, memberNameFilter, memberIdFilter, dynamicFilters, clubMembers?.filters);
   }, [
     selectedTab,
     clubMembers,

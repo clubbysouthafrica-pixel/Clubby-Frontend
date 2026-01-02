@@ -5,7 +5,8 @@ export function filteredRegisteredMembers(
     clubMembers: any,
     memberNameFilter: string,
     memberIdFilter: string,
-    dynamicFilters: any
+    dynamicFilters: any,
+    availableFilters?: any[]
 ): any {
     return selectedTab === "registered-members"
         ? clubMembers?.registered?.filter((member: ClubMember) => {
@@ -37,8 +38,20 @@ export function filteredRegisteredMembers(
                 if (type === "standard") {
                     const field = member.meta_standard?.find((f: any) => f.field_name === fieldName);
                     if (field && typeof selectedValue === "string" && selectedValue.trim()) {
-                        if (!field.value?.toString().toLowerCase().includes(selectedValue.toLowerCase())) {
-                            return false;
+                        // Check if this field is a dropdown (has predefined options)
+                        const availableField = availableFilters?.find((f: any) => f.field_name === fieldName && f.type === "standard");
+                        const isDropdown = availableField?.options && availableField.options.length > 0;
+                        
+                        if (isDropdown) {
+                            // For dropdowns, use exact match
+                            if (field.value?.toString().toLowerCase() !== selectedValue.toLowerCase()) {
+                                return false;
+                            }
+                        } else {
+                            // For text fields, use substring match
+                            if (!field.value?.toString().toLowerCase().includes(selectedValue.toLowerCase())) {
+                                return false;
+                            }
                         }
                     }
                 }
@@ -173,7 +186,8 @@ export function previousRegisteredMembers(
     clubMembers: any,
     memberNameFilter: string,
     memberIdFilter: string,
-    dynamicFilters: any
+    dynamicFilters: any,
+    availableFilters?: any[]
 ): any {
     return selectedTab === "previous-members"
             ? clubMembers?.unregistered?.filter((member: ClubMember) => {
@@ -204,7 +218,17 @@ export function previousRegisteredMembers(
                     if (type === "standard") {
                         const field = member.meta_standard?.find((f: any) => f.field_name === fieldName);
                         if (field && typeof selectedValue === "string" && selectedValue.trim()) {
-                            if (!field.value?.toString().toLowerCase().includes(selectedValue.toLowerCase())) return false;
+                            // Check if this field is a dropdown (has predefined options)
+                            const availableField = availableFilters?.find((f: any) => f.field_name === fieldName && f.type === "standard");
+                            const isDropdown = availableField?.options && availableField.options.length > 0;
+                            
+                            if (isDropdown) {
+                                // For dropdowns, use exact match
+                                if (field.value?.toString().toLowerCase() !== selectedValue.toLowerCase()) return false;
+                            } else {
+                                // For text fields, use substring match
+                                if (!field.value?.toString().toLowerCase().includes(selectedValue.toLowerCase())) return false;
+                            }
                         }
                     }
 
@@ -314,7 +338,8 @@ export function pendingRegisteredMembers(
     clubMembers: any,
     memberNameFilter: string,
     memberIdFilter: string,
-    dynamicFilters: any
+    dynamicFilters: any,
+    availableFilters?: any[]
 ): any {
     return selectedTab === "pending-members"
             ? clubMembers?.unregistered?.filter((member: ClubMember) => {
@@ -345,8 +370,20 @@ export function pendingRegisteredMembers(
                     if (type === "standard") {
                         const field = member.meta_standard?.find((f: any) => f.field_name === fieldName);
                         if (field && typeof selectedValue === "string" && selectedValue.trim()) {
-                            if (!field.value?.toString().toLowerCase().includes(selectedValue.toLowerCase())) {
-                                return false;
+                            // Check if this field is a dropdown (has predefined options)
+                            const availableField = availableFilters?.find((f: any) => f.field_name === fieldName && f.type === "standard");
+                            const isDropdown = availableField?.options && availableField.options.length > 0;
+                            
+                            if (isDropdown) {
+                                // For dropdowns, use exact match
+                                if (field.value?.toString().toLowerCase() !== selectedValue.toLowerCase()) {
+                                    return false;
+                                }
+                            } else {
+                                // For text fields, use substring match
+                                if (!field.value?.toString().toLowerCase().includes(selectedValue.toLowerCase())) {
+                                    return false;
+                                }
                             }
                         }
                     }
