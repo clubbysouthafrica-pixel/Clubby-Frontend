@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import ReusableDeregisterDialog from "./features/reusable-deregister-dialog";
 import ReusableSendEmailDialog from "./features/reusable-send-email-dialog";
+import { formatAmount } from "@/data/currencies";
 
 interface ImageProps {
   sensors: any;
@@ -36,6 +37,7 @@ interface ImageProps {
   activeColumnKeys?: string[];
   dereigsterMembers: { user_id: string; name: string }[];
   clubId: string;
+  currency: string;
   setAllListActionItems: (members: ClubMember[]) => void;
   setSelectedMember: React.Dispatch<React.SetStateAction<object>>;
   setlistActionItems: React.Dispatch<
@@ -61,6 +63,7 @@ export default function RegisteredMembersList({
   activeColumnKeys = [],
   dereigsterMembers,
   clubId,
+  currency,
   setAllListActionItems,
   setSelectedMember,
   setlistActionItems,
@@ -335,7 +338,7 @@ export default function RegisteredMembersList({
                           const customField = member.meta_billing?.find(
                             (f: any) => f.field_name === column.field_name,
                           );
-                          columnValue = customField?.value || "N/A";
+                          columnValue = formatAmount(customField?.value, currency) || "N/A";
                         }
 
                         if (column.type === "standard") {

@@ -23,6 +23,7 @@ import {
 import { previousRegisteredMembers } from "@/helpers/admin/members/filter-members-list";
 import RemoveMemberDialog from "./features/remove-member-dialog";
 import ReusableSendEmailDialog from "./features/reusable-send-email-dialog";
+import { formatAmount } from "@/data/currencies";
 
 interface ImageProps {
   club: Club | null;
@@ -52,6 +53,7 @@ export default function PreviousMembersList({
   selectedTab,
   clubMembers,
   clubId,
+  club,
   memberNameFilter,
   memberIdFilter,
   allMembersSelected,
@@ -324,7 +326,7 @@ export default function PreviousMembersList({
                           const customField = member.meta_billing?.find(
                             (f: any) => f.field_name === column.field_name,
                           );
-                          columnValue = customField?.value || "N/A";
+                          columnValue = formatAmount(customField?.value, club?.currency) || "N/A";
                         }
 
                         if (column.type === "standard") {

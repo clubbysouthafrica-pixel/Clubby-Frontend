@@ -832,6 +832,7 @@ export default function ListMembersPage() {
                     dynamicFilters={dynamicFilters}
                     activeColumnKeys={activeColumnKeysRegistered}
                     dereigsterMembers={dereigsterMembers}
+                    currency={club?.currency || ""}
                     setAllListActionItems={setAllListActionItems}
                     setSelectedMember={setSelectedMember}
                     setlistActionItems={setlistActionItems}
