@@ -104,7 +104,13 @@ export default function PreviousMembersList({
           sensors={sensors}
           id={sortableId}
         >
-          <Table>
+          <Table
+            className="table-auto"
+            style={{
+              // Use smaller per-column width and a softer minimum
+              minWidth: `${Math.max(700, (4 + activeColumnKeys.length) * 150)}px`,
+            }}
+          >
             <TableHeader className="bg-muted sticky top-0 z-10">
               <TableRow>
                 <TableHead className="text-center w-[80px] py-2 flex-shrink-0">
