@@ -40,7 +40,7 @@ import { exportTableData } from "@/helpers/admin/members/csv-export";
 
 export default function ListMembersPage() {
   const { club, isLoading: clubLoading } = useContext(
-    ClubContext
+    ClubContext,
   ) as ClubContextType;
   const [requestedKeys, setRequestedKeys] = useState<string[]>([]);
   const [selectedTab, setSelectedTab] = useState("registered-members");
@@ -63,7 +63,7 @@ export default function ListMembersPage() {
     useFetchClubMembers(
       club?.club_account_id as string,
       requestedKeys.length > 0 ? requestedKeys : undefined,
-      getMemberType(selectedTab)
+      getMemberType(selectedTab),
     );
   const { mutate, isPending, isSuccess, isError, reset } =
     useRegisterUserToClubMutation();
@@ -79,7 +79,7 @@ export default function ListMembersPage() {
   const [selectedMember, setSelectedMember] = useState({});
   const [memberRegisterAmount, setMemberRegisterAmount] = useState<number>(0);
   const [displayAmount, setDisplayAmount] = useState<string>(
-    formatAmount(0, club?.currency)
+    formatAmount(0, club?.currency),
   );
   const [invalidRegistrationAmount, setInvalidRegistrationAmount] =
     useState(false);
@@ -118,7 +118,7 @@ export default function ListMembersPage() {
     useState(false);
 
   const handleFormattedInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setInvalidRegistrationAmount(false);
     const inputValue = e.target.value.replace(/[^\d]/g, "");
@@ -133,7 +133,7 @@ export default function ListMembersPage() {
   const sensors = useSensors(
     useSensor(MouseSensor, {}),
     useSensor(TouchSensor, {}),
-    useSensor(KeyboardSensor, {})
+    useSensor(KeyboardSensor, {}),
   );
   const setAllListActionItems = (members: ClubMember[]) => {
     if (allMembersSelected) {
@@ -171,7 +171,7 @@ export default function ListMembersPage() {
       memberNameFilter,
       memberIdFilter,
       dynamicFilters,
-      availableDynamicFilters
+      availableDynamicFilters,
     );
     setRegisteredMembersLength(regMembersFiltered.length);
 
@@ -181,7 +181,7 @@ export default function ListMembersPage() {
       memberNameFilter,
       memberIdFilter,
       dynamicFilters,
-      availableDynamicFilters
+      availableDynamicFilters,
     );
     setDeregisteredMembersLength(prevMembersFiltered.length);
 
@@ -191,7 +191,7 @@ export default function ListMembersPage() {
       memberNameFilter,
       memberIdFilter,
       dynamicFilters,
-      availableDynamicFilters
+      availableDynamicFilters,
     );
     setUnregisteredMembersLength(pendingMembersFiltered.length);
   }, [clubMembers]);
@@ -233,7 +233,7 @@ export default function ListMembersPage() {
       window.history.replaceState(
         null,
         "",
-        window.location.pathname + window.location.search
+        window.location.pathname + window.location.search,
       );
     }
   }, []);
@@ -255,7 +255,7 @@ export default function ListMembersPage() {
   const registerUser = (
     member: ClubMember,
     paymentMethod?: string,
-    templateVariables?: Array<{ name: string; value: string }>
+    templateVariables?: Array<{ name: string; value: string }>,
   ) => {
     if (
       memberRegisterAmount > member.outstanding_amount ||
@@ -287,7 +287,7 @@ export default function ListMembersPage() {
           }
           setMemberRegisterAmount(0);
         },
-      }
+      },
     );
   };
 
@@ -311,12 +311,12 @@ export default function ListMembersPage() {
       memberNameFilter,
       memberIdFilter,
       dynamicFilters,
-      availableDynamicFilters
+      availableDynamicFilters,
     );
 
     const customCols =
       clubMembers?.filters?.filter((f: any) =>
-        activeColumnKeysRegistered.includes(f.key)
+        activeColumnKeysRegistered.includes(f.key),
       ) || [];
 
     exportTableData({
@@ -334,12 +334,12 @@ export default function ListMembersPage() {
       memberNameFilter,
       memberIdFilter,
       dynamicFilters,
-      availableDynamicFilters
+      availableDynamicFilters,
     );
 
     const customCols =
       clubMembers?.filters?.filter((f: any) =>
-        activeColumnKeysPending.includes(f.key)
+        activeColumnKeysPending.includes(f.key),
       ) || [];
 
     exportTableData({
@@ -362,12 +362,12 @@ export default function ListMembersPage() {
       memberNameFilter,
       memberIdFilter,
       dynamicFilters,
-      availableDynamicFilters
+      availableDynamicFilters,
     );
 
     const customCols =
       clubMembers?.filters?.filter((f: any) =>
-        activeColumnKeysPrevious.includes(f.key)
+        activeColumnKeysPrevious.includes(f.key),
       ) || [];
 
     exportTableData({
@@ -399,7 +399,7 @@ export default function ListMembersPage() {
               window.history.pushState(
                 "",
                 document.title,
-                window.location.pathname + window.location.search
+                window.location.pathname + window.location.search,
               );
 
               setMemberNameFilter("");
@@ -476,12 +476,12 @@ export default function ListMembersPage() {
               activeFilterKeys.length > 0 &&
               (() => {
                 const activeFilters = availableDynamicFilters.filter(
-                  ({ key }) => activeFilterKeys.includes(key)
+                  ({ key }) => activeFilterKeys.includes(key),
                 );
 
                 const sortedFilters = activeFilters.sort((a, b) => {
                   const getType = (
-                    filter: (typeof availableDynamicFilters)[0]
+                    filter: (typeof availableDynamicFilters)[0],
                   ) => {
                     if (!filter.options) return 0;
                     if (
@@ -517,7 +517,7 @@ export default function ListMembersPage() {
                             const displayValue = rawValue
                               ? formatAmount(
                                   parseInt(rawValue) || 0,
-                                  club?.currency
+                                  club?.currency,
                                 )
                               : "";
 
@@ -533,7 +533,7 @@ export default function ListMembersPage() {
                                   <button
                                     onClick={() => {
                                       setActiveFilterKeys((prev) =>
-                                        prev.filter((k) => k !== key)
+                                        prev.filter((k) => k !== key),
                                       );
                                       setDynamicFilters((prev) => {
                                         const newFilters = { ...prev };
@@ -593,7 +593,7 @@ export default function ListMembersPage() {
                                     onChange={(e) => {
                                       const inputValue = e.target.value.replace(
                                         /[^\d]/g,
-                                        ""
+                                        "",
                                       );
                                       const numericValue = inputValue || "";
                                       setDynamicFilters((prev) => ({
@@ -627,7 +627,7 @@ export default function ListMembersPage() {
                                   <button
                                     onClick={() => {
                                       setActiveFilterKeys((prev) =>
-                                        prev.filter((k) => k !== key)
+                                        prev.filter((k) => k !== key),
                                       );
                                       setDynamicFilters((prev) => {
                                         const newFilters = { ...prev };
@@ -676,7 +676,7 @@ export default function ListMembersPage() {
                                   <button
                                     onClick={() => {
                                       setActiveFilterKeys((prev) =>
-                                        prev.filter((k) => k !== key)
+                                        prev.filter((k) => k !== key),
                                       );
                                       setDynamicFilters((prev) => {
                                         const newFilters = { ...prev };
@@ -724,7 +724,7 @@ export default function ListMembersPage() {
                                 <button
                                   onClick={() => {
                                     setActiveFilterKeys((prev) =>
-                                      prev.filter((k) => k !== key)
+                                      prev.filter((k) => k !== key),
                                     );
                                     setDynamicFilters((prev) => {
                                       const newFilters = { ...prev };
@@ -763,7 +763,7 @@ export default function ListMembersPage() {
                               </Select>
                             </div>
                           );
-                        }
+                        },
                       )}
                     </div>
                   </div>
@@ -810,44 +810,46 @@ export default function ListMembersPage() {
             </div>
             <TabsContent
               value="registered-members"
-              className="relative flex flex-col gap-4 overflow-auto"
+              className="relative flex flex-col gap-4 overflow-y-auto"
             >
               <div className="flex items-center gap-2">
                 <h2 className="px-2 text-sm font-semibold">Active Members</h2>
                 <Badge variant="secondary">{registeredMembersLength}</Badge>
-              </div>              {clubMembersLoading || filterLoading ? (
+              </div>{" "}
+              {clubMembersLoading || filterLoading ? (
                 <div className="flex justify-center items-center p-8 min-h-96">
                   <Loader2 className="h-8 w-8 animate-spin" />
                 </div>
-              ) : (              <div className="flex flex-col">
-                <RegisteredMembersList
-                  clubId={club?.club_account_id || ""}
-                  sensors={sensors}
-                  sortableId={sortableId}
-                  allMembersSelected={allMembersSelected}
-                  listActionItems={listActionItems}
-                  selectedTab={selectedTab}
-                  clubMembers={clubMembers}
-                  memberNameFilter={memberNameFilter}
-                  memberIdFilter={memberIdFilter}
-                  dynamicFilters={dynamicFilters}
-                  activeColumnKeys={activeColumnKeysRegistered}
-                  dereigsterMembers={dereigsterMembers}
-                  setAllListActionItems={setAllListActionItems}
-                  setSelectedMember={setSelectedMember}
-                  setlistActionItems={setlistActionItems}
-                  setDeregisterMembers={setDeregisterMembers}
-                  setAllMembersSelected={setAllMembersSelected}
-                  setRegisteredMembersLength={setRegisteredMembersLength}
-                />
-                <button
-                  onClick={handleDownloadRegisteredMembers}
-                  className="mt-4 p-2 w-fit bg-transparent cursor-pointer hover:bg-gray-100 transition rounded-md disabled:bg-gray-400 disabled:cursor-not-allowed"
-                  title="Download table data as CSV"
-                >
-                  <Download className="h-5 w-5 text-green-600" />
-                </button>
-              </div>
+              ) : (
+                <div className="overflow-x-auto w-full">
+                  <RegisteredMembersList
+                    clubId={club?.club_account_id || ""}
+                    sensors={sensors}
+                    sortableId={sortableId}
+                    allMembersSelected={allMembersSelected}
+                    listActionItems={listActionItems}
+                    selectedTab={selectedTab}
+                    clubMembers={clubMembers}
+                    memberNameFilter={memberNameFilter}
+                    memberIdFilter={memberIdFilter}
+                    dynamicFilters={dynamicFilters}
+                    activeColumnKeys={activeColumnKeysRegistered}
+                    dereigsterMembers={dereigsterMembers}
+                    setAllListActionItems={setAllListActionItems}
+                    setSelectedMember={setSelectedMember}
+                    setlistActionItems={setlistActionItems}
+                    setDeregisterMembers={setDeregisterMembers}
+                    setAllMembersSelected={setAllMembersSelected}
+                    setRegisteredMembersLength={setRegisteredMembersLength}
+                  />
+                  <button
+                    onClick={handleDownloadRegisteredMembers}
+                    className="mt-4 p-2 w-fit bg-transparent cursor-pointer hover:bg-gray-100 transition rounded-md disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    title="Download table data as CSV"
+                  >
+                    <Download className="h-5 w-5 text-green-600" />
+                  </button>
+                </div>
               )}
             </TabsContent>
 
@@ -858,48 +860,50 @@ export default function ListMembersPage() {
               <div className="flex items-center gap-2">
                 <h2 className="px-2 text-sm font-semibold">Members Pending</h2>
                 <Badge variant="secondary">{unregisteredMembersLength}</Badge>
-              </div>              {clubMembersLoading || filterLoading ? (
+              </div>{" "}
+              {clubMembersLoading || filterLoading ? (
                 <div className="flex justify-center items-center p-8 min-h-96">
                   <Loader2 className="h-8 w-8 animate-spin" />
                 </div>
-              ) : (              <div className="flex flex-col">
-                <PendingMembersList
-                  clubId={club?.club_account_id || ""}
-                  club={club}
-                  sensors={sensors}
-                  sortableId={sortableId}
-                  openDialogUserId={openDialogUserId}
-                  displayAmount={displayAmount}
-                  isPending={isPending}
-                  invalidRegistrationAmount={invalidRegistrationAmount}
-                  isError={isError}
-                  reset={reset}
-                  selectedTab={selectedTab}
-                  clubMembers={clubMembers}
-                  listActionItems={listActionItems}
-                  memberNameFilter={memberNameFilter}
-                  memberIdFilter={memberIdFilter}
-                  dynamicFilters={dynamicFilters}
-                  allMembersSelected={allMembersSelected}
-                  activeColumnKeys={activeColumnKeysPending}
-                  handleFormattedInputChange={handleFormattedInputChange}
-                  registerUser={registerUser}
-                  setlistActionItems={setlistActionItems}
-                  setSelectedMember={setSelectedMember}
-                  setOpenDialogUserId={setOpenDialogUserId}
-                  setMemberRegisterAmount={setMemberRegisterAmount}
-                  setUnregisteredMembersLength={setUnregisteredMembersLength}
-                  setAllListActionItems={setAllListActionItems}
-                  setAllMembersSelected={setAllMembersSelected}
-                />
-                <button
-                  onClick={handleDownloadPendingMembers}
-                  className="mt-4 p-2 w-fit bg-transparent cursor-pointer hover:bg-gray-100 transition rounded-md disabled:bg-gray-400 disabled:cursor-not-allowed"
-                  title="Download table data as CSV"
-                >
-                  <Download className="h-5 w-5 text-green-600" />
-                </button>
-              </div>
+              ) : (
+                <div className="flex flex-col">
+                  <PendingMembersList
+                    clubId={club?.club_account_id || ""}
+                    club={club}
+                    sensors={sensors}
+                    sortableId={sortableId}
+                    openDialogUserId={openDialogUserId}
+                    displayAmount={displayAmount}
+                    isPending={isPending}
+                    invalidRegistrationAmount={invalidRegistrationAmount}
+                    isError={isError}
+                    reset={reset}
+                    selectedTab={selectedTab}
+                    clubMembers={clubMembers}
+                    listActionItems={listActionItems}
+                    memberNameFilter={memberNameFilter}
+                    memberIdFilter={memberIdFilter}
+                    dynamicFilters={dynamicFilters}
+                    allMembersSelected={allMembersSelected}
+                    activeColumnKeys={activeColumnKeysPending}
+                    handleFormattedInputChange={handleFormattedInputChange}
+                    registerUser={registerUser}
+                    setlistActionItems={setlistActionItems}
+                    setSelectedMember={setSelectedMember}
+                    setOpenDialogUserId={setOpenDialogUserId}
+                    setMemberRegisterAmount={setMemberRegisterAmount}
+                    setUnregisteredMembersLength={setUnregisteredMembersLength}
+                    setAllListActionItems={setAllListActionItems}
+                    setAllMembersSelected={setAllMembersSelected}
+                  />
+                  <button
+                    onClick={handleDownloadPendingMembers}
+                    className="mt-4 p-2 w-fit bg-transparent cursor-pointer hover:bg-gray-100 transition rounded-md disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    title="Download table data as CSV"
+                  >
+                    <Download className="h-5 w-5 text-green-600" />
+                  </button>
+                </div>
               )}
             </TabsContent>
 
@@ -908,7 +912,9 @@ export default function ListMembersPage() {
               className="relative flex flex-col gap-4 overflow-auto"
             >
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-semibold">Members Requiring Re-Registration</h2>
+                <h2 className="text-sm font-semibold">
+                  Members Requiring Re-Registration
+                </h2>
                 <Badge variant="secondary">{deregisteredMembersLength}</Badge>
               </div>
               {clubMembersLoading || filterLoading ? (
@@ -916,34 +922,34 @@ export default function ListMembersPage() {
                   <Loader2 className="h-8 w-8 animate-spin" />
                 </div>
               ) : (
-              <div className="flex flex-col">
-                <PreviousMembersList
-                  clubId={club?.club_account_id || ""}
-                  club={club}
-                  sensors={sensors}
-                  sortableId={sortableId}
-                  selectedTab={selectedTab}
-                  clubMembers={clubMembers}
-                  allMembersSelected={allMembersSelected}
-                  memberNameFilter={memberNameFilter}
-                  memberIdFilter={memberIdFilter}
-                  dynamicFilters={dynamicFilters}
-                  listActionItems={listActionItems}
-                  activeColumnKeys={activeColumnKeysPrevious}
-                  setAllListActionItems={setAllListActionItems}
-                  setSelectedMember={setSelectedMember}
-                  setlistActionItems={setlistActionItems}
-                  setAllMembersSelected={setAllMembersSelected}
-                  setDeregisteredMembersLength={setDeregisteredMembersLength}
-                />
-                <button
-                  onClick={handleDownloadPreviousMembers}
-                  className="mt-4 p-2 w-fit bg-transparent cursor-pointer hover:bg-gray-100 transition rounded-md disabled:bg-gray-400 disabled:cursor-not-allowed"
-                  title="Download table data as CSV"
-                >
-                  <Download className="h-5 w-5 text-green-600" />
-                </button>
-              </div>
+                <div className="flex flex-col">
+                  <PreviousMembersList
+                    clubId={club?.club_account_id || ""}
+                    club={club}
+                    sensors={sensors}
+                    sortableId={sortableId}
+                    selectedTab={selectedTab}
+                    clubMembers={clubMembers}
+                    allMembersSelected={allMembersSelected}
+                    memberNameFilter={memberNameFilter}
+                    memberIdFilter={memberIdFilter}
+                    dynamicFilters={dynamicFilters}
+                    listActionItems={listActionItems}
+                    activeColumnKeys={activeColumnKeysPrevious}
+                    setAllListActionItems={setAllListActionItems}
+                    setSelectedMember={setSelectedMember}
+                    setlistActionItems={setlistActionItems}
+                    setAllMembersSelected={setAllMembersSelected}
+                    setDeregisteredMembersLength={setDeregisteredMembersLength}
+                  />
+                  <button
+                    onClick={handleDownloadPreviousMembers}
+                    className="mt-4 p-2 w-fit bg-transparent cursor-pointer hover:bg-gray-100 transition rounded-md disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    title="Download table data as CSV"
+                  >
+                    <Download className="h-5 w-5 text-green-600" />
+                  </button>
+                </div>
               )}
             </TabsContent>
           </Tabs>

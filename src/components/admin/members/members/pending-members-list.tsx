@@ -1,9 +1,6 @@
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import { useEffect, useMemo, useState } from "react";
-import {
-  ChevronsUpDown,
-  ChevronDown,
-} from "lucide-react";
+import { ChevronsUpDown, ChevronDown } from "lucide-react";
 import { pendingRegisteredMembers } from "@/helpers/admin/members/filter-members-list";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -64,7 +61,7 @@ interface ImageProps {
   registerUser: (
     member: ClubMember,
     paymentMethod?: string,
-    templateVariables?: Array<{ name: string; value: string }>
+    templateVariables?: Array<{ name: string; value: string }>,
   ) => void;
   setSelectedMember: React.Dispatch<React.SetStateAction<object>>;
   setOpenDialogUserId: React.Dispatch<React.SetStateAction<string | null>>;
@@ -143,7 +140,7 @@ export default function PendingMembersList({
         }
 
         return !value || (typeof value === "string" && value.trim() === "");
-      }
+      },
     );
 
     if (emptyFields.length > 0) {
@@ -180,7 +177,14 @@ export default function PendingMembersList({
   };
 
   const filteredUnregisteredMembers = useMemo(() => {
-    return pendingRegisteredMembers(selectedTab, clubMembers, memberNameFilter, memberIdFilter, dynamicFilters, clubMembers?.filters);
+    return pendingRegisteredMembers(
+      selectedTab,
+      clubMembers,
+      memberNameFilter,
+      memberIdFilter,
+      dynamicFilters,
+      clubMembers?.filters,
+    );
   }, [
     selectedTab,
     clubMembers,
@@ -190,7 +194,7 @@ export default function PendingMembersList({
   ]);
 
   const [submittedSortAsc, setSubmittedSortAsc] = useState<boolean | null>(
-    null
+    null,
   );
 
   const sortedUnregisteredMembers = useMemo(() => {
@@ -215,505 +219,533 @@ export default function PendingMembersList({
   return (
     <div className="flex flex-col gap-4">
       <div
-        className={`rounded-lg border w-full overflow-hidden ${
+        className={`rounded-lg border w-full overflow-hidden max-w-[79vw] ${
           filteredUnregisteredMembers.length > 10
             ? "max-h-[600px] flex flex-col"
             : ""
         }`}
       >
-        <div className={`${filteredUnregisteredMembers.length > 10 ? "overflow-y-auto" : ""} overflow-x-auto flex-1`}>
+        <div
+          className={`${filteredUnregisteredMembers.length > 10 ? "overflow-y-auto" : ""} overflow-x-auto flex-1`}
+        >
           <DndContext
             collisionDetection={closestCenter}
             sensors={sensors}
             id={sortableId}
           >
-            <Table style={{ minWidth: "1080px" }}>
-          <TableHeader className="bg-muted sticky top-0 z-10">
-            <TableRow>
-              <TableHead className="text-center w-[80px] py-2 flex-shrink-0">
-                <div className="flex justify-center items-center border rounded-[10px] pl-3 pr-1 border-gray-300 border-1 w-fit mx-auto hover:border-gray-400 transition-colors">
-                  <Checkbox
-                    checked={allMembersSelected}
-                    onCheckedChange={(checked: boolean) => {
-                      if (checked) {
-                        setAllListActionItems(filteredUnregisteredMembers);
-                        setDeregisterMembers(
-                          filteredUnregisteredMembers.map((m: ClubMember) => ({
-                            user_id: m.user_id,
-                            name: `${m.member_first_name} ${m.member_surname}`,
-                          }))
-                        );
-                        setAllMembersSelected(true);
-                      } else {
-                        setlistActionItems([]);
-                        setDeregisterMembers([]);
-                        setAllMembersSelected(false);
-                      }
-                    }}
-                    className="w-4 h-4 border-gray-300 border-1 hover:border-gray-400 transition-colors"
-                  />
-                  <DropdownMenu modal={false}>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8"
-                      >
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
-                        Actions
-                      </DropdownMenuLabel>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setIsEmailDialogOpen(true);
-                        }}
-                        disabled={!listActionItems.length}
-                      >
-                        Send Email
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setIsDeregisterDialogOpen(true);
-                        }}
-                        disabled={!deregisterMembers.length}
-                        className="text-red-600"
-                      >
-                        Deregister Members
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </TableHead>
-              <TableHead className="text-center w-[150px]">Member Name</TableHead>
-              <TableHead className="text-center w-[150px]">Member ID</TableHead>
-              <TableHead className="text-center w-[150px]">
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1 hover:underline"
-                  onClick={() =>
-                    setSubmittedSortAsc((prev) =>
-                      prev === null ? true : !prev
-                    )
-                  }
-                  title="Toggle sort by Registration Submitted On"
-                >
-                  Registration Submitted
-                  {submittedSortAsc === null ? (
-                    <ChevronsUpDown className="h-3 w-3 opacity-60" />
-                  ) : (
-                    <span className="text-xs">
-                      {submittedSortAsc ? "▲" : "▼"}
-                    </span>
-                  )}
-                </button>
-              </TableHead>
-              <TableHead className="text-center w-[150px]">
-                Outstanding Reg. Amount
-              </TableHead>
-              <TableHead className="text-center w-[150px]">Register Member</TableHead>
-              {clubMembers?.filters
-                ?.filter((col: any) => activeColumnKeys.includes(col.key))
-                .map((column: any) => (
-                  <TableHead key={column.key} className="text-center w-[150px]">
-                    {column.field_name}
-                  </TableHead>
-                ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredUnregisteredMembers.length ? (
-              sortedUnregisteredMembers.map((member: ClubMember) => (
-                <TableRow
-                  key={member.user_id}
-                  className={
-                    listActionItems.some(
-                      (item) =>
-                        item.email === member.member_email &&
-                        item.name ===
-                          `${member.member_first_name} ${member.member_surname}`
-                    )
-                      ? "bg-blue-50"
-                      : ""
-                  }
-                >
-                  <TableCell className="text-center w-[80px] flex-shrink-0">
-                    <div className="flex justify-center">
+            <Table
+              className="table-auto"
+              style={{
+                // Use smaller per-column width and a softer minimum
+                minWidth: `${Math.max(700, (4 + activeColumnKeys.length) * 150)}px`,
+              }}
+            >
+              <TableHeader className="bg-muted sticky top-0 z-10">
+                <TableRow>
+                  <TableHead className="text-center w-[80px] py-2 flex-shrink-0">
+                    <div className="flex justify-center items-center border rounded-[10px] pl-3 pr-1 border-gray-300 border-1 w-fit mx-auto hover:border-gray-400 transition-colors">
                       <Checkbox
-                        checked={listActionItems.some(
-                          (item) =>
-                            item.email === member.member_email &&
-                            item.name ===
-                              `${member.member_first_name} ${member.member_surname}`
-                        )}
+                        checked={allMembersSelected}
                         onCheckedChange={(checked: boolean) => {
                           if (checked) {
-                            const updatedDeregisterMembers = [
-                              ...deregisterMembers,
-                              {
-                                user_id: member.user_id,
-                                name: `${member.member_first_name} ${member.member_surname}`,
-                              },
-                            ];
-                            setDeregisterMembers(updatedDeregisterMembers);
-
-                            const updatedList = [
-                              ...listActionItems,
-                              {
-                                email: member.member_email,
-                                name: `${member.member_first_name} ${member.member_surname}`,
-                              },
-                            ];
-                            setlistActionItems(updatedList);
-                            if (
-                              updatedList.length ===
-                              filteredUnregisteredMembers.length
-                            ) {
-                              setAllMembersSelected(true);
-                            }
-                          } else {
-                            const updatedDeregisterMembers =
-                              deregisterMembers.filter(
-                                (item) => item.user_id !== member.user_id
-                              );
-                            setDeregisterMembers(updatedDeregisterMembers);
-
-                            const updatedList = listActionItems.filter(
-                              (item) => item.email !== member.member_email
+                            setAllListActionItems(filteredUnregisteredMembers);
+                            setDeregisterMembers(
+                              filteredUnregisteredMembers.map(
+                                (m: ClubMember) => ({
+                                  user_id: m.user_id,
+                                  name: `${m.member_first_name} ${m.member_surname}`,
+                                }),
+                              ),
                             );
-                            setlistActionItems(updatedList);
+                            setAllMembersSelected(true);
+                          } else {
+                            setlistActionItems([]);
+                            setDeregisterMembers([]);
                             setAllMembersSelected(false);
                           }
                         }}
+                        className="w-4 h-4 border-gray-300 border-1 hover:border-gray-400 transition-colors"
                       />
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-center w-[150px]">
-                    <a
-                      onClick={() => setSelectedMember(member)}
-                      href={`#${member.user_id}`}
-                      className="underline hover:text-blue-800 cursor-pointer"
-                    >
-                      {member.member_first_name + " " + member.member_surname}
-                    </a>
-                  </TableCell>
-                  <TableCell className="text-center w-[150px]">
-                    <div className="inline-flex items-center gap-2 justify-center">
-                      <span className="font-mono">
-                        {member.user_id.slice(0, 8)}...
-                      </span>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigator.clipboard.writeText(member.user_id);
-                        }}
-                        title="Click to copy full Transaction ID"
-                        className="hover:text-primary cursor-pointer"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4 text-muted-foreground hover:text-foreground transition"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 16h8m2 0a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v8a2 2 0 002 2zM8 16v2a2 2 0 002 2h8a2 2 0 002-2v-2"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-center w-[150px]">
-                    {member.registration_submitted_on
-                      ? new Date(
-                          member.registration_submitted_on
-                        ).toLocaleString()
-                      : "-"}
-                  </TableCell>
-                  <TableCell className="text-center w-[150px]">
-                    {formatAmount(member.outstanding_amount, club?.currency)}
-                  </TableCell>
-                  <TableCell className="text-center w-[150px]">
-                    <div className="flex justify-center gap-2">
-                      <Dialog
-                        open={openDialogUserId === member.user_id}
-                        onOpenChange={(open) => {
-                          reset();
-                          setOpenDialogUserId(open ? member.user_id : null);
-                          setMemberRegisterAmount(0);
-                          if (open) {
-                            setTemplateVariables({
-                              member_name:
-                                member.member_first_name +
-                                " " +
-                                member.member_surname,
-                            });
-                            setIsTemplateVariablesOpen(true);
-                            setIsPaymentMethodsOpen(true);
-                          } else {
-                            setTemplateVariables({});
-                            setSelectedPaymentMethod("EFT/Cash");
-                            setTemplateVariablesError("");
-                            setIsTemplateVariablesOpen(true);
-                            setIsPaymentMethodsOpen(true);
-                          }
-                        }}
-                      >
-                        <div className="flex justify-center items-center">
-                          <Button
-                            variant="ghost"
-                            className="border border-black hover:bg-gray-100 hover:text-black"
+                      <DropdownMenu modal={false}>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8">
+                            <ChevronDown className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
+                            Actions
+                          </DropdownMenuLabel>
+                          <DropdownMenuItem
                             onClick={() => {
-                              setOpenDialogUserId(member.user_id);
+                              setIsEmailDialogOpen(true);
+                            }}
+                            disabled={!listActionItems.length}
+                          >
+                            Send Email
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setIsDeregisterDialogOpen(true);
+                            }}
+                            disabled={!deregisterMembers.length}
+                            className="text-red-600"
+                          >
+                            Deregister Members
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-center w-[150px]">
+                    Member Name
+                  </TableHead>
+                  <TableHead className="text-center w-[150px]">
+                    Member ID
+                  </TableHead>
+                  <TableHead className="text-center w-[150px]">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 hover:underline"
+                      onClick={() =>
+                        setSubmittedSortAsc((prev) =>
+                          prev === null ? true : !prev,
+                        )
+                      }
+                      title="Toggle sort by Registration Submitted On"
+                    >
+                      Registration Submitted
+                      {submittedSortAsc === null ? (
+                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                      ) : (
+                        <span className="text-xs">
+                          {submittedSortAsc ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </button>
+                  </TableHead>
+                  <TableHead className="text-center w-[150px]">
+                    Outstanding Reg. Amount
+                  </TableHead>
+                  <TableHead className="text-center w-[150px]">
+                    Register Member
+                  </TableHead>
+                  {clubMembers?.filters
+                    ?.filter((col: any) => activeColumnKeys.includes(col.key))
+                    .map((column: any) => (
+                      <TableHead
+                        key={column.key}
+                        className="text-center w-[150px]"
+                      >
+                        {column.field_name}
+                      </TableHead>
+                    ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredUnregisteredMembers.length ? (
+                  sortedUnregisteredMembers.map((member: ClubMember) => (
+                    <TableRow
+                      key={member.user_id}
+                      className={
+                        listActionItems.some(
+                          (item) =>
+                            item.email === member.member_email &&
+                            item.name ===
+                              `${member.member_first_name} ${member.member_surname}`,
+                        )
+                          ? "bg-blue-50"
+                          : ""
+                      }
+                    >
+                      <TableCell className="text-center w-[80px] flex-shrink-0">
+                        <div className="flex justify-center">
+                          <Checkbox
+                            checked={listActionItems.some(
+                              (item) =>
+                                item.email === member.member_email &&
+                                item.name ===
+                                  `${member.member_first_name} ${member.member_surname}`,
+                            )}
+                            onCheckedChange={(checked: boolean) => {
+                              if (checked) {
+                                const updatedDeregisterMembers = [
+                                  ...deregisterMembers,
+                                  {
+                                    user_id: member.user_id,
+                                    name: `${member.member_first_name} ${member.member_surname}`,
+                                  },
+                                ];
+                                setDeregisterMembers(updatedDeregisterMembers);
+
+                                const updatedList = [
+                                  ...listActionItems,
+                                  {
+                                    email: member.member_email,
+                                    name: `${member.member_first_name} ${member.member_surname}`,
+                                  },
+                                ];
+                                setlistActionItems(updatedList);
+                                if (
+                                  updatedList.length ===
+                                  filteredUnregisteredMembers.length
+                                ) {
+                                  setAllMembersSelected(true);
+                                }
+                              } else {
+                                const updatedDeregisterMembers =
+                                  deregisterMembers.filter(
+                                    (item) => item.user_id !== member.user_id,
+                                  );
+                                setDeregisterMembers(updatedDeregisterMembers);
+
+                                const updatedList = listActionItems.filter(
+                                  (item) => item.email !== member.member_email,
+                                );
+                                setlistActionItems(updatedList);
+                                setAllMembersSelected(false);
+                              }
+                            }}
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center w-[150px]">
+                        <a
+                          onClick={() => setSelectedMember(member)}
+                          href={`#${member.user_id}`}
+                          className="underline hover:text-blue-800 cursor-pointer"
+                        >
+                          {member.member_first_name +
+                            " " +
+                            member.member_surname}
+                        </a>
+                      </TableCell>
+                      <TableCell className="text-center w-[150px]">
+                        <div className="inline-flex items-center gap-2 justify-center">
+                          <span className="font-mono">
+                            {member.user_id.slice(0, 8)}...
+                          </span>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigator.clipboard.writeText(member.user_id);
+                            }}
+                            title="Click to copy full Transaction ID"
+                            className="hover:text-primary cursor-pointer"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-4 w-4 text-muted-foreground hover:text-foreground transition"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M8 16h8m2 0a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v8a2 2 0 002 2zM8 16v2a2 2 0 002 2h8a2 2 0 002-2v-2"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center w-[150px]">
+                        {member.registration_submitted_on
+                          ? new Date(
+                              member.registration_submitted_on,
+                            ).toLocaleString()
+                          : "-"}
+                      </TableCell>
+                      <TableCell className="text-center w-[150px]">
+                        {formatAmount(
+                          member.outstanding_amount,
+                          club?.currency,
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center w-[150px]">
+                        <div className="flex justify-center gap-2">
+                          <Dialog
+                            open={openDialogUserId === member.user_id}
+                            onOpenChange={(open) => {
+                              reset();
+                              setOpenDialogUserId(open ? member.user_id : null);
+                              setMemberRegisterAmount(0);
+                              if (open) {
+                                setTemplateVariables({
+                                  member_name:
+                                    member.member_first_name +
+                                    " " +
+                                    member.member_surname,
+                                });
+                                setIsTemplateVariablesOpen(true);
+                                setIsPaymentMethodsOpen(true);
+                              } else {
+                                setTemplateVariables({});
+                                setSelectedPaymentMethod("EFT/Cash");
+                                setTemplateVariablesError("");
+                                setIsTemplateVariablesOpen(true);
+                                setIsPaymentMethodsOpen(true);
+                              }
                             }}
                           >
-                            Register
-                          </Button>
-                        </div>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>
-                              Register Member:{" "}
-                              <strong>
-                                {member.member_first_name +
-                                  " " +
-                                  member.member_surname}
-                              </strong>
-                            </DialogTitle>
-                            <DialogDescription>
-                              Confirm payment details and provide required
-                              information
-                            </DialogDescription>
-                            <div className="flex flex-col gap-1 my-4">
-                              <Label className="text-l">
-                                Outstanding amount:{" "}
-                                {formatAmount(
-                                  member.outstanding_amount,
-                                  club?.currency
-                                )}
-                              </Label>
-                              <Label className="text-l">
-                                Member payment reference:{" "}
-                                {member.registration_payment_reference}
-                              </Label>
+                            <div className="flex justify-center items-center">
+                              <Button
+                                variant="ghost"
+                                className="border border-black hover:bg-gray-100 hover:text-black"
+                                onClick={() => {
+                                  setOpenDialogUserId(member.user_id);
+                                }}
+                              >
+                                Register
+                              </Button>
                             </div>
-                            {member.outstanding_amount > 0 && (
-                              <div className="grid gap-3 my-4">
-                                <Label htmlFor="pay">Payment Amount</Label>
-                                <Input
-                                  id="pay"
-                                  type="text"
-                                  placeholder="Enter amount"
-                                  value={displayAmount}
-                                  onChange={handleFormattedInputChange}
-                                />
-                              </div>
-                            )}
-                            {clubMembers?.payment_methods &&
-                              clubMembers.payment_methods.length > 0 && (
-                                <div className="grid gap-4 pt-2">
-                                  <div>
-                                    <button
-                                      onClick={() =>
-                                        setIsPaymentMethodsOpen(
-                                          !isPaymentMethodsOpen
-                                        )
-                                      }
-                                      className="flex items-center justify-between w-full p-3 bg-muted/40 rounded-lg hover:bg-muted/50 transition-colors"
-                                    >
-                                      <Label className="text-sm font-semibold mb-0 cursor-pointer">
-                                        Payment Method
-                                      </Label>
-                                      <ChevronDown
-                                        className={`h-4 w-4 transition-transform ${
-                                          isPaymentMethodsOpen
-                                            ? "rotate-180"
-                                            : ""
-                                        }`}
-                                      />
-                                    </button>
-                                    {isPaymentMethodsOpen && (
-                                      <div className="space-y-3 bg-muted/40 p-4 rounded-lg mt-2">
-                                        {clubMembers.payment_methods.map(
-                                          (method: string) => (
-                                            <div
-                                              key={method}
-                                              className="flex items-center gap-3"
-                                            >
-                                              <Checkbox
-                                                id={`payment-${method}`}
-                                                checked={
-                                                  selectedPaymentMethod ===
-                                                  method
-                                                }
-                                                onCheckedChange={(checked) => {
-                                                  setSelectedPaymentMethod(
-                                                    checked ? method : ""
-                                                  );
-                                                }}
-                                              />
-                                              <Label
-                                                htmlFor={`payment-${method}`}
-                                                className="cursor-pointer font-normal text-sm"
-                                              >
-                                                {method}
-                                              </Label>
-                                            </div>
-                                          )
-                                        )}
-                                      </div>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>
+                                  Register Member:{" "}
+                                  <strong>
+                                    {member.member_first_name +
+                                      " " +
+                                      member.member_surname}
+                                  </strong>
+                                </DialogTitle>
+                                <DialogDescription>
+                                  Confirm payment details and provide required
+                                  information
+                                </DialogDescription>
+                                <div className="flex flex-col gap-1 my-4">
+                                  <Label className="text-l">
+                                    Outstanding amount:{" "}
+                                    {formatAmount(
+                                      member.outstanding_amount,
+                                      club?.currency,
                                     )}
-                                  </div>
+                                  </Label>
+                                  <Label className="text-l">
+                                    Member payment reference:{" "}
+                                    {member.registration_payment_reference}
+                                  </Label>
                                 </div>
-                              )}
-                            {clubMembers?.template_variables &&
-                              Array.isArray(clubMembers.template_variables) &&
-                              clubMembers.template_variables.length > 0 && (
-                                <div className="grid gap-4 pt-2">
-                                  <div>
-                                    <button
-                                      onClick={() =>
-                                        setIsTemplateVariablesOpen(
-                                          !isTemplateVariablesOpen
-                                        )
-                                      }
-                                      className="flex items-center justify-between w-full p-3 bg-muted/40 rounded-lg hover:bg-muted/50 transition-colors"
-                                    >
-                                      <Label className="text-sm font-semibold mb-0 cursor-pointer">
-                                        Email Template Fields
-                                      </Label>
-                                      <ChevronDown
-                                        className={`h-4 w-4 transition-transform ${
-                                          isTemplateVariablesOpen
-                                            ? "rotate-180"
-                                            : ""
-                                        }`}
-                                      />
-                                    </button>
-                                    {isTemplateVariablesOpen && (
-                                      <div className="space-y-3 bg-muted/40 p-4 rounded-lg mt-2">
-                                        {clubMembers.template_variables.map(
-                                          (variable: any) => {
-                                            const varName =
-                                              variable?.name || variable;
-                                            const varTitle =
-                                              variable?.title || variable;
-                                            const isMemberNameField =
-                                              varTitle === "Member Name";
-
-                                            return (
-                                              <div
-                                                key={varName}
-                                                className="grid gap-2"
-                                              >
-                                                <Label
-                                                  htmlFor={`template-${varName}`}
-                                                  className="text-sm font-normal"
-                                                >
-                                                  {varTitle}
-                                                </Label>
-                                                <Input
-                                                  id={`template-${varName}`}
-                                                  type="text"
-                                                  placeholder={`Enter ${
-                                                    varTitle?.toLowerCase?.() ||
-                                                    ""
-                                                  }`}
-                                                  value={
-                                                    isMemberNameField
-                                                      ? templateVariables[
-                                                          varName
-                                                        ] ||
-                                                        member.member_first_name +
-                                                          " " +
-                                                          member.member_surname
-                                                      : templateVariables[
-                                                          varName
-                                                        ] || ""
-                                                  }
-                                                  onChange={(e) => {
-                                                    setTemplateVariables(
-                                                      (prev) => ({
-                                                        ...prev,
-                                                        [varName]:
-                                                          e.target.value,
-                                                      })
-                                                    );
-                                                    setTemplateVariablesError(
-                                                      ""
-                                                    );
-                                                  }}
-                                                  className=""
-                                                />
-                                              </div>
-                                            );
+                                {member.outstanding_amount > 0 && (
+                                  <div className="grid gap-3 my-4">
+                                    <Label htmlFor="pay">Payment Amount</Label>
+                                    <Input
+                                      id="pay"
+                                      type="text"
+                                      placeholder="Enter amount"
+                                      value={displayAmount}
+                                      onChange={handleFormattedInputChange}
+                                    />
+                                  </div>
+                                )}
+                                {clubMembers?.payment_methods &&
+                                  clubMembers.payment_methods.length > 0 && (
+                                    <div className="grid gap-4 pt-2">
+                                      <div>
+                                        <button
+                                          onClick={() =>
+                                            setIsPaymentMethodsOpen(
+                                              !isPaymentMethodsOpen,
+                                            )
                                           }
+                                          className="flex items-center justify-between w-full p-3 bg-muted/40 rounded-lg hover:bg-muted/50 transition-colors"
+                                        >
+                                          <Label className="text-sm font-semibold mb-0 cursor-pointer">
+                                            Payment Method
+                                          </Label>
+                                          <ChevronDown
+                                            className={`h-4 w-4 transition-transform ${
+                                              isPaymentMethodsOpen
+                                                ? "rotate-180"
+                                                : ""
+                                            }`}
+                                          />
+                                        </button>
+                                        {isPaymentMethodsOpen && (
+                                          <div className="space-y-3 bg-muted/40 p-4 rounded-lg mt-2">
+                                            {clubMembers.payment_methods.map(
+                                              (method: string) => (
+                                                <div
+                                                  key={method}
+                                                  className="flex items-center gap-3"
+                                                >
+                                                  <Checkbox
+                                                    id={`payment-${method}`}
+                                                    checked={
+                                                      selectedPaymentMethod ===
+                                                      method
+                                                    }
+                                                    onCheckedChange={(
+                                                      checked,
+                                                    ) => {
+                                                      setSelectedPaymentMethod(
+                                                        checked ? method : "",
+                                                      );
+                                                    }}
+                                                  />
+                                                  <Label
+                                                    htmlFor={`payment-${method}`}
+                                                    className="cursor-pointer font-normal text-sm"
+                                                  >
+                                                    {method}
+                                                  </Label>
+                                                </div>
+                                              ),
+                                            )}
+                                          </div>
                                         )}
                                       </div>
-                                    )}
-                                  </div>
-                                </div>
+                                    </div>
+                                  )}
+                                {clubMembers?.template_variables &&
+                                  Array.isArray(
+                                    clubMembers.template_variables,
+                                  ) &&
+                                  clubMembers.template_variables.length > 0 && (
+                                    <div className="grid gap-4 pt-2">
+                                      <div>
+                                        <button
+                                          onClick={() =>
+                                            setIsTemplateVariablesOpen(
+                                              !isTemplateVariablesOpen,
+                                            )
+                                          }
+                                          className="flex items-center justify-between w-full p-3 bg-muted/40 rounded-lg hover:bg-muted/50 transition-colors"
+                                        >
+                                          <Label className="text-sm font-semibold mb-0 cursor-pointer">
+                                            Email Template Fields
+                                          </Label>
+                                          <ChevronDown
+                                            className={`h-4 w-4 transition-transform ${
+                                              isTemplateVariablesOpen
+                                                ? "rotate-180"
+                                                : ""
+                                            }`}
+                                          />
+                                        </button>
+                                        {isTemplateVariablesOpen && (
+                                          <div className="space-y-3 bg-muted/40 p-4 rounded-lg mt-2">
+                                            {clubMembers.template_variables.map(
+                                              (variable: any) => {
+                                                const varName =
+                                                  variable?.name || variable;
+                                                const varTitle =
+                                                  variable?.title || variable;
+                                                const isMemberNameField =
+                                                  varTitle === "Member Name";
+
+                                                return (
+                                                  <div
+                                                    key={varName}
+                                                    className="grid gap-2"
+                                                  >
+                                                    <Label
+                                                      htmlFor={`template-${varName}`}
+                                                      className="text-sm font-normal"
+                                                    >
+                                                      {varTitle}
+                                                    </Label>
+                                                    <Input
+                                                      id={`template-${varName}`}
+                                                      type="text"
+                                                      placeholder={`Enter ${
+                                                        varTitle?.toLowerCase?.() ||
+                                                        ""
+                                                      }`}
+                                                      value={
+                                                        isMemberNameField
+                                                          ? templateVariables[
+                                                              varName
+                                                            ] ||
+                                                            member.member_first_name +
+                                                              " " +
+                                                              member.member_surname
+                                                          : templateVariables[
+                                                              varName
+                                                            ] || ""
+                                                      }
+                                                      onChange={(e) => {
+                                                        setTemplateVariables(
+                                                          (prev) => ({
+                                                            ...prev,
+                                                            [varName]:
+                                                              e.target.value,
+                                                          }),
+                                                        );
+                                                        setTemplateVariablesError(
+                                                          "",
+                                                        );
+                                                      }}
+                                                      className=""
+                                                    />
+                                                  </div>
+                                                );
+                                              },
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                {isError && (
+                                  <Alert variant="destructive">
+                                    <AlertCircle className="h-4 w-4" />
+                                    <AlertDescription className="text-xs">
+                                      Something went wrong registering user
+                                    </AlertDescription>
+                                  </Alert>
+                                )}
+                              </DialogHeader>
+                              <DialogFooter>
+                                <DialogClose asChild>
+                                  <Button variant="outline">Cancel</Button>
+                                </DialogClose>
+                                <Button
+                                  onClick={() => {
+                                    if (!validateTemplateVariables()) {
+                                      setIsTemplateVariablesOpen(true);
+                                    } else {
+                                      const structuredTemplateVariables =
+                                        buildTemplateVariablesWithValues(
+                                          member,
+                                        );
+                                      registerUser(
+                                        member,
+                                        selectedPaymentMethod,
+                                        structuredTemplateVariables,
+                                      );
+                                    }
+                                  }}
+                                  disabled={isPending}
+                                >
+                                  {isPending
+                                    ? "Registering..."
+                                    : "Register Member"}
+                                </Button>
+                              </DialogFooter>
+                              {templateVariablesError && (
+                                <Alert className="border border-red-600 text-red-600">
+                                  <AlertCircle className="h-4 w-4 text-red-600" />
+                                  <AlertDescription className="text-xs text-red-600">
+                                    {templateVariablesError}
+                                  </AlertDescription>
+                                </Alert>
                               )}
-                            {isError && (
-                              <Alert variant="destructive">
-                                <AlertCircle className="h-4 w-4" />
-                                <AlertDescription className="text-xs">
-                                  Something went wrong registering user
-                                </AlertDescription>
-                              </Alert>
-                            )}
-                          </DialogHeader>
-                          <DialogFooter>
-                            <DialogClose asChild>
-                              <Button variant="outline">Cancel</Button>
-                            </DialogClose>
-                            <Button
-                              onClick={() => {
-                                if (!validateTemplateVariables()) {
-                                  setIsTemplateVariablesOpen(true);
-                                } else {
-                                  const structuredTemplateVariables =
-                                    buildTemplateVariablesWithValues(member);
-                                  registerUser(
-                                    member,
-                                    selectedPaymentMethod,
-                                    structuredTemplateVariables
-                                  );
-                                }
-                              }}
-                              disabled={isPending}
-                            >
-                              {isPending ? "Registering..." : "Register Member"}
-                            </Button>
-                          </DialogFooter>
-                          {templateVariablesError && (
-                            <Alert className="border border-red-600 text-red-600">
-                              <AlertCircle className="h-4 w-4 text-red-600" />
-                              <AlertDescription className="text-xs text-red-600">
-                                {templateVariablesError}
-                              </AlertDescription>
-                            </Alert>
-                          )}
-                          {invalidRegistrationAmount && (
-                            <Alert className="border border-red-600 text-red-600">
-                              <AlertCircle className="h-4 w-4 text-red-600" />
-                              <AlertDescription className="text-xs text-red-600">
-                                The amount entered cannot be less than{" "}
-                                {formatAmount(1, club?.currency)} and more than
-                                the outstanding amount.
-                              </AlertDescription>
-                            </Alert>
-                          )}
-                        </DialogContent>
-                      </Dialog>
-                      {/* {member.resubmission_required && (
+                              {invalidRegistrationAmount && (
+                                <Alert className="border border-red-600 text-red-600">
+                                  <AlertCircle className="h-4 w-4 text-red-600" />
+                                  <AlertDescription className="text-xs text-red-600">
+                                    The amount entered cannot be less than{" "}
+                                    {formatAmount(1, club?.currency)} and more
+                                    than the outstanding amount.
+                                  </AlertDescription>
+                                </Alert>
+                              )}
+                            </DialogContent>
+                          </Dialog>
+                          {/* {member.resubmission_required && (
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -735,50 +767,62 @@ export default function PendingMembersList({
                           </Tooltip>
                         </TooltipProvider>
                       )} */}
-                    </div>
-                  </TableCell>
-                  {clubMembers?.filters
-                    ?.filter((col: any) => activeColumnKeys.includes(col.key))
-                    .map((column: any) => {
-                      let columnValue = "N/A";
-                      
-                      if (column.type === "billing") {
-                        const billingField = member.meta_billing?.find(
-                          (f: any) => f.field_name === column.field_name
-                        );
-                        columnValue = billingField?.label_value || "N/A";
-                      }
+                        </div>
+                      </TableCell>
+                      {clubMembers?.filters
+                        ?.filter((col: any) =>
+                          activeColumnKeys.includes(col.key),
+                        )
+                        .map((column: any) => {
+                          let columnValue = "N/A";
 
-                      if (column.type === "billing:number") {
-                        const customField = member.meta_billing?.find(
-                          (f: any) => f.field_name === column.field_name
-                        );
-                        columnValue = formatAmount(customField?.value || 0, club?.currency) || "N/A";
-                      }
+                          if (column.type === "billing") {
+                            const billingField = member.meta_billing?.find(
+                              (f: any) => f.field_name === column.field_name,
+                            );
+                            columnValue = billingField?.label_value || "N/A";
+                          }
 
-                      if (column.type === "standard") {
-                        const standardField = member.meta_standard?.find(
-                          (f: any) => f.field_name === column.field_name
-                        );
-                        columnValue = standardField?.value || "N/A";
-                      }
-                      
-                      return (
-                        <TableCell key={column.key} className="text-center w-[150px]">
-                          {columnValue}
-                        </TableCell>
-                      );
-                    })}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={6 + (activeColumnKeys?.length ?? 0)} className="h-24 text-center">
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
+                          if (column.type === "billing:number") {
+                            const customField = member.meta_billing?.find(
+                              (f: any) => f.field_name === column.field_name,
+                            );
+                            columnValue =
+                              formatAmount(
+                                customField?.value || 0,
+                                club?.currency,
+                              ) || "N/A";
+                          }
+
+                          if (column.type === "standard") {
+                            const standardField = member.meta_standard?.find(
+                              (f: any) => f.field_name === column.field_name,
+                            );
+                            columnValue = standardField?.value || "N/A";
+                          }
+
+                          return (
+                            <TableCell
+                              key={column.key}
+                              className="text-center w-[150px]"
+                            >
+                              {columnValue}
+                            </TableCell>
+                          );
+                        })}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6 + (activeColumnKeys?.length ?? 0)}
+                      className="h-24 text-center"
+                    >
+                      No results.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
             </Table>
           </DndContext>
         </div>
