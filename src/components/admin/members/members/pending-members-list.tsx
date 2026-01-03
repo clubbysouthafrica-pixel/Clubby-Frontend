@@ -219,7 +219,7 @@ export default function PendingMembersList({
   return (
     <div className="flex flex-col gap-4">
       <div
-        className={`rounded-lg border w-full overflow-hidden max-w-[100vw] ${
+        className={`rounded-lg border w-full overflow-hidden max-w-[79vw] ${
           filteredUnregisteredMembers.length > 10
             ? "max-h-[600px] flex flex-col"
             : ""

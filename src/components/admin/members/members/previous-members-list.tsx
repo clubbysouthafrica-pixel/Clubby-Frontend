@@ -99,7 +99,7 @@ export default function PreviousMembersList({
   return (
     <>
       <div
-        className={`overflow-hidden rounded-lg border max-w-[100vw] ${filteredDeregisteredMembers.length > 10 ? "max-h-[600px] overflow-y-auto" : ""}`}
+        className={`overflow-hidden rounded-lg border max-w-[79vw] ${filteredDeregisteredMembers.length > 10 ? "max-h-[600px] overflow-y-auto" : ""}`}
       >
         <DndContext
           collisionDetection={closestCenter}
