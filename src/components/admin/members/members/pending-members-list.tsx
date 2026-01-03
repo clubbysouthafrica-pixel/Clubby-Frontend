@@ -242,7 +242,7 @@ export default function PendingMembersList({
             >
               <TableHeader className="bg-muted sticky top-0 z-10">
                 <TableRow>
-                  <TableHead className="text-center w-[80px] py-2 flex-shrink-0">
+                  <TableHead className="text-center w-[80px] py-2 flex-shrink-0 sticky left-0 z-20 bg-muted">
                     <div className="flex justify-center items-center border rounded-[10px] pl-3 pr-1 border-gray-300 border-1 w-fit mx-auto hover:border-gray-400 transition-colors">
                       <Checkbox
                         checked={allMembersSelected}
@@ -358,7 +358,7 @@ export default function PendingMembersList({
                           : ""
                       }
                     >
-                      <TableCell className="text-center w-[80px] flex-shrink-0">
+                      <TableCell className="text-center w-[80px] flex-shrink-0 sticky left-0 z-20 bg-white">
                         <div className="flex justify-center">
                           <Checkbox
                             checked={listActionItems.some(
