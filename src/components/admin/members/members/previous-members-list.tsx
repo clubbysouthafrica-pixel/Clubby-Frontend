@@ -99,7 +99,7 @@ export default function PreviousMembersList({
   return (
     <>
       <div
-        className={`overflow-hidden rounded-lg border max-w-[79vw] ${filteredDeregisteredMembers.length > 10 ? "max-h-[600px] overflow-y-auto" : ""}`}
+        className={`overflow-hidden rounded-lg border max-w-[100vw] ${filteredDeregisteredMembers.length > 10 ? "max-h-[600px] overflow-y-auto" : ""}`}
       >
         <DndContext
           collisionDetection={closestCenter}
@@ -326,7 +326,7 @@ export default function PreviousMembersList({
                           const customField = member.meta_billing?.find(
                             (f: any) => f.field_name === column.field_name,
                           );
-                          columnValue = formatAmount(customField?.value, club?.currency) || "N/A";
+                          columnValue = customField?.value ? formatAmount(customField?.value, club?.currency) : "N/A";
                         }
 
                         if (column.type === "standard") {

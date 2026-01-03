@@ -219,7 +219,7 @@ export default function PendingMembersList({
   return (
     <div className="flex flex-col gap-4">
       <div
-        className={`rounded-lg border w-full overflow-hidden max-w-[79vw] ${
+        className={`rounded-lg border w-full overflow-hidden max-w-[100vw] ${
           filteredUnregisteredMembers.length > 10
             ? "max-h-[600px] flex flex-col"
             : ""
@@ -787,11 +787,7 @@ export default function PendingMembersList({
                             const customField = member.meta_billing?.find(
                               (f: any) => f.field_name === column.field_name,
                             );
-                            columnValue =
-                              formatAmount(
-                                customField?.value || 0,
-                                club?.currency,
-                              ) || "N/A";
+                            columnValue = customField?.value ? formatAmount(customField?.value, club?.currency) : "N/A";
                           }
 
                           if (column.type === "standard") {

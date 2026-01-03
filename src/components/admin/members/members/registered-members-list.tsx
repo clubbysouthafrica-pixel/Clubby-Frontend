@@ -103,7 +103,7 @@ export default function RegisteredMembersList({
   return (
     <>
       <div
-        className={`w-full rounded-lg border overflow-hidden max-w-[79vw] ${
+        className={`w-full rounded-lg border overflow-hidden max-w-[100vw] ${
           filteredRegisteredMembers.length > 10
             ? "max-h-[600px] overflow-y-auto"
             : ""
@@ -338,7 +338,7 @@ export default function RegisteredMembersList({
                           const customField = member.meta_billing?.find(
                             (f: any) => f.field_name === column.field_name,
                           );
-                          columnValue = formatAmount(customField?.value, currency) || "N/A";
+                          columnValue = customField?.value ? formatAmount(customField?.value, currency) : "N/A";
                         }
 
                         if (column.type === "standard") {
