@@ -777,36 +777,33 @@ export default function ListMembersPage() {
                 activeFilterKeys={activeFilterKeys}
                 onFilterKeysChange={setActiveFilterKeys}
               />
-              {selectedTab === "registered-members" &&
-                import.meta.env.VITE_ENVIRONMENT === "Dev" && (
-                  <AddColumnsDialog
-                    open={showColumnSelectorRegistered}
-                    onOpenChange={setShowColumnSelectorRegistered}
-                    availableFields={availableDynamicFilters}
-                    activeColumnKeys={activeColumnKeysRegistered}
-                    onColumnKeysChange={setActiveColumnKeysRegistered}
-                  />
-                )}
-              {selectedTab === "pending-members" &&
-                import.meta.env.VITE_ENVIRONMENT === "Dev" && (
-                  <AddColumnsDialog
-                    open={showColumnSelectorPending}
-                    onOpenChange={setShowColumnSelectorPending}
-                    availableFields={availableDynamicFilters}
-                    activeColumnKeys={activeColumnKeysPending}
-                    onColumnKeysChange={setActiveColumnKeysPending}
-                  />
-                )}
-              {selectedTab === "previous-members" &&
-                import.meta.env.VITE_ENVIRONMENT === "Dev" && (
-                  <AddColumnsDialog
-                    open={showColumnSelectorPrevious}
-                    onOpenChange={setShowColumnSelectorPrevious}
-                    availableFields={availableDynamicFilters}
-                    activeColumnKeys={activeColumnKeysPrevious}
-                    onColumnKeysChange={setActiveColumnKeysPrevious}
-                  />
-                )}
+              {selectedTab === "registered-members" && (
+                <AddColumnsDialog
+                  open={showColumnSelectorRegistered}
+                  onOpenChange={setShowColumnSelectorRegistered}
+                  availableFields={availableDynamicFilters}
+                  activeColumnKeys={activeColumnKeysRegistered}
+                  onColumnKeysChange={setActiveColumnKeysRegistered}
+                />
+              )}
+              {selectedTab === "pending-members" && (
+                <AddColumnsDialog
+                  open={showColumnSelectorPending}
+                  onOpenChange={setShowColumnSelectorPending}
+                  availableFields={availableDynamicFilters}
+                  activeColumnKeys={activeColumnKeysPending}
+                  onColumnKeysChange={setActiveColumnKeysPending}
+                />
+              )}
+              {selectedTab === "previous-members" && (
+                <AddColumnsDialog
+                  open={showColumnSelectorPrevious}
+                  onOpenChange={setShowColumnSelectorPrevious}
+                  availableFields={availableDynamicFilters}
+                  activeColumnKeys={activeColumnKeysPrevious}
+                  onColumnKeysChange={setActiveColumnKeysPrevious}
+                />
+              )}
             </div>
             <TabsContent
               value="registered-members"
