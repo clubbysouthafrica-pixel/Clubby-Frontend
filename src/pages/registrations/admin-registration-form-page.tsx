@@ -93,6 +93,8 @@ export default function AdminRegistrationFormPage() {
                 onSuccess: () => {
                     displayToast();
                     setSaving(false);
+                    // Update originalPages with current pages so new fields are now locked
+                    setOriginalPages(pages);
                 },
                 onError: (e) => {
                     displayErrorToast(e);
@@ -228,7 +230,7 @@ export default function AdminRegistrationFormPage() {
                                         <ConfirmDeleteDialog tooltipDescription="Remove page" id={p.page_index} removeFunc={removePage} />
                                     </div>
                                     <Input value={p.page_header} onChange={v => changePageHeader(p.page_index, v.target.value)} placeholder="change page header" />
-                                    <DynamicFormBuilder currency={club?.currency ?? "ZAR"} clubAccountId={club?.club_account_id as string} page={p} allPages={pages} setFields={setFields} deletedFields={deletedFields} setDeletedFields={setDeletedFields} />
+                                    <DynamicFormBuilder currency={club?.currency ?? "ZAR"} clubAccountId={club?.club_account_id as string} page={p} allPages={originalPages} setFields={setFields} deletedFields={deletedFields} setDeletedFields={setDeletedFields} />
                                 </div>
                             </TabsContent>
                         ))
