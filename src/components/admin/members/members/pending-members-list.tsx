@@ -349,7 +349,7 @@ export default function PendingMembersList({
                   sortedUnregisteredMembers.map((member: ClubMember) => (
                     <TableRow
                       key={member.user_id}
-                      className={
+                      className={`h-12 ${
                         listActionItems.some(
                           (item) =>
                             item.email === member.member_email &&
@@ -358,7 +358,7 @@ export default function PendingMembersList({
                         )
                           ? "bg-blue-50"
                           : ""
-                      }
+                      }`}
                     >
                       <TableCell className="text-center w-[80px] flex-shrink-0 sticky left-0 z-20 bg-white">
                         <div className="flex justify-center">
