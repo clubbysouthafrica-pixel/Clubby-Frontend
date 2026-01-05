@@ -93,7 +93,7 @@ export default function ContactPage() {
               </Card>
 
               {/* Phone Card */}
-              <Card className="group hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 border-primary/20 hover:border-primary/40">
+              {/*<Card className="group hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 border-primary/20 hover:border-primary/40">
                 <CardContent className="p-6">
                   <div className="flex items-center space-x-4">
                     <div className="flex-shrink-0">
@@ -112,10 +112,10 @@ export default function ContactPage() {
                     </div>
                   </div>
                 </CardContent>
-              </Card>
+              </Card>*/}
 
               {/* Location Card */}
-              <Card className="group hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 border-primary/20 hover:border-primary/40">
+              {/*<Card className="group hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 border-primary/20 hover:border-primary/40">
                 <CardContent className="p-6">
                   <div className="flex items-center space-x-4">
                     <div className="flex-shrink-0">
@@ -134,11 +134,11 @@ export default function ContactPage() {
                     </div>
                   </div>
                 </CardContent>
-              </Card>
+              </Card>*/}
             </div>
 
             {/* Business Hours */}
-            <Card className="bg-gradient-to-br from-muted/30 to-muted/10 border-muted">
+            {/*<Card className="bg-gradient-to-br from-muted/30 to-muted/10 border-muted">
               <CardHeader>
                 <CardTitle className="flex items-center text-lg">
                   <Clock className="w-5 h-5 mr-2 text-primary" />
@@ -159,11 +159,11 @@ export default function ContactPage() {
                   <span className="font-medium">Closed</span>
                 </div>
               </CardContent>
-            </Card>
+            </Card>*/}
           </div>
 
           {/* Contact Form */}
-          <div className="lg:col-span-3">
+          {/*<div className="lg:col-span-3">
             <Card className="shadow-2xl shadow-primary/5 border-primary/20">
               <CardHeader className="pb-8">
                 <div className="flex items-center space-x-3 mb-4">
@@ -272,7 +272,7 @@ export default function ContactPage() {
                 </form>
               </CardContent>
             </Card>
-          </div>
+          </div>*/}
         </div>
       </div>
 
