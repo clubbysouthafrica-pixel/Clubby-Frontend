@@ -59,7 +59,7 @@ export default function SelectedMember({
             }}
         >
             <DialogContent
-                className="!w-[1000px] !h-[800px] !max-w-none !max-h-none p-5 gap-4 flex flex-col min-h-0"
+                className="!w-[60%] !h-[90%] !max-w-none !max-h-none p-5 gap-4 flex flex-col min-h-0"
             >
                 <DialogHeader className="flex justify-between">
                     <div className="flex items-end space-x-2">
