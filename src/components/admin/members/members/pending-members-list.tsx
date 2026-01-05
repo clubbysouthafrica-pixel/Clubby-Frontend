@@ -226,7 +226,9 @@ export default function PendingMembersList({
         }`}
       >
         <div
-          className={`${filteredUnregisteredMembers.length > 10 ? "overflow-y-auto" : ""} overflow-x-auto flex-1`}
+          className={`overflow-y-auto overflow-x-auto flex-1 ${
+            filteredUnregisteredMembers.length > 10 ? "" : ""
+          }`}
         >
           <DndContext
             collisionDetection={closestCenter}

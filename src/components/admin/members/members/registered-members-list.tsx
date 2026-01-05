@@ -103,10 +103,10 @@ export default function RegisteredMembersList({
   return (
     <>
       <div
-        className={`w-full rounded-lg border overflow-hidden max-w-[79vw] ${
+        className={`w-full rounded-lg border overflow-x-auto max-w-[79vw] ${
           filteredRegisteredMembers.length > 10
             ? "max-h-[600px] overflow-y-auto"
-            : ""
+            : "overflow-y-hidden"
         }`}
       >
         <DndContext
