@@ -1,24 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Mail,
-  MapPin,
-  Clock,
-  Send,
-  Phone,
-  Globe,
-  MessageCircle,
-  ArrowRight,
-  CheckCircle,
-} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Mail, Globe, MessageCircle, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function ContactPage() {
