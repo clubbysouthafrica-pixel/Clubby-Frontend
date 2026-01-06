@@ -114,6 +114,24 @@ export function PublicRegistrationForm({
     return missing;
   }, [pages]);
 
+  const missingFieldNames = useMemo(() => {
+    const currentPage = pages[currentPageIndex];
+    if (!currentPage) return [];
+    
+    return currentPage.fields
+      .filter((f) => {
+        if (f.required) {
+          if (f.field_type === "STANDARD") return !f.value?.trim();
+          if (f.field_type === "BILLING" && f.input_type === "DROPDOWN")
+            return f.value == null || f.selectedAmountCents == null;
+          if (f.field_type === "BILLING" && f.input_type === "NUMBER") 
+            return f.value == null || (typeof f.value === "number" && f.value <= 0);
+        }
+        return false;
+      })
+      .map((f) => f.field_name);
+  }, [pages, currentPageIndex]);
+
   const handleNextPage = () => {
     const currentPage = pages[currentPageIndex];
     const missingOnCurrent = currentPage.fields.filter((f) => {
@@ -286,6 +304,7 @@ export function PublicRegistrationForm({
           setCurrentPageIndex={setCurrentPageIndex}
           setFieldValue={setFieldValue}
           requiredFieldsMissing={requiredFieldsMissing}
+          missingFieldNames={missingFieldNames}
           showHeader={true}
           onNext={handleNextPage}
           onContinue={handleContinue}

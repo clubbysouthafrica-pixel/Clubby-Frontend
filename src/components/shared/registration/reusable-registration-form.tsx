@@ -96,6 +96,7 @@ interface ReusableRegistrationFormProps {
     updater: (f: PageFieldBase) => PageFieldBase
   ) => void;
   requiredFieldsMissing: boolean;
+  missingFieldNames?: string[];
   headerTitle?: string;
   headerDescription?: string;
   showHeader?: boolean;
@@ -119,6 +120,7 @@ export function ReusableRegistrationForm({
   setCurrentPageIndex,
   setFieldValue,
   requiredFieldsMissing,
+  missingFieldNames,
   headerTitle,
   headerDescription,
   showHeader = true,
@@ -410,6 +412,12 @@ export function ReusableRegistrationForm({
                       <AlertDescription className="text-xs lg:text-xs text-red-600">
                         Please fill all required fields. These fields are marked
                         with (*).
+                        {missingFieldNames && missingFieldNames.length > 0 && (
+                          <div className="mt-2">
+                            Missing:{" "}
+                            <strong>{missingFieldNames.join(", ")}</strong>
+                          </div>
+                        )}
                       </AlertDescription>
                     </Alert>
                   )}
