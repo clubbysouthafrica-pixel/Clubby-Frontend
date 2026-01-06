@@ -410,8 +410,7 @@ export function ReusableRegistrationForm({
                     <Alert className="border border-red-600 text-red-600 mt-2">
                       <AlertCircle className="h-4 w-4 text-red-600" />
                       <AlertDescription className="text-xs lg:text-xs text-red-600">
-                        Please fill all required fields. These fields are marked
-                        with (*).
+                        Please fill all required fields.
                         {missingFieldNames && missingFieldNames.length > 0 && (
                           <div className="mt-2">
                             Missing:{" "}
