@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useFetchMemberRegisteration } from "@/queries/registration-form";
 import { Loader2, AlertCircle, PencilIcon, Check, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
