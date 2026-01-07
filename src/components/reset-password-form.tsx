@@ -11,7 +11,7 @@ import {FormEvent, useState} from "react";
 import {useNavigate, useSearchParams} from "react-router-dom";
 import {Input} from "@/components/ui/input.tsx";
 import {Alert, AlertDescription} from "@/components/ui/alert.tsx";
-import {AlertCircle} from "lucide-react";
+import {AlertCircle, Eye, EyeOff} from "lucide-react";
 import {AxiosError} from "axios";
 import {resetPassword} from "@/services/auth_service.tsx";
 
@@ -29,10 +29,19 @@ export function ResetPasswordForm({
     const [error, setError] = useState("")
     const [code, setCode] = useState<string>("")
     const [password, setPassword] = useState<string>("")
+    const [confirmPassword, setConfirmPassword] = useState<string>("")
+    const [showPassword, setShowPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
     const verifyOTP = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
-        if (!email || !code || !password) return
+        if (!email || !code || !password || !confirmPassword) return
+        
+        if (password !== confirmPassword) {
+            setError("Passwords do not match")
+            return
+        }
+        
         setLoading(true)
 
         try {
@@ -94,14 +103,45 @@ export function ResetPasswordForm({
                                 <div className="flex items-center">
                                     <Label htmlFor="password">New Password</Label>
                                 </div>
-                                <Input
-                                    id="password"
-                                    type="password"
-                                    placeholder="***"
-                                    value={password}
-                                    onChange={(event) => setPassword(event.target.value)}
-                                    required
-                                />
+                                <div className="relative">
+                                    <Input
+                                        id="password"
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="***"
+                                        value={password}
+                                        onChange={(event) => setPassword(event.target.value)}
+                                        required
+                                        className="pr-10"
+                                    />
+                                    <div
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="grid gap-3">
+                                <div className="flex items-center">
+                                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                                </div>
+                                <div className="relative">
+                                    <Input
+                                        id="confirmPassword"
+                                        type={showConfirmPassword ? "text" : "password"}
+                                        placeholder="***"
+                                        value={confirmPassword}
+                                        onChange={(event) => setConfirmPassword(event.target.value)}
+                                        required
+                                        className="pr-10"
+                                    />
+                                    <div
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    >
+                                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </div>
+                                </div>
                             </div>
 
                             {
