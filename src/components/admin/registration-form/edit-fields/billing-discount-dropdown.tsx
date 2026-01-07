@@ -72,7 +72,7 @@ export default function EditBillingDiscountDropdown({
         )
     }
 
-    const addDisabled = !discountLabel || discountPercentage < 0 || discountPercentage > 100 || selectedBillingFields.length === 0
+    const addDisabled = !discountLabel || typeof discountPercentage !== 'number' || discountPercentage < 0 || discountPercentage > 100 || selectedBillingFields.length === 0
 
     const handleAddOption = () => {
         if (addDisabled) return
@@ -130,7 +130,7 @@ export default function EditBillingDiscountDropdown({
                                 className="flex-1"
                                 type="number"
                                 placeholder="Percentage (0-100)"
-                                value={discountPercentage || ""}
+                                value={discountPercentage}
                                 onChange={(e) => {
                                     const val = parseFloat(e.target.value) || 0
                                     setDiscountPercentage(Math.min(100, Math.max(0, val)))
