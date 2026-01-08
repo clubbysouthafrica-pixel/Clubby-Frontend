@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useFetchMemberRegisteration } from "@/queries/registration-form";
 import { Loader2, AlertCircle, PencilIcon, Check, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
@@ -59,6 +59,7 @@ export function MemberRegistration({
     Record<string, string>
   >({});
   const [isSaving, setIsSaving] = useState(false);
+  const [loadingFieldId, setLoadingFieldId] = useState<string | null>(null);
   const [fieldMetadata, setFieldMetadata] = useState<
     Record<
       string,
@@ -88,42 +89,6 @@ export function MemberRegistration({
     return undefined;
   };
   const deregReason = getDeregReason(data);
-
-  // Preload metadata for all STANDARD_OTHER fields on initial load
-  useEffect(() => {
-    if (!data) return;
-
-    const loadMetadata = async () => {
-      const allFields = data.pages.flatMap(
-        (page: {
-          fields: Array<{ type: string; label: string; field_id?: string }>;
-        }) =>
-          page.fields.filter(
-            (field: { type: string; field_id?: string }) =>
-              field.type === "STANDARD_OTHER" && field.field_id
-          )
-      );
-
-      for (const field of allFields) {
-        if (!fieldMetadata[field.label]) {
-          try {
-            const fieldData = await fetchMemberRegistrationField(
-              clubAccountId,
-              field.field_id
-            );
-            setFieldMetadata((prev) => ({
-              ...prev,
-              [field.label]: fieldData.field,
-            }));
-          } catch (error) {
-            console.error(`Error loading metadata for ${field.label}:`, error);
-          }
-        }
-      }
-    };
-
-    loadMetadata();
-  }, [data, clubAccountId, fieldMetadata]);
 
   if (isLoading || !data) {
     return (
@@ -348,6 +313,7 @@ export function MemberRegistration({
 
                     const handleEdit = async () => {
                       if (!metadata && field.field_id) {
+                        setLoadingFieldId(field.label);
                         try {
                           const data = await fetchMemberRegistrationField(
                             clubAccountId,
@@ -382,6 +348,9 @@ export function MemberRegistration({
                           }
                         } catch (error) {
                           console.error("Error loading field metadata:", error);
+                          toast.error("Failed to load field", { duration: 2000 });
+                        } finally {
+                          setLoadingFieldId(null);
                         }
                       } else {
                         setEditingFieldId(field.label);
@@ -590,7 +559,8 @@ export function MemberRegistration({
                           )}
                         </div>
                         {membershipStatus !== "Resubmission required" &&
-                          field.field_id && metadata?.editable_by_member && (
+                          field.field_id &&
+                          (field.editable_by_member === true || metadata?.editable_by_member === true) && (
                             <div className="flex gap-1 ml-2 opacity-30 group-hover:opacity-100 transition-opacity">
                               {isEditing ? (
                                 <>
@@ -626,10 +596,15 @@ export function MemberRegistration({
                                   variant="outline"
                                   size="sm"
                                   onClick={handleEdit}
+                                  disabled={loadingFieldId === field.label}
                                   className="h-8 w-8 p-0"
                                   title="Update this field"
                                 >
-                                  <PencilIcon className="h-4 w-4" />
+                                  {loadingFieldId === field.label ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <PencilIcon className="h-4 w-4" />
+                                  )}
                                 </Button>
                               )}
                             </div>

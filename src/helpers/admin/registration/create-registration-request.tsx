@@ -85,6 +85,7 @@ export function createValidRegistrationRequest(fields: PageFieldBase[], clubId: 
             }
             if (f.input_type === "DISCOUNT") {
                 field.percentage = f.percentage
+                field.value = f?.percentage ?? 0
                 field.applicable_billing_fields = f.applicable_billing_fields
             }
             request.billing_fields.push(field)

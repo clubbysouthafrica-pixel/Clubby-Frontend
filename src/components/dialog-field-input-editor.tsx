@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { Dialog, DialogTrigger, DialogContent, DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { PencilIcon, XIcon } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { InputBillingOption, InputDiscountOption, InputFormRegistration, PageFormRegistration } from "@/interfaces/formRegistration"
 import { Label } from "./ui/label"
 import { Input } from "./ui/input"
@@ -41,6 +42,13 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
     const [multiplier, setMultiplier] = useState(false)
     const [phone_number_input, setPhoneNumberInput] = useState(false)
     const [sensitive_information, setSensitiveInformation] = useState(false)
+    
+    // Check if this field exists in allPages (the original pages from the initial server response)
+    // If it exists in allPages, it's an existing field from the database that should be locked
+    // If it doesn't exist in allPages, it's a newly created field that can be edited
+    const isExistingField = field?.field_id ? allPages.some(page => 
+        page.fields.some(f => f.field_id === field.field_id)
+    ) : false
     const [dropdownOptionField, setDropdownOptionField] = useState("")
     const [amount, setAmount] = useState(0)
 
@@ -346,13 +354,23 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
                                                                 <Label>Validate as phone number</Label>
                                                             </div>
                                                         )}
-                                                        <div className="flex items-center gap-3">
-                                                            <Checkbox
-                                                                checked={sensitive_information}
-                                                                onCheckedChange={(checked: boolean) => setSensitiveInformation(checked)}
-                                                            />
-                                                            <Label>Contains sensitive information</Label>
-                                                        </div>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <div className="flex items-center gap-3">
+                                                                    <Checkbox
+                                                                        checked={sensitive_information}
+                                                                        onCheckedChange={(checked: boolean) => setSensitiveInformation(checked)}
+                                                                        disabled={isExistingField}
+                                                                    />
+                                                                    <Label className={isExistingField ? "text-gray-400 cursor-not-allowed" : ""}>Contains sensitive information</Label>
+                                                                </div>
+                                                            </TooltipTrigger>
+                                                            {isExistingField && (
+                                                                <TooltipContent>
+                                                                    <p>This setting cannot be changed after the field is created</p>
+                                                                </TooltipContent>
+                                                            )}
+                                                        </Tooltip>
                                                     </div>
                                                 )}
                                                 {

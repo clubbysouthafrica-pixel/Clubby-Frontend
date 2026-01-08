@@ -78,7 +78,7 @@ export default function BillingDiscountDropdown({
                         <SelectLabel>{field.field_name}</SelectLabel>
                         {field.discountOptions?.map((opt) => (
                             <SelectItem key={opt.option_order_id} value={opt.label}>
-                                {opt.label} <strong>({opt.percentage}% off)</strong>
+                                {opt.label} <strong>{opt.percentage === 0 ? "No discount" : `${opt.percentage}% off`}</strong>
                             </SelectItem>
                         ))}
                     </SelectGroup>

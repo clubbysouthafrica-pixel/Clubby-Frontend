@@ -101,6 +101,7 @@ export function CurrentMemberRegistration({
     Record<string, string>
   >({});
   const [isSaving, setIsSaving] = useState(false);
+  const [loadingFieldId, setLoadingFieldId] = useState<string | null>(null);
   const [fieldMetadata, setFieldMetadata] = useState<
     Record<string, FieldMetadata>
   >({});
@@ -139,41 +140,7 @@ export function CurrentMemberRegistration({
     },
   });
 
-  // Preload metadata for all STANDARD_OTHER fields on initial load
-  useEffect(() => {
-    if (!data) return;
 
-    const loadMetadata = async () => {
-      const allFields = data.pages.flatMap(
-        (page: {
-          fields: Array<{ type: string; label: string; field_id?: string }>;
-        }) =>
-          page.fields.filter(
-            (field: { type: string; field_id?: string }) =>
-              field.type === "STANDARD_OTHER" && field.field_id
-          )
-      );
-
-      for (const field of allFields) {
-        if (!fieldMetadata[field.label]) {
-          try {
-            const fieldData = await fetchRegistrationField(
-              clubAccountId,
-              field.field_id
-            );
-            setFieldMetadata((prev) => ({
-              ...prev,
-              [field.label]: fieldData.field,
-            }));
-          } catch (error) {
-            console.error(`Error loading metadata for ${field.label}:`, error);
-          }
-        }
-      }
-    };
-
-    loadMetadata();
-  }, [data, clubAccountId, fieldMetadata]);
 
   useEffect(() => {
     if (data?.admin_notes && Array.isArray(data.admin_notes)) {
@@ -661,6 +628,7 @@ export function CurrentMemberRegistration({
                     const handleEdit = async () => {
                       // Load metadata first if not already loaded
                       if (!metadata && field.field_id) {
+                        setLoadingFieldId(field.label);
                         try {
                           const response = await fetchRegistrationField(
                             clubAccountId,
@@ -700,6 +668,8 @@ export function CurrentMemberRegistration({
                           // Still set editing state even if metadata fetch fails
                           setEditingFieldId(field.label);
                           setEditValue(updatedFieldValues[field.label] ?? field.value);
+                        } finally {
+                          setLoadingFieldId(null);
                         }
                       } else {
                         // Metadata already exists, set editing state immediately
@@ -944,10 +914,15 @@ export function CurrentMemberRegistration({
                                 variant="outline"
                                 size="sm"
                                 onClick={handleEdit}
+                                disabled={loadingFieldId === field.label}
                                 className="h-8 w-8 p-0"
                                 title="Update this field"
                               >
-                                <PencilIcon className="h-4 w-4" />
+                                {loadingFieldId === field.label ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <PencilIcon className="h-4 w-4" />
+                                )}
                               </Button>
                             )}
                           </div>

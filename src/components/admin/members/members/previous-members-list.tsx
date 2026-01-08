@@ -23,6 +23,7 @@ import {
 import { previousRegisteredMembers } from "@/helpers/admin/members/filter-members-list";
 import RemoveMemberDialog from "./features/remove-member-dialog";
 import ReusableSendEmailDialog from "./features/reusable-send-email-dialog";
+import { formatAmount } from "@/data/currencies";
 
 interface ImageProps {
   club: Club | null;
@@ -52,6 +53,7 @@ export default function PreviousMembersList({
   selectedTab,
   clubMembers,
   clubId,
+  club,
   memberNameFilter,
   memberIdFilter,
   allMembersSelected,
@@ -97,7 +99,7 @@ export default function PreviousMembersList({
   return (
     <>
       <div
-        className={`overflow-hidden rounded-lg border max-w-[79vw] ${filteredDeregisteredMembers.length > 10 ? "max-h-[600px] overflow-y-auto" : ""}`}
+        className={`overflow-x-auto rounded-lg border max-w-[79vw] ${filteredDeregisteredMembers.length > 10 ? "max-h-[600px] overflow-y-auto" : "overflow-y-hidden"}`}
       >
         <DndContext
           collisionDetection={closestCenter}
@@ -113,7 +115,7 @@ export default function PreviousMembersList({
           >
             <TableHeader className="bg-muted sticky top-0 z-10">
               <TableRow>
-                <TableHead className="text-center w-[80px] py-2 flex-shrink-0">
+                <TableHead className="text-center w-[80px] py-2 flex-shrink-0 sticky left-0 z-20 bg-muted">
                   <div className="flex justify-center items-center rounded-[10px] pl-3 pr-1 border-gray-300 border-1 w-fit mx-auto hover:border-gray-400 transition-colors">
                     <Checkbox
                       checked={allMembersSelected}
@@ -216,7 +218,7 @@ export default function PreviousMembersList({
                 sortedDeregisteredMembers.map((member: ClubMember) => (
                   <TableRow
                     key={member.user_id}
-                    className={
+                    className={`h-12 ${
                       listActionItems.some(
                         (item) =>
                           item.email === member.member_email &&
@@ -225,9 +227,9 @@ export default function PreviousMembersList({
                       )
                         ? "bg-blue-50"
                         : ""
-                    }
+                    }`}
                   >
-                    <TableCell className="text-center w-[80px] flex-shrink-0">
+                    <TableCell className="text-center w-[80px] flex-shrink-0 sticky left-0 z-20 bg-white">
                       <div className="flex justify-center">
                         <Checkbox
                           checked={listActionItems.some(
@@ -324,7 +326,7 @@ export default function PreviousMembersList({
                           const customField = member.meta_billing?.find(
                             (f: any) => f.field_name === column.field_name,
                           );
-                          columnValue = customField?.value || "N/A";
+                          columnValue = customField?.value ? formatAmount(customField?.value, club?.currency) : "N/A";
                         }
 
                         if (column.type === "standard") {

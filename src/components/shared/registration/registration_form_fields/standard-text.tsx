@@ -64,6 +64,15 @@ export default function StandardText({
     if (isPhoneNumber) {
       setPhoneNumber(val)
       setPhoneError("")
+      // Update the field value immediately so autofill and manual input both work
+      setFieldValue(
+        pages[currentPageIndex].page_index,
+        field.field_id,
+        (f) => ({
+          ...f,
+          value: val, // Store the raw value temporarily
+        })
+      )
     } else if (!isNumber || val === "" || /^[0-9]*$/.test(val)) {
       setFieldValue(
         pages[currentPageIndex].page_index,
@@ -109,10 +118,20 @@ export default function StandardText({
           field.field_id,
           (f) => ({
             ...f,
-            value: formattedNumber,
+            value: formattedNumber, // Store the formatted phone number with country code
           })
         )
       }
+    } else if (isPhoneNumber && !phoneNumber.trim()) {
+      // Clear the field if it's empty
+      setFieldValue(
+        pages[currentPageIndex].page_index,
+        field.field_id,
+        (f) => ({
+          ...f,
+          value: "",
+        })
+      )
     }
   }
 
