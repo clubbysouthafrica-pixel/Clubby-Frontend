@@ -72,44 +72,50 @@ export default function BillingText({
     }
 
     return (
-        <div
-            className="flex items-center gap-4 py-2"
-            key={field.field_id}
-        >
-            <p className="text-sm font-medium whitespace-nowrap">
-                {field.field_name}{" "}
-                <span className="text-gray-500 font-normal">
-                    ({formatAmount(field.amount ?? 0, clubCurrency)} each)
-                </span>
-            </p>
-            <span className="text-gray-1000 font-medium">×</span>
-            <div className="flex items-center space-x-1">
-                <Input
-                    type="number"
-                    value={multiplier}
-                    min={field?.multiplier && field?.required ? "1" : "0"}
-                    onChange={(e) => {
-                        const rawValue = parseInt(e.target.value);
-                        const minValue = field?.multiplier && field?.required ? 1 : 0;
-                    
-                        const val = isNaN(rawValue) ? minValue : Math.max(minValue, rawValue);
-                    
-                        setMultiplier(val);
-                        onChange(val);
-                    }}
-                    className="w-18 h-8 text-center text-sm border-gray-500 rounded-sm"
-                    style={{
-                        MozAppearance: "textfield",
-                        WebkitAppearance: "none",
-                        margin: 0,
-                    }}
-                />
-            </div>
-            <span className="text-gray-500 font-medium">=</span>
-            <span className="font-semibold text-sm whitespace-nowrap">
-                {formatAmount((field.amount ?? 0) * multiplier, clubCurrency)}
-            </span>
-        </div>
+      <div
+  key={field.field_id}
+  className="flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-2 py-2 sm:py-1"
+>
+  {/* Field name and amount */}
+  <p className="text-sm font-medium whitespace-nowrap">
+    {field.field_name}{" "}
+    <span className="text-gray-500 font-normal">
+      ({formatAmount(field.amount ?? 0, clubCurrency)} each)
+    </span>
+  </p>
+
+  {/* Multiplier and input */}
+  <div className="flex items-center gap-1">
+    <span className="text-gray-1000 font-medium">×</span>
+    <Input
+      type="number"
+      value={multiplier}
+      min={field?.multiplier && field?.required ? "1" : "0"}
+      onChange={(e) => {
+        const rawValue = parseInt(e.target.value);
+        const minValue = field?.multiplier && field?.required ? 1 : 0;
+        const val = isNaN(rawValue) ? minValue : Math.max(minValue, rawValue);
+        setMultiplier(val);
+        onChange(val);
+      }}
+      className="w-16 h-8 text-center text-sm border-gray-400 rounded-sm"
+      style={{
+        MozAppearance: "textfield",
+        WebkitAppearance: "none",
+        margin: 0,
+      }}
+    />
+  </div>
+
+  {/* Total */}
+  <div className="flex items-center gap-1">
+    <span className="text-gray-500 font-medium">=</span>
+    <span className="font-semibold text-sm whitespace-nowrap">
+      {formatAmount((field.amount ?? 0) * multiplier, clubCurrency)}
+    </span>
+  </div>
+</div>
+
 
     );
 }
