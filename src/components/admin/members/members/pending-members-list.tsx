@@ -198,6 +198,24 @@ export default function PendingMembersList({
     setUnregisteredMembersLength(baseUnregisteredMembers.length);
   }, [baseUnregisteredMembers, setUnregisteredMembersLength]);
 
+  useEffect(() => {
+    // Sync deregisterMembers with listActionItems
+    // This ensures the deregister button enabled state matches the checkbox state
+    const updatedDeregisterMembers = baseUnregisteredMembers
+      .filter((member: ClubMember) =>
+        listActionItems.some(
+          (item) =>
+            item.email === member.member_email &&
+            item.name === `${member.member_first_name} ${member.member_surname}`,
+        ),
+      )
+      .map((member: ClubMember) => ({
+        user_id: member.user_id,
+        name: `${member.member_first_name} ${member.member_surname}`,
+      }));
+    setDeregisterMembers(updatedDeregisterMembers);
+  }, [listActionItems, baseUnregisteredMembers]);
+
   return (
     <div className="flex flex-col gap-4">
       <div
