@@ -20,7 +20,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { previousRegisteredMembers } from "@/helpers/admin/members/filter-members-list";
 import RemoveMemberDialog from "./features/remove-member-dialog";
 import ReusableSendEmailDialog from "./features/reusable-send-email-dialog";
 import { formatAmount } from "@/data/currencies";
@@ -38,6 +37,7 @@ interface ImageProps {
   memberIdFilter: string;
   dynamicFilters: Record<string, string>;
   activeColumnKeys?: string[];
+  memberLimit: number;
   setAllMembersSelected: React.Dispatch<React.SetStateAction<boolean>>;
   setlistActionItems: React.Dispatch<
     React.SetStateAction<{ email: string; name: string }[]>
@@ -59,6 +59,7 @@ export default function PreviousMembersList({
   allMembersSelected,
   dynamicFilters,
   activeColumnKeys = [],
+  memberLimit,
   listActionItems,
   setSelectedMember,
   setAllListActionItems,
@@ -66,14 +67,8 @@ export default function PreviousMembersList({
   setlistActionItems,
   setAllMembersSelected,
 }: ImageProps) {
-  const filteredDeregisteredMembers = previousRegisteredMembers(
-    selectedTab,
-    clubMembers,
-    memberNameFilter,
-    memberIdFilter,
-    dynamicFilters,
-    clubMembers?.filters,
-  );
+  // Use raw clubMembers.deregistered - backend already handles pagination and member_name/member_id filtering
+  const baseDeregisteredMembers = clubMembers?.deregistered || [];
   const [deregSortAsc, setDeregSortAsc] = useState<boolean | null>(null);
   const [openRemoveDialog, setOpenRemoveDialog] = useState<boolean>(false);
   const [selectedMembersToRemove, setSelectedMembersToRemove] = useState<
@@ -82,24 +77,24 @@ export default function PreviousMembersList({
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
 
   const sortedDeregisteredMembers = useMemo(() => {
-    if (deregSortAsc === null) return filteredDeregisteredMembers;
-    const copy = [...filteredDeregisteredMembers];
+    if (deregSortAsc === null) return baseDeregisteredMembers;
+    const copy = [...baseDeregisteredMembers];
     copy.sort((a: ClubMember, b: ClubMember) => {
       const at = a?.deregistered_on ? new Date(a.deregistered_on).getTime() : 0;
       const bt = b?.deregistered_on ? new Date(b.deregistered_on).getTime() : 0;
       return deregSortAsc ? at - bt : bt - at;
     });
     return copy;
-  }, [filteredDeregisteredMembers, deregSortAsc]);
+  }, [baseDeregisteredMembers, deregSortAsc]);
 
   useEffect(() => {
-    setDeregisteredMembersLength(filteredDeregisteredMembers.length);
-  }, [filteredDeregisteredMembers, setDeregisteredMembersLength]);
+    setDeregisteredMembersLength(baseDeregisteredMembers.length);
+  }, [baseDeregisteredMembers, setDeregisteredMembersLength]);
 
   return (
     <>
       <div
-        className={`overflow-x-auto rounded-lg border max-w-[79vw] ${filteredDeregisteredMembers.length > 10 ? "max-h-[600px] overflow-y-auto" : "overflow-y-hidden"}`}
+        className={`overflow-x-auto rounded-lg border max-w-[79vw] ${baseDeregisteredMembers.length > 10 ? "max-h-[600px] overflow-y-auto" : "overflow-y-hidden"}`}
       >
         <DndContext
           collisionDetection={closestCenter}
@@ -121,8 +116,7 @@ export default function PreviousMembersList({
                       checked={allMembersSelected}
                       onCheckedChange={(checked: boolean) => {
                         if (checked) {
-                          setAllListActionItems(filteredDeregisteredMembers);
-                          setAllMembersSelected(true);
+                          setAllListActionItems(sortedDeregisteredMembers);
                         } else {
                           setlistActionItems([]);
                           setAllMembersSelected(false);
@@ -250,7 +244,7 @@ export default function PreviousMembersList({
                               setlistActionItems(updatedList);
                               if (
                                 updatedList.length ===
-                                filteredDeregisteredMembers.length
+                                baseDeregisteredMembers.length
                               ) {
                                 setAllMembersSelected(true);
                               }
