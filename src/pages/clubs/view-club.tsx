@@ -45,6 +45,8 @@ import {
   Clock,
   CheckCircle,
   Globe,
+  Sparkles,
+  Twitter,
 } from "lucide-react";
 import { useFetchClub, useFetchClubBankDetails } from "@/queries/clubs";
 import { useNavigate, useParams } from "react-router-dom";
@@ -71,6 +73,10 @@ import { useContext } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { updatePaymentReferenceService } from "@/services/profile";
 import { toast } from "sonner";
+import { Image } from "@radix-ui/react-avatar";
+import { FaFacebook, FaInstagram, FaTwitter } from "react-icons/fa";
+import InfoRow from "@/components/info-row";
+import SocialLink from "@/components/social-links";
 
 function epochToJoinedString(epoch: number): string {
   const date = new Date(epoch); // if epoch is in seconds, use new Date(epoch * 1000)
@@ -106,6 +112,33 @@ type Transaction = {
   lifecycle: Record<string, TransactionEntry>;
 };
 
+const otherData = {
+  club_url: "https://www.exampleclub.com",
+  facebook: "https://facebook.com/exampleclub",
+  instagram: "https://instagram.com/exampleclub",
+  twitter: "https://twitter.com/exampleclub",
+
+  gallery: [
+    "https://images.unsplash.com/photo-1521412644187-c49fa049e84d",
+    "https://images.unsplash.com/photo-1517649763962-0c623066013b",
+    "https://images.unsplash.com/photo-1508609349937-5ec4ae374ebf",
+    "https://images.unsplash.com/photo-1517649763962-0c623066013b",
+  ],
+
+  opening_times: {
+    monday: { open: "06:00", close: "20:00" },
+    tuesday: { open: "06:00", close: "20:00" },
+    wednesday: { open: "06:00", close: "20:00" },
+    thursday: { open: "06:00", close: "20:00" },
+    friday: { open: "06:00", close: "18:00" },
+    saturday: { open: "07:00", close: "14:00" },
+    sunday: { open: "Closed", close: "" },
+  },
+
+  support_email: "support@exampleclub.com",
+  joined: 1580515200, // Feb 1, 2020 (epoch seconds)
+};
+
 export default function ViewClubPage() {
   const auth = useContext(AuthContext);
   const isLoggedIn = !!auth?.user;
@@ -125,7 +158,7 @@ export default function ViewClubPage() {
   const [iframeLoading, setIframeLoading] = useState(true);
   const [editingReference, setEditingReference] = useState(false);
   const [newReference, setNewReference] = useState(
-    bankDetails?.registration_payment_reference || ""
+    bankDetails?.registration_payment_reference || "",
   );
   const [savingReference, setSavingReference] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
@@ -156,7 +189,7 @@ export default function ViewClubPage() {
     try {
       await updatePaymentReferenceService(
         data?.club_account_id ?? "",
-        newReference
+        newReference,
       );
       // Update the local bankDetails state
       if (bankDetails) {
@@ -208,7 +241,7 @@ export default function ViewClubPage() {
 
   const getStatusIcon = (
     isRegistered: boolean,
-    resubmissionRequired: boolean
+    resubmissionRequired: boolean,
   ) => {
     if (resubmissionRequired) {
       return <AlertTriangle className="h-4 w-4 text-red-600" />;
@@ -222,7 +255,7 @@ export default function ViewClubPage() {
 
   const getStatusColor = (
     isRegistered: boolean,
-    resubmissionRequired: boolean
+    resubmissionRequired: boolean,
   ) => {
     if (resubmissionRequired) {
       return "text-red-600";
@@ -232,7 +265,7 @@ export default function ViewClubPage() {
 
   const getStatusTitle = (
     isRegistered: boolean,
-    resubmissionRequired: boolean
+    resubmissionRequired: boolean,
   ) => {
     if (resubmissionRequired) {
       return "Resubmission Required";
@@ -242,7 +275,7 @@ export default function ViewClubPage() {
 
   const getStatusDescription = (
     isRegistered: boolean,
-    resubmissionRequired: boolean
+    resubmissionRequired: boolean,
   ) => {
     if (resubmissionRequired) {
       return "Your registration requires a resubmission. This may be due to reasons such as your membership expiring, the club starting a new season, or invalid information in your previous submission. Please resubmit your registration form.";
@@ -374,6 +407,51 @@ export default function ViewClubPage() {
                             <span>{data.support_email}</span>
                           </div>
                         </div>
+                        {(otherData?.club_url ||
+                          otherData?.facebook ||
+                          otherData?.instagram ||
+                          otherData?.twitter) && (
+                          <section>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                              {otherData?.club_url && (
+                                <SocialLink
+                                  icon={<Globe />}
+                                  label="Website"
+                                  onClick={() =>
+                                    window.open(otherData.club_url, "_blank")
+                                  }
+                                />
+                              )}
+                              {otherData?.facebook && (
+                                <SocialLink
+                                  icon={<FaFacebook />}
+                                  label="Facebook"
+                                  onClick={() =>
+                                    window.open(otherData.facebook, "_blank")
+                                  }
+                                />
+                              )}
+                              {data?.instagram && (
+                                <SocialLink
+                                  icon={<FaInstagram />}
+                                  label="Instagram"
+                                  onClick={() =>
+                                    window.open(otherData.instagram, "_blank")
+                                  }
+                                />
+                              )}
+                              {otherData?.twitter && (
+                                <SocialLink
+                                  icon={<FaTwitter />}
+                                  label="Twitter"
+                                  onClick={() =>
+                                    window.open(otherData.twitter, "_blank")
+                                  }
+                                />
+                              )}
+                            </div>
+                          </section>
+                        )}
                       </div>
 
                       <div className="flex flex-col gap-4 min-w-fit">
@@ -394,7 +472,7 @@ export default function ViewClubPage() {
                                     "text-sm",
                                     data.registered
                                       ? "bg-green-100 text-green-800 border-green-200"
-                                      : "bg-orange-100 text-orange-800 border-orange-200"
+                                      : "bg-orange-100 text-orange-800 border-orange-200",
                                   )}
                                 >
                                   {data.registered
@@ -411,7 +489,7 @@ export default function ViewClubPage() {
                                     Outstanding:{" "}
                                     {formatAmount(
                                       bankDetails.outstanding_amount,
-                                      data.currency
+                                      data.currency,
                                     )}
                                   </p>
                                   <Button
@@ -471,24 +549,24 @@ export default function ViewClubPage() {
                       <div className="flex items-center gap-2 mb-0">
                         {getStatusIcon(
                           data.registered,
-                          data.resubmission_required
+                          data.resubmission_required,
                         )}
                         <h3
                           className={`text-sm font-semibold ${getStatusColor(
                             data.registered,
-                            data.resubmission_required
+                            data.resubmission_required,
                           )}`}
                         >
                           {getStatusTitle(
                             data.registered,
-                            data.resubmission_required
+                            data.resubmission_required,
                           )}
                         </h3>
                       </div>
                       <p className="text-xs text-muted-foreground leading-relaxed">
                         {getStatusDescription(
                           data.registered,
-                          data.resubmission_required
+                          data.resubmission_required,
                         )}
                       </p>
                     </CardHeader>
@@ -513,7 +591,7 @@ export default function ViewClubPage() {
                     "bg-background/50 backdrop-blur-sm border border-primary/20 shadow-lg",
                     isMobile
                       ? "flex flex-col h-auto w-full gap-1 p-1"
-                      : "justify-start h-12"
+                      : "justify-start h-12",
                   )}
                 >
                   <TabsTrigger
@@ -521,7 +599,7 @@ export default function ViewClubPage() {
                       "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium",
                       isMobile
                         ? "w-full justify-center text-sm h-10"
-                        : "w-[200px] h-10"
+                        : "w-[200px] h-10",
                     )}
                     value="home"
                   >
@@ -535,7 +613,7 @@ export default function ViewClubPage() {
                         "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium",
                         isMobile
                           ? "w-full justify-center text-sm h-10"
-                          : "w-[200px] h-10"
+                          : "w-[200px] h-10",
                       )}
                       value="bank"
                     >
@@ -550,7 +628,7 @@ export default function ViewClubPage() {
                         "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium",
                         isMobile
                           ? "w-full justify-center text-sm h-10"
-                          : "w-[200px] h-10"
+                          : "w-[200px] h-10",
                       )}
                       value="member-registration"
                     >
@@ -566,8 +644,8 @@ export default function ViewClubPage() {
                       data.resubmission_required
                         ? "Resubmission required"
                         : data.registered
-                        ? "Registered"
-                        : "Pending"
+                          ? "Registered"
+                          : "Pending"
                     }
                     clubName={data.club_name}
                     currency={data.currency}
@@ -575,122 +653,92 @@ export default function ViewClubPage() {
                   />
                 </TabsContent>
 
+                {/* HOME TAB SECTION */}
                 <TabsContent value="home" className="mt-6">
-                  <div className="space-y-6">
-                    {data?.club_url ? (
-                      <Card className="border-primary/20 shadow-lg overflow-hidden">
-                        <div className="relative group w-full overflow-hidden">
-                          <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-4 border-b border-primary/20">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <Globe className="w-5 h-5 text-primary" />
-                                <div>
-                                  <h3 className="font-semibold text-foreground">
-                                    Club Website
-                                  </h3>
-                                  <p className="text-sm text-muted-foreground">
-                                    Interactive club content
-                                  </p>
-                                </div>
-                              </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  window.open(data.club_url!, "_blank")
-                                }
-                                className="bg-background/50 backdrop-blur-sm border-primary/20 hover:bg-primary/5"
-                              >
-                                <ExternalLink className="h-4 w-4 mr-2" />
-                                Open Full Site
-                              </Button>
-                            </div>
-                          </div>
-                          <div
-                            className="relative w-full bg-background"
-                            style={{ height: "70vh" }}
-                          >
-                            {iframeLoading && (
-                              <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-50">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                              </div>
-                            )}
-                            <iframe
-                              src={data.club_url}
-                              title="Club Website"
-                              className="w-full border-0 bg-background"
-                              style={{ height: "100%" }}
-                              onLoad={() => setIframeLoading(false)}
-                            />
-                          </div>
-                        </div>
-                      </Card>
-                    ) : (
-                      <div className="grid gap-6 md:grid-cols-2">
-                        {/* Welcome Card */}
-                        {/* <Card className="border-primary/20 shadow-lg">
-                          <CardHeader className="pb-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                                <Sparkles className="w-6 h-6 text-primary" />
-                              </div>
-                              <div>
-                                <CardTitle className="text-xl">
-                                  Welcome to {data.club_name}
-                                </CardTitle>
-                                <CardDescription className="text-base">
-                                  {data?.description ??
-                                    "Discover what this amazing club has to offer."}
-                                </CardDescription>
-                              </div>
-                            </div>
-                          </CardHeader>
-                        </Card> */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* GALLERY */}
+                    {otherData?.gallery?.length > 0 && (
+                      <section className="sm:col-span-2">
+                        <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                          Gallery
+                        </h3>
 
-                        {/* Contact Information Card */}
-                        <Card className="border-primary/20 shadow-lg">
-                          <CardHeader className="pb-4">
-                            <CardTitle className="flex items-center gap-2 text-lg">
-                              <Mail className="w-5 h-5 text-primary" />
-                              Contact Information
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                              <Mail className="h-5 w-5 text-primary" />
-                              <div>
-                                <p className="text-sm text-muted-foreground">
-                                  Support Email
-                                </p>
-                                <p className="font-medium">
-                                  {data.support_email}
-                                </p>
-                              </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                          {otherData.gallery.map((img: string, idx: number) => (
+                            <div
+                              key={idx}
+                              className="relative aspect-square overflow-hidden rounded-xl bg-muted group"
+                            >
+                              <img
+                                src={img}
+                                alt={`Gallery image ${idx + 1}`}
+                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                              />
                             </div>
-                            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                              <MapPin className="h-5 w-5 text-primary" />
-                              <div>
-                                <p className="text-sm text-muted-foreground">
-                                  Location
-                                </p>
-                                <p className="font-medium">{countryName}</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                              <Calendar className="h-5 w-5 text-primary" />
-                              <div>
-                                <p className="text-sm text-muted-foreground">
-                                  Established
-                                </p>
-                                <p className="font-medium">
-                                  {epochToJoinedString(data.joined)}
-                                </p>
-                              </div>
-                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    )}
+
+                    <div className="space-y-6">
+                      {/* OPENING TIMES */}
+                      {otherData?.opening_times && (
+                        <section>
+                          <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                            Opening Times
+                          </h3>
+
+                          <Card className="rounded-2xl">
+                            <CardContent className="divide-y p-0">
+                              {Object.entries(otherData.opening_times).map(
+                                ([day, times]: [string, any]) => (
+                                  <div
+                                    key={day}
+                                    className="flex items-center justify-between px-5 py-3 text-sm"
+                                  >
+                                    <span className="capitalize font-medium">
+                                      {day}
+                                    </span>
+                                    <span className="text-muted-foreground">
+                                      {times.open} – {times.close}
+                                    </span>
+                                  </div>
+                                ),
+                              )}
+                            </CardContent>
+                          </Card>
+                        </section>
+                      )}
+
+                      {/* CONTACT INFO */}
+                      <section>
+                        <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                          Club Information
+                        </h3>
+
+                        <Card className="rounded-2xl">
+                          <CardContent className="space-y-5 p-5">
+                            <InfoRow
+                              icon={<Mail />}
+                              label="Support Email"
+                              value={data.support_email}
+                            />
+
+                            <InfoRow
+                              icon={<MapPin />}
+                              label="Location"
+                              value={countryName}
+                            />
+
+                            <InfoRow
+                              icon={<Calendar />}
+                              label="Established"
+                              value={epochToJoinedString(data.joined)}
+                            />
                           </CardContent>
                         </Card>
-                      </div>
-                    )}
+                      </section>
+                    </div>
                   </div>
                 </TabsContent>
 
@@ -710,7 +758,7 @@ export default function ViewClubPage() {
                               <CardDescription className="text-lg">
                                 {formatAmount(
                                   bankDetails?.outstanding_amount,
-                                  data.currency
+                                  data.currency,
                                 )}
                               </CardDescription>
                             </div>
@@ -874,7 +922,7 @@ export default function ViewClubPage() {
                                                 <span className="font-mono text-sm bg-muted/50 px-2 py-1 rounded">
                                                   {tx.transaction_id.slice(
                                                     0,
-                                                    8
+                                                    8,
                                                   )}
                                                   ...
                                                 </span>
@@ -887,7 +935,7 @@ export default function ViewClubPage() {
                                                 onClick={(e) => {
                                                   e.stopPropagation();
                                                   navigator.clipboard.writeText(
-                                                    tx.transaction_id
+                                                    tx.transaction_id,
                                                   );
                                                 }}
                                                 title="Copy full Transaction ID"
@@ -933,11 +981,11 @@ export default function ViewClubPage() {
                                                 tx.status === "PENDING"
                                                   ? "bg-blue-100 text-blue-800 border-blue-200"
                                                   : tx.status ===
-                                                    "PARTIALLY PAID"
-                                                  ? "bg-orange-100 text-orange-800 border-orange-200"
-                                                  : tx.status === "CANCELLED"
-                                                  ? "bg-red-100 text-red-800 border-red-200"
-                                                  : "bg-green-100 text-green-800 border-green-200"
+                                                      "PARTIALLY PAID"
+                                                    ? "bg-orange-100 text-orange-800 border-orange-200"
+                                                    : tx.status === "CANCELLED"
+                                                      ? "bg-red-100 text-red-800 border-red-200"
+                                                      : "bg-green-100 text-green-800 border-green-200",
                                               )}
                                             >
                                               {tx.status}
@@ -977,17 +1025,17 @@ export default function ViewClubPage() {
                                                       tx.lifecycle as Record<
                                                         string,
                                                         TransactionEntry
-                                                      >
+                                                      >,
                                                     )
                                                       // Sort by timestamp descending (latest first)
                                                       .sort(
                                                         ([a], [b]) =>
-                                                          Number(b) - Number(a)
+                                                          Number(b) - Number(a),
                                                       )
                                                       .map(
                                                         ([timestamp, entry]: [
                                                           string,
-                                                          TransactionEntry
+                                                          TransactionEntry,
                                                         ]) => (
                                                           <TableRow
                                                             key={timestamp}
@@ -995,8 +1043,8 @@ export default function ViewClubPage() {
                                                             <TableCell className="text-center">
                                                               {new Date(
                                                                 Number(
-                                                                  timestamp
-                                                                )
+                                                                  timestamp,
+                                                                ),
                                                               ).toLocaleString(
                                                                 "en-GB",
                                                                 {
@@ -1008,7 +1056,7 @@ export default function ViewClubPage() {
                                                                   minute:
                                                                     "2-digit",
                                                                   hour12: true,
-                                                                }
+                                                                },
                                                               )}
                                                             </TableCell>
                                                             <TableCell className="text-center">
@@ -1025,28 +1073,31 @@ export default function ViewClubPage() {
                                                                 "SUBMISSION"
                                                                   ? "text-black-700"
                                                                   : entry.type ===
-                                                                    "CANCELLATION"
-                                                                  ? "text-red-700"
-                                                                  : "text-green-700"
+                                                                      "CANCELLATION"
+                                                                    ? "text-red-700"
+                                                                    : "text-green-700"
                                                               }`}
                                                             >
                                                               {entry.type ===
                                                               "SUBMISSION"
                                                                 ? ""
-                                                                : entry.type === "CANCELLATION"
-                                                                ? "N/A"
-                                                                : "+"}
-                                                              {entry.type !== "CANCELLATION" && formatAmount(
-                                                                entry.amount,
-                                                                data.currency
-                                                              )}
+                                                                : entry.type ===
+                                                                    "CANCELLATION"
+                                                                  ? "N/A"
+                                                                  : "+"}
+                                                              {entry.type !==
+                                                                "CANCELLATION" &&
+                                                                formatAmount(
+                                                                  entry.amount,
+                                                                  data.currency,
+                                                                )}
                                                             </TableCell>
                                                             <TableCell className="text-center">
                                                               {entry.payment_type ??
                                                                 "N/A"}
                                                             </TableCell>
                                                           </TableRow>
-                                                        )
+                                                        ),
                                                       )}
                                                   </TableBody>
                                                 </Table>
@@ -1055,7 +1106,7 @@ export default function ViewClubPage() {
                                           </TableRow>
                                         )}
                                       </React.Fragment>
-                                    )
+                                    ),
                                   )}
                                 </TableBody>
                               </Table>
@@ -1084,7 +1135,7 @@ export default function ViewClubPage() {
                 <span className="font-semibold text-foreground">
                   {formatAmount(
                     bankDetails?.outstanding_amount,
-                    data?.currency
+                    data?.currency,
                   )}
                 </span>
               </DialogDescription>
@@ -1133,7 +1184,7 @@ export default function ViewClubPage() {
                     <TabsTrigger key={index} value={`custom-${index}`}>
                       {method.name}
                     </TabsTrigger>
-                  )
+                  ),
                 )}
             </TabsList>
             <TabsContent value="eft" className="pt-4 flex-1 overflow-y-auto">
@@ -1224,7 +1275,7 @@ export default function ViewClubPage() {
                               onClick={() =>
                                 copyToClipboard(
                                   bankDetails?.account_number || "",
-                                  "account"
+                                  "account",
                                 )
                               }
                               className="opacity-0 group-hover:opacity-100 transition-opacity"
@@ -1261,7 +1312,7 @@ export default function ViewClubPage() {
                               onClick={() =>
                                 copyToClipboard(
                                   bankDetails?.branch_code || "",
-                                  "branch"
+                                  "branch",
                                 )
                               }
                               className="opacity-0 group-hover:opacity-100 transition-opacity"
@@ -1298,7 +1349,7 @@ export default function ViewClubPage() {
                               onClick={() =>
                                 copyToClipboard(
                                   bankDetails?.account_type || "",
-                                  "type"
+                                  "type",
                                 )
                               }
                               className="opacity-0 group-hover:opacity-100 transition-opacity"
@@ -1355,7 +1406,7 @@ export default function ViewClubPage() {
                                 onClick={() =>
                                   copyToClipboard(
                                     bankDetails?.payment_reference || "",
-                                    "reference"
+                                    "reference",
                                   )
                                 }
                                 className="opacity-0 group-hover:opacity-100 transition-opacity"
