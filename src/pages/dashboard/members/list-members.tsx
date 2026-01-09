@@ -857,6 +857,7 @@ export default function ListMembersPage() {
                   availableFields={availableDynamicFilters}
                   activeFilterKeys={activeFilterKeys}
                   onFilterKeysChange={setActiveFilterKeys}
+                  description="Select which filters you want to display. After selecting, click the Run button below to apply these filters."
                 />
                 {selectedTab === "registered-members" && (
                   <AddColumnsDialog
@@ -865,6 +866,7 @@ export default function ListMembersPage() {
                     availableFields={availableDynamicFilters}
                     activeColumnKeys={activeColumnKeysRegistered}
                     onColumnKeysChange={setActiveColumnKeysRegistered}
+                    description="Select which columns you want to display. After selecting, click the Run button below to apply these columns."
                   />
                 )}
                 {selectedTab === "pending-members" && (
@@ -874,6 +876,7 @@ export default function ListMembersPage() {
                     availableFields={availableDynamicFilters}
                     activeColumnKeys={activeColumnKeysPending}
                     onColumnKeysChange={setActiveColumnKeysPending}
+                    description="Select which columns you want to display. After selecting, click the Run button below to apply these columns."
                   />
                 )}
                 {selectedTab === "previous-members" && (
@@ -883,6 +886,7 @@ export default function ListMembersPage() {
                     availableFields={availableDynamicFilters}
                     activeColumnKeys={activeColumnKeysPrevious}
                     onColumnKeysChange={setActiveColumnKeysPrevious}
+                    description="Select which columns you want to display. After selecting, click the Run button below to apply these columns."
                   />
                 )}
               </div>
@@ -935,6 +939,9 @@ export default function ListMembersPage() {
                     })}
                 </div>
               )}
+              <p className="text-sm text-gray-600 my-1">
+                Configure your filters and columns above, then click the <span className="font-semibold">Run</span> button to apply your selections and display the results.
+              </p>
               <button
                 onClick={async () => {
                   setPageToken(undefined);
@@ -951,7 +958,7 @@ export default function ListMembersPage() {
                   await refetchClubMembers();
                 }}
                 title="Run database query to refresh members data"
-                className="px-4 py-1 mt-4 bg-orange-400 hover:bg-orange-500 rounded-[20px] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2 w-fit"
+                className="px-4 py-1 w-[100px] bg-orange-400 hover:bg-orange-500 rounded-[20px] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center font-bold"
               >
                 Run
               </button>
