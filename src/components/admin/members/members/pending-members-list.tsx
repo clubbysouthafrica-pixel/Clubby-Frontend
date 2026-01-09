@@ -1,7 +1,6 @@
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import { useEffect, useMemo, useState } from "react";
 import { ChevronsUpDown, ChevronDown } from "lucide-react";
-import { pendingRegisteredMembers } from "@/helpers/admin/members/filter-members-list";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import {
@@ -56,6 +55,7 @@ interface ImageProps {
   listActionItems: { email: string; name: string }[];
   clubId: string;
   activeColumnKeys?: string[];
+  memberLimit: number;
   reset: () => void;
   handleFormattedInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   registerUser: (
@@ -83,11 +83,7 @@ export default function PendingMembersList({
   isPending,
   invalidRegistrationAmount,
   isError,
-  selectedTab,
   clubMembers,
-  memberNameFilter,
-  memberIdFilter,
-  dynamicFilters,
   allMembersSelected,
   listActionItems,
   clubId,
@@ -176,30 +172,16 @@ export default function PendingMembersList({
     });
   };
 
-  const filteredUnregisteredMembers = useMemo(() => {
-    return pendingRegisteredMembers(
-      selectedTab,
-      clubMembers,
-      memberNameFilter,
-      memberIdFilter,
-      dynamicFilters,
-      clubMembers?.filters,
-    );
-  }, [
-    selectedTab,
-    clubMembers,
-    memberNameFilter,
-    memberIdFilter,
-    dynamicFilters,
-  ]);
+  // Use raw clubMembers.unregistered - backend already handles pagination and member_name/member_id filtering
+  const baseUnregisteredMembers = clubMembers?.unregistered || [];
 
   const [submittedSortAsc, setSubmittedSortAsc] = useState<boolean | null>(
     null,
   );
 
   const sortedUnregisteredMembers = useMemo(() => {
-    if (submittedSortAsc === null) return filteredUnregisteredMembers;
-    const copy = [...filteredUnregisteredMembers];
+    if (submittedSortAsc === null) return baseUnregisteredMembers;
+    const copy = [...baseUnregisteredMembers];
     copy.sort((a: ClubMember, b: ClubMember) => {
       const at = a?.registration_submitted_on
         ? new Date(a.registration_submitted_on).getTime()
@@ -210,24 +192,42 @@ export default function PendingMembersList({
       return submittedSortAsc ? at - bt : bt - at;
     });
     return copy;
-  }, [filteredUnregisteredMembers, submittedSortAsc]);
+  }, [baseUnregisteredMembers, submittedSortAsc]);
 
   useEffect(() => {
-    setUnregisteredMembersLength(filteredUnregisteredMembers.length);
-  }, [filteredUnregisteredMembers, setUnregisteredMembersLength]);
+    setUnregisteredMembersLength(baseUnregisteredMembers.length);
+  }, [baseUnregisteredMembers, setUnregisteredMembersLength]);
+
+  useEffect(() => {
+    // Sync deregisterMembers with listActionItems
+    // This ensures the deregister button enabled state matches the checkbox state
+    const updatedDeregisterMembers = baseUnregisteredMembers
+      .filter((member: ClubMember) =>
+        listActionItems.some(
+          (item) =>
+            item.email === member.member_email &&
+            item.name === `${member.member_first_name} ${member.member_surname}`,
+        ),
+      )
+      .map((member: ClubMember) => ({
+        user_id: member.user_id,
+        name: `${member.member_first_name} ${member.member_surname}`,
+      }));
+    setDeregisterMembers(updatedDeregisterMembers);
+  }, [listActionItems, baseUnregisteredMembers]);
 
   return (
     <div className="flex flex-col gap-4">
       <div
         className={`rounded-lg border w-full overflow-hidden max-w-[79vw] ${
-          filteredUnregisteredMembers.length > 10
+          baseUnregisteredMembers.length > 10
             ? "max-h-[600px] flex flex-col"
             : ""
         }`}
       >
         <div
           className={`overflow-y-auto overflow-x-auto flex-1 ${
-            filteredUnregisteredMembers.length > 10 ? "" : ""
+            baseUnregisteredMembers.length > 10 ? "" : ""
           }`}
         >
           <DndContext
@@ -250,16 +250,7 @@ export default function PendingMembersList({
                         checked={allMembersSelected}
                         onCheckedChange={(checked: boolean) => {
                           if (checked) {
-                            setAllListActionItems(filteredUnregisteredMembers);
-                            setDeregisterMembers(
-                              filteredUnregisteredMembers.map(
-                                (m: ClubMember) => ({
-                                  user_id: m.user_id,
-                                  name: `${m.member_first_name} ${m.member_surname}`,
-                                }),
-                              ),
-                            );
-                            setAllMembersSelected(true);
+                            setAllListActionItems(sortedUnregisteredMembers);
                           } else {
                             setlistActionItems([]);
                             setDeregisterMembers([]);
@@ -345,7 +336,7 @@ export default function PendingMembersList({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUnregisteredMembers.length ? (
+                {baseUnregisteredMembers.length ? (
                   sortedUnregisteredMembers.map((member: ClubMember) => (
                     <TableRow
                       key={member.user_id}
@@ -390,7 +381,7 @@ export default function PendingMembersList({
                                 setlistActionItems(updatedList);
                                 if (
                                   updatedList.length ===
-                                  filteredUnregisteredMembers.length
+                                  baseUnregisteredMembers.length
                                 ) {
                                   setAllMembersSelected(true);
                                 }
