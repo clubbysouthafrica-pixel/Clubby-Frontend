@@ -57,7 +57,6 @@ export default function RegisteredMembersList({
   dereigsterMembers,
   clubId,
   currency,
-  memberLimit,
   setAllListActionItems,
   setSelectedMember,
   setlistActionItems,
