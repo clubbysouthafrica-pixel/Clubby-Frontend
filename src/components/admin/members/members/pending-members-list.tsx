@@ -172,7 +172,6 @@ export default function PendingMembersList({
     });
   };
 
-  // Use raw clubMembers.unregistered - backend already handles pagination and member_name/member_id filtering
   const baseUnregisteredMembers = clubMembers?.unregistered || [];
 
   const [submittedSortAsc, setSubmittedSortAsc] = useState<boolean | null>(

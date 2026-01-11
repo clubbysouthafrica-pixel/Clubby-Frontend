@@ -117,6 +117,8 @@ export default function ListMembersPage() {
   >([]);
   const [activeFilterKeys, setActiveFilterKeys] = useState<string[]>([]);
   const [showFilterSelector, setShowFilterSelector] = useState(false);
+  const [templateVariables, setTemplateVariables] = useState<any[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
 
   const [activeColumnKeysRegistered, setActiveColumnKeysRegistered] = useState<
     string[]
@@ -219,6 +221,8 @@ export default function ListMembersPage() {
           setDisplayedColumnKeysPrevious(appliedColumnKeysPrevious);
         }
         setAllFilters(clubMembers.filters || null);
+        setTemplateVariables(clubMembers.template_variables || []);
+        setPaymentMethods(clubMembers.payment_methods || []);
       }
       setFilterLoading(false);
     }
@@ -1135,6 +1139,8 @@ export default function ListMembersPage() {
                         unregistered: allUnregisteredMembers,
                         deregistered: allDeregisteredMembers,
                         filters: allFilters,
+                        template_variables: templateVariables,
+                        payment_methods: paymentMethods,
                       }}
                       listActionItems={listActionItems}
                       memberNameFilter={memberNameFilter}
