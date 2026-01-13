@@ -90,6 +90,14 @@ export function MemberRegistration({
   };
   const deregReason = getDeregReason(data);
 
+  // Filter pages to only show pages with at least one visible field
+  const visiblePages = data?.pages?.filter((page: any) =>
+    page.fields.some(
+      (field: any) =>
+        !(field.visible === false && !field.value)
+    )
+  ) || [];
+
   if (isLoading || !data) {
     return (
       <div className="flex justify-center items-center p-5 min-h-[400px]">
@@ -188,15 +196,15 @@ export function MemberRegistration({
         )}
         <CardContent className="py-2 px-4 flex-1 min-h-0 flex flex-col">
           <div
-            key={data.pages[currentPageIndex].page_index}
+            key={visiblePages[currentPageIndex].page_index}
             className="flex-1 min-h-0 flex flex-col"
           >
             <h3 className="text-base font-semibold text-center border-b pb-2">
-              {data.pages[currentPageIndex].page_header}
+              {visiblePages[currentPageIndex].page_header}
             </h3>
 
             <div className="flex-none space-y-6 px-2 py-2">
-              {data.pages[currentPageIndex].fields.map(
+              {visiblePages[currentPageIndex].fields.map(
                 (field: {
                   type: string;
                   label: string;
@@ -715,7 +723,7 @@ export function MemberRegistration({
               )}
             </div>
 
-            {data.pages.length > 1 && (
+            {visiblePages.length > 1 && (
               <div className="flex justify-between items-center pt-3 border-t">
                 {currentPageIndex > 0 ? (
                   <Button
@@ -740,10 +748,10 @@ export function MemberRegistration({
                 )}
 
                 <div className="text-xs text-muted-foreground">
-                  Page {currentPageIndex + 1} of {data.pages.length}
+                  Page {currentPageIndex + 1} of {visiblePages.length}
                 </div>
 
-                {currentPageIndex < data.pages.length - 1 ? (
+                {currentPageIndex < visiblePages.length - 1 ? (
                   <Button
                     type="button"
                     size="sm"
