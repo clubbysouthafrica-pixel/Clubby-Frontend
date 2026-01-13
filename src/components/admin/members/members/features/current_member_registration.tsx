@@ -112,8 +112,6 @@ export function CurrentMemberRegistration({
     currency
   );
 
-  console.log("Registration Data:", data);
-
   const updateNotesMutation = useMutation({
     mutationFn: (
       notes: Array<{ id: string; title: string; content: string; visibleToMember: boolean }>
@@ -522,7 +520,6 @@ export function CurrentMemberRegistration({
                   discount?: number;
                   visible?: boolean;
                 }) => {
-                  console.log(field)
                   // Hide fields that were removed from the form and have no value for this user
                   if (field.visible === false && !field.value) {
                     return null;
