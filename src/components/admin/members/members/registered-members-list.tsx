@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ClubMember } from "@/interfaces/club";
-import { filteredRegisteredMembers as frg } from "@/helpers/admin/members/filter-members-list";
+// Removed unused import - using raw clubMembers data instead
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,15 +29,12 @@ interface ImageProps {
   sortableId: any;
   allMembersSelected: boolean;
   listActionItems: { email: string; name: string }[];
-  selectedTab: string;
   clubMembers: any;
-  memberNameFilter: string;
-  memberIdFilter: string;
-  dynamicFilters: Record<string, string>;
   activeColumnKeys?: string[];
   dereigsterMembers: { user_id: string; name: string }[];
   clubId: string;
   currency: string;
+  memberLimit: number;
   setAllListActionItems: (members: ClubMember[]) => void;
   setSelectedMember: React.Dispatch<React.SetStateAction<object>>;
   setlistActionItems: React.Dispatch<
@@ -55,11 +52,7 @@ export default function RegisteredMembersList({
   sortableId,
   allMembersSelected,
   listActionItems,
-  selectedTab,
   clubMembers,
-  memberNameFilter,
-  memberIdFilter,
-  dynamicFilters,
   activeColumnKeys = [],
   dereigsterMembers,
   clubId,
@@ -71,40 +64,33 @@ export default function RegisteredMembersList({
   setAllMembersSelected,
   setRegisteredMembersLength,
 }: ImageProps) {
-  const filteredRegisteredMembers = frg(
-    selectedTab,
-    clubMembers,
-    memberNameFilter,
-    memberIdFilter,
-    dynamicFilters,
-    clubMembers?.filters,
-  );
+
+  const baseRegisteredMembers = clubMembers?.registered || [];
   const [regSortAsc, setRegSortAsc] = useState<boolean | null>(null);
   const [isDeregisterDialogOpen, setIsDeregisterDialogOpen] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
-  // const [openRemoveDialog, setOpenRemoveDialog] = useState<boolean>(false);
-  // const [selectedMemberToRemove, setSelectedMemberToRemove] = useState<ClubMember | null>(null);
+
 
   const sortedRegisteredMembers = useMemo(() => {
-    if (regSortAsc === null) return filteredRegisteredMembers;
-    const copy = [...filteredRegisteredMembers];
+    if (regSortAsc === null) return baseRegisteredMembers;
+    const copy = [...baseRegisteredMembers];
     copy.sort((a: ClubMember, b: ClubMember) => {
       const at = a?.registered_on ? new Date(a.registered_on).getTime() : 0;
       const bt = b?.registered_on ? new Date(b.registered_on).getTime() : 0;
       return regSortAsc ? at - bt : bt - at;
     });
     return copy;
-  }, [filteredRegisteredMembers, regSortAsc]);
+  }, [baseRegisteredMembers, regSortAsc]);
 
   useEffect(() => {
-    setRegisteredMembersLength(filteredRegisteredMembers.length);
-  }, [filteredRegisteredMembers, setRegisteredMembersLength]);
+    setRegisteredMembersLength(baseRegisteredMembers.length);
+  }, [baseRegisteredMembers, setRegisteredMembersLength]);
 
   return (
     <>
       <div
         className={`w-full rounded-lg border overflow-x-auto max-w-[79vw] ${
-          filteredRegisteredMembers.length > 10
+          baseRegisteredMembers.length > 10
             ? "max-h-[600px] overflow-y-auto"
             : "overflow-y-hidden"
         }`}
@@ -129,16 +115,7 @@ export default function RegisteredMembersList({
                       checked={allMembersSelected}
                       onCheckedChange={(checked: boolean) => {
                         if (checked) {
-                          setAllListActionItems(filteredRegisteredMembers);
-                          setDeregisterMembers(
-                            filteredRegisteredMembers.map(
-                              (member: ClubMember) => ({
-                                user_id: member.user_id,
-                                name: `${member.member_first_name} ${member.member_surname}`,
-                              }),
-                            ),
-                          );
-                          setAllMembersSelected(true);
+                          setAllListActionItems(sortedRegisteredMembers);
                         } else {
                           setlistActionItems([]);
                           setDeregisterMembers([]);
@@ -255,7 +232,7 @@ export default function RegisteredMembersList({
                               setlistActionItems(updatedListActionItems);
                               if (
                                 updatedListActionItems.length ===
-                                filteredRegisteredMembers.length
+                                baseRegisteredMembers.length
                               ) {
                                 setAllMembersSelected(true);
                               }

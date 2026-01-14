@@ -1,4 +1,4 @@
-import { useContext, useMemo, useState } from "react";
+import { useContext, useState, useRef } from "react";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { useFetchClubTransactions } from "@/queries/admin/transactions";
 import {
@@ -19,22 +19,34 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import * as React from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 export default function FinancialTransactionsPage() {
   const { club, isLoading: clubLoading } = useContext(
     ClubContext
   ) as ClubContextType;
-  const { data: transactions, isLoading } = useFetchClubTransactions(
-    club?.club_account_id as string
-  );
-
+  
+  const [transactionLimit, setTransactionLimit] = useState(25);
+  const [pageToken, setPageToken] = useState<string | undefined>(undefined);
+  const [allTransactions, setAllTransactions] = useState<any[]>([]);
+  const isLoadingMoreRef = useRef(false);
+  
   const [memberIdSearch, setMemberIdSearch] = useState("");
   const [txIdSearch, setTxIdSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [transactionType, setTransactionType] = useState("all");
 
+  const [appliedFilters, setAppliedFilters] = useState<{ transaction_id?: string; member_id?: string; transaction_type?: string; status?: string }>({});
+
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+  
+  const { data: transactions, isLoading, refetch: refetchTransactions } = useFetchClubTransactions(
+    club?.club_account_id as string,
+    transactionLimit,
+    pageToken,
+    appliedFilters
+  );
 
   const toggleRow = (id: string) => {
     setExpandedRows((prev) => ({
@@ -43,23 +55,18 @@ export default function FinancialTransactionsPage() {
     }));
   };
 
-  const filteredTransactions = useMemo(() => {
-    if (!transactions?.transactions) return [];
-
-    return transactions.transactions.filter((txn: any) => {
-      const matchesName = txn.user_id
-        ?.toLowerCase()
-        .includes(memberIdSearch.toLowerCase());
-      const matchesTxId = txn.transaction_id
-        ?.toLowerCase()
-        .includes(txIdSearch.toLowerCase());
-      const matchesStatus =
-        statusFilter === "all" ? true : txn.status === statusFilter;
-      const matchesType =
-        transactionType === "all" ? true : txn.type === transactionType;
-      return matchesName && matchesStatus && matchesType && matchesTxId;
-    });
-  }, [transactions, memberIdSearch, statusFilter, transactionType, txIdSearch]);
+  React.useEffect(() => {
+    if (transactions?.transactions) {
+      if (isLoadingMoreRef.current) {
+        // Append new data when loading more
+        setAllTransactions((prev) => [...prev, ...transactions.transactions]);
+        isLoadingMoreRef.current = false;
+      } else {
+        // Replace all data when initial load or filter change
+        setAllTransactions(transactions.transactions);
+      }
+    }
+  }, [transactions]);
 
   if (clubLoading) {
     return (
@@ -80,53 +87,125 @@ export default function FinancialTransactionsPage() {
     <div className="p-5">
       <h1 className="text-base font-bold mb-4">Revenue Transactions</h1>
 
-      <div className="flex flex-wrap gap-4 mb-6">
-        <Input
-          className="w-[20%]"
-          placeholder="Search by Transaction ID"
-          value={txIdSearch}
-          onChange={(e) => setTxIdSearch(e.target.value)}
-        />
+      <Card className="p-4 mb-6">
+        <div className="flex flex-wrap gap-4">
+          <Input
+            className="w-[20%]"
+            placeholder="Search by Transaction ID"
+            value={txIdSearch}
+            onChange={(e) => setTxIdSearch(e.target.value)}
+          />
 
-        <Input
-          className="w-[20%]"
-          placeholder="Search by Member ID"
-          value={memberIdSearch}
-          onChange={(e) => setMemberIdSearch(e.target.value)}
-        />
+          <Input
+            className="w-[20%]"
+            placeholder="Search by Member ID"
+            value={memberIdSearch}
+            onChange={(e) => setMemberIdSearch(e.target.value)}
+          />
 
-        <Select onValueChange={setTransactionType} value={transactionType}>
-          <SelectTrigger className="flex items-center gap-2 w-[20%]">
-            <span className="text-muted-foreground whitespace-nowrap">
-              Tx. Type:
-            </span>
-            <SelectValue placeholder="All" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="REGISTRATION">Registration</SelectItem>
-          </SelectContent>
-        </Select>
+          <Select onValueChange={setTransactionType} value={transactionType}>
+            <SelectTrigger className="flex items-center gap-2 w-[20%]">
+              <span className="text-muted-foreground whitespace-nowrap">
+                Tx. Type:
+              </span>
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="REGISTRATION">Registration</SelectItem>
+            </SelectContent>
+          </Select>
 
-        <Select onValueChange={setStatusFilter} value={statusFilter}>
-          <SelectTrigger className="flex items-center gap-2 w-[20%]">
-            <span className="text-muted-foreground whitespace-nowrap">
-              Status:
-            </span>
-            <SelectValue placeholder="All" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="PENDING">Pending</SelectItem>
-            <SelectItem value="PARTIALLY PAID">Partially paid</SelectItem>
-            <SelectItem value="PAID">Paid</SelectItem>
-          </SelectContent>
-        </Select>
+          <Select onValueChange={setStatusFilter} value={statusFilter}>
+            <SelectTrigger className="flex items-center gap-2 w-[20%]">
+              <span className="text-muted-foreground whitespace-nowrap">
+                Status:
+              </span>
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="PARTIALLY_PAID">Partially paid</SelectItem>
+              <SelectItem value="PAID">Paid</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <p className="text-sm text-gray-600 my-1">
+          Configure your filters above, then click the <span className="font-semibold">Run</span> button to apply your selections and display the results.
+        </p>
+        <button
+          onClick={() => {
+            setAppliedFilters({
+              transaction_id: txIdSearch,
+              member_id: memberIdSearch,
+              transaction_type: transactionType,
+              status: statusFilter,
+            });
+            setPageToken(undefined);
+            setAllTransactions([]);
+          }}
+          title="Run database query to refresh transactions data"
+          className="px-4 py-1 w-[100px] bg-orange-400 hover:bg-orange-500 rounded-[20px] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center font-bold"
+        >
+          Run
+        </button>
+
+        <div className="flex items-center gap-3 pt-4 border-t">
+          <label className="text-sm font-medium">Results per page:</label>
+          <Select 
+            value={transactionLimit.toString()} 
+            onValueChange={(value) => {
+              setTransactionLimit(parseInt(value));
+              setPageToken(undefined);
+              setAllTransactions([]);
+            }}
+          >
+            <SelectTrigger className="w-[100px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="25">25</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </Card>
+
+      <div className="flex items-center gap-2 mb-4">
+        <h2 className="text-xl font-medium text-gray-700">
+          Showing <span className="font-bold">{allTransactions.length}</span> items
+        </h2>
       </div>
+
+      {transactions?.pageToken && transactions.pageToken !== "" && (
+        <div className="bg-orange-100 W-[100%] border border-orange-600 p-4 rounded-md flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-orange-600" />
+            <p className="text-black font-medium">More results available</p>
+          </div>
+          <button
+            onClick={() => {
+              isLoadingMoreRef.current = true;
+              setPageToken(transactions.pageToken);
+              setTimeout(() => refetchTransactions(), 0);
+            }}
+            disabled={isLoading}
+            className="px-4 py-2 bg-orange-100 hover:bg-orange-200 cursor-pointer rounded-[20px] border border-black text-black font-semibold rounded-md hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              "Load More"
+            )}
+          </button>
+        </div>
+      )}
 
       <div
         className={`overflow-hidden rounded-lg border ${
-          filteredTransactions.length > 10
+          allTransactions.length > 10
             ? "max-h-[600px] overflow-y-auto"
             : ""
         }`}
@@ -145,7 +224,7 @@ export default function FinancialTransactionsPage() {
           </TableHeader>
 
           <TableBody>
-            {filteredTransactions.map((tx: any) => (
+            {allTransactions.map((tx: any) => (
               <React.Fragment key={tx.transaction_id}>
                 <TableRow
                   className="cursor-pointer hover:bg-muted/50 transition"
@@ -233,7 +312,7 @@ export default function FinancialTransactionsPage() {
                     className={`text-center font-bold ${
                       tx.status === "PENDING"
                         ? "text-blue-700"
-                        : tx.status === "PARTIALLY PAID"
+                        : tx.status === "PARTIALLY_PAID"
                         ? "text-orange-700"
                         : tx.status === "CANCELLED"
                         ? "text-red-700"

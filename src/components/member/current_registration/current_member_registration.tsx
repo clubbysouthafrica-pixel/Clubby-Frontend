@@ -90,6 +90,14 @@ export function MemberRegistration({
   };
   const deregReason = getDeregReason(data);
 
+  // Filter pages to only show pages with at least one visible field
+  const visiblePages = data?.pages?.filter((page: any) =>
+    page.fields.some(
+      (field: any) =>
+        !(field.visible === false && !field.value)
+    )
+  ) || [];
+
   if (isLoading || !data) {
     return (
       <div className="flex justify-center items-center p-5 min-h-[400px]">
@@ -188,15 +196,15 @@ export function MemberRegistration({
         )}
         <CardContent className="py-2 px-4 flex-1 min-h-0 flex flex-col">
           <div
-            key={data.pages[currentPageIndex].page_index}
+            key={visiblePages[currentPageIndex].page_index}
             className="flex-1 min-h-0 flex flex-col"
           >
             <h3 className="text-base font-semibold text-center border-b pb-2">
-              {data.pages[currentPageIndex].page_header}
+              {visiblePages[currentPageIndex].page_header}
             </h3>
 
             <div className="flex-none space-y-6 px-2 py-2">
-              {data.pages[currentPageIndex].fields.map(
+              {visiblePages[currentPageIndex].fields.map(
                 (field: {
                   type: string;
                   label: string;
@@ -206,7 +214,13 @@ export function MemberRegistration({
                   quantity?: number;
                   discount?: number;
                   editable_by_member?: boolean;
+                  visible?: boolean;
                 }) => {
+                  // Hide fields that were removed from the form and have no value for this user
+                  if (field.visible === false && !field.value) {
+                    return null;
+                  }
+
                   if (field.type === "STANDARD_SIGNATURE") {
                     if (field.signature_type === "signature") {
                       return (
@@ -214,9 +228,16 @@ export function MemberRegistration({
                           key={field.label}
                           className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg"
                         >
-                          <Label className="text-xs font-semibold text-muted-foreground">
-                            {field.label}
-                          </Label>
+                          <div className="flex items-center gap-2">
+                            <Label className="text-xs font-semibold text-muted-foreground">
+                              {field.label}
+                            </Label>
+                            {field.visible === false && (
+                              <span className="text-[10px] px-1.5 py-0.5 bg-orange-100 text-orange-700 border border-orange-300 rounded">
+                                Removed from registration form
+                              </span>
+                            )}
+                          </div>
                           <img
                             src={field.value}
                             alt="User Signature"
@@ -230,9 +251,16 @@ export function MemberRegistration({
                           key={field.label}
                           className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg"
                         >
-                          <Label className="text-xs font-semibold text-muted-foreground">
-                            {field.label}
-                          </Label>
+                          <div className="flex items-center gap-2">
+                            <Label className="text-xs font-semibold text-muted-foreground">
+                              {field.label}
+                            </Label>
+                            {field.visible === false && (
+                              <span className="text-[10px] px-1.5 py-0.5 bg-orange-100 text-orange-700 border border-orange-300 rounded">
+                                Removed from registration form
+                              </span>
+                            )}
+                          </div>
                           <Label className="text-sm font-[cursive] border-b-2 border-gray-400 pb-1">
                             {field.value}
                           </Label>
@@ -516,10 +544,17 @@ export function MemberRegistration({
                         key={field.label}
                         className="flex items-center justify-between group"
                       >
-                        <div className="flex-1 flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg">
-                          <Label className="text-xs font-semibold text-muted-foreground">
-                            {field.label}
-                          </Label>
+                        <div className="flex-1 flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg relative">
+                          {field.visible === false && (
+                            <span className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 bg-orange-100 text-orange-700 border border-orange-300 rounded">
+                              Removed from registration form
+                            </span>
+                          )}
+                          <div className="flex items-center gap-2">
+                            <Label className="text-xs font-semibold text-muted-foreground">
+                              {field.label}
+                            </Label>
+                          </div>
                           {isEditing ? (
                             renderInput()
                           ) : (
@@ -560,7 +595,8 @@ export function MemberRegistration({
                         </div>
                         {membershipStatus !== "Resubmission required" &&
                           field.field_id &&
-                          (field.editable_by_member === true || metadata?.editable_by_member === true) && (
+                          (field.editable_by_member === true || metadata?.editable_by_member === true) &&
+                          field.visible !== false && (
                             <div className="flex gap-1 ml-2 opacity-30 group-hover:opacity-100 transition-opacity">
                               {isEditing ? (
                                 <>
@@ -620,10 +656,17 @@ export function MemberRegistration({
                         className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg border"
                       >
                         <div className="flex items-center justify-between">
-                          <Label className="text-xs font-semibold text-muted-foreground">
-                            {field.label}{" "}
-                            {field.quantity ? `(x${field.quantity})` : null}
-                          </Label>
+                          <div className="flex items-center gap-2">
+                            <Label className="text-xs font-semibold text-muted-foreground">
+                              {field.label}{" "}
+                              {field.quantity ? `(x${field.quantity})` : null}
+                            </Label>
+                            {field.visible === false && (
+                              <span className="text-[10px] px-1.5 py-0.5 bg-orange-100 text-orange-700 border border-orange-300 rounded">
+                                Removed from registration form
+                              </span>
+                            )}
+                          </div>
                           {field.discount && (
                             <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-1 rounded">
                               {field.discount}% off
@@ -660,9 +703,16 @@ export function MemberRegistration({
                         key={field.label}
                         className="flex flex-col gap-1.5 p-3 bg-gray-50 rounded-lg border border-dashed"
                       >
-                        <Label className="text-xs font-semibold text-muted-foreground">
-                          {field.label}
-                        </Label>
+                        <div className="flex items-center gap-2">
+                          <Label className="text-xs font-semibold text-muted-foreground">
+                            {field.label}
+                          </Label>
+                          {field.visible === false && (
+                            <span className="text-[10px] px-1.5 py-0.5 bg-orange-100 text-orange-700 border border-orange-300 rounded">
+                              Removed from registration form
+                            </span>
+                          )}
+                        </div>
                         <Label className="text-xs italic text-gray-500">
                           Not filled in by member.
                         </Label>
@@ -673,7 +723,7 @@ export function MemberRegistration({
               )}
             </div>
 
-            {data.pages.length > 1 && (
+            {visiblePages.length > 1 && (
               <div className="flex justify-between items-center pt-3 border-t">
                 {currentPageIndex > 0 ? (
                   <Button
@@ -698,10 +748,10 @@ export function MemberRegistration({
                 )}
 
                 <div className="text-xs text-muted-foreground">
-                  Page {currentPageIndex + 1} of {data.pages.length}
+                  Page {currentPageIndex + 1} of {visiblePages.length}
                 </div>
 
-                {currentPageIndex < data.pages.length - 1 ? (
+                {currentPageIndex < visiblePages.length - 1 ? (
                   <Button
                     type="button"
                     size="sm"
