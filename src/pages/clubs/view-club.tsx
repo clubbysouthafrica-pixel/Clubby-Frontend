@@ -112,33 +112,6 @@ type Transaction = {
   lifecycle: Record<string, TransactionEntry>;
 };
 
-const otherData = {
-  club_url: "https://www.exampleclub.com",
-  facebook: "https://facebook.com/exampleclub",
-  instagram: "https://instagram.com/exampleclub",
-  twitter: "https://twitter.com/exampleclub",
-
-  gallery: [
-    "https://images.unsplash.com/photo-1521412644187-c49fa049e84d",
-    "https://images.unsplash.com/photo-1517649763962-0c623066013b",
-    "https://images.unsplash.com/photo-1508609349937-5ec4ae374ebf",
-    "https://images.unsplash.com/photo-1517649763962-0c623066013b",
-  ],
-
-  opening_times: {
-    monday: { open: "06:00", close: "20:00" },
-    tuesday: { open: "06:00", close: "20:00" },
-    wednesday: { open: "06:00", close: "20:00" },
-    thursday: { open: "06:00", close: "20:00" },
-    friday: { open: "06:00", close: "18:00" },
-    saturday: { open: "07:00", close: "14:00" },
-    sunday: { open: "Closed", close: "" },
-  },
-
-  support_email: "support@exampleclub.com",
-  joined: 1580515200, // Feb 1, 2020 (epoch seconds)
-};
-
 export default function ViewClubPage() {
   const auth = useContext(AuthContext);
   const isLoggedIn = !!auth?.user;
@@ -407,27 +380,27 @@ export default function ViewClubPage() {
                             <span>{data.support_email}</span>
                           </div>
                         </div>
-                        {(otherData?.club_url ||
-                          otherData?.facebook ||
-                          otherData?.instagram ||
-                          otherData?.twitter) && (
+                        {(data?.club_url ||
+                          data?.facebook ||
+                          data?.instagram ||
+                          data?.twitter) && (
                           <section>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                              {otherData?.club_url && (
+                              {data?.club_url && (
                                 <SocialLink
                                   icon={<Globe />}
                                   label="Website"
                                   onClick={() =>
-                                    window.open(otherData.club_url, "_blank")
+                                    window.open(data.club_url, "_blank")
                                   }
                                 />
                               )}
-                              {otherData?.facebook && (
+                              {data?.facebook && (
                                 <SocialLink
                                   icon={<FaFacebook />}
                                   label="Facebook"
                                   onClick={() =>
-                                    window.open(otherData.facebook, "_blank")
+                                    window.open(data.facebook, "_blank")
                                   }
                                 />
                               )}
@@ -436,16 +409,16 @@ export default function ViewClubPage() {
                                   icon={<FaInstagram />}
                                   label="Instagram"
                                   onClick={() =>
-                                    window.open(otherData.instagram, "_blank")
+                                    window.open(data.instagram, "_blank")
                                   }
                                 />
                               )}
-                              {otherData?.twitter && (
+                              {data?.twitter && (
                                 <SocialLink
                                   icon={<FaTwitter />}
                                   label="Twitter"
                                   onClick={() =>
-                                    window.open(otherData.twitter, "_blank")
+                                    window.open(data.twitter, "_blank")
                                   }
                                 />
                               )}
@@ -657,14 +630,14 @@ export default function ViewClubPage() {
                 <TabsContent value="home" className="mt-6">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {/* GALLERY */}
-                    {otherData?.gallery?.length > 0 && (
+                    {data?.gallery?.length > 0 && (
                       <section className="sm:col-span-2">
                         <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                           Gallery
                         </h3>
 
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                          {otherData.gallery.map((img: string, idx: number) => (
+                          {data.gallery.map((img: string, idx: number) => (
                             <div
                               key={idx}
                               className="relative aspect-square overflow-hidden rounded-xl bg-muted group"
@@ -682,7 +655,7 @@ export default function ViewClubPage() {
 
                     <div className="space-y-6">
                       {/* OPENING TIMES */}
-                      {otherData?.opening_times && (
+                      {data?.opening_times && (
                         <section>
                           <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                             Opening Times
@@ -690,7 +663,7 @@ export default function ViewClubPage() {
 
                           <Card className="rounded-2xl">
                             <CardContent className="divide-y p-0">
-                              {Object.entries(otherData.opening_times).map(
+                              {Object.entries(data.opening_times).map(
                                 ([day, times]: [string, any]) => (
                                   <div
                                     key={day}
