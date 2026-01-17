@@ -14,7 +14,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { User, Mail, Phone, MapPin, Calendar } from "lucide-react";
+import { User, Mail, Phone, MapPin, Calendar, Copy } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { CurrentMemberRegistration } from "./current_member_registration"
 import { useFetchMemberUser } from "@/queries/admin/member_user";
@@ -77,8 +77,14 @@ export default function SelectedMember({
                     </TabsList>
 
                     {selectedTab === "user-information" && (
-                        <DialogDescription className="mt-2 mb-2">
+                        <DialogDescription className="my-2">
                             This section contains information on the Clubby user.
+                        </DialogDescription>
+                    )}
+
+                    {selectedTab === "member-registration" && (
+                        <DialogDescription className="mt-2 mb-2">
+                            This section contains information on the member registration.
                         </DialogDescription>
                     )}
 
@@ -88,16 +94,34 @@ export default function SelectedMember({
                                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                             </div>
                         }
-                        {selectedTab === "user-information" && !isLoading && memberUser &&
-                            <Card className="border shadow-sm pt-0 flex-1 min-h-0 flex flex-col">
-                                <CardHeader className="border-b bg-muted/30">
-                                    <CardTitle className="text-l text-center pt-5">
-                                        User Information
-                                    </CardTitle>
-                                    <CardDescription className="text-center">
-                                        Personal details and contact information
-                                    </CardDescription>
-                                </CardHeader>
+                        {selectedTab === "user-information" && (
+                            <div className="flex flex-col gap-0 flex-1 min-h-0">
+                                {/* Member ID Section - Always visible */}
+                                <div className="flex items-center gap-2 text-sm bg-transparent p-1">
+                                    <span className="text-muted-foreground text-xs">Member ID:</span>
+                                    <strong className="text-xs font-mono">{selectedMember.user_id || "Not provided"}</strong>
+                                    <button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(selectedMember.user_id || "");
+                                        }}
+                                        className="p-1 hover:bg-muted rounded transition-colors"
+                                        title="Copy Member ID"
+                                    >
+                                        <Copy className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-pointer" />
+                                    </button>
+                                </div>
+
+                                {/* User Information Section - Shows when loaded */}
+                                {!isLoading && memberUser && (
+                                    <Card className="border shadow-sm pt-0 flex-1 min-h-0 flex flex-col">
+                                        <CardHeader className="border-b bg-muted/30">
+                                            <CardTitle className="text-l text-center pt-5">
+                                                User Information
+                                            </CardTitle>
+                                            <CardDescription className="text-center">
+                                                Personal details and contact information
+                                            </CardDescription>
+                                        </CardHeader>
                                 <CardContent className="p-4 flex-1 min-h-0 overflow-y-auto">
                                     <div className="px-2">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -191,8 +215,10 @@ export default function SelectedMember({
                                         </div>
                                     </div>
                                 </CardContent>
-                            </Card>
-                        }
+                                    </Card>
+                                )}
+                            </div>
+                        )}
                         {selectedTab === "member-registration" &&
                             <CurrentMemberRegistration clubName={clubName} userId={selectedMember.user_id} clubAccountId={clubAccountId} currency={currency} />
                         }
