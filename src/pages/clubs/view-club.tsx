@@ -935,6 +935,8 @@ export default function ViewClubPage() {
                                                   : tx.status ===
                                                     "PARTIALLY PAID"
                                                   ? "bg-orange-100 text-orange-800 border-orange-200"
+                                                  : tx.status === "REFUND"
+                                                  ? "bg-red-100 text-red-800 border-red-200"
                                                   : tx.status === "CANCELLED"
                                                   ? "bg-red-100 text-red-800 border-red-200"
                                                   : "bg-green-100 text-green-800 border-green-200"
