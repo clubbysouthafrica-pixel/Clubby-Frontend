@@ -103,6 +103,7 @@ type Transaction = {
   type: string;
   outstanding_amount: number;
   status: string;
+  amount: number;
   lifecycle: Record<string, TransactionEntry>;
 };
 
@@ -834,14 +835,17 @@ export default function ViewClubPage() {
                               <Table className="border-0">
                                 <TableHeader className="bg-gradient-to-r from-muted/50 to-muted/30 sticky top-0 z-10">
                                   <TableRow className="border-primary/10 hover:bg-transparent">
-                                    <TableHead className="text-center w-1/4 font-semibold">
+                                    <TableHead className="text-center w-1/5 font-semibold">
                                       Transaction ID
                                     </TableHead>
-                                    <TableHead className="text-center w-1/4 font-semibold">
+                                    <TableHead className="text-center w-1/5 font-semibold">
                                       Type
                                     </TableHead>
-                                    <TableHead className="text-center w-1/4 font-semibold">
+                                    <TableHead className="text-center w-1/5 font-semibold">
                                       Status
+                                    </TableHead>
+                                    <TableHead className="text-center w-1/5 font-semibold">
+                                      Amount
                                     </TableHead>
                                   </TableRow>
                                 </TableHeader>
@@ -850,7 +854,7 @@ export default function ViewClubPage() {
                                   {transactions.transactions.length === 0 && (
                                     <TableRow>
                                       <TableCell
-                                        colSpan={4}
+                                        colSpan={5}
                                         className="text-center py-8 text-muted-foreground"
                                       >
                                         No transactions yet.
@@ -867,7 +871,7 @@ export default function ViewClubPage() {
                                             toggleRow(tx.transaction_id)
                                           }
                                         >
-                                          <TableCell className="text-center w-1/4 py-4">
+                                          <TableCell className="text-center w-1/5 py-4">
                                             <div className="inline-flex items-center gap-3 justify-center">
                                               <div className="flex items-center gap-2">
                                                 <div className="w-2 h-2 rounded-full bg-primary/50" />
@@ -918,7 +922,7 @@ export default function ViewClubPage() {
                                               </svg>
                                             </div>
                                           </TableCell>
-                                          <TableCell className="text-center py-4">
+                                          <TableCell className="text-center w-1/5 py-4">
                                             <Badge
                                               variant="outline"
                                               className="font-medium"
@@ -926,7 +930,7 @@ export default function ViewClubPage() {
                                               {tx.type}
                                             </Badge>
                                           </TableCell>
-                                          <TableCell className="text-center py-4">
+                                          <TableCell className="text-center w-1/5 py-4">
                                             <Badge
                                               className={cn(
                                                 "font-medium",
@@ -944,6 +948,9 @@ export default function ViewClubPage() {
                                             >
                                               {tx.status}
                                             </Badge>
+                                          </TableCell>
+                                          <TableCell className="text-center w-1/5 py-4 font-semibold">
+                                            {formatAmount(tx.amount, data.currency)}
                                           </TableCell>
                                         </TableRow>
 
