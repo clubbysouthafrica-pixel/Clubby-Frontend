@@ -1160,31 +1160,22 @@ export default function ViewClubPage() {
                   </div>
                 </div>
 
-                <div className="mt-6 p-4 bg-amber-50 rounded-lg border-2 border-amber-200">
-                  <div className="flex gap-3">
-                    <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                    <div className="space-y-3">
-                      <h4 className="font-semibold text-amber-900">
-                        Registration Status Notice
-                      </h4>
-                      <div className="space-y-2 text-sm text-amber-800">
-                        <p>
-                          Your registration will remain <strong>Pending</strong> until the club administrator confirms receipt of your payment.
-                        </p>
-                        {data.support_email && (
-                          <p>
-                            If you don't receive confirmation within a reasonable timeframe, please contact the club at:{" "}
-                            <a
-                              href={`mailto:${data.support_email}`}
-                              className="font-semibold text-amber-900 hover:text-amber-700 underline"
-                            >
-                              {data.support_email}
-                            </a>
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                <div className="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                  <p className="text-sm text-amber-900">
+                    <strong className="text-amber-700">Registration Status:</strong>{" "}
+                    Your registration will remain <strong>Pending</strong> until the club administrator confirms receipt of your payment.
+                    {data.support_email && (
+                      <>
+                        {" "}If you don't receive confirmation within a reasonable timeframe, please contact the club at:{" "}
+                        <a
+                          href={`mailto:${data.support_email}`}
+                          className="font-semibold text-amber-700 hover:text-amber-800 underline"
+                        >
+                          {data.support_email}
+                        </a>
+                      </>
+                    )}
+                  </p>
                 </div>
 
                 {bankDetailsLoading && (
