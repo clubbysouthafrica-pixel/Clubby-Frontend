@@ -746,7 +746,6 @@ export default function FinancialTransactionsPage() {
                     transaction_id: selectedRefundTransaction.transaction_id
                   });
                   toast.success(response.data?.message || "Refund confirmed successfully");
-                  // Update the transaction locally to mark refund as complete
                   setAllTransactions((prev) =>
                     prev.map((tx) =>
                       tx.transaction_id === selectedRefundTransaction.transaction_id
