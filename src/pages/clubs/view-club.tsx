@@ -1137,45 +1137,20 @@ export default function ViewClubPage() {
                 )}
             </TabsList>
             <TabsContent value="eft" className="pt-4 flex-1 overflow-y-auto">
-              <div className="space-y-6 pr-4">
-                <div className="text-center space-y-3">
-                  <div className="flex items-center justify-center gap-2">
-                    <Building2 className="w-6 h-6 text-primary" />
-                    <h3 className="text-xl font-semibold">
+              <div className="space-y-3 sm:space-y-6 pr-2 sm:pr-4">
+                <div className="text-center space-y-2 sm:space-y-3">
+                  <div className="flex items-center justify-center gap-1 sm:gap-2">
+                    <Building2 className="w-4 h-4 sm:w-6 sm:h-6 text-primary" />
+                    <h3 className="text-sm sm:text-xl font-semibold">
                       Bank Transfer (EFT)
                     </h3>
                   </div>
                   <div className="flex flex-col items-center">
-                    <p className="text-muted-foreground leading-relaxed">
+                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                       Transfer funds directly to the club's bank account using
                       the details below.
                     </p>
-                    <div className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
-                      <p className="text-sm">
-                        <strong className="text-primary">Important:</strong>{" "}
-                        Always include your payment reference number to ensure
-                        proper allocation of your payment.
-                      </p>
-                    </div>
                   </div>
-                </div>
-
-                <div className="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
-                  <p className="text-sm text-amber-900">
-                    <strong className="text-amber-700">Registration Status:</strong>{" "}
-                    Your registration will remain <strong>Pending</strong> until the club administrator confirms receipt of your payment.
-                    {data.support_email && (
-                      <>
-                        {" "}If you don't receive confirmation within a reasonable timeframe, please contact the club at:{" "}
-                        <a
-                          href={`mailto:${data.support_email}`}
-                          className="font-semibold text-amber-700 hover:text-amber-800 underline"
-                        >
-                          {data.support_email}
-                        </a>
-                      </>
-                    )}
-                  </p>
                 </div>
 
                 {bankDetailsLoading && (
@@ -1186,7 +1161,7 @@ export default function ViewClubPage() {
 
                 {!bankDetailsLoading && (
                   <div className="flex justify-center">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl w-full">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-6 max-w-2xl w-full">
                       <Card className="group hover:shadow-md transition-shadow border-primary/10">
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between">
@@ -1391,6 +1366,42 @@ export default function ViewClubPage() {
                     </div>
                   </div>
                 )}
+
+                <div className="flex flex-col items-center space-y-2 sm:space-y-3">
+                  <div className="w-full sm:w-[80%] p-2 sm:p-3 bg-primary/5 rounded-lg border border-primary/20">
+                    <p className="text-xs sm:text-sm">
+                      <strong className="text-primary">Important:</strong>{" "}
+                      Always include your payment reference number to ensure
+                      proper allocation of your payment.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-center">
+                  <div className="w-full sm:w-[80%] p-2 sm:p-3 bg-amber-50 rounded-lg border border-amber-200">
+                    <p className="text-xs sm:text-sm text-amber-900">
+                      <strong className="text-amber-700">
+                        Registration Status:
+                      </strong>{" "}
+                      Your registration will remain <strong>Pending</strong>{" "}
+                      until the club administrator confirms receipt of your
+                      payment.
+                      {data.support_email && (
+                        <>
+                          {" "}
+                          If you don't receive confirmation within a
+                          reasonable timeframe, please contact the club at:{" "}
+                          <a
+                            href={`mailto:${data.support_email}`}
+                            className="font-semibold text-amber-700 hover:text-amber-800 underline"
+                          >
+                            {data.support_email}
+                          </a>
+                        </>
+                      )}
+                    </p>
+                  </div>
+                </div>
               </div>
             </TabsContent>
             {data?.payfast_enabled &&
