@@ -393,10 +393,10 @@ export default function FinancialTransactionsPage() {
                   </TableCell>
                   <TableCell className="text-center">{tx.type}</TableCell>
                   <TableCell className="text-center">
-                    {tx.amount ? formatAmount(tx.amount, club?.currency) : "N/A"}
+                    {tx.amount != null ? formatAmount(tx.amount, club?.currency) : "N/A"}
                   </TableCell>
                   <TableCell className="text-center">
-                    {tx.amount_paid ? formatAmount(tx.amount_paid, club?.currency) : "N/A"}
+                    {tx.amount_paid != null ? formatAmount(tx.amount_paid, club?.currency) : "N/A"}
                   </TableCell>
                   <TableCell
                     className={`text-center font-bold ${
