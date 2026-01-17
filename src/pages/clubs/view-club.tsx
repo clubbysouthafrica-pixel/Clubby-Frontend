@@ -1025,6 +1025,9 @@ export default function ViewClubPage() {
                                                                 "SUBMISSION"
                                                                   ? "text-black-700"
                                                                   : entry.type ===
+                                                                    "REFUND"
+                                                                  ? "text-red-700"
+                                                                  : entry.type ===
                                                                     "CANCELLATION"
                                                                   ? "text-red-700"
                                                                   : "text-green-700"
@@ -1033,11 +1036,13 @@ export default function ViewClubPage() {
                                                               {entry.type ===
                                                               "SUBMISSION"
                                                                 ? ""
+                                                                : entry.type === "REFUND"
+                                                                ? "-"
                                                                 : entry.type === "CANCELLATION"
                                                                 ? "N/A"
                                                                 : "+"}
                                                               {entry.type !== "CANCELLATION" && formatAmount(
-                                                                entry.amount,
+                                                                entry.type === "REFUND" ? Math.abs(entry.amount) : entry.amount,
                                                                 data.currency
                                                               )}
                                                             </TableCell>
