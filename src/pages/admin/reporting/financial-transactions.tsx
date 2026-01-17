@@ -18,9 +18,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import * as React from "react";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { api } from "@/services/admin/api";
+import { toast } from "sonner";
 
 export default function FinancialTransactionsPage() {
   const { club, isLoading: clubLoading } = useContext(
@@ -44,6 +55,13 @@ export default function FinancialTransactionsPage() {
   const [statusSortAsc, setStatusSortAsc] = useState<boolean | null>(null);
   const [amountSortAsc, setAmountSortAsc] = useState<boolean | null>(null);
   const [amountPaidSortAsc, setAmountPaidSortAsc] = useState<boolean | null>(null);
+  const [refundNameSortAsc, setRefundNameSortAsc] = useState<boolean | null>(null);
+  const [refundTypeSortAsc, setRefundTypeSortAsc] = useState<boolean | null>(null);
+  const [refundAmountSortAsc, setRefundAmountSortAsc] = useState<boolean | null>(null);
+  const [refundDateSortAsc, setRefundDateSortAsc] = useState<boolean | null>(null);
+  const [confirmRefundDialog, setConfirmRefundDialog] = useState<boolean>(false);
+  const [selectedRefundTransaction, setSelectedRefundTransaction] = useState<any>(null);
+  const [isConfirmingRefund, setIsConfirmingRefund] = useState<boolean>(false);
   
   const { data: transactions, isLoading, refetch: refetchTransactions } = useFetchClubTransactions(
     club?.club_account_id as string,
@@ -62,11 +80,9 @@ export default function FinancialTransactionsPage() {
   React.useEffect(() => {
     if (transactions?.transactions) {
       if (isLoadingMoreRef.current) {
-        // Append new data when loading more
         setAllTransactions((prev) => [...prev, ...transactions.transactions]);
         isLoadingMoreRef.current = false;
       } else {
-        // Replace all data when initial load or filter change
         setAllTransactions(transactions.transactions);
       }
     }
@@ -504,6 +520,264 @@ export default function FinancialTransactionsPage() {
           </TableBody>
         </Table>
       </div>
+
+      {allTransactions.some(tx => tx.refund_completed === false) && (
+        <div className="mt-8">
+          <div className="flex items-center gap-2 mb-4">
+            <h2 className="text-xl font-medium text-gray-700">
+              Showing <span className="font-bold">{allTransactions.filter(tx => tx.refund_completed === false).length}</span> unconfirmed refunds of <span className="font-bold">{allTransactions.length}</span> items
+            </h2>
+          </div>
+
+          <div
+            className={`overflow-hidden rounded-lg border ${
+              allTransactions.filter(tx => tx.refund_completed === false).length > 10
+                ? "max-h-[600px] overflow-y-auto"
+                : ""
+            }`}
+          >
+            <Table>
+              <TableHeader className="bg-muted sticky top-0 z-10">
+                <TableRow>
+                  <TableHead className="text-center flex-1">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 hover:underline w-full justify-center"
+                      onClick={() => {
+                        setRefundNameSortAsc((prev) => (prev === null ? true : !prev));
+                        setRefundTypeSortAsc(null);
+                        setRefundAmountSortAsc(null);
+                        setRefundDateSortAsc(null);
+                      }}
+                      title="Toggle sort by Member Name"
+                    >
+                      Member Name
+                      {refundNameSortAsc === null ? (
+                        <svg className="h-3 w-3 opacity-60" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M19 12l-7 7-7-7" /></svg>
+                      ) : (
+                        <span className="text-xs">{refundNameSortAsc ? "▲" : "▼"}</span>
+                      )}
+                    </button>
+                  </TableHead>
+                  <TableHead className="text-center flex-1">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 hover:underline w-full justify-center"
+                      onClick={() => {
+                        setRefundTypeSortAsc((prev) => (prev === null ? true : !prev));
+                        setRefundNameSortAsc(null);
+                        setRefundAmountSortAsc(null);
+                        setRefundDateSortAsc(null);
+                      }}
+                      title="Toggle sort by Type"
+                    >
+                      Type
+                      {refundTypeSortAsc === null ? (
+                        <svg className="h-3 w-3 opacity-60" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M19 12l-7 7-7-7" /></svg>
+                      ) : (
+                        <span className="text-xs">{refundTypeSortAsc ? "▲" : "▼"}</span>
+                      )}
+                    </button>
+                  </TableHead>
+                  <TableHead className="text-center flex-1">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 hover:underline w-full justify-center"
+                      onClick={() => {
+                        setRefundAmountSortAsc((prev) => (prev === null ? true : !prev));
+                        setRefundNameSortAsc(null);
+                        setRefundTypeSortAsc(null);
+                        setRefundDateSortAsc(null);
+                      }}
+                      title="Toggle sort by Refund Amount"
+                    >
+                      Refund Amount
+                      {refundAmountSortAsc === null ? (
+                        <svg className="h-3 w-3 opacity-60" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M19 12l-7 7-7-7" /></svg>
+                      ) : (
+                        <span className="text-xs">{refundAmountSortAsc ? "▲" : "▼"}</span>
+                      )}
+                    </button>
+                  </TableHead>
+                  <TableHead className="text-center flex-1">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 hover:underline w-full justify-center"
+                      onClick={() => {
+                        setRefundDateSortAsc((prev) => (prev === null ? true : !prev));
+                        setRefundNameSortAsc(null);
+                        setRefundTypeSortAsc(null);
+                        setRefundAmountSortAsc(null);
+                      }}
+                      title="Toggle sort by Refund Date"
+                    >
+                      Refund Date
+                      {refundDateSortAsc === null ? (
+                        <svg className="h-3 w-3 opacity-60" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M19 12l-7 7-7-7" /></svg>
+                      ) : (
+                        <span className="text-xs">{refundDateSortAsc ? "▲" : "▼"}</span>
+                      )}
+                    </button>
+                  </TableHead>
+                  <TableHead className="text-center flex-1">
+                    Action
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
+                {allTransactions
+                  .filter(tx => tx.refund_completed === false)
+                  .sort((a, b) => {
+                    if (refundNameSortAsc !== null) {
+                      const aName = a.name || "";
+                      const bName = b.name || "";
+                      return refundNameSortAsc ? aName.localeCompare(bName) : bName.localeCompare(aName);
+                    }
+                    if (refundTypeSortAsc !== null) {
+                      const aType = a.type || "";
+                      const bType = b.type || "";
+                      return refundTypeSortAsc ? aType.localeCompare(bType) : bType.localeCompare(aType);
+                    }
+                    if (refundAmountSortAsc !== null) {
+                      const aAmount = a.refund_amount ?? 0;
+                      const bAmount = b.refund_amount ?? 0;
+                      return refundAmountSortAsc ? aAmount - bAmount : bAmount - aAmount;
+                    }
+                    if (refundDateSortAsc !== null) {
+                      const aTimestamp = a.lifecycle && Object.entries(a.lifecycle)
+                        .filter(([, entry]: any) => entry.type?.toLowerCase().includes('refund'))
+                        .map(([timestamp]) => timestamp)
+                        .sort((x, y) => Number(y) - Number(x))[0] ? Number(Object.entries(a.lifecycle)
+                        .filter(([, entry]: any) => entry.type?.toLowerCase().includes('refund'))
+                        .map(([timestamp]) => timestamp)
+                        .sort((x, y) => Number(y) - Number(x))[0]) : 0;
+                      const bTimestamp = b.lifecycle && Object.entries(b.lifecycle)
+                        .filter(([, entry]: any) => entry.type?.toLowerCase().includes('refund'))
+                        .map(([timestamp]) => timestamp)
+                        .sort((x, y) => Number(y) - Number(x))[0] ? Number(Object.entries(b.lifecycle)
+                        .filter(([, entry]: any) => entry.type?.toLowerCase().includes('refund'))
+                        .map(([timestamp]) => timestamp)
+                        .sort((x, y) => Number(y) - Number(x))[0]) : 0;
+                      return refundDateSortAsc ? aTimestamp - bTimestamp : bTimestamp - aTimestamp;
+                    }
+                    return 0;
+                  })
+                  .map((tx: any) => (
+                    <TableRow
+                      key={tx.transaction_id}
+                      className="hover:bg-muted/50 transition"
+                    >
+                      <TableCell className="text-center">
+                        {tx.name || "N/A"}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {tx.type}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {tx.refund_amount != null ? formatAmount(tx.refund_amount, club?.currency) : "N/A"}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {tx.lifecycle && Object.entries(tx.lifecycle)
+                          .filter(([, entry]: any) => entry.type?.toLowerCase().includes('refund'))
+                          .map(([timestamp]) => timestamp)
+                          .sort((a, b) => Number(b) - Number(a))[0]
+                          ? new Date(Number(Object.entries(tx.lifecycle)
+                              .filter(([, entry]: any) => entry.type?.toLowerCase().includes('refund'))
+                              .map(([timestamp]) => timestamp)
+                              .sort((a, b) => Number(b) - Number(a))[0])).toLocaleString("en-GB", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hour12: true,
+                            })
+                          : "N/A"}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <button
+                          onClick={() => {
+                            setSelectedRefundTransaction(tx);
+                            setConfirmRefundDialog(true);
+                          }}
+                          className="text-green-600 hover:text-green-700 cursor-pointer font-medium transition-colors"
+                        >
+                          Confirm Refund Completed
+                        </button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      )}
+
+      <Dialog open={confirmRefundDialog} onOpenChange={setConfirmRefundDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Refund Completed</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to confirm this refund? This will remove it from the refunds table as the refund is considered complete.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedRefundTransaction && (
+            <div className="py-4 space-y-2">
+              <div className="text-sm">
+                <span className="font-medium">Member:</span> {selectedRefundTransaction.name || "N/A"}
+              </div>
+              <div className="text-sm">
+                <span className="font-medium">Refund Amount:</span> {selectedRefundTransaction.refund_amount != null ? formatAmount(selectedRefundTransaction.refund_amount, club?.currency) : "N/A"}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmRefundDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!selectedRefundTransaction) return;
+                setIsConfirmingRefund(true);
+                try {
+                  const response = await api.post(`/transactions/confirmRefund`, {
+                    club_account_id: club?.club_account_id,
+                    transaction_id: selectedRefundTransaction.transaction_id
+                  });
+                  toast.success(response.data?.message || "Refund confirmed successfully");
+                  // Update the transaction locally to mark refund as complete
+                  setAllTransactions((prev) =>
+                    prev.map((tx) =>
+                      tx.transaction_id === selectedRefundTransaction.transaction_id
+                        ? { ...tx, refund_completed: true }
+                        : tx
+                    )
+                  );
+                  setConfirmRefundDialog(false);
+                  setSelectedRefundTransaction(null);
+                } catch (error: any) {
+                  const errorMessage = error.response?.data?.message || "Failed to confirm refund";
+                  toast.error(errorMessage);
+                  console.error("Error confirming refund:", error);
+                } finally {
+                  setIsConfirmingRefund(false);
+                }
+              }}
+              disabled={isConfirmingRefund}
+            >
+              {isConfirmingRefund ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Confirming...
+                </>
+              ) : (
+                "Confirm Refund"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
