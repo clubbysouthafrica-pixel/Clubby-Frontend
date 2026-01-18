@@ -73,7 +73,6 @@ import { useContext } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { updatePaymentReferenceService } from "@/services/profile";
 import { toast } from "sonner";
-import { Image } from "@radix-ui/react-avatar";
 import { FaFacebook, FaInstagram, FaTwitter } from "react-icons/fa";
 import InfoRow from "@/components/info-row";
 import SocialLink from "@/components/social-links";

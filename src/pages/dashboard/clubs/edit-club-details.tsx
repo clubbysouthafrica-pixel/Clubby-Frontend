@@ -40,19 +40,43 @@ import {
 } from "@/helpers/admin/constants/registration_submission_email_template";
 import EditableEmailTemplate from "../../../components/admin/manage/emailing/editable_email_template";
 import { BankingDetailsForm } from "@/components/admin/club/banking-details-form";
+import ClubGalleryEdit from "./gallery";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function EditClubDetails() {
   const { club } = useContext(ClubContext) as ClubContextType;
   const { data, isLoading } = useFetchClubDetails(
-    club?.club_account_id as string
+    club?.club_account_id as string,
   );
   const { mutate, isPending } = useUpdateClubDetailsMutation();
+
+  const daysOfWeek = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+  ];
+
+  const [openingTimes, setOpeningTimes] = useState(
+    daysOfWeek.map((day) => ({
+      day,
+      open: "",
+      close: "",
+      closed: false,
+    })),
+  );
 
   const [activeTab, setActiveTab] = useState("club-view");
   const [country, setCountry] = useState("");
   const [currency, setCurrency] = useState("");
   const [supportEmail, setSupportEmail] = useState("");
   const [clubUrl, setClubUrl] = useState("");
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [facebookUrl, setFacebookUrl] = useState("");
+  const [clubDetails, setClubDetails] = useState("");
   const [hideFromPublic, setHideFromPublic] = useState<boolean>(false);
 
   const [
@@ -67,10 +91,8 @@ export default function EditClubDetails() {
     registrationSuccessEmailTemplate,
     setRegistrationSuccessEmailTemplate,
   ] = useState<string>(REGISTRATION_SUCCESS_EMAIL_TEMPLATE);
-  const [
-    registrationSuccessEmailSubject,
-    setRegistrationSuccessEmailSubject,
-  ] = useState<string>("Registration Confirmed");
+  const [registrationSuccessEmailSubject, setRegistrationSuccessEmailSubject] =
+    useState<string>("Registration Confirmed");
   const [useSuccessEmailTemplate, setUseSuccessEmailTemplate] =
     useState<boolean>(false);
   const [useSubmissionEmailTemplate, setUseSubmissionEmailTemplate] =
@@ -88,24 +110,25 @@ export default function EditClubDetails() {
 
       setRegistrationSubmissionEmailTemplate(
         data?.registration_submission_email_template_body ??
-          REGISTRATION_SUBMISSION_EMAIL_TEMPLATE
+          REGISTRATION_SUBMISSION_EMAIL_TEMPLATE,
       );
       setRegistrationSubmissionEmailSubject(
-        data?.registration_submission_email_subject ?? "Registration Submission"
+        data?.registration_submission_email_subject ??
+          "Registration Submission",
       );
       setRegistrationSuccessEmailTemplate(
         data?.registration_success_email_template_body ??
-          REGISTRATION_SUCCESS_EMAIL_TEMPLATE
+          REGISTRATION_SUCCESS_EMAIL_TEMPLATE,
       );
       setRegistrationSuccessEmailSubject(
-        data?.registration_success_email_subject ?? "Registration Confirmed"
+        data?.registration_success_email_subject ?? "Registration Confirmed",
       );
       setUseSubmissionEmailTemplate(
-        data?.use_submission_email_template ?? false
+        data?.use_submission_email_template ?? false,
       );
       setUseSuccessEmailTemplate(data?.use_success_email_template ?? false);
       setNotifyOnMemberRegistration(
-        data?.notify_on_member_registration ?? true
+        data?.notify_on_member_registration ?? true,
       );
     }
   }, [data]);
@@ -133,8 +156,7 @@ export default function EditClubDetails() {
           registrationSubmissionEmailSubject,
         registration_success_email_template_body:
           registrationSuccessEmailTemplate,
-        registration_success_email_subject:
-          registrationSuccessEmailSubject,
+        registration_success_email_subject: registrationSuccessEmailSubject,
         use_success_email_template: useSuccessEmailTemplate,
         use_submission_email_template: useSubmissionEmailTemplate,
         notify_on_member_registration: notifyOnMemberRegistration,
@@ -153,7 +175,7 @@ export default function EditClubDetails() {
             "Something went wrong";
           toast.error(errorMessage);
         },
-      }
+      },
     );
   };
   const update = () =>
@@ -182,8 +204,7 @@ export default function EditClubDetails() {
           registrationSubmissionEmailSubject,
         registration_success_email_template_body:
           registrationSuccessEmailTemplate,
-        registration_success_email_subject:
-          registrationSuccessEmailSubject,
+        registration_success_email_subject: registrationSuccessEmailSubject,
         use_success_email_template: useSuccessEmailTemplate,
         use_submission_email_template: useSubmissionEmailTemplate,
         notify_on_member_registration: notifyOnMemberRegistration,
@@ -202,7 +223,7 @@ export default function EditClubDetails() {
             "Something went wrong";
           toast.error(errorMessage);
         },
-      }
+      },
     );
 
   if (isLoading) {
@@ -213,13 +234,34 @@ export default function EditClubDetails() {
     );
   }
 
+  function handleTimeChange(
+    idx: number,
+    field: "open" | "close",
+    value: string,
+  ) {
+    setOpeningTimes((times) =>
+      times.map((t, i) =>
+        i === idx ? { ...t, [field]: value, closed: false } : t,
+      ),
+    );
+  }
+
+  function handleClosedChange(idx: number, checked: boolean) {
+    setOpeningTimes((times) =>
+      times.map((t, i) =>
+        i === idx ? { ...t, closed: checked, open: "", close: "" } : t,
+      ),
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex w-[80%] flex-col">
         {!isLoading && (
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="w-full h-12">
               <TabsTrigger value="club-view">Club View</TabsTrigger>
+              <TabsTrigger value="gallery">Gallery</TabsTrigger>
               <TabsTrigger value="account">Banking & Payments</TabsTrigger>
               <TabsTrigger value="location">Location</TabsTrigger>
               <TabsTrigger value="emailing">Emailing</TabsTrigger>
@@ -251,21 +293,91 @@ export default function EditClubDetails() {
                     )}
                   </Button>
                 </CardHeader>
-                <CardContent className="grid gap-6">
+                <CardContent className="grid gap-6 space-y-6">
                   <div className="grid gap-2">
-                    <Label htmlFor="club_url">Club URL (optional)</Label>
+                    <Label htmlFor="club_url">Socials Links (optional)</Label>
                     <Input
                       id="club_url"
                       type="url"
-                      placeholder="https://example.com/club"
+                      placeholder="Website Link"
                       value={clubUrl}
                       onChange={(e) => setClubUrl(e.target.value)}
+                    />
+                    <Input
+                      id="instagram_url"
+                      type="url"
+                      placeholder="Instagram Link"
+                      value={instagramUrl}
+                      onChange={(e) => setInstagramUrl(e.target.value)}
+                    />
+                    <Input
+                      id="facebook_url"
+                      type="url"
+                      placeholder="Facebook Link"
+                      value={facebookUrl}
+                      onChange={(e) => setFacebookUrl(e.target.value)}
                     />
                     <p className="text-xs text-muted-foreground">
                       If provided, this URL may be used on the public club page
                       for embedding or linking.
                     </p>
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="club_url">About Club</Label>
+                    <Textarea
+                      id="club_url"
+                      placeholder="Information about the club"
+                      value={clubDetails}
+                      onChange={(e) => setClubDetails(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-semibold">Opening Times</Label>
+                    <div className="grid gap-3">
+                      {openingTimes.map((t, idx) => (
+                        <div key={t.day} className="flex items-center gap-3">
+                          <span className="w-24">{t.day}</span>
+                          <Input
+                            type="time"
+                            value={t.open}
+                            disabled={t.closed}
+                            onChange={(e) =>
+                              handleTimeChange(idx, "open", e.target.value)
+                            }
+                            className="w-28"
+                            aria-label={`${t.day} opening time`}
+                          />
+                          <span>-</span>
+                          <Input
+                            type="time"
+                            value={t.close}
+                            disabled={t.closed}
+                            onChange={(e) =>
+                              handleTimeChange(idx, "close", e.target.value)
+                            }
+                            className="w-28"
+                            aria-label={`${t.day} closing time`}
+                          />
+                          <label className="flex items-center gap-1 ml-2 text-xs">
+                            <input
+                              type="checkbox"
+                              checked={t.closed}
+                              onChange={(e) =>
+                                handleClosedChange(idx, e.target.checked)
+                              }
+                              className="accent-primary"
+                            />
+                            Closed
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Set your club’s opening and closing times for each day.
+                      Mark as closed if not open that day.
+                    </p>
+                  </div>
+
                   <div className="grid gap-2">
                     <Label className="text-sm">Public Listing</Label>
                     <p className="text-xs text-muted-foreground">
@@ -455,6 +567,10 @@ export default function EditClubDetails() {
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="gallery">
+              <ClubGalleryEdit />
             </TabsContent>
 
             <TabsContent value="account">
@@ -647,7 +763,14 @@ export default function EditClubDetails() {
                   >
                     <CardTitle>Registration Success Email</CardTitle>
                     <CardDescription>
-                      Customize the email template sent to members upon successful registration. Use <strong>{"{{member_name}}"}</strong> to include the member's name and <strong>{"{{custom_field}}"}</strong> to reference custom registration fields (use lowercase with underscores between words). Custom field values will be requested for the admin to enter when registering the member.
+                      Customize the email template sent to members upon
+                      successful registration. Use{" "}
+                      <strong>{"{{member_name}}"}</strong> to include the
+                      member's name and <strong>{"{{custom_field}}"}</strong> to
+                      reference custom registration fields (use lowercase with
+                      underscores between words). Custom field values will be
+                      requested for the admin to enter when registering the
+                      member.
                     </CardDescription>
                     <EditableEmailTemplate
                       template={registrationSuccessEmailTemplate}
