@@ -74,7 +74,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         items: [
           { title: "Products", url: "/shop/products" },
           { title: "Orders", url: "/shop/orders" },
-          { title: "Analytics", url: "/shop/analytics" },
+          // { title: "Analytics", url: "/shop/analytics" },
         ],
       },
       {
