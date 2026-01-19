@@ -1,5 +1,5 @@
 import * as React from "react";
-import { HomeIcon, UserPlusIcon, UsersIcon, BarChart } from "lucide-react";
+import { HomeIcon, UserPlusIcon, UsersIcon, BarChart, ShoppingBag } from "lucide-react";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import { ClubSwitcher } from "@/components/club-switcher.tsx";
@@ -67,6 +67,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           { title: "Add member", url: "/manage/members/add" },
         ],
       },
+      // Only show Shop in development environment
+      ...(process.env.NODE_ENV === 'development' ? [{
+        title: "Shop",
+        url: "/shop",
+        icon: ShoppingBag,
+        items: [
+          { title: "Products", url: "/shop/products" },
+          { title: "Orders", url: "/shop/orders" },
+          { title: "Analytics", url: "/shop/analytics" },
+        ],
+      }] : []),
       {
         title: "Registration form",
         url: "/manage/registrations",
