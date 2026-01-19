@@ -67,8 +67,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           { title: "Add member", url: "/manage/members/add" },
         ],
       },
-      // Only show Shop in development environment
-      ...(process.env.NODE_ENV === 'development' ? [{
+      {
         title: "Shop",
         url: "/shop",
         icon: ShoppingBag,
@@ -77,7 +76,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           { title: "Orders", url: "/shop/orders" },
           { title: "Analytics", url: "/shop/analytics" },
         ],
-      }] : []),
+      },
       {
         title: "Registration form",
         url: "/manage/registrations",
