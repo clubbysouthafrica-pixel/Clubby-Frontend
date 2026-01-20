@@ -133,6 +133,7 @@ export default function FinancialTransactionsPage() {
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
               <SelectItem value="REGISTRATION">Registration</SelectItem>
+              <SelectItem value="ORDER">Order</SelectItem>
             </SelectContent>
           </Select>
 
