@@ -8,6 +8,7 @@ export interface AddProductRequest {
     active_product: boolean;
     purchase_limit: "single" | "multiple";
     description?: string;
+    product_image?: string;
 }
 
 export interface UpdateProductRequest {
@@ -16,6 +17,7 @@ export interface UpdateProductRequest {
     name?: string;
     initial_quantity?: number;
     active_product?: boolean;
+    product_image?: string;
 }
 
 export const addProduct = (productRequest: AddProductRequest): Promise<any> => {

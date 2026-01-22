@@ -301,7 +301,15 @@ export default function MemberShopPage() {
               return (
                 <Card key={product.product_id} className="overflow-hidden hover:shadow-lg transition-shadow">
                   <div className="aspect-square bg-gray-100 flex items-center justify-center">
-                    <Package className="h-16 w-16 text-gray-400" />
+                    {product.product_image_url ? (
+                      <img 
+                        src={product.product_image_url} 
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Package className="h-16 w-16 text-gray-400" />
+                    )}
                     {/* Placeholder for product image */}
                   </div>
                   <CardHeader>

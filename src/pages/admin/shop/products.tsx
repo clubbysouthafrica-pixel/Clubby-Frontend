@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Package, Eye, ChevronsUpDown, Minus } from "lucide-react";
+import { Plus, Package, Eye, ChevronsUpDown, Minus, ImageIcon, Upload } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -53,6 +53,8 @@ export default function ProductsPage() {
   
   // Dialog state
   const [openDialog, setOpenDialog] = useState<boolean>(false);
+  const [imageDialogOpen, setImageDialogOpen] = useState<boolean>(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string>("");
   
   // Form state
   const [productName, setProductName] = useState("");
@@ -62,6 +64,7 @@ export default function ProductsPage() {
   const [description, setDescription] = useState("");
   const [isActive, setIsActive] = useState(false);
   const [allowMultiple, setAllowMultiple] = useState(true);
+  const [productImage, setProductImage] = useState<string>("");
 
   // Sync API data with local state
   useEffect(() => {
@@ -75,10 +78,11 @@ export default function ProductsPage() {
         createdAt: product.created_date,
         description: product.description,
         allowMultiple: product.purchase_limit === "multiple",
+        image: product?.product_image_url ?? undefined,
       }));
       setProducts(formattedProducts);
-      setOriginalProducts(JSON.parse(JSON.stringify(formattedProducts))); // Deep copy for original values
-      setUnsavedChanges(new Set()); // Clear unsaved changes when new data loads
+      setOriginalProducts(JSON.parse(JSON.stringify(formattedProducts)));
+      setUnsavedChanges(new Set());
     }
   }, [productsData]);
 
@@ -98,6 +102,7 @@ export default function ProductsPage() {
     setDescription("");
     setIsActive(false);
     setAllowMultiple(true);
+    setProductImage("");
   };
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,6 +110,17 @@ export default function ProductsPage() {
     const numeric = parseInt(cleaned || "0", 10);
     setPrice((numeric / 100).toString());
     setPriceDisplay(formatAmount(numeric, club?.currency));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setProductImage(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = async () => {
@@ -122,6 +138,7 @@ export default function ProductsPage() {
         active_product: isActive,
         purchase_limit: allowMultiple ? "multiple" : "single",
         description: description || undefined,
+        ...(productImage && { product_image: productImage }),
       };
 
       const response = await addProduct(productRequest);
@@ -274,7 +291,8 @@ export default function ProductsPage() {
               ...product, 
               name: originalProduct.name,
               quantityLeft: originalProduct.quantityLeft, 
-              isActive: originalProduct.isActive 
+              isActive: originalProduct.isActive,
+              image: originalProduct.image
             }
           : product
       )
@@ -293,8 +311,26 @@ export default function ProductsPage() {
     });
   };
 
+  const handleProductImageUpdate = (productId: any, imageUrl: string) => {
+    setProducts(prev =>
+      prev.map(product =>
+        product.id === productId
+          ? { ...product, image: imageUrl }
+          : product
+      )
+    );
+    
+    setUnsavedChanges(prev => new Set([...prev, productId]));
+  };
+
+  const handleImageClick = (imageUrl: string) => {
+    setSelectedImageUrl(imageUrl);
+    setImageDialogOpen(true);
+  };
+
   const handleSaveProduct = async (productId: any) => {
     const product = products.find(p => p.id === productId);
+    const originalProduct = originalProducts.find(p => p.id === productId);
     if (!product || !club?.club_account_id) return;
 
     try {
@@ -303,8 +339,13 @@ export default function ProductsPage() {
         club_account_id: club.club_account_id,
         name: product.name,
         initial_quantity: product.quantityLeft,
-        active_product: product.isActive
+        active_product: product.isActive,
       };
+
+      // Only include product_image if it has changed
+      if (originalProduct && product.image !== originalProduct.image) {
+        updateRequest.product_image = product.image;
+      }
 
       await updateProduct(updateRequest);
       
@@ -312,7 +353,7 @@ export default function ProductsPage() {
       setOriginalProducts(prev => 
         prev.map(orig => 
           orig.id === productId 
-            ? { ...orig, name: product.name, quantityLeft: product.quantityLeft, isActive: product.isActive }
+            ? { ...orig, name: product.name, quantityLeft: product.quantityLeft, isActive: product.isActive, image: product.image }
             : orig
         )
       );
@@ -366,10 +407,13 @@ export default function ProductsPage() {
           <CardContent>
             <div className="rounded-lg border w-full overflow-hidden">
               <div className="overflow-y-auto overflow-x-auto">
-                <Table className="table-auto" style={{ minWidth: "1090px" }}>
+                <Table className="table-auto" style={{ minWidth: "1190px" }}>
                   <TableHeader className="bg-muted sticky top-0 z-10">
                     <TableRow>
-                      <TableHead className="text-center w-[200px]">
+                      <TableHead className="text-center w-[140px]">
+                        Image
+                      </TableHead>
+                      <TableHead className="text-center w-[140px]">
                         <button
                           className="flex items-center justify-center gap-1 w-full hover:bg-gray-100 rounded p-1"
                           onClick={() => handleSort('name')}
@@ -443,13 +487,13 @@ export default function ProductsPage() {
                   <TableBody>
                     {productsLoading ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8">
+                        <TableCell colSpan={8} className="text-center py-8">
                           Loading products...
                         </TableCell>
                       </TableRow>
                     ) : productsError ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-red-600">
+                        <TableCell colSpan={8} className="text-center py-8 text-red-600">
                           Error loading products. Please try again.
                         </TableCell>
                       </TableRow>
@@ -465,7 +509,81 @@ export default function ProductsPage() {
                               : ''
                           }`}
                         >
-                          <TableCell className="text-center w-[200px]">
+                          <TableCell className="text-center w-[140px]">
+                            {editingProducts.has(product.id) ? (
+                              <div className="flex justify-center">
+                                <div className="relative group">
+                                  <input
+                                    id={`product-image-${product.id}`}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        const reader = new FileReader();
+                                        reader.onload = (event) => {
+                                          const imageUrl = event.target?.result as string;
+                                          handleProductImageUpdate(product.id, imageUrl);
+                                        };
+                                        reader.readAsDataURL(file);
+                                      }
+                                    }}
+                                    className="hidden"
+                                  />
+                                  <label
+                                    htmlFor={`product-image-${product.id}`}
+                                    className="block cursor-pointer"
+                                  >
+                                    {product.image ? (
+                                      <img 
+                                        src={product.image} 
+                                        alt={product.name}
+                                        className="h-12 w-12 object-cover rounded border group-hover:opacity-75 transition-opacity"
+                                        onError={(e) => {
+                                          e.currentTarget.style.display = 'none';
+                                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                        }}
+                                      />
+                                    ) : (
+                                      <div className="h-12 w-12 bg-gray-100 rounded border group-hover:opacity-75 transition-opacity flex items-center justify-center">
+                                        <ImageIcon className="h-6 w-6 text-gray-400" />
+                                      </div>
+                                    )}
+                                    <div className="absolute inset-0 rounded bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                      <Upload className="h-4 w-4 text-white" />
+                                    </div>
+                                  </label>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                {product.image ? (
+                                  <div className="flex justify-center">
+                                    <img 
+                                      src={product.image} 
+                                      alt={product.name}
+                                      className="h-12 w-12 object-cover rounded border cursor-pointer hover:opacity-75 transition-opacity"
+                                      onClick={() => handleImageClick(product.image)}
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                      }}
+                                    />
+                                    <div className="hidden flex items-center justify-center h-12 w-12 bg-gray-100 rounded border">
+                                      <ImageIcon className="h-6 w-6 text-gray-400" />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex justify-center">
+                                    <div className="flex items-center justify-center h-12 w-12 bg-gray-100 rounded border">
+                                      <ImageIcon className="h-6 w-6 text-gray-400" />
+                                    </div>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center w-[140px]">
                             {editingProducts.has(product.id) ? (
                               <Input
                                 type="text"
@@ -582,7 +700,7 @@ export default function ProductsPage() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8">
+                        <TableCell colSpan={8} className="text-center py-8">
                           No products found
                         </TableCell>
                       </TableRow>
@@ -692,6 +810,46 @@ export default function ProductsPage() {
                 rows={3}
               />
             </div>
+
+            <div className="space-y-3">
+              <Label>Product Image</Label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                {productImage ? (
+                  <div className="space-y-3">
+                    <img
+                      src={productImage}
+                      alt="Product preview"
+                      className="h-32 w-32 object-cover rounded-lg mx-auto border border-gray-200 shadow-sm"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Image selected</p>
+                      <label htmlFor="productImage" className="text-xs text-blue-600 hover:text-blue-700 cursor-pointer underline">
+                        Click to change
+                      </label>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex justify-center">
+                      <Package className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <div>
+                      <label htmlFor="productImage" className="text-sm font-medium text-gray-700 hover:text-gray-900 cursor-pointer">
+                        Click to upload image
+                      </label>
+                      <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                    </div>
+                  </div>
+                )}
+                <Input
+                  id="productImage"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+              </div>
+            </div>
             
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -727,6 +885,18 @@ export default function ProductsPage() {
               Add Product
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
+        <DialogContent className="max-w-2xl flex items-center justify-center">
+          {selectedImageUrl && (
+            <img 
+              src={selectedImageUrl} 
+              alt="Product"
+              className="max-h-[80vh] max-w-full object-contain"
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>
