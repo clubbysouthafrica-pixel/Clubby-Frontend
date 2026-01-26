@@ -571,9 +571,9 @@ export default function OrdersPage() {
       <Dialog open={fulfillmentDialogOpen} onOpenChange={setFulfillmentDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Update Order Fulfillment Status</DialogTitle>
+            <DialogTitle>Complete Order</DialogTitle>
             <DialogDescription>
-              Are you sure you want to mark this order as delivered? This action will update the fulfillment status.
+              Are you sure you want to mark this order as delivered? This action will update the fulfillment status to DELIVERED and this order will be considered complete.
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-3 justify-end mt-6">

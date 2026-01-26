@@ -310,3 +310,73 @@ export function RegistrationBillingChart({ data, currency }: RegistrationBilling
   );
 }
 
+type OrdersComboChartProps = {
+  data: ReportDataRow[];
+  currency: string;
+};
+
+// Custom Tooltip for Orders Combo Chart
+function OrdersCustomTooltip({ active, payload, label, currency }: { active?: boolean; payload?: TooltipPayload[]; label?: string; currency: string }) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="rounded-lg border bg-background/95 p-3 shadow-lg">
+        <p className="text-xs font-semibold mb-2">{label}</p>
+        {payload.map((entry, index) => {
+          const isMoney = entry.name === "Revenue" || entry.name === "Pending Revenue";
+          const displayValue = isMoney ? formatAmount(Number(entry.value), currency) : entry.value;
+          return (
+            <div key={`item-${index}`} className="flex items-center gap-2 text-xs p-1">
+              <span
+                className="inline-block h-4 w-4"
+                style={{ backgroundColor: entry.color }}
+              />
+              <span className="font-medium">{entry.name}:</span>
+              <span className="text-foreground">{displayValue}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+  return null;
+}
+
+export function OrdersComboChart({ data, currency }: OrdersComboChartProps) {
+  const chartData = data.map((d) => ({
+    name: formatMonthLabel(d.date),
+    revenue: d.total_revenue,
+    pending: d.total_pending_revenue,
+    itemsSold: d.total_shop_sold_items,
+    pendingItems: d.total_shop_pending_sold_items,
+  }));
+
+  return (
+    <div className="w-full h-72">
+      <ResponsiveContainer width="100%" height="100%">
+        <ComposedChart data={chartData} margin={{ top: 10, right: 56, left: 56, bottom: 56 }}>
+          <CartesianGrid strokeDasharray="4 4" className="stroke-muted" />
+          <XAxis
+            dataKey="name"
+            tick={{ fontSize: 12 }}
+          />
+          <YAxis
+            yAxisId="left"
+            tick={{ fontSize: 12 }}
+            tickFormatter={(v) => formatAmount(Number(v), currency)}
+          />
+          <YAxis
+            yAxisId="right"
+            orientation="right"
+            tick={{ fontSize: 12 }}
+          />
+          <Tooltip content={<OrdersCustomTooltip currency={currency} />} />
+          <Legend />
+          <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill={CHART_COLORS.registered.fill} stroke={CHART_COLORS.registered.stroke} strokeWidth={1} radius={[4, 4, 0, 0]} />
+          <Bar yAxisId="left" dataKey="pending" name="Pending Revenue" fill={CHART_COLORS.deregistered.fill} stroke={CHART_COLORS.deregistered.stroke} strokeWidth={1} radius={[4, 4, 0, 0]} />
+          <Line yAxisId="right" type="monotone" dataKey="itemsSold" name="Items Sold" stroke={CHART_COLORS.revenue.stroke} strokeWidth={2} dot={false} />
+          <Line yAxisId="right" type="monotone" dataKey="pendingItems" name="Pending Items" stroke={CHART_COLORS.pendingRevenue.stroke} strokeWidth={2} dot={false} strokeDasharray="5 5" />
+        </ComposedChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
