@@ -45,6 +45,8 @@ import {
   Clock,
   CheckCircle,
   Globe,
+  ShoppingBag,
+  ShoppingCart,
 } from "lucide-react";
 import { useFetchClub, useFetchClubBankDetails } from "@/queries/clubs";
 import { useNavigate, useParams } from "react-router-dom";
@@ -61,10 +63,13 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatAmount } from "@/data/currencies";
 import { useFetchUserTransactions } from "@/queries/transactions";
-import * as React from "react";
+import { getMemberOrders, updateOrderFulfillment } from "@/services/orders";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { MemberRegistration } from "@/components/member/current_registration/current_member_registration";
+
+import { RegistrationTabContent } from "@/components/member/registration/registration-tab-content";
+import { ShopTab } from "@/components/member/shop/shop-tab";
+import PaymentsTabContent from "@/components/member/payments/payments-tab-content";
 import { PayFastPayment } from "@/components/payments/payfast-payment";
 import { AuthContext } from "@/context/AuthContext";
 import { useContext } from "react";
@@ -90,26 +95,11 @@ const countryMap: Record<string, string> = {
   FR: "France",
 };
 
-// Local types for transactions to improve table typing
-type TransactionEntry = {
-  type: string;
-  description: string;
-  amount: number;
-  payment_type?: string;
-};
-
-type Transaction = {
-  transaction_id: string;
-  type: string;
-  outstanding_amount: number;
-  status: string;
-  lifecycle: Record<string, TransactionEntry>;
-};
-
 export default function ViewClubPage() {
   const auth = useContext(AuthContext);
   const isLoggedIn = !!auth?.user;
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
 
   const navigate = useNavigate();
   const { clubId } = useParams();
@@ -119,16 +109,36 @@ export default function ViewClubPage() {
     useFetchClubBankDetails(clubId as string, !!data?.club_member_exists);
   const { data: transactions, isLoading: isUserTransactionsLoading } =
     useFetchUserTransactions(data?.club_account_id ?? "", data?.user_id ?? "");
+
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState("home");
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [iframeLoading, setIframeLoading] = useState(true);
   const [editingReference, setEditingReference] = useState(false);
   const [newReference, setNewReference] = useState(
-    bankDetails?.registration_payment_reference || ""
+    bankDetails?.registration_payment_reference || "",
   );
   const [savingReference, setSavingReference] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [showOrderSelection, setShowOrderSelection] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [fulfillmentDialogOpen, setFulfillmentDialogOpen] = useState(false);
+  const [selectedFulfillmentOrder, setSelectedFulfillmentOrder] = useState<any>(null);
+  const [updatingFulfillment, setUpdatingFulfillment] = useState(false);
+
+  // Fetch member orders for the shop tab
+  const {
+    data: memberOrders,
+    isLoading: isOrdersLoading,
+    error: ordersError,
+  } = useQuery({
+    queryKey: ["member-orders", data?.club_account_id],
+    queryFn: () => getMemberOrders(data?.club_account_id || ""),
+    enabled:
+      !!data?.club_account_id &&
+      !!data?.club_member_exists &&
+      activeTab === "shop",
+  });
 
   const toggleRow = (id: string) => {
     setExpandedRows((prev) => ({
@@ -137,11 +147,84 @@ export default function ViewClubPage() {
     }));
   };
 
-  const handlePayHereClick = () => {
-    if (!bankDetailsLoading && bankDetails) {
-      setPaymentDialogOpen(true);
+  const handlePayHereClick = (order?: any) => {
+    console.log("handlePayHereClick called with order:", order);
+    console.log(
+      "bankDetails.order_options check:",
+      bankDetails?.order_options,
+      bankDetails?.order_options?.length,
+    );
+
+    if (order) {
+      console.log("Setting selected order and opening payment dialog");
+      setSelectedOrder(order);
+      if (!bankDetailsLoading && bankDetails) {
+        setPaymentDialogOpen(true);
+      } else {
+        toast.error("Payment details are still loading. Please wait...");
+      }
+    } else if (
+      bankDetails?.order_options &&
+      bankDetails.order_options.length > 0
+    ) {
+      console.log("Order options found, showing order selection dialog");
+      setShowOrderSelection(true);
     } else {
-      toast.error("Payment details are still loading. Please wait...");
+      console.log("No order options, going directly to payment dialog");
+      if (!bankDetailsLoading && bankDetails) {
+        setPaymentDialogOpen(true);
+      } else {
+        toast.error("Payment details are still loading. Please wait...");
+      }
+    }
+  };
+
+  const handlePayNowClick = () => {
+    // Debug logging to see what's in the data
+    console.log("handlePayNowClick called");
+    console.log("bankDetails:", bankDetails);
+    console.log("bankDetails.order_options:", bankDetails?.order_options);
+    console.log("order_options length:", bankDetails?.order_options?.length);
+
+    // This is the wrapper that should be called by Pay Now buttons
+    // It will trigger order selection if order_options exist
+    handlePayHereClick();
+  };
+
+  const handleFulfillmentStatusClick = (order: any) => {
+    setSelectedFulfillmentOrder(order);
+    setFulfillmentDialogOpen(true);
+  };
+
+  const handleConfirmFulfillmentUpdate = async () => {
+    if (!selectedFulfillmentOrder || !data?.club_account_id) return;
+
+    setUpdatingFulfillment(true);
+    try {
+      const response = await updateOrderFulfillment(data.club_account_id, selectedFulfillmentOrder.order_id);
+      toast.success(response?.message || "Order fulfillment status updated successfully!");
+      setFulfillmentDialogOpen(false);
+
+      // Update the local cache with the new fulfillment status
+      queryClient.setQueryData(
+        ["member-orders", data.club_account_id],
+        (oldData: any) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            orders: oldData.orders?.map((order: any) =>
+              order.order_id === selectedFulfillmentOrder.order_id
+                ? { ...order, fulfillment_status: "DELIVERED" }
+                : order,
+            ),
+          };
+        },
+      );
+    } catch (error) {
+      console.error("Error updating fulfillment status:", error);
+      toast.error("Failed to update fulfillment status. Please try again.");
+    } finally {
+      setUpdatingFulfillment(false);
     }
   };
 
@@ -156,7 +239,7 @@ export default function ViewClubPage() {
     try {
       await updatePaymentReferenceService(
         data?.club_account_id ?? "",
-        newReference
+        newReference,
       );
       // Update the local bankDetails state
       if (bankDetails) {
@@ -208,7 +291,7 @@ export default function ViewClubPage() {
 
   const getStatusIcon = (
     isRegistered: boolean,
-    resubmissionRequired: boolean
+    resubmissionRequired: boolean,
   ) => {
     if (resubmissionRequired) {
       return <AlertTriangle className="h-4 w-4 text-red-600" />;
@@ -222,7 +305,7 @@ export default function ViewClubPage() {
 
   const getStatusColor = (
     isRegistered: boolean,
-    resubmissionRequired: boolean
+    resubmissionRequired: boolean,
   ) => {
     if (resubmissionRequired) {
       return "text-red-600";
@@ -232,7 +315,7 @@ export default function ViewClubPage() {
 
   const getStatusTitle = (
     isRegistered: boolean,
-    resubmissionRequired: boolean
+    resubmissionRequired: boolean,
   ) => {
     if (resubmissionRequired) {
       return "Resubmission Required";
@@ -242,7 +325,7 @@ export default function ViewClubPage() {
 
   const getStatusDescription = (
     isRegistered: boolean,
-    resubmissionRequired: boolean
+    resubmissionRequired: boolean,
   ) => {
     if (resubmissionRequired) {
       return "Your registration requires a resubmission. This may be due to reasons such as your membership expiring, the club starting a new season, or invalid information in your previous submission. Please resubmit your registration form.";
@@ -394,7 +477,7 @@ export default function ViewClubPage() {
                                     "text-sm",
                                     data.registered
                                       ? "bg-green-100 text-green-800 border-green-200"
-                                      : "bg-orange-100 text-orange-800 border-orange-200"
+                                      : "bg-orange-100 text-orange-800 border-orange-200",
                                   )}
                                 >
                                   {data.registered
@@ -411,13 +494,13 @@ export default function ViewClubPage() {
                                     Outstanding:{" "}
                                     {formatAmount(
                                       bankDetails.outstanding_amount,
-                                      data.currency
+                                      data.currency,
                                     )}
                                   </p>
                                   <Button
                                     variant="link"
                                     size="sm"
-                                    onClick={handlePayHereClick}
+                                    onClick={handlePayNowClick}
                                     className="text-xs h-auto p-0 text-destructive hover:text-destructive/80"
                                   >
                                     Pay Now
@@ -471,24 +554,24 @@ export default function ViewClubPage() {
                       <div className="flex items-center gap-2 mb-0">
                         {getStatusIcon(
                           data.registered,
-                          data.resubmission_required
+                          data.resubmission_required,
                         )}
                         <h3
                           className={`text-sm font-semibold ${getStatusColor(
                             data.registered,
-                            data.resubmission_required
+                            data.resubmission_required,
                           )}`}
                         >
                           {getStatusTitle(
                             data.registered,
-                            data.resubmission_required
+                            data.resubmission_required,
                           )}
                         </h3>
                       </div>
                       <p className="text-xs text-muted-foreground leading-relaxed">
                         {getStatusDescription(
                           data.registered,
-                          data.resubmission_required
+                          data.resubmission_required,
                         )}
                       </p>
                     </CardHeader>
@@ -513,7 +596,7 @@ export default function ViewClubPage() {
                     "bg-background/50 backdrop-blur-sm border border-primary/20 shadow-lg",
                     isMobile
                       ? "flex flex-col h-auto w-full gap-1 p-1"
-                      : "justify-start h-12"
+                      : "justify-start h-12 w-full",
                   )}
                 >
                   <TabsTrigger
@@ -521,7 +604,7 @@ export default function ViewClubPage() {
                       "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium",
                       isMobile
                         ? "w-full justify-center text-sm h-10"
-                        : "w-[200px] h-10"
+                        : "w-[200px] h-10",
                     )}
                     value="home"
                   >
@@ -535,7 +618,7 @@ export default function ViewClubPage() {
                         "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium",
                         isMobile
                           ? "w-full justify-center text-sm h-10"
-                          : "w-[200px] h-10"
+                          : "w-[200px] h-10",
                       )}
                       value="bank"
                     >
@@ -550,7 +633,7 @@ export default function ViewClubPage() {
                         "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium",
                         isMobile
                           ? "w-full justify-center text-sm h-10"
-                          : "w-[200px] h-10"
+                          : "w-[200px] h-10",
                       )}
                       value="member-registration"
                     >
@@ -558,21 +641,248 @@ export default function ViewClubPage() {
                       Registration
                     </TabsTrigger>
                   )}
+                  <ShopTab
+                    clubId={clubId!}
+                    isMobile={isMobile}
+                    isClubMember={
+                      data?.club_member_exists || data?.resubmission_required
+                    }
+                    isRegistered={data?.registered}
+                  />
                 </TabsList>
 
-                <TabsContent value="member-registration">
-                  <MemberRegistration
-                    membershipStatus={
-                      data.resubmission_required
-                        ? "Resubmission required"
-                        : data.registered
+                <RegistrationTabContent
+                  membershipStatus={
+                    data.resubmission_required
+                      ? "Resubmission required"
+                      : data.registered
                         ? "Registered"
                         : "Pending"
-                    }
-                    clubName={data.club_name}
-                    currency={data.currency}
-                    clubAccountId={data.club_account_id}
-                  />
+                  }
+                  clubName={data.club_name}
+                  currency={data.currency}
+                  clubAccountId={data.club_account_id}
+                />
+
+                <TabsContent value="shop" className="mt-6">
+                  <div className="space-y-6">
+                    <Card>
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                              <ShoppingBag className="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                              <CardTitle className="text-xl">
+                                My Orders
+                              </CardTitle>
+                              <CardDescription className="text-base">
+                                View your order history and shop for new items
+                              </CardDescription>
+                            </div>
+                          </div>
+                          <Button
+                            onClick={() => navigate(`/myclubs/${clubId}/shop`)}
+                            className="flex items-center gap-2"
+                          >
+                            <ShoppingBag className="h-4 w-4" />
+                            Go to Shop
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-0">
+                        <div className="overflow-hidden">
+                          <Table className="border-0">
+                            <TableHeader className="bg-gradient-to-r from-muted/50 to-muted/30 sticky top-0 z-10">
+                              <TableRow className="border-primary/10 hover:bg-transparent">
+                                <TableHead className="text-center flex-1 font-semibold">
+                                  Order #
+                                </TableHead>
+                                <TableHead className="text-center flex-1 font-semibold">
+                                  Date
+                                </TableHead>
+                                <TableHead className="text-center flex-1 font-semibold">
+                                  Items
+                                </TableHead>
+                                <TableHead className="text-center flex-1 font-semibold">
+                                  Total
+                                </TableHead>
+                                <TableHead className="text-center flex-1 font-semibold">
+                                  Amount Paid
+                                </TableHead>
+                                <TableHead className="text-center flex-1 font-semibold">
+                                  Payment Status
+                                </TableHead>
+                                <TableHead className="text-center flex-1 font-semibold">
+                                  Fulfillment Status
+                                </TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {isOrdersLoading && (
+                                <TableRow>
+                                  <TableCell
+                                    colSpan={7}
+                                    className="text-center py-8"
+                                  >
+                                    <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                                    <p className="text-muted-foreground mt-2">
+                                      Loading orders...
+                                    </p>
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                              {ordersError && (
+                                <TableRow>
+                                  <TableCell
+                                    colSpan={7}
+                                    className="text-center py-8 text-red-600"
+                                  >
+                                    Failed to load orders. Please try again
+                                    later.
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                              {!isOrdersLoading &&
+                                !ordersError &&
+                                memberOrders?.orders?.length === 0 && (
+                                  <TableRow>
+                                    <TableCell
+                                      colSpan={7}
+                                      className="text-center py-8 text-muted-foreground"
+                                    >
+                                      No orders yet. Start shopping to see your
+                                      orders here!
+                                    </TableCell>
+                                  </TableRow>
+                                )}
+                              {!isOrdersLoading &&
+                                !ordersError &&
+                                memberOrders?.orders?.map((order: any) => (
+                                  <TableRow
+                                    key={order.order_id}
+                                    className="hover:bg-primary/5 transition-colors border-primary/10 group"
+                                  >
+                                    <TableCell className="text-center flex-1 py-4">
+                                      <span className="font-mono text-sm bg-muted/50 px-2 py-1 rounded">
+                                        #{order.order_id?.slice(0, 8) || "N/A"}
+                                      </span>
+                                    </TableCell>
+                                    <TableCell className="text-center flex-1 py-4">
+                                      {order.created_date
+                                        ? new Date(
+                                            order.created_date * 1000,
+                                          ).toLocaleDateString()
+                                        : "N/A"}
+                                    </TableCell>
+                                    <TableCell className="text-center flex-1 py-4">
+                                      <div className="space-y-1">
+                                        {order.items?.map(
+                                          (item: any, index: number) => (
+                                            <div
+                                              key={index}
+                                              className="text-sm"
+                                            >
+                                              {item.name} x{item.quantity}
+                                            </div>
+                                          ),
+                                        ) || (
+                                          <div className="text-sm">
+                                            No items
+                                          </div>
+                                        )}
+                                      </div>
+                                    </TableCell>
+                                    <TableCell className="text-center flex-1 py-4 font-semibold">
+                                      {formatAmount(
+                                        order.total_amount || 0,
+                                        data.currency,
+                                      )}
+                                    </TableCell>
+                                    <TableCell className="text-center flex-1 py-4 font-semibold">
+                                      {formatAmount(
+                                        order.amount_paid || 0,
+                                        data.currency,
+                                      )}
+                                    </TableCell>
+                                    <TableCell className="text-center flex-1 py-4">
+                                      <div className="flex flex-col items-center gap-2">
+                                        <Badge
+                                          className={`font-medium ${
+                                            order.payment_status === "PAID"
+                                              ? "bg-green-100 text-green-800 border-green-200"
+                                              : order.payment_status === "PENDING" || order.payment_status === "PARTIALLY_PAID"
+                                                ? "bg-orange-100 text-orange-800 border-orange-200"
+                                                : order.payment_status === "cancelled"
+                                                  ? "bg-red-100 text-red-800 border-red-200"
+                                                  : "bg-gray-100 text-gray-800 border-gray-200"
+                                          }`}
+                                        >
+                                          {order.payment_status
+                                            ? order.payment_status
+                                                .charAt(0)
+                                                .toUpperCase() +
+                                              order.payment_status.slice(1)
+                                            : "Unknown"}
+                                        </Badge>
+                                        {(order.payment_status === "PENDING" || order.payment_status === "PARTIALLY_PAID") && (
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="text-xs underline h-6 px-2 text-red-600"
+                                            onClick={() => setActiveTab("bank")}
+                                          >
+                                            Pay Now
+                                          </Button>
+                                        )}
+                                      </div>
+                                    </TableCell>
+                                    <TableCell className="text-center flex-1 py-4">
+                                      <div className="flex items-center justify-center gap-2">
+                                        <Badge
+                                          onClick={() =>
+                                            order.fulfillment_status === "PROCESSING" &&
+                                            handleFulfillmentStatusClick(order)
+                                          }
+                                          className={`font-medium ${
+                                            order.fulfillment_status ===
+                                            "DELIVERED"
+                                              ? "bg-green-100 text-green-800 border-green-200"
+                                              : order.fulfillment_status ===
+                                                  "NOT_PROCESSED"
+                                                ? "bg-orange-100 text-orange-800 border-orange-200"
+                                                : order.fulfillment_status ===
+                                                    "PROCESSING"
+                                                  ? "bg-purple-100 text-purple-800 border-purple-200 cursor-pointer hover:opacity-80"
+                                                  : "bg-green-100 text-green-800 border-green-200"
+                                          }`}
+                                        >
+                                          {order.fulfillment_status
+                                            ? order.fulfillment_status
+                                                .charAt(0)
+                                                .toUpperCase() +
+                                              order.fulfillment_status.slice(1)
+                                            : "Unknown"}
+                                        </Badge>
+                                        {order.fulfillment_status === "PROCESSING" && (
+                                          <div className="relative group">
+                                            <AlertTriangle className="w-4 h-4 text-purple-600 cursor-help" />
+                                            <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10 bottom-full mb-2 right-0">
+                                              Click to update status
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="home" className="mt-6">
@@ -627,27 +937,6 @@ export default function ViewClubPage() {
                       </Card>
                     ) : (
                       <div className="grid gap-6 md:grid-cols-2">
-                        {/* Welcome Card */}
-                        {/* <Card className="border-primary/20 shadow-lg">
-                          <CardHeader className="pb-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                                <Sparkles className="w-6 h-6 text-primary" />
-                              </div>
-                              <div>
-                                <CardTitle className="text-xl">
-                                  Welcome to {data.club_name}
-                                </CardTitle>
-                                <CardDescription className="text-base">
-                                  {data?.description ??
-                                    "Discover what this amazing club has to offer."}
-                                </CardDescription>
-                              </div>
-                            </div>
-                          </CardHeader>
-                        </Card> */}
-
-                        {/* Contact Information Card */}
                         <Card className="border-primary/20 shadow-lg">
                           <CardHeader className="pb-4">
                             <CardTitle className="flex items-center gap-2 text-lg">
@@ -695,399 +984,160 @@ export default function ViewClubPage() {
                 </TabsContent>
 
                 {data?.club_member_exists && (
-                  <TabsContent value="bank" className="mt-6">
-                    {!data?.resubmission_required && (
-                      <Card className="border-primary/20 shadow-lg mb-6">
-                        <CardHeader className="pb-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                              <CreditCard className="w-6 h-6 text-primary" />
-                            </div>
-                            <div className="flex-1">
-                              <CardTitle className="text-2xl">
-                                Outstanding Balance
-                              </CardTitle>
-                              <CardDescription className="text-lg">
-                                {formatAmount(
-                                  bankDetails?.outstanding_amount,
-                                  data.currency
-                                )}
-                              </CardDescription>
-                            </div>
-                            {bankDetails?.outstanding_amount === 0 && (
-                              <Badge className="bg-green-100 text-green-800 border-green-200">
-                                <CheckCircle className="w-4 h-4 mr-1" />
-                                Paid in Full
-                              </Badge>
-                            )}
-                            {bankDetails?.outstanding_amount > 0 && (
-                              <Button
-                                onClick={handlePayHereClick}
-                                className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300"
-                              >
-                                Pay Now
-                              </Button>
-                            )}
-                          </div>
-                          {bankDetails?.registration_payment_reference && (
-                            <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                              <div className="flex items-center justify-between mb-2">
-                                <p className="text-sm text-muted-foreground">
-                                  Payment Reference Number
-                                </p>
-                                {!editingReference && (
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => setEditingReference(true)}
-                                    className="h-6 px-2 text-xs"
-                                  >
-                                    Edit
-                                  </Button>
-                                )}
-                              </div>
-
-                              {!editingReference ? (
-                                <>
-                                  <p className="font-mono font-semibold">
-                                    {bankDetails.registration_payment_reference}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground leading-relaxed mt-2">
-                                    This reference number is displayed on the
-                                    admin side. When you make a payment (e.g.,
-                                    via EFT), include this number as your proof
-                                    of reference so the admin can verify and
-                                    match your payment to your account.
-                                  </p>
-                                </>
-                              ) : (
-                                <div className="space-y-3">
-                                  <div className="space-y-1">
-                                    <Label
-                                      htmlFor="reference-input"
-                                      className="text-xs"
-                                    >
-                                      New Reference Number
-                                    </Label>
-                                    <Input
-                                      id="reference-input"
-                                      value={newReference}
-                                      onChange={(e) =>
-                                        setNewReference(e.target.value)
-                                      }
-                                      placeholder="Enter new reference number"
-                                      className="font-mono"
-                                    />
-                                  </div>
-                                  <div className="flex gap-2">
-                                    <Button
-                                      size="sm"
-                                      onClick={handleSaveReference}
-                                      disabled={
-                                        savingReference || !newReference.trim()
-                                      }
-                                      className="flex-1"
-                                    >
-                                      {savingReference && (
-                                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                      )}
-                                      Save
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={handleCancelEdit}
-                                      disabled={savingReference}
-                                      className="flex-1"
-                                    >
-                                      Cancel
-                                    </Button>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </CardHeader>
-                      </Card>
-                    )}
-                    <div className="flex flex-col w-full gap-6">
-                      {!isUserTransactionsLoading && transactions && (
-                        <Card className="border-primary/20 shadow-lg">
-                          <CardHeader>
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                                <FileText className="w-5 h-5 text-primary" />
-                              </div>
-                              <div>
-                                <CardTitle className="text-xl">
-                                  Transaction History
-                                </CardTitle>
-                                <CardDescription className="text-base">
-                                  View your payment transactions and membership
-                                  activity
-                                </CardDescription>
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="p-0">
-                            <div className="overflow-hidden">
-                              <Table className="border-0">
-                                <TableHeader className="bg-gradient-to-r from-muted/50 to-muted/30 sticky top-0 z-10">
-                                  <TableRow className="border-primary/10 hover:bg-transparent">
-                                    <TableHead className="text-center w-1/4 font-semibold">
-                                      Transaction ID
-                                    </TableHead>
-                                    <TableHead className="text-center w-1/4 font-semibold">
-                                      Type
-                                    </TableHead>
-                                    <TableHead className="text-center w-1/4 font-semibold">
-                                      Status
-                                    </TableHead>
-                                  </TableRow>
-                                </TableHeader>
-
-                                <TableBody>
-                                  {transactions.transactions.length === 0 && (
-                                    <TableRow>
-                                      <TableCell
-                                        colSpan={4}
-                                        className="text-center py-8 text-muted-foreground"
-                                      >
-                                        No transactions yet.
-                                      </TableCell>
-                                    </TableRow>
-                                  )}
-                                  {transactions.transactions.map(
-                                    (tx: Transaction) => (
-                                      <React.Fragment key={tx.transaction_id}>
-                                        {/* Main Transaction Row */}
-                                        <TableRow
-                                          className="cursor-pointer hover:bg-primary/5 transition-colors border-primary/10 group"
-                                          onClick={() =>
-                                            toggleRow(tx.transaction_id)
-                                          }
-                                        >
-                                          <TableCell className="text-center w-1/4 py-4">
-                                            <div className="inline-flex items-center gap-3 justify-center">
-                                              <div className="flex items-center gap-2">
-                                                <div className="w-2 h-2 rounded-full bg-primary/50" />
-                                                <span className="font-mono text-sm bg-muted/50 px-2 py-1 rounded">
-                                                  {tx.transaction_id.slice(
-                                                    0,
-                                                    8
-                                                  )}
-                                                  ...
-                                                </span>
-                                              </div>
-
-                                              {/* Copy button */}
-                                              <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  navigator.clipboard.writeText(
-                                                    tx.transaction_id
-                                                  );
-                                                }}
-                                                title="Copy full Transaction ID"
-                                                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                              >
-                                                <Copy className="h-3 w-3" />
-                                              </Button>
-
-                                              <svg
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                className={`h-4 w-4 transition-transform text-muted-foreground ${
-                                                  expandedRows[
-                                                    tx.transaction_id
-                                                  ]
-                                                    ? "rotate-90"
-                                                    : ""
-                                                }`}
-                                                fill="none"
-                                                viewBox="0 0 24 24"
-                                                stroke="currentColor"
-                                              >
-                                                <path
-                                                  strokeLinecap="round"
-                                                  strokeLinejoin="round"
-                                                  strokeWidth={2}
-                                                  d="M9 5l7 7-7 7"
-                                                />
-                                              </svg>
-                                            </div>
-                                          </TableCell>
-                                          <TableCell className="text-center py-4">
-                                            <Badge
-                                              variant="outline"
-                                              className="font-medium"
-                                            >
-                                              {tx.type}
-                                            </Badge>
-                                          </TableCell>
-                                          <TableCell className="text-center py-4">
-                                            <Badge
-                                              className={cn(
-                                                "font-medium",
-                                                tx.status === "PENDING"
-                                                  ? "bg-blue-100 text-blue-800 border-blue-200"
-                                                  : tx.status ===
-                                                    "PARTIALLY PAID"
-                                                  ? "bg-orange-100 text-orange-800 border-orange-200"
-                                                  : tx.status === "CANCELLED"
-                                                  ? "bg-red-100 text-red-800 border-red-200"
-                                                  : "bg-green-100 text-green-800 border-green-200"
-                                              )}
-                                            >
-                                              {tx.status}
-                                            </Badge>
-                                          </TableCell>
-                                        </TableRow>
-
-                                        {expandedRows[tx.transaction_id] && (
-                                          <TableRow className="bg-muted/10">
-                                            <TableCell
-                                              colSpan={8}
-                                              className="p-4"
-                                            >
-                                              <div className="overflow-hidden rounded-lg">
-                                                <Table className="w-full">
-                                                  <TableHeader className="bg-muted sticky top-0 z-10">
-                                                    <TableRow>
-                                                      <TableHead className="text-center">
-                                                        Date
-                                                      </TableHead>
-                                                      <TableHead className="text-center">
-                                                        Type
-                                                      </TableHead>
-                                                      <TableHead className="text-center">
-                                                        Description
-                                                      </TableHead>
-                                                      <TableHead className="text-center">
-                                                        Amount
-                                                      </TableHead>
-                                                      <TableHead className="text-center">
-                                                        Payment type
-                                                      </TableHead>
-                                                    </TableRow>
-                                                  </TableHeader>
-                                                  <TableBody>
-                                                    {Object.entries(
-                                                      tx.lifecycle as Record<
-                                                        string,
-                                                        TransactionEntry
-                                                      >
-                                                    )
-                                                      // Sort by timestamp descending (latest first)
-                                                      .sort(
-                                                        ([a], [b]) =>
-                                                          Number(b) - Number(a)
-                                                      )
-                                                      .map(
-                                                        ([timestamp, entry]: [
-                                                          string,
-                                                          TransactionEntry
-                                                        ]) => (
-                                                          <TableRow
-                                                            key={timestamp}
-                                                          >
-                                                            <TableCell className="text-center">
-                                                              {new Date(
-                                                                Number(
-                                                                  timestamp
-                                                                )
-                                                              ).toLocaleString(
-                                                                "en-GB",
-                                                                {
-                                                                  day: "2-digit",
-                                                                  month:
-                                                                    "2-digit",
-                                                                  year: "numeric",
-                                                                  hour: "2-digit",
-                                                                  minute:
-                                                                    "2-digit",
-                                                                  hour12: true,
-                                                                }
-                                                              )}
-                                                            </TableCell>
-                                                            <TableCell className="text-center">
-                                                              {entry.type}
-                                                            </TableCell>
-                                                            <TableCell className="text-center">
-                                                              {
-                                                                entry.description
-                                                              }
-                                                            </TableCell>
-                                                            <TableCell
-                                                              className={`text-center ${
-                                                                entry.type ===
-                                                                "SUBMISSION"
-                                                                  ? "text-black-700"
-                                                                  : entry.type ===
-                                                                    "CANCELLATION"
-                                                                  ? "text-red-700"
-                                                                  : "text-green-700"
-                                                              }`}
-                                                            >
-                                                              {entry.type ===
-                                                              "SUBMISSION"
-                                                                ? ""
-                                                                : entry.type === "CANCELLATION"
-                                                                ? "N/A"
-                                                                : "+"}
-                                                              {entry.type !== "CANCELLATION" && formatAmount(
-                                                                entry.amount,
-                                                                data.currency
-                                                              )}
-                                                            </TableCell>
-                                                            <TableCell className="text-center">
-                                                              {entry.payment_type ??
-                                                                "N/A"}
-                                                            </TableCell>
-                                                          </TableRow>
-                                                        )
-                                                      )}
-                                                  </TableBody>
-                                                </Table>
-                                              </div>
-                                            </TableCell>
-                                          </TableRow>
-                                        )}
-                                      </React.Fragment>
-                                    )
-                                  )}
-                                </TableBody>
-                              </Table>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-                    </div>
-                  </TabsContent>
+                  <PaymentsTabContent
+                    data={data}
+                    bankDetails={bankDetails}
+                    transactions={transactions}
+                    isUserTransactionsLoading={isUserTransactionsLoading}
+                    expandedRows={expandedRows}
+                    editingReference={editingReference}
+                    newReference={newReference}
+                    savingReference={savingReference}
+                    toggleRow={toggleRow}
+                    setEditingReference={setEditingReference}
+                    setNewReference={setNewReference}
+                    handleSaveReference={handleSaveReference}
+                    handleCancelEdit={handleCancelEdit}
+                    handlePayHereClick={handlePayNowClick}
+                  />
                 )}
               </Tabs>
             </div>
           </div>
         )}
 
-      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
-        <DialogContent className="!w-[1000px] !h-[800px] !max-w-none !max-h-none p-5 gap-4 flex flex-col min-h-0">
+      {/* Order Selection Dialog */}
+      <Dialog open={showOrderSelection} onOpenChange={setShowOrderSelection}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShoppingCart className="w-5 h-5 text-primary" />
+              Select Order to Pay
+            </DialogTitle>
+            <DialogDescription>
+              Choose which order you want to make a payment for.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {bankDetails?.order_options?.map((order: any, index: number) => {
+              const totalAmount =
+                order.items?.reduce(
+                  (sum: number, item: any) => sum + (item.subtotal || 0),
+                  0,
+                ) || 0;
+
+              return (
+                <div
+                  key={index}
+                  className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                  onClick={() => {
+                    setSelectedOrder(order);
+                    setShowOrderSelection(false);
+                    handlePayHereClick(order);
+                  }}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-semibold">
+                      {order.title || `Order ${index + 1}`}
+                    </h4>
+                    <span className="font-bold text-primary">
+                      {formatAmount(totalAmount, data?.currency)}
+                    </span>
+                  </div>
+                  {order.description && (
+                    <p className="text-sm text-muted-foreground mb-2">
+                      {order.description}
+                    </p>
+                  )}
+                  {order.items && order.items.length > 0 && (
+                    <div className="space-y-1">
+                      {order.items.map((item: any, itemIndex: number) => (
+                        <div
+                          key={itemIndex}
+                          className="flex justify-between text-sm"
+                        >
+                          <span>
+                            {item.name} (x{item.quantity})
+                          </span>
+                          <span>
+                            {formatAmount(item.subtotal || 0, data?.currency)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={paymentDialogOpen}
+        onOpenChange={(open) => {
+          setPaymentDialogOpen(open);
+          if (!open) {
+            setSelectedOrder(null);
+          }
+        }}
+      >
+        <DialogContent className="!w-[1000px] !h-[820px] !max-w-none !max-h-none p-5 gap-4 flex flex-col min-h-0">
           <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4 space-y-2">
             <DialogTitle className="flex items-center gap-2 text-2xl">
               <CreditCard className="w-6 h-6 text-primary" />
               Payment Options
             </DialogTitle>
             <div className="space-y-1">
-              <DialogDescription className="text-base">
-                Outstanding Balance:{" "}
-                <span className="font-semibold text-foreground">
-                  {formatAmount(
-                    bankDetails?.outstanding_amount,
-                    data?.currency
+              {selectedOrder ? (
+                <>
+                  <DialogDescription className="text-base">
+                    Order Total:{" "}
+                    <span className="font-semibold text-foreground">
+                      {formatAmount(
+                        selectedOrder.total_amount || 0,
+                        data?.currency,
+                      )}
+                    </span>
+                  </DialogDescription>
+                  <DialogDescription className="text-base">
+                    Amount Paid:{" "}
+                    <span className="font-semibold text-foreground">
+                      {formatAmount(
+                        selectedOrder?.total_amount - selectedOrder?.outstanding_amount || 0,
+                        data?.currency,
+                      )}
+                    </span>
+                  </DialogDescription>
+                  <DialogDescription className="text-base">
+                    Outstanding Amount:{" "}
+                    <span className="font-semibold text-foreground text-orange-600">
+                      {formatAmount(
+                        selectedOrder?.outstanding_amount || 0,
+                        data?.currency,
+                      )}
+                    </span>
+                  </DialogDescription>
+                  {selectedOrder.order_id && (
+                    <DialogDescription className="text-base">
+                      Order ID:{" "}
+                      <span className="font-semibold text-foreground">
+                        {selectedOrder.order_id}
+                      </span>
+                    </DialogDescription>
                   )}
-                </span>
-              </DialogDescription>
+                </>
+              ) : (
+                <DialogDescription className="text-base">
+                  Outstanding Balance:{" "}
+                  <span className="font-semibold text-foreground">
+                    {formatAmount(
+                      bankDetails?.outstanding_amount,
+                      data?.currency,
+                    )}
+                  </span>
+                </DialogDescription>
+              )}
               {bankDetails?.registration_payment_reference && (
                 <DialogDescription className="text-base">
                   Payment Reference:{" "}
@@ -1133,30 +1183,23 @@ export default function ViewClubPage() {
                     <TabsTrigger key={index} value={`custom-${index}`}>
                       {method.name}
                     </TabsTrigger>
-                  )
+                  ),
                 )}
             </TabsList>
             <TabsContent value="eft" className="pt-4 flex-1 overflow-y-auto">
-              <div className="space-y-6 pr-4">
-                <div className="text-center space-y-3">
-                  <div className="flex items-center justify-center gap-2">
-                    <Building2 className="w-6 h-6 text-primary" />
-                    <h3 className="text-xl font-semibold">
+              <div className="space-y-3 sm:space-y-6 pr-2 sm:pr-4">
+                <div className="text-center space-y-2 sm:space-y-3">
+                  <div className="flex items-center justify-center gap-1 sm:gap-2">
+                    <Building2 className="w-4 h-4 sm:w-6 sm:h-6 text-primary" />
+                    <h3 className="text-sm sm:text-xl font-semibold">
                       Bank Transfer (EFT)
                     </h3>
                   </div>
                   <div className="flex flex-col items-center">
-                    <p className="text-muted-foreground leading-relaxed">
+                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                       Transfer funds directly to the club's bank account using
                       the details below.
                     </p>
-                    <div className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
-                      <p className="text-sm">
-                        <strong className="text-primary">Important:</strong>{" "}
-                        Always include your payment reference number to ensure
-                        proper allocation of your payment.
-                      </p>
-                    </div>
                   </div>
                 </div>
 
@@ -1168,7 +1211,7 @@ export default function ViewClubPage() {
 
                 {!bankDetailsLoading && (
                   <div className="flex justify-center">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl w-full">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-6 max-w-2xl w-full">
                       <Card className="group hover:shadow-md transition-shadow border-primary/10">
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between">
@@ -1224,7 +1267,7 @@ export default function ViewClubPage() {
                               onClick={() =>
                                 copyToClipboard(
                                   bankDetails?.account_number || "",
-                                  "account"
+                                  "account",
                                 )
                               }
                               className="opacity-0 group-hover:opacity-100 transition-opacity"
@@ -1261,7 +1304,7 @@ export default function ViewClubPage() {
                               onClick={() =>
                                 copyToClipboard(
                                   bankDetails?.branch_code || "",
-                                  "branch"
+                                  "branch",
                                 )
                               }
                               className="opacity-0 group-hover:opacity-100 transition-opacity"
@@ -1298,7 +1341,7 @@ export default function ViewClubPage() {
                               onClick={() =>
                                 copyToClipboard(
                                   bankDetails?.account_type || "",
-                                  "type"
+                                  "type",
                                 )
                               }
                               className="opacity-0 group-hover:opacity-100 transition-opacity"
@@ -1355,7 +1398,7 @@ export default function ViewClubPage() {
                                 onClick={() =>
                                   copyToClipboard(
                                     bankDetails?.payment_reference || "",
-                                    "reference"
+                                    "reference",
                                   )
                                 }
                                 className="opacity-0 group-hover:opacity-100 transition-opacity"
@@ -1373,6 +1416,42 @@ export default function ViewClubPage() {
                     </div>
                   </div>
                 )}
+
+                <div className="flex flex-col items-center space-y-2 sm:space-y-3">
+                  <div className="w-full sm:w-[100%] p-2 sm:p-3 bg-primary/5 rounded-lg border border-primary/20">
+                    <p className="text-xs sm:text-sm">
+                      <strong className="text-primary">Important:</strong>{" "}
+                      Always include your payment reference number to ensure
+                      proper allocation of your payment.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-center">
+                  <div className="w-full sm:w-[100%] p-2 sm:p-3 bg-amber-50 rounded-lg border border-amber-200">
+                    <p className="text-xs sm:text-sm text-amber-900">
+                      <strong className="text-amber-700">
+                        Registration Status:
+                      </strong>{" "}
+                      Your registration will remain <strong>Pending</strong>{" "}
+                      until the club administrator confirms receipt of your
+                      payment.
+                      {data.support_email && (
+                        <>
+                          {" "}
+                          If you don't receive confirmation within a reasonable
+                          timeframe, please contact the club at:{" "}
+                          <a
+                            href={`mailto:${data.support_email}`}
+                            className="font-semibold text-amber-700 hover:text-amber-800 underline"
+                          >
+                            {data.support_email}
+                          </a>
+                        </>
+                      )}
+                    </p>
+                  </div>
+                </div>
               </div>
             </TabsContent>
             {data?.payfast_enabled &&
@@ -1386,7 +1465,12 @@ export default function ViewClubPage() {
                     <div className="max-w-2xl w-full">
                       <PayFastPayment
                         clubAccountId={data?.club_account_id ?? ""}
-                        outstandingAmount={bankDetails?.outstanding_amount ?? 0}
+                        outstandingAmount={
+                          selectedOrder
+                            ? selectedOrder?.outstanding_amount || 0
+                            : (bankDetails?.outstanding_amount ?? 0)
+                        }
+                        orderId={selectedOrder?.order_id}
                       />
                     </div>
                   </div>
@@ -1424,6 +1508,39 @@ export default function ViewClubPage() {
                 </TabsContent>
               ))}
           </Tabs>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={fulfillmentDialogOpen} onOpenChange={setFulfillmentDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirm Your Order Has Been Received</DialogTitle>
+            <DialogDescription>
+              Are you certain you want to confirm you have received your order? This will be reflected on the admin side too and considered received.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 justify-end mt-6">
+            <Button
+              variant="outline"
+              onClick={() => setFulfillmentDialogOpen(false)}
+              disabled={updatingFulfillment}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmFulfillmentUpdate}
+              disabled={updatingFulfillment}
+            >
+              {updatingFulfillment ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Confirm"
+              )}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </Pager>

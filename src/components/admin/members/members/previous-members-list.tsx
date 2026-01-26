@@ -65,6 +65,8 @@ export default function PreviousMembersList({
   // Use raw clubMembers.deregistered - backend already handles pagination and member_name/member_id filtering
   const baseDeregisteredMembers = clubMembers?.deregistered || [];
   const [deregSortAsc, setDeregSortAsc] = useState<boolean | null>(null);
+  const [memberNameSortAsc, setMemberNameSortAsc] = useState<boolean | null>(null);
+  const [totalFeeSortAsc, setTotalFeeSortAsc] = useState<boolean | null>(null);
   const [openRemoveDialog, setOpenRemoveDialog] = useState<boolean>(false);
   const [selectedMembersToRemove, setSelectedMembersToRemove] = useState<
     ClubMember[]
@@ -72,15 +74,30 @@ export default function PreviousMembersList({
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
 
   const sortedDeregisteredMembers = useMemo(() => {
-    if (deregSortAsc === null) return baseDeregisteredMembers;
-    const copy = [...baseDeregisteredMembers];
-    copy.sort((a: ClubMember, b: ClubMember) => {
-      const at = a?.deregistered_on ? new Date(a.deregistered_on).getTime() : 0;
-      const bt = b?.deregistered_on ? new Date(b.deregistered_on).getTime() : 0;
-      return deregSortAsc ? at - bt : bt - at;
-    });
-    return copy;
-  }, [baseDeregisteredMembers, deregSortAsc]);
+    let sortedCopy = [...baseDeregisteredMembers];
+    
+    if (memberNameSortAsc !== null) {
+      sortedCopy.sort((a: ClubMember, b: ClubMember) => {
+        const aName = `${a.member_first_name} ${a.member_surname}`.toLowerCase();
+        const bName = `${b.member_first_name} ${b.member_surname}`.toLowerCase();
+        return memberNameSortAsc ? aName.localeCompare(bName) : bName.localeCompare(aName);
+      });
+    } else if (totalFeeSortAsc !== null) {
+      sortedCopy.sort((a: ClubMember, b: ClubMember) => {
+        const aFee = a.total_fee || 0;
+        const bFee = b.total_fee || 0;
+        return totalFeeSortAsc ? aFee - bFee : bFee - aFee;
+      });
+    } else if (deregSortAsc !== null) {
+      sortedCopy.sort((a: ClubMember, b: ClubMember) => {
+        const at = a?.deregistered_on ? new Date(a.deregistered_on).getTime() : 0;
+        const bt = b?.deregistered_on ? new Date(b.deregistered_on).getTime() : 0;
+        return deregSortAsc ? at - bt : bt - at;
+      });
+    }
+    
+    return sortedCopy;
+  }, [baseDeregisteredMembers, deregSortAsc, memberNameSortAsc, totalFeeSortAsc]);
 
   useEffect(() => {
     setDeregisteredMembersLength(baseDeregisteredMembers.length);
@@ -166,10 +183,42 @@ export default function PreviousMembersList({
                   </div>
                 </TableHead>
                 <TableHead className="text-center w-[150px]">
-                  Member Name
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1 hover:underline w-full justify-center"
+                    onClick={() => {
+                      setMemberNameSortAsc((prev) => (prev === null ? true : !prev));
+                      setDeregSortAsc(null);
+                      setTotalFeeSortAsc(null);
+                    }}
+                    title="Toggle sort by Member Name"
+                  >
+                    Member Name
+                    {memberNameSortAsc === null ? (
+                      <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                    ) : (
+                      <span className="text-xs">{memberNameSortAsc ? "▲" : "▼"}</span>
+                    )}
+                  </button>
                 </TableHead>
                 <TableHead className="text-center w-[150px]">
-                  Member ID
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1 hover:underline w-full justify-center"
+                    onClick={() => {
+                      setTotalFeeSortAsc((prev) => (prev === null ? true : !prev));
+                      setDeregSortAsc(null);
+                      setMemberNameSortAsc(null);
+                    }}
+                    title="Toggle sort by Total Fee"
+                  >
+                    Total Fee
+                    {totalFeeSortAsc === null ? (
+                      <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                    ) : (
+                      <span className="text-xs">{totalFeeSortAsc ? "▲" : "▼"}</span>
+                    )}
+                  </button>
                 </TableHead>
                 <TableHead className="text-center w-[150px]">
                   <button
@@ -264,35 +313,11 @@ export default function PreviousMembersList({
                       </a>
                     </TableCell>
                     <TableCell className="text-center w-[150px]">
-                      <div className="inline-flex items-center gap-2 justify-center">
-                        <span className="font-mono">
-                          {member.user_id.slice(0, 8)}...
-                        </span>
-
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigator.clipboard.writeText(member.user_id);
-                          }}
-                          title="Click to copy full Transaction ID"
-                          className="hover:text-primary cursor-pointer"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-4 w-4 text-muted-foreground hover:text-foreground transition"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M8 16h8m2 0a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v8a2 2 0 002 2zM8 16v2a2 2 0 002 2h8a2 2 0 002-2v-2"
-                            />
-                          </svg>
-                        </button>
-                      </div>
+                      {member?.total_fee ? (
+                        formatAmount(member.total_fee, club?.currency)
+                      ) : (
+                        <span className="text-gray-400">n/a</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-center w-[150px]">
                       {member.deregistered_on
@@ -330,7 +355,11 @@ export default function PreviousMembersList({
                             key={column.key}
                             className="text-center w-[150px]"
                           >
-                            {columnValue}
+                            {columnValue === "N/A" ? (
+                              <span className="text-gray-400">n/a</span>
+                            ) : (
+                              columnValue
+                            )}
                           </TableCell>
                         );
                       })}

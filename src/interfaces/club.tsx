@@ -20,6 +20,7 @@ export interface ClubMember {
     member_first_name: string
     member_surname: string
     member_email:string
+    total_fee?: number
     meta_billing: Record<string, any>
     meta_standard: Record<string, any>
     outstanding_amount: number

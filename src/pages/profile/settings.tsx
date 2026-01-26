@@ -100,6 +100,14 @@ export default function SettingsPage() {
         }
     })
 
+    const formatName = (name: string): string => {
+        return name
+            .toLowerCase()
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ')
+    }
+
     return (
         <Pager>
             {/* Hero Section */}
@@ -197,7 +205,7 @@ export default function SettingsPage() {
                                                 type="text"
                                                 placeholder="Enter your first name"
                                                 value={accountSettings.first_name}
-                                                onChange={(v) => setAccountSettings(prev => ({ ...prev, first_name: v.target.value }))}
+                                                onChange={(v) => setAccountSettings(prev => ({ ...prev, first_name: formatName(v.target.value) }))}
                                                 className="border-primary/20 focus:border-primary transition-colors"
                                             />
                                         </div>
@@ -209,7 +217,7 @@ export default function SettingsPage() {
                                                 type="text"
                                                 placeholder="Enter your surname"
                                                 value={accountSettings.surname}
-                                                onChange={(v) => setAccountSettings(prev => ({ ...prev, surname: v.target.value }))}
+                                                onChange={(v) => setAccountSettings(prev => ({ ...prev, surname: formatName(v.target.value) }))}
                                                 className="border-primary/20 focus:border-primary transition-colors"
                                             />
                                         </div>

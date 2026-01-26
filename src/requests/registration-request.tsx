@@ -23,6 +23,7 @@ export interface DeregisterMemberRequest {
     userIds: string[]
     clubId: string
     deregistration_reason?: string
+    refunds: string[]
 }
 
 export interface DeregisterSeasonRequest {

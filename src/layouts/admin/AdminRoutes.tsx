@@ -25,6 +25,10 @@ import LoginPage from "@/pages/authentication/login/page";
 import TermsPage from "@/pages/policies/terms";
 import PrivacyPage from "@/pages/policies/privacy";
 import AdminPolicyPage from "@/pages/registrations/admin-policy-page";
+import ShopPage from "@/pages/admin/shop/shop";
+import ProductsPage from "@/pages/admin/shop/products";
+import OrdersPage from "@/pages/admin/shop/orders";
+import AnalyticsPage from "@/pages/admin/shop/analytics";
 
 export default function AdminRoutes() {
   return (
@@ -151,6 +155,38 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <FinancialTransactionsPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/shop"
+        element={
+          <ProtectedRoute>
+            <ShopPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/shop/products"
+        element={
+          <ProtectedRoute>
+            <ProductsPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/shop/orders"
+        element={
+          <ProtectedRoute>
+            <OrdersPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/shop/analytics"
+        element={
+          <ProtectedRoute>
+            <AnalyticsPage />
           </ProtectedRoute>
         }
       ></Route>

@@ -13,6 +13,7 @@ import PasswordResetPage from "@/pages/authentication/password/PasswordReset.tsx
 import SettingsPage from "@/pages/profile/settings.tsx";
 import ProtectedRoute from "@/guards/ProtectedRoute.tsx";
 import ViewClubPage from "@/pages/clubs/view-club.tsx";
+import MemberShopPage from "@/components/member/shop/shop";
 import OnboardMember from "@/pages/authentication/onboard-member";
 import AdminRegistrationFormPage from "@/pages/registrations/admin-registration-form-page";
 import BrowseClubsPage from "@/pages/clubs/browse-clubs";
@@ -75,6 +76,14 @@ export default function MarketRoutes() {
         element={
           <ProtectedRoute>
             <ViewClubPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/myclubs/:clubId/shop"
+        element={
+          <ProtectedRoute>
+            <MemberShopPage />
           </ProtectedRoute>
         }
       ></Route>

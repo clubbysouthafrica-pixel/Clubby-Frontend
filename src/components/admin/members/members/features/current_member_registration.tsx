@@ -174,7 +174,7 @@ export function CurrentMemberRegistration({
     <div className="w-full space-y-2 flex-1 min-h-0 flex flex-col">
       {/* Transaction ID */}
       {data?.transaction_id && (
-        <div className="flex items-center gap-2 text-sm bg-transparent p-2">
+        <div className="flex items-center gap-2 text-sm bg-transparent p-1">
           <span className="text-muted-foreground text-xs">Transaction ID:</span>
           <strong className="text-xs font-mono">{data.transaction_id}</strong>
           <button
