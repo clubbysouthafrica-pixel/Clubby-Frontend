@@ -48,6 +48,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = location.pathname;
 
   const navItems = React.useMemo(() => {
+    const isProd = import.meta.env.VITE_ENVIRONMENT === "Prod";
+    
     const baseItems = [
       {
         title: "Club",
@@ -67,7 +69,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           { title: "Add member", url: "/manage/members/add" },
         ],
       },
-      {
+      ...(isProd ? [] : [{
         title: "Shop",
         url: "/shop",
         icon: ShoppingBag,
@@ -76,7 +78,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           { title: "Orders", url: "/shop/orders" },
           // { title: "Analytics", url: "/shop/analytics" },
         ],
-      },
+      }]),
       {
         title: "Registration form",
         url: "/manage/registrations",
