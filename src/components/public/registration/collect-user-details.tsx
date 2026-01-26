@@ -27,6 +27,14 @@ export function CollectUserDetails({
   const emailsMatch = email === confirmEmail && isEmailValid;
   const isFormValid = emailsMatch && firstName.trim() && surname.trim();
 
+  const formatName = (name: string): string => {
+    return name
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  };
+
   const handleContinue = () => {
     if (!isEmailValid) {
       setError("Invalid email provided.");
@@ -136,7 +144,7 @@ export function CollectUserDetails({
           placeholder="Enter your first name"
           value={firstName}
           onChange={(e) => {
-            setFirstName(e.target.value);
+            setFirstName(formatName(e.target.value));
             setError(undefined);
           }}
           className="text-sm"
@@ -156,7 +164,7 @@ export function CollectUserDetails({
           placeholder="Enter your surname"
           value={surname}
           onChange={(e) => {
-            setSurname(e.target.value);
+            setSurname(formatName(e.target.value));
             setError(undefined);
           }}
           className="text-sm"

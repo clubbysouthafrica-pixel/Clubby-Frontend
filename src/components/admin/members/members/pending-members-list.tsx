@@ -177,21 +177,45 @@ export default function PendingMembersList({
   const [submittedSortAsc, setSubmittedSortAsc] = useState<boolean | null>(
     null,
   );
+  const [memberNameSortAsc, setMemberNameSortAsc] = useState<boolean | null>(null);
+  const [totalFeeSortAsc, setTotalFeeSortAsc] = useState<boolean | null>(null);
+  const [outstandingAmountSortAsc, setOutstandingAmountSortAsc] = useState<boolean | null>(null);
 
   const sortedUnregisteredMembers = useMemo(() => {
-    if (submittedSortAsc === null) return baseUnregisteredMembers;
-    const copy = [...baseUnregisteredMembers];
-    copy.sort((a: ClubMember, b: ClubMember) => {
-      const at = a?.registration_submitted_on
-        ? new Date(a.registration_submitted_on).getTime()
-        : 0;
-      const bt = b?.registration_submitted_on
-        ? new Date(b.registration_submitted_on).getTime()
-        : 0;
-      return submittedSortAsc ? at - bt : bt - at;
-    });
-    return copy;
-  }, [baseUnregisteredMembers, submittedSortAsc]);
+    let sortedCopy = [...baseUnregisteredMembers];
+    
+    if (memberNameSortAsc !== null) {
+      sortedCopy.sort((a: ClubMember, b: ClubMember) => {
+        const aName = `${a.member_first_name} ${a.member_surname}`.toLowerCase();
+        const bName = `${b.member_first_name} ${b.member_surname}`.toLowerCase();
+        return memberNameSortAsc ? aName.localeCompare(bName) : bName.localeCompare(aName);
+      });
+    } else if (totalFeeSortAsc !== null) {
+      sortedCopy.sort((a: ClubMember, b: ClubMember) => {
+        const aFee = a.total_fee || 0;
+        const bFee = b.total_fee || 0;
+        return totalFeeSortAsc ? aFee - bFee : bFee - aFee;
+      });
+    } else if (outstandingAmountSortAsc !== null) {
+      sortedCopy.sort((a: ClubMember, b: ClubMember) => {
+        const aAmount = a.outstanding_amount || 0;
+        const bAmount = b.outstanding_amount || 0;
+        return outstandingAmountSortAsc ? aAmount - bAmount : bAmount - aAmount;
+      });
+    } else if (submittedSortAsc !== null) {
+      sortedCopy.sort((a: ClubMember, b: ClubMember) => {
+        const at = a?.registration_submitted_on
+          ? new Date(a.registration_submitted_on).getTime()
+          : 0;
+        const bt = b?.registration_submitted_on
+          ? new Date(b.registration_submitted_on).getTime()
+          : 0;
+        return submittedSortAsc ? at - bt : bt - at;
+      });
+    }
+    
+    return sortedCopy;
+  }, [baseUnregisteredMembers, submittedSortAsc, memberNameSortAsc, totalFeeSortAsc, outstandingAmountSortAsc]);
 
   useEffect(() => {
     setUnregisteredMembersLength(baseUnregisteredMembers.length);
@@ -205,7 +229,8 @@ export default function PendingMembersList({
         listActionItems.some(
           (item) =>
             item.email === member.member_email &&
-            item.name === `${member.member_first_name} ${member.member_surname}`,
+            item.name ===
+              `${member.member_first_name} ${member.member_surname}`,
         ),
       )
       .map((member: ClubMember) => ({
@@ -290,20 +315,39 @@ export default function PendingMembersList({
                     </div>
                   </TableHead>
                   <TableHead className="text-center w-[150px]">
-                    Member Name
-                  </TableHead>
-                  <TableHead className="text-center w-[150px]">
-                    Member ID
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 hover:underline w-full justify-center"
+                      onClick={() => {
+                        setMemberNameSortAsc((prev) =>
+                          prev === null ? true : !prev,
+                        );
+                        setSubmittedSortAsc(null);
+                        setTotalFeeSortAsc(null);
+                      }}
+                      title="Toggle sort by Member Name"
+                    >
+                      Member Name
+                      {memberNameSortAsc === null ? (
+                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                      ) : (
+                        <span className="text-xs">
+                          {memberNameSortAsc ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </button>
                   </TableHead>
                   <TableHead className="text-center w-[150px]">
                     <button
                       type="button"
-                      className="inline-flex items-center gap-1 hover:underline"
-                      onClick={() =>
+                      className="inline-flex items-center gap-1 hover:underline w-full justify-center"
+                      onClick={() => {
                         setSubmittedSortAsc((prev) =>
                           prev === null ? true : !prev,
-                        )
-                      }
+                        );
+                        setMemberNameSortAsc(null);
+                        setTotalFeeSortAsc(null);
+                      }}
                       title="Toggle sort by Registration Submitted On"
                     >
                       Registration Submitted
@@ -317,7 +361,51 @@ export default function PendingMembersList({
                     </button>
                   </TableHead>
                   <TableHead className="text-center w-[150px]">
-                    Outstanding Reg. Amount
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 hover:underline w-full justify-center"
+                      onClick={() => {
+                        setTotalFeeSortAsc((prev) =>
+                          prev === null ? true : !prev,
+                        );
+                        setSubmittedSortAsc(null);
+                        setMemberNameSortAsc(null);
+                      }}
+                      title="Toggle sort by Total Fee"
+                    >
+                      Total Fee
+                      {totalFeeSortAsc === null ? (
+                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                      ) : (
+                        <span className="text-xs">
+                          {totalFeeSortAsc ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </button>
+                  </TableHead>
+                  <TableHead className="text-center w-[150px]">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 hover:underline w-full justify-center"
+                      onClick={() => {
+                        setOutstandingAmountSortAsc((prev) =>
+                          prev === null ? true : !prev,
+                        );
+                        setMemberNameSortAsc(null);
+                        setTotalFeeSortAsc(null);
+                        setSubmittedSortAsc(null);
+                      }}
+                      title="Toggle sort by Outstanding Amount"
+                    >
+                      Outstanding Reg. Amount
+                      {outstandingAmountSortAsc === null ? (
+                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                      ) : (
+                        <span className="text-xs">
+                          {outstandingAmountSortAsc ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </button>
                   </TableHead>
                   <TableHead className="text-center w-[150px]">
                     Register Member
@@ -413,37 +501,6 @@ export default function PendingMembersList({
                         </a>
                       </TableCell>
                       <TableCell className="text-center w-[150px]">
-                        <div className="inline-flex items-center gap-2 justify-center">
-                          <span className="font-mono">
-                            {member.user_id.slice(0, 8)}...
-                          </span>
-
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigator.clipboard.writeText(member.user_id);
-                            }}
-                            title="Click to copy full Transaction ID"
-                            className="hover:text-primary cursor-pointer"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4 text-muted-foreground hover:text-foreground transition"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M8 16h8m2 0a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v8a2 2 0 002 2zM8 16v2a2 2 0 002 2h8a2 2 0 002-2v-2"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center w-[150px]">
                         {member.registration_submitted_on
                           ? new Date(
                               member.registration_submitted_on,
@@ -451,9 +508,20 @@ export default function PendingMembersList({
                           : "-"}
                       </TableCell>
                       <TableCell className="text-center w-[150px]">
-                        {formatAmount(
-                          member.outstanding_amount,
-                          club?.currency,
+                        {member?.total_fee ? (
+                          formatAmount(member.total_fee, club?.currency)
+                        ) : (
+                          <span className="text-gray-400">n/a</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center w-[150px]">
+                        {member.outstanding_amount ? (
+                          formatAmount(
+                            member.outstanding_amount,
+                            club?.currency,
+                          )
+                        ) : (
+                          <span className="text-gray-400">n/a</span>
                         )}
                       </TableCell>
                       <TableCell className="text-center w-[150px]">
@@ -510,9 +578,13 @@ export default function PendingMembersList({
                                 <div className="flex flex-col gap-1 my-4">
                                   <Label className="text-l">
                                     Outstanding amount:{" "}
-                                    {formatAmount(
-                                      member.outstanding_amount,
-                                      club?.currency,
+                                    {member.outstanding_amount ? (
+                                      formatAmount(
+                                        member.outstanding_amount,
+                                        club?.currency,
+                                      )
+                                    ) : (
+                                      <span className="text-gray-400">n/a</span>
                                     )}
                                   </Label>
                                   <Label className="text-l">
@@ -779,7 +851,9 @@ export default function PendingMembersList({
                             const customField = member.meta_billing?.find(
                               (f: any) => f.field_name === column.field_name,
                             );
-                            columnValue = customField?.value ? formatAmount(customField?.value, club?.currency) : "N/A";
+                            columnValue = customField?.value
+                              ? formatAmount(customField?.value, club?.currency)
+                              : "N/A";
                           }
 
                           if (column.type === "standard") {
@@ -794,7 +868,11 @@ export default function PendingMembersList({
                               key={column.key}
                               className="text-center w-[150px]"
                             >
-                              {columnValue}
+                              {columnValue === "N/A" ? (
+                                <span className="text-gray-400">n/a</span>
+                              ) : (
+                                columnValue
+                              )}
                             </TableCell>
                           );
                         })}
@@ -821,12 +899,20 @@ export default function PendingMembersList({
         onOpenChange={setIsDeregisterDialogOpen}
         title="Deregister Members"
         description="Members to deregister"
-        itemsList={deregisterMembers.map((member) => ({
-          id: member.user_id,
-          name: member.name,
-        }))}
+        itemsList={deregisterMembers.map((member) => {
+          const fullMember = sortedUnregisteredMembers.find(
+            (m) => m.user_id === member.user_id,
+          );
+          return {
+            id: member.user_id,
+            name: member.name,
+            total_fee: fullMember?.total_fee,
+            total_outstanding_amount: fullMember?.outstanding_amount,
+          };
+        })}
         clubId={clubId}
         userIds={deregisterMembers.map((member) => member.user_id)}
+        currency={club?.currency}
         confirmationText="I understand that this action will permanently deregister all selected club members."
         submitButtonText="Deregister"
         onSuccessClose={() => {

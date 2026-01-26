@@ -12,13 +12,14 @@ type PayfastResponse = {
 interface PayFastPaymentProps {
   clubAccountId: string;
   outstandingAmount: number;
+  orderId?: string;
 }
 
-export function PayFastPayment({ clubAccountId, outstandingAmount }: PayFastPaymentProps) {
+export function PayFastPayment({ clubAccountId, outstandingAmount, orderId }: PayFastPaymentProps) {
   const [isPayfastLoading, setIsPayfastLoading] = useState(false);
-  
+
   const { data: payfastData, refetch: refetchPayfast } =
-    useFetchPayFastCheckoutUrlQuery(clubAccountId);
+    useFetchPayFastCheckoutUrlQuery(clubAccountId, orderId);
 
   const handlePayfastClick = async () => {
     setIsPayfastLoading(true);

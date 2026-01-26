@@ -31,6 +31,7 @@ export const deregisterMembersQuery = (request: DeregisterMemberRequest) => {
         club_account_id: request.clubId,
         user_ids: request.userIds,
         deregistration_reason: request.deregistration_reason,
+        refunds: request?.refunds ?? []
     })
         .then(res => res.data);
 }

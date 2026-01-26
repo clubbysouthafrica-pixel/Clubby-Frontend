@@ -10,7 +10,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { UserMinus } from "lucide-react";
+import { User } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../../../ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDeregisterAllMutation } from "@/mutations/admin/useDeregisterMutation";
@@ -80,8 +80,8 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
               aria-label="Deregister season"
               variant="outline"
             >
-              <UserMinus />
-              Deregister Season
+              <User />
+              Start New Season
             </Button>
           </TooltipTrigger>
           <TooltipContent className="mr-2">

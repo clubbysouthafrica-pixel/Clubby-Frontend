@@ -69,6 +69,14 @@ export function OnboardMemberForm({
         return fullPhoneNumber
     }
 
+    const formatName = (name: string): string => {
+        return name
+            .toLowerCase()
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ')
+    }
+
     const registerUser = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
 
@@ -116,7 +124,7 @@ export function OnboardMemberForm({
                                                 type="text"
                                                 placeholder="Enter your first name"
                                                 value={firstName}
-                                                onChange={(e) => setFirstName(e.target.value)}
+                                                onChange={(e) => setFirstName(formatName(e.target.value))}
                                             />
                                         </div>
                                         <div className="grid gap-3">
@@ -126,7 +134,7 @@ export function OnboardMemberForm({
                                                 type="text"
                                                 placeholder="Enter your last name"
                                                 value={surname}
-                                                onChange={(e) => setSurname(e.target.value)}
+                                                onChange={(e) => setSurname(formatName(e.target.value))}
                                             />
                                         </div>
                                         <div className="grid gap-3">

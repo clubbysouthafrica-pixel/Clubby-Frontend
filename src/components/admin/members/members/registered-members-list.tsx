@@ -67,20 +67,37 @@ export default function RegisteredMembersList({
 
   const baseRegisteredMembers = clubMembers?.registered || [];
   const [regSortAsc, setRegSortAsc] = useState<boolean | null>(null);
+  const [memberNameSortAsc, setMemberNameSortAsc] = useState<boolean | null>(null);
+  const [totalFeeSortAsc, setTotalFeeSortAsc] = useState<boolean | null>(null);
   const [isDeregisterDialogOpen, setIsDeregisterDialogOpen] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
 
 
   const sortedRegisteredMembers = useMemo(() => {
-    if (regSortAsc === null) return baseRegisteredMembers;
-    const copy = [...baseRegisteredMembers];
-    copy.sort((a: ClubMember, b: ClubMember) => {
-      const at = a?.registered_on ? new Date(a.registered_on).getTime() : 0;
-      const bt = b?.registered_on ? new Date(b.registered_on).getTime() : 0;
-      return regSortAsc ? at - bt : bt - at;
-    });
-    return copy;
-  }, [baseRegisteredMembers, regSortAsc]);
+    let sortedCopy = [...baseRegisteredMembers];
+    
+    if (memberNameSortAsc !== null) {
+      sortedCopy.sort((a: ClubMember, b: ClubMember) => {
+        const aName = `${a.member_first_name} ${a.member_surname}`.toLowerCase();
+        const bName = `${b.member_first_name} ${b.member_surname}`.toLowerCase();
+        return memberNameSortAsc ? aName.localeCompare(bName) : bName.localeCompare(aName);
+      });
+    } else if (totalFeeSortAsc !== null) {
+      sortedCopy.sort((a: ClubMember, b: ClubMember) => {
+        const aFee = a.total_fee || 0;
+        const bFee = b.total_fee || 0;
+        return totalFeeSortAsc ? aFee - bFee : bFee - aFee;
+      });
+    } else if (regSortAsc !== null) {
+      sortedCopy.sort((a: ClubMember, b: ClubMember) => {
+        const at = a?.registered_on ? new Date(a.registered_on).getTime() : 0;
+        const bt = b?.registered_on ? new Date(b.registered_on).getTime() : 0;
+        return regSortAsc ? at - bt : bt - at;
+      });
+    }
+    
+    return sortedCopy;
+  }, [baseRegisteredMembers, regSortAsc, memberNameSortAsc, totalFeeSortAsc]);
 
   useEffect(() => {
     setRegisteredMembersLength(baseRegisteredMembers.length);
@@ -152,10 +169,42 @@ export default function RegisteredMembersList({
                   </div>
                 </TableHead>
                 <TableHead className="text-center w-[150px]">
-                  Member name
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1 hover:underline w-full justify-center"
+                    onClick={() => {
+                      setMemberNameSortAsc((prev) => (prev === null ? true : !prev));
+                      setRegSortAsc(null);
+                      setTotalFeeSortAsc(null);
+                    }}
+                    title="Toggle sort by Member Name"
+                  >
+                    Member name
+                    {memberNameSortAsc === null ? (
+                      <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                    ) : (
+                      <span className="text-xs">{memberNameSortAsc ? "▲" : "▼"}</span>
+                    )}
+                  </button>
                 </TableHead>
                 <TableHead className="text-center w-[150px]">
-                  Member ID
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1 hover:underline w-full justify-center"
+                    onClick={() => {
+                      setTotalFeeSortAsc((prev) => (prev === null ? true : !prev));
+                      setRegSortAsc(null);
+                      setMemberNameSortAsc(null);
+                    }}
+                    title="Toggle sort by Total Fee"
+                  >
+                    Registration Fee
+                    {totalFeeSortAsc === null ? (
+                      <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                    ) : (
+                      <span className="text-xs">{totalFeeSortAsc ? "▲" : "▼"}</span>
+                    )}
+                  </button>
                 </TableHead>
                 <TableHead className="text-center w-[150px]">
                   <button
@@ -264,35 +313,11 @@ export default function RegisteredMembersList({
                       </a>
                     </TableCell>
                     <TableCell className="text-center w-[150px]">
-                      <div className="inline-flex items-center gap-2 justify-center">
-                        <span className="font-mono">
-                          {member.user_id.slice(0, 8)}...
-                        </span>
-
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigator.clipboard.writeText(member.user_id);
-                          }}
-                          title="Click to copy full Transaction ID"
-                          className="hover:text-primary cursor-pointer"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-4 w-4 text-muted-foreground hover:text-foreground transition"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M8 16h8m2 0a2 2 0 002-2V6a2 2 0 00-2-2H8a2 2 0 00-2 2v8a2 2 0 002 2zM8 16v2a2 2 0 002 2h8a2 2 0 002-2v-2"
-                            />
-                          </svg>
-                        </button>
-                      </div>
+                      {member.total_fee ? (
+                        formatAmount(member.total_fee, currency)
+                      ) : (
+                        <span className="text-gray-400">n/a</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-center w-[150px]">
                       {member.registered_on
@@ -330,7 +355,11 @@ export default function RegisteredMembersList({
                             key={column.key}
                             className="text-center w-[150px]"
                           >
-                            {columnValue}
+                            {columnValue === "N/A" ? (
+                              <span className="text-gray-400">n/a</span>
+                            ) : (
+                              columnValue
+                            )}
                           </TableCell>
                         );
                       })}
@@ -356,12 +385,18 @@ export default function RegisteredMembersList({
         onOpenChange={setIsDeregisterDialogOpen}
         title="Deregister Members"
         description="Members to deregister"
-        itemsList={dereigsterMembers.map((member) => ({
-          id: member.user_id,
-          name: member.name,
-        }))}
+        itemsList={dereigsterMembers.map((member) => {
+          const fullMember = sortedRegisteredMembers.find((m) => m.user_id === member.user_id);
+          return {
+            id: member.user_id,
+            name: member.name,
+            total_fee: fullMember?.total_fee,
+            total_outstanding_amount: fullMember?.outstanding_amount,
+          };
+        })}
         clubId={clubId}
         userIds={dereigsterMembers.map((member) => member.user_id)}
+        currency={currency}
         confirmationText="I understand that this action will permanently deregister all selected club members."
         submitButtonText="Deregister"
         onSuccessClose={() => {
