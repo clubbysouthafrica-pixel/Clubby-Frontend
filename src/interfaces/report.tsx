@@ -13,6 +13,14 @@ export interface ReportDataRow {
   total_revenue: number;
 }
 
+export interface OrderReportDataRow {
+  date: string;
+  total_shop_sold_items: number;
+  total_shop_revenue: number;
+  total_shop_pending_sold_items: number;
+  total_shop_pending_revenue: number;
+}
+
 export interface GeneralReport {
   total_registered_members: number;
   total_pending_members: number;
@@ -20,10 +28,15 @@ export interface GeneralReport {
   total_registration_pending_revenue: number;
   total_pending_revenue: number;
   total_revenue: number;
+  total_shop_sold_items: number;
+  total_shop_revenue: number;
+  total_shop_pending_sold_items: number;
+  total_shop_pending_revenue: number;
   total_active_members: number;
   total_deregistered_members: number;
   data: ReportDataRow[];
   registration_data: RegistrationReportDataRow[];
+  order_data: OrderReportDataRow[];
 }
 
 export interface RegistrationReportRowDataItem {

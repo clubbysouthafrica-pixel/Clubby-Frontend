@@ -1,4 +1,4 @@
-import { ReportDataRow } from "@/interfaces/report"
+import { OrderReportDataRow } from "@/interfaces/report"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { formatAmount } from "@/data/currencies"
 import { OrdersReportingSectionCards } from "./reporting-section-cards"
@@ -42,11 +42,11 @@ export function OrdersReport({ report, currency }: props) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {report.order_data?.map((month: ReportDataRow) => (
+                            {report.order_data?.map((month: OrderReportDataRow) => (
                                 <TableRow key={month.date} className="hover:bg-muted/40">
                                     <TableCell className="text-center font-medium w-1/5">{month.date}</TableCell>
-                                    <TableCell className="text-center w-1/5">{formatAmount(month.total_revenue, currency)}</TableCell>
-                                    <TableCell className="text-center w-1/5">{formatAmount(month.total_pending_revenue, currency)}</TableCell>
+                                    <TableCell className="text-center w-1/5">{formatAmount(month.total_shop_revenue, currency)}</TableCell>
+                                    <TableCell className="text-center w-1/5">{formatAmount(month.total_shop_pending_revenue, currency)}</TableCell>
                                     <TableCell className="text-center w-1/5">{month.total_shop_sold_items}</TableCell>
                                     <TableCell className="text-center w-1/5">{month.total_shop_pending_sold_items}</TableCell>
                                 </TableRow>

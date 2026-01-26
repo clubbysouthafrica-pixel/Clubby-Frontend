@@ -1,4 +1,4 @@
-import { ReportDataRow } from "@/interfaces/report"
+import { RegistrationReportDataRow } from "@/interfaces/report"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { formatAmount } from "@/data/currencies"
 import { RegistrationReportingSectionCards } from "./reporting-section-cards"
@@ -42,7 +42,7 @@ export function RegistrationReport({ report, currency }: props) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {report.registration_data?.map((month: ReportDataRow) => (
+                            {report.registration_data?.map((month: RegistrationReportDataRow) => (
                                 <TableRow key={month.date} className="hover:bg-muted/40">
                                     <TableCell className="text-center font-medium w-1/5">{month.date}</TableCell>
                                     <TableCell className="text-center w-1/5">{formatAmount(month.total_revenue, currency)}</TableCell>

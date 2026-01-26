@@ -1,4 +1,4 @@
-import { ReportDataRow } from "@/interfaces/report";
+import { ReportDataRow, RegistrationReportDataRow, OrderReportDataRow } from "@/interfaces/report";
 import { formatAmount } from "@/data/currencies";
 import {
   ResponsiveContainer,
@@ -116,7 +116,7 @@ export function RevenueAreaChart({ data, currency }: RevenueAreaChartProps) {
 }
 
 type RegistrationComboChartProps = {
-  data: ReportDataRow[];
+  data: RegistrationReportDataRow[];
   currency: string;
 };
 
@@ -147,7 +147,7 @@ function RegistrationCustomTooltip({ active, payload, label, currency }: { activ
 }
 
 export function RegistrationComboChart({ data, currency }: RegistrationComboChartProps) {
-  const chartData = data.map((d) => ({
+  const chartData = data.map((d: RegistrationReportDataRow) => ({
     name: formatMonthLabel(d.date),
     registered: d.total_registered_members,
     pendingMembers: d.total_pending_members,
@@ -311,7 +311,7 @@ export function RegistrationBillingChart({ data, currency }: RegistrationBilling
 }
 
 type OrdersComboChartProps = {
-  data: ReportDataRow[];
+  data: OrderReportDataRow[];
   currency: string;
 };
 
@@ -342,10 +342,10 @@ function OrdersCustomTooltip({ active, payload, label, currency }: { active?: bo
 }
 
 export function OrdersComboChart({ data, currency }: OrdersComboChartProps) {
-  const chartData = data.map((d) => ({
+  const chartData = data.map((d: OrderReportDataRow) => ({
     name: formatMonthLabel(d.date),
-    revenue: d.total_revenue,
-    pending: d.total_pending_revenue,
+    revenue: d.total_shop_revenue,
+    pending: d.total_shop_pending_revenue,
     itemsSold: d.total_shop_sold_items,
     pendingItems: d.total_shop_pending_sold_items,
   }));
