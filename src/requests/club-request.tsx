@@ -23,6 +23,15 @@ export interface ClubDetailsRequest {
     currency: string
     support_email: string
     club_url?: string
+    instagram_url?: string
+    facebook_url?: string
+    about_club?: string
+    opening_times?: Array<{
+        day: string
+        open: string
+        close: string
+        closed: boolean
+    }>
     hide_from_public?: boolean
     registration_submission_email_template_body: string
     registration_submission_email_subject: string

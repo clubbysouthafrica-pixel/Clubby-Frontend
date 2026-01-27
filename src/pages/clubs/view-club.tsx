@@ -653,7 +653,22 @@ export default function ViewClubPage() {
                     )}
 
                     <div className="space-y-6">
-                      {/* OPENING TIMES */}
+                      {data?.about_club && (
+                        <section>
+                          <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                            About Club
+                          </h3>
+
+                          <Card className="rounded-2xl">
+                            <CardContent className="p-5">
+                              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                                {data.about_club}
+                              </p>
+                            </CardContent>
+                          </Card>
+                        </section>
+                      )}
+
                       {data?.opening_times && (
                         <section>
                           <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
@@ -662,20 +677,49 @@ export default function ViewClubPage() {
 
                           <Card className="rounded-2xl">
                             <CardContent className="divide-y p-0">
-                              {Object.entries(data.opening_times).map(
-                                ([day, times]: [string, any]) => (
-                                  <div
-                                    key={day}
-                                    className="flex items-center justify-between px-5 py-3 text-sm"
-                                  >
-                                    <span className="capitalize font-medium">
-                                      {day}
-                                    </span>
-                                    <span className="text-muted-foreground">
-                                      {times.open} – {times.close}
-                                    </span>
-                                  </div>
-                                ),
+                              {Array.isArray(data.opening_times) ? (
+                                data.opening_times.map((times: any, idx: number) => {
+                                  const daysOfWeek = [
+                                    "Monday",
+                                    "Tuesday",
+                                    "Wednesday",
+                                    "Thursday",
+                                    "Friday",
+                                    "Saturday",
+                                    "Sunday",
+                                  ];
+                                  return (
+                                    <div
+                                      key={idx}
+                                      className="flex items-center justify-between px-5 py-3 text-sm"
+                                    >
+                                      <span className="capitalize font-medium">
+                                        {daysOfWeek[idx]}
+                                      </span>
+                                      <span className="text-muted-foreground">
+                                        {times.closed
+                                          ? "Closed"
+                                          : `${times.open} – ${times.close}`}
+                                      </span>
+                                    </div>
+                                  );
+                                })
+                              ) : (
+                                Object.entries(data.opening_times).map(
+                                  ([day, times]: [string, any]) => (
+                                    <div
+                                      key={day}
+                                      className="flex items-center justify-between px-5 py-3 text-sm"
+                                    >
+                                      <span className="capitalize font-medium">
+                                        {day}
+                                      </span>
+                                      <span className="text-muted-foreground">
+                                        {times.open} – {times.close}
+                                      </span>
+                                    </div>
+                                  ),
+                                )
                               )}
                             </CardContent>
                           </Card>
