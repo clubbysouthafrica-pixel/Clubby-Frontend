@@ -88,3 +88,25 @@ export interface RegistrationReportText {
 export interface RegistrationReport {
   report: RegistrationReportDropDown[] | RegistrationReportText;
 }
+
+export interface ShopProductData {
+  date: string;
+  revenue: number;
+  sold_units: number;
+  pending_revenue: number;
+  pending_units: number;
+}
+
+export interface ShopProductReport {
+  product_id: string;
+  product_name: string;
+  total_revenue: number;
+  total_pending_revenue: number;
+  total_sold_units: number;
+  total_pending_units: number;
+  data: ShopProductData[];
+}
+
+export interface ShopReport {
+  report: ShopProductReport[];
+}
