@@ -60,14 +60,14 @@ export default function EditClubDetails() {
     "Sunday",
   ];
 
-  const [openingTimes, setOpeningTimes] = useState(
-    daysOfWeek.map((day) => ({
-      day,
-      open: "",
-      close: "",
-      closed: false,
-    })),
-  );
+  const defaultOpeningTimes = daysOfWeek.map((day) => ({
+    day,
+    open: "",
+    close: "",
+    closed: false,
+  }));
+
+  const [openingTimes, setOpeningTimes] = useState(defaultOpeningTimes);
 
   const [activeTab, setActiveTab] = useState("club-view");
   const [country, setCountry] = useState("");
@@ -107,6 +107,10 @@ export default function EditClubDetails() {
       setSupportEmail(data.support_email);
       setClubUrl(data?.club_url || "");
       setHideFromPublic(data?.hide_from_public ?? false);
+      setInstagramUrl(data?.instagram_url || "");
+      setFacebookUrl(data?.facebook_url || "");
+      setClubDetails(data?.about_club || "");
+      setOpeningTimes(data?.opening_times || defaultOpeningTimes);
 
       setRegistrationSubmissionEmailTemplate(
         data?.registration_submission_email_template_body ??
@@ -143,12 +147,16 @@ export default function EditClubDetails() {
   }) => {
     mutate(
       {
+        opening_times: openingTimes,
         club_account_id: club?.club_account_id as string,
         bank_details: bankingData.bank_details,
         country_of_operation: country,
         currency,
         support_email: supportEmail,
         club_url: clubUrl,
+        about_club: clubDetails,
+        instagram_url: instagramUrl,
+        facebook_url: facebookUrl,
         hide_from_public: hideFromPublic,
         registration_submission_email_template_body:
           registrationSubmissionEmailTemplate,
@@ -193,6 +201,9 @@ export default function EditClubDetails() {
           merchant_key: "",
           passphrase: "",
         },
+        opening_times: openingTimes,
+        instagram_url: instagramUrl,
+        facebook_url: facebookUrl,
         country_of_operation: country,
         currency,
         support_email: supportEmail,
@@ -225,7 +236,6 @@ export default function EditClubDetails() {
         },
       },
     );
-
   if (isLoading) {
     return (
       <div className="p-5 min-h-screen">
@@ -323,9 +333,9 @@ export default function EditClubDetails() {
                     </p>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="club_url">About Club</Label>
+                    <Label htmlFor="about_club">About Club</Label>
                     <Textarea
-                      id="club_url"
+                      id="about_club"
                       placeholder="Information about the club"
                       value={clubDetails}
                       onChange={(e) => setClubDetails(e.target.value)}
