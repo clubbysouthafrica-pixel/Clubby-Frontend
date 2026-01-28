@@ -106,11 +106,18 @@ export default function EditClubDetails() {
       setCountry(data?.country_of_operation);
       setSupportEmail(data.support_email);
       setClubUrl(data?.club_url || "");
+      setInstagramUrl(data?.instagram_url || "");
+      setFacebookUrl(data?.facebook_url || "");
+      setClubDetails(data?.about_club || "");
       setHideFromPublic(data?.hide_from_public ?? false);
       setInstagramUrl(data?.instagram_url || "");
       setFacebookUrl(data?.facebook_url || "");
       setClubDetails(data?.about_club || "");
       setOpeningTimes(data?.opening_times || defaultOpeningTimes);
+
+      if (data?.opening_times && Array.isArray(data.opening_times)) {
+        setOpeningTimes(data.opening_times);
+      }
 
       setRegistrationSubmissionEmailTemplate(
         data?.registration_submission_email_template_body ??
@@ -208,6 +215,10 @@ export default function EditClubDetails() {
         currency,
         support_email: supportEmail,
         club_url: clubUrl,
+        instagram_url: instagramUrl,
+        facebook_url: facebookUrl,
+        about_club: clubDetails,
+        opening_times: openingTimes,
         hide_from_public: hideFromPublic,
         registration_submission_email_template_body:
           registrationSubmissionEmailTemplate,
