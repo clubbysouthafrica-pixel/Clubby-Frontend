@@ -215,10 +215,7 @@ export default function EditClubDetails() {
         currency,
         support_email: supportEmail,
         club_url: clubUrl,
-        instagram_url: instagramUrl,
-        facebook_url: facebookUrl,
         about_club: clubDetails,
-        opening_times: openingTimes,
         hide_from_public: hideFromPublic,
         registration_submission_email_template_body:
           registrationSubmissionEmailTemplate,

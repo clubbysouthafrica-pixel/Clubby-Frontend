@@ -81,6 +81,7 @@ import { toast } from "sonner";
 import { FaFacebook, FaInstagram, FaTwitter } from "react-icons/fa";
 import InfoRow from "@/components/info-row";
 import SocialLink from "@/components/social-links";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function epochToJoinedString(epoch: number): string {
   const date = new Date(epoch); // if epoch is in seconds, use new Date(epoch * 1000)
@@ -128,7 +129,8 @@ export default function ViewClubPage() {
   const [showOrderSelection, setShowOrderSelection] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [fulfillmentDialogOpen, setFulfillmentDialogOpen] = useState(false);
-  const [selectedFulfillmentOrder, setSelectedFulfillmentOrder] = useState<any>(null);
+  const [selectedFulfillmentOrder, setSelectedFulfillmentOrder] =
+    useState<any>(null);
   const [updatingFulfillment, setUpdatingFulfillment] = useState(false);
 
   // Fetch member orders for the shop tab
@@ -206,8 +208,13 @@ export default function ViewClubPage() {
 
     setUpdatingFulfillment(true);
     try {
-      const response = await updateOrderFulfillment(data.club_account_id, selectedFulfillmentOrder.order_id);
-      toast.success(response?.message || "Order fulfillment status updated successfully!");
+      const response = await updateOrderFulfillment(
+        data.club_account_id,
+        selectedFulfillmentOrder.order_id,
+      );
+      toast.success(
+        response?.message || "Order fulfillment status updated successfully!",
+      );
       setFulfillmentDialogOpen(false);
 
       // Update the local cache with the new fulfillment status
@@ -862,9 +869,13 @@ export default function ViewClubPage() {
                                           className={`font-medium ${
                                             order.payment_status === "PAID"
                                               ? "bg-green-100 text-green-800 border-green-200"
-                                              : order.payment_status === "PENDING" || order.payment_status === "PARTIALLY_PAID"
+                                              : order.payment_status ===
+                                                    "PENDING" ||
+                                                  order.payment_status ===
+                                                    "PARTIALLY_PAID"
                                                 ? "bg-orange-100 text-orange-800 border-orange-200"
-                                                : order.payment_status === "cancelled"
+                                                : order.payment_status ===
+                                                    "cancelled"
                                                   ? "bg-red-100 text-red-800 border-red-200"
                                                   : "bg-gray-100 text-gray-800 border-gray-200"
                                           }`}
@@ -876,7 +887,9 @@ export default function ViewClubPage() {
                                               order.payment_status.slice(1)
                                             : "Unknown"}
                                         </Badge>
-                                        {(order.payment_status === "PENDING" || order.payment_status === "PARTIALLY_PAID") && (
+                                        {(order.payment_status === "PENDING" ||
+                                          order.payment_status ===
+                                            "PARTIALLY_PAID") && (
                                           <Button
                                             size="sm"
                                             variant="ghost"
@@ -892,7 +905,8 @@ export default function ViewClubPage() {
                                       <div className="flex items-center justify-center gap-2">
                                         <Badge
                                           onClick={() =>
-                                            order.fulfillment_status === "PROCESSING" &&
+                                            order.fulfillment_status ===
+                                              "PROCESSING" &&
                                             handleFulfillmentStatusClick(order)
                                           }
                                           className={`font-medium ${
@@ -915,7 +929,8 @@ export default function ViewClubPage() {
                                               order.fulfillment_status.slice(1)
                                             : "Unknown"}
                                         </Badge>
-                                        {order.fulfillment_status === "PROCESSING" && (
+                                        {order.fulfillment_status ===
+                                          "PROCESSING" && (
                                           <div className="relative group">
                                             <AlertTriangle className="w-4 h-4 text-purple-600 cursor-help" />
                                             <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10 bottom-full mb-2 right-0">
@@ -939,14 +954,28 @@ export default function ViewClubPage() {
                 <TabsContent value="home" className="mt-6">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {/* GALLERY */}
-                    {data?.gallery?.length > 0 && (
-                      <section className="sm:col-span-2">
-                        <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                          Gallery
-                        </h3>
+                    <section className="sm:col-span-2">
+                      <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                        Gallery
+                      </h3>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                          {data.gallery.map((img: string, idx: number) => (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        {(!data?.gallery || data.gallery.length === 0) && (
+                          <>
+                            <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group">
+                              <Skeleton className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                            </div>
+                            <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group">
+                              <Skeleton className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                            </div>
+                            <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group">
+                              <Skeleton className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                            </div>
+                          </>
+                        )}
+
+                        {data?.gallery?.length > 0 &&
+                          data.gallery.map((img: string, idx: number) => (
                             <div
                               key={idx}
                               className="relative aspect-square overflow-hidden rounded-xl bg-muted group"
@@ -958,9 +987,8 @@ export default function ViewClubPage() {
                               />
                             </div>
                           ))}
-                        </div>
-                      </section>
-                    )}
+                      </div>
+                    </section>
 
                     <div className="space-y-6">
                       {data?.about_club && (
@@ -987,50 +1015,50 @@ export default function ViewClubPage() {
 
                           <Card className="rounded-2xl">
                             <CardContent className="divide-y p-0">
-                              {Array.isArray(data.opening_times) ? (
-                                data.opening_times.map((times: any, idx: number) => {
-                                  const daysOfWeek = [
-                                    "Monday",
-                                    "Tuesday",
-                                    "Wednesday",
-                                    "Thursday",
-                                    "Friday",
-                                    "Saturday",
-                                    "Sunday",
-                                  ];
-                                  return (
-                                    <div
-                                      key={idx}
-                                      className="flex items-center justify-between px-5 py-3 text-sm"
-                                    >
-                                      <span className="capitalize font-medium">
-                                        {daysOfWeek[idx]}
-                                      </span>
-                                      <span className="text-muted-foreground">
-                                        {times.closed
-                                          ? "Closed"
-                                          : `${times.open} – ${times.close}`}
-                                      </span>
-                                    </div>
-                                  );
-                                })
-                              ) : (
-                                Object.entries(data.opening_times).map(
-                                  ([day, times]: [string, any]) => (
-                                    <div
-                                      key={day}
-                                      className="flex items-center justify-between px-5 py-3 text-sm"
-                                    >
-                                      <span className="capitalize font-medium">
-                                        {day}
-                                      </span>
-                                      <span className="text-muted-foreground">
-                                        {times.open} – {times.close}
-                                      </span>
-                                    </div>
-                                  ),
-                                )
-                              )}
+                              {Array.isArray(data.opening_times)
+                                ? data.opening_times.map(
+                                    (times: any, idx: number) => {
+                                      const daysOfWeek = [
+                                        "Monday",
+                                        "Tuesday",
+                                        "Wednesday",
+                                        "Thursday",
+                                        "Friday",
+                                        "Saturday",
+                                        "Sunday",
+                                      ];
+                                      return (
+                                        <div
+                                          key={idx}
+                                          className="flex items-center justify-between px-5 py-3 text-sm"
+                                        >
+                                          <span className="capitalize font-medium">
+                                            {daysOfWeek[idx]}
+                                          </span>
+                                          <span className="text-muted-foreground">
+                                            {times.closed
+                                              ? "Closed"
+                                              : `${times.open} – ${times.close}`}
+                                          </span>
+                                        </div>
+                                      );
+                                    },
+                                  )
+                                : Object.entries(data.opening_times).map(
+                                    ([day, times]: [string, any]) => (
+                                      <div
+                                        key={day}
+                                        className="flex items-center justify-between px-5 py-3 text-sm"
+                                      >
+                                        <span className="capitalize font-medium">
+                                          {day}
+                                        </span>
+                                        <span className="text-muted-foreground">
+                                          {times.open} – {times.close}
+                                        </span>
+                                      </div>
+                                    ),
+                                  )}
                             </CardContent>
                           </Card>
                         </section>
@@ -1189,7 +1217,8 @@ export default function ViewClubPage() {
                     Amount Paid:{" "}
                     <span className="font-semibold text-foreground">
                       {formatAmount(
-                        selectedOrder?.total_amount - selectedOrder?.outstanding_amount || 0,
+                        selectedOrder?.total_amount -
+                          selectedOrder?.outstanding_amount || 0,
                         data?.currency,
                       )}
                     </span>
@@ -1596,12 +1625,17 @@ export default function ViewClubPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={fulfillmentDialogOpen} onOpenChange={setFulfillmentDialogOpen}>
+      <Dialog
+        open={fulfillmentDialogOpen}
+        onOpenChange={setFulfillmentDialogOpen}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Confirm Your Order Has Been Received</DialogTitle>
             <DialogDescription>
-              Are you certain you want to confirm you have received your order? This will be reflected on the admin side too and considered received.
+              Are you certain you want to confirm you have received your order?
+              This will be reflected on the admin side too and considered
+              received.
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-3 justify-end mt-6">
