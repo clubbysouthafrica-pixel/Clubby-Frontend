@@ -119,7 +119,6 @@ export default function ViewClubPage() {
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState("home");
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [iframeLoading, setIframeLoading] = useState(true);
   const [editingReference, setEditingReference] = useState(false);
   const [newReference, setNewReference] = useState(
     bankDetails?.registration_payment_reference || "",
@@ -643,33 +642,17 @@ export default function ViewClubPage() {
                 value={activeTab}
                 onValueChange={(value) => {
                   setActiveTab(value);
-                  if (value === "home" && data?.club_url) {
-                    setIframeLoading(true);
-                  }
                 }}
               >
-                <TabsList
-                  className={cn(
-                    "bg-background/50 backdrop-blur-sm border border-primary/20 shadow-lg",
-                    isMobile
-                      ? "flex flex-col h-auto w-full gap-1 p-1"
-                      : "justify-start h-12 w-full",
-                  )}
-                >
-                  <TabsTrigger
+                {data?.club_member_exists && (
+                  <TabsList
                     className={cn(
-                      "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium",
+                      "bg-background/50 backdrop-blur-sm border border-primary/20 shadow-lg",
                       isMobile
-                        ? "w-full justify-center text-sm h-10"
-                        : "w-[200px] h-10",
+                        ? "flex flex-col h-auto w-full gap-1 p-1"
+                        : "justify-start h-12 w-full",
                     )}
-                    value="home"
                   >
-                    <Home className="w-4 h-4 mr-2" />
-                    Home
-                  </TabsTrigger>
-                  {(data?.club_member_exists ||
-                    data?.resubmission_required) && (
                     <TabsTrigger
                       className={cn(
                         "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium",
@@ -677,37 +660,51 @@ export default function ViewClubPage() {
                           ? "w-full justify-center text-sm h-10"
                           : "w-[200px] h-10",
                       )}
-                      value="bank"
+                      value="home"
                     >
-                      <CreditCard className="w-4 h-4 mr-2" />
-                      {isMobile ? "Payments" : "Payments & Billing"}
+                      <Home className="w-4 h-4 mr-2" />
+                      Home
                     </TabsTrigger>
-                  )}
-                  {(data?.club_member_exists ||
-                    data?.resubmission_required) && (
-                    <TabsTrigger
-                      className={cn(
-                        "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium",
-                        isMobile
-                          ? "w-full justify-center text-sm h-10"
-                          : "w-[200px] h-10",
-                      )}
-                      value="member-registration"
-                    >
-                      <FileText className="w-4 h-4 mr-2" />
-                      Registration
-                    </TabsTrigger>
-                  )}
-                  <ShopTab
-                    clubId={clubId!}
-                    isMobile={isMobile}
-                    isClubMember={
-                      data?.club_member_exists || data?.resubmission_required
-                    }
-                    isRegistered={data?.registered}
-                  />
-                </TabsList>
-
+                    {(data?.club_member_exists ||
+                      data?.resubmission_required) && (
+                      <TabsTrigger
+                        className={cn(
+                          "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium",
+                          isMobile
+                            ? "w-full justify-center text-sm h-10"
+                            : "w-[200px] h-10",
+                        )}
+                        value="bank"
+                      >
+                        <CreditCard className="w-4 h-4 mr-2" />
+                        {isMobile ? "Payments" : "Payments & Billing"}
+                      </TabsTrigger>
+                    )}
+                    {(data?.club_member_exists ||
+                      data?.resubmission_required) && (
+                      <TabsTrigger
+                        className={cn(
+                          "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium",
+                          isMobile
+                            ? "w-full justify-center text-sm h-10"
+                            : "w-[200px] h-10",
+                        )}
+                        value="member-registration"
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Registration
+                      </TabsTrigger>
+                    )}
+                    <ShopTab
+                      clubId={clubId!}
+                      isMobile={isMobile}
+                      isClubMember={
+                        data?.club_member_exists || data?.resubmission_required
+                      }
+                      isRegistered={data?.registered}
+                    />
+                  </TabsList>
+                )}
                 <RegistrationTabContent
                   membershipStatus={
                     data.resubmission_required
