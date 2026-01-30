@@ -93,7 +93,7 @@ interface ReusableRegistrationFormProps {
   setFieldValue: (
     pageIndex: number,
     fieldId: string,
-    updater: (f: PageFieldBase) => PageFieldBase
+    updater: (f: PageFieldBase) => PageFieldBase,
   ) => void;
   requiredFieldsMissing: boolean;
   missingFieldNames?: string[];
@@ -155,8 +155,12 @@ export function ReusableRegistrationForm({
   };
 
   return (
-    <div className={`flex justify-center items-center px-0 lg:px-0 ${className ?? "py-4 lg:py-8"}`}>
-      <Card className={`w-full lg:w-[800px] gap-2 border shadow-sm pt-0 ${className}`}>
+    <div
+      className={`flex justify-center items-center px-0 lg:px-0 w-full overflow-x-hidden ${className ?? "py-4 lg:py-8"}`}
+    >
+      <Card
+        className={`w-full max-w-full lg:w-[800px] gap-2 border shadow-sm pt-0 ${className}`}
+      >
         {showHeader && (
           <CardHeader className="border-b bg-muted/30 py-4 lg:py-6 pb-4 lg:pb-6 flex flex-col items-center gap-3">
             {clubProfileUrl && (
@@ -182,7 +186,7 @@ export function ReusableRegistrationForm({
           {pages.length > 0 && (
             <form>
               <div className="space-y-2 lg:space-y-2 min-w-0">
-                <div className="grid gap-2 lg:gap-2 min-w-0">
+                <div className="gap-2 lg:gap-2 min-w-0">
                   {topContent}
 
                   {pages[currentPageIndex] && (
@@ -199,24 +203,24 @@ export function ReusableRegistrationForm({
                       {pages[currentPageIndex].fields
                         .sort(
                           (a, b) =>
-                            Number(a.field_order_id) - Number(b.field_order_id)
+                            Number(a.field_order_id) - Number(b.field_order_id),
                         )
                         .map((field) => {
                           if (field.field_type === "TEXT" && field.field_text) {
                             const cleaned = field.field_text
                               .replace(
                                 /<ol>(\s*<li[^>]*data-list="bullet"[^>]*>[\s\S]*?)<\/ol>/g,
-                                "<ul>$1</ul>"
+                                "<ul>$1</ul>",
                               )
                               .replace(
                                 /<span class="ql-ui"[^>]*><\/span>/g,
-                                ""
+                                "",
                               );
 
                             return (
                               <div
                                 key={field.field_order_id}
-                                className="prose prose-sm max-w-none bg-muted/10 rounded-lg break-words overflow-hidden w-full [&_*]:break-words [&_*]:max-w-full [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-semibold [&_h4]:text-base [&_h4]:font-semibold [&_h5]:text-sm [&_h5]:font-semibold [&_h6]:text-xs [&_h6]:font-semibold"
+                                className="prose prose-sm max-w-none bg-muted/10 break-words overflow-hidden w-full [&_*]:break-words [&_*]:max-w-full [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-semibold [&_h4]:text-base [&_h4]:font-semibold [&_h5]:text-sm [&_h5]:font-semibold [&_h6]:text-xs [&_h6]:font-semibold"
                                 dangerouslySetInnerHTML={{ __html: cleaned }}
                               />
                             );

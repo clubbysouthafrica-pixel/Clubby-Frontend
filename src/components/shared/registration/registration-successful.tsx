@@ -39,7 +39,7 @@ export default function RegistrationSuccessful({
         <h1 className="text-3xl font-bold text-gray-900 mb-2">{clubName}</h1>
       )}
 
-      <div className="flex flex-row gap-4">
+      <div className="flex flex-col md:flex-row gap-4 items-center md:items-start">
         <h2 className="mt-4 text-2xl font-semibold text-gray-900">{title}</h2>
         <div className="p-4 rounded-full bg-green-50 inline-flex items-center justify-center">
           <CheckCircle2 className="text-green-600 h-10 w-10" />

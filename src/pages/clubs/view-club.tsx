@@ -76,6 +76,10 @@ import { useContext } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { updatePaymentReferenceService } from "@/services/profile";
 import { toast } from "sonner";
+import { FaFacebook, FaInstagram, FaTwitter } from "react-icons/fa";
+import InfoRow from "@/components/info-row";
+import SocialLink from "@/components/social-links";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function epochToJoinedString(epoch: number): string {
   const date = new Date(epoch); // if epoch is in seconds, use new Date(epoch * 1000)
@@ -113,7 +117,6 @@ export default function ViewClubPage() {
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState("home");
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [iframeLoading, setIframeLoading] = useState(true);
   const [editingReference, setEditingReference] = useState(false);
   const [newReference, setNewReference] = useState(
     bankDetails?.registration_payment_reference || "",
@@ -123,7 +126,8 @@ export default function ViewClubPage() {
   const [showOrderSelection, setShowOrderSelection] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [fulfillmentDialogOpen, setFulfillmentDialogOpen] = useState(false);
-  const [selectedFulfillmentOrder, setSelectedFulfillmentOrder] = useState<any>(null);
+  const [selectedFulfillmentOrder, setSelectedFulfillmentOrder] =
+    useState<any>(null);
   const [updatingFulfillment, setUpdatingFulfillment] = useState(false);
 
   // Fetch member orders for the shop tab
@@ -201,8 +205,13 @@ export default function ViewClubPage() {
 
     setUpdatingFulfillment(true);
     try {
-      const response = await updateOrderFulfillment(data.club_account_id, selectedFulfillmentOrder.order_id);
-      toast.success(response?.message || "Order fulfillment status updated successfully!");
+      const response = await updateOrderFulfillment(
+        data.club_account_id,
+        selectedFulfillmentOrder.order_id,
+      );
+      toast.success(
+        response?.message || "Order fulfillment status updated successfully!",
+      );
       setFulfillmentDialogOpen(false);
 
       // Update the local cache with the new fulfillment status
@@ -457,6 +466,51 @@ export default function ViewClubPage() {
                             <span>{data.support_email}</span>
                           </div>
                         </div>
+                        {(data?.club_url ||
+                          data?.facebook ||
+                          data?.instagram ||
+                          data?.twitter) && (
+                          <section>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                              {data?.club_url && (
+                                <SocialLink
+                                  icon={<Globe />}
+                                  label="Website"
+                                  onClick={() =>
+                                    window.open(data.club_url, "_blank")
+                                  }
+                                />
+                              )}
+                              {data?.facebook && (
+                                <SocialLink
+                                  icon={<FaFacebook />}
+                                  label="Facebook"
+                                  onClick={() =>
+                                    window.open(data.facebook, "_blank")
+                                  }
+                                />
+                              )}
+                              {data?.instagram && (
+                                <SocialLink
+                                  icon={<FaInstagram />}
+                                  label="Instagram"
+                                  onClick={() =>
+                                    window.open(data.instagram, "_blank")
+                                  }
+                                />
+                              )}
+                              {data?.twitter && (
+                                <SocialLink
+                                  icon={<FaTwitter />}
+                                  label="Twitter"
+                                  onClick={() =>
+                                    window.open(data.twitter, "_blank")
+                                  }
+                                />
+                              )}
+                            </div>
+                          </section>
+                        )}
                       </div>
 
                       <div className="flex flex-col gap-4 min-w-fit">
@@ -586,33 +640,17 @@ export default function ViewClubPage() {
                 value={activeTab}
                 onValueChange={(value) => {
                   setActiveTab(value);
-                  if (value === "home" && data?.club_url) {
-                    setIframeLoading(true);
-                  }
                 }}
               >
-                <TabsList
-                  className={cn(
-                    "bg-background/50 backdrop-blur-sm border border-primary/20 shadow-lg",
-                    isMobile
-                      ? "flex flex-col h-auto w-full gap-1 p-1"
-                      : "justify-start h-12 w-full",
-                  )}
-                >
-                  <TabsTrigger
+                {data?.club_member_exists && (
+                  <TabsList
                     className={cn(
-                      "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium",
+                      "bg-background/50 backdrop-blur-sm border border-primary/20 shadow-lg",
                       isMobile
-                        ? "w-full justify-center text-sm h-10"
-                        : "w-[200px] h-10",
+                        ? "flex flex-col h-auto w-full gap-1 p-1"
+                        : "justify-start h-12 w-full",
                     )}
-                    value="home"
                   >
-                    <Home className="w-4 h-4 mr-2" />
-                    Home
-                  </TabsTrigger>
-                  {(data?.club_member_exists ||
-                    data?.resubmission_required) && (
                     <TabsTrigger
                       className={cn(
                         "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium",
@@ -620,37 +658,51 @@ export default function ViewClubPage() {
                           ? "w-full justify-center text-sm h-10"
                           : "w-[200px] h-10",
                       )}
-                      value="bank"
+                      value="home"
                     >
-                      <CreditCard className="w-4 h-4 mr-2" />
-                      {isMobile ? "Payments" : "Payments & Billing"}
+                      <Home className="w-4 h-4 mr-2" />
+                      Home
                     </TabsTrigger>
-                  )}
-                  {(data?.club_member_exists ||
-                    data?.resubmission_required) && (
-                    <TabsTrigger
-                      className={cn(
-                        "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium",
-                        isMobile
-                          ? "w-full justify-center text-sm h-10"
-                          : "w-[200px] h-10",
-                      )}
-                      value="member-registration"
-                    >
-                      <FileText className="w-4 h-4 mr-2" />
-                      Registration
-                    </TabsTrigger>
-                  )}
-                  <ShopTab
-                    clubId={clubId!}
-                    isMobile={isMobile}
-                    isClubMember={
-                      data?.club_member_exists || data?.resubmission_required
-                    }
-                    isRegistered={data?.registered}
-                  />
-                </TabsList>
-
+                    {(data?.club_member_exists ||
+                      data?.resubmission_required) && (
+                      <TabsTrigger
+                        className={cn(
+                          "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium",
+                          isMobile
+                            ? "w-full justify-center text-sm h-10"
+                            : "w-[200px] h-10",
+                        )}
+                        value="bank"
+                      >
+                        <CreditCard className="w-4 h-4 mr-2" />
+                        {isMobile ? "Payments" : "Payments & Billing"}
+                      </TabsTrigger>
+                    )}
+                    {(data?.club_member_exists ||
+                      data?.resubmission_required) && (
+                      <TabsTrigger
+                        className={cn(
+                          "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium",
+                          isMobile
+                            ? "w-full justify-center text-sm h-10"
+                            : "w-[200px] h-10",
+                        )}
+                        value="member-registration"
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Registration
+                      </TabsTrigger>
+                    )}
+                    <ShopTab
+                      clubId={clubId!}
+                      isMobile={isMobile}
+                      isClubMember={
+                        data?.club_member_exists || data?.resubmission_required
+                      }
+                      isRegistered={data?.registered}
+                    />
+                  </TabsList>
+                )}
                 <RegistrationTabContent
                   membershipStatus={
                     data.resubmission_required
@@ -812,9 +864,13 @@ export default function ViewClubPage() {
                                           className={`font-medium ${
                                             order.payment_status === "PAID"
                                               ? "bg-green-100 text-green-800 border-green-200"
-                                              : order.payment_status === "PENDING" || order.payment_status === "PARTIALLY_PAID"
+                                              : order.payment_status ===
+                                                    "PENDING" ||
+                                                  order.payment_status ===
+                                                    "PARTIALLY_PAID"
                                                 ? "bg-orange-100 text-orange-800 border-orange-200"
-                                                : order.payment_status === "cancelled"
+                                                : order.payment_status ===
+                                                    "cancelled"
                                                   ? "bg-red-100 text-red-800 border-red-200"
                                                   : "bg-gray-100 text-gray-800 border-gray-200"
                                           }`}
@@ -826,7 +882,9 @@ export default function ViewClubPage() {
                                               order.payment_status.slice(1)
                                             : "Unknown"}
                                         </Badge>
-                                        {(order.payment_status === "PENDING" || order.payment_status === "PARTIALLY_PAID") && (
+                                        {(order.payment_status === "PENDING" ||
+                                          order.payment_status ===
+                                            "PARTIALLY_PAID") && (
                                           <Button
                                             size="sm"
                                             variant="ghost"
@@ -842,7 +900,8 @@ export default function ViewClubPage() {
                                       <div className="flex items-center justify-center gap-2">
                                         <Badge
                                           onClick={() =>
-                                            order.fulfillment_status === "PROCESSING" &&
+                                            order.fulfillment_status ===
+                                              "PROCESSING" &&
                                             handleFulfillmentStatusClick(order)
                                           }
                                           className={`font-medium ${
@@ -865,7 +924,8 @@ export default function ViewClubPage() {
                                               order.fulfillment_status.slice(1)
                                             : "Unknown"}
                                         </Badge>
-                                        {order.fulfillment_status === "PROCESSING" && (
+                                        {order.fulfillment_status ===
+                                          "PROCESSING" && (
                                           <div className="relative group">
                                             <AlertTriangle className="w-4 h-4 text-purple-600 cursor-help" />
                                             <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10 bottom-full mb-2 right-0">
@@ -885,101 +945,152 @@ export default function ViewClubPage() {
                   </div>
                 </TabsContent>
 
+                {/* HOME TAB SECTION */}
                 <TabsContent value="home" className="mt-6">
-                  <div className="space-y-6">
-                    {data?.club_url ? (
-                      <Card className="border-primary/20 shadow-lg overflow-hidden">
-                        <div className="relative group w-full overflow-hidden">
-                          <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-4 border-b border-primary/20">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <Globe className="w-5 h-5 text-primary" />
-                                <div>
-                                  <h3 className="font-semibold text-foreground">
-                                    Club Website
-                                  </h3>
-                                  <p className="text-sm text-muted-foreground">
-                                    Interactive club content
-                                  </p>
-                                </div>
-                              </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  window.open(data.club_url!, "_blank")
-                                }
-                                className="bg-background/50 backdrop-blur-sm border-primary/20 hover:bg-primary/5"
-                              >
-                                <ExternalLink className="h-4 w-4 mr-2" />
-                                Open Full Site
-                              </Button>
-                            </div>
-                          </div>
-                          <div
-                            className="relative w-full bg-background"
-                            style={{ height: "70vh" }}
-                          >
-                            {iframeLoading && (
-                              <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-50">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                              </div>
-                            )}
-                            <iframe
-                              src={data.club_url}
-                              title="Club Website"
-                              className="w-full border-0 bg-background"
-                              style={{ height: "100%" }}
-                              onLoad={() => setIframeLoading(false)}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-12">
+                    <div className="space-y-6">
+
+                      {/* CONTACT INFO */}
+                      <section>
+                        <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                          Club Information
+                        </h3>
+
+                        <Card className="rounded-2xl">
+                          <CardContent className="space-y-5 p-5">
+                            <InfoRow
+                              icon={<Mail />}
+                              label="Support Email"
+                              value={data.support_email}
                             />
-                          </div>
-                        </div>
-                      </Card>
-                    ) : (
-                      <div className="grid gap-6 md:grid-cols-2">
-                        <Card className="border-primary/20 shadow-lg">
-                          <CardHeader className="pb-4">
-                            <CardTitle className="flex items-center gap-2 text-lg">
-                              <Mail className="w-5 h-5 text-primary" />
-                              Contact Information
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                              <Mail className="h-5 w-5 text-primary" />
-                              <div>
-                                <p className="text-sm text-muted-foreground">
-                                  Support Email
-                                </p>
-                                <p className="font-medium">
-                                  {data.support_email}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                              <MapPin className="h-5 w-5 text-primary" />
-                              <div>
-                                <p className="text-sm text-muted-foreground">
-                                  Location
-                                </p>
-                                <p className="font-medium">{countryName}</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                              <Calendar className="h-5 w-5 text-primary" />
-                              <div>
-                                <p className="text-sm text-muted-foreground">
-                                  Established
-                                </p>
-                                <p className="font-medium">
-                                  {epochToJoinedString(data.joined)}
-                                </p>
-                              </div>
-                            </div>
+
+                            <InfoRow
+                              icon={<MapPin />}
+                              label="Location"
+                              value={countryName}
+                            />
+
+                            <InfoRow
+                              icon={<Calendar />}
+                              label="Established"
+                              value={epochToJoinedString(data.joined)}
+                            />
                           </CardContent>
                         </Card>
-                      </div>
-                    )}
+                      </section>
+
+                      {data?.opening_times && (
+                        <section>
+                          <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                            Opening Times
+                          </h3>
+
+                          <Card className="rounded-2xl">
+                            <CardContent className="divide-y p-0">
+                              {Array.isArray(data.opening_times)
+                                ? data.opening_times.map(
+                                    (times: any, idx: number) => {
+                                      const daysOfWeek = [
+                                        "Monday",
+                                        "Tuesday",
+                                        "Wednesday",
+                                        "Thursday",
+                                        "Friday",
+                                        "Saturday",
+                                        "Sunday",
+                                      ];
+                                      return (
+                                        <div
+                                          key={idx}
+                                          className="flex items-center justify-between px-5 py-3 text-sm"
+                                        >
+                                          <span className="capitalize font-medium">
+                                            {daysOfWeek[idx]}
+                                          </span>
+                                          <span className="text-muted-foreground">
+                                            {times.closed
+                                              ? "Closed"
+                                              : `${times.open} – ${times.close}`}
+                                          </span>
+                                        </div>
+                                      );
+                                    },
+                                  )
+                                : Object.entries(data.opening_times).map(
+                                    ([day, times]: [string, any]) => (
+                                      <div
+                                        key={day}
+                                        className="flex items-center justify-between px-5 py-3 text-sm"
+                                      >
+                                        <span className="capitalize font-medium">
+                                          {day}
+                                        </span>
+                                        <span className="text-muted-foreground">
+                                          {times.open} – {times.close}
+                                        </span>
+                                      </div>
+                                    ),
+                                  )}
+                            </CardContent>
+                          </Card>
+                        </section>
+                      )}
+                    </div>
+
+                    <div className="sm:col-span-2 space-y-6">
+                      {data?.about_club && (
+                        <section>
+                          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                            Club Description
+                          </h3>
+
+                          <Card className="rounded-2xl border-0 shadow-none">
+                            <CardContent className="p-2">
+                              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                                {data.about_club}
+                              </p>
+                            </CardContent>
+                          </Card>
+                        </section>
+                      )}
+
+                      {/* GALLERY */}
+                      <section>
+                        <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                          Gallery
+                        </h3>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                          {(!data?.gallery || data.gallery.length === 0) && (
+                            <>
+                              <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group">
+                                <Skeleton className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                              </div>
+                              <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group">
+                                <Skeleton className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                              </div>
+                              <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group">
+                                <Skeleton className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                              </div>
+                            </>
+                          )}
+
+                          {data?.gallery?.length > 0 &&
+                            data.gallery.map((img: string, idx: number) => (
+                              <div
+                                key={idx}
+                                className="relative aspect-square overflow-hidden rounded-xl bg-muted group"
+                              >
+                                <img
+                                  src={img}
+                                  alt={`Gallery image ${idx + 1}`}
+                                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                />
+                              </div>
+                            ))}
+                        </div>
+                      </section>
+                    </div>
                   </div>
                 </TabsContent>
 
@@ -1104,7 +1215,8 @@ export default function ViewClubPage() {
                     Amount Paid:{" "}
                     <span className="font-semibold text-foreground">
                       {formatAmount(
-                        selectedOrder?.total_amount - selectedOrder?.outstanding_amount || 0,
+                        selectedOrder?.total_amount -
+                          selectedOrder?.outstanding_amount || 0,
                         data?.currency,
                       )}
                     </span>
@@ -1511,12 +1623,17 @@ export default function ViewClubPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={fulfillmentDialogOpen} onOpenChange={setFulfillmentDialogOpen}>
+      <Dialog
+        open={fulfillmentDialogOpen}
+        onOpenChange={setFulfillmentDialogOpen}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Confirm Your Order Has Been Received</DialogTitle>
             <DialogDescription>
-              Are you certain you want to confirm you have received your order? This will be reflected on the admin side too and considered received.
+              Are you certain you want to confirm you have received your order?
+              This will be reflected on the admin side too and considered
+              received.
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-3 justify-end mt-6">
