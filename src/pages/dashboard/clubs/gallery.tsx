@@ -6,7 +6,7 @@ export default function ClubGalleryEdit() {
 
   const handleGalleryImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setGalleryImages((prev) => [...prev, ...Array.from(e.target.files)]);
+      setGalleryImages((prev) => [...prev, ...Array.from(e.target.files || [])]);
     }
   };
 

@@ -1,4 +1,4 @@
-function SocialLink({ icon, label, onClick }) {
+function SocialLink({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
   return (
     <button
       onClick={onClick}

@@ -24,13 +24,6 @@ import { useUpdateClubDetailsMutation } from "@/mutations/admin/club";
 import { useFetchClubDetails } from "@/queries/admin/clubs";
 import {
   Loader2,
-  Mail,
-  MapPin,
-  Coins,
-  CreditCard,
-  Building2,
-  CheckCircle2,
-  XCircle,
 } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -279,7 +272,6 @@ export default function EditClubDetails() {
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="w-full h-12">
               <TabsTrigger value="club-view">Club View</TabsTrigger>
-              <TabsTrigger value="gallery">Gallery</TabsTrigger>
               <TabsTrigger value="account">Banking & Payments</TabsTrigger>
               <TabsTrigger value="location">Location</TabsTrigger>
               <TabsTrigger value="emailing">Emailing</TabsTrigger>
@@ -311,284 +303,208 @@ export default function EditClubDetails() {
                     )}
                   </Button>
                 </CardHeader>
-                <CardContent className="grid gap-6 space-y-6">
-                  <div className="grid gap-2">
-                    <Label htmlFor="club_url">Socials Links (optional)</Label>
-                    <Input
-                      id="club_url"
-                      type="url"
-                      placeholder="Website Link"
-                      value={clubUrl}
-                      onChange={(e) => setClubUrl(e.target.value)}
-                    />
-                    <Input
-                      id="instagram_url"
-                      type="url"
-                      placeholder="Instagram Link"
-                      value={instagramUrl}
-                      onChange={(e) => setInstagramUrl(e.target.value)}
-                    />
-                    <Input
-                      id="facebook_url"
-                      type="url"
-                      placeholder="Facebook Link"
-                      value={facebookUrl}
-                      onChange={(e) => setFacebookUrl(e.target.value)}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      If provided, this URL may be used on the public club page
-                      for embedding or linking.
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="about_club">About Club</Label>
-                    <Textarea
-                      id="about_club"
-                      placeholder="Information about the club"
-                      value={clubDetails}
-                      onChange={(e) => setClubDetails(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="font-semibold">Opening Times</Label>
-                    <div className="grid gap-3">
-                      {openingTimes.map((t, idx) => (
-                        <div key={t.day} className="flex items-center gap-3">
-                          <span className="w-24">{t.day}</span>
-                          <Input
-                            type="time"
-                            value={t.open}
-                            disabled={t.closed}
-                            onChange={(e) =>
-                              handleTimeChange(idx, "open", e.target.value)
-                            }
-                            className="w-28"
-                            aria-label={`${t.day} opening time`}
-                          />
-                          <span>-</span>
-                          <Input
-                            type="time"
-                            value={t.close}
-                            disabled={t.closed}
-                            onChange={(e) =>
-                              handleTimeChange(idx, "close", e.target.value)
-                            }
-                            className="w-28"
-                            aria-label={`${t.day} closing time`}
-                          />
-                          <label className="flex items-center gap-1 ml-2 text-xs">
+                <CardContent className="space-y-12">
+                  {/* Public Listing Section - Full Width Row */}
+                  <section>
+                    <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                      Public Listing
+                    </h3>
+                    <Card className="rounded-2xl">
+                      <CardContent className="p-5 space-y-4">
+                        <p className="text-sm text-muted-foreground">
+                          Control whether this club appears in the public Browse
+                          Clubs list.
+                        </p>
+                        <div className="flex items-center gap-6">
+                          <label className="flex items-center gap-2 text-sm cursor-pointer">
                             <input
-                              type="checkbox"
-                              checked={t.closed}
-                              onChange={(e) =>
-                                handleClosedChange(idx, e.target.checked)
-                              }
+                              type="radio"
+                              name="publicVisibility"
+                              value="public"
+                              checked={!hideFromPublic}
+                              onChange={() => setHideFromPublic(false)}
                               className="accent-primary"
                             />
-                            Closed
+                            <span>Public (listed)</span>
+                          </label>
+                          <label className="flex items-center gap-2 text-sm cursor-pointer">
+                            <input
+                              type="radio"
+                              name="publicVisibility"
+                              value="hidden"
+                              checked={hideFromPublic}
+                              onChange={() => setHideFromPublic(true)}
+                              className="accent-primary"
+                            />
+                            <span>Hidden (unlisted)</span>
                           </label>
                         </div>
-                      ))}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Set your club’s opening and closing times for each day.
-                      Mark as closed if not open that day.
-                    </p>
+                      </CardContent>
+                    </Card>
+                  </section>
+
+                  {/* Social Links Section - Full Width Row */}
+                  <section>
+                    <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                      Social Links (optional)
+                    </h3>
+                    <Card className="rounded-2xl">
+                      <CardContent className="space-y-4 p-5">
+                        <div>
+                          <Label
+                            htmlFor="club_url"
+                            className="text-sm mb-2 block"
+                          >
+                            Website Link
+                          </Label>
+                          <Input
+                            id="club_url"
+                            type="url"
+                            placeholder="https://yourwebsite.com"
+                            value={clubUrl}
+                            onChange={(e) => setClubUrl(e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <Label
+                            htmlFor="instagram_url"
+                            className="text-sm mb-2 block"
+                          >
+                            Instagram Link
+                          </Label>
+                          <Input
+                            id="instagram_url"
+                            type="url"
+                            placeholder="https://instagram.com/yourclub"
+                            value={instagramUrl}
+                            onChange={(e) => setInstagramUrl(e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <Label
+                            htmlFor="facebook_url"
+                            className="text-sm mb-2 block"
+                          >
+                            Facebook Link
+                          </Label>
+                          <Input
+                            id="facebook_url"
+                            type="url"
+                            placeholder="https://facebook.com/yourclub"
+                            value={facebookUrl}
+                            onChange={(e) => setFacebookUrl(e.target.value)}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          If provided, these URLs may be used on the public club
+                          page for linking to your social media profiles.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </section>
+
+                  {/* Other Configurations Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-12 auto-rows-max">
+                    {/* Opening Times Section */}
+                    <section className="h-full flex flex-col">
+                      <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                        Opening Times
+                      </h3>
+                      <Card className="rounded-2xl flex-1 flex flex-col">
+                        <CardContent className="px-5 flex-1 flex flex-col">
+                          <p className="text-xs mb-10 text-muted-foreground mt-4">
+                            Set your club's opening and closing times for each
+                            day. Mark as closed if not open that day.
+                          </p>
+                          <div className="grid gap-3 flex-1">
+                            {openingTimes.map((t, idx) => (
+                              <div
+                                key={t.day}
+                                className="flex items-center gap-3"
+                              >
+                                <span className="w-24 text-sm font-medium">
+                                  {t.day}
+                                </span>
+                                <Input
+                                  type="time"
+                                  value={t.open}
+                                  disabled={t.closed}
+                                  onChange={(e) =>
+                                    handleTimeChange(
+                                      idx,
+                                      "open",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="w-28"
+                                  aria-label={`${t.day} opening time`}
+                                />
+                                <span className="text-muted-foreground">–</span>
+                                <Input
+                                  type="time"
+                                  value={t.close}
+                                  disabled={t.closed}
+                                  onChange={(e) =>
+                                    handleTimeChange(
+                                      idx,
+                                      "close",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="w-28"
+                                  aria-label={`${t.day} closing time`}
+                                />
+                                <label className="flex items-center gap-2 ml-2 text-xs cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={t.closed}
+                                    onChange={(e) =>
+                                      handleClosedChange(idx, e.target.checked)
+                                    }
+                                    className="accent-primary"
+                                  />
+                                  <span>Closed</span>
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </section>
+
+                    {/* Club Description Section */}
+                    <section className="h-full flex flex-col">
+                      <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                        Club Description
+                      </h3>
+                      <Card className="rounded-2xl flex-1 flex flex-col">
+                        <CardContent className="px-5 flex-1 flex flex-col">
+                          <p className="text-xs mb-5 mt-4 text-muted-foreground">
+                            Provide a detailed description about your club to help members and visitors understand what your club is about.
+                          </p>
+                          <div className="flex-1 flex flex-col">
+                            <Textarea
+                              id="about_club"
+                              placeholder="Information about the club"
+                              value={clubDetails}
+                              onChange={(e) => setClubDetails(e.target.value)}
+                              className="min-h-32 flex-1"
+                            />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </section>
                   </div>
 
-                  <div className="grid gap-2">
-                    <Label className="text-sm">Public Listing</Label>
-                    <p className="text-xs text-muted-foreground">
-                      Control whether this club appears in the public Browse
-                      Clubs list.
-                    </p>
-                    <div className="flex items-center gap-6 mt-1">
-                      <label className="flex items-center gap-2 text-sm cursor-pointer">
-                        <input
-                          type="radio"
-                          name="publicVisibility"
-                          value="public"
-                          checked={!hideFromPublic}
-                          onChange={() => setHideFromPublic(false)}
-                          className="accent-primary"
-                        />
-                        <span>Public (listed)</span>
-                      </label>
-                      <label className="flex items-center gap-2 text-sm cursor-pointer">
-                        <input
-                          type="radio"
-                          name="publicVisibility"
-                          value="hidden"
-                          checked={hideFromPublic}
-                          onChange={() => setHideFromPublic(true)}
-                          className="accent-primary"
-                        />
-                        <span>Hidden (unlisted)</span>
-                      </label>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Support Email */}
-                    <div
-                      onClick={() => setActiveTab("emailing")}
-                      className={`rounded-lg p-4 border-2 flex items-start gap-3 cursor-pointer transition-transform hover:scale-[1.02] ${
-                        supportEmail
-                          ? "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800"
-                          : "bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800"
-                      }`}
-                    >
-                      <Mail
-                        className={`h-5 w-5 mt-0.5 ${
-                          supportEmail
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-red-600 dark:text-red-400"
-                        }`}
-                      />
-                      <div className="space-y-1 flex-1 min-w-0">
-                        <Label className="text-xs font-semibold">
-                          Support Email
-                        </Label>
-                        <p className="text-sm font-medium break-all">
-                          {supportEmail || "Not set"}
-                        </p>
-                      </div>
-                      {supportEmail ? (
-                        <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
-                      ) : (
-                        <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
-                      )}
-                    </div>
-
-                    {/* Country */}
-                    <div
-                      onClick={() => setActiveTab("location")}
-                      className={`rounded-lg p-4 border-2 flex items-start gap-3 cursor-pointer transition-transform hover:scale-[1.02] ${
-                        country
-                          ? "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800"
-                          : "bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800"
-                      }`}
-                    >
-                      <MapPin
-                        className={`h-5 w-5 mt-0.5 ${
-                          country
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-red-600 dark:text-red-400"
-                        }`}
-                      />
-                      <div className="space-y-1 flex-1">
-                        <Label className="text-xs font-semibold">
-                          Country of Operation
-                        </Label>
-                        <p className="text-sm font-medium">
-                          {country || "Not set"}
-                        </p>
-                      </div>
-                      {country ? (
-                        <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
-                      ) : (
-                        <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
-                      )}
-                    </div>
-
-                    {/* Currency */}
-                    <div
-                      onClick={() => setActiveTab("location")}
-                      className={`rounded-lg p-4 border-2 flex items-start gap-3 cursor-pointer transition-transform hover:scale-[1.02] ${
-                        currency
-                          ? "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800"
-                          : "bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800"
-                      }`}
-                    >
-                      <Coins
-                        className={`h-5 w-5 mt-0.5 ${
-                          currency
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-red-600 dark:text-red-400"
-                        }`}
-                      />
-                      <div className="space-y-1 flex-1">
-                        <Label className="text-xs font-semibold">
-                          Currency
-                        </Label>
-                        <p className="text-sm font-medium">
-                          {currency || "Not set"}
-                        </p>
-                      </div>
-                      {currency ? (
-                        <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
-                      ) : (
-                        <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
-                      )}
-                    </div>
-
-                    {/* PayFast */}
-                    <div
-                      onClick={() => setActiveTab("account")}
-                      className={`rounded-lg p-4 border-2 flex items-start gap-3 cursor-pointer transition-transform hover:scale-[1.02] ${
-                        data?.payfast_enabled
-                          ? "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800"
-                          : "bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800"
-                      }`}
-                    >
-                      <CreditCard
-                        className={`h-5 w-5 mt-0.5 ${
-                          data?.payfast_enabled
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-red-600 dark:text-red-400"
-                        }`}
-                      />
-                      <div className="space-y-1 flex-1">
-                        <Label className="text-xs font-semibold">
-                          PayFast Enabled
-                        </Label>
-                        <p className="text-sm font-medium">
-                          {data?.payfast_enabled ? "Yes" : "No"}
-                        </p>
-                      </div>
-                      {data?.payfast_enabled ? (
-                        <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
-                      ) : (
-                        <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
-                      )}
-                    </div>
-
-                    {/* Bank Details */}
-                    <div
-                      onClick={() => setActiveTab("account")}
-                      className={`rounded-lg p-4 border-2 flex items-start gap-3 md:col-span-2 cursor-pointer transition-transform hover:scale-[1.02] ${
-                        data?.bank_details
-                          ? "bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800"
-                          : "bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800"
-                      }`}
-                    >
-                      <Building2
-                        className={`h-5 w-5 mt-0.5 ${
-                          data?.bank_details
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-red-600 dark:text-red-400"
-                        }`}
-                      />
-                      <div className="space-y-1 flex-1">
-                        <Label className="text-xs font-semibold">
-                          Bank Details
-                        </Label>
-                        <p className="text-sm font-medium">
-                          {data?.bank_details ? "Configured" : "Missing"}
-                        </p>
-                      </div>
-                      {data?.bank_details ? (
-                        <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
-                      ) : (
-                        <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
-                      )}
-                    </div>
-                  </div>
+                  {/* Gallery Section - Full Width */}
+                  <section>
+                    <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                      Gallery
+                    </h3>
+                    <ClubGalleryEdit />
+                  </section>
                 </CardContent>
               </Card>
-            </TabsContent>
-
-            <TabsContent value="gallery">
-              <ClubGalleryEdit />
             </TabsContent>
 
             <TabsContent value="account">

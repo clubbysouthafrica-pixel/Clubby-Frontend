@@ -45,8 +45,6 @@ import {
   Clock,
   CheckCircle,
   Globe,
-  Sparkles,
-  Twitter,
   ShoppingBag,
   ShoppingCart,
 } from "lucide-react";
@@ -949,60 +947,37 @@ export default function ViewClubPage() {
 
                 {/* HOME TAB SECTION */}
                 <TabsContent value="home" className="mt-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {/* GALLERY */}
-                    <section className="sm:col-span-2">
-                      <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                        Gallery
-                      </h3>
-
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                        {(!data?.gallery || data.gallery.length === 0) && (
-                          <>
-                            <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group">
-                              <Skeleton className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                            </div>
-                            <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group">
-                              <Skeleton className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                            </div>
-                            <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group">
-                              <Skeleton className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                            </div>
-                          </>
-                        )}
-
-                        {data?.gallery?.length > 0 &&
-                          data.gallery.map((img: string, idx: number) => (
-                            <div
-                              key={idx}
-                              className="relative aspect-square overflow-hidden rounded-xl bg-muted group"
-                            >
-                              <img
-                                src={img}
-                                alt={`Gallery image ${idx + 1}`}
-                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                              />
-                            </div>
-                          ))}
-                      </div>
-                    </section>
-
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-12">
                     <div className="space-y-6">
-                      {data?.about_club && (
-                        <section>
-                          <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                            About Club
-                          </h3>
 
-                          <Card className="rounded-2xl">
-                            <CardContent className="p-5">
-                              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                                {data.about_club}
-                              </p>
-                            </CardContent>
-                          </Card>
-                        </section>
-                      )}
+                      {/* CONTACT INFO */}
+                      <section>
+                        <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                          Club Information
+                        </h3>
+
+                        <Card className="rounded-2xl">
+                          <CardContent className="space-y-5 p-5">
+                            <InfoRow
+                              icon={<Mail />}
+                              label="Support Email"
+                              value={data.support_email}
+                            />
+
+                            <InfoRow
+                              icon={<MapPin />}
+                              label="Location"
+                              value={countryName}
+                            />
+
+                            <InfoRow
+                              icon={<Calendar />}
+                              label="Established"
+                              value={epochToJoinedString(data.joined)}
+                            />
+                          </CardContent>
+                        </Card>
+                      </section>
 
                       {data?.opening_times && (
                         <section>
@@ -1060,34 +1035,60 @@ export default function ViewClubPage() {
                           </Card>
                         </section>
                       )}
+                    </div>
 
-                      {/* CONTACT INFO */}
+                    <div className="sm:col-span-2 space-y-6">
+                      {data?.about_club && (
+                        <section>
+                          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                            Club Description
+                          </h3>
+
+                          <Card className="rounded-2xl border-0 shadow-none">
+                            <CardContent className="p-2">
+                              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                                {data.about_club}
+                              </p>
+                            </CardContent>
+                          </Card>
+                        </section>
+                      )}
+
+                      {/* GALLERY */}
                       <section>
                         <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                          Club Information
+                          Gallery
                         </h3>
 
-                        <Card className="rounded-2xl">
-                          <CardContent className="space-y-5 p-5">
-                            <InfoRow
-                              icon={<Mail />}
-                              label="Support Email"
-                              value={data.support_email}
-                            />
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                          {(!data?.gallery || data.gallery.length === 0) && (
+                            <>
+                              <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group">
+                                <Skeleton className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                              </div>
+                              <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group">
+                                <Skeleton className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                              </div>
+                              <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group">
+                                <Skeleton className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                              </div>
+                            </>
+                          )}
 
-                            <InfoRow
-                              icon={<MapPin />}
-                              label="Location"
-                              value={countryName}
-                            />
-
-                            <InfoRow
-                              icon={<Calendar />}
-                              label="Established"
-                              value={epochToJoinedString(data.joined)}
-                            />
-                          </CardContent>
-                        </Card>
+                          {data?.gallery?.length > 0 &&
+                            data.gallery.map((img: string, idx: number) => (
+                              <div
+                                key={idx}
+                                className="relative aspect-square overflow-hidden rounded-xl bg-muted group"
+                              >
+                                <img
+                                  src={img}
+                                  alt={`Gallery image ${idx + 1}`}
+                                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                />
+                              </div>
+                            ))}
+                        </div>
                       </section>
                     </div>
                   </div>
