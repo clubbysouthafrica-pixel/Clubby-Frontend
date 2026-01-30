@@ -2,7 +2,6 @@ import { ShopReport } from "@/interfaces/report";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatAmount } from "@/data/currencies";
-import { ShoppingBag, TrendingUp } from "lucide-react";
 import {
   ResponsiveContainer,
   ComposedChart,
