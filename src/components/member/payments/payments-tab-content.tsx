@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,9 @@ import {
   CreditCard, 
   FileText, 
   Copy,
-  Loader2
+  Loader2,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatAmount } from "@/data/currencies";
@@ -71,6 +73,53 @@ export default function PaymentsTabContent({
   handleCancelEdit,
   handlePayHereClick
 }: PaymentsTabContentProps) {
+  const [sortColumn, setSortColumn] = useState<'type' | 'status' | 'amount' | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  const handleSort = (column: 'type' | 'status' | 'amount') => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const sortedTransactions = useMemo(() => {
+    if (!transactions?.transactions) return [];
+    
+    const sorted = [...transactions.transactions];
+    
+    if (!sortColumn) return sorted;
+
+    sorted.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      if (sortColumn === 'type') {
+        aValue = a.type;
+        bValue = b.type;
+      } else if (sortColumn === 'status') {
+        aValue = a.status;
+        bValue = b.status;
+      } else if (sortColumn === 'amount') {
+        aValue = a.amount;
+        bValue = b.amount;
+      }
+
+      if (typeof aValue === 'string') {
+        return sortDirection === 'asc' 
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      } else {
+        return sortDirection === 'asc'
+          ? aValue - bValue
+          : bValue - aValue;
+      }
+    });
+
+    return sorted;
+  }, [transactions, sortColumn, sortDirection]);
 
   return (
     <TabsContent value="bank" className="mt-6">
@@ -208,21 +257,51 @@ export default function PaymentsTabContent({
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-hidden">
+              <div className={`${transactions?.transactions && transactions.transactions.length > 5 ? 'max-h-96 overflow-y-auto' : 'overflow-hidden'}`}>
                 <Table className="border-0">
                   <TableHeader className="bg-gradient-to-r from-muted/50 to-muted/30 sticky top-0 z-10">
                     <TableRow className="border-primary/10 hover:bg-transparent">
                       <TableHead className="text-center w-1/5 font-semibold">
                         Transaction ID
                       </TableHead>
-                      <TableHead className="text-center w-1/5 font-semibold">
-                        Type
+                      <TableHead 
+                        className="text-center w-1/5 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => handleSort('type')}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          Type
+                          {sortColumn === 'type' && (
+                            sortDirection === 'asc' ? 
+                              <ArrowUp className="h-4 w-4" /> : 
+                              <ArrowDown className="h-4 w-4" />
+                          )}
+                        </div>
                       </TableHead>
-                      <TableHead className="text-center w-1/5 font-semibold">
-                        Status
+                      <TableHead 
+                        className="text-center w-1/5 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => handleSort('status')}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          Status
+                          {sortColumn === 'status' && (
+                            sortDirection === 'asc' ? 
+                              <ArrowUp className="h-4 w-4" /> : 
+                              <ArrowDown className="h-4 w-4" />
+                          )}
+                        </div>
                       </TableHead>
-                      <TableHead className="text-center w-1/5 font-semibold">
-                        Amount
+                      <TableHead 
+                        className="text-center w-1/5 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => handleSort('amount')}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          Amount
+                          {sortColumn === 'amount' && (
+                            sortDirection === 'asc' ? 
+                              <ArrowUp className="h-4 w-4" /> : 
+                              <ArrowDown className="h-4 w-4" />
+                          )}
+                        </div>
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -238,7 +317,7 @@ export default function PaymentsTabContent({
                         </TableCell>
                       </TableRow>
                     )}
-                    {transactions.transactions.map(
+                    {sortedTransactions.map(
                       (tx: Transaction) => (
                         <React.Fragment key={tx.transaction_id}>
                           {/* Main Transaction Row */}

@@ -1,9 +1,10 @@
 
-import { useContext, useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Fragment, useContext, useEffect, useState, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Clock, CheckCircle, Package, ChevronDown, Copy, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
+import { ChevronDown, Copy, CheckCircle2, AlertTriangle, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Table,
@@ -21,25 +22,49 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
-import { getClubOrders, confirmOrderPayment } from "@/services/admin/orders";
+import { getClubOrders, confirmOrderPayment, refundOrRemoveOrder } from "@/services/admin/orders";
 import { updateAdminOrderFulfillment } from "@/requests/admin-orders-request";
 import { formatAmount } from "@/data/currencies";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function OrdersPage() {
   const { club } = useContext(ClubContext) as ClubContextType;
-  const [orders, setOrders] = useState<any[]>([]);
+  const [searchParams] = useSearchParams();
+  
+  // Parse URL query params first
+  const memberParam = searchParams.get("member");
+  const paymentStatusParam = searchParams.get("paymentStatus");
+  
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
-  const [stats, setStats] = useState({
-    total: 0,
-    pending: 0,
-    completed: 0,
-    shipping: 0,
+  
+  // Filtering and pagination - initialize with URL params if present
+  const [transactionIdSearch, setTransactionIdSearch] = useState("");
+  const [memberNameSearch, setMemberNameSearch] = useState(memberParam || "");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState(paymentStatusParam ? paymentStatusParam.toUpperCase() : "all");
+  const [fulfillmentStatusFilter, setFulfillmentStatusFilter] = useState("all");
+  const [appliedFilters, setAppliedFilters] = useState<{ transaction_id?: string; member_name?: string; payment_status?: string; fulfillment_status?: string }>(() => {
+    const filters: { transaction_id?: string; member_name?: string; payment_status?: string; fulfillment_status?: string } = {};
+    if (memberParam) filters.member_name = memberParam;
+    if (paymentStatusParam) filters.payment_status = paymentStatusParam.toUpperCase();
+    return filters;
   });
+  const [ordersLimit, setOrdersLimit] = useState(25);
+  const [pageToken, setPageToken] = useState<string | undefined>(undefined);
+  const [allOrders, setAllOrders] = useState<any[]>([]);
+  const [nextPageToken, setNextPageToken] = useState<string | undefined>(undefined);
+  const isLoadingMoreRef = useRef(false);
+  
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [selectedOrderForPayment, setSelectedOrderForPayment] = useState<any>(null);
   const [paymentAmount, setPaymentAmount] = useState("");
@@ -62,6 +87,9 @@ export default function OrdersPage() {
   const [expandedDeleteItems, setExpandedDeleteItems] = useState<Set<string>>(new Set());
   const [returnDeleteToInventory, setReturnDeleteToInventory] = useState<Set<string>>(new Set());
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [confirmRefundCompletionDialogOpen, setConfirmRefundCompletionDialogOpen] = useState(false);
+  const [selectedOrderForRefundCompletion, setSelectedOrderForRefundCompletion] = useState<any>(null);
+  const [isConfirmingRefundCompletion, setIsConfirmingRefundCompletion] = useState(false);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -69,24 +97,22 @@ export default function OrdersPage() {
       
       try {
         setIsLoading(true);
-        const response = await getClubOrders(club.club_account_id);
+        const response = await getClubOrders(
+          club.club_account_id,
+          ordersLimit,
+          pageToken,
+          appliedFilters
+        );
         
         if (response.status === 200 && response.data?.orders) {
-          setOrders(response.data.orders);
+          if (isLoadingMoreRef.current) {
+            setAllOrders((prev) => [...prev, ...response.data.orders]);
+            isLoadingMoreRef.current = false;
+          } else {
+            setAllOrders(response.data.orders);
+          }
+          setNextPageToken(response.data?.pageToken);
           setPaymentMethods(response.data.payment_methods || []);
-          
-          // Calculate stats
-          const totalOrders = response.data.orders.length;
-          const pendingOrders = response.data.orders.filter((o: any) => o.payment_status === "PENDING").length;
-          const completedOrders = response.data.orders.filter((o: any) => o.fulfillment_status === "DELIVERED").length;
-          const shippingOrders = response.data.orders.filter((o: any) => o.fulfillment_status === "PROCESSING").length;
-          
-          setStats({
-            total: totalOrders,
-            pending: pendingOrders,
-            completed: completedOrders,
-            shipping: shippingOrders,
-          });
         }
       } catch (err: any) {
         setError("Failed to load orders");
@@ -97,7 +123,7 @@ export default function OrdersPage() {
     };
 
     fetchOrders();
-  }, [club?.club_account_id]);
+  }, [club?.club_account_id, ordersLimit, pageToken, appliedFilters]);
 
   const handlePayNowClick = (order: Record<string, unknown>) => {
     setSelectedOrderForPayment(order);
@@ -160,7 +186,7 @@ export default function OrdersPage() {
         if (club?.club_account_id) {
           const ordersResponse = await getClubOrders(club.club_account_id);
           if (ordersResponse.status === 200 && ordersResponse.data?.orders) {
-            setOrders(ordersResponse.data.orders);
+            setAllOrders(ordersResponse.data.orders);
           }
         }
         handleClosePaymentDialog();
@@ -184,8 +210,14 @@ export default function OrdersPage() {
   };
 
   const handleFulfillmentStatusClick = (order: any) => {
-    setSelectedOrderForFulfillment(order);
-    setFulfillmentDialogOpen(true);
+    // Check if payment_status is REFUND and fulfillment_status is PROCESSING
+    if (order.payment_status === "REFUND" && order.fulfillment_status === "PROCESSING") {
+      setSelectedOrderForRefundCompletion(order);
+      setConfirmRefundCompletionDialogOpen(true);
+    } else {
+      setSelectedOrderForFulfillment(order);
+      setFulfillmentDialogOpen(true);
+    }
   };
 
   const handleConfirmFulfillmentUpdate = async () => {
@@ -195,7 +227,8 @@ export default function OrdersPage() {
       setIsUpdatingFulfillment(true);
       const response = await updateAdminOrderFulfillment(
         club.club_account_id,
-        selectedOrderForFulfillment.order_id
+        selectedOrderForFulfillment.order_id,
+        "fulfillment"
       );
 
       // Check if status is 200 and response has a message
@@ -203,10 +236,11 @@ export default function OrdersPage() {
         toast.success("Fulfillment status updated successfully");
         
         // Update local state immediately
-        setOrders(prevOrders =>
-          prevOrders.map(order =>
+        const updatedOrder = { ...selectedOrderForFulfillment, fulfillment_status: "DELIVERED" };
+        setAllOrders((prevOrders: any) =>
+          prevOrders.map((order: any) =>
             order.order_id === selectedOrderForFulfillment.order_id
-              ? { ...order, fulfillment_status: "DELIVERED" }
+              ? updatedOrder
               : order
           )
         );
@@ -221,6 +255,45 @@ export default function OrdersPage() {
       console.error("Error updating fulfillment status:", err);
     } finally {
       setIsUpdatingFulfillment(false);
+    }
+  };
+
+  const handleConfirmRefundCompletion = async () => {
+    if (!selectedOrderForRefundCompletion || !club?.club_account_id) return;
+
+    try {
+      setIsConfirmingRefundCompletion(true);
+      
+      // Update the fulfillment status to COMPLETED or similar to indicate refund is done
+      const response = await updateAdminOrderFulfillment(
+        club.club_account_id,
+        selectedOrderForRefundCompletion.order_id,
+        "refund_completion"
+      );
+
+      if (response && response.status === 200 && response.message) {
+        toast.success("Refund completion confirmed");
+        
+        // Update local state
+        const updatedOrder = { ...selectedOrderForRefundCompletion, fulfillment_status: "REFUNDED" };
+        setAllOrders((prevOrders: any) =>
+          prevOrders.map((order: any) =>
+            order.order_id === selectedOrderForRefundCompletion.order_id
+              ? updatedOrder
+              : order
+          )
+        );
+        
+        setConfirmRefundCompletionDialogOpen(false);
+        setSelectedOrderForRefundCompletion(null);
+      } else {
+        toast.error(response?.message || "Failed to confirm refund completion");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Error confirming refund completion");
+      console.error("Error confirming refund completion:", err);
+    } finally {
+      setIsConfirmingRefundCompletion(false);
     }
   };
 
@@ -284,16 +357,16 @@ export default function OrdersPage() {
         }
       });
       
-      // TODO: Call your refund API here with:
-      // const response = await refundOrder(selectedOrderForRefund.order_id, {
-      //   selectedItems: selectedItems,
-      //   refundAmount: refundAmount
-      // });
+      // Check if all units are being refunded
+      const totalUnits = orderItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
+      const isFullRefund = selectedItemsForRefund.size === totalUnits;
       
       const refundPayload = {
+        transaction_id: selectedOrderForRefund.transaction_id,
         order_id: selectedOrderForRefund.order_id,
         club_account_id: club?.club_account_id,
         refund_amount: refundAmount,
+        is_full_refund: isFullRefund,
         items: selectedItems.map(item => ({
           product_id: item.product_id,
           name: item.name,
@@ -306,24 +379,33 @@ export default function OrdersPage() {
         }))
       };
       
-      console.log("Expected Refund Request Payload:", JSON.stringify(refundPayload, null, 2));
+      const response = await refundOrRemoveOrder({
+        ...refundPayload,
+        club_account_id: club?.club_account_id as string,
+      });
       
-      toast.success(`Order refunded successfully - ${formatAmount(refundAmount, club?.currency)}`);
-      
-      // Update local state
-      setOrders(prevOrders =>
-        prevOrders.map(order =>
-          order.order_id === selectedOrderForRefund.order_id
-            ? { ...order, payment_status: "REFUNDED" }
-            : order
-        )
-      );
-      
-      setRefundDialogOpen(false);
-      setSelectedOrderForRefund(null);
-      setSelectedItemsForRefund(new Set());
-      setReturnToInventory(new Set());
-      setExpandedRefundItems(new Set());
+      if (response.status === 200) {
+        toast.success(`Order refunded successfully - ${formatAmount(refundAmount, club?.currency || "ZAR")}`);
+        
+        // Update local state
+        setAllOrders((prevOrders: any) =>
+          prevOrders.map((order: any) =>
+            order.order_id === selectedOrderForRefund.order_id
+              ? { ...order, payment_status: "REFUNDED" }
+              : order
+          )
+        );
+        
+        setRefundDialogOpen(false);
+        setSelectedOrderForRefund(null);
+        setSelectedItemsForRefund(new Set());
+        setReturnToInventory(new Set());
+        setExpandedRefundItems(new Set());
+        
+        setTimeout(() => window.location.reload(), 500);
+      } else {
+        toast.error(response.data?.message || "Failed to process refund");
+      }
     } catch (err: any) {
       toast.error(err.message || "Error processing refund");
       console.error("Error processing refund:", err);
@@ -374,12 +456,8 @@ export default function OrdersPage() {
         });
       });
       
-      // TODO: Call your delete API here with:
-      // const response = await deleteOrder(selectedOrderForDelete.order_id, {
-      //   items: itemsWithInventory
-      // });
-      
       const deletePayload = {
+        transaction_id: selectedOrderForDelete.transaction_id,
         order_id: selectedOrderForDelete.order_id,
         club_account_id: club?.club_account_id,
         items: itemsWithInventory.map(item => ({
@@ -393,19 +471,28 @@ export default function OrdersPage() {
         }))
       };
       
-      console.log("Expected Delete Request Payload:", JSON.stringify(deletePayload, null, 2));
+      const response = await refundOrRemoveOrder({
+        ...deletePayload,
+        club_account_id: club?.club_account_id as string,
+      });
       
-      toast.success("Order deleted successfully");
-      
-      // Update local state
-      setOrders(prevOrders =>
-        prevOrders.filter(order => order.order_id !== selectedOrderForDelete.order_id)
-      );
-      
-      setDeleteDialogOpen(false);
-      setSelectedOrderForDelete(null);
-      setExpandedDeleteItems(new Set());
-      setReturnDeleteToInventory(new Set());
+      if (response.status === 200) {
+        toast.success("Order deleted successfully");
+        
+        // Update local state
+        setAllOrders((prevOrders: any) =>
+          prevOrders.filter((order: any) => order.order_id !== selectedOrderForDelete.order_id)
+        );
+        
+        setDeleteDialogOpen(false);
+        setSelectedOrderForDelete(null);
+        setExpandedDeleteItems(new Set());
+        setReturnDeleteToInventory(new Set());
+        
+        setTimeout(() => window.location.reload(), 500);
+      } else {
+        toast.error(response.data?.message || "Failed to delete order");
+      }
     } catch (err: any) {
       toast.error(err.message || "Error deleting order");
       console.error("Error deleting order:", err);
@@ -415,73 +502,131 @@ export default function OrdersPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
-        <p className="text-muted-foreground">
-          Track and manage customer orders and fulfillment.
+    <div className="p-5">
+      <h1 className="text-base font-bold mb-4">Orders</h1>
+
+      <Card className="p-4 mb-6">
+        <div className="flex flex-wrap gap-4">
+          <Input
+            className="w-[20%]"
+            placeholder="Search by Transaction ID"
+            value={transactionIdSearch}
+            onChange={(e) => setTransactionIdSearch(e.target.value)}
+          />
+
+          <Input
+            className="w-[20%]"
+            placeholder="Search by Member Name"
+            value={memberNameSearch}
+            onChange={(e) => setMemberNameSearch(e.target.value)}
+          />
+
+          <Select onValueChange={setPaymentStatusFilter} value={paymentStatusFilter}>
+            <SelectTrigger className="flex items-center gap-2 w-[20%]">
+              <span className="text-muted-foreground whitespace-nowrap">
+                Payment Status:
+              </span>
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="PAID">Paid</SelectItem>
+              <SelectItem value="PAID (Partial Refund)">Paid (Partial Refund)</SelectItem>
+              <SelectItem value="REFUND">Refund</SelectItem>
+              <SelectItem value="CANCELLED">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select onValueChange={setFulfillmentStatusFilter} value={fulfillmentStatusFilter}>
+            <SelectTrigger className="flex items-center gap-2 w-[20%]">
+              <span className="text-muted-foreground whitespace-nowrap">
+                Fulfillment Status:
+              </span>
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="NOT_PROCESSED">Not Processed</SelectItem>
+              <SelectItem value="PROCESSING">Processing</SelectItem>
+              <SelectItem value="DELIVERED">Delivered</SelectItem>
+              <SelectItem value="REFUNDED">Refunded</SelectItem>
+              <SelectItem value="CANCELLED">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <p className="text-sm text-gray-600 my-1">
+          Configure your filters above, then click the <span className="font-semibold">Run</span> button to apply your selections and display the results.
         </p>
+        <button
+          onClick={() => {
+            setAppliedFilters({
+              transaction_id: transactionIdSearch,
+              member_name: memberNameSearch,
+              payment_status: paymentStatusFilter,
+              fulfillment_status: fulfillmentStatusFilter,
+            });
+            setPageToken(undefined);
+            setAllOrders([]);
+          }}
+          title="Run database query to refresh orders data"
+          className="px-4 py-1 w-[100px] bg-orange-400 hover:bg-orange-500 rounded-[20px] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center font-bold"
+        >
+          Run
+        </button>
+
+        <div className="flex items-center gap-3 pt-4 border-t">
+          <label className="text-sm font-medium">Results per page:</label>
+          <Select 
+            value={ordersLimit.toString()} 
+            onValueChange={(value) => {
+              setOrdersLimit(parseInt(value));
+              setPageToken(undefined);
+              setAllOrders([]);
+            }}
+          >
+            <SelectTrigger className="w-[100px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="25">25</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </Card>
+
+      <div className="flex items-center gap-2 mb-4">
+        <h2 className="text-xl font-medium text-gray-700">
+          Showing <span className="font-bold">{allOrders.length}</span> items
+        </h2>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground">
-              All orders
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pending}</div>
-            <p className="text-xs text-muted-foreground">
-              Awaiting payment
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.completed}</div>
-            <p className="text-xs text-muted-foreground">
-              Successfully delivered
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Shipping</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.shipping}</div>
-            <p className="text-xs text-muted-foreground">
-              In transit
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      {nextPageToken && nextPageToken !== "" && (
+        <div className="bg-orange-100 W-[100%] border border-orange-600 p-4 rounded-md flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-orange-600" />
+            <p className="text-black font-medium">More results available</p>
+          </div>
+          <button
+            onClick={() => {
+              isLoadingMoreRef.current = true;
+              setPageToken(nextPageToken);
+            }}
+            disabled={isLoading}
+            className="px-4 py-2 bg-orange-100 hover:bg-orange-200 cursor-pointer rounded-[20px] border border-black text-black font-semibold rounded-md hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              "Load More"
+            )}
+          </button>
+        </div>
+      )}
 
       <Card>
-        <CardHeader>
-          <CardTitle>All Orders</CardTitle>
-          <CardDescription>Manage and track all customer orders</CardDescription>
-        </CardHeader>
         <CardContent>
           <div className="border rounded-lg overflow-hidden">
             <Table>
@@ -510,16 +655,16 @@ export default function OrdersPage() {
                       {error}
                     </TableCell>
                   </TableRow>
-                ) : orders.length === 0 ? (
+                ) : allOrders.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-8">
                       No orders found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  orders.map((order) => (
-                    <>
-                      <TableRow key={order.order_id} className="h-12">
+                  allOrders.map((order) => (
+                    <Fragment key={order.order_id}>
+                      <TableRow className="h-12">
                         <TableCell className="text-center">
                           <Button
                             variant="ghost"
@@ -572,18 +717,31 @@ export default function OrdersPage() {
                         {`${order.first_name} ${order.surname}`}
                       </TableCell>
                       <TableCell className="text-center font-medium">
-                        {formatAmount(order.total_amount || 0, club?.currency)}
+                        {order.payment_status === "PAID (Partial Refund)" ? (
+                          <div className="space-y-1">
+                            <div className="text-sm line-through text-muted-foreground">
+                              {formatAmount(order.total_amount || 0, club?.currency)}
+                            </div>
+                            <div className="text-sm font-semibold">
+                              {formatAmount(order.amount_paid || 0, club?.currency)}
+                            </div>
+                          </div>
+                        ) : (
+                          formatAmount(order.total_amount || 0, club?.currency)
+                        )}
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex flex-col items-center gap-2">
                           <Badge
                             className={`${
-                              order.payment_status === "PAID"
+                              order.payment_status === "PAID" || order.payment_status === "PAID (Partial Refund)"
                                 ? "bg-green-100 text-green-800 border-green-200"
                                 : order.payment_status === "PENDING"
                                   ? "bg-orange-100 text-orange-800 border-orange-200 mt-2"
                                   : order.payment_status === "PARTIALLY_PAID"
                                   ? "bg-purple-100 text-purple-800 border-purple-200"
+                                  : order.payment_status === "CANCELLED" || order.payment_status === "REFUND"
+                                  ? "bg-red-100 text-red-800 border-red-200"
                                   : "bg-gray-100 text-gray-800 border-gray-200"
                             }`}
                           >
@@ -615,6 +773,8 @@ export default function OrdersPage() {
                                   ? "bg-purple-100 text-purple-800 border-purple-200 cursor-pointer hover:opacity-80"
                                   : order.fulfillment_status === "NOT_PROCESSED"
                                     ? "bg-orange-100 text-orange-800 border-orange-200"
+                                    : order.fulfillment_status === "CANCELLED" || order.fulfillment_status === "REFUND" || order.fulfillment_status === "REFUNDED"
+                                    ? "bg-red-100 text-red-800 border-red-200"
                                     : "bg-green-100 text-green-800 border-green-200"
                             }`}
                           >
@@ -640,16 +800,7 @@ export default function OrdersPage() {
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-2">
-                          {order.payment_status === "PAID" || (order.amount_paid && order.amount_paid > 0) ? (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-xs h-7 text-blue-600"
-                              onClick={() => handleRefundClick(order)}
-                            >
-                              Refund
-                            </Button>
-                          ) : order.amount_paid === 0 || !order.amount_paid ? (
+                          {order.fulfillment_status === "NOT_PROCESSED" ? (
                             <Button
                               size="sm"
                               variant="outline"
@@ -658,7 +809,18 @@ export default function OrdersPage() {
                             >
                               Delete
                             </Button>
-                          ) : null}
+                          ) : order.payment_status === "PAID" || (order.amount_paid && order.amount_paid > 0) ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs h-7 text-blue-600"
+                              onClick={() => handleRefundClick(order)}
+                            >
+                              Refund
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">N/A</span>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -672,15 +834,36 @@ export default function OrdersPage() {
                                 {(order.items as any[]).map((item: any, idx: number) => (
                                   <div
                                     key={`${item.product_id}-${idx}`}
-                                    className="bg-white rounded p-3 border flex items-center justify-between text-sm"
+                                    className={`bg-white rounded p-3 border flex items-center justify-between text-sm ${
+                                      order.payment_status === "CANCELLED" ? "border-red-200 bg-red-50" : ""
+                                    }`}
                                   >
-                                    <div>
-                                      <p className="font-medium">{item.name}</p>
-                                      <p className="text-xs text-muted-foreground">
-                                        Qty: {item.quantity} × {formatAmount(item.price || 0, club?.currency)}
+                                    <div className="flex-1">
+                                      <p className="font-medium">
+                                        {item.name}
                                       </p>
+                                      <div className="space-y-1 mt-2">
+                                        {item.quantity > 0 && (
+                                          <div className="flex items-center gap-2">
+                                            <span className={`text-xs px-2 py-1 rounded ${
+                                              order.payment_status === "CANCELLED"
+                                                ? "bg-red-100 text-red-700"
+                                                : "bg-blue-50 text-blue-700"
+                                            }`}>
+                                              Qty: {item.quantity} × {formatAmount(item.price || 0, club?.currency)}
+                                            </span>
+                                          </div>
+                                        )}
+                                        {item.refund_quantity && item.refund_quantity > 0 && (
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-xs bg-red-50 text-red-700 px-2 py-1 rounded">
+                                              Refunded: {item.refund_quantity} × {formatAmount(item.price || 0, club?.currency)}
+                                            </span>
+                                          </div>
+                                        )}
+                                      </div>
                                     </div>
-                                    <p className="font-medium">
+                                    <p className="font-medium text-right">
                                       {formatAmount(item.subtotal || 0, club?.currency)}
                                     </p>
                                   </div>
@@ -693,7 +876,7 @@ export default function OrdersPage() {
                         </TableCell>
                       </TableRow>
                     )}
-                    </>
+                    </Fragment>
                   ))
                 )}
               </TableBody>
@@ -878,6 +1061,40 @@ export default function OrdersPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Confirm Refund Completion Dialog */}
+      <Dialog open={confirmRefundCompletionDialogOpen} onOpenChange={setConfirmRefundCompletionDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirm Refund Completion</DialogTitle>
+            <DialogDescription>
+              Has the refund for order {selectedOrderForRefundCompletion?.order_id?.substring(0, 8).toUpperCase()} been completed? This will mark the refund as finished.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 justify-end mt-6">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmRefundCompletionDialogOpen(false)}
+              disabled={isConfirmingRefundCompletion}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmRefundCompletion}
+              disabled={isConfirmingRefundCompletion}
+            >
+              {isConfirmingRefundCompletion ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Confirming...
+                </>
+              ) : (
+                "Confirm"
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Refund Dialog */}
       <Dialog open={refundDialogOpen} onOpenChange={setRefundDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
@@ -905,9 +1122,9 @@ export default function OrdersPage() {
 
             <div className="space-y-3 border-t pt-4">
               <p className="text-sm font-medium">Refund Items</p>
-              <div className="space-y-2 border rounded-lg p-3 bg-gray-50">
+              <div className="space-y-2 border rounded-lg p-3 bg-gray-50 max-h-96 overflow-y-auto">
                 {(selectedOrderForRefund?.items as any[])?.length > 0 ? (
-                  (selectedOrderForRefund.items as any[]).map((item: any, idx: number) => {
+                  (selectedOrderForRefund.items as any[]).filter((item: any) => item.quantity > 0).map((item: any, idx: number) => {
                     const itemId = `${item.product_id}-${idx}`;
                     const isExpanded = expandedRefundItems.has(itemId);
                     return (

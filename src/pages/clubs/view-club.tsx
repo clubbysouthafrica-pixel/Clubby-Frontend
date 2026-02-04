@@ -47,10 +47,12 @@ import {
   Globe,
   ShoppingBag,
   ShoppingCart,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { useFetchClub, useFetchClubBankDetails } from "@/queries/clubs";
 import { useNavigate, useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -129,6 +131,8 @@ export default function ViewClubPage() {
   const [selectedFulfillmentOrder, setSelectedFulfillmentOrder] =
     useState<any>(null);
   const [updatingFulfillment, setUpdatingFulfillment] = useState(false);
+  const [orderSortColumn, setOrderSortColumn] = useState<'date' | 'payment_status' | 'fulfillment_status' | 'total' | null>(null);
+  const [orderSortDirection, setOrderSortDirection] = useState<'asc' | 'desc'>('asc');
 
   // Fetch member orders for the shop tab
   const {
@@ -144,6 +148,54 @@ export default function ViewClubPage() {
       activeTab === "shop",
   });
 
+  const handleOrderSort = (column: 'date' | 'payment_status' | 'fulfillment_status' | 'total') => {
+    if (orderSortColumn === column) {
+      setOrderSortDirection(orderSortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setOrderSortColumn(column);
+      setOrderSortDirection('asc');
+    }
+  };
+
+  const sortedOrders = useMemo(() => {
+    if (!memberOrders?.orders) return [];
+
+    const sorted = [...memberOrders.orders];
+
+    if (!orderSortColumn) return sorted;
+
+    sorted.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      if (orderSortColumn === 'date') {
+        aValue = a.created_date || 0;
+        bValue = b.created_date || 0;
+      } else if (orderSortColumn === 'payment_status') {
+        aValue = a.payment_status || '';
+        bValue = b.payment_status || '';
+      } else if (orderSortColumn === 'fulfillment_status') {
+        aValue = a.fulfillment_status || '';
+        bValue = b.fulfillment_status || '';
+      } else if (orderSortColumn === 'total') {
+        aValue = a.total_amount || 0;
+        bValue = b.total_amount || 0;
+      }
+
+      if (typeof aValue === 'string') {
+        return orderSortDirection === 'asc'
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      } else {
+        return orderSortDirection === 'asc'
+          ? aValue - bValue
+          : bValue - aValue;
+      }
+    });
+
+    return sorted;
+  }, [memberOrders, orderSortColumn, orderSortDirection]);
+
   const toggleRow = (id: string) => {
     setExpandedRows((prev) => ({
       ...prev,
@@ -152,15 +204,7 @@ export default function ViewClubPage() {
   };
 
   const handlePayHereClick = (order?: any) => {
-    console.log("handlePayHereClick called with order:", order);
-    console.log(
-      "bankDetails.order_options check:",
-      bankDetails?.order_options,
-      bankDetails?.order_options?.length,
-    );
-
     if (order) {
-      console.log("Setting selected order and opening payment dialog");
       setSelectedOrder(order);
       if (!bankDetailsLoading && bankDetails) {
         setPaymentDialogOpen(true);
@@ -171,10 +215,8 @@ export default function ViewClubPage() {
       bankDetails?.order_options &&
       bankDetails.order_options.length > 0
     ) {
-      console.log("Order options found, showing order selection dialog");
       setShowOrderSelection(true);
     } else {
-      console.log("No order options, going directly to payment dialog");
       if (!bankDetailsLoading && bankDetails) {
         setPaymentDialogOpen(true);
       } else {
@@ -184,14 +226,6 @@ export default function ViewClubPage() {
   };
 
   const handlePayNowClick = () => {
-    // Debug logging to see what's in the data
-    console.log("handlePayNowClick called");
-    console.log("bankDetails:", bankDetails);
-    console.log("bankDetails.order_options:", bankDetails?.order_options);
-    console.log("order_options length:", bankDetails?.order_options?.length);
-
-    // This is the wrapper that should be called by Pay Now buttons
-    // It will trigger order selection if order_options exist
     handlePayHereClick();
   };
 
@@ -744,30 +778,70 @@ export default function ViewClubPage() {
                         </div>
                       </CardHeader>
                       <CardContent className="p-0">
-                        <div className="overflow-hidden">
+                        <div className={`${memberOrders?.orders && memberOrders.orders.length > 5 ? 'max-h-96 overflow-y-auto' : 'overflow-hidden'}`}>
                           <Table className="border-0">
                             <TableHeader className="bg-gradient-to-r from-muted/50 to-muted/30 sticky top-0 z-10">
                               <TableRow className="border-primary/10 hover:bg-transparent">
                                 <TableHead className="text-center flex-1 font-semibold">
                                   Order #
                                 </TableHead>
-                                <TableHead className="text-center flex-1 font-semibold">
-                                  Date
+                                <TableHead 
+                                  className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                                  onClick={() => handleOrderSort('date')}
+                                >
+                                  <div className="flex items-center justify-center gap-2">
+                                    Date
+                                    {orderSortColumn === 'date' && (
+                                      orderSortDirection === 'asc' ? 
+                                        <ArrowUp className="h-4 w-4" /> : 
+                                        <ArrowDown className="h-4 w-4" />
+                                    )}
+                                  </div>
                                 </TableHead>
                                 <TableHead className="text-center flex-1 font-semibold">
                                   Items
                                 </TableHead>
-                                <TableHead className="text-center flex-1 font-semibold">
-                                  Total
+                                <TableHead 
+                                  className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                                  onClick={() => handleOrderSort('total')}
+                                >
+                                  <div className="flex items-center justify-center gap-2">
+                                    Total
+                                    {orderSortColumn === 'total' && (
+                                      orderSortDirection === 'asc' ? 
+                                        <ArrowUp className="h-4 w-4" /> : 
+                                        <ArrowDown className="h-4 w-4" />
+                                    )}
+                                  </div>
                                 </TableHead>
                                 <TableHead className="text-center flex-1 font-semibold">
                                   Amount Paid
                                 </TableHead>
-                                <TableHead className="text-center flex-1 font-semibold">
-                                  Payment Status
+                                <TableHead 
+                                  className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                                  onClick={() => handleOrderSort('payment_status')}
+                                >
+                                  <div className="flex items-center justify-center gap-2">
+                                    Payment Status
+                                    {orderSortColumn === 'payment_status' && (
+                                      orderSortDirection === 'asc' ? 
+                                        <ArrowUp className="h-4 w-4" /> : 
+                                        <ArrowDown className="h-4 w-4" />
+                                    )}
+                                  </div>
                                 </TableHead>
-                                <TableHead className="text-center flex-1 font-semibold">
-                                  Fulfillment Status
+                                <TableHead 
+                                  className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                                  onClick={() => handleOrderSort('fulfillment_status')}
+                                >
+                                  <div className="flex items-center justify-center gap-2">
+                                    Fulfillment Status
+                                    {orderSortColumn === 'fulfillment_status' && (
+                                      orderSortDirection === 'asc' ? 
+                                        <ArrowUp className="h-4 w-4" /> : 
+                                        <ArrowDown className="h-4 w-4" />
+                                    )}
+                                  </div>
                                 </TableHead>
                               </TableRow>
                             </TableHeader>
@@ -811,7 +885,7 @@ export default function ViewClubPage() {
                                 )}
                               {!isOrdersLoading &&
                                 !ordersError &&
-                                memberOrders?.orders?.map((order: any) => (
+                                sortedOrders?.map((order: any) => (
                                   <TableRow
                                     key={order.order_id}
                                     className="hover:bg-primary/5 transition-colors border-primary/10 group"
@@ -862,25 +936,18 @@ export default function ViewClubPage() {
                                       <div className="flex flex-col items-center gap-2">
                                         <Badge
                                           className={`font-medium ${
-                                            order.payment_status === "PAID"
+                                            order.payment_status === "PAID" || order.payment_status === "PAID (Partial Refund)"
                                               ? "bg-green-100 text-green-800 border-green-200"
-                                              : order.payment_status ===
-                                                    "PENDING" ||
-                                                  order.payment_status ===
-                                                    "PARTIALLY_PAID"
-                                                ? "bg-orange-100 text-orange-800 border-orange-200"
-                                                : order.payment_status ===
-                                                    "cancelled"
-                                                  ? "bg-red-100 text-red-800 border-red-200"
-                                                  : "bg-gray-100 text-gray-800 border-gray-200"
+                                              : order.payment_status === "PENDING"
+                                                ? "bg-orange-100 text-orange-800 border-orange-200 mt-2"
+                                                : order.payment_status === "PARTIALLY_PAID"
+                                                ? "bg-purple-100 text-purple-800 border-purple-200"
+                                                : order.payment_status === "CANCELLED" || order.payment_status === "REFUND"
+                                                ? "bg-red-100 text-red-800 border-red-200"
+                                                : "bg-gray-100 text-gray-800 border-gray-200"
                                           }`}
                                         >
-                                          {order.payment_status
-                                            ? order.payment_status
-                                                .charAt(0)
-                                                .toUpperCase() +
-                                              order.payment_status.slice(1)
-                                            : "Unknown"}
+                                          {order.payment_status || "Unknown"}
                                         </Badge>
                                         {(order.payment_status === "PENDING" ||
                                           order.payment_status ===
@@ -914,15 +981,13 @@ export default function ViewClubPage() {
                                                 : order.fulfillment_status ===
                                                     "PROCESSING"
                                                   ? "bg-purple-100 text-purple-800 border-purple-200 cursor-pointer hover:opacity-80"
+                                                  : order.fulfillment_status ===
+                                                      "CANCELLED" || order.fulfillment_status === "REFUND" || order.fulfillment_status === "REFUNDED"
+                                                  ? "bg-red-100 text-red-800 border-red-200"
                                                   : "bg-green-100 text-green-800 border-green-200"
                                           }`}
                                         >
-                                          {order.fulfillment_status
-                                            ? order.fulfillment_status
-                                                .charAt(0)
-                                                .toUpperCase() +
-                                              order.fulfillment_status.slice(1)
-                                            : "Unknown"}
+                                          {order.fulfillment_status || "Unknown"}
                                         </Badge>
                                         {order.fulfillment_status ===
                                           "PROCESSING" && (

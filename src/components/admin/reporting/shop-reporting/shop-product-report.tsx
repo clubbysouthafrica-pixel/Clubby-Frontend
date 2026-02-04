@@ -204,10 +204,10 @@ export function ShopProductReport({ report, currency }: ShopProductReportProps) 
                     <TableRow key={idx} className="hover:bg-muted/40">
                       <TableCell className="text-center font-medium w-1/5">{row.date}</TableCell>
                       <TableCell className="text-center w-1/5">
-                        {formatAmount(row.revenue / 100, currency)}
+                        {formatAmount(row.revenue, currency)}
                       </TableCell>
                       <TableCell className="text-center w-1/5">
-                        {formatAmount(row.pending_revenue / 100, currency)}
+                        {formatAmount(row.pending_revenue, currency)}
                       </TableCell>
                       <TableCell className="text-center w-1/5">{row.sold_units}</TableCell>
                       <TableCell className="text-center w-1/5">{row.pending_units}</TableCell>

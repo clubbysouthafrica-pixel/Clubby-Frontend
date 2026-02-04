@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import * as React from "react";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, Copy } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { api } from "@/services/admin/api";
 import { toast } from "sonner";
@@ -75,6 +75,37 @@ export default function FinancialTransactionsPage() {
       ...prev,
       [id]: !prev[id],
     }));
+  };
+
+  // Helper function to get all refunds from lifecycle
+  const getRefundsFromLifecycle = (lifecycle: any) => {
+    if (!lifecycle) return [];
+    return Object.entries(lifecycle)
+      .filter(([, entry]: any) => entry.type === 'REFUND')
+      .map(([timestamp, entry]: any) => ({
+        timestamp: Number(timestamp),
+        ...entry,
+      }));
+  };
+
+  // Helper function to create a flattened list of individual refunds with transaction context
+  const getUnconfirmedRefundRows = () => {
+    const refundRows: any[] = [];
+    allTransactions.forEach((tx) => {
+      const refunds = getRefundsFromLifecycle(tx.lifecycle);
+      refunds.forEach((refund: any) => {
+        if (refund.refund_completed === false) {
+          refundRows.push({
+            ...refund,
+            transaction_id: tx.transaction_id,
+            name: tx.name,
+            type: tx.type,
+            order_id: tx.order_id,
+          });
+        }
+      });
+    });
+    return refundRows;
   };
 
   React.useEffect(() => {
@@ -522,17 +553,17 @@ export default function FinancialTransactionsPage() {
         </Table>
       </div>
 
-      {allTransactions.some(tx => tx.refund_completed === false) && (
+      {getUnconfirmedRefundRows().length > 0 && (
         <div className="mt-8">
           <div className="flex items-center gap-2 mb-4">
             <h2 className="text-xl font-medium text-gray-700">
-              Showing <span className="font-bold">{allTransactions.filter(tx => tx.refund_completed === false).length}</span> unconfirmed refunds of <span className="font-bold">{allTransactions.length}</span> items
+              Showing <span className="font-bold">{getUnconfirmedRefundRows().length}</span> unconfirmed refunds
             </h2>
           </div>
 
           <div
             className={`overflow-hidden rounded-lg border ${
-              allTransactions.filter(tx => tx.refund_completed === false).length > 10
+              getUnconfirmedRefundRows().length > 10
                 ? "max-h-[600px] overflow-y-auto"
                 : ""
             }`}
@@ -540,6 +571,9 @@ export default function FinancialTransactionsPage() {
             <Table>
               <TableHeader className="bg-muted sticky top-0 z-10">
                 <TableRow>
+                  <TableHead className="text-center flex-1">
+                    Transaction ID
+                  </TableHead>
                   <TableHead className="text-center flex-1">
                     <button
                       type="button"
@@ -627,8 +661,7 @@ export default function FinancialTransactionsPage() {
               </TableHeader>
 
               <TableBody>
-                {allTransactions
-                  .filter(tx => tx.refund_completed === false)
+                {getUnconfirmedRefundRows()
                   .sort((a, b) => {
                     if (refundNameSortAsc !== null) {
                       const aName = a.name || "";
@@ -641,52 +674,53 @@ export default function FinancialTransactionsPage() {
                       return refundTypeSortAsc ? aType.localeCompare(bType) : bType.localeCompare(aType);
                     }
                     if (refundAmountSortAsc !== null) {
-                      const aAmount = a.refund_amount ?? 0;
-                      const bAmount = b.refund_amount ?? 0;
+                      const aAmount = a.amount || 0;
+                      const bAmount = b.amount || 0;
                       return refundAmountSortAsc ? aAmount - bAmount : bAmount - aAmount;
                     }
                     if (refundDateSortAsc !== null) {
-                      const aTimestamp = a.lifecycle && Object.entries(a.lifecycle)
-                        .filter(([, entry]: any) => entry.type?.toLowerCase().includes('refund'))
-                        .map(([timestamp]) => timestamp)
-                        .sort((x, y) => Number(y) - Number(x))[0] ? Number(Object.entries(a.lifecycle)
-                        .filter(([, entry]: any) => entry.type?.toLowerCase().includes('refund'))
-                        .map(([timestamp]) => timestamp)
-                        .sort((x, y) => Number(y) - Number(x))[0]) : 0;
-                      const bTimestamp = b.lifecycle && Object.entries(b.lifecycle)
-                        .filter(([, entry]: any) => entry.type?.toLowerCase().includes('refund'))
-                        .map(([timestamp]) => timestamp)
-                        .sort((x, y) => Number(y) - Number(x))[0] ? Number(Object.entries(b.lifecycle)
-                        .filter(([, entry]: any) => entry.type?.toLowerCase().includes('refund'))
-                        .map(([timestamp]) => timestamp)
-                        .sort((x, y) => Number(y) - Number(x))[0]) : 0;
+                      const aTimestamp = a.timestamp || 0;
+                      const bTimestamp = b.timestamp || 0;
                       return refundDateSortAsc ? aTimestamp - bTimestamp : bTimestamp - aTimestamp;
                     }
                     return 0;
                   })
-                  .map((tx: any) => (
+                  .map((refundEntry: any) => (
                     <TableRow
-                      key={tx.transaction_id}
+                      key={`${refundEntry.transaction_id}-${refundEntry.timestamp}`}
                       className="hover:bg-muted/50 transition"
                     >
                       <TableCell className="text-center">
-                        {tx.name || "N/A"}
+                        <div className="inline-flex items-center gap-2">
+                          <span className="font-mono text-sm bg-muted/50 px-2 py-1 rounded">
+                            {refundEntry.transaction_id?.slice(0, 8) || "N/A"}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              navigator.clipboard.writeText(refundEntry.transaction_id);
+                              toast.success("Transaction ID copied!");
+                            }}
+                            title="Copy full Transaction ID"
+                            className="h-6 w-6 p-0"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                       <TableCell className="text-center">
-                        {tx.type}
+                        {refundEntry.name || "N/A"}
                       </TableCell>
                       <TableCell className="text-center">
-                        {tx.refund_amount != null ? formatAmount(tx.refund_amount, club?.currency) : "N/A"}
+                        {refundEntry.type}
                       </TableCell>
                       <TableCell className="text-center">
-                        {tx.lifecycle && Object.entries(tx.lifecycle)
-                          .filter(([, entry]: any) => entry.type?.toLowerCase().includes('refund'))
-                          .map(([timestamp]) => timestamp)
-                          .sort((a, b) => Number(b) - Number(a))[0]
-                          ? new Date(Number(Object.entries(tx.lifecycle)
-                              .filter(([, entry]: any) => entry.type?.toLowerCase().includes('refund'))
-                              .map(([timestamp]) => timestamp)
-                              .sort((a, b) => Number(b) - Number(a))[0])).toLocaleString("en-GB", {
+                        {refundEntry.amount > 0 ? formatAmount(refundEntry.amount, club?.currency) : "N/A"}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {refundEntry.timestamp
+                          ? new Date(refundEntry.timestamp).toLocaleString("en-GB", {
                               day: "2-digit",
                               month: "2-digit",
                               year: "numeric",
@@ -699,7 +733,12 @@ export default function FinancialTransactionsPage() {
                       <TableCell className="text-center">
                         <button
                           onClick={() => {
-                            setSelectedRefundTransaction(tx);
+                            // Find the full transaction from allTransactions
+                            const fullTransaction = allTransactions.find(tx => tx.transaction_id === refundEntry.transaction_id);
+                            setSelectedRefundTransaction({
+                              ...refundEntry,
+                              fullTransaction: fullTransaction
+                            });
                             setConfirmRefundDialog(true);
                           }}
                           className="text-green-600 hover:text-green-700 cursor-pointer font-medium transition-colors"
@@ -726,10 +765,25 @@ export default function FinancialTransactionsPage() {
           {selectedRefundTransaction && (
             <div className="py-4 space-y-2">
               <div className="text-sm">
-                <span className="font-medium">Member:</span> {selectedRefundTransaction.name || "N/A"}
+                <span className="font-medium">Member:</span> {selectedRefundTransaction?.name || "N/A"}
               </div>
               <div className="text-sm">
-                <span className="font-medium">Refund Amount:</span> {selectedRefundTransaction.refund_amount != null ? formatAmount(selectedRefundTransaction.refund_amount, club?.currency) : "N/A"}
+                <span className="font-medium">Refund Description:</span> {selectedRefundTransaction?.description || "N/A"}
+              </div>
+              <div className="text-sm">
+                <span className="font-medium">Refund Amount:</span> {selectedRefundTransaction?.amount > 0 ? formatAmount(selectedRefundTransaction?.amount, club?.currency) : "N/A"}
+              </div>
+              <div className="text-sm">
+                <span className="font-medium">Refund Date:</span> {selectedRefundTransaction?.timestamp
+                  ? new Date(selectedRefundTransaction.timestamp).toLocaleString("en-GB", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                    })
+                  : "N/A"}
               </div>
             </div>
           )}
@@ -744,16 +798,28 @@ export default function FinancialTransactionsPage() {
                 try {
                   const response = await api.post(`/transactions/confirmRefund`, {
                     club_account_id: club?.club_account_id,
-                    transaction_id: selectedRefundTransaction.transaction_id
+                    transaction_id: selectedRefundTransaction.transaction_id,
+                    refund_timestamp: selectedRefundTransaction.timestamp
                   });
                   toast.success(response.data?.message || "Refund confirmed successfully");
+                
                   setAllTransactions((prev) =>
                     prev.map((tx) =>
                       tx.transaction_id === selectedRefundTransaction.transaction_id
-                        ? { ...tx, refund_completed: true }
+                        ? {
+                            ...tx,
+                            lifecycle: {
+                              ...tx.lifecycle,
+                              [selectedRefundTransaction.timestamp]: {
+                                ...tx.lifecycle[selectedRefundTransaction.timestamp],
+                                refund_completed: true
+                              }
+                            }
+                          }
                         : tx
                     )
                   );
+                  
                   setConfirmRefundDialog(false);
                   setSelectedRefundTransaction(null);
                 } catch (error: any) {
