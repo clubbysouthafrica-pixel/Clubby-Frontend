@@ -66,7 +66,7 @@ import { cn } from "@/lib/utils";
 import { formatAmount } from "@/data/currencies";
 import { useFetchUserTransactions } from "@/queries/transactions";
 import { getMemberOrders } from "@/services/orders";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
 
 import { RegistrationTabContent } from "@/components/member/registration/registration-tab-content";
@@ -105,7 +105,6 @@ export default function ViewClubPage() {
   const auth = useContext(AuthContext);
   const isLoggedIn = !!auth?.user;
   const isMobile = useIsMobile();
-  const queryClient = useQueryClient();
 
   const navigate = useNavigate();
   const { clubId } = useParams();

@@ -51,7 +51,7 @@ export default function OrdersPage() {
   const [transactionIdSearch, setTransactionIdSearch] = useState("");
   const [memberNameSearch, setMemberNameSearch] = useState(memberParam || "");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState(paymentStatusParam ? paymentStatusParam.toUpperCase() : "all");
-  const [fulfillmentStatusFilter, setFulfillmentStatusFilter] = useState("all");
+  const [fulfillmentStatusFilter] = useState("all");
   const [appliedFilters, setAppliedFilters] = useState<{ transaction_id?: string; member_name?: string; payment_status?: string; fulfillment_status?: string }>(() => {
     const filters: { transaction_id?: string; member_name?: string; payment_status?: string; fulfillment_status?: string } = {};
     if (memberParam) filters.member_name = memberParam;
