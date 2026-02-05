@@ -3,6 +3,7 @@ import { api } from "./api";
 interface FetchClubOrdersResponse {
     status: number;
     data: any;
+    message?: string;
 }
 
 interface ConfirmOrderPaymentRequest {
@@ -82,6 +83,24 @@ export const confirmOrderPayment = async (payload: ConfirmOrderPaymentRequest): 
 export const refundOrRemoveOrder = async (payload: RefundOrRemoveRequest): Promise<FetchClubOrdersResponse> => {
     try {
         const res = await api.post("/orders/refundOrRemove", payload);
+        return { status: res.status, data: res.data };
+    } catch (err: any) {
+        if (err.response) {
+            return { status: err.response.status, data: err.response.data };
+        }
+        throw err;
+    }
+};
+
+interface UpdateFulfillmentRequest {
+    order_id: string;
+    club_account_id: string;
+    type: string;
+}
+
+export const updateAdminOrderFulfillment = async (payload: UpdateFulfillmentRequest): Promise<FetchClubOrdersResponse> => {
+    try {
+        const res = await api.post("/orders/updateOrderFulfillment", payload);
         return { status: res.status, data: res.data };
     } catch (err: any) {
         if (err.response) {

@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
-import { getClubOrders, confirmOrderPayment, refundOrRemoveOrder } from "@/services/admin/orders";
+import { getClubOrders, confirmOrderPayment, refundOrRemoveOrder, updateAdminOrderFulfillment } from "@/services/admin/orders";
 import { formatAmount } from "@/data/currencies";
 import { Label } from "@/components/ui/label";
 
@@ -71,6 +71,9 @@ export default function OrdersPage() {
   const [isPaymentMethodsOpen, setIsPaymentMethodsOpen] = useState(false);
   const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
   const [copiedTransactionId, setCopiedTransactionId] = useState<string | null>(null);
+  const [fulfillmentDialogOpen, setFulfillmentDialogOpen] = useState(false);
+  const [selectedOrderForFulfillment, setSelectedOrderForFulfillment] = useState<any>(null);
+  const [isUpdatingFulfillment, setIsUpdatingFulfillment] = useState(false);
   const [refundDialogOpen, setRefundDialogOpen] = useState(false);
   const [selectedOrderForRefund, setSelectedOrderForRefund] = useState<any>(null);
   const [selectedItemsForRefund, setSelectedItemsForRefund] = useState<Set<string>>(new Set());
@@ -175,13 +178,18 @@ export default function OrdersPage() {
 
       if (response.status === 200) {
         toast.success("Payment confirmed successfully");
-        // Refetch orders
-        if (club?.club_account_id) {
-          const ordersResponse = await getClubOrders(club.club_account_id);
-          if (ordersResponse.status === 200 && ordersResponse.data?.orders) {
-            setAllOrders(ordersResponse.data.orders);
-          }
-        }
+        // Update the order locally instead of refreshing the page
+        setAllOrders((prevOrders) =>
+          prevOrders.map((order) =>
+            order.order_id === selectedOrderForPayment.order_id
+              ? {
+                  ...order,
+                  payment_status: "PAID",
+                  fulfillment_status: "PROCESSING",
+                }
+              : order
+          )
+        );
         handleClosePaymentDialog();
       } else {
         toast.error(response.data?.message || "Failed to confirm payment");
@@ -200,6 +208,53 @@ export default function OrdersPage() {
     setSelectedOrderForPayment(null);
     setSelectedPaymentType("");
     setIsPaymentMethodsOpen(false);
+  };
+
+  const handleFulfillmentStatusClick = (order: any) => {
+    setSelectedOrderForFulfillment(order);
+    setFulfillmentDialogOpen(true);
+  };
+
+  const handleConfirmFulfillmentUpdate = async () => {
+    if (!selectedOrderForFulfillment || !club?.club_account_id) return;
+
+    try {
+      setIsUpdatingFulfillment(true);
+      
+      // Determine the fulfillment status to send based on payment status
+      const fulfillmentStatusType = selectedOrderForFulfillment.payment_status?.includes("REFUND")
+        ? "REFUNDED"
+        : "DELIVERED";
+
+      const response = await updateAdminOrderFulfillment({
+        order_id: selectedOrderForFulfillment.order_id,
+        club_account_id: club.club_account_id,
+        type: fulfillmentStatusType,
+      });
+
+      if (response && response.status === 200) {
+        toast.success("Fulfillment status updated successfully");
+        
+        const updatedOrder = { ...selectedOrderForFulfillment, fulfillment_status: fulfillmentStatusType };
+        setAllOrders((prevOrders: any) =>
+          prevOrders.map((order: any) =>
+            order.order_id === selectedOrderForFulfillment.order_id
+              ? updatedOrder
+              : order
+          )
+        );
+        
+        setFulfillmentDialogOpen(false);
+        setSelectedOrderForFulfillment(null);
+      } else {
+        toast.error(response?.data?.message || "Failed to update fulfillment status");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Error updating fulfillment status");
+      console.error("Error updating fulfillment status:", err);
+    } finally {
+      setIsUpdatingFulfillment(false);
+    }
   };
 
   const handleRefundClick = (order: Record<string, unknown>) => {
@@ -292,13 +347,20 @@ export default function OrdersPage() {
       if (response.status === 200) {
         toast.success(`Order refunded successfully - ${formatAmount(refundAmount, club?.currency || "ZAR")}`);
         
-        // Update local state
         setAllOrders((prevOrders: any) =>
-          prevOrders.map((order: any) =>
-            order.order_id === selectedOrderForRefund.order_id
-              ? { ...order, payment_status: "REFUNDED" }
-              : order
-          )
+          prevOrders.map((order: any) => {
+            if (order.order_id === selectedOrderForRefund.order_id) {
+              if (!isFullRefund) {
+                return {
+                  ...order,
+                  payment_status: "PAID (Partial Refund)",
+                  amount_paid: (order.amount_paid || 0) - refundAmount
+                };
+              }
+              return { ...order, payment_status: "REFUNDED" };
+            }
+            return order;
+          })
         );
         
         setRefundDialogOpen(false);
@@ -321,13 +383,11 @@ export default function OrdersPage() {
 
   const handleDeleteClick = (order: Record<string, unknown>) => {
     setSelectedOrderForDelete(order);
-    // Initialize all items as collapsed and return to inventory by default
     const orderItems = (order.items as any[]) || [];
     const defaultReturn = new Set<string>();
     orderItems.forEach((item: any, idx: number) => {
       for (let i = 0; i < item.quantity; i++) {
         const unitId = `${item.product_id}-${idx}-${i}`;
-        // Default to returning items to inventory
         defaultReturn.add(unitId);
       }
     });
@@ -342,7 +402,6 @@ export default function OrdersPage() {
     try {
       setIsProcessingDelete(true);
       
-      // Build delete payload with return to inventory info for each unit
       const orderItems = (selectedOrderForDelete.items as any[]) || [];
       const itemsWithInventory: any[] = [];
       
@@ -384,7 +443,6 @@ export default function OrdersPage() {
       if (response.status === 200) {
         toast.success("Order deleted successfully");
         
-        // Update local state
         setAllOrders((prevOrders: any) =>
           prevOrders.filter((order: any) => order.order_id !== selectedOrderForDelete.order_id)
         );
@@ -647,6 +705,35 @@ export default function OrdersPage() {
                           )}
                         </div>
                       </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex flex-col items-center gap-2">
+                          <Badge
+                            className={`${
+                              order.fulfillment_status === "DELIVERED"
+                                ? "bg-green-100 text-green-800 border-green-200"
+                                : order.fulfillment_status === "PROCESSING"
+                                  ? "bg-purple-100 text-purple-800 border-purple-200"
+                                  : order.fulfillment_status === "NOT_PROCESSED"
+                                    ? "bg-orange-100 text-orange-800 border-orange-200"
+                                    : order.fulfillment_status === "CANCELLED" || order.fulfillment_status === "REFUND" || order.fulfillment_status === "REFUNDED"
+                                    ? "bg-red-100 text-red-800 border-red-200"
+                                    : "bg-green-100 text-green-800 border-green-200"
+                            }`}
+                          >
+                            {order.fulfillment_status || "Unknown"}
+                          </Badge>
+                          {order.fulfillment_status === "PROCESSING" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleFulfillmentStatusClick(order)}
+                              className="text-xs h-7 text-purple-600 border-0 shadow-none"
+                            >
+                              Update Status
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-center text-sm">
                         {order.created_date
                           ? new Date(order.created_date * 1000).toLocaleDateString(
@@ -664,7 +751,7 @@ export default function OrdersPage() {
                               className="text-xs h-7 text-red-600"
                               onClick={() => handleDeleteClick(order)}
                             >
-                              Delete
+                              Cancel
                             </Button>
                           ) : order.payment_status === "PAID" || (order.amount_paid && order.amount_paid > 0) ? (
                             <Button
@@ -1043,13 +1130,13 @@ export default function OrdersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Dialog */}
+      {/* Cancel Order Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Delete Order</DialogTitle>
+            <DialogTitle>Cancel Order</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete order {selectedOrderForDelete?.transaction_id?.substring(0, 8)}?
+              Are you sure you want to cancel order {selectedOrderForDelete?.transaction_id?.substring(0, 8)}?
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -1147,7 +1234,7 @@ export default function OrdersPage() {
           </div>
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-sm text-red-800">
-              This action cannot be undone. The order will be permanently deleted from the system.
+              This action cannot be undone. The order will be permanently cancelled from the system.
             </p>
           </div>
           <DialogFooter>
@@ -1166,13 +1253,49 @@ export default function OrdersPage() {
               {isProcessingDelete ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
+                  Cancelling...
                 </>
               ) : (
-                "Delete Order"
+                "Cancel Order"
               )}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Fulfillment Update Dialog */}
+      <Dialog open={fulfillmentDialogOpen} onOpenChange={setFulfillmentDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Update Fulfillment Status</DialogTitle>
+            <DialogDescription>
+              {selectedOrderForFulfillment?.payment_status?.includes("REFUND") 
+                ? "Are you sure you want to confirm the refund? This will update the fulfillment status to DELIVERED."
+                : "Are you sure you want to mark this order as delivered? This will update the fulfillment status to DELIVERED."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 justify-end mt-6">
+            <Button
+              variant="outline"
+              onClick={() => setFulfillmentDialogOpen(false)}
+              disabled={isUpdatingFulfillment}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmFulfillmentUpdate}
+              disabled={isUpdatingFulfillment}
+            >
+              {isUpdatingFulfillment ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Confirm"
+              )}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
