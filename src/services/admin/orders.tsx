@@ -56,6 +56,7 @@ export const getClubOrders = async (
     if (filters?.payment_status && filters.payment_status !== "all") url += `&payment_status=${encodeURIComponent(filters.payment_status)}`;
     if (filters?.fulfillment_status && filters.fulfillment_status !== "all") url += `&fulfillment_status=${encodeURIComponent(filters.fulfillment_status)}`;
     
+    
     const res = await api.get(url);
     return { status: res.status, data: res.data };
   } catch (err: any) {

@@ -65,7 +65,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatAmount } from "@/data/currencies";
 import { useFetchUserTransactions } from "@/queries/transactions";
-import { getMemberOrders, updateOrderFulfillment } from "@/services/orders";
+import { getMemberOrders } from "@/services/orders";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
 
@@ -127,10 +127,6 @@ export default function ViewClubPage() {
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [showOrderSelection, setShowOrderSelection] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
-  const [fulfillmentDialogOpen, setFulfillmentDialogOpen] = useState(false);
-  const [selectedFulfillmentOrder, setSelectedFulfillmentOrder] =
-    useState<any>(null);
-  const [updatingFulfillment, setUpdatingFulfillment] = useState(false);
   const [orderSortColumn, setOrderSortColumn] = useState<'date' | 'payment_status' | 'fulfillment_status' | 'total' | null>(null);
   const [orderSortDirection, setOrderSortDirection] = useState<'asc' | 'desc'>('asc');
 
@@ -227,48 +223,6 @@ export default function ViewClubPage() {
 
   const handlePayNowClick = () => {
     handlePayHereClick();
-  };
-
-  const handleFulfillmentStatusClick = (order: any) => {
-    setSelectedFulfillmentOrder(order);
-    setFulfillmentDialogOpen(true);
-  };
-
-  const handleConfirmFulfillmentUpdate = async () => {
-    if (!selectedFulfillmentOrder || !data?.club_account_id) return;
-
-    setUpdatingFulfillment(true);
-    try {
-      const response = await updateOrderFulfillment(
-        data.club_account_id,
-        selectedFulfillmentOrder.order_id,
-      );
-      toast.success(
-        response?.message || "Order fulfillment status updated successfully!",
-      );
-      setFulfillmentDialogOpen(false);
-
-      // Update the local cache with the new fulfillment status
-      queryClient.setQueryData(
-        ["member-orders", data.club_account_id],
-        (oldData: any) => {
-          if (!oldData) return oldData;
-          return {
-            ...oldData,
-            orders: oldData.orders?.map((order: any) =>
-              order.order_id === selectedFulfillmentOrder.order_id
-                ? { ...order, fulfillment_status: "DELIVERED" }
-                : order,
-            ),
-          };
-        },
-      );
-    } catch (error) {
-      console.error("Error updating fulfillment status:", error);
-      toast.error("Failed to update fulfillment status. Please try again.");
-    } finally {
-      setUpdatingFulfillment(false);
-    }
   };
 
   const copyToClipboard = (text: string, field: string) => {
@@ -727,14 +681,16 @@ export default function ViewClubPage() {
                         Registration
                       </TabsTrigger>
                     )}
-                    <ShopTab
-                      clubId={clubId!}
-                      isMobile={isMobile}
-                      isClubMember={
-                        data?.club_member_exists || data?.resubmission_required
-                      }
-                      isRegistered={data?.registered}
-                    />
+                    {!data?.resubmission_required && (
+                      <ShopTab
+                        clubId={clubId!}
+                        isMobile={isMobile}
+                        isClubMember={
+                          data?.club_member_exists || data?.resubmission_required
+                        }
+                        isRegistered={data?.registered}
+                      />
+                    )}
                   </TabsList>
                 )}
                 <RegistrationTabContent
@@ -966,11 +922,6 @@ export default function ViewClubPage() {
                                     <TableCell className="text-center flex-1 py-4">
                                       <div className="flex items-center justify-center gap-2">
                                         <Badge
-                                          onClick={() =>
-                                            order.fulfillment_status ===
-                                              "PROCESSING" &&
-                                            handleFulfillmentStatusClick(order)
-                                          }
                                           className={`font-medium ${
                                             order.fulfillment_status ===
                                             "DELIVERED"
@@ -980,7 +931,7 @@ export default function ViewClubPage() {
                                                 ? "bg-orange-100 text-orange-800 border-orange-200"
                                                 : order.fulfillment_status ===
                                                     "PROCESSING"
-                                                  ? "bg-purple-100 text-purple-800 border-purple-200 cursor-pointer hover:opacity-80"
+                                                  ? "bg-purple-100 text-purple-800 border-purple-200"
                                                   : order.fulfillment_status ===
                                                       "CANCELLED" || order.fulfillment_status === "REFUND" || order.fulfillment_status === "REFUNDED"
                                                   ? "bg-red-100 text-red-800 border-red-200"
@@ -989,15 +940,6 @@ export default function ViewClubPage() {
                                         >
                                           {order.fulfillment_status || "Unknown"}
                                         </Badge>
-                                        {order.fulfillment_status ===
-                                          "PROCESSING" && (
-                                          <div className="relative group">
-                                            <AlertTriangle className="w-4 h-4 text-purple-600 cursor-help" />
-                                            <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10 bottom-full mb-2 right-0">
-                                              Click to update status
-                                            </div>
-                                          </div>
-                                        )}
                                       </div>
                                     </TableCell>
                                   </TableRow>
@@ -1685,44 +1627,6 @@ export default function ViewClubPage() {
                 </TabsContent>
               ))}
           </Tabs>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={fulfillmentDialogOpen}
-        onOpenChange={setFulfillmentDialogOpen}
-      >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Confirm Your Order Has Been Received</DialogTitle>
-            <DialogDescription>
-              Are you certain you want to confirm you have received your order?
-              This will be reflected on the admin side too and considered
-              received.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex gap-3 justify-end mt-6">
-            <Button
-              variant="outline"
-              onClick={() => setFulfillmentDialogOpen(false)}
-              disabled={updatingFulfillment}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirmFulfillmentUpdate}
-              disabled={updatingFulfillment}
-            >
-              {updatingFulfillment ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Updating...
-                </>
-              ) : (
-                "Confirm"
-              )}
-            </Button>
-          </div>
         </DialogContent>
       </Dialog>
     </Pager>

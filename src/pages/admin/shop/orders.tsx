@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Copy, CheckCircle2, AlertTriangle, AlertCircle, Loader2 } from "lucide-react";
+import { ChevronDown, Copy, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Table,
@@ -32,7 +32,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { getClubOrders, confirmOrderPayment, refundOrRemoveOrder } from "@/services/admin/orders";
-import { updateAdminOrderFulfillment } from "@/requests/admin-orders-request";
 import { formatAmount } from "@/data/currencies";
 import { Label } from "@/components/ui/label";
 
@@ -72,9 +71,6 @@ export default function OrdersPage() {
   const [isPaymentMethodsOpen, setIsPaymentMethodsOpen] = useState(false);
   const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
   const [copiedTransactionId, setCopiedTransactionId] = useState<string | null>(null);
-  const [fulfillmentDialogOpen, setFulfillmentDialogOpen] = useState(false);
-  const [selectedOrderForFulfillment, setSelectedOrderForFulfillment] = useState<any>(null);
-  const [isUpdatingFulfillment, setIsUpdatingFulfillment] = useState(false);
   const [refundDialogOpen, setRefundDialogOpen] = useState(false);
   const [selectedOrderForRefund, setSelectedOrderForRefund] = useState<any>(null);
   const [selectedItemsForRefund, setSelectedItemsForRefund] = useState<Set<string>>(new Set());
@@ -87,9 +83,6 @@ export default function OrdersPage() {
   const [expandedDeleteItems, setExpandedDeleteItems] = useState<Set<string>>(new Set());
   const [returnDeleteToInventory, setReturnDeleteToInventory] = useState<Set<string>>(new Set());
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
-  const [confirmRefundCompletionDialogOpen, setConfirmRefundCompletionDialogOpen] = useState(false);
-  const [selectedOrderForRefundCompletion, setSelectedOrderForRefundCompletion] = useState<any>(null);
-  const [isConfirmingRefundCompletion, setIsConfirmingRefundCompletion] = useState(false);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -207,94 +200,6 @@ export default function OrdersPage() {
     setSelectedOrderForPayment(null);
     setSelectedPaymentType("");
     setIsPaymentMethodsOpen(false);
-  };
-
-  const handleFulfillmentStatusClick = (order: any) => {
-    // Check if payment_status is REFUND and fulfillment_status is PROCESSING
-    if (order.payment_status === "REFUND" && order.fulfillment_status === "PROCESSING") {
-      setSelectedOrderForRefundCompletion(order);
-      setConfirmRefundCompletionDialogOpen(true);
-    } else {
-      setSelectedOrderForFulfillment(order);
-      setFulfillmentDialogOpen(true);
-    }
-  };
-
-  const handleConfirmFulfillmentUpdate = async () => {
-    if (!selectedOrderForFulfillment || !club?.club_account_id) return;
-
-    try {
-      setIsUpdatingFulfillment(true);
-      const response = await updateAdminOrderFulfillment(
-        club.club_account_id,
-        selectedOrderForFulfillment.order_id,
-        "fulfillment"
-      );
-
-      // Check if status is 200 and response has a message
-      if (response && response.status === 200 && response.message) {
-        toast.success("Fulfillment status updated successfully");
-        
-        // Update local state immediately
-        const updatedOrder = { ...selectedOrderForFulfillment, fulfillment_status: "DELIVERED" };
-        setAllOrders((prevOrders: any) =>
-          prevOrders.map((order: any) =>
-            order.order_id === selectedOrderForFulfillment.order_id
-              ? updatedOrder
-              : order
-          )
-        );
-        
-        setFulfillmentDialogOpen(false);
-        setSelectedOrderForFulfillment(null);
-      } else {
-        toast.error(response?.message || "Failed to update fulfillment status");
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Error updating fulfillment status");
-      console.error("Error updating fulfillment status:", err);
-    } finally {
-      setIsUpdatingFulfillment(false);
-    }
-  };
-
-  const handleConfirmRefundCompletion = async () => {
-    if (!selectedOrderForRefundCompletion || !club?.club_account_id) return;
-
-    try {
-      setIsConfirmingRefundCompletion(true);
-      
-      // Update the fulfillment status to COMPLETED or similar to indicate refund is done
-      const response = await updateAdminOrderFulfillment(
-        club.club_account_id,
-        selectedOrderForRefundCompletion.order_id,
-        "refund_completion"
-      );
-
-      if (response && response.status === 200 && response.message) {
-        toast.success("Refund completion confirmed");
-        
-        // Update local state
-        const updatedOrder = { ...selectedOrderForRefundCompletion, fulfillment_status: "REFUNDED" };
-        setAllOrders((prevOrders: any) =>
-          prevOrders.map((order: any) =>
-            order.order_id === selectedOrderForRefundCompletion.order_id
-              ? updatedOrder
-              : order
-          )
-        );
-        
-        setConfirmRefundCompletionDialogOpen(false);
-        setSelectedOrderForRefundCompletion(null);
-      } else {
-        toast.error(response?.message || "Failed to confirm refund completion");
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Error confirming refund completion");
-      console.error("Error confirming refund completion:", err);
-    } finally {
-      setIsConfirmingRefundCompletion(false);
-    }
   };
 
   const handleRefundClick = (order: Record<string, unknown>) => {
@@ -537,23 +442,6 @@ export default function OrdersPage() {
               <SelectItem value="CANCELLED">Cancelled</SelectItem>
             </SelectContent>
           </Select>
-
-          <Select onValueChange={setFulfillmentStatusFilter} value={fulfillmentStatusFilter}>
-            <SelectTrigger className="flex items-center gap-2 w-[20%]">
-              <span className="text-muted-foreground whitespace-nowrap">
-                Fulfillment Status:
-              </span>
-              <SelectValue placeholder="All" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="NOT_PROCESSED">Not Processed</SelectItem>
-              <SelectItem value="PROCESSING">Processing</SelectItem>
-              <SelectItem value="DELIVERED">Delivered</SelectItem>
-              <SelectItem value="REFUNDED">Refunded</SelectItem>
-              <SelectItem value="CANCELLED">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
 
         <p className="text-sm text-gray-600 my-1">
@@ -756,37 +644,6 @@ export default function OrdersPage() {
                             >
                               Confirm Payment
                             </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <Badge
-                            onClick={() =>
-                              order.fulfillment_status === "PROCESSING" &&
-                              handleFulfillmentStatusClick(order)
-                            }
-                            className={`${
-                              order.fulfillment_status === "DELIVERED"
-                                ? "bg-green-100 text-green-800 border-green-200"
-                                : order.fulfillment_status === "PROCESSING"
-                                  ? "bg-purple-100 text-purple-800 border-purple-200 cursor-pointer hover:opacity-80"
-                                  : order.fulfillment_status === "NOT_PROCESSED"
-                                    ? "bg-orange-100 text-orange-800 border-orange-200"
-                                    : order.fulfillment_status === "CANCELLED" || order.fulfillment_status === "REFUND" || order.fulfillment_status === "REFUNDED"
-                                    ? "bg-red-100 text-red-800 border-red-200"
-                                    : "bg-green-100 text-green-800 border-green-200"
-                            }`}
-                          >
-                            {order.fulfillment_status || "Unknown"}
-                          </Badge>
-                          {order.fulfillment_status === "PROCESSING" && (
-                            <div className="relative group">
-                              <AlertTriangle className="w-4 h-4 text-purple-600 cursor-help" />
-                              <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10 bottom-full mb-2 right-0">
-                                Click to update status
-                              </div>
-                            </div>
                           )}
                         </div>
                       </TableCell>
@@ -1025,73 +882,6 @@ export default function OrdersPage() {
               {isConfirmingPayment ? "Processing..." : "Confirm Payment"}
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={fulfillmentDialogOpen} onOpenChange={setFulfillmentDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Complete Order</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to mark this order as delivered? This action will update the fulfillment status to DELIVERED and this order will be considered complete.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex gap-3 justify-end mt-6">
-            <Button
-              variant="outline"
-              onClick={() => setFulfillmentDialogOpen(false)}
-              disabled={isUpdatingFulfillment}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirmFulfillmentUpdate}
-              disabled={isUpdatingFulfillment}
-            >
-              {isUpdatingFulfillment ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Updating...
-                </>
-              ) : (
-                "Confirm"
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Confirm Refund Completion Dialog */}
-      <Dialog open={confirmRefundCompletionDialogOpen} onOpenChange={setConfirmRefundCompletionDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Confirm Refund Completion</DialogTitle>
-            <DialogDescription>
-              Has the refund for order {selectedOrderForRefundCompletion?.order_id?.substring(0, 8).toUpperCase()} been completed? This will mark the refund as finished.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex gap-3 justify-end mt-6">
-            <Button
-              variant="outline"
-              onClick={() => setConfirmRefundCompletionDialogOpen(false)}
-              disabled={isConfirmingRefundCompletion}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirmRefundCompletion}
-              disabled={isConfirmingRefundCompletion}
-            >
-              {isConfirmingRefundCompletion ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Confirming...
-                </>
-              ) : (
-                "Confirm"
-              )}
-            </Button>
-          </div>
         </DialogContent>
       </Dialog>
 
