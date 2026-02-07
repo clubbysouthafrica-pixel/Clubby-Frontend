@@ -18,6 +18,7 @@ import HomeDashboardPage from "@/pages/dashboard/dash-home";
 import RegistrationReportPage from "@/pages/admin/reporting/registration-report-page";
 import BillingPage from "@/pages/admin/billing/billing";
 import GeneralReportingPage from "@/pages/admin/reporting/general-reporting";
+import ShopReportingPage from "@/pages/admin/reporting/shop-reporting";
 import FinancialTransactionsPage from "@/pages/admin/reporting/financial-transactions";
 import OnboardClubPage from "@/pages/authentication/onboard-club";
 import AddMemberPage from "@/pages/dashboard/members/add-member";
@@ -147,6 +148,14 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <GeneralReportingPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/reporting/shop"
+        element={
+          <ProtectedRoute>
+            <ShopReportingPage />
           </ProtectedRoute>
         }
       ></Route>

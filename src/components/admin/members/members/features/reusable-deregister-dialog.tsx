@@ -18,6 +18,7 @@ import { useState, useEffect } from "react";
 import { useDeregisterMembersMutation } from "@/mutations/admin/useDeregisterMutation";
 import { toast } from "sonner";
 import { formatAmount } from "@/data/currencies";
+import { useNavigate } from "react-router-dom";
 
 interface ReusableDeregisterDialogProps {
   isOpen: boolean;
@@ -65,6 +66,7 @@ export default function ReusableDeregisterDialog({
   submitButtonVariant = "destructive",
   currency = "ZAR",
 }: ReusableDeregisterDialogProps) {
+  const navigate = useNavigate();
   const [confirmed, setConfirmed] = useState(false);
   const [itemQuery, setItemQuery] = useState("");
   const [message, setMessage] = useState("");
@@ -139,7 +141,30 @@ export default function ReusableDeregisterDialog({
             window.location.reload();
           }, 500);
         },
-        onError: () => toast.error("Something went wrong"),
+        onError: (error: any) => {
+          const status = error?.response?.status;
+          const message = error?.response?.data?.message || error?.message || "Something went wrong";
+          
+          if (status === 411) {
+            const memberName = error?.response?.data?.name || "member";
+            
+            toast.error(message, {
+              action: {
+                label: "Handle Orders",
+                onClick: () => {
+                  navigate(`/shop/orders?member=${encodeURIComponent(memberName)}&paymentStatus=pending`);
+                }
+              }
+            });
+            
+            // Close dialog after showing error
+            setTimeout(() => {
+              onOpenChange(false);
+            }, 300);
+          } else {
+            toast.error(message);
+          }
+        },
       },
     );
   };
