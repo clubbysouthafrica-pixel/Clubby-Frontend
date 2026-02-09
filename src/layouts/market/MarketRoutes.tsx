@@ -23,6 +23,7 @@ import { ClubRegisterForm } from "@/components/member/register/registration_form
 import TermsPage from "@/pages/policies/terms";
 import PrivacyPage from "@/pages/policies/privacy";
 import RegistrationPolicy from "@/pages/policies/privacy-clubs";
+import ResetTemporaryPasswordPage from "@/pages/authentication/reset-temporary-password/page.tsx";
 export default function MarketRoutes() {
   return (
     <Routes>
@@ -31,6 +32,7 @@ export default function MarketRoutes() {
       <Route path="/privacy" element={<PrivacyPage />}></Route>
       <Route path="/legal" element={<RegistrationPolicy />}></Route>
       <Route path="/login" element={<LoginPage />}></Route>
+      <Route path="/login/reset-email" element={<ResetTemporaryPasswordPage />}></Route>
       <Route path="/register" element={<RegisterPage />}></Route>
       <Route path="/forgotpassword" element={<ForgotPasswordPage />}></Route>
       <Route path="/activateAccount" element={<ActivateAccount />}></Route>

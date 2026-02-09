@@ -7,7 +7,6 @@ export default function MarketLayout({ children }: { children: React.ReactNode }
             <div className="h-full">
                 {children}
             </div>
-            {/*<Footer />*/}
         </div>
     )
 }

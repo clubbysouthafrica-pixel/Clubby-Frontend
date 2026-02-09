@@ -29,6 +29,7 @@ export function LoginForm({
   const username = searchParams.get("username");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [errorStatusCode, setErrorStatusCode] = useState<number | null>(null);
   const [email, setEmail] = useState<string>(username || "");
   const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
@@ -68,6 +69,13 @@ export function LoginForm({
       if (e instanceof AxiosError) {
         if (e.response?.data?.message === "User is not confirmed.")
           navigate(`/otp?username=${encodeURIComponent(email)}`);
+        
+        if (e.response?.status === 411) {
+          navigate(`/login/reset-email?email=${encodeURIComponent(email)}`);
+          return;
+        }
+        
+        setErrorStatusCode(e.response?.status || null);
         setError(e.response?.data?.message);
       } else {
         setError((e as Error).message);
@@ -84,28 +92,30 @@ export function LoginForm({
           <CardTitle className="text-xl text-left mb-3">
             Log in to your account
           </CardTitle>
-          <CardDescription className="bg-gray-100 p-1 rounded-sm flex">
-            <Button
-              variant={isAdminLogin ? "ghost" : "default"}
-              className={
-                "rounded-sm w-1/2 " +
-                (isAdminLogin ? "" : " bg-indigo-400 hover:bg-indigo-400")
-              }
-              onClick={() => setAdminLogin(false)}
-            >
-              Member
-            </Button>
-            <Button
-              variant={isAdminLogin ? "default" : "ghost"}
-              className={
-                "rounded-sm w-1/2 " +
-                (isAdminLogin ? " bg-indigo-400 hover:bg-indigo-400" : "")
-              }
-              onClick={() => setAdminLogin(true)}
-            >
-              Admin
-            </Button>
-          </CardDescription>
+          {errorStatusCode !== 411 && (
+            <CardDescription className="bg-gray-100 p-1 rounded-sm flex">
+              <Button
+                variant={isAdminLogin ? "ghost" : "default"}
+                className={
+                  "rounded-sm w-1/2 " +
+                  (isAdminLogin ? "" : " bg-indigo-400 hover:bg-indigo-400")
+                }
+                onClick={() => setAdminLogin(false)}
+              >
+                Member
+              </Button>
+              <Button
+                variant={isAdminLogin ? "default" : "ghost"}
+                className={
+                  "rounded-sm w-1/2 " +
+                  (isAdminLogin ? " bg-indigo-400 hover:bg-indigo-400" : "")
+                }
+                onClick={() => setAdminLogin(true)}
+              >
+                Admin
+              </Button>
+            </CardDescription>
+          )}
         </CardHeader>
         <CardContent>
           <form
@@ -116,64 +126,83 @@ export function LoginForm({
           >
             <div className="grid gap-6">
               <div className="grid gap-6">
-                <div className="grid gap-3 pt-3">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="m@example.com"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    required
-                  />
-                </div>
-                <div className="grid gap-3 pb-3">
-                  <div className="flex items-center">
-                    <Label htmlFor="password">Password</Label>
-                    <Link
-                      to="/forgotpassword"
-                      className="ml-auto text-xs underline-offset-4 hover:underline"
-                    >
-                      Forgot your password?
-                    </Link>
-                  </div>
-
-                  {/* Relative wrapper for input + icon */}
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="***"
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                      required
-                      className="pr-10" // Add padding to the right so the icon doesn't overlap text
-                    />
-
-                    {/* Eye icon */}
-                    <div
-                      className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground"
-                      onClick={() => {
-                        setShowPassword(!showPassword);
-                        setError("");
-                      }}
-                    >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {errorStatusCode === 411 ? (
+                  <>
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                      <p className="text-red-800 font-semibold text-base">
+                        Your temporary password has expired
+                      </p>
+                      <p className="text-red-700 text-sm mt-2">
+                        Please reset your temporary password to continue.
+                      </p>
                     </div>
-                  </div>
-                </div>
+                    <Link to={`/login/reset-email?email=${encodeURIComponent(email)}`}>
+                      <Button type="button" className="w-full">
+                        Reset Temporary Password
+                      </Button>
+                    </Link>
+                  </>
+                ) : (
+                      <>
+                        <div className="grid gap-3 pt-3">
+                          <Label htmlFor="email">Email</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            placeholder="m@example.com"
+                            value={email}
+                            onChange={(event) => setEmail(event.target.value)}
+                            required
+                          />
+                        </div>
+                        <div className="grid gap-3 pb-3">
+                          <div className="flex items-center">
+                            <Label htmlFor="password">Password</Label>
+                            <Link
+                              to="/forgotpassword"
+                              className="ml-auto text-xs underline-offset-4 hover:underline"
+                            >
+                              Forgot your password?
+                            </Link>
+                          </div>
 
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription className="text-xs">
-                      {error}
-                    </AlertDescription>
-                  </Alert>
-                )}
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Logging in..." : "Login"}
-                </Button>
+                          {/* Relative wrapper for input + icon */}
+                          <div className="relative">
+                            <Input
+                              id="password"
+                              type={showPassword ? "text" : "password"}
+                              placeholder="***"
+                              value={password}
+                              onChange={(event) => setPassword(event.target.value)}
+                              required
+                              className="pr-10" // Add padding to the right so the icon doesn't overlap text
+                            />
+
+                            {/* Eye icon */}
+                            <div
+                              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground"
+                              onClick={() => {
+                                setShowPassword(!showPassword);
+                                setError("");
+                              }}
+                            >
+                              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </div>
+                          </div>
+                        </div>
+
+                        {error && errorStatusCode !== 411 && (
+                          <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription>{error}</AlertDescription>
+                          </Alert>
+                        )}
+
+                        <Button type="submit" className="w-full" disabled={loading}>
+                          {loading ? "Logging in..." : "Login"}
+                        </Button>
+                      </>
+                    )}
               </div>
               <div className="text-center text-sm">
                 {isAdminLogin ? (
