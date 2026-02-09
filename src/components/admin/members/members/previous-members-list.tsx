@@ -13,6 +13,7 @@ import { ChevronsUpDown, ChevronDown } from "lucide-react";
 import { Club } from "@/context/ClubContext";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -202,6 +203,9 @@ export default function PreviousMembersList({
                   </button>
                 </TableHead>
                 <TableHead className="text-center w-[150px]">
+                  Email
+                </TableHead>
+                <TableHead className="text-center w-[150px]">
                   <button
                     type="button"
                     className="inline-flex items-center gap-1 hover:underline w-full justify-center"
@@ -304,13 +308,23 @@ export default function PreviousMembersList({
                       </div>
                     </TableCell>
                     <TableCell className="text-center w-[150px]">
-                      <a
-                        onClick={() => setSelectedMember(member)}
-                        href={`#${member.user_id}`}
-                        className="underline hover:text-blue-800 cursor-pointer"
-                      >
-                        {member.member_first_name + " " + member.member_surname}
-                      </a>
+                      <div className="flex items-center justify-center gap-2">
+                        <a
+                          onClick={() => setSelectedMember(member)}
+                          href={`#${member.user_id}`}
+                          className="underline hover:text-blue-800 cursor-pointer"
+                        >
+                          {member.member_first_name + " " + member.member_surname}
+                        </a>
+                        {member?.last_season_registration === true && (
+                          <Badge variant="destructive" className="text-xs">
+                            Previous Season Registration
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center w-[150px]">
+                      {member.member_email}
                     </TableCell>
                     <TableCell className="text-center w-[150px]">
                       {member?.total_fee ? (
