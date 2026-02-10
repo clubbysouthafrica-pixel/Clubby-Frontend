@@ -77,7 +77,7 @@ export function ShopProductReport({ report, currency }: ShopProductReportProps) 
                       Price per Item
                     </p>
                     <p className="text-lg md:text-xl font-bold mt-0.5 text-slate-900 dark:text-white tracking-tight truncate">
-                      {formatAmount(product.total_sold_units > 0 ? product.total_revenue / product.total_sold_units : 0, currency)}
+                      {formatAmount(product.price, currency)}
                     </p>
                   </div>
                 </div>
