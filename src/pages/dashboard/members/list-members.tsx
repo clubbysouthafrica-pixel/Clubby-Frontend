@@ -508,13 +508,13 @@ export default function ListMembersPage() {
                       value="registered-members"
                       className="w-[300px]"
                     >
-                      Active Members
+                      Active Registrations
                     </TabsTrigger>
                     <TabsTrigger value="pending-members" className="w-[300px]">
-                      Members Pending
+                      Pending Registrations
                     </TabsTrigger>
                     <TabsTrigger value="previous-members" className="w-[300px]">
-                      Members Requiring Re-Registration
+                      De-registrations
                     </TabsTrigger>
                   </TabsList>
                 </div>
@@ -991,7 +991,7 @@ export default function ListMembersPage() {
             >
               <Card className="p-4 mt-2 flex flex-col gap-4">
                 <div className="flex items-center gap-2">
-                  <h2 className="px-2 text-xl font-semibold">Active Members - Items returned ({registeredMembersLength})</h2>
+                  <h2 className="px-2 text-xl font-semibold">Active Registrations - Items returned ({registeredMembersLength})</h2>
                 </div>
                 {fetchError && (
                   <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md flex items-center justify-between">
@@ -1077,7 +1077,7 @@ export default function ListMembersPage() {
             >
               <Card className="p-4 mt-2 flex flex-col gap-4">
                 <div className="flex items-center gap-2">
-                  <h2 className="px-2 text-xl font-semibold">Members Pending  - Items returned ({unregisteredMembersLength})</h2>
+                  <h2 className="px-2 text-xl font-semibold">Pending Registrations  - Items returned ({unregisteredMembersLength})</h2>
                 </div>
                 {fetchError && (
                   <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md flex items-center justify-between">
@@ -1178,7 +1178,7 @@ export default function ListMembersPage() {
               <Card className="p-4 mt-2 flex flex-col gap-4">
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-semibold">
-                    Members Requiring Re-Registration  - Items returned ({deregisteredMembersLength})
+                    De-registrations  - Items returned ({deregisteredMembersLength})
                   </h2>
                 </div>
                 {fetchError && (

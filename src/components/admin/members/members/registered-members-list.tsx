@@ -188,6 +188,9 @@ export default function RegisteredMembersList({
                   </button>
                 </TableHead>
                 <TableHead className="text-center w-[150px]">
+                  Email
+                </TableHead>
+                <TableHead className="text-center w-[150px]">
                   <button
                     type="button"
                     className="inline-flex items-center gap-1 hover:underline w-full justify-center"
@@ -311,6 +314,9 @@ export default function RegisteredMembersList({
                       >
                         {member.member_first_name + " " + member.member_surname}
                       </a>
+                    </TableCell>
+                    <TableCell className="text-center w-[150px]">
+                      {member.member_email}
                     </TableCell>
                     <TableCell className="text-center w-[150px]">
                       {member.total_fee ? (

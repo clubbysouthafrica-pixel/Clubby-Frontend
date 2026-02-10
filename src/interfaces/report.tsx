@@ -100,6 +100,7 @@ export interface ShopProductData {
 export interface ShopProductReport {
   product_id: string;
   product_name: string;
+  price: number;
   total_revenue: number;
   total_pending_revenue: number;
   total_sold_units: number;

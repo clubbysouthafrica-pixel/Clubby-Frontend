@@ -27,6 +27,7 @@ export interface ClubMember {
     primary_member: string
     registered_on: string
     registration_submitted_on: string
+    last_season_registration?: boolean
     registration_payment_reference: string
     user_id: string
     resubmission_required: boolean

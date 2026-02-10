@@ -37,7 +37,7 @@ import {
 } from "@dnd-kit/core";
 import * as React from "react";
 
-const REPORTING_METRICS = ["Registrations", "Emails"];
+const REPORTING_METRICS = ["Registrations", "Emails", "Orders"];
 
 export default function ClubUsageAndCharges({ data, currency }: any) {
   const [selectedTab, setSelectedTab] = useState("Registrations");
@@ -67,6 +67,9 @@ export default function ClubUsageAndCharges({ data, currency }: any) {
               </TabsTrigger>
               <TabsTrigger value="Emails" className="w-[150px]">
                 Emails
+              </TabsTrigger>
+              <TabsTrigger value="Orders" className="w-[150px]">
+                Shop
               </TabsTrigger>
             </TabsList>
           </div>
@@ -116,9 +119,9 @@ export default function ClubUsageAndCharges({ data, currency }: any) {
                     <Legend />
                     <Bar
                       yAxisId="left"
-                      dataKey={key === "Registrations" ? "users" : "emails"}
+                      dataKey={key === "Registrations" ? "users" : key === "Emails" ? "emails" : "sales"}
                       fill="#4caf50"
-                      name={key === "Registrations" ? "Users" : "Emails Sent"}
+                      name={key === "Registrations" ? "Users" : key === "Emails" ? "Emails Sent" : "Sales"}
                     />
                     <Bar
                       yAxisId="right"
@@ -143,50 +146,60 @@ export default function ClubUsageAndCharges({ data, currency }: any) {
           <Table>
             <TableHeader className="bg-muted sticky top-0 z-10">
               <TableRow>
-                <TableHead className="text-center w-1/4">Month</TableHead>
-                <TableHead className="text-center w-1/4">
+                <TableHead className="text-center w-1/5">Month</TableHead>
+                <TableHead className="text-center w-1/5">
                   Total Charge
                 </TableHead>
-                <TableHead className="text-center w-1/4">
+                <TableHead className="text-center w-1/5">
                   Registrations
                 </TableHead>
-                <TableHead className="text-center w-1/4">Emails</TableHead>
+                <TableHead className="text-center w-1/5">Emails</TableHead>
+                <TableHead className="text-center w-1/5">Shop</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {Object.keys(data.overall_month_data || {}).map((key) => (
                 <TableRow key={key}>
-                  <TableCell className="text-center w-1/4">{key}</TableCell>
-                  <TableCell className="text-center w-1/4">
+                  <TableCell className="text-center w-1/5">{key}</TableCell>
+                  <TableCell className="text-center w-1/5">
                     {formatAmount(
                       data.overall_month_data[key].total_amount,
                       currency
                     )}
                   </TableCell>
-                  <TableCell className="text-center w-1/4">
+                  <TableCell className="text-center w-1/5">
                     {formatAmount(
                       data.overall_month_data[key].registration_amount,
                       currency
                     )}
                   </TableCell>
-                  <TableCell className="text-center w-1/4">
+                  <TableCell className="text-center w-1/5">
                     {formatAmount(
                       data.overall_month_data[key].email_amount,
+                      currency
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center w-1/5">
+                    {formatAmount(
+                      data.overall_month_data[key].order_amount || 0,
                       currency
                     )}
                   </TableCell>
                 </TableRow>
               ))}
               <TableRow className="font-semibold bg-gray-50">
-                <TableCell className="text-center w-1/4">Total</TableCell>
-                <TableCell className="text-center w-1/4">
+                <TableCell className="text-center w-1/5">Total</TableCell>
+                <TableCell className="text-center w-1/5">
                   {formatAmount(data.total_charge, currency)}
                 </TableCell>
-                <TableCell className="text-center w-1/4">
+                <TableCell className="text-center w-1/5">
                   {formatAmount(data.total_registration_amount, currency)}
                 </TableCell>
-                <TableCell className="text-center w-1/4">
+                <TableCell className="text-center w-1/5">
                   {formatAmount(data.total_email_amount, currency)}
+                </TableCell>
+                <TableCell className="text-center w-1/5">
+                  {formatAmount(data.total_order_amount, currency)}
                 </TableCell>
               </TableRow>
             </TableBody>
