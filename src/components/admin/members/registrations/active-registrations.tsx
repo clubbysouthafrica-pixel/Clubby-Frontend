@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import ReusableDeregisterDialog from "./features/reusable-deregister-dialog";
-import ReusableSendEmailDialog from "./features/reusable-send-email-dialog";
 import { formatAmount } from "@/data/currencies";
 
 interface ImageProps {
@@ -70,7 +69,6 @@ export default function RegisteredMembersList({
   const [memberNameSortAsc, setMemberNameSortAsc] = useState<boolean | null>(null);
   const [totalFeeSortAsc, setTotalFeeSortAsc] = useState<boolean | null>(null);
   const [isDeregisterDialogOpen, setIsDeregisterDialogOpen] = useState(false);
-  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
 
 
   const sortedRegisteredMembers = useMemo(() => {
@@ -151,12 +149,6 @@ export default function RegisteredMembersList({
                         <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
                           Actions
                         </DropdownMenuLabel>
-                        <DropdownMenuItem
-                          onClick={() => setIsEmailDialogOpen(true)}
-                          disabled={!listActionItems.length}
-                        >
-                          Send Email
-                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => setIsDeregisterDialogOpen(true)}
                           disabled={!dereigsterMembers.length}
@@ -412,19 +404,7 @@ export default function RegisteredMembersList({
         }}
       />
 
-      <ReusableSendEmailDialog
-        isOpen={isEmailDialogOpen}
-        onOpenChange={setIsEmailDialogOpen}
-        title="Send Email"
-        description="Mailing list"
-        contactsList={listActionItems}
-        clubId={clubId}
-        onSuccessClose={() => {
-          setlistActionItems([]);
-          setDeregisterMembers([]);
-          setAllMembersSelected(false);
-        }}
-      />
+
     </>
   );
 }

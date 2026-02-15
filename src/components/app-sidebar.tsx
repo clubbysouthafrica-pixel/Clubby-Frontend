@@ -66,6 +66,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: UsersIcon,
         items: [
           { title: "Members", url: "/manage/members" },
+          { title: "Registrations", url: "/manage/member/registrations" },
           { title: "Add member", url: "/manage/members/add" },
         ],
       },

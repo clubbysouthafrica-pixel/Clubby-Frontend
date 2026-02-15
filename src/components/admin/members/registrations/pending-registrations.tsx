@@ -35,7 +35,6 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import ReusableDeregisterDialog from "./features/reusable-deregister-dialog";
-import ReusableSendEmailDialog from "./features/reusable-send-email-dialog";
 
 interface ImageProps {
   club: Club | null;
@@ -114,7 +113,6 @@ export default function PendingMembersList({
   const [deregisterMembers, setDeregisterMembers] = useState<
     { user_id: string; name: string }[]
   >([]);
-  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
 
   const validateTemplateVariables = (): boolean => {
     if (
@@ -293,14 +291,6 @@ export default function PendingMembersList({
                           <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
                             Actions
                           </DropdownMenuLabel>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setIsEmailDialogOpen(true);
-                            }}
-                            disabled={!listActionItems.length}
-                          >
-                            Send Email
-                          </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => {
                               setIsDeregisterDialogOpen(true);
@@ -928,19 +918,7 @@ export default function PendingMembersList({
         }}
       />
 
-      <ReusableSendEmailDialog
-        isOpen={isEmailDialogOpen}
-        onOpenChange={setIsEmailDialogOpen}
-        title="Send Email"
-        description="Mailing list"
-        contactsList={listActionItems}
-        clubId={clubId}
-        onSuccessClose={() => {
-          setlistActionItems([]);
-          setDeregisterMembers([]);
-          setAllMembersSelected(false);
-        }}
-      />
+
     </div>
   );
 }

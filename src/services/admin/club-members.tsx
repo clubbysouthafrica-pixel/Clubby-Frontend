@@ -1,7 +1,7 @@
 import { RegisterClubMember } from "@/interfaces/club";
 import { api } from "./api";
 
-export const fetchClubMembers = (clubId: string, activeKeys?: string[], memberType?: string, limit?: number, pageToken?: string, memberName?: string, memberId?: string, customFilters?: Array<{ field_id: string; type: string; input_type: string; value: string; condition?: string }>) => {
+export const fetchClubMembers = (clubId: string, activeKeys?: string[], memberType?: string, limit?: number, pageToken?: string, memberName?: string, memberId?: string, customFilters?: Array<{ field_id: string; type: string; input_type: string; value: string; condition?: string }>, page?: string, showArchived?: boolean) => {
     const params = new URLSearchParams();
     params.append("club_account_id", clubId);
     params.append("limit", (limit || 5).toString());
@@ -13,6 +13,12 @@ export const fetchClubMembers = (clubId: string, activeKeys?: string[], memberTy
     }
     if (pageToken && typeof pageToken === "string") {
         params.append("pageToken", pageToken);
+    }
+    if (page) {
+        params.append("page", page);
+    }
+    if (showArchived) {
+        params.append("show_archived", "true");
     }
     
     const requestBody: any = {};

@@ -12,8 +12,8 @@ import {
 } from "@dnd-kit/core";
 import { ClubMember } from "@/interfaces/club";
 import { useRegisterUserToClubMutation } from "@/mutations/admin/member";
-import SelectedMember from "@/components/admin/members/members/features/selected-members";
-import DeregisterSeasonDialog from "@/components/admin/members/members/features/deregister-season";
+import SelectedMember from "@/components/admin/members/registrations/features/selected-members";
+import DeregisterSeasonDialog from "@/components/admin/members/registrations/features/deregister-season";
 import { formatAmount } from "@/data/currencies";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,16 +24,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import RegisteredMembersList from "@/components/admin/members/members/registered-members-list";
-import PendingMembersList from "@/components/admin/members/members/pending-members-list";
-import PreviousMembersList from "@/components/admin/members/members/previous-members-list";
-import AddColumnsDialog from "@/components/admin/members/members/features/add-columns-dialog";
-import AddFiltersDialog from "@/components/admin/members/members/features/add-filters-dialog";
+import RegisteredMembersList from "@/components/admin/members/registrations/active-registrations";
+import PendingMembersList from "@/components/admin/members/registrations/pending-registrations";
+import PreviousMembersList from "@/components/admin/members/registrations/previous-registrations";
+import AddColumnsDialog from "@/components/admin/members/registrations/features/add-columns-dialog";
+import AddFiltersDialog from "@/components/admin/members/registrations/features/add-filters-dialog";
 import { Loader2, X, Download, AlertCircle } from "lucide-react";
 import { exportTableData } from "@/helpers/admin/members/csv-export";
 import { Card } from "@/components/ui/card";
 
-export default function ListMembersPage() {
+export default function RegistrationsPage() {
   const { club, isLoading: clubLoading } = useContext(
     ClubContext
   ) as ClubContextType;
@@ -54,6 +54,7 @@ export default function ListMembersPage() {
   const [filterConditions, setFilterConditions] = useState<Record<string, string>>({});
   const [appliedCustomFilters, setAppliedCustomFilters] = useState<Array<{ field_id: string; type: string; input_type: string; value: string; condition?: string }>>([]);
   const [computedCustomFilters, setComputedCustomFilters] = useState<Array<{ field_id: string; type: string; input_type: string; value: string; condition?: string }>>([]);
+  const [showArchived, setShowArchived] = useState<boolean>(false);
   const isLoadingMoreRef = useRef(false);
 
   const getMemberType = (tab: string): string => {
@@ -82,7 +83,9 @@ export default function ListMembersPage() {
     pageToken,
     appliedMemberNameFilter,
     appliedMemberIdFilter,
-    appliedCustomFilters.length > 0 ? appliedCustomFilters : undefined
+    appliedCustomFilters.length > 0 ? appliedCustomFilters : undefined,
+    undefined,
+    selectedTab === "previous-members" ? showArchived : undefined
   );
 
   const { mutate, isPending, isSuccess, isError, reset } =
@@ -454,7 +457,12 @@ export default function ListMembersPage() {
 
   return (
     <div className="p-5">
-      <h1 className="text-base font-bold">Club Members</h1>
+       <div>
+          <h1 className="text-3xl font-bold tracking-tight">Registrations</h1>
+          <p className="text-muted-foreground">
+            Manage your club's member registrations
+          </p>
+        </div>
       <>
         {clubLoading ? (
           <div className="flex justify-center items-center p-8 min-h-96">
@@ -495,7 +503,7 @@ export default function ListMembersPage() {
               setActiveColumnKeysPending([]);
               setActiveColumnKeysPrevious([]);
             }}
-            className="w-full flex-col justify-start gap-1 mt-2"
+            className="w-full flex-col justify-start gap-1 my-4"
           >
             <div className="flex items-center justify-between">
               <Label htmlFor="view-selector" className="sr-only">
@@ -1225,7 +1233,6 @@ export default function ListMembersPage() {
                 ) : (
                   <div className="flex flex-col w-full">
                     <PreviousMembersList
-                      clubId={club?.club_account_id || ""}
                       club={club}
                       sensors={sensors}
                       sortableId={sortableId}
@@ -1236,17 +1243,16 @@ export default function ListMembersPage() {
                         deregistered: allDeregisteredMembers,
                         filters: allFilters,
                       }}
-                      allMembersSelected={allMembersSelected}
                       memberNameFilter={memberNameFilter}
                       memberIdFilter={memberIdFilter}
                       dynamicFilters={dynamicFilters}
                       listActionItems={listActionItems}
                       activeColumnKeys={displayedColumnKeysPrevious}
                       memberLimit={memberLimit}
-                      setAllListActionItems={setAllListActionItems}
+                      showArchived={showArchived}
+                      onShowArchivedChange={setShowArchived}
                       setSelectedMember={setSelectedMember}
                       setlistActionItems={setlistActionItems}
-                      setAllMembersSelected={setAllMembersSelected}
                       setDeregisteredMembersLength={setDeregisteredMembersLength}
                     />
                     <button
