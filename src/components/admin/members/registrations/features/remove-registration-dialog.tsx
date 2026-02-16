@@ -125,7 +125,6 @@ export default function RemoveRegistrationDialog({
                         <li>{members.length > 1 ? "These registrations will" : "This registration will"} be permanently removed</li>
                         <li>All registration data associated with {members.length > 1 ? "these registrations" : "this registration"} will be archived</li>
                         <li>All reporting associated with {members.length > 1 ? "these registrations" : "this registration"} will also be removed</li>
-                        <li>The member {members.length > 1 ? "records" : "record"} will remain in the system</li>
                     </ul>
                 </div>
 
