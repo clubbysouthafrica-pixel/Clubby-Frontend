@@ -12,7 +12,6 @@ import SettingsPage from "@/pages/profile/settings.tsx";
 import ProtectedRoute from "@/guards/ProtectedRoute.tsx";
 import AdminRegistrationFormPage from "@/pages/registrations/admin-registration-form-page";
 import ManageClubDashboard from "@/pages/dashboard/clubs/manage-club";
-import ListMembersPage from "@/pages/dashboard/members/list-members";
 import ManagePage from "@/pages/dashboard/manage/manage";
 import HomeDashboardPage from "@/pages/dashboard/dash-home";
 import RegistrationReportPage from "@/pages/admin/reporting/registration-report-page";
@@ -21,7 +20,7 @@ import GeneralReportingPage from "@/pages/admin/reporting/general-reporting";
 import ShopReportingPage from "@/pages/admin/reporting/shop-reporting";
 import FinancialTransactionsPage from "@/pages/admin/reporting/financial-transactions";
 import OnboardClubPage from "@/pages/authentication/onboard-club";
-import AddMemberPage from "@/pages/dashboard/members/add-member";
+import AddMemberPage from "@/pages/admin/members/add-member/add-member";
 import LoginPage from "@/pages/authentication/login/page";
 import TermsPage from "@/pages/policies/terms";
 import PrivacyPage from "@/pages/policies/privacy";
@@ -30,6 +29,8 @@ import ShopPage from "@/pages/admin/shop/shop";
 import ProductsPage from "@/pages/admin/shop/products";
 import OrdersPage from "@/pages/admin/shop/orders";
 import AnalyticsPage from "@/pages/admin/shop/analytics";
+import RegistrationsPage from "@/pages/admin/members/registrations/registrations";
+import MembersPage from "@/pages/admin/members/members/members";
 
 export default function AdminRoutes() {
   return (
@@ -99,7 +100,15 @@ export default function AdminRoutes() {
         path="/manage/members"
         element={
           <ProtectedRoute>
-            <ListMembersPage />
+            <MembersPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/manage/member/registrations"
+        element={
+          <ProtectedRoute>
+            <RegistrationsPage />
           </ProtectedRoute>
         }
       ></Route>

@@ -10,10 +10,7 @@ interface ShopTabProps {
 }
 
 export function ShopTab({ isMobile, isClubMember, isRegistered }: ShopTabProps) {
-  // Hide shop tab in production environment
-  const isProd = import.meta.env.VITE_ENVIRONMENT === "Prod";
-  
-  if (!isClubMember || !isRegistered || isProd) {
+  if (!isClubMember || !isRegistered) {
     return null;
   }
 

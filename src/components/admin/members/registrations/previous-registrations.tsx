@@ -9,60 +9,55 @@ import {
 } from "@/components/ui/table";
 import { ClubMember } from "@/interfaces/club";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronsUpDown, ChevronDown } from "lucide-react";
+import { ChevronsUpDown, Trash2, Archive, ArchiveRestore } from "lucide-react";
 import { Club } from "@/context/ClubContext";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuLabel,
-} from "@/components/ui/dropdown-menu";
-import RemoveMemberDialog from "./features/remove-member-dialog";
-import ReusableSendEmailDialog from "./features/reusable-send-email-dialog";
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import RemoveRegistrationDialog from "./features/remove-registration-dialog";
 import { formatAmount } from "@/data/currencies";
+import { useArchiveRegistrationMutation } from "@/mutations/admin/useRegistrationMutation";
+import { toast } from "sonner";
 
-interface ImageProps {
+interface PreviousMembersListProps {
   club: Club | null;
   sensors: any;
   sortableId: any;
   selectedTab: string;
   clubMembers: any;
-  clubId: string;
   listActionItems: { email: string; name: string }[];
-  allMembersSelected: boolean;
   memberNameFilter: string;
   memberIdFilter: string;
   dynamicFilters: Record<string, string>;
   activeColumnKeys?: string[];
   memberLimit: number;
-  setAllMembersSelected: React.Dispatch<React.SetStateAction<boolean>>;
+  showArchived?: boolean;
+  onShowArchivedChange?: (value: boolean) => void;
   setlistActionItems: React.Dispatch<
     React.SetStateAction<{ email: string; name: string }[]>
   >;
   setSelectedMember: React.Dispatch<React.SetStateAction<object>>;
   setDeregisteredMembersLength: React.Dispatch<React.SetStateAction<number>>;
-  setAllListActionItems: (members: ClubMember[]) => void;
 }
 
 export default function PreviousMembersList({
   sensors,
   sortableId,
   clubMembers,
-  clubId,
   club,
-  allMembersSelected,
   activeColumnKeys = [],
   listActionItems,
   setSelectedMember,
-  setAllListActionItems,
   setDeregisteredMembersLength,
   setlistActionItems,
-  setAllMembersSelected,
-}: ImageProps) {
+  showArchived = false,
+  onShowArchivedChange,
+}: PreviousMembersListProps) {
   // Use raw clubMembers.deregistered - backend already handles pagination and member_name/member_id filtering
   const baseDeregisteredMembers = clubMembers?.deregistered || [];
   const [deregSortAsc, setDeregSortAsc] = useState<boolean | null>(null);
@@ -72,10 +67,21 @@ export default function PreviousMembersList({
   const [selectedMembersToRemove, setSelectedMembersToRemove] = useState<
     ClubMember[]
   >([]);
-  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [localArchivedToggle, setLocalArchivedToggle] = useState<Record<string, boolean | undefined>>({});
+  const { mutate: archiveRegistrationMutate, isPending: isArchiving } = useArchiveRegistrationMutation();
 
   const sortedDeregisteredMembers = useMemo(() => {
     let sortedCopy = [...baseDeregisteredMembers];
+    
+    // Filter out locally archived entries (only when not showing archived)
+    if (!showArchived) {
+      sortedCopy = sortedCopy.filter((member) => {
+        const isArchived = localArchivedToggle[member.user_id] !== undefined 
+          ? localArchivedToggle[member.user_id] 
+          : member.archived;
+        return !isArchived;
+      });
+    }
     
     if (memberNameSortAsc !== null) {
       sortedCopy.sort((a: ClubMember, b: ClubMember) => {
@@ -98,7 +104,7 @@ export default function PreviousMembersList({
     }
     
     return sortedCopy;
-  }, [baseDeregisteredMembers, deregSortAsc, memberNameSortAsc, totalFeeSortAsc]);
+  }, [baseDeregisteredMembers, deregSortAsc, memberNameSortAsc, totalFeeSortAsc, localArchivedToggle]);
 
   useEffect(() => {
     setDeregisteredMembersLength(baseDeregisteredMembers.length);
@@ -106,6 +112,16 @@ export default function PreviousMembersList({
 
   return (
     <>
+      <div className="mb-4 flex items-center gap-2">
+        <Switch
+          id="show-archived"
+          checked={showArchived}
+          onCheckedChange={onShowArchivedChange}
+        />
+        <Label htmlFor="show-archived" className="cursor-pointer">
+          Show archived registrations
+        </Label>
+      </div>
       <div
         className={`overflow-x-auto rounded-lg border max-w-[79vw] ${baseDeregisteredMembers.length > 10 ? "max-h-[600px] overflow-y-auto" : "overflow-y-hidden"}`}
       >
@@ -123,65 +139,8 @@ export default function PreviousMembersList({
           >
             <TableHeader className="bg-muted sticky top-0 z-10">
               <TableRow>
-                <TableHead className="text-center w-[80px] py-2 flex-shrink-0 sticky left-0 z-20 bg-muted">
-                  <div className="flex justify-center items-center rounded-[10px] pl-3 pr-1 border-gray-300 border-1 w-fit mx-auto hover:border-gray-400 transition-colors">
-                    <Checkbox
-                      checked={allMembersSelected}
-                      onCheckedChange={(checked: boolean) => {
-                        if (checked) {
-                          setAllListActionItems(sortedDeregisteredMembers);
-                        } else {
-                          setlistActionItems([]);
-                          setAllMembersSelected(false);
-                        }
-                      }}
-                      className="w-4 h-4 border-gray-300 border-1 hover:border-gray-400 transition-colors"
-                    />
-                    <DropdownMenu modal={false}>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8">
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
-                          Actions
-                        </DropdownMenuLabel>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setIsEmailDialogOpen(true);
-                          }}
-                          disabled={!listActionItems.length}
-                        >
-                          Send Email
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            if (listActionItems.length > 0) {
-                              const membersToRemove =
-                                sortedDeregisteredMembers.filter(
-                                  (member: any) =>
-                                    listActionItems.some(
-                                      (item) =>
-                                        item.email === member.member_email &&
-                                        item.name ===
-                                          `${member.member_first_name} ${member.member_surname}`,
-                                    ),
-                                );
-                              if (membersToRemove.length > 0) {
-                                setSelectedMembersToRemove(membersToRemove);
-                                setOpenRemoveDialog(true);
-                              }
-                            }
-                          }}
-                          disabled={!listActionItems.length}
-                          className="text-red-600"
-                        >
-                          Remove Members
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
+                <TableHead className="text-center w-[120px] py-2 flex-shrink-0 sticky left-0 z-20 bg-muted">
+                  Actions
                 </TableHead>
                 <TableHead className="text-center w-[150px]">
                   <button
@@ -271,40 +230,79 @@ export default function PreviousMembersList({
                         : ""
                     }`}
                   >
-                    <TableCell className="text-center w-[80px] flex-shrink-0 sticky left-0 z-20 bg-white">
-                      <div className="flex justify-center">
-                        <Checkbox
-                          checked={listActionItems.some(
-                            (item) =>
-                              item.email === member.member_email &&
-                              item.name ===
-                                `${member.member_first_name} ${member.member_surname}`,
-                          )}
-                          onCheckedChange={(checked: boolean) => {
-                            if (checked) {
-                              const updatedList = [
-                                ...listActionItems,
-                                {
-                                  email: member.member_email,
-                                  name: `${member.member_first_name} ${member.member_surname}`,
-                                },
-                              ];
-                              setlistActionItems(updatedList);
-                              if (
-                                updatedList.length ===
-                                baseDeregisteredMembers.length
-                              ) {
-                                setAllMembersSelected(true);
-                              }
-                            } else {
-                              const updatedList = listActionItems.filter(
-                                (item) => item.email !== member.member_email,
-                              );
-                              setlistActionItems(updatedList);
-                              setAllMembersSelected(false);
-                            }
-                          }}
-                        />
+                    <TableCell className="text-center w-[120px] flex-shrink-0 sticky left-0 z-20 bg-white">
+                      <div className="flex justify-center gap-2">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={() => {
+                                setSelectedMembersToRemove([member]);
+                                setOpenRemoveDialog(true);
+                              }}
+                              className="p-1 rounded-md transition-colors text-red-600 hover:text-red-700 cursor-pointer"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>Delete registration</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={() => {
+                                archiveRegistrationMutate(
+                                  {
+                                    user_id: member.user_id,
+                                    registration_id: member.registration_id || ""
+                                  },
+                                  {
+                                    onSuccess: () => {
+                                      const currentState = localArchivedToggle[member.user_id] !== undefined
+                                        ? localArchivedToggle[member.user_id]
+                                        : member.archived;
+                                      setLocalArchivedToggle((prev) => ({
+                                        ...prev,
+                                        [member.user_id]: !currentState
+                                      }));
+                                      if (currentState) {
+                                        toast.success("Registration unarchived successfully");
+                                      } else {
+                                        toast.success("Registration archived successfully");
+                                      }
+                                    },
+                                    onError: (error: unknown) => {
+                                      const errObj = error as Record<string, unknown> | undefined;
+                                      const resp = errObj?.response as Record<string, unknown> | undefined;
+                                      const msg = (resp?.data as Record<string, unknown> | undefined)?.message as string | undefined ?? String(error ?? "An error occurred");
+                                      toast.error(msg);
+                                    }
+                                  }
+                                );
+                              }}
+                              disabled={isArchiving}
+                              className="p-1 rounded-md transition-colors text-gray-600 hover:text-gray-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {(() => {
+                                const isArchived = localArchivedToggle[member.user_id] !== undefined
+                                  ? localArchivedToggle[member.user_id]
+                                  : member.archived;
+                                return isArchived ? (
+                                  <ArchiveRestore className="h-4 w-4" />
+                                ) : (
+                                  <Archive className="h-4 w-4" />
+                                );
+                              })()}
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {(() => {
+                              const isArchived = localArchivedToggle[member.user_id] !== undefined
+                                ? localArchivedToggle[member.user_id]
+                                : member.archived;
+                              return isArchived ? "Unarchive registration" : "Archive registration";
+                            })()}
+                          </TooltipContent>
+                        </Tooltip>
                       </div>
                     </TableCell>
                     <TableCell className="text-center w-[150px]">
@@ -316,11 +314,6 @@ export default function PreviousMembersList({
                         >
                           {member.member_first_name + " " + member.member_surname}
                         </a>
-                        {member?.last_season_registration === true && (
-                          <Badge variant="destructive" className="text-xs">
-                            Previous Season Registration
-                          </Badge>
-                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-center w-[150px]">
@@ -334,9 +327,10 @@ export default function PreviousMembersList({
                       )}
                     </TableCell>
                     <TableCell className="text-center w-[150px]">
-                      {member.deregistered_on
-                        ? new Date(member.deregistered_on).toLocaleString()
-                        : "Previous season registration"}
+                      {member?.last_season_registration || !member?.deregistered_on
+                        ? <Badge className="bg-red-100 text-red-800 border-red-300">Previous Season Registration</Badge>
+                        : new Date(member?.deregistered_on).toLocaleString()
+                      }
                     </TableCell>
                     {clubMembers?.filters
                       ?.filter((col: any) => activeColumnKeys.includes(col.key))
@@ -382,7 +376,7 @@ export default function PreviousMembersList({
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={4 + (activeColumnKeys?.length ?? 0)}
+                    colSpan={5 + (activeColumnKeys?.length ?? 0)}
                     className="h-24 text-center"
                   >
                     No results.
@@ -393,7 +387,7 @@ export default function PreviousMembersList({
           </Table>
         </DndContext>
 
-        <RemoveMemberDialog
+        <RemoveRegistrationDialog
           open={openRemoveDialog}
           onOpenChange={setOpenRemoveDialog}
           members={selectedMembersToRemove}
@@ -411,18 +405,7 @@ export default function PreviousMembersList({
           }}
         />
 
-        <ReusableSendEmailDialog
-          isOpen={isEmailDialogOpen}
-          onOpenChange={setIsEmailDialogOpen}
-          title="Send Email"
-          description="Mailing list"
-          contactsList={listActionItems}
-          clubId={clubId}
-          onSuccessClose={() => {
-            setlistActionItems([]);
-            setAllMembersSelected(false);
-          }}
-        />
+
       </div>
     </>
   );
