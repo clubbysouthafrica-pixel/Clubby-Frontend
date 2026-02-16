@@ -741,7 +741,7 @@ export default function MembersPage() {
               <Card className="p-4 mt-2 flex flex-col gap-4">
                 <div className="flex items-center gap-2">
                   <h2 className="px-2 text-xl font-semibold">
-                    Active Registrations - Items returned (
+                    Members - Items returned (
                     {registeredMembersLength})
                   </h2>
                 </div>
