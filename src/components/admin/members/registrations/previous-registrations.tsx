@@ -314,11 +314,6 @@ export default function PreviousMembersList({
                         >
                           {member.member_first_name + " " + member.member_surname}
                         </a>
-                        {member?.last_season_registration === true && (
-                          <Badge variant="destructive" className="text-xs">
-                            Previous Season Registration
-                          </Badge>
-                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-center w-[150px]">
@@ -334,7 +329,7 @@ export default function PreviousMembersList({
                     <TableCell className="text-center w-[150px]">
                       {member.deregistered_on
                         ? new Date(member.deregistered_on).toLocaleString()
-                        : "Previous season registration"}
+                        : <Badge variant="secondary" className="text-xs">Previous Season Registration</Badge>}
                     </TableCell>
                     {clubMembers?.filters
                       ?.filter((col: any) => activeColumnKeys.includes(col.key))
