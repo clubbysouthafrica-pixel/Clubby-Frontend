@@ -431,7 +431,11 @@ export default function MembersTable({
                               <TableBody>
                                 {member.registrations &&
                                 member.registrations.length > 0 ? (
-                                  member.registrations.map(
+                                  [...member.registrations]
+                                    .sort((a: any, b: any) => 
+                                      b.latest_registration === true ? 1 : a.latest_registration === true ? -1 : 0
+                                    )
+                                    .map(
                                     (reg: any, idx: number) => (
                                       <TableRow key={idx}>
                                         <TableCell className="text-center text-sm">
@@ -439,7 +443,7 @@ export default function MembersTable({
                                         </TableCell>
                                         <TableCell className="text-center text-sm">
                                           {reg.latest_registration ? (
-                                            <Badge className="bg-green-100 text-green-800 border-green-300">
+                                            <Badge className="bg-gray-100 text-gray-800 border-gray-300">
                                               Latest registration
                                             </Badge>
                                           ) : (
