@@ -14,7 +14,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { User, Mail, Phone, MapPin, Calendar, Copy } from "lucide-react";
+import { User, Mail, Phone, MapPin, Calendar, Copy, AlertTriangle } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { CurrentMemberRegistration } from "./current_member_registration"
 import { useFetchMemberUser } from "@/queries/admin/member_user";
@@ -41,6 +41,7 @@ export default function SelectedMember({
     const [open, setOpen] = useState(false);
 
     const userId = selectedMember?.user_id ?? "";
+    const isMissingMember = selectedMember?.missing_club_member === true;
     const { data: memberUser, isLoading } = useFetchMemberUser(userId);
 
     React.useEffect(() => {
@@ -72,6 +73,15 @@ export default function SelectedMember({
                     </div>
                 </DialogHeader>
                 
+                {isMissingMember && (
+                    <div className="bg-red-50 border-l-4 border-red-600 p-4 flex items-start gap-3">
+                        <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                            <p className="font-semibold text-red-800 text-sm">Member No Longer Active</p>
+                            <p className="text-red-700 text-xs mt-1">This member is no longer part of the club and won't appear in the members table.</p>
+                        </div>
+                    </div>
+                )}
                 {showOnlyRegistration ? (
                     <>
                         <DialogDescription className="mt-2">

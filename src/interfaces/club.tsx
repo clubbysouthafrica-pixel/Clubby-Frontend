@@ -33,6 +33,7 @@ export interface ClubMember {
     archived?: boolean
     user_id: string
     resubmission_required: boolean
+    missing_club_member?: boolean
 }
 
 export interface RegisterClubMember {
