@@ -6,7 +6,6 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     Card,
     CardContent,
@@ -16,28 +15,18 @@ import {
 } from "@/components/ui/card";
 import { User, Mail, Phone, MapPin, Calendar, Copy } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import { CurrentMemberRegistration } from "./current_member_registration"
 import { useFetchMemberUser } from "@/queries/admin/member_user";
 import { Loader2 } from "lucide-react";
 
-interface ImageProps {
+interface SelectedMemberDialogProps {
     selectedMember: any;
     setSelectedMember: React.Dispatch<React.SetStateAction<any>>;
-    currency: string;
-    clubAccountId: string;
-    clubName: string;
-    showOnlyRegistration?: boolean;
 }
 
-export default function SelectedMember({
+export default function SelectedMemberDialog({
     selectedMember,
     setSelectedMember,
-    clubName,
-    clubAccountId,
-    currency,
-    showOnlyRegistration = false,
-}: ImageProps) {
-    const [selectedTab, setSelectedTab] = useState(showOnlyRegistration ? "member-registration" : "user-information");
+}: SelectedMemberDialogProps) {
     const [open, setOpen] = useState(false);
 
     const userId = selectedMember?.user_id ?? "";
@@ -47,6 +36,7 @@ export default function SelectedMember({
         if (selectedMember) setOpen(true);
         else setOpen(false);
     }, [selectedMember]);
+
     if (!selectedMember) return null;
 
     return (
@@ -71,74 +61,46 @@ export default function SelectedMember({
                         </DialogTitle>
                     </div>
                 </DialogHeader>
-                
-                {showOnlyRegistration ? (
-                    <>
-                        <DialogDescription className="mt-2">
-                            Registration information for this member.
-                        </DialogDescription>
-                        <CurrentMemberRegistration 
-                            clubName={clubName} 
-                            userId={selectedMember.user_id} 
-                            clubAccountId={clubAccountId} 
-                            currency={currency} 
-                        />
-                    </>
-                ) : (
-                    <Tabs value={selectedTab} onValueChange={setSelectedTab} className="mt-0 flex-1 min-h-0 flex flex-col">
-                        <TabsList>
-                            <TabsTrigger className="w-[180px]" value="user-information">User information</TabsTrigger>
-                            <TabsTrigger className="w-[180px]" value="member-registration">Member registration</TabsTrigger>
-                        </TabsList>
 
-                        {selectedTab === "user-information" && (
-                            <DialogDescription className="my-2">
-                                This section contains information on the Clubby user.
-                            </DialogDescription>
-                        )}
+                <DialogDescription className="my-2">
+                    This section contains information on the club member.
+                </DialogDescription>
 
-                        {selectedTab === "member-registration" && (
-                            <DialogDescription className="mt-2 mb-2">
-                                This section contains information on the member registration.
-                            </DialogDescription>
-                        )}
-
-                        <div className="flex-1 min-h-0 overflow-hidden rounded-lg flex flex-col">
-                            {selectedTab === "user-information" && (
-                            <div className="flex flex-col gap-0 flex-1 min-h-0">
-                                {/* Member ID Section - Always visible */}
-                                <div className="flex flex-col gap-2 text-sm bg-transparent p-1">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-muted-foreground text-xs">Member ID:</span>
-                                        <strong className="text-xs font-mono">{selectedMember.user_id || "Not provided"}</strong>
-                                        <button
-                                            onClick={() => {
-                                                navigator.clipboard.writeText(selectedMember.user_id || "");
-                                            }}
-                                            className="p-1 hover:bg-muted rounded transition-colors"
-                                            title="Copy Member ID"
-                                        >
-                                            <Copy className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-pointer" />
-                                        </button>
-                                    </div>
-                                    {isLoading && (
-                                        <div className="flex items-center gap-2">
-                                            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-                                            <span className="text-xs text-muted-foreground">Loading user information...</span>
-                                        </div>
-                                    )}
+                <div className="flex-1 min-h-0 overflow-hidden rounded-lg flex flex-col">
+                    <div className="flex flex-col gap-0 flex-1 min-h-0">
+                        {/* Member ID Section - Always visible */}
+                        <div className="flex flex-col gap-2 text-sm bg-transparent p-1">
+                            <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground text-xs">Member ID:</span>
+                                <strong className="text-xs font-mono">{selectedMember.user_id || "Not provided"}</strong>
+                                <button
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(selectedMember.user_id || "");
+                                    }}
+                                    className="p-1 hover:bg-muted rounded transition-colors"
+                                    title="Copy Member ID"
+                                >
+                                    <Copy className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-pointer" />
+                                </button>
+                            </div>
+                            {isLoading && (
+                                <div className="flex items-center gap-2">
+                                    <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                                    <span className="text-xs text-muted-foreground">Loading user information...</span>
                                 </div>
+                            )}
+                        </div>
 
-                                {!isLoading && memberUser && (
-                                    <Card className="border shadow-sm pt-0 flex-1 min-h-0 flex flex-col">
-                                        <CardHeader className="border-b bg-muted/30">
-                                            <CardTitle className="text-l text-center pt-5">
-                                                User Information
-                                            </CardTitle>
-                                            <CardDescription className="text-center">
-                                                Personal details and contact information
-                                            </CardDescription>
-                                        </CardHeader>
+                        {!isLoading && memberUser && (
+                            <Card className="border shadow-sm pt-0 flex-1 min-h-0 flex flex-col">
+                                <CardHeader className="border-b bg-muted/30">
+                                    <CardTitle className="text-l text-center pt-5">
+                                        User Information
+                                    </CardTitle>
+                                    <CardDescription className="text-center">
+                                        Personal details and contact information
+                                    </CardDescription>
+                                </CardHeader>
                                 <CardContent className="p-4 flex-1 min-h-0 overflow-y-auto">
                                     <div className="px-2">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -232,16 +194,10 @@ export default function SelectedMember({
                                         </div>
                                     </div>
                                 </CardContent>
-                                    </Card>
-                                )}
-                            </div>
+                            </Card>
                         )}
-                        {selectedTab === "member-registration" &&
-                            <CurrentMemberRegistration clubName={clubName} userId={selectedMember.user_id} clubAccountId={clubAccountId} currency={currency} />
-                        }
                     </div>
-                    </Tabs>
-                )}
+                </div>
             </DialogContent>
         </Dialog >
     );

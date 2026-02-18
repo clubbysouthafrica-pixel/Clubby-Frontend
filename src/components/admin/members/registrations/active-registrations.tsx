@@ -235,7 +235,11 @@ export default function RegisteredMembersList({
                 sortedRegisteredMembers.map((member: ClubMember) => (
                   <TableRow
                     key={member.user_id}
-                    className={`h-12 ${
+                    onClick={() => {
+                      setSelectedMember(member);
+                      window.location.hash = member.user_id;
+                    }}
+                    className={`h-12 cursor-pointer hover:drop-shadow-md transition-shadow ${
                       listActionItems.some(
                         (item) =>
                           item.email === member.member_email &&
@@ -247,7 +251,7 @@ export default function RegisteredMembersList({
                     }`}
                   >
                     <TableCell className="text-center w-[80px] flex-shrink-0 sticky left-0 z-20 bg-white">
-                      <div className="flex justify-center">
+                      <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           checked={listActionItems.some(
                             (item) =>
@@ -299,13 +303,9 @@ export default function RegisteredMembersList({
                       </div>
                     </TableCell>
                     <TableCell className="text-center w-[150px]">
-                      <a
-                        onClick={() => setSelectedMember(member)}
-                        href={`#${member.user_id}`}
-                        className="underline hover:text-blue-800 cursor-pointer"
-                      >
+                      <span className="underline">
                         {member.member_first_name + " " + member.member_surname}
-                      </a>
+                      </span>
                     </TableCell>
                     <TableCell className="text-center w-[150px]">
                       {member.member_email}

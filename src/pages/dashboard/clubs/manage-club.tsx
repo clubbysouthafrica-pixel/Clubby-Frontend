@@ -8,13 +8,21 @@ import EditClubDetails from "./edit-club-details";
 import { Loader2 } from "lucide-react";
 
 export default function ManageClubDashboard() {
-  const { club, isLoading: clubLoading } = useContext(ClubContext) as ClubContextType;
+  const { club, isLoading: clubLoading } = useContext(
+    ClubContext,
+  ) as ClubContextType;
   const { data: clubDetails, isLoading: detailsLoading } = useFetchClub(
     club?.club_account_id as string,
-    { includeImages: true }
+    { includeImages: true },
   );
 
-  if (clubLoading || detailsLoading || !clubDetails || !clubDetails?.images?.cover || !clubDetails?.images?.profile) {
+  if (
+    clubLoading ||
+    detailsLoading ||
+    !clubDetails ||
+    !clubDetails?.images?.cover ||
+    !clubDetails?.images?.profile
+  ) {
     return (
       <div className="flex justify-center py-8">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -24,7 +32,12 @@ export default function ManageClubDashboard() {
 
   return (
     <div className="p-6 space-y-6 min-h-screen">
-      <h1 className="text-base font-bold">Manage Club Page</h1>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Manage Club Page</h1>
+        <p className="text-muted-foreground">
+          Manage your club
+        </p>
+      </div>
       {!detailsLoading && club?.club_account_id && (
         <div className="w-full">
           <ImageUploadDialog

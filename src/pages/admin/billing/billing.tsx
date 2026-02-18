@@ -21,7 +21,7 @@ export default function BillingPage() {
 
   const { data, isLoading } = useMcsBillingReportingQuery(
     club?.club_account_id as string,
-    seasonToFetch
+    seasonToFetch,
   );
 
   const availableSeasons = club?.season_cycle
@@ -42,16 +42,21 @@ export default function BillingPage() {
   }
   return (
     <div className="p-5">
-      {selectedSeason === "current" ? (
-        <h3 className="text-xl font-bold mb-2 pb-2 text-center">
-          You Owe Clubby:{" "}
-          {formatAmount(data.report.total_outstanding_amount, club?.currency)}
-        </h3>
-      ) : (
-        <h3 className="text-xl font-bold mb-2 pb-2 text-center">
-          Season: {selectedSeason}
-        </h3>
-      )}
+      <div className="mb-4">
+        {selectedSeason === "current" ? (
+          <h1 className="text-3xl font-bold tracking-tight">
+            You Owe Clubby:{" "}
+            {formatAmount(data.report.total_outstanding_amount, club?.currency)}
+          </h1>
+        ) : (
+          <h1 className="text-3xl font-bold tracking-tight">
+            Season: {selectedSeason}
+          </h1>
+        )}
+        <p className="text-muted-foreground">
+          Manage your club's billing and usage
+        </p>
+      </div>
       {hasPreviousSeasons && (
         <div className="flex justify-center mb-2 pb-2">
           <div className="w-full max-w-xs">

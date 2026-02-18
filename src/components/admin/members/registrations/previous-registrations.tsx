@@ -219,7 +219,11 @@ export default function PreviousMembersList({
                 sortedDeregisteredMembers.map((member: ClubMember) => (
                   <TableRow
                     key={member.user_id}
-                    className={`h-12 ${
+                    onClick={() => {
+                      setSelectedMember(member);
+                      window.location.hash = member.user_id;
+                    }}
+                    className={`h-12 cursor-pointer hover:drop-shadow-md transition-shadow ${
                       listActionItems.some(
                         (item) =>
                           item.email === member.member_email &&
@@ -231,7 +235,7 @@ export default function PreviousMembersList({
                     }`}
                   >
                     <TableCell className="text-center w-[120px] flex-shrink-0 sticky left-0 z-20 bg-white">
-                      <div className="flex justify-center gap-2">
+                      <div className="flex justify-center gap-2" onClick={(e) => e.stopPropagation()}>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
@@ -307,13 +311,9 @@ export default function PreviousMembersList({
                     </TableCell>
                     <TableCell className="text-center w-[150px]">
                       <div className="flex items-center justify-center gap-2">
-                        <a
-                          onClick={() => setSelectedMember(member)}
-                          href={`#${member.user_id}`}
-                          className="underline hover:text-blue-800 cursor-pointer"
-                        >
+                        <span className="underline">
                           {member.member_first_name + " " + member.member_surname}
-                        </a>
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="text-center w-[150px]">

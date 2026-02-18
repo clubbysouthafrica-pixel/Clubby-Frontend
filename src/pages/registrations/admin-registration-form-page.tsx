@@ -203,7 +203,7 @@ export default function AdminRegistrationFormPage() {
   return (
     <div className="px-5 pt-5 w-[90%] min-h-screen flex flex-col">
       <div className="flex justify-between items-center mb-4 sticky top-0 bg-white z-20 py-4">
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-2 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">
               Registration Form

@@ -288,7 +288,11 @@ export default function MembersTable({
                   <>
                     <TableRow
                       key={member.user_id}
-                      className={`h-12 ${
+                      onClick={() => {
+                        setSelectedMember(member);
+                        window.location.hash = member.user_id;
+                      }}
+                      className={`h-12 cursor-pointer hover:drop-shadow-md transition-shadow border-l-4 ${expandedMemberId === member.user_id ? "border-l-blue-500 bg-blue-50" : "border-l-transparent"} ${
                         listActionItems.some(
                           (item) =>
                             item.email === member.member_email &&
@@ -300,7 +304,7 @@ export default function MembersTable({
                       }`}
                     >
                       <TableCell className="text-center w-[80px] flex-shrink-0 sticky left-0 z-20 bg-white">
-                        <div className="flex justify-center">
+                        <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
                           <Checkbox
                             checked={listActionItems.some(
                               (item) =>
@@ -352,13 +356,9 @@ export default function MembersTable({
                         </div>
                       </TableCell>
                       <TableCell className="text-center w-[150px]">
-                        <a
-                          onClick={() => setSelectedMember(member)}
-                          href={`#${member.user_id}`}
-                          className="underline hover:text-blue-800 cursor-pointer"
-                        >
+                        <span className="underline">
                           {member.member_first_name + " " + member.member_surname}
-                        </a>
+                        </span>
                       </TableCell>
                       <TableCell className="text-center w-[150px]">
                         {member.member_email}
@@ -387,13 +387,14 @@ export default function MembersTable({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() =>
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setExpandedMemberId(
                               expandedMemberId === member.user_id
                                 ? null
                                 : member.user_id
                             )
-                          }
+                          }}
                           className="gap-1"
                         >
                           <ChevronRight
@@ -408,20 +409,22 @@ export default function MembersTable({
                       </TableCell>
                     </TableRow>
                     {expandedMemberId === member.user_id && (
-                      <TableRow className="bg-muted/10">
-                        <TableCell colSpan={6} className="p-4">
-                          <div className="overflow-hidden rounded-lg border">
+                      <TableRow className="bg-blue-50">
+                        <TableCell colSpan={6} className="p-4 border-l-4 border-l-blue-500">
+                          <div className="overflow-hidden rounded-lg border border-blue-200">
                             <Table className="w-full">
-                              <TableHeader className="bg-muted sticky top-0 z-10">
+                              <TableHeader className="bg-blue-100 sticky top-0 z-10">
                                 <TableRow>
                                   <TableHead className="text-center">
-                                    Registration ID
                                   </TableHead>
                                   <TableHead className="text-center">
-                                    Status
+                                    Registration State
                                   </TableHead>
                                   <TableHead className="text-center">
                                     Submitted On
+                                  </TableHead>
+                                  <TableHead className="text-center">
+                                    Registered On
                                   </TableHead>
                                   <TableHead className="text-center">
                                     Deregistered On
@@ -436,41 +439,49 @@ export default function MembersTable({
                                       b.latest_registration === true ? 1 : a.latest_registration === true ? -1 : 0
                                     )
                                     .map(
-                                    (reg: any, idx: number) => (
-                                      <TableRow key={idx}>
-                                        <TableCell className="text-center text-sm">
-                                          {reg.registration_id}
-                                        </TableCell>
-                                        <TableCell className="text-center text-sm">
-                                          {reg.latest_registration ? (
+                                    (reg: any, idx: number) => {
+                                      const memberStatus = getMemberStatus(member.registered, member.resubmission_required);
+                                      const registrationState = reg.latest_registration ? memberStatus.status : "Deregistered";
+                                      const registrationStateClass = reg.latest_registration ? memberStatus.className : "bg-red-100 text-red-800 border-red-300";
+                                      return (
+                                        <TableRow key={idx}>
+                                          <TableCell className="text-center text-sm">
                                             <Badge className="bg-gray-100 text-gray-800 border-gray-300">
-                                              Latest registration
+                                              {reg.latest_registration ? "Latest registration" : "Old registration"}
                                             </Badge>
-                                          ) : (
-                                            <Badge className="bg-gray-100 text-gray-800 border-gray-300">
-                                              Old registration
+                                          </TableCell>
+                                          <TableCell className="text-center text-sm">
+                                            <Badge className={registrationStateClass}>
+                                              {registrationState}
                                             </Badge>
-                                          )}
-                                        </TableCell>
-                                        <TableCell className="text-center text-sm">
-                                          {new Date(
-                                            reg.registration_submitted_on
-                                          ).toLocaleString()}
-                                        </TableCell>
-                                        <TableCell className="text-center text-sm">
-                                          {reg.deregistered_on
-                                            ? new Date(
-                                                reg.deregistered_on
-                                              ).toLocaleString()
-                                            : "-"}
-                                        </TableCell>
-                                      </TableRow>
-                                    )
+                                          </TableCell>
+                                          <TableCell className="text-center text-sm">
+                                            {new Date(
+                                              reg.registration_submitted_on
+                                            ).toLocaleString()}
+                                          </TableCell>
+                                          <TableCell className="text-center text-sm">
+                                            {reg.registered_on
+                                              ? new Date(
+                                                  reg.registered_on
+                                                ).toLocaleString()
+                                              : "-"}
+                                          </TableCell>
+                                          <TableCell className="text-center text-sm">
+                                            {reg.deregistered_on
+                                              ? new Date(
+                                                  reg.deregistered_on
+                                                ).toLocaleString()
+                                              : "-"}
+                                          </TableCell>
+                                        </TableRow>
+                                      );
+                                    }
                                   )
                                 ) : (
                                   <TableRow>
                                     <TableCell
-                                      colSpan={4}
+                                      colSpan={5}
                                       className="text-center text-sm text-muted-foreground"
                                     >
                                       No registrations
