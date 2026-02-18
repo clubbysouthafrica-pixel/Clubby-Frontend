@@ -35,15 +35,19 @@ import { Card } from "@/components/ui/card";
 
 export default function RegistrationsPage() {
   const { club, isLoading: clubLoading } = useContext(
-    ClubContext
+    ClubContext,
   ) as ClubContextType;
   const [requestedKeys, setRequestedKeys] = useState<string[]>([]);
   const [selectedTab, setSelectedTab] = useState("registered-members");
   const [memberLimit, setMemberLimit] = useState(25);
   const [pageToken, setPageToken] = useState<string | undefined>(undefined);
   const [allRegisteredMembers, setAllRegisteredMembers] = useState<any[]>([]);
-  const [allUnregisteredMembers, setAllUnregisteredMembers] = useState<any[]>([]);
-  const [allDeregisteredMembers, setAllDeregisteredMembers] = useState<any[]>([]);
+  const [allUnregisteredMembers, setAllUnregisteredMembers] = useState<any[]>(
+    [],
+  );
+  const [allDeregisteredMembers, setAllDeregisteredMembers] = useState<any[]>(
+    [],
+  );
   const [allFilters, setAllFilters] = useState<any>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [memberNameFilter, setMemberNameFilter] = useState("");
@@ -51,9 +55,27 @@ export default function RegistrationsPage() {
   const [appliedMemberNameFilter, setAppliedMemberNameFilter] = useState("");
   const [appliedMemberIdFilter, setAppliedMemberIdFilter] = useState("");
   const [dynamicFilters, setDynamicFilters] = useState<Record<string, any>>({});
-  const [filterConditions, setFilterConditions] = useState<Record<string, string>>({});
-  const [appliedCustomFilters, setAppliedCustomFilters] = useState<Array<{ field_id: string; type: string; input_type: string; value: string; condition?: string }>>([]);
-  const [computedCustomFilters, setComputedCustomFilters] = useState<Array<{ field_id: string; type: string; input_type: string; value: string; condition?: string }>>([]);
+  const [filterConditions, setFilterConditions] = useState<
+    Record<string, string>
+  >({});
+  const [appliedCustomFilters, setAppliedCustomFilters] = useState<
+    Array<{
+      field_id: string;
+      type: string;
+      input_type: string;
+      value: string;
+      condition?: string;
+    }>
+  >([]);
+  const [computedCustomFilters, setComputedCustomFilters] = useState<
+    Array<{
+      field_id: string;
+      type: string;
+      input_type: string;
+      value: string;
+      condition?: string;
+    }>
+  >([]);
   const [showArchived, setShowArchived] = useState<boolean>(false);
   const isLoadingMoreRef = useRef(false);
 
@@ -85,7 +107,7 @@ export default function RegistrationsPage() {
     appliedMemberIdFilter,
     appliedCustomFilters.length > 0 ? appliedCustomFilters : undefined,
     undefined,
-    selectedTab === "previous-members" ? showArchived : undefined
+    selectedTab === "previous-members" ? showArchived : undefined,
   );
 
   const { mutate, isPending, isSuccess, isError, reset } =
@@ -102,7 +124,7 @@ export default function RegistrationsPage() {
   const [selectedMember, setSelectedMember] = useState({});
   const [memberRegisterAmount, setMemberRegisterAmount] = useState<number>(0);
   const [displayAmount, setDisplayAmount] = useState<string>(
-    formatAmount(0, club?.currency)
+    formatAmount(0, club?.currency),
   );
   const [invalidRegistrationAmount, setInvalidRegistrationAmount] =
     useState(false);
@@ -116,7 +138,13 @@ export default function RegistrationsPage() {
     useState<number>(0);
 
   const [availableDynamicFilters, setAvailableDynamicFilters] = useState<
-    { key: string; field_id?: string; field_name: string; type: string; options: string[] }[]
+    {
+      key: string;
+      field_id?: string;
+      field_name: string;
+      type: string;
+      options: string[];
+    }[]
   >([]);
   const [activeFilterKeys, setActiveFilterKeys] = useState<string[]>([]);
   const [showFilterSelector, setShowFilterSelector] = useState(false);
@@ -126,27 +154,36 @@ export default function RegistrationsPage() {
   const [activeColumnKeysRegistered, setActiveColumnKeysRegistered] = useState<
     string[]
   >([]);
-  const [appliedColumnKeysRegistered, setAppliedColumnKeysRegistered] = useState<string[]>([]);
-  const [displayedColumnKeysRegistered, setDisplayedColumnKeysRegistered] = useState<string[]>([]);
+  const [appliedColumnKeysRegistered, setAppliedColumnKeysRegistered] =
+    useState<string[]>([]);
+  const [displayedColumnKeysRegistered, setDisplayedColumnKeysRegistered] =
+    useState<string[]>([]);
   const [showColumnSelectorRegistered, setShowColumnSelectorRegistered] =
     useState(false);
   const [activeColumnKeysPending, setActiveColumnKeysPending] = useState<
     string[]
   >([]);
-  const [appliedColumnKeysPending, setAppliedColumnKeysPending] = useState<string[]>([]);
-  const [displayedColumnKeysPending, setDisplayedColumnKeysPending] = useState<string[]>([]);
+  const [appliedColumnKeysPending, setAppliedColumnKeysPending] = useState<
+    string[]
+  >([]);
+  const [displayedColumnKeysPending, setDisplayedColumnKeysPending] = useState<
+    string[]
+  >([]);
   const [showColumnSelectorPending, setShowColumnSelectorPending] =
     useState(false);
   const [activeColumnKeysPrevious, setActiveColumnKeysPrevious] = useState<
     string[]
   >([]);
-  const [appliedColumnKeysPrevious, setAppliedColumnKeysPrevious] = useState<string[]>([]);
-  const [displayedColumnKeysPrevious, setDisplayedColumnKeysPrevious] = useState<string[]>([]);
+  const [appliedColumnKeysPrevious, setAppliedColumnKeysPrevious] = useState<
+    string[]
+  >([]);
+  const [displayedColumnKeysPrevious, setDisplayedColumnKeysPrevious] =
+    useState<string[]>([]);
   const [showColumnSelectorPrevious, setShowColumnSelectorPrevious] =
     useState(false);
 
   const handleFormattedInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setInvalidRegistrationAmount(false);
     const inputValue = e.target.value.replace(/[^\d]/g, "");
@@ -161,7 +198,7 @@ export default function RegistrationsPage() {
   const sensors = useSensors(
     useSensor(MouseSensor, {}),
     useSensor(TouchSensor, {}),
-    useSensor(KeyboardSensor, {})
+    useSensor(KeyboardSensor, {}),
   );
   const setAllListActionItems = (members: ClubMember[]) => {
     // Directly set the items without toggle logic
@@ -185,9 +222,10 @@ export default function RegistrationsPage() {
   useEffect(() => {
     if (clubMembersError) {
       // Handle API errors
-      const errorMessage = clubMembersError instanceof Error 
-        ? clubMembersError.message 
-        : "Failed to load members. Please try again.";
+      const errorMessage =
+        clubMembersError instanceof Error
+          ? clubMembersError.message
+          : "Failed to load members. Please try again.";
       setFetchError(errorMessage);
       isLoadingMoreRef.current = false;
       setFilterLoading(false);
@@ -195,7 +233,7 @@ export default function RegistrationsPage() {
       setFetchError(null);
       const memberType = getMemberType(selectedTab);
       const members = clubMembers.members || [];
-      
+
       if (isLoadingMoreRef.current) {
         // Append new data when loading more
         if (memberType === "registered") {
@@ -215,7 +253,7 @@ export default function RegistrationsPage() {
         } else if (memberType === "previous") {
           setAllDeregisteredMembers(members);
         }
-        
+
         if (memberType === "registered") {
           setDisplayedColumnKeysRegistered(appliedColumnKeysRegistered);
         } else if (memberType === "pending") {
@@ -232,7 +270,12 @@ export default function RegistrationsPage() {
   }, [clubMembers, clubMembersError, selectedTab]);
 
   useEffect(() => {
-    if (allRegisteredMembers.length === 0 && allUnregisteredMembers.length === 0 && allDeregisteredMembers.length === 0) return;
+    if (
+      allRegisteredMembers.length === 0 &&
+      allUnregisteredMembers.length === 0 &&
+      allDeregisteredMembers.length === 0
+    )
+      return;
 
     setAvailableDynamicFilters(allFilters);
     setFilterLoading(false);
@@ -240,7 +283,7 @@ export default function RegistrationsPage() {
     setRegisteredMembersLength(allRegisteredMembers.length);
     setUnregisteredMembersLength(allUnregisteredMembers.length);
     setDeregisteredMembersLength(allDeregisteredMembers.length);
-  }, [allRegisteredMembers, allUnregisteredMembers, allDeregisteredMembers])
+  }, [allRegisteredMembers, allUnregisteredMembers, allDeregisteredMembers]);
 
   useEffect(() => {
     setDisplayAmount(formatAmount(0, club?.currency));
@@ -252,8 +295,14 @@ export default function RegistrationsPage() {
 
   // Build customFilters array from dynamicFilters
   useEffect(() => {
-    const customFiltersArray: Array<{ field_id: string; type: string; input_type: string; value: string; condition?: string }> = [];
-    
+    const customFiltersArray: Array<{
+      field_id: string;
+      type: string;
+      input_type: string;
+      value: string;
+      condition?: string;
+    }> = [];
+
     Object.entries(dynamicFilters).forEach(([key, value]) => {
       // Skip empty or "all" values
       if (!value || value === "" || value === "all") {
@@ -261,23 +310,29 @@ export default function RegistrationsPage() {
       }
 
       // Find the filter definition to get the field_id, type, and determine input_type
-      const filterDefinition = availableDynamicFilters?.find((f) => f.key === key);
+      const filterDefinition = availableDynamicFilters?.find(
+        (f) => f.key === key,
+      );
       const fieldId = filterDefinition?.field_id || key;
       const fieldType = filterDefinition?.type || "text";
       const options = filterDefinition?.options || [];
-      
+
       // Determine input_type and extract value and condition
       let inputType = "text";
       let actualValue = String(value);
       let condition: string | undefined = undefined;
-      
+
       // Handle billing:number or other number types with operator
       if (fieldType === "billing:number" || typeof value === "object") {
         inputType = "number";
         const filterObj = value as any;
         actualValue = String(filterObj.value || "");
         condition = filterObj.operator || filterConditions[key];
-      } else if (options.length === 2 && options.includes("true") && options.includes("false")) {
+      } else if (
+        options.length === 2 &&
+        options.includes("true") &&
+        options.includes("false")
+      ) {
         inputType = "checkbox";
       } else if (options.length > 0) {
         inputType = "select";
@@ -285,22 +340,22 @@ export default function RegistrationsPage() {
         inputType = "number";
         condition = filterConditions[key];
       }
-      
+
       const filterObj: any = {
         field_id: `reg_field_${fieldId}`,
         type: fieldType,
         input_type: inputType,
         value: actualValue,
       };
-      
+
       // Add condition for number fields
       if (condition) {
         filterObj.condition = condition;
       }
-      
+
       customFiltersArray.push(filterObj);
     });
-    
+
     setComputedCustomFilters(customFiltersArray);
   }, [dynamicFilters, availableDynamicFilters, filterConditions]);
 
@@ -335,7 +390,7 @@ export default function RegistrationsPage() {
       window.history.replaceState(
         null,
         "",
-        window.location.pathname + window.location.search
+        window.location.pathname + window.location.search,
       );
     }
   }, []);
@@ -357,7 +412,7 @@ export default function RegistrationsPage() {
   const registerUser = (
     member: ClubMember,
     paymentMethod?: string,
-    templateVariables?: Array<{ name: string; value: string }>
+    templateVariables?: Array<{ name: string; value: string }>,
   ) => {
     if (
       memberRegisterAmount > member.outstanding_amount ||
@@ -389,7 +444,7 @@ export default function RegistrationsPage() {
           }
           setMemberRegisterAmount(0);
         },
-      }
+      },
     );
   };
 
@@ -411,7 +466,7 @@ export default function RegistrationsPage() {
   const handleDownloadRegisteredMembers = () => {
     const customCols =
       clubMembers?.filters?.filter((f: any) =>
-        activeColumnKeysRegistered.includes(f.key)
+        activeColumnKeysRegistered.includes(f.key),
       ) || [];
 
     exportTableData({
@@ -425,7 +480,7 @@ export default function RegistrationsPage() {
   const handleDownloadPendingMembers = () => {
     const customCols =
       clubMembers?.filters?.filter((f: any) =>
-        activeColumnKeysPending.includes(f.key)
+        activeColumnKeysPending.includes(f.key),
       ) || [];
 
     exportTableData({
@@ -444,7 +499,7 @@ export default function RegistrationsPage() {
   const handleDownloadPreviousMembers = () => {
     const customCols =
       clubMembers?.filters?.filter((f: any) =>
-        activeColumnKeysPrevious.includes(f.key)
+        activeColumnKeysPrevious.includes(f.key),
       ) || [];
 
     exportTableData({
@@ -457,12 +512,12 @@ export default function RegistrationsPage() {
 
   return (
     <div className="p-5">
-       <div>
-          <h1 className="text-3xl font-bold tracking-tight">Registrations</h1>
-          <p className="text-muted-foreground">
-            Manage your club's member registrations
-          </p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Registrations</h1>
+        <p className="text-muted-foreground">
+          Manage your club's member registrations
+        </p>
+      </div>
       <>
         {clubLoading ? (
           <div className="flex justify-center items-center p-8 min-h-96">
@@ -485,7 +540,7 @@ export default function RegistrationsPage() {
               window.history.pushState(
                 "",
                 document.title,
-                window.location.pathname + window.location.search
+                window.location.pathname + window.location.search,
               );
 
               // Reset both input filters and applied filters
@@ -571,12 +626,12 @@ export default function RegistrationsPage() {
                 activeFilterKeys.length > 0 &&
                 (() => {
                   const activeFilters = availableDynamicFilters.filter(
-                    ({ key }) => activeFilterKeys.includes(key)
+                    ({ key }) => activeFilterKeys.includes(key),
                   );
 
                   const sortedFilters = activeFilters.sort((a, b) => {
                     const getType = (
-                      filter: (typeof availableDynamicFilters)[0]
+                      filter: (typeof availableDynamicFilters)[0],
                     ) => {
                       if (!filter.options) return 0;
                       if (
@@ -612,7 +667,7 @@ export default function RegistrationsPage() {
                               const displayValue = rawValue
                                 ? formatAmount(
                                     parseInt(rawValue) || 0,
-                                    club?.currency
+                                    club?.currency,
                                   )
                                 : "";
 
@@ -628,7 +683,7 @@ export default function RegistrationsPage() {
                                     <button
                                       onClick={() => {
                                         setActiveFilterKeys((prev) =>
-                                          prev.filter((k) => k !== key)
+                                          prev.filter((k) => k !== key),
                                         );
                                         setDynamicFilters((prev) => {
                                           const newFilters = { ...prev };
@@ -720,7 +775,7 @@ export default function RegistrationsPage() {
                                     <button
                                       onClick={() => {
                                         setActiveFilterKeys((prev) =>
-                                          prev.filter((k) => k !== key)
+                                          prev.filter((k) => k !== key),
                                         );
                                         setDynamicFilters((prev) => {
                                           const newFilters = { ...prev };
@@ -769,7 +824,7 @@ export default function RegistrationsPage() {
                                     <button
                                       onClick={() => {
                                         setActiveFilterKeys((prev) =>
-                                          prev.filter((k) => k !== key)
+                                          prev.filter((k) => k !== key),
                                         );
                                         setDynamicFilters((prev) => {
                                           const newFilters = { ...prev };
@@ -817,7 +872,7 @@ export default function RegistrationsPage() {
                                   <button
                                     onClick={() => {
                                       setActiveFilterKeys((prev) =>
-                                        prev.filter((k) => k !== key)
+                                        prev.filter((k) => k !== key),
                                       );
                                       setDynamicFilters((prev) => {
                                         const newFilters = { ...prev };
@@ -856,7 +911,7 @@ export default function RegistrationsPage() {
                                 </Select>
                               </div>
                             );
-                          }
+                          },
                         )}
                       </div>
                     </div>
@@ -902,16 +957,27 @@ export default function RegistrationsPage() {
                   />
                 )}
               </div>
-              {(activeColumnKeysRegistered.length > 0 || activeColumnKeysPending.length > 0 || activeColumnKeysPrevious.length > 0) && (
+              {(activeColumnKeysRegistered.length > 0 ||
+                activeColumnKeysPending.length > 0 ||
+                activeColumnKeysPrevious.length > 0) && (
                 <div className="flex flex-wrap gap-2">
                   {selectedTab === "registered-members" &&
                     activeColumnKeysRegistered.map((key) => {
-                      const field = availableDynamicFilters?.find((f) => f.key === key);
+                      const field = availableDynamicFilters?.find(
+                        (f) => f.key === key,
+                      );
                       return (
-                        <div key={key} className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                        <div
+                          key={key}
+                          className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium"
+                        >
                           {field?.field_name || key}
                           <button
-                            onClick={() => setActiveColumnKeysRegistered((prev) => prev.filter((k) => k !== key))}
+                            onClick={() =>
+                              setActiveColumnKeysRegistered((prev) =>
+                                prev.filter((k) => k !== key),
+                              )
+                            }
                             className="ml-1 hover:text-blue-600 font-bold"
                           >
                             ×
@@ -921,12 +987,21 @@ export default function RegistrationsPage() {
                     })}
                   {selectedTab === "pending-members" &&
                     activeColumnKeysPending.map((key) => {
-                      const field = availableDynamicFilters?.find((f) => f.key === key);
+                      const field = availableDynamicFilters?.find(
+                        (f) => f.key === key,
+                      );
                       return (
-                        <div key={key} className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                        <div
+                          key={key}
+                          className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium"
+                        >
                           {field?.field_name || key}
                           <button
-                            onClick={() => setActiveColumnKeysPending((prev) => prev.filter((k) => k !== key))}
+                            onClick={() =>
+                              setActiveColumnKeysPending((prev) =>
+                                prev.filter((k) => k !== key),
+                              )
+                            }
                             className="ml-1 hover:text-blue-600 font-bold"
                           >
                             ×
@@ -936,12 +1011,21 @@ export default function RegistrationsPage() {
                     })}
                   {selectedTab === "previous-members" &&
                     activeColumnKeysPrevious.map((key) => {
-                      const field = availableDynamicFilters?.find((f) => f.key === key);
+                      const field = availableDynamicFilters?.find(
+                        (f) => f.key === key,
+                      );
                       return (
-                        <div key={key} className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                        <div
+                          key={key}
+                          className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium"
+                        >
                           {field?.field_name || key}
                           <button
-                            onClick={() => setActiveColumnKeysPrevious((prev) => prev.filter((k) => k !== key))}
+                            onClick={() =>
+                              setActiveColumnKeysPrevious((prev) =>
+                                prev.filter((k) => k !== key),
+                              )
+                            }
                             className="ml-1 hover:text-blue-600 font-bold"
                           >
                             ×
@@ -952,7 +1036,9 @@ export default function RegistrationsPage() {
                 </div>
               )}
               <p className="text-sm text-gray-600 my-1">
-                Configure your filters and columns above, then click the <span className="font-semibold">Run</span> button to apply your selections and display the results.
+                Configure your filters and columns above, then click the{" "}
+                <span className="font-semibold">Run</span> button to apply your
+                selections and display the results.
               </p>
               <button
                 onClick={async () => {
@@ -976,13 +1062,16 @@ export default function RegistrationsPage() {
               </button>
               <div className="flex items-center gap-3 pt-4 border-t">
                 <Label className="text-sm font-medium">Results per page:</Label>
-                <Select value={memberLimit.toString()} onValueChange={(value) => {
-                  setMemberLimit(parseInt(value));
-                  setPageToken(undefined);
-                  setlistActionItems([]);
-                  setDeregisterMembers([]);
-                  setAllMembersSelected(false);
-                }}>
+                <Select
+                  value={memberLimit.toString()}
+                  onValueChange={(value) => {
+                    setMemberLimit(parseInt(value));
+                    setPageToken(undefined);
+                    setlistActionItems([]);
+                    setDeregisterMembers([]);
+                    setAllMembersSelected(false);
+                  }}
+                >
                   <SelectTrigger className="w-[100px]">
                     <SelectValue />
                   </SelectTrigger>
@@ -999,7 +1088,10 @@ export default function RegistrationsPage() {
             >
               <Card className="p-4 mt-2 flex flex-col gap-4">
                 <div className="flex items-center gap-2">
-                  <h2 className="px-2 text-xl font-semibold">Active Registrations - Items returned ({registeredMembersLength})</h2>
+                  <h2 className="px-2 text-xl font-semibold">
+                    Active Registrations - Items returned (
+                    {registeredMembersLength})
+                  </h2>
                 </div>
                 {fetchError && (
                   <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md flex items-center justify-between">
@@ -1012,32 +1104,38 @@ export default function RegistrationsPage() {
                     </button>
                   </div>
                 )}
-                {!fetchError && clubMembers?.pageToken && clubMembers.pageToken !== "" && (
-                  <div className="bg-orange-100 max-w-[79vw] border border-orange-600 p-4 rounded-md flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="h-5 w-5 text-orange-600" />
-                      <p className="text-black font-medium">More results available</p>
+                {!fetchError &&
+                  clubMembers?.pageToken &&
+                  clubMembers.pageToken !== "" && (
+                    <div className="bg-orange-100 max-w-[79vw] border border-orange-600 p-4 rounded-md flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="h-5 w-5 text-orange-600" />
+                        <p className="text-black font-medium">
+                          More results available
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setAppliedMemberNameFilter(memberNameFilter);
+                          setAppliedMemberIdFilter(memberIdFilter);
+                          setAppliedColumnKeysRegistered(
+                            activeColumnKeysRegistered,
+                          );
+                          isLoadingMoreRef.current = true;
+                          setPageToken(clubMembers.pageToken);
+                          setTimeout(() => refetchClubMembers(), 0);
+                        }}
+                        disabled={clubMembersLoading}
+                        className="px-4 py-2 bg-orange-100 hover:bg-orange-200 cursor-pointer rounded-[20px] border border-black text-black font-semibold rounded-md hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        {clubMembersLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "Load More"
+                        )}
+                      </button>
                     </div>
-                    <button
-                      onClick={() => {
-                        setAppliedMemberNameFilter(memberNameFilter);
-                        setAppliedMemberIdFilter(memberIdFilter);
-                        setAppliedColumnKeysRegistered(activeColumnKeysRegistered);
-                        isLoadingMoreRef.current = true;
-                        setPageToken(clubMembers.pageToken);
-                        setTimeout(() => refetchClubMembers(), 0);
-                      }}
-                      disabled={clubMembersLoading}
-                      className="px-4 py-2 bg-orange-100 hover:bg-orange-200 cursor-pointer rounded-[20px] border border-black text-black font-semibold rounded-md hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                      {clubMembersLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        "Load More"
-                      )}
-                    </button>
-                  </div>
-                )}
+                  )}
                 {!fetchError && (clubMembersLoading || filterLoading) ? (
                   <div className="flex justify-center items-center p-8 min-h-96">
                     <Loader2 className="h-8 w-8 animate-spin" />
@@ -1085,7 +1183,10 @@ export default function RegistrationsPage() {
             >
               <Card className="p-4 mt-2 flex flex-col gap-4">
                 <div className="flex items-center gap-2">
-                  <h2 className="px-2 text-xl font-semibold">Pending Registrations  - Items returned ({unregisteredMembersLength})</h2>
+                  <h2 className="px-2 text-xl font-semibold">
+                    Pending Registrations - Items returned (
+                    {unregisteredMembersLength})
+                  </h2>
                 </div>
                 {fetchError && (
                   <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md flex items-center justify-between">
@@ -1098,32 +1199,36 @@ export default function RegistrationsPage() {
                     </button>
                   </div>
                 )}
-                {!fetchError && clubMembers?.pageToken && clubMembers.pageToken !== "" && (
-                  <div className="bg-orange-100 max-w-[79vw] border border-orange-600 p-4 rounded-md flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="h-5 w-5 text-orange-600" />
-                      <p className="text-black font-medium">More results available</p>
+                {!fetchError &&
+                  clubMembers?.pageToken &&
+                  clubMembers.pageToken !== "" && (
+                    <div className="bg-orange-100 max-w-[79vw] border border-orange-600 p-4 rounded-md flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="h-5 w-5 text-orange-600" />
+                        <p className="text-black font-medium">
+                          More results available
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setAppliedMemberNameFilter(memberNameFilter);
+                          setAppliedMemberIdFilter(memberIdFilter);
+                          setAppliedColumnKeysPending(activeColumnKeysPending);
+                          isLoadingMoreRef.current = true;
+                          setPageToken(clubMembers.pageToken);
+                          setTimeout(() => refetchClubMembers(), 0);
+                        }}
+                        disabled={clubMembersLoading}
+                        className="px-4 py-2 bg-orange-100 rounded-[20px] hover:bg-orange-200 cursor-pointer border border-orange-600 text-black font-semibold rounded-md hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        {clubMembersLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "Load More"
+                        )}
+                      </button>
                     </div>
-                    <button
-                      onClick={() => {
-                        setAppliedMemberNameFilter(memberNameFilter);
-                        setAppliedMemberIdFilter(memberIdFilter);
-                        setAppliedColumnKeysPending(activeColumnKeysPending);
-                        isLoadingMoreRef.current = true;
-                        setPageToken(clubMembers.pageToken);
-                        setTimeout(() => refetchClubMembers(), 0);
-                      }}
-                      disabled={clubMembersLoading}
-                      className="px-4 py-2 bg-orange-100 rounded-[20px] hover:bg-orange-200 cursor-pointer border border-orange-600 text-black font-semibold rounded-md hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                      {clubMembersLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        "Load More"
-                      )}
-                    </button>
-                  </div>
-                )}
+                  )}
                 {!fetchError && (clubMembersLoading || filterLoading) ? (
                   <div className="flex justify-center items-center p-8 min-h-96">
                     <Loader2 className="h-8 w-8 animate-spin" />
@@ -1163,7 +1268,9 @@ export default function RegistrationsPage() {
                       setSelectedMember={setSelectedMember}
                       setOpenDialogUserId={setOpenDialogUserId}
                       setMemberRegisterAmount={setMemberRegisterAmount}
-                      setUnregisteredMembersLength={setUnregisteredMembersLength}
+                      setUnregisteredMembersLength={
+                        setUnregisteredMembersLength
+                      }
                       setAllListActionItems={setAllListActionItems}
                       setAllMembersSelected={setAllMembersSelected}
                     />
@@ -1186,7 +1293,8 @@ export default function RegistrationsPage() {
               <Card className="p-4 mt-2 flex flex-col gap-4">
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-semibold">
-                    De-registrations  - Items returned ({deregisteredMembersLength})
+                    De-registrations - Items returned (
+                    {deregisteredMembersLength})
                   </h2>
                 </div>
                 {fetchError && (
@@ -1200,32 +1308,38 @@ export default function RegistrationsPage() {
                     </button>
                   </div>
                 )}
-                {!fetchError && clubMembers?.pageToken && clubMembers.pageToken !== "" && (
-                  <div className="bg-orange-100 max-w-[79vw] border border-orange-600 p-4 rounded-md flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="h-5 w-5 text-orange-600" />
-                      <p className="text-black font-medium">More results available</p>
+                {!fetchError &&
+                  clubMembers?.pageToken &&
+                  clubMembers.pageToken !== "" && (
+                    <div className="bg-orange-100 max-w-[79vw] border border-orange-600 p-4 rounded-md flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="h-5 w-5 text-orange-600" />
+                        <p className="text-black font-medium">
+                          More results available
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setAppliedMemberNameFilter(memberNameFilter);
+                          setAppliedMemberIdFilter(memberIdFilter);
+                          setAppliedColumnKeysPrevious(
+                            activeColumnKeysPrevious,
+                          );
+                          isLoadingMoreRef.current = true;
+                          setPageToken(clubMembers.pageToken);
+                          setTimeout(() => refetchClubMembers(), 0);
+                        }}
+                        disabled={clubMembersLoading}
+                        className="px-4 py-2 bg-orange-100 border hover:bg-orange-200 cursor-pointer rounded-[20px] border-orange-600 text-black font-semibold rounded-md hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        {clubMembersLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "Load More"
+                        )}
+                      </button>
                     </div>
-                    <button
-                      onClick={() => {
-                        setAppliedMemberNameFilter(memberNameFilter);
-                        setAppliedMemberIdFilter(memberIdFilter);
-                        setAppliedColumnKeysPrevious(activeColumnKeysPrevious);
-                        isLoadingMoreRef.current = true;
-                        setPageToken(clubMembers.pageToken);
-                        setTimeout(() => refetchClubMembers(), 0);
-                      }}
-                      disabled={clubMembersLoading}
-                      className="px-4 py-2 bg-orange-100 border hover:bg-orange-200 cursor-pointer rounded-[20px] border-orange-600 text-black font-semibold rounded-md hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                      {clubMembersLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        "Load More"
-                      )}
-                    </button>
-                  </div>
-                )}
+                  )}
                 {!fetchError && (clubMembersLoading || filterLoading) ? (
                   <div className="flex justify-center items-center p-8 min-h-96">
                     <Loader2 className="h-8 w-8 animate-spin" />
@@ -1253,7 +1367,9 @@ export default function RegistrationsPage() {
                       onShowArchivedChange={setShowArchived}
                       setSelectedMember={setSelectedMember}
                       setlistActionItems={setlistActionItems}
-                      setDeregisteredMembersLength={setDeregisteredMembersLength}
+                      setDeregisteredMembersLength={
+                        setDeregisteredMembersLength
+                      }
                     />
                     <button
                       onClick={handleDownloadPreviousMembers}
@@ -1276,6 +1392,7 @@ export default function RegistrationsPage() {
           setSelectedMember={setSelectedMember}
           currency={club?.currency ?? "ZAR"}
           clubAccountId={club?.club_account_id ?? ""}
+          showOnlyRegistration={true}
         />
       )}
     </div>

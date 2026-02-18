@@ -136,7 +136,10 @@ export default function FinancialTransactionsPage() {
   }
   return (
     <div className="p-5">
-      <h1 className="text-base font-bold mb-4">Revenue Transactions</h1>
+      <div className="mb-4">
+        <h1 className="text-3xl font-bold tracking-tight">Revenue Transactions</h1>
+        <p className="text-muted-foreground">Manage your club's revenue transactions</p>
+      </div>
 
       <Card className="p-4 mb-6">
         <div className="flex flex-wrap gap-4">

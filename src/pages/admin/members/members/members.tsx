@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState, useRef } from "react";
 import { useFetchClubMembers } from "@/queries/admin/club-members";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { Label } from "@/components/ui/label";
-
+import SelectedMemberDialog from "@/components/admin/members/members/features/selected-member-dialog";
 import {
   KeyboardSensor,
   MouseSensor,
@@ -92,7 +92,8 @@ export default function MembersPage() {
   const [dereigsterMembers, setDeregisterMembers] = useState<
     { user_id: string; name: string }[]
   >([]);
-  const [, setSelectedMember] = useState({});
+  const [selectedMember, setSelectedMember] = useState({});
+  const [hashUserId, setHashUserId] = useState<string | null>(null);
   const [filterLoading, setFilterLoading] = useState(true);
 
   const [registeredMembersLength, setRegisteredMembersLength] =
@@ -176,6 +177,20 @@ export default function MembersPage() {
 
     setRegisteredMembersLength(allRegisteredMembers.length);
   }, [allRegisteredMembers]);
+
+  useEffect(() => {
+    const updateHash = () => {
+      const hash = window.location.hash.replace("#", "");
+      setHashUserId(hash || null);
+    };
+
+    updateHash();
+    window.addEventListener("hashchange", updateHash);
+
+    return () => {
+      window.removeEventListener("hashchange", updateHash);
+    };
+  }, []);
 
   useEffect(() => {
     setPageToken(undefined);
@@ -825,6 +840,12 @@ export default function MembersPage() {
           </div>
         )}
       </>
+      {hashUserId && (
+        <SelectedMemberDialog
+          selectedMember={selectedMember}
+          setSelectedMember={setSelectedMember}
+        />
+      )}
     </div>
   );
 }

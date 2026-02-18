@@ -174,7 +174,22 @@ export function CurrentMemberRegistration({
     <div className="w-full space-y-2 flex-1 min-h-0 flex flex-col">
       {/* Transaction ID and Previous Season Tag */}
       {(data?.transaction_id || data?.last_season_registration) && (
-        <div className="flex items-center justify-between text-sm bg-transparent p-1">
+        <div className="flex flex-col items-start justify-start text-sm bg-transparent p-1">
+          {userId ? (
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground text-xs">Member ID:</span>
+              <strong className="text-xs font-mono">{userId}</strong>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(userId);
+                }}
+                className="p-1 hover:bg-muted rounded transition-colors"
+                title="Copy member ID"
+              >
+                <Copy className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-pointer" />
+              </button>
+            </div>
+          ) : null}
           {data?.transaction_id ? (
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground text-xs">Transaction ID:</span>
