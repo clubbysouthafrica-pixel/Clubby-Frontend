@@ -262,10 +262,6 @@ export default function MemberShopPage() {
                 <ArrowLeft className="h-4 w-4" />
                 Back to Club
               </Button>
-              <div>
-                <h1 className="text-xl md:text-2xl font-bold text-gray-900">Club Shop</h1>
-                <p className="text-xs md:text-sm text-gray-600">Browse and purchase club merchandise</p>
-              </div>
             </div>
             <Button
               onClick={() => setShowCart(true)}
