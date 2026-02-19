@@ -377,7 +377,7 @@ export default function PreviousMembersList({
                       </div>
                     </TableCell>
                     <TableCell className="text-center w-[150px]">
-                      {member.member_email}
+                      {member.member_email === "n/a" ? <span className="text-gray-400">n/a</span> : member.member_email}
                     </TableCell>
                     <TableCell className="text-center w-[150px]">
                       {member?.total_fee ? (
