@@ -216,6 +216,9 @@ export default function PreviousMembersList({
                   </button>
                 </TableHead>
                 <TableHead className="text-center w-[150px]">
+                  Amount Paid
+                </TableHead>
+                <TableHead className="text-center w-[150px]">
                   <button
                     type="button"
                     className="inline-flex items-center gap-1 hover:underline"
@@ -382,6 +385,13 @@ export default function PreviousMembersList({
                     <TableCell className="text-center w-[150px]">
                       {member?.total_fee ? (
                         formatAmount(member.total_fee, club?.currency)
+                      ) : (
+                        <span className="text-gray-400">n/a</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center w-[150px]">
+                      {member?.total_fee ? (
+                        formatAmount(member.total_fee - (member.outstanding_amount || 0), club?.currency)
                       ) : (
                         <span className="text-gray-400">n/a</span>
                       )}
