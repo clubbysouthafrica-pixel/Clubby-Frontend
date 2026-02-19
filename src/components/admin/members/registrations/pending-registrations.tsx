@@ -550,7 +550,8 @@ export default function PendingMembersList({
                               <Button
                                 variant="ghost"
                                 className="border border-black hover:bg-gray-100 hover:text-black"
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setOpenDialogUserId(member.user_id);
                                 }}
                               >
