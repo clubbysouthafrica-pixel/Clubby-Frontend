@@ -9,7 +9,13 @@ import {
 } from "@/components/ui/table";
 import { ClubMember } from "@/interfaces/club";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronsUpDown, Trash2, Archive, ArchiveRestore } from "lucide-react";
+import {
+  ChevronsUpDown,
+  Trash2,
+  Archive,
+  ArchiveRestore,
+  AlertTriangle,
+} from "lucide-react";
 import { Club } from "@/context/ClubContext";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -61,33 +67,43 @@ export default function PreviousMembersList({
   // Use raw clubMembers.deregistered - backend already handles pagination and member_name/member_id filtering
   const baseDeregisteredMembers = clubMembers?.deregistered || [];
   const [deregSortAsc, setDeregSortAsc] = useState<boolean | null>(null);
-  const [memberNameSortAsc, setMemberNameSortAsc] = useState<boolean | null>(null);
+  const [memberNameSortAsc, setMemberNameSortAsc] = useState<boolean | null>(
+    null,
+  );
   const [totalFeeSortAsc, setTotalFeeSortAsc] = useState<boolean | null>(null);
   const [openRemoveDialog, setOpenRemoveDialog] = useState<boolean>(false);
   const [selectedMembersToRemove, setSelectedMembersToRemove] = useState<
     ClubMember[]
   >([]);
-  const [localArchivedToggle, setLocalArchivedToggle] = useState<Record<string, boolean | undefined>>({});
-  const { mutate: archiveRegistrationMutate, isPending: isArchiving } = useArchiveRegistrationMutation();
+  const [localArchivedToggle, setLocalArchivedToggle] = useState<
+    Record<string, boolean | undefined>
+  >({});
+  const { mutate: archiveRegistrationMutate, isPending: isArchiving } =
+    useArchiveRegistrationMutation();
 
   const sortedDeregisteredMembers = useMemo(() => {
     let sortedCopy = [...baseDeregisteredMembers];
-    
+
     // Filter out locally archived entries (only when not showing archived)
     if (!showArchived) {
       sortedCopy = sortedCopy.filter((member) => {
-        const isArchived = localArchivedToggle[member.user_id] !== undefined 
-          ? localArchivedToggle[member.user_id] 
-          : member.archived;
+        const isArchived =
+          localArchivedToggle[member.user_id] !== undefined
+            ? localArchivedToggle[member.user_id]
+            : member.archived;
         return !isArchived;
       });
     }
-    
+
     if (memberNameSortAsc !== null) {
       sortedCopy.sort((a: ClubMember, b: ClubMember) => {
-        const aName = `${a.member_first_name} ${a.member_surname}`.toLowerCase();
-        const bName = `${b.member_first_name} ${b.member_surname}`.toLowerCase();
-        return memberNameSortAsc ? aName.localeCompare(bName) : bName.localeCompare(aName);
+        const aName =
+          `${a.member_first_name} ${a.member_surname}`.toLowerCase();
+        const bName =
+          `${b.member_first_name} ${b.member_surname}`.toLowerCase();
+        return memberNameSortAsc
+          ? aName.localeCompare(bName)
+          : bName.localeCompare(aName);
       });
     } else if (totalFeeSortAsc !== null) {
       sortedCopy.sort((a: ClubMember, b: ClubMember) => {
@@ -97,14 +113,24 @@ export default function PreviousMembersList({
       });
     } else if (deregSortAsc !== null) {
       sortedCopy.sort((a: ClubMember, b: ClubMember) => {
-        const at = a?.deregistered_on ? new Date(a.deregistered_on).getTime() : 0;
-        const bt = b?.deregistered_on ? new Date(b.deregistered_on).getTime() : 0;
+        const at = a?.deregistered_on
+          ? new Date(a.deregistered_on).getTime()
+          : 0;
+        const bt = b?.deregistered_on
+          ? new Date(b.deregistered_on).getTime()
+          : 0;
         return deregSortAsc ? at - bt : bt - at;
       });
     }
-    
+
     return sortedCopy;
-  }, [baseDeregisteredMembers, deregSortAsc, memberNameSortAsc, totalFeeSortAsc, localArchivedToggle]);
+  }, [
+    baseDeregisteredMembers,
+    deregSortAsc,
+    memberNameSortAsc,
+    totalFeeSortAsc,
+    localArchivedToggle,
+  ]);
 
   useEffect(() => {
     setDeregisteredMembersLength(baseDeregisteredMembers.length);
@@ -147,7 +173,9 @@ export default function PreviousMembersList({
                     type="button"
                     className="inline-flex items-center gap-1 hover:underline w-full justify-center"
                     onClick={() => {
-                      setMemberNameSortAsc((prev) => (prev === null ? true : !prev));
+                      setMemberNameSortAsc((prev) =>
+                        prev === null ? true : !prev,
+                      );
                       setDeregSortAsc(null);
                       setTotalFeeSortAsc(null);
                     }}
@@ -157,19 +185,21 @@ export default function PreviousMembersList({
                     {memberNameSortAsc === null ? (
                       <ChevronsUpDown className="h-3 w-3 opacity-60" />
                     ) : (
-                      <span className="text-xs">{memberNameSortAsc ? "▲" : "▼"}</span>
+                      <span className="text-xs">
+                        {memberNameSortAsc ? "▲" : "▼"}
+                      </span>
                     )}
                   </button>
                 </TableHead>
-                <TableHead className="text-center w-[150px]">
-                  Email
-                </TableHead>
+                <TableHead className="text-center w-[150px]">Email</TableHead>
                 <TableHead className="text-center w-[150px]">
                   <button
                     type="button"
                     className="inline-flex items-center gap-1 hover:underline w-full justify-center"
                     onClick={() => {
-                      setTotalFeeSortAsc((prev) => (prev === null ? true : !prev));
+                      setTotalFeeSortAsc((prev) =>
+                        prev === null ? true : !prev,
+                      );
                       setDeregSortAsc(null);
                       setMemberNameSortAsc(null);
                     }}
@@ -179,9 +209,14 @@ export default function PreviousMembersList({
                     {totalFeeSortAsc === null ? (
                       <ChevronsUpDown className="h-3 w-3 opacity-60" />
                     ) : (
-                      <span className="text-xs">{totalFeeSortAsc ? "▲" : "▼"}</span>
+                      <span className="text-xs">
+                        {totalFeeSortAsc ? "▲" : "▼"}
+                      </span>
                     )}
                   </button>
+                </TableHead>
+                <TableHead className="text-center w-[150px]">
+                  Amount Paid
                 </TableHead>
                 <TableHead className="text-center w-[150px]">
                   <button
@@ -223,7 +258,7 @@ export default function PreviousMembersList({
                       setSelectedMember(member);
                       window.location.hash = member.user_id;
                     }}
-                    className={`h-12 cursor-pointer hover:drop-shadow-md transition-shadow ${
+                    className={`h-12 cursor-pointer hover:drop-shadow-md transition-shadow relative ${
                       listActionItems.some(
                         (item) =>
                           item.email === member.member_email &&
@@ -234,8 +269,11 @@ export default function PreviousMembersList({
                         : ""
                     }`}
                   >
-                    <TableCell className="text-center w-[120px] flex-shrink-0 sticky left-0 z-20 bg-white">
-                      <div className="flex justify-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <TableCell className="text-center w-[120px] flex-shrink-0 sticky left-0 z-20 bg-white relative">
+                      <div
+                        className="flex justify-center gap-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
@@ -257,39 +295,58 @@ export default function PreviousMembersList({
                                 archiveRegistrationMutate(
                                   {
                                     user_id: member.user_id,
-                                    registration_id: member.registration_id || ""
+                                    registration_id:
+                                      member.registration_id || "",
                                   },
                                   {
                                     onSuccess: () => {
-                                      const currentState = localArchivedToggle[member.user_id] !== undefined
-                                        ? localArchivedToggle[member.user_id]
-                                        : member.archived;
+                                      const currentState =
+                                        localArchivedToggle[member.user_id] !==
+                                        undefined
+                                          ? localArchivedToggle[member.user_id]
+                                          : member.archived;
                                       setLocalArchivedToggle((prev) => ({
                                         ...prev,
-                                        [member.user_id]: !currentState
+                                        [member.user_id]: !currentState,
                                       }));
                                       if (currentState) {
-                                        toast.success("Registration unarchived successfully");
+                                        toast.success(
+                                          "Registration unarchived successfully",
+                                        );
                                       } else {
-                                        toast.success("Registration archived successfully");
+                                        toast.success(
+                                          "Registration archived successfully",
+                                        );
                                       }
                                     },
                                     onError: (error: unknown) => {
-                                      const errObj = error as Record<string, unknown> | undefined;
-                                      const resp = errObj?.response as Record<string, unknown> | undefined;
-                                      const msg = (resp?.data as Record<string, unknown> | undefined)?.message as string | undefined ?? String(error ?? "An error occurred");
+                                      const errObj = error as
+                                        | Record<string, unknown>
+                                        | undefined;
+                                      const resp = errObj?.response as
+                                        | Record<string, unknown>
+                                        | undefined;
+                                      const msg =
+                                        ((
+                                          resp?.data as
+                                            | Record<string, unknown>
+                                            | undefined
+                                        )?.message as string | undefined) ??
+                                        String(error ?? "An error occurred");
                                       toast.error(msg);
-                                    }
-                                  }
+                                    },
+                                  },
                                 );
                               }}
                               disabled={isArchiving}
                               className="p-1 rounded-md transition-colors text-gray-600 hover:text-gray-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               {(() => {
-                                const isArchived = localArchivedToggle[member.user_id] !== undefined
-                                  ? localArchivedToggle[member.user_id]
-                                  : member.archived;
+                                const isArchived =
+                                  localArchivedToggle[member.user_id] !==
+                                  undefined
+                                    ? localArchivedToggle[member.user_id]
+                                    : member.archived;
                                 return isArchived ? (
                                   <ArchiveRestore className="h-4 w-4" />
                                 ) : (
@@ -300,10 +357,14 @@ export default function PreviousMembersList({
                           </TooltipTrigger>
                           <TooltipContent>
                             {(() => {
-                              const isArchived = localArchivedToggle[member.user_id] !== undefined
-                                ? localArchivedToggle[member.user_id]
-                                : member.archived;
-                              return isArchived ? "Unarchive registration" : "Archive registration";
+                              const isArchived =
+                                localArchivedToggle[member.user_id] !==
+                                undefined
+                                  ? localArchivedToggle[member.user_id]
+                                  : member.archived;
+                              return isArchived
+                                ? "Unarchive registration"
+                                : "Archive registration";
                             })()}
                           </TooltipContent>
                         </Tooltip>
@@ -312,12 +373,14 @@ export default function PreviousMembersList({
                     <TableCell className="text-center w-[150px]">
                       <div className="flex items-center justify-center gap-2">
                         <span className="underline">
-                          {member.member_first_name + " " + member.member_surname}
+                          {member.member_first_name +
+                            " " +
+                            member.member_surname}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell className="text-center w-[150px]">
-                      {member.member_email}
+                      {member.member_email === "n/a" ? <span className="text-gray-400">n/a</span> : member.member_email}
                     </TableCell>
                     <TableCell className="text-center w-[150px]">
                       {member?.total_fee ? (
@@ -327,10 +390,33 @@ export default function PreviousMembersList({
                       )}
                     </TableCell>
                     <TableCell className="text-center w-[150px]">
-                      {member?.last_season_registration || !member?.deregistered_on
-                        ? <Badge className="bg-red-100 text-red-800 border-red-300">Previous Season Registration</Badge>
-                        : new Date(member?.deregistered_on).toLocaleString()
-                      }
+                      {member?.total_fee ? (
+                        formatAmount(member.total_fee - (member.outstanding_amount || 0), club?.currency)
+                      ) : (
+                        <span className="text-gray-400">n/a</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center w-[150px]">
+                      {member.missing_club_member && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="absolute top-5 right-5 transform translate-x-1 -translate-y-1">
+                              <AlertTriangle className="h-4 w-4 text-red-600 fill-red-100" />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="right">
+                            This member no longer exists with the club
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      {member?.last_season_registration ||
+                      !member?.deregistered_on ? (
+                        <Badge className="bg-red-100 text-red-800 border-red-300">
+                          Previous Season Registration
+                        </Badge>
+                      ) : (
+                        new Date(member?.deregistered_on).toLocaleString()
+                      )}
                     </TableCell>
                     {clubMembers?.filters
                       ?.filter((col: any) => activeColumnKeys.includes(col.key))
@@ -348,7 +434,9 @@ export default function PreviousMembersList({
                           const customField = member.meta_billing?.find(
                             (f: any) => f.field_name === column.field_name,
                           );
-                          columnValue = customField?.value ? formatAmount(customField?.value, club?.currency) : "N/A";
+                          columnValue = customField?.value
+                            ? formatAmount(customField?.value, club?.currency)
+                            : "N/A";
                         }
 
                         if (column.type === "standard") {
@@ -404,8 +492,6 @@ export default function PreviousMembersList({
             window.location.reload();
           }}
         />
-
-
       </div>
     </>
   );

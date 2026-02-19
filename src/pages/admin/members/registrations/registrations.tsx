@@ -12,7 +12,7 @@ import {
 } from "@dnd-kit/core";
 import { ClubMember } from "@/interfaces/club";
 import { useRegisterUserToClubMutation } from "@/mutations/admin/member";
-import SelectedMember from "@/components/admin/members/registrations/features/selected-members";
+import RegistrationDialog from "@/components/admin/members/registrations/features/registration-dialog";
 import DeregisterSeasonDialog from "@/components/admin/members/registrations/features/deregister-season";
 import { formatAmount } from "@/data/currencies";
 import { Input } from "@/components/ui/input";
@@ -1386,13 +1386,12 @@ export default function RegistrationsPage() {
         )}
       </>
       {hashUserId && (
-        <SelectedMember
+        <RegistrationDialog
           clubName={club?.club_name ?? ""}
           selectedMember={selectedMember}
           setSelectedMember={setSelectedMember}
           currency={club?.currency ?? "ZAR"}
           clubAccountId={club?.club_account_id ?? ""}
-          showOnlyRegistration={true}
         />
       )}
     </div>

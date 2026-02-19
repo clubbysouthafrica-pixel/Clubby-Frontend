@@ -26,12 +26,13 @@ export const fetchMemberRegistration = (
   clubAccountId: string,
   userId: string,
   currency: string,
+  registrationId?: string,
 ): Promise<any> => {
   if (!clubAccountId || !userId || !currency) throw new Error("no club set");
 
   return api
     .get(
-      `/registration/getMemberRegistration?club_account_id=${clubAccountId}&user_id=${userId}&currency=${currency}`,
+      `/registration/getMemberRegistration?club_account_id=${clubAccountId}&user_id=${userId}&currency=${currency}${registrationId ? `&registration_id=${registrationId}` : ""}`,
     )
     .then((res) => res.data);
 };

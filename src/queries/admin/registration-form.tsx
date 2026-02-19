@@ -12,12 +12,12 @@ export const useFetchRegistrationForm = (clubAccountId: string) => {
   });
 };
 
-export const useFetchMemberRegisteration = (clubAccountId: string, userId: string, currency: string) => {
+export const useFetchMemberRegisteration = (clubAccountId: string, userId: string, currency: string, registrationId?: string) => {
   return useQuery({
-    queryKey: ['memberRegistration', clubAccountId, userId, currency],
+    queryKey: ['memberRegistration', clubAccountId, userId, currency, registrationId],
     queryFn: ({ queryKey }) => {
-      const [_key, clubId, userId, currency] = queryKey;
-      return fetchMemberRegistration(clubId, userId, currency);
+      const [_key, clubId, userId, currency, regId] = queryKey as [string, string, string, string, string | undefined];
+      return fetchMemberRegistration(clubId, userId, currency, regId);
     },
     enabled: Boolean(clubAccountId && userId && currency),
   });

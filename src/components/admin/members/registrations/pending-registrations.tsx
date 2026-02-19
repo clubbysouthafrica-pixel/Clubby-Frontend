@@ -424,7 +424,7 @@ export default function PendingMembersList({
                         setSelectedMember(member);
                         window.location.hash = member.user_id;
                       }}
-                      className={`h-12 cursor-pointer hover:drop-shadow-md transition-shadow ${
+                      className={`h-12 cursor-pointer hover:drop-shadow-md transition-shadow relative ${
                         listActionItems.some(
                           (item) =>
                             item.email === member.member_email &&
@@ -435,7 +435,7 @@ export default function PendingMembersList({
                           : ""
                       }`}
                     >
-                      <TableCell className="text-center w-[80px] flex-shrink-0 sticky left-0 z-20 bg-white">
+                      <TableCell className="text-center w-[80px] flex-shrink-0 sticky left-0 z-20 bg-white relative">
                       <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
                           <Checkbox
                             checked={listActionItems.some(
@@ -550,14 +550,15 @@ export default function PendingMembersList({
                               <Button
                                 variant="ghost"
                                 className="border border-black hover:bg-gray-100 hover:text-black"
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setOpenDialogUserId(member.user_id);
                                 }}
                               >
                                 Register
                               </Button>
                             </div>
-                            <DialogContent>
+                            <DialogContent onClick={(e) => e.stopPropagation()}>
                               <DialogHeader>
                                 <DialogTitle>
                                   Register Member:{" "}

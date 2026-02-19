@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect, useRef } from "react";
 import { AuthContext, AuthContextType } from "@/context/AuthContext.tsx";
 import { Alert, AlertDescription } from "@/components/ui/alert.tsx";
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
@@ -27,15 +27,21 @@ export function LoginForm({
 
   const [searchParams] = useSearchParams();
   const username = searchParams.get("username");
+  const queryEmail = searchParams.get("email");
+  const queryTempPassword = searchParams.get("tempPassword");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [errorStatusCode, setErrorStatusCode] = useState<number | null>(null);
-  const [email, setEmail] = useState<string>(username || "");
-  const [password, setPassword] = useState<string>("");
+  const [email, setEmail] = useState<string>(queryEmail || username || "");
+  const [password, setPassword] = useState<string>(queryTempPassword || "");
   const [showPassword, setShowPassword] = useState(false);
+  const autoSubmitRef = useRef(false);
 
-  const signIn = async () => {
-    if (!email || !password) return;
+  const signIn = async (emailParam?: string, passwordParam?: string) => {
+    const emailToUse = emailParam || email;
+    const passwordToUse = passwordParam || password;
+    
+    if (!emailToUse || !passwordToUse) return;
     setLoading(true);
 
     try {
@@ -44,14 +50,14 @@ export function LoginForm({
         new_password_required,
       }: { onboarded: boolean; new_password_required: boolean } = await login(
         isAdminLogin,
-        email,
-        password,
+        emailToUse,
+        passwordToUse,
       );
 
       if (new_password_required) {
         if (isAdminLogin) localStorage.setItem("isAdminActivation", "true");
         else localStorage.setItem("isAdminActivation", "false");
-        navigate(`/activateAccount?email=${encodeURIComponent(email)}`);
+        navigate(`/activateAccount?email=${encodeURIComponent(emailToUse)}`);
       } else {
         if (isAdminLogin) {
           localStorage.setItem("isAdmin", "true");
@@ -68,10 +74,10 @@ export function LoginForm({
 
       if (e instanceof AxiosError) {
         if (e.response?.data?.message === "User is not confirmed.")
-          navigate(`/otp?username=${encodeURIComponent(email)}`);
+          navigate(`/otp?username=${encodeURIComponent(emailToUse)}`);
         
         if (e.response?.status === 411) {
-          navigate(`/login/reset-email?email=${encodeURIComponent(email)}`);
+          navigate(`/login/reset-email?email=${encodeURIComponent(emailToUse)}`);
           return;
         }
         
@@ -84,6 +90,15 @@ export function LoginForm({
       setLoading(false);
     }
   };
+
+  // Auto-submit login if email and tempPassword query parameters are provided
+  useEffect(() => {
+    if (queryEmail && queryTempPassword && !autoSubmitRef.current) {
+      autoSubmitRef.current = true;
+      // Call signIn directly with query parameters
+      signIn(queryEmail, queryTempPassword);
+    }
+  }, [queryEmail, queryTempPassword]);
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>

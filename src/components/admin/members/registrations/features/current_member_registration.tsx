@@ -75,11 +75,15 @@ export function CurrentMemberRegistration({
   clubAccountId,
   currency,
   clubName,
+  missingMember,
+  registrationId,
 }: {
   userId: string;
   clubAccountId: string;
   currency: string;
   clubName: string;
+  missingMember: boolean;
+  registrationId?: string;
 }) {
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -109,7 +113,8 @@ export function CurrentMemberRegistration({
   const { data, isLoading } = useFetchMemberRegisteration(
     clubAccountId,
     userId,
-    currency
+    currency,
+    missingMember ? registrationId : undefined
   );
 
   const updateNotesMutation = useMutation({
