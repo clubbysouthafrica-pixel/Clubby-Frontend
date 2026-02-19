@@ -66,6 +66,7 @@ export default function MembersPage() {
     }>
   >([]);
   const isLoadingMoreRef = useRef(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const {
     data: clubMembers,
@@ -152,6 +153,7 @@ export default function MembersPage() {
       setFetchError(errorMessage);
       isLoadingMoreRef.current = false;
       setFilterLoading(false);
+      setIsLoadingMore(false);
     } else if (clubMembers) {
       setFetchError(null);
       const members = clubMembers.members || [];
@@ -160,6 +162,7 @@ export default function MembersPage() {
         // Append new data when loading more
         setAllRegisteredMembers((prev) => [...prev, ...members]);
         isLoadingMoreRef.current = false;
+        setIsLoadingMore(false);
       } else {
         // Replace data when starting fresh (filters changed, etc)
         setAllRegisteredMembers(members);
@@ -788,14 +791,15 @@ export default function MembersPage() {
                           setAppliedColumnKeysRegistered(
                             activeColumnKeysRegistered,
                           );
+                          setIsLoadingMore(true);
                           isLoadingMoreRef.current = true;
                           setPageToken(clubMembers.pageToken);
                           setTimeout(() => refetchClubMembers(), 0);
                         }}
-                        disabled={clubMembersLoading}
+                        disabled={isLoadingMore}
                         className="px-4 py-2 bg-orange-100 hover:bg-orange-200 cursor-pointer rounded-[20px] border border-black text-black font-semibold rounded-md hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                       >
-                        {clubMembersLoading ? (
+                        {isLoadingMore ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           "Load More"

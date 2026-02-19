@@ -78,6 +78,9 @@ export default function RegistrationsPage() {
   >([]);
   const [showArchived, setShowArchived] = useState<boolean>(false);
   const isLoadingMoreRef = useRef(false);
+  const [isLoadingMoreRegistered, setIsLoadingMoreRegistered] = useState(false);
+  const [isLoadingMorePending, setIsLoadingMorePending] = useState(false);
+  const [isLoadingMorePrevious, setIsLoadingMorePrevious] = useState(false);
 
   const getMemberType = (tab: string): string => {
     switch (tab) {
@@ -229,6 +232,9 @@ export default function RegistrationsPage() {
       setFetchError(errorMessage);
       isLoadingMoreRef.current = false;
       setFilterLoading(false);
+      setIsLoadingMoreRegistered(false);
+      setIsLoadingMorePending(false);
+      setIsLoadingMorePrevious(false);
     } else if (clubMembers) {
       setFetchError(null);
       const memberType = getMemberType(selectedTab);
@@ -244,6 +250,9 @@ export default function RegistrationsPage() {
           setAllDeregisteredMembers((prev) => [...prev, ...members]);
         }
         isLoadingMoreRef.current = false;
+        setIsLoadingMoreRegistered(false);
+        setIsLoadingMorePending(false);
+        setIsLoadingMorePrevious(false);
       } else {
         // Replace data when starting fresh (filters changed, tab changed, etc)
         if (memberType === "registered") {
@@ -1121,14 +1130,15 @@ export default function RegistrationsPage() {
                           setAppliedColumnKeysRegistered(
                             activeColumnKeysRegistered,
                           );
+                          setIsLoadingMoreRegistered(true);
                           isLoadingMoreRef.current = true;
                           setPageToken(clubMembers.pageToken);
                           setTimeout(() => refetchClubMembers(), 0);
                         }}
-                        disabled={clubMembersLoading}
+                        disabled={isLoadingMoreRegistered}
                         className="px-4 py-2 bg-orange-100 hover:bg-orange-200 cursor-pointer rounded-[20px] border border-black text-black font-semibold rounded-md hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                       >
-                        {clubMembersLoading ? (
+                        {isLoadingMoreRegistered ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           "Load More"
@@ -1214,14 +1224,15 @@ export default function RegistrationsPage() {
                           setAppliedMemberNameFilter(memberNameFilter);
                           setAppliedMemberIdFilter(memberIdFilter);
                           setAppliedColumnKeysPending(activeColumnKeysPending);
+                          setIsLoadingMorePending(true);
                           isLoadingMoreRef.current = true;
                           setPageToken(clubMembers.pageToken);
                           setTimeout(() => refetchClubMembers(), 0);
                         }}
-                        disabled={clubMembersLoading}
+                        disabled={isLoadingMorePending}
                         className="px-4 py-2 bg-orange-100 rounded-[20px] hover:bg-orange-200 cursor-pointer border border-orange-600 text-black font-semibold rounded-md hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                       >
-                        {clubMembersLoading ? (
+                        {isLoadingMorePending ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           "Load More"
@@ -1325,14 +1336,15 @@ export default function RegistrationsPage() {
                           setAppliedColumnKeysPrevious(
                             activeColumnKeysPrevious,
                           );
+                          setIsLoadingMorePrevious(true);
                           isLoadingMoreRef.current = true;
                           setPageToken(clubMembers.pageToken);
                           setTimeout(() => refetchClubMembers(), 0);
                         }}
-                        disabled={clubMembersLoading}
+                        disabled={isLoadingMorePrevious}
                         className="px-4 py-2 bg-orange-100 border hover:bg-orange-200 cursor-pointer rounded-[20px] border-orange-600 text-black font-semibold rounded-md hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                       >
-                        {clubMembersLoading ? (
+                        {isLoadingMorePrevious ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           "Load More"
