@@ -1385,7 +1385,7 @@ export default function RegistrationsPage() {
           </Tabs>
         )}
       </>
-      {hashUserId && selectedTab === "previous-members" && (
+      {hashUserId && (
         <RegistrationDialog
           clubName={club?.club_name ?? ""}
           selectedMember={selectedMember}
