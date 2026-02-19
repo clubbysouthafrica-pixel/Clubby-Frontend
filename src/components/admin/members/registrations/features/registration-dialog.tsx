@@ -71,6 +71,8 @@ export default function RegistrationDialog({
                     userId={selectedMember.user_id}
                     clubAccountId={clubAccountId}
                     currency={currency}
+                    missingMember={isMissingMember}
+                    registrationId={selectedMember.registration_id}
                 />
             </DialogContent>
         </Dialog>
