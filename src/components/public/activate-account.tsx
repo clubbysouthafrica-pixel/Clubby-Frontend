@@ -7,8 +7,9 @@ import {
     CardTitle,
 } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useContext } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { AuthContext, AuthContextType } from "@/context/AuthContext.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Alert, AlertDescription } from "@/components/ui/alert.tsx";
 import { AlertCircle } from "lucide-react";
@@ -23,6 +24,7 @@ export function ActivateAccountForm({
     ...props
 }: React.ComponentProps<"div">) {
     const navigate = useNavigate()
+    const { login } = (useContext(AuthContext) as AuthContextType) || {};
 
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
@@ -48,14 +50,35 @@ export function ActivateAccountForm({
         const session = sessionStorage.getItem("cognitoSession");
         try {
             setLoading(true)
-            if (localStorage.getItem("isAdminActivation") === "true") {
+            const isAdmin = localStorage.getItem("isAdminActivation") === "true";
+            if (isAdmin) {
                 await activateAdminUser(email as string, session as string, password as string)
             } else {
                 await activateMemberUser(email as string, session as string, password as string)
             }
 
             toast.success("Successfully activated account.")
-            navigate("/login")
+            
+            // Auto sign in the user
+            try {
+                const {
+                    onboarded,
+                }: { onboarded: boolean; new_password_required: boolean } = await login(
+                    isAdmin,
+                    email as string,
+                    password as string,
+                );
+
+                if (isAdmin) {
+                    localStorage.setItem("isAdmin", "true");
+                    navigate("/");
+                } else {
+                    navigate(onboarded ? "/" : "/onboardMember");
+                }
+            } catch (loginError) {
+                // If login fails, redirect to login page
+                navigate("/login");
+            }
 
         } catch (e) {
             if (!e) {
