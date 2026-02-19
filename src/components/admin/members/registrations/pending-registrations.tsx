@@ -558,7 +558,7 @@ export default function PendingMembersList({
                                 Register
                               </Button>
                             </div>
-                            <DialogContent>
+                            <DialogContent onClick={(e) => e.stopPropagation()}>
                               <DialogHeader>
                                 <DialogTitle>
                                   Register Member:{" "}
