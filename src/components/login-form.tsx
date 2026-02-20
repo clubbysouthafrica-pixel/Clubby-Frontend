@@ -13,7 +13,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useContext, useState, useEffect, useRef } from "react";
 import { AuthContext, AuthContextType } from "@/context/AuthContext.tsx";
 import { Alert, AlertDescription } from "@/components/ui/alert.tsx";
-import { AlertCircle, Eye, EyeOff } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 import { AxiosError } from "axios";
 
 export function LoginForm({
@@ -23,12 +23,13 @@ export function LoginForm({
   const { login } = (useContext(AuthContext) as AuthContextType) || {};
   const navigate = useNavigate();
 
-  const [isAdminLogin, setAdminLogin] = useState(false);
-
   const [searchParams] = useSearchParams();
   const username = searchParams.get("username");
   const queryEmail = searchParams.get("email");
   const queryTempPassword = searchParams.get("tempPassword");
+  const loginType = searchParams.get("login");
+  
+  const [isAdminLogin, setAdminLogin] = useState(loginType === "admin");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [errorStatusCode, setErrorStatusCode] = useState<number | null>(null);
@@ -141,7 +142,12 @@ export function LoginForm({
           >
             <div className="grid gap-6">
               <div className="grid gap-6">
-                {errorStatusCode === 411 ? (
+                {loading ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+                    <p className="mt-4 text-sm text-gray-600">Signing in...</p>
+                  </div>
+                ) : errorStatusCode === 411 ? (
                   <>
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
                       <p className="text-red-800 font-semibold text-base">
