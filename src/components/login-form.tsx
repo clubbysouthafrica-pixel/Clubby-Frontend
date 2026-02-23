@@ -157,7 +157,7 @@ export function LoginForm({
                         Please reset your temporary password to continue.
                       </p>
                     </div>
-                    <Link to={`/login/reset-email?email=${encodeURIComponent(email)}`}>
+                    <Link to={`/login/reset-email?email=${encodeURIComponent(email)}&admin=${isAdminLogin}`}>
                       <Button type="button" className="w-full">
                         Reset Temporary Password
                       </Button>
