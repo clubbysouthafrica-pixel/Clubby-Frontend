@@ -38,10 +38,9 @@ export const resetPassword = async (username: string, code: string, newPassword:
     return response.data;
 }
 
-export const resetTemporaryPassword = async (email: string, isAdminLogin: boolean) => {
+export const resetMemberTemporaryPassword = async (email: string) => {
     const response = await api.post('/member/resetTemporaryPassword', {
-        username: email,
-        isAdminLogin: isAdminLogin
+        username: email
     });
 
     return response.data;

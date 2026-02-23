@@ -9,3 +9,11 @@ export const activateAdminUser = async (email: string, session: string, password
 
     return response.data;
 }
+
+export const resetAdminTemporaryPassword = async (email: string) => {
+    const response = await api.post('/admin/resetTemporaryPassword', {
+        username: email
+    });
+
+    return response.data;
+}
