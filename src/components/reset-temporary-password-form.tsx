@@ -15,6 +15,7 @@ export function ResetTemporaryPasswordForm({
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const email = searchParams.get("email");
+  const isAdminLogin = searchParams.get("admin") === "true";
 
   const [resendLoading, setResendLoading] = useState(false);
   const [error, setError] = useState("");
@@ -36,7 +37,7 @@ export function ResetTemporaryPasswordForm({
     setSuccessMessage("");
 
     try {
-      const response = await resetTemporaryPassword(email);
+      const response = await resetTemporaryPassword(email, isAdminLogin);
       const message =
         response.message ||
         response.data?.message ||

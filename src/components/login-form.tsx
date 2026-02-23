@@ -78,7 +78,7 @@ export function LoginForm({
           navigate(`/otp?username=${encodeURIComponent(emailToUse)}`);
         
         if (e.response?.status === 411) {
-          navigate(`/login/reset-email?email=${encodeURIComponent(emailToUse)}`);
+          navigate(`/login/reset-email?email=${encodeURIComponent(emailToUse)}&admin=${isAdminLogin}`);
           return;
         }
         
