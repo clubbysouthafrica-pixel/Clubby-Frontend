@@ -22,9 +22,7 @@ import { countries } from "@/data/countries";
 import { currencies } from "@/data/currencies";
 import { useUpdateClubDetailsMutation } from "@/mutations/admin/club";
 import { useFetchClubDetails } from "@/queries/admin/clubs";
-import {
-  Loader2,
-} from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -480,7 +478,9 @@ export default function EditClubDetails() {
                       <Card className="rounded-2xl flex-1 flex flex-col">
                         <CardContent className="px-5 flex-1 flex flex-col">
                           <p className="text-xs mb-5 mt-4 text-muted-foreground">
-                            Provide a detailed description about your club to help members and visitors understand what your club is about.
+                            Provide a detailed description about your club to
+                            help members and visitors understand what your club
+                            is about.
                           </p>
                           <div className="flex-1 flex flex-col">
                             <Textarea
@@ -501,7 +501,7 @@ export default function EditClubDetails() {
                     <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                       Gallery
                     </h3>
-                    <ClubGalleryEdit />
+                    <ClubGalleryEdit clubId={club?.club_account_id as string} />
                   </section>
                 </CardContent>
               </Card>
