@@ -1,8 +1,16 @@
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useFetchClubGallery } from "@/queries/gallery";
+import { useEffect, useState } from "react";
 
 export default function ClubGalleryEdit({ clubId }: { clubId: string }) {
   const [galleryImages, setGalleryImages] = useState<(File | string)[]>([]);
+  const { data, isLoading } = useFetchClubGallery(clubId);
+
+  useEffect(() => {
+    if (data?.images) {
+      setGalleryImages(data.images);
+    }
+  }, [data]);
 
   const handleGalleryImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -61,6 +69,10 @@ export default function ClubGalleryEdit({ clubId }: { clubId: string }) {
       setGalleryImages((prev) => prev.filter((_, i) => i !== idx));
     }
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div>
