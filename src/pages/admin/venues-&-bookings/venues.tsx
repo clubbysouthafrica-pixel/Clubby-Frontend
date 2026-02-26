@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
-import { getVenues, createVenue } from "@/services/admin-features/venues";
+import { getVenues, createVenue, enableVenues } from "@/services/admin-features/venues";
 import { Loader2, Plus, Edit2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +17,8 @@ export default function VenuesPage() {
   const [isCreatingVenue, setIsCreatingVenue] = useState(false);
   const [dialogError, setDialogError] = useState<string | null>(null);
   const [editingVenue, setEditingVenue] = useState<any | null>(null);
+  const [venuesEnabled, setVenuesEnabled] = useState(true);
+  const [isTogglingVenues, setIsTogglingVenues] = useState(false);
 
   useEffect(() => {
     if (!club?.club_account_id) return;
@@ -27,6 +29,9 @@ export default function VenuesPage() {
         setError(null);
         const data = await getVenues(club.club_account_id);
         setVenues(data.venues || []);
+        if (data.venues_enabled !== undefined) {
+          setVenuesEnabled(data.venues_enabled);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to fetch venues");
         console.error("Error fetching venues:", err);
@@ -70,9 +75,29 @@ export default function VenuesPage() {
     }
   };
 
+  const handleToggleVenues = async (enabled: boolean) => {
+    if (!club?.club_account_id) {
+      setError("Club not found");
+      return;
+    }
+
+    try {
+      setError(null);
+      setIsTogglingVenues(true);
+      await enableVenues({ club_account_id: club.club_account_id, venues_enabled: enabled });
+      setVenuesEnabled(enabled);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to update venues setting";
+      setError(errorMessage);
+      console.error("Error toggling venues:", err);
+    } finally {
+      setIsTogglingVenues(false);
+    }
+  };
+
   return (
-    <div className="p-6">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Venues Management</h1>
           <p className="text-muted-foreground">
@@ -89,6 +114,33 @@ export default function VenuesPage() {
           <Plus className="h-4 w-4" />
           Create Venue
         </Button>
+      </div>
+
+      {/* Venues Toggle Section */}
+      <div className="rounded-lg border-2 p-6 bg-blue-50 border-blue-200">
+        <div className="flex items-start justify-between">
+          <div className="space-y-2 flex-1">
+            <h2 className="text-lg font-semibold text-gray-900">Enable Venues Booking</h2>
+            <p className="text-sm text-gray-600">
+              When enabled, members will be able to view and book specific venues at the times you configure. They'll see available time slots and can reserve them according to your venue's settings.
+            </p>
+          </div>
+          <Button
+            onClick={() => handleToggleVenues(!venuesEnabled)}
+            variant={venuesEnabled ? "default" : "outline"}
+            className="ml-4 whitespace-nowrap gap-2"
+            disabled={venues.length === 0 || isTogglingVenues}
+          >
+            {isTogglingVenues ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {venuesEnabled ? "Disabling..." : "Enabling..."}
+              </>
+            ) : (
+              <>{venuesEnabled ? "Enabled" : "Disabled"}</>
+            )}
+          </Button>
+        </div>
       </div>
 
       {loading && (
