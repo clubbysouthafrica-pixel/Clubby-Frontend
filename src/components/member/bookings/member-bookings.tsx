@@ -363,6 +363,48 @@ export default function MemberBookings({
     setBookingName(memberName);
   }, [memberName]);
 
+  const handleSlotTouchStart = (dayIdx: number, timeIdx: number) => {
+    const isPast = isPastDay(daysInWeek[dayIdx]);
+    const isClosed = isDayClosedForVenue(dayIdx);
+    const isAvailable = isTimeInOperatingHours(timeSlots[timeIdx], dayIdx);
+    const isBooked = isSlotBooked(dayIdx, timeIdx);
+    const isDisabled = isPast || isClosed || !isAvailable || isBooked;
+
+    if (!isDisabled) {
+      setDragStart({ dayIdx, timeIdx });
+      setDragEnd({ dayIdx, timeIdx });
+    }
+  };
+
+  const handleSlotTouchMove = (e: React.TouchEvent) => {
+    if (!dragStart) return;
+    
+    const touch = e.touches[0];
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    
+    if (element) {
+      const dayIdxAttr = element.getAttribute("data-day-idx");
+      const timeIdxAttr = element.getAttribute("data-time-idx");
+      
+      if (dayIdxAttr !== null && timeIdxAttr !== null) {
+        const dayIdx = parseInt(dayIdxAttr);
+        const timeIdx = parseInt(timeIdxAttr);
+        
+        // Only allow dragging on the same day
+        if (dayIdx === dragStart.dayIdx) {
+          setDragEnd({ dayIdx, timeIdx });
+        }
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (dragStart || dragEnd || selectedSlot) {
+      window.addEventListener("touchend", handleSlotMouseUp);
+      return () => window.removeEventListener("touchend", handleSlotMouseUp);
+    }
+  }, [dragStart, dragEnd, selectedSlot]);
+
   if (loading) {
     return (
       <Card>
@@ -429,28 +471,28 @@ export default function MemberBookings({
           </div>
 
           {/* Week Navigation */}
-          <div className="flex items-center justify-between bg-white border rounded-lg p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white border rounded-lg p-4">
             <Button
               variant="outline"
               size="sm"
               onClick={goToPreviousWeek}
               disabled={!canGoPrevious()}
-              className="gap-1"
+              className="gap-1 w-full sm:w-auto"
             >
               <ChevronLeft className="h-4 w-4" />
-              Previous
+              <span className="sm:inline">Previous</span>
             </Button>
 
-            <div className="text-center">
-              <p className="font-semibold text-lg">{formatWeekRange()}</p>
+            <div className="text-center order-first sm:order-none">
+              <p className="font-semibold text-sm sm:text-lg text-center break-words">{formatWeekRange()}</p>
             </div>
 
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={goToToday}>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button variant="outline" size="sm" onClick={goToToday} className="flex-1 sm:flex-none">
                 Today
               </Button>
-              <Button variant="outline" size="sm" onClick={goToNextWeek} className="gap-1">
-                Next
+              <Button variant="outline" size="sm" onClick={goToNextWeek} className="gap-1 flex-1 sm:flex-none">
+                <span className="sm:inline">Next</span>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -489,7 +531,7 @@ export default function MemberBookings({
             {/* Time Slots */}
             <div
               ref={timeSlotsRef}
-              className="max-h-[600px] overflow-y-auto"
+              className="max-h-[600px] overflow-y-auto touch-none"
             >
               {timeSlots.map((time, timeIdx) => (
                 <div
@@ -526,12 +568,18 @@ export default function MemberBookings({
                       return (
                         <div
                           key={`${dayIdx}-${timeIdx}`}
+                          data-day-idx={dayIdx}
+                          data-time-idx={timeIdx}
                           onMouseDown={() =>
                             handleSlotMouseDown(dayIdx, timeIdx)
                           }
                           onMouseEnter={() =>
                             handleSlotMouseEnter(dayIdx, timeIdx)
                           }
+                          onTouchStart={() =>
+                            handleSlotTouchStart(dayIdx, timeIdx)
+                          }
+                          onTouchMove={handleSlotTouchMove}
                           onClick={() => {
                             if (isDisabled || !selectedSlot) {
                               setSelectedSlot(null);
@@ -566,7 +614,7 @@ export default function MemberBookings({
           </div>
           
           <div className="text-xs text-gray-600">
-            Drag across time slots to create a booking
+            Drag across time slots to create a booking (or touch and swipe on mobile)
           </div>
         </div>
       )}
