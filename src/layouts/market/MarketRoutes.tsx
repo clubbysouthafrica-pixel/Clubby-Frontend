@@ -1,29 +1,28 @@
 import { Route, Routes } from "react-router-dom";
-import HomePage from "@/pages/home/page.tsx";
-import LoginPage from "@/pages/authentication/login/page.tsx";
-import RegisterPage from "@/pages/authentication/register/page.tsx";
-import MyClubsPage from "@/pages/clubs/my-clubs.tsx";
-import OTPPage from "@/pages/authentication/otp/page.tsx";
-import ProfilePage from "@/pages/profile/page.tsx";
-import ContactPage from "@/pages/contact/page.tsx";
-import GetStartedPage from "@/pages/getstarted/page.tsx";
-import AboutPage from "@/pages/about/about.tsx";
-import ForgotPasswordPage from "@/pages/authentication/password/PasswordResetRequest.tsx";
-import PasswordResetPage from "@/pages/authentication/password/PasswordReset.tsx";
-import SettingsPage from "@/pages/profile/settings.tsx";
+import HomePage from "@/pages/member/home";
+import LoginPage from "@/pages/public/login/login";
+import RegisterPage from "@/pages/public/login/register/page";
+import MyClubsPage from "@/pages/member/my-clubs";
+import OTPPage from "@/pages/public/login/otp/page";
+import ContactPage from "@/pages/public/contact-us";
+import GetStartedPage from "@/pages/public/get-started";
+import AboutPage from "@/pages/public/about";
+import ForgotPasswordPage from "@/pages/public/login/password/PasswordResetRequest";
+import PasswordResetPage from "@/pages/public/login/password/PasswordReset";
+import SettingsPage from "@/pages/shared-admin-&-member/user-settings";
 import ProtectedRoute from "@/guards/ProtectedRoute.tsx";
-import ViewClubPage from "@/pages/clubs/view-club.tsx";
+import ViewClubPage from "@/pages/shared-public-&-member/view-club";
 import MemberShopPage from "@/components/member/shop/shop";
-import OnboardMember from "@/pages/authentication/onboard-member";
-import AdminRegistrationFormPage from "@/pages/registrations/admin-registration-form-page";
-import BrowseClubsPage from "@/pages/clubs/browse-clubs";
-import PublicJoinRegisterPage from "@/pages/clubs/public-join-register";
-import ActivateAccount from "@/pages/authentication/temporary-password/ActivateAccount";
+import OnboardMember from "@/pages/member/onboard-member";
+import AdminRegistrationFormPage from "@/pages/admin/registration-form/create-form";
+import BrowseClubsPage from "@/pages/public/browse-clubs";
+import PublicJoinRegisterPage from "@/pages/public/public-join-register";
+import ActivateAccount from "@/pages/public/login/temporary-password/ActivateAccount";
 import { ClubRegisterForm } from "@/components/member/register/registration_form";
-import TermsPage from "@/pages/policies/terms";
-import PrivacyPage from "@/pages/policies/privacy";
-import RegistrationPolicy from "@/pages/policies/privacy-clubs";
-import ResetTemporaryPasswordPage from "@/pages/authentication/reset-temporary-password/page.tsx";
+import TermsPage from "@/pages/public/terms";
+import PrivacyPage from "@/pages/public/privacy";
+import RegistrationPolicy from "@/pages/public/privacy-clubs";
+import ResetTemporaryPasswordPage from "@/pages/public/login/reset-temporary-password/page";
 export default function MarketRoutes() {
   return (
     <Routes>
@@ -94,14 +93,6 @@ export default function MarketRoutes() {
         element={
           <ProtectedRoute>
             <ViewClubPage />
-          </ProtectedRoute>
-        }
-      ></Route>
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <ProfilePage />
           </ProtectedRoute>
         }
       ></Route>

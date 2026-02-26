@@ -4,7 +4,7 @@ import { useFetchClub } from "@/queries/admin/clubs";
 import { Badge } from "@/components/ui/badge";
 import ImageUploadDialog from "@/components/image-upload-dialog";
 import ShareClubDialog from "@/components/share-club-dialog";
-import EditClubDetails from "./edit-club-details";
+import EditClubDetails from "@/components/admin/club/manage-club/edit-club-details";
 import { Loader2 } from "lucide-react";
 
 export default function ManageClubDashboard() {

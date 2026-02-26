@@ -129,7 +129,6 @@ export default function ViewClubPage() {
   const [orderSortColumn, setOrderSortColumn] = useState<'date' | 'payment_status' | 'fulfillment_status' | 'total' | null>(null);
   const [orderSortDirection, setOrderSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  // Fetch member orders for the shop tab
   const {
     data: memberOrders,
     isLoading: isOrdersLoading,
