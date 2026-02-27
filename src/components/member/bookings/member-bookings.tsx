@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { getBookings } from "@/services/admin-features/bookings";
+import { getBookings } from "@/services/bookings";
 import { createBooking } from "@/services/bookings";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
