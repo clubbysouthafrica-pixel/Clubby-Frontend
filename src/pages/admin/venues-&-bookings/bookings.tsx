@@ -10,9 +10,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { toast } from "sonner";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { getVenues } from "@/services/admin-features/venues";
-import { getBookings, createBooking } from "@/services/admin-features/bookings";
+import { getBookings, createBooking, removeBooking } from "@/services/admin-features/bookings";
 
 export default function BookingsPage() {
   const { club } = useContext(ClubContext) as ClubContextType;
@@ -44,6 +45,12 @@ export default function BookingsPage() {
   const [bookingDialogError, setBookingDialogError] = useState<string | null>(null);
   const [bookingName, setBookingName] = useState("");
   const [isCreatingBooking, setIsCreatingBooking] = useState(false);
+  const [deleteConfirmDialog, setDeleteConfirmDialog] = useState<{
+    isOpen: boolean;
+    slotTime: number | null;
+    bookingName: string | null;
+  }>({ isOpen: false, slotTime: null, bookingName: null });
+  const [isDeletingBooking, setIsDeletingBooking] = useState(false);
 
   useEffect(() => {
     if (!club?.club_account_id) return;
@@ -372,6 +379,65 @@ export default function BookingsPage() {
     }
   };
 
+  const handleDeleteBooking = async () => {
+    if (!deleteConfirmDialog.slotTime || !selectedVenueId) return;
+
+    try {
+      setIsDeletingBooking(true);
+      await removeBooking({
+        venue_id: selectedVenueId,
+        slot_time: deleteConfirmDialog.slotTime,
+      });
+
+      // Refresh bookings after deletion
+      const weekStart = new Date(currentWeekStart);
+      weekStart.setHours(0, 0, 0, 0);
+      const startSlotTime = Math.floor(weekStart.getTime() / 1000);
+
+      const weekEnd = new Date(currentWeekStart);
+      weekEnd.setDate(weekEnd.getDate() + 7);
+      weekEnd.setHours(0, 0, 0, 0);
+      const endSlotTime = Math.floor(weekEnd.getTime() / 1000);
+
+      const bookingsResponse = await getBookings(
+        selectedVenueId,
+        String(startSlotTime),
+        String(endSlotTime)
+      );
+      if (bookingsResponse.bookings) {
+        setBookings(bookingsResponse.bookings);
+      }
+
+      setDeleteConfirmDialog({ isOpen: false, slotTime: null, bookingName: null });
+      toast.success("Booking deleted successfully!");
+    } catch (error) {
+      console.error("Failed to delete booking:", error);
+      let errorMessage = "Failed to delete booking. Please try again.";
+
+      if (error instanceof Error) {
+        if (
+          "response" in error &&
+          error.response &&
+          typeof error.response === "object" &&
+          "data" in error.response
+        ) {
+          const data = error.response.data as any;
+          if (data?.message) {
+            errorMessage = data.message;
+          } else {
+            errorMessage = error.message;
+          }
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      toast.error(errorMessage);
+    } finally {
+      setIsDeletingBooking(false);
+    }
+  };
+
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
@@ -499,30 +565,46 @@ export default function BookingsPage() {
                         return (
                           <div
                             key={`${date}-${time}`}
-                            onMouseDown={() =>
-                              handleSlotMouseDown(dayIdx, timeIdx)
-                            }
-                            onMouseEnter={() =>
-                              handleSlotMouseEnter(dayIdx, timeIdx)
-                            }
+                            onMouseDown={() => {
+                              if (!isBooked) {
+                                handleSlotMouseDown(dayIdx, timeIdx);
+                              }
+                            }}
+                            onMouseEnter={() => {
+                              if (!isBooked) {
+                                handleSlotMouseEnter(dayIdx, timeIdx);
+                              }
+                            }}
                             onClick={() => {
-                              if (isDisabled || !selectedSlot) {
+                              if (isBooked && bookingName) {
+                                // Open booking details dialog for booked slots
+                                const slotDate = new Date(daysInWeek[dayIdx]);
+                                const [slotHour, slotMin] = time.split(":").map(Number);
+                                slotDate.setHours(slotHour, slotMin, 0, 0);
+                                const slotTime = Math.floor(slotDate.getTime() / 1000);
+                                
+                                setDeleteConfirmDialog({
+                                  isOpen: true,
+                                  slotTime,
+                                  bookingName,
+                                });
+                              } else if (isDisabled || !selectedSlot) {
                                 setSelectedSlot(null);
                                 setIsDialogOpen(false);
                               }
                             }}
                             className={`border-r border-gray-200 p-2 transition-colors relative group select-none flex items-center justify-center ${
                               isBooked
-                                ? "bg-red-400 cursor-default pointer-events-none"
+                                ? "bg-red-400 cursor-pointer hover:bg-red-500"
                                 : isDisabled
                                   ? "bg-gray-200 opacity-50 cursor-default pointer-events-none"
                                   : dragStart
                                     ? "cursor-grabbing"
                                     : "cursor-pointer"
-                            } ${isDragging ? "bg-blue-600 hover:bg-blue-600" : !isDisabled ? "hover:bg-blue-50" : ""}`}
+                            } ${isDragging ? "bg-blue-600 hover:bg-blue-600" : !isDisabled && !isBooked ? "hover:bg-blue-50" : ""}`}
                           >
                             {isBooked && bookingName && (
-                              <div className="text-xs font-semibold text-white text-center truncate px-1">
+                              <div className="text-xs font-semibold text-white text-center truncate px-1 w-full h-full flex flex-col items-center justify-center">
                                 <div>{time} - {timeIdx + 1 < timeSlots.length ? timeSlots[timeIdx + 1] : "23:59"}</div>
                                 <div>{bookingName}</div>
                               </div>
@@ -690,6 +772,53 @@ export default function BookingsPage() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Delete Booking Confirmation Dialog */}
+      <Dialog open={deleteConfirmDialog.isOpen} onOpenChange={(open) => {
+        if (!open) {
+          setDeleteConfirmDialog({ isOpen: false, slotTime: null, bookingName: null });
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Booking Details</DialogTitle>
+          </DialogHeader>
+          {deleteConfirmDialog.bookingName && deleteConfirmDialog.slotTime && (
+            <>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Booking Name</label>
+                  <p className="mt-1 text-sm text-gray-900">{deleteConfirmDialog.bookingName}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Time Slot</label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {new Date(deleteConfirmDialog.slotTime * 1000).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2 justify-end mt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setDeleteConfirmDialog({ isOpen: false, slotTime: null, bookingName: null });
+                  }}
+                  disabled={isDeletingBooking}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteBooking}
+                  disabled={isDeletingBooking}
+                >
+                  {isDeletingBooking ? "Deleting..." : "Delete Booking"}
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

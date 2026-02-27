@@ -8,8 +8,18 @@ export interface CreateBookingRequest {
     duration: number;
 }
 
+export interface RemoveBookingRequest {
+    venue_id: string;
+    slot_time: number;
+}
+
 export const createBooking = (createBookingRequest: CreateBookingRequest): Promise<any> => {
     return api.post("/bookings/createBooking", createBookingRequest)
+        .then(res => res.data);
+}
+
+export const removeBooking = (removeBookingRequest: RemoveBookingRequest): Promise<any> => {
+    return api.delete("/bookings/removeBooking", { data: removeBookingRequest })
         .then(res => res.data);
 }
 

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { createBooking, getBookings } from "@/services/bookings";
+import { createBooking, getBookings } from "@/services/admin-features/bookings";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -605,7 +605,6 @@ export default function MemberBookings({
             </div>
           </div>
 
-          {/* Create Booking Button - always visible but disabled when no slots selected */}
           <div className="space-y-2">
             {selectionError && (
               <div className="rounded-md bg-orange-50 p-3 text-sm text-orange-700 border border-orange-200">
