@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { getBookings } from "@/services/admin-features/bookings";
 import { createBooking } from "@/services/bookings";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MemberBookingsProps {
   venues: any[];
@@ -28,6 +29,7 @@ export default function MemberBookings({
   error,
   memberName = "",
 }: MemberBookingsProps) {
+  const isMobile = useIsMobile();
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(() => {
     const today = new Date();
     const day = today.getDay();
@@ -315,14 +317,14 @@ export default function MemberBookings({
     const isBooked = isSlotBooked(dayIdx, timeIdx);
     const isDisabled = isPast || isClosed || !isAvailable || isBooked;
 
-    if (!isDisabled) {
+    if (!isDisabled && !isMobile) {
       setDragStart({ dayIdx, timeIdx });
       setDragEnd({ dayIdx, timeIdx });
     }
   };
 
   const handleSlotMouseEnter = (dayIdx: number, timeIdx: number) => {
-    if (dragStart) {
+    if (dragStart && !isMobile) {
       setDragEnd({ dayIdx, timeIdx });
     }
   };
@@ -337,7 +339,6 @@ export default function MemberBookings({
         startTimeIdx: minTime,
         endTimeIdx: maxTime,
       });
-      setIsDialogOpen(true);
     }
     setDragStart(null);
     setDragEnd(null);
@@ -371,28 +372,95 @@ export default function MemberBookings({
     const isDisabled = isPast || isClosed || !isAvailable || isBooked;
 
     if (!isDisabled) {
-      setDragStart({ dayIdx, timeIdx });
-      setDragEnd({ dayIdx, timeIdx });
+      if (isMobile) {
+        // On mobile, handle tap-to-select for multiple slots
+        if (!selectedSlot) {
+          // No selection yet - start new selection
+          setSelectedSlot({
+            dayIdx,
+            startTimeIdx: timeIdx,
+            endTimeIdx: timeIdx,
+          });
+        } else if (selectedSlot.dayIdx !== dayIdx) {
+          // Different day - reset selection
+          setSelectedSlot(null);
+        } else {
+          // Same day - check if clicked slot is within current selection
+          const isWithinSelection =
+            timeIdx >= selectedSlot.startTimeIdx &&
+            timeIdx <= selectedSlot.endTimeIdx;
+
+          if (isWithinSelection) {
+            // Clicking within current selection - deselect it
+            setSelectedSlot(null);
+          } else {
+            // Clicking outside current selection - expand the range
+            const minTime = Math.min(selectedSlot.startTimeIdx, timeIdx);
+            const maxTime = Math.max(selectedSlot.endTimeIdx, timeIdx);
+            
+            setSelectedSlot({
+              dayIdx,
+              startTimeIdx: minTime,
+              endTimeIdx: maxTime,
+            });
+          }
+        }
+      } else {
+        // Desktop: start drag selection
+        setDragStart({ dayIdx, timeIdx });
+        setDragEnd({ dayIdx, timeIdx });
+      }
     }
   };
 
   const handleSlotTouchMove = (e: React.TouchEvent) => {
-    if (!dragStart) return;
-    
-    const touch = e.touches[0];
-    const element = document.elementFromPoint(touch.clientX, touch.clientY);
-    
-    if (element) {
-      const dayIdxAttr = element.getAttribute("data-day-idx");
-      const timeIdxAttr = element.getAttribute("data-time-idx");
+    if (isMobile) {
+      // Mobile: expand selection when dragging
+      if (!selectedSlot) return;
       
-      if (dayIdxAttr !== null && timeIdxAttr !== null) {
-        const dayIdx = parseInt(dayIdxAttr);
-        const timeIdx = parseInt(timeIdxAttr);
+      const touch = e.touches[0];
+      const element = document.elementFromPoint(touch.clientX, touch.clientY);
+      
+      if (element) {
+        const dayIdxAttr = element.getAttribute("data-day-idx");
+        const timeIdxAttr = element.getAttribute("data-time-idx");
         
-        // Only allow dragging on the same day
-        if (dayIdx === dragStart.dayIdx) {
-          setDragEnd({ dayIdx, timeIdx });
+        if (dayIdxAttr !== null && timeIdxAttr !== null) {
+          const dayIdx = parseInt(dayIdxAttr);
+          const timeIdx = parseInt(timeIdxAttr);
+          
+          // Only allow dragging on the same day
+          if (dayIdx === selectedSlot.dayIdx) {
+            const minTime = Math.min(selectedSlot.startTimeIdx, timeIdx);
+            const maxTime = Math.max(selectedSlot.startTimeIdx, timeIdx);
+            
+            setSelectedSlot({
+              dayIdx,
+              startTimeIdx: minTime,
+              endTimeIdx: maxTime,
+            });
+          }
+        }
+      }
+    } else {
+      // Desktop: drag to select
+      if (!dragStart) return;
+      
+      const touch = e.touches[0];
+      const element = document.elementFromPoint(touch.clientX, touch.clientY);
+      
+      if (element) {
+        const dayIdxAttr = element.getAttribute("data-day-idx");
+        const timeIdxAttr = element.getAttribute("data-time-idx");
+        
+        if (dayIdxAttr !== null && timeIdxAttr !== null) {
+          const dayIdx = parseInt(dayIdxAttr);
+          const timeIdx = parseInt(timeIdxAttr);
+          
+          // Only allow dragging on the same day
+          if (dayIdx === dragStart.dayIdx) {
+            setDragEnd({ dayIdx, timeIdx });
+          }
         }
       }
     }
@@ -498,7 +566,17 @@ export default function MemberBookings({
             </div>
           </div>
 
-          {/* Calendar */}
+          {/* Create Booking Button - appears when slots are selected */}
+          {selectedSlot && (
+            <Button
+              onClick={() => setIsDialogOpen(true)}
+              className="w-full"
+            >
+              Create Booking
+            </Button>
+          )}
+
+
           <div className="border rounded-lg overflow-hidden bg-white">
             <div
               className={`grid grid-cols-8 border-b bg-gray-50 ${getRowHeightClass()}`}
@@ -536,7 +614,7 @@ export default function MemberBookings({
               {timeSlots.map((time, timeIdx) => (
                 <div
                   key={time}
-                  className={`grid grid-cols-8 border-b hover:bg-gray-50 transition-colors ${getRowHeightClass()}`}
+                  className={`grid grid-cols-8 border-b hover:border-t-2 hover:border-t-blue-300 hover:bg-gray-50 hover:shadow-sm transition-all ${getRowHeightClass()}`}
                 >
                     <div className="border-r p-0 text-xs font-extrabold text-gray-600 bg-gray-50 relative flex items-start">
                       {shouldShowTimeLabel(time) ? (
@@ -614,7 +692,11 @@ export default function MemberBookings({
           </div>
           
           <div className="text-xs text-gray-600">
-            Drag across time slots to create a booking (or touch and swipe on mobile)
+            {isMobile ? (
+              <>Tap slots to select them and build your booking time range</>
+            ) : (
+              <>Drag across time slots to create a booking</>
+            )}
           </div>
         </div>
       )}
