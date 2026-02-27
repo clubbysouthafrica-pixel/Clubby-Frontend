@@ -635,7 +635,7 @@ export default function BookingsPage() {
       {!loading && venues.length === 0 && (
         <div className="text-center py-8 text-gray-500">
           No venues found.{" "}
-          <a href="/admin/venues" className="text-blue-600 hover:underline">
+          <a href="/venues" className="text-blue-600 hover:underline">
             Create a venue
           </a>{" "}
           to get started.
