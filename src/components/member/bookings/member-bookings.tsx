@@ -54,6 +54,7 @@ export default function MemberBookings({
   } | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [bookingDialogError, setBookingDialogError] = useState<string | null>(null);
+  const [selectionError, setSelectionError] = useState<string | null>(null);
   const [isCreatingBooking, setIsCreatingBooking] = useState(false);
   const [bookingName, setBookingName] = useState(memberName);
   const timeSlotsRef = useRef<HTMLDivElement>(null);
@@ -156,6 +157,33 @@ export default function MemberBookings({
     if (bookingUnit === 30) return "min-h-6";
     if (bookingUnit === 45) return "min-h-9";
     return "min-h-12";
+  };
+
+  const validateSelectionDuration = (
+    startTimeIdx: number,
+    endTimeIdx: number
+  ): { isValid: boolean; error?: string } => {
+    const venue = getSelectedVenue();
+    if (!venue?.max_daily_booking_time) {
+      return { isValid: true };
+    }
+
+    const durationMinutes = (endTimeIdx - startTimeIdx + 1) * getBookingUnit();
+    const maxDurationMinutes = venue.max_daily_booking_time;
+
+    if (durationMinutes > maxDurationMinutes) {
+      const maxHours = Math.floor(maxDurationMinutes / 60);
+      const maxMins = maxDurationMinutes % 60;
+      const selectedHours = Math.floor(durationMinutes / 60);
+      const selectedMins = durationMinutes % 60;
+
+      return {
+        isValid: false,
+        error: `Selection exceeds maximum (${selectedHours}h ${selectedMins}m > ${maxHours}h ${maxMins}m)`,
+      };
+    }
+
+    return { isValid: true };
   };
 
   const shouldShowTimeLabel = (timeSlot: string) => {
@@ -333,6 +361,9 @@ export default function MemberBookings({
       const minTime = Math.min(dragStart.timeIdx, dragEnd.timeIdx);
       const maxTime = Math.max(dragStart.timeIdx, dragEnd.timeIdx);
 
+      const validation = validateSelectionDuration(minTime, maxTime);
+      setSelectionError(validation.error || null);
+
       setSelectedSlot({
         dayIdx: dragStart.dayIdx,
         startTimeIdx: minTime,
@@ -380,9 +411,11 @@ export default function MemberBookings({
             startTimeIdx: timeIdx,
             endTimeIdx: timeIdx,
           });
+          setSelectionError(null);
         } else if (selectedSlot.dayIdx !== dayIdx) {
           // Different day - reset selection
           setSelectedSlot(null);
+          setSelectionError(null);
         } else {
           // Same day - check if clicked slot is within current selection
           const isWithinSelection =
@@ -392,10 +425,14 @@ export default function MemberBookings({
           if (isWithinSelection) {
             // Clicking within current selection - deselect it
             setSelectedSlot(null);
+            setSelectionError(null);
           } else {
             // Clicking outside current selection - expand the range
             const minTime = Math.min(selectedSlot.startTimeIdx, timeIdx);
             const maxTime = Math.max(selectedSlot.endTimeIdx, timeIdx);
+            
+            const validation = validateSelectionDuration(minTime, maxTime);
+            setSelectionError(validation.error || null);
             
             setSelectedSlot({
               dayIdx,
@@ -432,6 +469,9 @@ export default function MemberBookings({
           if (dayIdx === selectedSlot.dayIdx) {
             const minTime = Math.min(selectedSlot.startTimeIdx, timeIdx);
             const maxTime = Math.max(selectedSlot.startTimeIdx, timeIdx);
+            
+            const validation = validateSelectionDuration(minTime, maxTime);
+            setSelectionError(validation.error || null);
             
             setSelectedSlot({
               dayIdx,
@@ -565,15 +605,21 @@ export default function MemberBookings({
             </div>
           </div>
 
-          {/* Create Booking Button - appears when slots are selected */}
-          {selectedSlot && (
+          {/* Create Booking Button - always visible but disabled when no slots selected */}
+          <div className="space-y-2">
+            {selectionError && (
+              <div className="rounded-md bg-orange-50 p-3 text-sm text-orange-700 border border-orange-200">
+                {selectionError}
+              </div>
+            )}
             <Button
               onClick={() => setIsDialogOpen(true)}
+              disabled={!selectedSlot || !!selectionError}
               className="w-full"
             >
               Create Booking
             </Button>
-          )}
+          </div>
 
 
           <div className="border rounded-lg overflow-hidden bg-white">
@@ -608,23 +654,21 @@ export default function MemberBookings({
             {/* Scroll Up Button - Mobile Only */}
             {isMobile && (
               <Button
-                variant="outline"
-                size="sm"
                 onClick={() => {
                   if (timeSlotsRef.current) {
                     timeSlotsRef.current.scrollBy({ top: -100, behavior: "smooth" });
                   }
                 }}
-                className="w-full rounded-none border-b"
+                className="w-full rounded-none border-b bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold py-2"
               >
-                <ChevronLeft className="h-4 w-4 rotate-90" />
+                <ChevronLeft className="h-5 w-5 rotate-90" />
               </Button>
             )}
 
             {/* Time Slots */}
             <div
               ref={timeSlotsRef}
-              className="max-h-[600px] overflow-y-auto touch-none"
+              className="max-h-[600px] overflow-y-auto"
             >
               {timeSlots.map((time, timeIdx) => (
                 <div
@@ -669,16 +713,21 @@ export default function MemberBookings({
                           onMouseEnter={() =>
                             handleSlotMouseEnter(dayIdx, timeIdx)
                           }
-                          onTouchStart={() =>
-                            handleSlotTouchStart(dayIdx, timeIdx)
-                          }
-                          onTouchMove={handleSlotTouchMove}
+                          onTouchStart={(e) => {
+                            e.preventDefault();
+                            handleSlotTouchStart(dayIdx, timeIdx);
+                          }}
+                          onTouchMove={(e) => {
+                            e.preventDefault();
+                            handleSlotTouchMove(e);
+                          }}
                           onClick={() => {
                             if (isDisabled || !selectedSlot) {
                               setSelectedSlot(null);
                               setIsDialogOpen(false);
                             }
                           }}
+                          style={{ touchAction: "manipulation" }}
                           className={`border-r border-gray-200 p-2 transition-colors relative group select-none flex items-center justify-center ${
                             isBooked
                               ? "bg-red-500 cursor-default pointer-events-none"
@@ -708,16 +757,14 @@ export default function MemberBookings({
             {/* Scroll Down Button - Mobile Only */}
             {isMobile && (
               <Button
-                variant="outline"
-                size="sm"
                 onClick={() => {
                   if (timeSlotsRef.current) {
                     timeSlotsRef.current.scrollBy({ top: 100, behavior: "smooth" });
                   }
                 }}
-                className="w-full rounded-none border-t"
+                className="w-full rounded-none border-t bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold py-2"
               >
-                <ChevronLeft className="h-4 w-4 -rotate-90" />
+                <ChevronLeft className="h-5 w-5 -rotate-90" />
               </Button>
             )}
           </div>
