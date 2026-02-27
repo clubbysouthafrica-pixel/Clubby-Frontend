@@ -27,6 +27,8 @@ import OrdersPage from "@/pages/admin/shop/orders";
 import AnalyticsPage from "@/pages/admin/shop/analytics";
 import RegistrationsPage from "@/pages/admin/members/registrations/registrations";
 import MembersPage from "@/pages/admin/members/members/members";
+import VenuesPage from "@/pages/admin/venues-&-bookings/venues";
+import BookingsPage from "@/pages/admin/venues-&-bookings/bookings";
 
 export default function AdminRoutes() {
   return (
@@ -176,6 +178,22 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <AnalyticsPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/venues"
+        element={
+          <ProtectedRoute>
+            <VenuesPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/venues/bookings"
+        element={
+          <ProtectedRoute>
+            <BookingsPage />
           </ProtectedRoute>
         }
       ></Route>

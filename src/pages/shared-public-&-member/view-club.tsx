@@ -66,12 +66,14 @@ import { cn } from "@/lib/utils";
 import { formatAmount } from "@/data/currencies";
 import { useFetchUserTransactions } from "@/queries/transactions";
 import { getMemberOrders } from "@/services/orders";
+import { getVenues } from "@/services/venues";
 import { useQuery } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
 
 import { RegistrationTabContent } from "@/components/member/registration/registration-tab-content";
 import { ShopTab } from "@/components/member/shop/shop-tab";
 import PaymentsTabContent from "@/components/member/payments/payments-tab-content";
+import MemberBookings from "@/components/member/bookings/member-bookings";
 import { PayFastPayment } from "@/components/payments/payfast-payment";
 import { AuthContext } from "@/context/AuthContext";
 import { useContext } from "react";
@@ -128,6 +130,9 @@ export default function ViewClubPage() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [orderSortColumn, setOrderSortColumn] = useState<'date' | 'payment_status' | 'fulfillment_status' | 'total' | null>(null);
   const [orderSortDirection, setOrderSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [venues, setVenues] = useState<any[]>([]);
+  const [venuesLoading, setVenuesLoading] = useState(false);
+  const [venuesError, setVenuesError] = useState<string | null>(null);
 
   const {
     data: memberOrders,
@@ -283,6 +288,34 @@ export default function ViewClubPage() {
   useEffect(() => {
     setNewReference(bankDetails?.registration_payment_reference || "");
   }, [bankDetails?.registration_payment_reference]);
+
+  useEffect(() => {
+    if (activeTab !== "bookings" || !data?.club_account_id) {
+      console.log("Skipping venues fetch:", { activeTab, clubAccountId: data?.club_account_id });
+      return;
+    }
+
+    console.log("Fetching venues for tab:", activeTab);
+
+    const fetchVenues = async () => {
+      try {
+        setVenuesLoading(true);
+        setVenuesError(null);
+        console.log("Fetching venues with club_account_id:", data.club_account_id);
+        const venuseData = await getVenues(data.club_account_id);
+        console.log("Venues fetched:", venuseData);
+        setVenues(venuseData.venues || []);
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : "Failed to load venues";
+        setVenuesError(errorMsg);
+        console.error("Error fetching venues:", err, errorMsg);
+      } finally {
+        setVenuesLoading(false);
+      }
+    };
+
+    fetchVenues();
+  }, [activeTab, data?.club_account_id]);
 
   const getStatusIcon = (
     isRegistered: boolean,
@@ -679,6 +712,20 @@ export default function ViewClubPage() {
                         Registration
                       </TabsTrigger>
                     )}
+                    {data?.club_member_exists && data?.venues_enabled && (
+                      <TabsTrigger
+                        className={cn(
+                          "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium",
+                          isMobile
+                            ? "w-full justify-center text-sm h-10"
+                            : "w-[200px] h-10",
+                        )}
+                        value="bookings"
+                      >
+                        <Calendar className="w-4 h-4 mr-2" />
+                        Bookings
+                      </TabsTrigger>
+                    )}
                     {!data?.resubmission_required && (
                       <ShopTab
                         clubId={clubId!}
@@ -950,12 +997,19 @@ export default function ViewClubPage() {
                   </div>
                 </TabsContent>
 
-                {/* HOME TAB SECTION */}
+                <TabsContent value="bookings" className="mt-6">
+                  <MemberBookings
+                    venues={venues}
+                    loading={venuesLoading}
+                    error={venuesError}
+                    memberName={data?.member_name || ""}
+                  />
+                </TabsContent>
+
                 <TabsContent value="home" className="mt-6">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-12">
                     <div className="space-y-6">
 
-                      {/* CONTACT INFO */}
                       <section>
                         <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                           Club Information

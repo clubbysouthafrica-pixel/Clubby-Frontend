@@ -10,4 +10,3 @@ export const getAllMemberClubs = () => {
     return api.get(`/clubMember/getAllMemberClubs`)
         .then(res => res.data)
 }
-
