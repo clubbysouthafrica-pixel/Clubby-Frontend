@@ -19,7 +19,7 @@ export const createBooking = (createBookingRequest: CreateBookingRequest): Promi
 }
 
 export const removeBooking = (removeBookingRequest: RemoveBookingRequest): Promise<any> => {
-    return api.delete("/bookings/removeBooking", { data: removeBookingRequest })
+    return api.post("/bookings/removeBooking", removeBookingRequest)
         .then(res => res.data);
 }
 
