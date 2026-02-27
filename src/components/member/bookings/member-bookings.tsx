@@ -605,6 +605,22 @@ export default function MemberBookings({
               })}
             </div>
 
+            {/* Scroll Up Button - Mobile Only */}
+            {isMobile && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (timeSlotsRef.current) {
+                    timeSlotsRef.current.scrollBy({ top: -100, behavior: "smooth" });
+                  }
+                }}
+                className="w-full rounded-none border-b"
+              >
+                <ChevronLeft className="h-4 w-4 rotate-90" />
+              </Button>
+            )}
+
             {/* Time Slots */}
             <div
               ref={timeSlotsRef}
@@ -688,6 +704,22 @@ export default function MemberBookings({
                   </div>
                 ))}
             </div>
+
+            {/* Scroll Down Button - Mobile Only */}
+            {isMobile && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (timeSlotsRef.current) {
+                    timeSlotsRef.current.scrollBy({ top: 100, behavior: "smooth" });
+                  }
+                }}
+                className="w-full rounded-none border-t"
+              >
+                <ChevronLeft className="h-4 w-4 -rotate-90" />
+              </Button>
+            )}
           </div>
           
           <div className="text-xs text-gray-600">
