@@ -5,7 +5,8 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert.tsx";
 import { AxiosError } from "axios";
-import { resetTemporaryPassword } from "@/services/auth_service.tsx";
+import { resetMemberTemporaryPassword } from "@/services/auth_service.tsx";
+import { resetAdminTemporaryPassword } from "@/services/admin/auth_service.tsx";
 import { toast } from "sonner";
 
 export function ResetTemporaryPasswordForm({
@@ -15,6 +16,7 @@ export function ResetTemporaryPasswordForm({
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const email = searchParams.get("email");
+  const isAdminLogin = searchParams.get("admin") === "true";
 
   const [resendLoading, setResendLoading] = useState(false);
   const [error, setError] = useState("");
@@ -36,7 +38,9 @@ export function ResetTemporaryPasswordForm({
     setSuccessMessage("");
 
     try {
-      const response = await resetTemporaryPassword(email);
+      const response = isAdminLogin
+        ? await resetAdminTemporaryPassword(email)
+        : await resetMemberTemporaryPassword(email);
       const message =
         response.message ||
         response.data?.message ||

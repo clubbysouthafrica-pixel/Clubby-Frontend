@@ -601,7 +601,7 @@ export default function PendingMembersList({
                                     />
                                   </div>
                                 )}
-                                {clubMembers?.payment_methods &&
+                                {clubMembers?.payment_methods && member.outstanding_amount > 0 &&
                                   clubMembers.payment_methods.length > 0 && (
                                     <div className="grid gap-4 pt-2">
                                       <div>

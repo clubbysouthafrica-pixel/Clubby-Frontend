@@ -29,8 +29,8 @@ import {
   REGISTRATION_SUBMISSION_EMAIL_TEMPLATE,
   REGISTRATION_SUCCESS_EMAIL_TEMPLATE,
 } from "@/helpers/admin/constants/registration_submission_email_template";
-import EditableEmailTemplate from "../../../components/admin/manage/emailing/editable_email_template";
-import { BankingDetailsForm } from "@/components/admin/club/banking-details-form";
+import EditableEmailTemplate from "@/components/admin/manage/emailing/editable_email_template";
+import { BankingDetailsForm } from "@/components/admin/club/manage-club/banking-details-form";
 import ClubGalleryEdit from "./gallery";
 import { Textarea } from "@/components/ui/textarea";
 

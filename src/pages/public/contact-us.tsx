@@ -63,10 +63,10 @@ export default function ContactPage() {
                         Send us a detailed message
                       </p>
                       <a
-                        href="mailto:gregtorrington@icloud.com"
+                        href="mailto:clubbysouthafrica@gmail.com"
                         className="text-primary hover:text-primary/80 font-medium flex items-center transition-colors"
                       >
-                        gregtorrington@icloud.com
+                        clubbysouthafrica@gmail.com
                         <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                       </a>
                     </div>
