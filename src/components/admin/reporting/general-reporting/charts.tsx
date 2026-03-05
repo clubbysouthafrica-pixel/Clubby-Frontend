@@ -355,8 +355,8 @@ export function OrdersComboChart({
 }) {
   const chartData = data.map((d) => ({
     name: formatMonthLabel(d.date),
-    revenue: d.total_shop_revenue,
-    pending: d.total_shop_pending_revenue,
+    revenue: d.total_revenue,
+    pending: d.total_pending_revenue,
     itemsSold: d.total_shop_sold_items,
     pendingItems: d.total_shop_pending_sold_items,
   }));

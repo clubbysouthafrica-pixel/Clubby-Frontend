@@ -16,9 +16,9 @@ export interface ReportDataRow {
 export interface OrderReportDataRow {
   date: string;
   total_shop_sold_items: number;
-  total_shop_revenue: number;
+  total_revenue: number;
   total_shop_pending_sold_items: number;
-  total_shop_pending_revenue: number;
+  total_pending_revenue: number;
 }
 
 export interface GeneralReport {

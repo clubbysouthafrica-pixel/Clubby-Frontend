@@ -83,10 +83,10 @@ export function OrdersReport({ report, currency }: props) {
                       {month.date}
                     </TableCell>
                     <TableCell className="text-center w-1/5">
-                      {formatAmount(month.total_shop_revenue, currency)}
+                      {formatAmount(month.total_revenue, currency)}
                     </TableCell>
                     <TableCell className="text-center w-1/5">
-                      {formatAmount(month.total_shop_pending_revenue, currency)}
+                      {formatAmount(month.total_pending_revenue, currency)}
                     </TableCell>
                     <TableCell className="text-center w-1/5">
                       {month.total_shop_sold_items}
