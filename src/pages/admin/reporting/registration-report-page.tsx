@@ -2,7 +2,6 @@ import { useContext, useState } from "react";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { useRegistrationBillingReportingQuery } from "@/queries/admin/useReporting";
 import { RegistrationReportData } from "@/components/registration-report-data-table";
-import { Card } from "@/components/ui/card";
 import { Loader2, Download, BarChart3 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
