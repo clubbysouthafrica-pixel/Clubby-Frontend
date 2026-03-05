@@ -84,6 +84,7 @@ import { FaFacebook, FaInstagram, FaTwitter } from "react-icons/fa";
 import InfoRow from "@/components/info-row";
 import SocialLink from "@/components/social-links";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useFetchClubGallery } from "@/queries/gallery";
 
 function epochToJoinedString(epoch: number): string {
   const date = new Date(epoch); // if epoch is in seconds, use new Date(epoch * 1000)
@@ -112,6 +113,9 @@ export default function ViewClubPage() {
   const { clubId } = useParams();
   const [countryName, setCountryName] = useState("");
   const { data, isLoading, isError } = useFetchClub(clubId as string);
+  const { data: galleryData, isLoading: galleryLoading } = useFetchClubGallery(
+    clubId as string,
+  );
   const { data: bankDetails, isLoading: bankDetailsLoading } =
     useFetchClubBankDetails(clubId as string, !!data?.club_member_exists);
   const { data: transactions, isLoading: isUserTransactionsLoading } =
@@ -147,12 +151,14 @@ export default function ViewClubPage() {
       activeTab === "shop",
   });
 
-  const handleOrderSort = (column: 'date' | 'payment_status' | 'fulfillment_status' | 'total') => {
+  const handleOrderSort = (
+    column: "date" | "payment_status" | "fulfillment_status" | "total",
+  ) => {
     if (orderSortColumn === column) {
-      setOrderSortDirection(orderSortDirection === 'asc' ? 'desc' : 'asc');
+      setOrderSortDirection(orderSortDirection === "asc" ? "desc" : "asc");
     } else {
       setOrderSortColumn(column);
-      setOrderSortDirection('asc');
+      setOrderSortDirection("asc");
     }
   };
 
@@ -167,28 +173,26 @@ export default function ViewClubPage() {
       let aValue: any;
       let bValue: any;
 
-      if (orderSortColumn === 'date') {
+      if (orderSortColumn === "date") {
         aValue = a.created_date || 0;
         bValue = b.created_date || 0;
-      } else if (orderSortColumn === 'payment_status') {
-        aValue = a.payment_status || '';
-        bValue = b.payment_status || '';
-      } else if (orderSortColumn === 'fulfillment_status') {
-        aValue = a.fulfillment_status || '';
-        bValue = b.fulfillment_status || '';
-      } else if (orderSortColumn === 'total') {
+      } else if (orderSortColumn === "payment_status") {
+        aValue = a.payment_status || "";
+        bValue = b.payment_status || "";
+      } else if (orderSortColumn === "fulfillment_status") {
+        aValue = a.fulfillment_status || "";
+        bValue = b.fulfillment_status || "";
+      } else if (orderSortColumn === "total") {
         aValue = a.total_amount || 0;
         bValue = b.total_amount || 0;
       }
 
-      if (typeof aValue === 'string') {
-        return orderSortDirection === 'asc'
+      if (typeof aValue === "string") {
+        return orderSortDirection === "asc"
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);
       } else {
-        return orderSortDirection === 'asc'
-          ? aValue - bValue
-          : bValue - aValue;
+        return orderSortDirection === "asc" ? aValue - bValue : bValue - aValue;
       }
     });
 
@@ -731,7 +735,8 @@ export default function ViewClubPage() {
                         clubId={clubId!}
                         isMobile={isMobile}
                         isClubMember={
-                          data?.club_member_exists || data?.resubmission_required
+                          data?.club_member_exists ||
+                          data?.resubmission_required
                         }
                         isRegistered={data?.registered}
                       />
@@ -779,69 +784,79 @@ export default function ViewClubPage() {
                         </div>
                       </CardHeader>
                       <CardContent className="p-0">
-                        <div className={`${memberOrders?.orders && memberOrders.orders.length > 5 ? 'max-h-96 overflow-y-auto' : 'overflow-hidden'}`}>
+                        <div
+                          className={`${memberOrders?.orders && memberOrders.orders.length > 5 ? "max-h-96 overflow-y-auto" : "overflow-hidden"}`}
+                        >
                           <Table className="border-0">
                             <TableHeader className="bg-gradient-to-r from-muted/50 to-muted/30 sticky top-0 z-10">
                               <TableRow className="border-primary/10 hover:bg-transparent">
                                 <TableHead className="text-center flex-1 font-semibold">
                                   Order #
                                 </TableHead>
-                                <TableHead 
+                                <TableHead
                                   className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                                  onClick={() => handleOrderSort('date')}
+                                  onClick={() => handleOrderSort("date")}
                                 >
                                   <div className="flex items-center justify-center gap-2">
                                     Date
-                                    {orderSortColumn === 'date' && (
-                                      orderSortDirection === 'asc' ? 
-                                        <ArrowUp className="h-4 w-4" /> : 
+                                    {orderSortColumn === "date" &&
+                                      (orderSortDirection === "asc" ? (
+                                        <ArrowUp className="h-4 w-4" />
+                                      ) : (
                                         <ArrowDown className="h-4 w-4" />
-                                    )}
+                                      ))}
                                   </div>
                                 </TableHead>
                                 <TableHead className="text-center flex-1 font-semibold">
                                   Items
                                 </TableHead>
-                                <TableHead 
+                                <TableHead
                                   className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                                  onClick={() => handleOrderSort('total')}
+                                  onClick={() => handleOrderSort("total")}
                                 >
                                   <div className="flex items-center justify-center gap-2">
                                     Total
-                                    {orderSortColumn === 'total' && (
-                                      orderSortDirection === 'asc' ? 
-                                        <ArrowUp className="h-4 w-4" /> : 
+                                    {orderSortColumn === "total" &&
+                                      (orderSortDirection === "asc" ? (
+                                        <ArrowUp className="h-4 w-4" />
+                                      ) : (
                                         <ArrowDown className="h-4 w-4" />
-                                    )}
+                                      ))}
                                   </div>
                                 </TableHead>
                                 <TableHead className="text-center flex-1 font-semibold">
                                   Amount Paid
                                 </TableHead>
-                                <TableHead 
+                                <TableHead
                                   className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                                  onClick={() => handleOrderSort('payment_status')}
+                                  onClick={() =>
+                                    handleOrderSort("payment_status")
+                                  }
                                 >
                                   <div className="flex items-center justify-center gap-2">
                                     Payment Status
-                                    {orderSortColumn === 'payment_status' && (
-                                      orderSortDirection === 'asc' ? 
-                                        <ArrowUp className="h-4 w-4" /> : 
+                                    {orderSortColumn === "payment_status" &&
+                                      (orderSortDirection === "asc" ? (
+                                        <ArrowUp className="h-4 w-4" />
+                                      ) : (
                                         <ArrowDown className="h-4 w-4" />
-                                    )}
+                                      ))}
                                   </div>
                                 </TableHead>
-                                <TableHead 
+                                <TableHead
                                   className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                                  onClick={() => handleOrderSort('fulfillment_status')}
+                                  onClick={() =>
+                                    handleOrderSort("fulfillment_status")
+                                  }
                                 >
                                   <div className="flex items-center justify-center gap-2">
                                     Fulfillment Status
-                                    {orderSortColumn === 'fulfillment_status' && (
-                                      orderSortDirection === 'asc' ? 
-                                        <ArrowUp className="h-4 w-4" /> : 
+                                    {orderSortColumn === "fulfillment_status" &&
+                                      (orderSortDirection === "asc" ? (
+                                        <ArrowUp className="h-4 w-4" />
+                                      ) : (
                                         <ArrowDown className="h-4 w-4" />
-                                    )}
+                                      ))}
                                   </div>
                                 </TableHead>
                               </TableRow>
@@ -937,15 +952,22 @@ export default function ViewClubPage() {
                                       <div className="flex flex-col items-center gap-2">
                                         <Badge
                                           className={`font-medium ${
-                                            order.payment_status === "PAID" || order.payment_status === "PAID (Partial Refund)"
+                                            order.payment_status === "PAID" ||
+                                            order.payment_status ===
+                                              "PAID (Partial Refund)"
                                               ? "bg-green-100 text-green-800 border-green-200"
-                                              : order.payment_status === "PENDING"
+                                              : order.payment_status ===
+                                                  "PENDING"
                                                 ? "bg-orange-100 text-orange-800 border-orange-200 mt-2"
-                                                : order.payment_status === "PARTIALLY_PAID"
-                                                ? "bg-purple-100 text-purple-800 border-purple-200"
-                                                : order.payment_status === "CANCELLED" || order.payment_status === "REFUND"
-                                                ? "bg-red-100 text-red-800 border-red-200"
-                                                : "bg-gray-100 text-gray-800 border-gray-200"
+                                                : order.payment_status ===
+                                                    "PARTIALLY_PAID"
+                                                  ? "bg-purple-100 text-purple-800 border-purple-200"
+                                                  : order.payment_status ===
+                                                        "CANCELLED" ||
+                                                      order.payment_status ===
+                                                        "REFUND"
+                                                    ? "bg-red-100 text-red-800 border-red-200"
+                                                    : "bg-gray-100 text-gray-800 border-gray-200"
                                           }`}
                                         >
                                           {order.payment_status || "Unknown"}
@@ -978,12 +1000,17 @@ export default function ViewClubPage() {
                                                     "PROCESSING"
                                                   ? "bg-purple-100 text-purple-800 border-purple-200"
                                                   : order.fulfillment_status ===
-                                                      "CANCELLED" || order.fulfillment_status === "REFUND" || order.fulfillment_status === "REFUNDED"
-                                                  ? "bg-red-100 text-red-800 border-red-200"
-                                                  : "bg-green-100 text-green-800 border-green-200"
+                                                        "CANCELLED" ||
+                                                      order.fulfillment_status ===
+                                                        "REFUND" ||
+                                                      order.fulfillment_status ===
+                                                        "REFUNDED"
+                                                    ? "bg-red-100 text-red-800 border-red-200"
+                                                    : "bg-green-100 text-green-800 border-green-200"
                                           }`}
                                         >
-                                          {order.fulfillment_status || "Unknown"}
+                                          {order.fulfillment_status ||
+                                            "Unknown"}
                                         </Badge>
                                       </div>
                                     </TableCell>
@@ -1009,7 +1036,7 @@ export default function ViewClubPage() {
                 <TabsContent value="home" className="mt-6">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-12">
                     <div className="space-y-6">
-
+                      {/* CONTACT INFO */}
                       <section>
                         <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                           Club Information
@@ -1120,7 +1147,7 @@ export default function ViewClubPage() {
                         </h3>
 
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                          {(!data?.gallery || data.gallery.length === 0) && (
+                          {galleryLoading ? (
                             <>
                               <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group">
                                 <Skeleton className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
@@ -1132,21 +1159,35 @@ export default function ViewClubPage() {
                                 <Skeleton className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
                               </div>
                             </>
-                          )}
-
-                          {data?.gallery?.length > 0 &&
-                            data.gallery.map((img: string, idx: number) => (
-                              <div
-                                key={idx}
-                                className="relative aspect-square overflow-hidden rounded-xl bg-muted group"
-                              >
-                                <img
-                                  src={img}
-                                  alt={`Gallery image ${idx + 1}`}
-                                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                />
+                          ) : !galleryData?.images ||
+                            galleryData.images.length === 0 ? (
+                            <>
+                              <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group">
+                                <Skeleton className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
                               </div>
-                            ))}
+                              <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group">
+                                <Skeleton className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                              </div>
+                              <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group">
+                                <Skeleton className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                              </div>
+                            </>
+                          ) : (
+                            galleryData.images.map(
+                              (img: string, idx: number) => (
+                                <div
+                                  key={idx}
+                                  className="relative aspect-square overflow-hidden rounded-xl bg-muted group"
+                                >
+                                  <img
+                                    src={img}
+                                    alt={`Gallery image ${idx + 1}`}
+                                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                  />
+                                </div>
+                              ),
+                            )
+                          )}
                         </div>
                       </section>
                     </div>
