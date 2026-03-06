@@ -34,8 +34,8 @@ import { BankingDetailsForm } from "@/components/admin/club/manage-club/banking-
 import ClubGalleryEdit from "./gallery";
 import { Textarea } from "@/components/ui/textarea";
 
-export default function EditClubDetails() {
-  const { club } = useContext(ClubContext) as ClubContextType;
+export default function EditClubDetails({ initialTab }: { initialTab?: string }) {
+  const { club, setClub } = useContext(ClubContext) as ClubContextType;
   const { data, isLoading } = useFetchClubDetails(
     club?.club_account_id as string,
   );
@@ -90,6 +90,8 @@ export default function EditClubDetails() {
     useState<boolean>(false);
   const [notifyOnMemberRegistration, setNotifyOnMemberRegistration] =
     useState<boolean>(false);
+  const [isBankingDetailsFormComplete, setIsBankingDetailsFormComplete] =
+    useState<boolean>(false);
 
   useEffect(() => {
     if (data) {
@@ -135,6 +137,12 @@ export default function EditClubDetails() {
     }
   }, [data]);
 
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
   const handleBankingDetailsSave = (bankingData: {
     bank_details: {
       bank: string;
@@ -168,7 +176,22 @@ export default function EditClubDetails() {
         notify_on_member_registration: notifyOnMemberRegistration,
       },
       {
-        onSuccess: () => toast.success("Successfully updated club details"),
+        onSuccess: () => {
+          if (club) {
+            const isBankingDetailsComplete =
+              bankingData.bank_details.bank &&
+              bankingData.bank_details.account_number &&
+              bankingData.bank_details.branch_code &&
+              bankingData.bank_details.account_type;
+            setClub({
+              ...club,
+              currency_exists: Boolean(currency),
+              country_exists: Boolean(country),
+              bank_details_exists: Boolean(isBankingDetailsComplete),
+            });
+          }
+          toast.success("Successfully updated club details");
+        },
         onError: (error: unknown) => {
           const errorMessage =
             (
@@ -220,7 +243,22 @@ export default function EditClubDetails() {
         notify_on_member_registration: notifyOnMemberRegistration,
       },
       {
-        onSuccess: () => toast.success("Successfully updated club details"),
+        onSuccess: () => {
+          if (club) {
+            const isBankingDetailsComplete =
+              data?.bank_details?.bank &&
+              data?.bank_details?.account_number &&
+              data?.bank_details?.branch_code &&
+              data?.bank_details?.account_type;
+            setClub({
+              ...club,
+              currency_exists: Boolean(currency),
+              country_exists: Boolean(country),
+              bank_details_exists: Boolean(isBankingDetailsComplete),
+            });
+          }
+          toast.success("Successfully updated club details");
+        },
         onError: (error: unknown) => {
           const errorMessage =
             (
@@ -263,6 +301,25 @@ export default function EditClubDetails() {
     );
   }
 
+  function isBankingDetailsIncomplete(): boolean {
+    // If the form is currently complete, return false (no star needed)
+    if (isBankingDetailsFormComplete) return false;
+    
+    // Otherwise check if saved data is complete
+    const bankDetails = data?.bank_details;
+    if (!bankDetails) return true;
+    return !(
+      bankDetails.bank &&
+      bankDetails.account_number &&
+      bankDetails.branch_code &&
+      bankDetails.account_type
+    );
+  }
+
+  function isLocationIncomplete(): boolean {
+    return !country || !currency;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex w-[80%] flex-col">
@@ -270,8 +327,18 @@ export default function EditClubDetails() {
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="w-full h-12">
               <TabsTrigger value="club-view">Club View</TabsTrigger>
-              <TabsTrigger value="account">Banking & Payments</TabsTrigger>
-              <TabsTrigger value="location">Location</TabsTrigger>
+              <TabsTrigger value="account">
+                Banking & Payments
+                {isBankingDetailsIncomplete() && (
+                  <span className="ml-2 text-red-500 font-bold text-2xl leading-none">*</span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="location">
+                Location
+                {isLocationIncomplete() && (
+                  <span className="ml-2 text-red-500 font-bold text-2xl leading-none">*</span>
+                )}
+              </TabsTrigger>
               <TabsTrigger value="emailing">Emailing</TabsTrigger>
             </TabsList>
 
@@ -515,6 +582,7 @@ export default function EditClubDetails() {
                 customPaymentMethods={data?.custom_payment_methods}
                 onSave={handleBankingDetailsSave}
                 isPending={isPending}
+                onCompletionChange={setIsBankingDetailsFormComplete}
               />
             </TabsContent>
 
@@ -547,7 +615,12 @@ export default function EditClubDetails() {
                 <CardContent>
                   <div className="grid gap-6">
                     <div className="grid gap-2">
-                      <Label>Country of Operation</Label>
+                      <Label>
+                        Country of Operation
+                        {!country && (
+                          <span className="text-red-500 font-bold text-lg ml-2">*</span>
+                        )}
+                      </Label>
                       <Select value={country} onValueChange={setCountry}>
                         <SelectTrigger className="w-[280px]">
                           <SelectValue placeholder="Select country" />
@@ -564,7 +637,12 @@ export default function EditClubDetails() {
                       </Select>
                     </div>
                     <div className="grid gap-2">
-                      <Label>Currency</Label>
+                      <Label>
+                        Currency
+                        {!currency && (
+                          <span className="text-red-500 font-bold text-lg ml-2">*</span>
+                        )}
+                      </Label>
                       <Select value={currency} onValueChange={setCurrency}>
                         <SelectTrigger className="w-[280px]">
                           <SelectValue placeholder="Select currency" />

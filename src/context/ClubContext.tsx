@@ -15,6 +15,10 @@ export interface Club {
     currency: string
     onboarded: boolean
     deregistration_in_progress: boolean
+    registration_form_exists?: boolean
+    currency_exists?: boolean
+    country_exists?: boolean
+    bank_details_exists?: boolean
 }
 
 interface ClubProviderProps {

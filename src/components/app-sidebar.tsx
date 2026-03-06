@@ -53,9 +53,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         title: "Club",
         url: "/manage/club",
         icon: HomeIcon,
+        hasMissingFields: Boolean(club && (!club.country_exists || !club.currency_exists || !club.bank_details_exists)),
         items: [
           { title: "Home", url: "/" },
-          { title: "Manage Club", url: "/manage/club" },
+          { 
+            title: "Manage Club", 
+            url: "/manage/club",
+            hasMissingFields: Boolean(club && (!club.country_exists || !club.currency_exists || !club.bank_details_exists))
+          },
         ],
       },
       {
@@ -90,8 +95,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         title: "Registration form",
         url: "/manage/registrations",
         icon: UserPlusIcon,
+        hasMissingFields: Boolean(club && club.registration_form_exists === false),
         items: [
-          { title: "Create Form", url: "/manage/registrations/forms" },
+          { 
+            title: "Create Form", 
+            url: "/manage/registrations/forms",
+            hasMissingFields: Boolean(club && club.registration_form_exists === false)
+          },
         ],
       },
       {
@@ -123,7 +133,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         isActive: Boolean(matched),
       };
     });
-  }, [pathname]);
+  }, [pathname, club]);
 
   return (
     <Sidebar collapsible="icon" {...props}>

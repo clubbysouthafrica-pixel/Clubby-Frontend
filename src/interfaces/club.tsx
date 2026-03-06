@@ -11,6 +11,11 @@ export interface Club {
     outstanding_amount: number
     registration_amount: number
     registration_payment_reference?: string
+    registration_form_exists?: boolean
+    currency_exists?: boolean
+    country_exists?: boolean
+    bank_details_exists?: boolean
+    deregistration_in_progress?: boolean
 }
 
 export interface ClubMember {

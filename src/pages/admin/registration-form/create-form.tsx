@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/tooltip";
 
 export default function AdminRegistrationFormPage() {
-  const { club } = useContext(ClubContext) as ClubContextType;
+  const { club, setClub } = useContext(ClubContext) as ClubContextType;
   const [deletedFields, setDeletedFields] = useState<string[]>([]);
 
   const { mutate } = useCreateClubMutation();
@@ -107,6 +107,13 @@ export default function AdminRegistrationFormPage() {
       },
       {
         onSuccess: () => {
+          const hasAtLeastOneField = pages.some((page) => (page.fields?.length ?? 0) > 0);
+          if (club && hasAtLeastOneField) {
+            setClub({
+              ...club,
+              registration_form_exists: true,
+            });
+          }
           displayToast();
           setSaving(false);
           // Update originalPages with current pages so new fields are now locked

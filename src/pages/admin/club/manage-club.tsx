@@ -1,4 +1,5 @@
 import { useContext } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { useFetchClub } from "@/queries/admin/clubs";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +12,17 @@ export default function ManageClubDashboard() {
   const { club, isLoading: clubLoading } = useContext(
     ClubContext,
   ) as ClubContextType;
+  const [searchParams] = useSearchParams();
+  const missing = searchParams.get("missing");
+
+  // Determine which tab should be active based on missing query param
+  let initialTab = undefined;
+  if (missing === "currency" || missing === "country") {
+    initialTab = "location";
+  } else if (missing === "bank_details") {
+    initialTab = "account";
+  }
+
   const { data: clubDetails, isLoading: detailsLoading } = useFetchClub(
     club?.club_account_id as string,
     { includeImages: true },
@@ -69,7 +81,7 @@ export default function ManageClubDashboard() {
           </div>
         </div>
       )}
-      <EditClubDetails />
+      <EditClubDetails initialTab={initialTab} />
     </div>
   );
 }

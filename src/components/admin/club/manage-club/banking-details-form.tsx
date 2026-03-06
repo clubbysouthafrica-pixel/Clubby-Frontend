@@ -35,6 +35,7 @@ interface BankingDetailsFormProps {
         bank_details: Required<BankDetails>
     }) => void
     isPending?: boolean
+    onCompletionChange?: (isComplete: boolean) => void
 }
 
 export function BankingDetailsForm({ 
@@ -43,7 +44,8 @@ export function BankingDetailsForm({
     payfastEnabled = false,
     customPaymentMethods = [],
     onSave, 
-    isPending = false 
+    isPending = false,
+    onCompletionChange
 }: BankingDetailsFormProps) {
     const { club } = useContext(ClubContext) as ClubContextType
     const clubAccountId = (club_account_id ?? club?.club_account_id) as string
@@ -82,7 +84,18 @@ export function BankingDetailsForm({
             }))
             setCustomPayments(loadedPayments)
         }
-    }, [bankDetails, customPaymentMethods])
+        // Reset completion state when loading bankDetails from server
+        if (bankDetails) {
+            const isComplete = !!(bankDetails.bank && bankDetails.account_number && bankDetails.branch_code && bankDetails.account_type)
+            onCompletionChange?.(isComplete)
+        }
+    }, [bankDetails, customPaymentMethods, onCompletionChange])
+
+    useEffect(() => {
+        // Check if all EFT fields are filled in
+        const isComplete = !!(bank && bankAccountNumber && branchCode && accountType)
+        onCompletionChange?.(isComplete)
+    }, [bank, bankAccountNumber, branchCode, accountType, onCompletionChange])
 
     const getApiErrorMessage = (err: unknown): string => {
         type ErrorPayload = { message?: string; error?: string } | string | undefined
@@ -308,7 +321,12 @@ export function BankingDetailsForm({
                     )}
                     <TabsContent value="eft" className="space-y-4 mt-4">
                         <div className="grid gap-3">
-                            <Label htmlFor="bank">Bank</Label>
+                            <Label htmlFor="bank">
+                              Bank
+                              {!bank && (
+                                <span className="text-red-500 font-bold text-lg ml-2">*</span>
+                              )}
+                            </Label>
                             <Input
                                 id="bank"
                                 type="text"
@@ -318,7 +336,12 @@ export function BankingDetailsForm({
                             />
                         </div>
                         <div className="grid gap-3">
-                            <Label htmlFor="account-number">Account Number</Label>
+                            <Label htmlFor="account-number">
+                              Account Number
+                              {!bankAccountNumber && (
+                                <span className="text-red-500 font-bold text-lg ml-2">*</span>
+                              )}
+                            </Label>
                             <Input
                                 id="account-number"
                                 type="text"
@@ -328,7 +351,12 @@ export function BankingDetailsForm({
                             />
                         </div>
                         <div className="grid gap-3">
-                            <Label htmlFor="branch-code">Branch Code</Label>
+                            <Label htmlFor="branch-code">
+                              Branch Code
+                              {!branchCode && (
+                                <span className="text-red-500 font-bold text-lg ml-2">*</span>
+                              )}
+                            </Label>
                             <Input
                                 id="branch-code"
                                 type="text"
@@ -338,7 +366,12 @@ export function BankingDetailsForm({
                             />
                         </div>
                         <div className="grid gap-3">
-                            <Label htmlFor="account-type">Account Type</Label>
+                            <Label htmlFor="account-type">
+                              Account Type
+                              {!accountType && (
+                                <span className="text-red-500 font-bold text-lg ml-2">*</span>
+                              )}
+                            </Label>
                             <Input
                                 id="account-type"
                                 type="text"
