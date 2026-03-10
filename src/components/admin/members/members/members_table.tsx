@@ -63,6 +63,7 @@ interface ImageProps {
   >;
   setAllMembersSelected: React.Dispatch<React.SetStateAction<boolean>>;
   setRegisteredMembersLength: React.Dispatch<React.SetStateAction<number>>;
+  onRemoveMembers?: (memberIds: string[]) => void;
 }
 
 export default function MembersTable({
@@ -79,6 +80,7 @@ export default function MembersTable({
   setDeregisterMembers,
   setAllMembersSelected,
   setRegisteredMembersLength,
+  onRemoveMembers,
 }: ImageProps) {
 
   const [regSortAsc, setRegSortAsc] = useState<boolean | null>(null);
@@ -292,16 +294,7 @@ export default function MembersTable({
                         setSelectedMember(member);
                         window.location.hash = member.user_id;
                       }}
-                      className={`h-12 cursor-pointer hover:drop-shadow-md transition-shadow border-l-4 ${expandedMemberId === member.user_id ? "border-l-blue-500 bg-blue-50" : "border-l-transparent"} ${
-                        listActionItems.some(
-                          (item) =>
-                            item.email === member.member_email &&
-                            item.name ===
-                              `${member.member_first_name} ${member.member_surname}`,
-                        )
-                          ? "bg-blue-50"
-                          : ""
-                      }`}
+                      className={`h-12 cursor-pointer border-l-4 ${expandedMemberId === member.user_id ? "border-l-blue-500" : "border-l-transparent"}`}
                     >
                       <TableCell className="text-center w-[80px] flex-shrink-0 sticky left-0 z-20 bg-white">
                         <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
@@ -409,8 +402,8 @@ export default function MembersTable({
                       </TableCell>
                     </TableRow>
                     {expandedMemberId === member.user_id && (
-                      <TableRow className="bg-blue-50">
-                        <TableCell colSpan={6} className="p-4 border-l-4 border-l-blue-500">
+                      <TableRow className="">
+                        <TableCell colSpan={6} className="p-4 border-l-4 border-blue-500">
                           <div className="overflow-hidden rounded-lg border border-blue-200">
                             <Table className="w-full">
                               <TableHeader className="bg-blue-100 sticky top-0 z-10">
@@ -529,11 +522,12 @@ export default function MembersTable({
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         members={selectedMembersToDelete}
-        onRemoveSuccess={() => {
+        onRemoveSuccess={(memberIds) => {
           setlistActionItems([]);
           setDeregisterMembers([]);
           setAllMembersSelected(false);
           setSelectedMembersToDelete([]);
+          onRemoveMembers?.(memberIds);
         }}
       />
 

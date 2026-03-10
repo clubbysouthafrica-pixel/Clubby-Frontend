@@ -829,6 +829,11 @@ export default function MembersPage() {
                       setDeregisterMembers={setDeregisterMembers}
                       setAllMembersSelected={setAllMembersSelected}
                       setRegisteredMembersLength={setRegisteredMembersLength}
+                      onRemoveMembers={(memberIds) => {
+                        setAllRegisteredMembers((prev) =>
+                          prev.filter((member) => !memberIds.includes(member.user_id))
+                        );
+                      }}
                     />
                     <button
                       onClick={handleDownloadRegisteredMembers}

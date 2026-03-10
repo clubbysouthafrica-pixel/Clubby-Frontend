@@ -14,7 +14,7 @@ interface RemoveMemberDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     members: ClubMember[];
-    onRemoveSuccess?: () => void;
+    onRemoveSuccess?: (memberIds: string[]) => void;
 }
 
 export default function RemoveMemberDialog({
@@ -52,7 +52,7 @@ export default function RemoveMemberDialog({
                         setDisplaySuccess(true);
                         setTimeout(() => {
                             onOpenChange(false);
-                            onRemoveSuccess?.();
+                            onRemoveSuccess?.(memberIds);
                         }, 500);
                     },
                     onError: (error: unknown) => {
