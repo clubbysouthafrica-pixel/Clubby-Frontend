@@ -49,6 +49,8 @@ import {
   ShoppingCart,
   ArrowUp,
   ArrowDown,
+  ArrowLeft,
+  ArrowRight,
 } from "lucide-react";
 import { useFetchClub, useFetchClubBankDetails } from "@/queries/clubs";
 import { useNavigate, useParams } from "react-router-dom";
@@ -83,8 +85,6 @@ import { toast } from "sonner";
 import { FaFacebook, FaInstagram, FaTwitter } from "react-icons/fa";
 import InfoRow from "@/components/info-row";
 import SocialLink from "@/components/social-links";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useFetchClubGallery } from "@/queries/gallery";
 
 function epochToJoinedString(epoch: number): string {
   const date = new Date(epoch); // if epoch is in seconds, use new Date(epoch * 1000)
@@ -113,9 +113,7 @@ export default function ViewClubPage() {
   const { clubId } = useParams();
   const [countryName, setCountryName] = useState("");
   const { data, isLoading, isError } = useFetchClub(clubId as string);
-  const { data: galleryData, isLoading: galleryLoading } = useFetchClubGallery(
-    clubId as string,
-  );
+
   const { data: bankDetails, isLoading: bankDetailsLoading } =
     useFetchClubBankDetails(clubId as string, !!data?.club_member_exists);
   const { data: transactions, isLoading: isUserTransactionsLoading } =
@@ -137,6 +135,7 @@ export default function ViewClubPage() {
   const [venues, setVenues] = useState<any[]>([]);
   const [venuesLoading, setVenuesLoading] = useState(false);
   const [venuesError, setVenuesError] = useState<string | null>(null);
+  const [selectedGalleryImageIndex, setSelectedGalleryImageIndex] = useState<number | null>(null);
 
   const {
     data: memberOrders,
@@ -1147,46 +1146,22 @@ export default function ViewClubPage() {
                         </h3>
 
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                          {galleryLoading ? (
-                            <>
-                              <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group">
-                                <Skeleton className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                              </div>
-                              <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group">
-                                <Skeleton className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                              </div>
-                              <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group">
-                                <Skeleton className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                              </div>
-                            </>
-                          ) : !galleryData?.images ||
-                            galleryData.images.length === 0 ? (
-                            <>
-                              <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group">
-                                <Skeleton className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                              </div>
-                              <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group">
-                                <Skeleton className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                              </div>
-                              <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group">
-                                <Skeleton className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                              </div>
-                            </>
+                          {data?.gallery_images && data.gallery_images.length > 0 ? (
+                            data.gallery_images.map((image: any, idx: number) => (
+                              <button
+                                key={image.key}
+                                onClick={() => setSelectedGalleryImageIndex(idx)}
+                                className="relative rounded-lg overflow-hidden shadow-sm bg-muted transition-shadow hover:shadow-md cursor-pointer hover:opacity-90"
+                              >
+                                <img
+                                  src={image.url}
+                                  alt="Gallery"
+                                  className="w-full h-32 object-cover block"
+                                />
+                              </button>
+                            ))
                           ) : (
-                            galleryData.images.map(
-                              (img: string, idx: number) => (
-                                <div
-                                  key={idx}
-                                  className="relative aspect-square overflow-hidden rounded-xl bg-muted group"
-                                >
-                                  <img
-                                    src={img}
-                                    alt={`Gallery image ${idx + 1}`}
-                                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                  />
-                                </div>
-                              ),
-                            )
+                            <p className="text-sm text-muted-foreground">No gallery images</p>
                           )}
                         </div>
                       </section>
@@ -1720,6 +1695,62 @@ export default function ViewClubPage() {
                 </TabsContent>
               ))}
           </Tabs>
+        </DialogContent>
+      </Dialog>
+
+      {/* Gallery Image Dialog */}
+      <Dialog
+        open={selectedGalleryImageIndex !== null}
+        onOpenChange={(open) => !open && setSelectedGalleryImageIndex(null)}
+      >
+        <DialogContent className="max-w-4xl max-h-screen flex items-center justify-center p-0 bg-black/90 border-0">
+          {selectedGalleryImageIndex !== null && data?.gallery_images && (
+            <div className="relative w-full h-full flex items-center justify-center">
+              <img
+                src={data.gallery_images[selectedGalleryImageIndex].url}
+                alt="Gallery"
+                className="w-full h-full object-contain"
+              />
+              
+              {data.gallery_images.length > 1 && (
+                <>
+                  <button
+                    onClick={() =>
+                      setSelectedGalleryImageIndex(
+                        selectedGalleryImageIndex === 0
+                          ? data.gallery_images.length - 1
+                          : selectedGalleryImageIndex - 1,
+                      )
+                    }
+                    className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/20 hover:bg-white/40 transition-colors"
+                    aria-label="Previous image"
+                  >
+                    <ArrowLeft className="w-6 h-6 text-white" />
+                  </button>
+                  
+                  <button
+                    onClick={() =>
+                      setSelectedGalleryImageIndex(
+                        selectedGalleryImageIndex === data.gallery_images.length - 1
+                          ? 0
+                          : selectedGalleryImageIndex + 1,
+                      )
+                    }
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/20 hover:bg-white/40 transition-colors"
+                    aria-label="Next image"
+                  >
+                    <ArrowRight className="w-6 h-6 text-white" />
+                  </button>
+                  
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 px-3 py-1 rounded-full">
+                    <p className="text-white text-sm">
+                      {selectedGalleryImageIndex + 1} / {data.gallery_images.length}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </Pager>

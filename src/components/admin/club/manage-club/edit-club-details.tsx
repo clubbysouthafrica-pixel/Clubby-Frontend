@@ -568,7 +568,17 @@ export default function EditClubDetails({ initialTab }: { initialTab?: string })
                     <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                       Gallery
                     </h3>
-                    <ClubGalleryEdit clubId={club?.club_account_id as string} />
+                    <ClubGalleryEdit
+                      clubId={club?.club_account_id as string}
+                      galleryImages={
+                        data?.gallery_images
+                          ? data.gallery_images.map((image: any) => ({
+                              id: image.key,
+                              url: image.url,
+                            }))
+                          : []
+                      }
+                    />
                   </section>
                 </CardContent>
               </Card>

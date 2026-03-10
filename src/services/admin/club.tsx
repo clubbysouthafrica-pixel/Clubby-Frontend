@@ -29,3 +29,18 @@ export const updateCustomPaymentMethods = (clubAccountId: string, customPaymentM
         custom_payment_methods: customPaymentMethods
     }).then(res => res.data)
 }
+
+export const uploadGalleryImage = (clubAccountId: string, galleryImage: string, imageId: string) => {
+    return api.post("club/uploadGalleryImage", {
+        club_account_id: clubAccountId,
+        gallery_image: galleryImage,
+        image_id: imageId
+    }).then(res => res.data)
+}
+
+export const removeGalleryImage = (clubAccountId: string, imageId: string) => {
+    return api.post("club/removeGalleryImage", {
+        club_account_id: clubAccountId,
+        image_id: imageId
+    }).then(res => res.data)
+}
