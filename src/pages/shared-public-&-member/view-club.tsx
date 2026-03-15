@@ -53,7 +53,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useFetchClub, useFetchClubBankDetails } from "@/queries/clubs";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
 import {
   Table,
@@ -121,6 +121,30 @@ export default function ViewClubPage() {
 
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState("home");
+  const { search } = useLocation();
+
+  // Handle query params on component mount and when search changes
+  useEffect(() => {
+    const queryParams = new URLSearchParams(search);
+    const tabParam = queryParams.get('tab');
+    const orderIdParam = queryParams.get('orderId');
+    
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+    
+    // Auto-select order if orderId is in query params and bankDetails are loaded
+    if (orderIdParam && bankDetails?.order_options && !bankDetailsLoading) {
+      const matchedOrder = bankDetails.order_options.find(
+        (order: any) => order.order_id === orderIdParam || order.id === orderIdParam
+      );
+      
+      if (matchedOrder) {
+        setNewOrderId(orderIdParam);
+        setShowOrderSelection(true);
+      }
+    }
+  }, [search, bankDetails?.order_options, bankDetailsLoading]);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [editingReference, setEditingReference] = useState(false);
   const [newReference, setNewReference] = useState(
@@ -130,6 +154,7 @@ export default function ViewClubPage() {
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [showOrderSelection, setShowOrderSelection] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [newOrderId, setNewOrderId] = useState<string | null>(null);
   const [orderSortColumn, setOrderSortColumn] = useState<'date' | 'payment_status' | 'fulfillment_status' | 'total' | null>(null);
   const [orderSortDirection, setOrderSortDirection] = useState<'asc' | 'desc'>('asc');
   const [venues, setVenues] = useState<any[]>([]);
@@ -539,27 +564,59 @@ export default function ViewClubPage() {
                         {data?.club_member_exists && (
                           <div className="text-center">
                             {!data.resubmission_required && (
-                              <div className="flex items-center justify-center gap-2 mb-2">
-                                {data.registered ? (
-                                  <CheckCircle className="w-5 h-5 text-green-600" />
-                                ) : (
-                                  <Clock className="w-5 h-5 text-orange-600" />
-                                )}
-                                <Badge
-                                  variant={
-                                    data.registered ? "default" : "secondary"
-                                  }
-                                  className={cn(
-                                    "text-sm",
-                                    data.registered
-                                      ? "bg-green-100 text-green-800 border-green-200"
-                                      : "bg-orange-100 text-orange-800 border-orange-200",
+                              <div className="flex flex-col items-center justify-center gap-2 mb-2">
+                                <div className="flex items-center justify-center gap-2">
+                                  {data.registered ? (
+                                    <CheckCircle className="w-5 h-5 text-green-600" />
+                                  ) : (
+                                    <Clock className="w-5 h-5 text-orange-600" />
                                   )}
-                                >
-                                  {data.registered
-                                    ? "Active Member"
-                                    : "Pending Member"}
-                                </Badge>
+                                  <Badge
+                                    variant={
+                                      data.registered ? "default" : "secondary"
+                                    }
+                                    className={cn(
+                                      "text-sm",
+                                      data.registered
+                                        ? "bg-green-100 text-green-800 border-green-200"
+                                        : "bg-orange-100 text-orange-800 border-orange-200",
+                                    )}
+                                  >
+                                    {data.registered
+                                      ? "Active Member"
+                                      : "Pending Member"}
+                                  </Badge>
+                                </div>
+                                {data.registered &&
+                                  bankDetails?.outstanding_amount > 0 && (
+                                    <div className="text-center space-y-2">
+                                      <div>
+                                        <p className="text-xs text-muted-foreground">
+                                          Outstanding Balance:
+                                        </p>
+                                        <p className="text-sm font-semibold text-red-600">
+                                          {formatAmount(
+                                            bankDetails.outstanding_amount,
+                                            data.currency,
+                                          )}
+                                        </p>
+                                      </div>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          setActiveTab("bank");
+                                          setTimeout(() => {
+                                            handlePayHereClick();
+                                          }, 100);
+                                        }}
+                                        className="text-xs h-auto py-1"
+                                      >
+                                        <CreditCard className="w-3 h-3 mr-1" />
+                                        Pay Now
+                                      </Button>
+                                    </div>
+                                  )}
                               </div>
                             )}
                             {!data.registered &&
@@ -1215,7 +1272,11 @@ export default function ViewClubPage() {
               return (
                 <div
                   key={index}
-                  className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                  className={`p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors ${
+                    (order.order_id === newOrderId || order.id === newOrderId)
+                      ? "border-yellow-400 bg-yellow-50 border-2"
+                      : ""
+                  }`}
                   onClick={() => {
                     setSelectedOrder(order);
                     setShowOrderSelection(false);

@@ -1,4 +1,4 @@
-import { getClubProducts } from "@/services/admin/shop";
+import { getClubProducts } from "@/services/admin-features/shop";
 import { useQuery } from "@tanstack/react-query";
 
 export const useFetchClubProducts = (clubAccountId: string) => {

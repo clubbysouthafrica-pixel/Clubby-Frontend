@@ -4,7 +4,6 @@ export interface AddProductRequest {
     club_account_id: string;
     name: string;
     price: number;
-    initial_quantity: number;
     active_product: boolean;
     purchase_limit: "single" | "multiple";
     description?: string;

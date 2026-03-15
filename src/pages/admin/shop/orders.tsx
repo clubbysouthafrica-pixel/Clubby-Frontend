@@ -9,6 +9,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
+  Bell,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -41,7 +43,7 @@ import {
   confirmOrderPayment,
   refundOrRemoveOrder,
   updateAdminOrderFulfillment,
-} from "@/services/admin/orders";
+} from "@/services/admin-features/orders";
 import { formatAmount } from "@/data/currencies";
 import { Label } from "@/components/ui/label";
 
@@ -63,7 +65,7 @@ export default function OrdersPage() {
   const [paymentStatusFilter, setPaymentStatusFilter] = useState(
     paymentStatusParam ? paymentStatusParam.toUpperCase() : "all",
   );
-  const [fulfillmentStatusFilter] = useState("all");
+  const [fulfillmentStatusFilter, setFulfillmentStatusFilter] = useState("all");
   const [appliedFilters, setAppliedFilters] = useState<{
     transaction_id?: string;
     member_name?: string;
@@ -99,10 +101,6 @@ export default function OrdersPage() {
   const [copiedTransactionId, setCopiedTransactionId] = useState<string | null>(
     null,
   );
-  const [fulfillmentDialogOpen, setFulfillmentDialogOpen] = useState(false);
-  const [selectedOrderForFulfillment, setSelectedOrderForFulfillment] =
-    useState<any>(null);
-  const [isUpdatingFulfillment, setIsUpdatingFulfillment] = useState(false);
   const [refundDialogOpen, setRefundDialogOpen] = useState(false);
   const [selectedOrderForRefund, setSelectedOrderForRefund] =
     useState<any>(null);
@@ -113,20 +111,44 @@ export default function OrdersPage() {
   const [expandedRefundItems, setExpandedRefundItems] = useState<Set<string>>(
     new Set(),
   );
-  const [returnToInventory, setReturnToInventory] = useState<Set<string>>(
-    new Set(),
-  );
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedOrderForDelete, setSelectedOrderForDelete] =
     useState<any>(null);
   const [isProcessingDelete, setIsProcessingDelete] = useState(false);
-  const [expandedDeleteItems, setExpandedDeleteItems] = useState<Set<string>>(
-    new Set(),
-  );
-  const [returnDeleteToInventory, setReturnDeleteToInventory] = useState<
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [showPendingDropdown, setShowPendingDropdown] = useState(false);
+  const [selectedDeliveryItems, setSelectedDeliveryItems] = useState<
     Set<string>
   >(new Set());
-  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [isConfirmingDelivery, setIsConfirmingDelivery] = useState(false);
+
+  // Calculate total undelivered items
+  const undeliveredItems = allOrders
+    .filter(
+      (order) =>
+        order.payment_status === "PAID" ||
+        order.payment_status === "PAID (Partial Refund)",
+    )
+    .flatMap(
+      (order) =>
+        (order.items as any[])?.flatMap((item: any) => {
+          const unfulfilled =
+            (item.quantity || 0) - (item.fulfillment_quantity || 0);
+          if (unfulfilled > 0) {
+            return Array.from({ length: unfulfilled }).map((_, unitIdx) => ({
+              orderId: order.order_id,
+              transactionId: order.transaction_id,
+              memberName: `${order.first_name} ${order.surname}`,
+              itemName: item.name,
+              itemPrice: item.price,
+              productId: item.product_id,
+              unitIndex: unitIdx + 1,
+              totalUnfulfilled: unfulfilled,
+            }));
+          }
+          return [];
+        }) || [],
+    );
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -262,78 +284,21 @@ export default function OrdersPage() {
     setIsPaymentMethodsOpen(false);
   };
 
-  const handleFulfillmentStatusClick = (order: any) => {
-    setSelectedOrderForFulfillment(order);
-    setFulfillmentDialogOpen(true);
-  };
-
-  const handleConfirmFulfillmentUpdate = async () => {
-    if (!selectedOrderForFulfillment || !club?.club_account_id) return;
-
-    try {
-      setIsUpdatingFulfillment(true);
-
-      // Determine the fulfillment status to send based on payment status
-      const fulfillmentStatusType =
-        selectedOrderForFulfillment.payment_status?.includes("REFUND")
-          ? "REFUNDED"
-          : "DELIVERED";
-
-      const response = await updateAdminOrderFulfillment({
-        order_id: selectedOrderForFulfillment.order_id,
-        club_account_id: club.club_account_id,
-        type: fulfillmentStatusType,
-      });
-
-      if (response && response.status === 200) {
-        toast.success("Fulfillment status updated successfully");
-
-        const updatedOrder = {
-          ...selectedOrderForFulfillment,
-          fulfillment_status: fulfillmentStatusType,
-        };
-        setAllOrders((prevOrders: any) =>
-          prevOrders.map((order: any) =>
-            order.order_id === selectedOrderForFulfillment.order_id
-              ? updatedOrder
-              : order,
-          ),
-        );
-
-        setFulfillmentDialogOpen(false);
-        setSelectedOrderForFulfillment(null);
-      } else {
-        toast.error(
-          response?.data?.message || "Failed to update fulfillment status",
-        );
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Error updating fulfillment status");
-      console.error("Error updating fulfillment status:", err);
-    } finally {
-      setIsUpdatingFulfillment(false);
-    }
-  };
-
   const handleRefundClick = (order: Record<string, unknown>) => {
     setSelectedOrderForRefund(order);
     // Initialize all individual units as selected by default
     const orderItems = (order.items as any[]) || [];
     const allUnits = new Set<string>();
     const expandedItems = new Set<string>();
-    const defaultReturn = new Set<string>();
     orderItems.forEach((item: any, idx: number) => {
       expandedItems.add(`${item.product_id}-${idx}`);
       for (let i = 0; i < item.quantity; i++) {
         const unitId = `${item.product_id}-${idx}-${i}`;
         allUnits.add(unitId);
-        // Default to returning items to inventory
-        defaultReturn.add(unitId);
       }
     });
     setSelectedItemsForRefund(allUnits);
     setExpandedRefundItems(expandedItems);
-    setReturnToInventory(defaultReturn);
     setRefundDialogOpen(true);
   };
 
@@ -350,15 +315,10 @@ export default function OrdersPage() {
 
       orderItems.forEach((item: any, idx: number) => {
         let selectedQuantity = 0;
-        const unitDetails: any[] = [];
         for (let i = 0; i < item.quantity; i++) {
           const unitId = `${item.product_id}-${idx}-${i}`;
           if (selectedItemsForRefund.has(unitId)) {
             selectedQuantity++;
-            unitDetails.push({
-              unitId: unitId,
-              returnToInventory: returnToInventory.has(unitId),
-            });
           }
         }
 
@@ -370,12 +330,10 @@ export default function OrdersPage() {
             ...item,
             quantity: selectedQuantity,
             subtotal: itemRefundAmount,
-            units: unitDetails,
           });
         }
       });
 
-      // Check if all units are being refunded
       const totalUnits = orderItems.reduce(
         (sum: number, item: any) => sum + item.quantity,
         0,
@@ -394,9 +352,6 @@ export default function OrdersPage() {
           quantity: item.quantity,
           price: item.price,
           subtotal: item.subtotal,
-          units: item.units.map((unit: any) => ({
-            returnToInventory: unit.returnToInventory,
-          })),
         })),
       };
 
@@ -429,7 +384,6 @@ export default function OrdersPage() {
         setRefundDialogOpen(false);
         setSelectedOrderForRefund(null);
         setSelectedItemsForRefund(new Set());
-        setReturnToInventory(new Set());
         setExpandedRefundItems(new Set());
 
         setTimeout(() => window.location.reload(), 500);
@@ -446,16 +400,6 @@ export default function OrdersPage() {
 
   const handleDeleteClick = (order: Record<string, unknown>) => {
     setSelectedOrderForDelete(order);
-    const orderItems = (order.items as any[]) || [];
-    const defaultReturn = new Set<string>();
-    orderItems.forEach((item: any, idx: number) => {
-      for (let i = 0; i < item.quantity; i++) {
-        const unitId = `${item.product_id}-${idx}-${i}`;
-        defaultReturn.add(unitId);
-      }
-    });
-    setExpandedDeleteItems(new Set());
-    setReturnDeleteToInventory(defaultReturn);
     setDeleteDialogOpen(true);
   };
 
@@ -466,35 +410,16 @@ export default function OrdersPage() {
       setIsProcessingDelete(true);
 
       const orderItems = (selectedOrderForDelete.items as any[]) || [];
-      const itemsWithInventory: any[] = [];
-
-      orderItems.forEach((item: any, idx: number) => {
-        const unitDetails: any[] = [];
-        for (let i = 0; i < item.quantity; i++) {
-          const unitId = `${item.product_id}-${idx}-${i}`;
-          unitDetails.push({
-            unitId: unitId,
-            returnToInventory: returnDeleteToInventory.has(unitId),
-          });
-        }
-        itemsWithInventory.push({
-          ...item,
-          units: unitDetails,
-        });
-      });
 
       const deletePayload = {
         transaction_id: selectedOrderForDelete.transaction_id,
         order_id: selectedOrderForDelete.order_id,
         club_account_id: club?.club_account_id,
-        items: itemsWithInventory.map((item) => ({
+        items: orderItems.map((item) => ({
           product_id: item.product_id,
           name: item.name,
           quantity: item.quantity,
           price: item.price,
-          units: item.units.map((unit: any) => ({
-            returnToInventory: unit.returnToInventory,
-          })),
         })),
       };
 
@@ -514,8 +439,6 @@ export default function OrdersPage() {
 
         setDeleteDialogOpen(false);
         setSelectedOrderForDelete(null);
-        setExpandedDeleteItems(new Set());
-        setReturnDeleteToInventory(new Set());
 
         setTimeout(() => window.location.reload(), 500);
       } else {
@@ -526,6 +449,57 @@ export default function OrdersPage() {
       console.error("Error deleting order:", err);
     } finally {
       setIsProcessingDelete(false);
+    }
+  };
+
+  const handleConfirmDelivery = async () => {
+    if (selectedDeliveryItems.size === 0) return;
+
+    try {
+      setIsConfirmingDelivery(true);
+
+      // Build payload with selected items
+      const deliveryItems = Array.from(selectedDeliveryItems)
+        .map((itemId) => {
+          const item = undeliveredItems.find(
+            (u) =>
+              `${u.orderId}-${u.productId}-${u.unitIndex}` === itemId ||
+              `${u.orderId}-${u.productId}` === itemId,
+          );
+          if (item) {
+            return {
+              order_id: item.orderId,
+              product_id: item.productId,
+            };
+          }
+          return null;
+        })
+        .filter((item) => item !== null);
+
+      const payload = { orders: deliveryItems };
+      console.log("Confirming delivery for items:", payload);
+
+      const response = await updateAdminOrderFulfillment({
+        orders: deliveryItems,
+        club_account_id: club?.club_account_id || "",
+      });
+
+      if (response.status !== 200) {
+        throw new Error(response.data?.message || "Failed to confirm delivery");
+      }
+
+      toast.success(
+        `Confirmed delivery for ${selectedDeliveryItems.size} item(s)`,
+      );
+      setSelectedDeliveryItems(new Set());
+
+      // Refresh the page to fetch updated orders
+      window.location.reload();
+    } catch (err: any) {
+      toast.error(err.message || "Error confirming delivery");
+      console.error("Error confirming delivery:", err);
+    } finally {
+      setIsConfirmingDelivery(false);
     }
   };
 
@@ -573,6 +547,27 @@ export default function OrdersPage() {
               <SelectItem value="CANCELLED">Cancelled</SelectItem>
             </SelectContent>
           </Select>
+
+          <Select
+            onValueChange={setFulfillmentStatusFilter}
+            value={fulfillmentStatusFilter}
+          >
+            <SelectTrigger className="flex items-center gap-2 w-[20%]">
+              <span className="text-muted-foreground whitespace-nowrap">
+                Fulfillment Status:
+              </span>
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="PROCESSING">Processing</SelectItem>
+              <SelectItem value="PARTIALLY_DELIVERED">
+                Partially Delivered
+              </SelectItem>
+              <SelectItem value="DELIVERED">Delivered</SelectItem>
+              <SelectItem value="NOT_PROCESSED">Not Processed</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <p className="text-sm text-gray-600 my-1">
@@ -585,8 +580,12 @@ export default function OrdersPage() {
             setAppliedFilters({
               transaction_id: transactionIdSearch,
               member_name: memberNameSearch,
-              payment_status: paymentStatusFilter,
-              fulfillment_status: fulfillmentStatusFilter,
+              payment_status:
+                paymentStatusFilter !== "all" ? paymentStatusFilter : undefined,
+              fulfillment_status:
+                fulfillmentStatusFilter !== "all"
+                  ? fulfillmentStatusFilter
+                  : undefined,
             });
             setPageToken(undefined);
             setAllOrders([]);
@@ -618,7 +617,146 @@ export default function OrdersPage() {
         </div>
       </Card>
 
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-4 mb-4">
+        <div className="relative">
+          <button
+            onClick={() => setShowPendingDropdown(!showPendingDropdown)}
+            className="relative p-2 mr-5 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+            title="Pending deliveries"
+          >
+            <Bell className="h-6 w-6 text-gray-600" />
+            {undeliveredItems.length > 0 && (
+              <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                {undeliveredItems.length}
+              </span>
+            )}
+          </button>
+          {showPendingDropdown && (
+            <div className="absolute top-full left-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto">
+              <div className="sticky top-0 z-10 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+                <h3 className="font-semibold text-gray-900">
+                  Pending Deliveries ({undeliveredItems.length})
+                </h3>
+                <div className="flex items-center gap-2">
+                  {undeliveredItems.length > 0 && (
+                    <Button
+                      onClick={handleConfirmDelivery}
+                      disabled={
+                        selectedDeliveryItems.size === 0 || isConfirmingDelivery
+                      }
+                      className="bg-green-600 hover:bg-green-700 text-white text-xs"
+                      size="sm"
+                    >
+                      {isConfirmingDelivery ? (
+                        <>
+                          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                          Confirming...
+                        </>
+                      ) : (
+                        `Confirm (${selectedDeliveryItems.size})`
+                      )}
+                    </Button>
+                  )}
+                  <button
+                    onClick={() => setShowPendingDropdown(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              {undeliveredItems.length === 0 ? (
+                <div className="p-4 text-center text-sm text-gray-500">
+                  All items delivered!
+                </div>
+              ) : (
+                <>
+                  <div className="divide-y">
+                    {undeliveredItems.map((item, idx) => (
+                      <div
+                        key={`${item.orderId}-${item.productId}-${idx}`}
+                        className="p-4 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-start gap-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedDeliveryItems.has(
+                              `${item.orderId}-${item.productId}-${item.unitIndex}`,
+                            )}
+                            onChange={(e) => {
+                              const itemId = `${item.orderId}-${item.productId}-${item.unitIndex}`;
+                              const newSelected = new Set(
+                                selectedDeliveryItems,
+                              );
+                              if (e.target.checked) {
+                                newSelected.add(itemId);
+                              } else {
+                                newSelected.delete(itemId);
+                              }
+                              setSelectedDeliveryItems(newSelected);
+                            }}
+                            className="mt-1 rounded flex-shrink-0 cursor-pointer"
+                          />
+                          <div className="flex-1">
+                            <p className="font-medium text-sm text-gray-900">
+                              {item.itemName}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {item.memberName}
+                            </p>
+                            <div className="flex items-center gap-1">
+                              <p className="text-xs text-gray-500">
+                                Transaction:{" "}
+                                <span className="font-mono">
+                                  {item.transactionId
+                                    ?.substring(0, 8)
+                                    .toUpperCase()}
+                                </span>
+                              </p>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(
+                                    item.transactionId,
+                                  );
+                                  setCopiedTransactionId(item.transactionId);
+                                  setTimeout(
+                                    () => setCopiedTransactionId(null),
+                                    2000,
+                                  );
+                                }}
+                                title="Copy full Transaction ID"
+                                className="h-4 w-4 p-0 opacity-75 hover:opacity-100 transition-opacity"
+                              >
+                                {copiedTransactionId === item.transactionId ? (
+                                  <CheckCircle2 className="h-3 w-3 text-green-600" />
+                                ) : (
+                                  <Copy className="h-3 w-3" />
+                                )}
+                              </Button>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Price:{" "}
+                              {formatAmount(
+                                item.itemPrice || 0,
+                                club?.currency,
+                              )}
+                            </p>
+                          </div>
+                          <Badge className="bg-orange-100 text-orange-800 border-orange-200 whitespace-nowrap flex-shrink-0">
+                            Unit {item.unitIndex}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
         <h2 className="text-xl font-medium text-gray-700">
           Showing <span className="font-bold">{allOrders.length}</span> items
         </h2>
@@ -805,17 +943,6 @@ export default function OrdersPage() {
                             >
                               {order.payment_status || "Unknown"}
                             </Badge>
-                            {(order.payment_status === "PENDING" ||
-                              order.payment_status === "PARTIALLY_PAID") && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handlePayNowClick(order)}
-                                className="text-xs h-7 m-0 text-red-600 border-0 shadow-none"
-                              >
-                                Confirm Payment
-                              </Button>
-                            )}
                           </div>
                         </TableCell>
                         <TableCell className="text-center">
@@ -841,18 +968,6 @@ export default function OrdersPage() {
                             >
                               {order.fulfillment_status || "Unknown"}
                             </Badge>
-                            {order.fulfillment_status === "PROCESSING" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() =>
-                                  handleFulfillmentStatusClick(order)
-                                }
-                                className="text-xs h-7 text-purple-600 border-0 shadow-none"
-                              >
-                                Update Status
-                              </Button>
-                            )}
                           </div>
                         </TableCell>
                         <TableCell className="text-center text-sm">
@@ -867,7 +982,18 @@ export default function OrdersPage() {
                             : "N/A"}
                         </TableCell>
                         <TableCell className="text-center">
-                          <div className="flex items-center justify-center gap-2">
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            {(order.payment_status === "PENDING" ||
+                              order.payment_status === "PARTIALLY_PAID") && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handlePayNowClick(order)}
+                                className="text-xs h-7 text-red-600"
+                              >
+                                Confirm Payment
+                              </Button>
+                            )}
                             {order.fulfillment_status === "NOT_PROCESSED" ? (
                               <Button
                                 size="sm"
@@ -951,6 +1077,24 @@ export default function OrdersPage() {
                                                 </div>
                                               )}
                                           </div>
+                                        </div>
+                                        <div className="flex items-center flex-row gap-2 justify-center px-4">
+                                          {item.quantity -
+                                            (item.fulfillment_quantity || 0) >
+                                            0 && (
+                                            <span
+                                              className={`text-xs px-2 py-1 rounded font-medium whitespace-nowrap bg-orange-50 text-orange-700 border border-orange-200`}
+                                            >
+                                              {`⏳ Not Received: ${item.quantity - (item.fulfillment_quantity || 0)} / ${item.quantity}`}
+                                            </span>
+                                          )}
+                                          {item.fulfillment_quantity > 0 && (
+                                            <span
+                                              className={`text-xs px-2 py-1 rounded font-medium whitespace-nowrap bg-green-50 text-green-700 border border-green-200`}
+                                            >
+                                              {`✓ Received: ${item.fulfillment_quantity || 0} / ${item.quantity}`}
+                                            </span>
+                                          )}
                                         </div>
                                         <p className="font-medium text-right">
                                           {formatAmount(
@@ -1203,8 +1347,8 @@ export default function OrdersPage() {
               <div className="space-y-2 border rounded-lg p-3 bg-gray-50 max-h-96 overflow-y-auto">
                 {(selectedOrderForRefund?.items as any[])?.length > 0 ? (
                   (selectedOrderForRefund.items as any[])
-                    .filter((item: any) => item.quantity > 0)
                     .map((item: any, idx: number) => {
+                      if (item.quantity <= 0) return null;
                       const itemId = `${item.product_id}-${idx}`;
                       const isExpanded = expandedRefundItems.has(itemId);
                       return (
@@ -1273,31 +1417,6 @@ export default function OrdersPage() {
                                           )}
                                         </span>
                                       </label>
-                                      {selectedItemsForRefund.has(unitId) && (
-                                        <label className="flex items-center gap-2 cursor-pointer pl-6">
-                                          <input
-                                            type="checkbox"
-                                            checked={returnToInventory.has(
-                                              unitId,
-                                            )}
-                                            onChange={(e) => {
-                                              const newReturn = new Set(
-                                                returnToInventory,
-                                              );
-                                              if (e.target.checked) {
-                                                newReturn.add(unitId);
-                                              } else {
-                                                newReturn.delete(unitId);
-                                              }
-                                              setReturnToInventory(newReturn);
-                                            }}
-                                            className="rounded flex-shrink-0"
-                                          />
-                                          <span className="text-xs text-muted-foreground">
-                                            Return to inventory
-                                          </span>
-                                        </label>
-                                      )}
                                     </div>
                                   );
                                 },
@@ -1307,6 +1426,7 @@ export default function OrdersPage() {
                         </div>
                       );
                     })
+                    .filter(Boolean)
                 ) : (
                   <p className="text-xs text-muted-foreground text-center py-4">
                     No items in this order
@@ -1397,87 +1517,30 @@ export default function OrdersPage() {
             </div>
 
             <div className="space-y-3 border-t pt-4">
-              <div className="space-y-2">
-                <p className="text-sm font-medium">
-                  Order Items - Return to Inventory
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  All items will be returned to inventory by default. Expand
-                  items below to customize this behavior for specific units.
-                </p>
-              </div>
+              <p className="text-sm font-medium">Order Items</p>
               <div className="space-y-2 border rounded-lg p-3 bg-gray-50">
                 {(selectedOrderForDelete?.items as any[])?.length > 0 ? (
                   (selectedOrderForDelete.items as any[]).map(
-                    (item: any, idx: number) => {
-                      const itemId = `${item.product_id}-${idx}`;
-                      const isExpanded = expandedDeleteItems.has(itemId);
-                      return (
-                        <div key={itemId} className="bg-white rounded border">
-                          <button
-                            onClick={() => {
-                              const newExpanded = new Set(expandedDeleteItems);
-                              if (isExpanded) {
-                                newExpanded.delete(itemId);
-                              } else {
-                                newExpanded.add(itemId);
-                              }
-                              setExpandedDeleteItems(newExpanded);
-                            }}
-                            className="w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors"
-                          >
-                            <div className="text-left">
-                              <p className="font-medium text-sm">{item.name}</p>
-                              <p className="text-xs text-muted-foreground">
-                                Quantity: {item.quantity}
-                              </p>
-                            </div>
-                            <ChevronDown
-                              className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${
-                                isExpanded ? "rotate-180" : ""
-                              }`}
-                            />
-                          </button>
-                          {isExpanded && (
-                            <div className="space-y-3 border-t p-3">
-                              {Array.from({ length: item.quantity }).map(
-                                (_, unitIdx) => {
-                                  const unitId = `${item.product_id}-${idx}-${unitIdx}`;
-                                  return (
-                                    <label
-                                      key={unitId}
-                                      className="flex items-center gap-2 cursor-pointer"
-                                    >
-                                      <input
-                                        type="checkbox"
-                                        checked={returnDeleteToInventory.has(
-                                          unitId,
-                                        )}
-                                        onChange={(e) => {
-                                          const newReturn = new Set(
-                                            returnDeleteToInventory,
-                                          );
-                                          if (e.target.checked) {
-                                            newReturn.add(unitId);
-                                          } else {
-                                            newReturn.delete(unitId);
-                                          }
-                                          setReturnDeleteToInventory(newReturn);
-                                        }}
-                                        className="rounded flex-shrink-0"
-                                      />
-                                      <span className="text-xs text-muted-foreground">
-                                        Unit {unitIdx + 1}
-                                      </span>
-                                    </label>
-                                  );
-                                },
-                              )}
-                            </div>
-                          )}
+                    (item: any, idx: number) => (
+                      <div
+                        key={`${item.product_id}-${idx}`}
+                        className="bg-white rounded border p-3 flex items-center justify-between text-sm"
+                      >
+                        <div className="flex-1">
+                          <p className="font-medium">{item.name}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Qty: {item.quantity} ×{" "}
+                            {formatAmount(item.price || 0, club?.currency)}
+                          </p>
                         </div>
-                      );
-                    },
+                        <p className="font-medium text-right">
+                          {formatAmount(
+                            (item.price || 0) * item.quantity,
+                            club?.currency,
+                          )}
+                        </p>
+                      </div>
+                    ),
                   )
                 ) : (
                   <p className="text-xs text-muted-foreground text-center py-4">
@@ -1516,45 +1579,6 @@ export default function OrdersPage() {
               )}
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Fulfillment Update Dialog */}
-      <Dialog
-        open={fulfillmentDialogOpen}
-        onOpenChange={setFulfillmentDialogOpen}
-      >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Update Fulfillment Status</DialogTitle>
-            <DialogDescription>
-              {selectedOrderForFulfillment?.payment_status?.includes("REFUND")
-                ? "Are you sure you want to confirm the refund? This will update the fulfillment status to DELIVERED."
-                : "Are you sure you want to mark this order as delivered? This will update the fulfillment status to DELIVERED."}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex gap-3 justify-end mt-6">
-            <Button
-              variant="outline"
-              onClick={() => setFulfillmentDialogOpen(false)}
-              disabled={isUpdatingFulfillment}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirmFulfillmentUpdate}
-              disabled={isUpdatingFulfillment}
-            >
-              {isUpdatingFulfillment ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Updating...
-                </>
-              ) : (
-                "Confirm"
-              )}
-            </Button>
-          </div>
         </DialogContent>
       </Dialog>
     </div>

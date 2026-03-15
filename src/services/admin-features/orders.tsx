@@ -14,16 +14,11 @@ interface ConfirmOrderPaymentRequest {
     payment_type: string;
 }
 
-interface Unit {
-    returnToInventory: boolean;
-}
-
 interface Item {
     product_id: string;
     name: string;
     quantity: number;
     price: number;
-    units: Unit[];
     subtotal?: number;
 }
 
@@ -93,9 +88,11 @@ export const refundOrRemoveOrder = async (payload: RefundOrRemoveRequest): Promi
 };
 
 interface UpdateFulfillmentRequest {
-    order_id: string;
+    orders: {
+        order_id: string;
+        product_id: string;
+    }[];
     club_account_id: string;
-    type: string;
 }
 
 export const updateAdminOrderFulfillment = async (payload: UpdateFulfillmentRequest): Promise<FetchClubOrdersResponse> => {

@@ -34,7 +34,6 @@ type CartItem = {
   name: string;
   price: number;
   quantity: number;
-  maxQuantity: number;
   allowMultiple: boolean;
 };
 
@@ -51,18 +50,6 @@ export default function MemberShopPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [orderDialog, setOrderDialog] = useState(false);
-  const [localProductQuantities, setLocalProductQuantities] = useState<Record<string, number>>({});
-  
-  // Initialize local product quantities when products data is loaded
-  useEffect(() => {
-    if (productsData?.products) {
-      const quantities: Record<string, number> = {};
-      productsData.products.forEach((product: any) => {
-        quantities[product.product_id] = product.initial_quantity;
-      });
-      setLocalProductQuantities(quantities);
-    }
-  }, [productsData]);
   
   // Check if user is registered with the club
   useEffect(() => {
@@ -131,32 +118,18 @@ export default function MemberShopPage() {
     );
   }
 
-  // Get current quantity for a product (from local state or fallback to initial)
-  const getCurrentQuantity = (productId: string) => {
-    const product = productsData?.products?.find((p: any) => p.product_id === productId);
-    return localProductQuantities[productId] ?? product?.initial_quantity ?? 0;
-  };
-
-  // Get products from API, filter only active products with available quantity
   const availableProducts = (productsData?.products || []).filter(
-    (product: any) => product.active_product && getCurrentQuantity(product.product_id) > 0
+    (product: any) => product.active_product
   );
   
-  // Use club currency if available, fallback to ZAR
   const clubCurrency = clubData?.currency || "ZAR";
 
   const addToCart = (product: any) => {
     const existingItem = cart.find(item => item.productId === product.product_id);
-    const currentQuantity = getCurrentQuantity(product.product_id);
     
     if (existingItem) {
       if (product.purchase_limit === "single") {
         toast.error("This item can only be purchased once");
-        return;
-      }
-      
-      if (existingItem.quantity >= currentQuantity) {
-        toast.error("Maximum quantity reached");
         return;
       }
       
@@ -171,7 +144,6 @@ export default function MemberShopPage() {
         name: product.name,
         price: product.price,
         quantity: 1,
-        maxQuantity: currentQuantity,
         allowMultiple: product.purchase_limit === "multiple",
       };
       setCart([...cart, newItem]);
@@ -192,7 +164,7 @@ export default function MemberShopPage() {
 
     setCart(cart.map(item => 
       item.productId === productId 
-        ? { ...item, quantity: Math.min(newQuantity, item.maxQuantity) }
+        ? { ...item, quantity: newQuantity }
         : item
     ));
   };
@@ -227,18 +199,22 @@ export default function MemberShopPage() {
     try {
       const response = await createOrder(orderRequest);
       
-      // Update local product quantities to reflect the purchase
-      const updatedQuantities = { ...localProductQuantities };
-      cart.forEach(item => {
-        const currentQty = updatedQuantities[item.productId] || 0;
-        updatedQuantities[item.productId] = Math.max(0, currentQty - item.quantity);
-      });
-      setLocalProductQuantities(updatedQuantities);
-
       toast.success(response.message || "Order created successfully!");
       setCart([]);
       setOrderDialog(false);
       setShowCart(false);
+      
+      // Redirect to view-club page with order id and tab params
+      const orderId = response.order_id || response.id;
+      const queryParams = new URLSearchParams();
+      if (orderId) {
+        queryParams.append('orderId', orderId);
+      }
+      queryParams.append('tab', 'bank');
+      
+      setTimeout(() => {
+        navigate(`/myclubs/${clubId}?${queryParams.toString()}`);
+      }, 1000);
     } catch (error: any) {
       console.error("Error creating order:", error);
       const errorMessage = error.response?.data?.message || error.message || "Failed to create order. Please try again.";
@@ -290,9 +266,7 @@ export default function MemberShopPage() {
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {availableProducts.map((product: any) => {
-              const currentQuantity = getCurrentQuantity(product.product_id);
               const inCartQuantity = cart.find(item => item.productId === product.product_id)?.quantity || 0;
-              const isOutOfStock = currentQuantity === 0;
               
               return (
                 <Card key={product.product_id} className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -317,12 +291,6 @@ export default function MemberShopPage() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <Badge variant="outline" className="mb-1">
-                          {product.purchase_limit === "multiple" ? "Multiple OK" : "Limit 1"}
-                        </Badge>
-                        <p className="text-sm text-gray-600">
-                          {currentQuantity} available
-                        </p>
                         {inCartQuantity > 0 && (
                           <p className="text-xs text-orange-600">
                             {inCartQuantity} in cart
@@ -338,10 +306,9 @@ export default function MemberShopPage() {
                     <Button 
                       onClick={() => addToCart(product)} 
                       className="w-full"
-                      disabled={isOutOfStock}
                     >
                       <ShoppingCart className="h-4 w-4 mr-2" />
-                      {isOutOfStock ? "Out of Stock" : "Add to Cart"}
+                      Add to Cart
                     </Button>
                   </CardContent>
                 </Card>
@@ -389,7 +356,7 @@ export default function MemberShopPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                        disabled={!item.allowMultiple || item.quantity >= item.maxQuantity}
+                        disabled={!item.allowMultiple}
                         className="h-8 w-8 p-0"
                       >
                         <Plus className="h-3 w-3" />

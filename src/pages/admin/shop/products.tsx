@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Package, Eye, ChevronsUpDown, Minus, ImageIcon, Upload } from "lucide-react";
+import { Plus, Package, Eye, ChevronsUpDown, ImageIcon, Upload } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -32,9 +32,9 @@ import {
 } from "@/components/ui/select";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { formatAmount } from "@/data/currencies";
-import { addProduct, AddProductRequest, updateProduct, UpdateProductRequest } from "@/services/admin/shop";
+import { addProduct, AddProductRequest, updateProduct, UpdateProductRequest } from "@/services/admin-features/shop";
 import { toast } from "sonner";
-import { useFetchClubProducts } from "@/queries/admin/shop";
+import { useFetchClubProducts } from "@/queries/admin-features/shop";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function ProductsPage() {
@@ -60,7 +60,6 @@ export default function ProductsPage() {
   const [productName, setProductName] = useState("");
   const [price, setPrice] = useState("");
   const [priceDisplay, setPriceDisplay] = useState("");
-  const [quantity, setQuantity] = useState("");
   const [description, setDescription] = useState("");
   const [isActive, setIsActive] = useState(false);
   const [allowMultiple, setAllowMultiple] = useState(true);
@@ -98,7 +97,6 @@ export default function ProductsPage() {
     setProductName("");
     setPrice("");
     setPriceDisplay("");
-    setQuantity("");
     setDescription("");
     setIsActive(false);
     setAllowMultiple(true);
@@ -124,7 +122,7 @@ export default function ProductsPage() {
   };
 
   const handleSubmit = async () => {
-    if (!productName || !price || !quantity || !club?.club_account_id) {
+    if (!productName || !price || !club?.club_account_id) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -134,7 +132,6 @@ export default function ProductsPage() {
         club_account_id: club.club_account_id,
         name: productName,
         price: parseFloat(price) * 100, // Convert to cents as expected by backend
-        initial_quantity: parseInt(quantity),
         active_product: isActive,
         purchase_limit: allowMultiple ? "multiple" : "single",
         description: description || undefined,
@@ -148,7 +145,7 @@ export default function ProductsPage() {
         id: response.product_id || products.length + 1,
         name: productName,
         price: parseFloat(price),
-        quantityLeft: parseInt(quantity),
+        quantityLeft: 0,
         isActive,
         createdAt: Math.floor(Date.now() / 1000), // Current epoch time
         description,
@@ -227,36 +224,6 @@ export default function ProductsPage() {
       prev.map(product => 
         product.id === productId 
           ? { ...product, isActive: !product.isActive }
-          : product
-      )
-    );
-    setUnsavedChanges(prev => new Set([...prev, productId]));
-  };
-
-  const handleQuantityChange = (productId: any, change: number) => {
-    if (!editingProducts.has(productId)) return; // Only allow changes in edit mode
-    
-    setProducts(prev => 
-      prev.map(product => 
-        product.id === productId 
-          ? { 
-              ...product, 
-              quantityLeft: Math.max(0, product.quantityLeft + change)
-            }
-          : product
-      )
-    );
-    setUnsavedChanges(prev => new Set([...prev, productId]));
-  };
-
-  const handleQuantityInputChange = (productId: any, newQuantity: string) => {
-    if (!editingProducts.has(productId)) return; // Only allow changes in edit mode
-    
-    const quantity = parseInt(newQuantity) || 0;
-    setProducts(prev => 
-      prev.map(product => 
-        product.id === productId 
-          ? { ...product, quantityLeft: Math.max(0, quantity) }
           : product
       )
     );
@@ -443,21 +410,6 @@ export default function ProductsPage() {
                           )}
                         </button>
                       </TableHead>
-                      <TableHead className="text-center w-[120px]">
-                        <button
-                          className="flex items-center justify-center gap-1 w-full hover:bg-gray-100 rounded p-1"
-                          onClick={() => handleSort('quantity')}
-                        >
-                          Quantity Left
-                          {quantitySortAsc === null ? (
-                            <ChevronsUpDown className="h-3 w-3 opacity-60" />
-                          ) : (
-                            <span className="text-xs">
-                              {quantitySortAsc ? "▲" : "▼"}
-                            </span>
-                          )}
-                        </button>
-                      </TableHead>
                       <TableHead className="text-center w-[160px]">
                         Active Product
                       </TableHead>
@@ -487,13 +439,13 @@ export default function ProductsPage() {
                   <TableBody>
                     {productsLoading ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8">
+                        <TableCell colSpan={7} className="text-center py-8">
                           Loading products...
                         </TableCell>
                       </TableRow>
                     ) : productsError ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8 text-red-600">
+                        <TableCell colSpan={7} className="text-center py-8 text-red-600">
                           Error loading products. Please try again.
                         </TableCell>
                       </TableRow>
@@ -598,52 +550,6 @@ export default function ProductsPage() {
                           <TableCell className="text-center w-[120px]">
                             {formatAmount(product.price * 100, club?.currency)}
                           </TableCell>
-                          <TableCell className="text-center w-[120px]">
-                            {editingProducts.has(product.id) ? (
-                              <div className="flex items-center justify-center gap-2">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  onClick={() => handleQuantityChange(product.id, -1)}
-                                  disabled={product.quantityLeft <= 0}
-                                  className="h-6 w-6 p-0"
-                                >
-                                  <Minus className="h-3 w-3" />
-                                </Button>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  value={product.quantityLeft}
-                                  onChange={(e) => handleQuantityInputChange(product.id, e.target.value)}
-                                  className={`w-16 h-6 text-center text-xs ${
-                                    product.quantityLeft === 0 
-                                      ? "text-red-600 font-medium border-red-300" 
-                                      : product.quantityLeft < 10 
-                                      ? "text-orange-600 font-medium border-orange-300" 
-                                      : "border-gray-300"
-                                  }`}
-                                />
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  onClick={() => handleQuantityChange(product.id, 1)}
-                                  className="h-6 w-6 p-0"
-                                >
-                                  <Plus className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            ) : (
-                              <span className={`${
-                                product.quantityLeft === 0 
-                                  ? "text-red-600 font-medium" 
-                                  : product.quantityLeft < 10 
-                                  ? "text-orange-600 font-medium" 
-                                  : ""
-                              }`}>
-                                {product.quantityLeft}
-                              </span>
-                            )}
-                          </TableCell>
                           <TableCell className="text-center w-[160px]">
                             <Badge 
                               variant={product.isActive ? "default" : "secondary"}
@@ -700,7 +606,7 @@ export default function ProductsPage() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8">
+                        <TableCell colSpan={7} className="text-center py-8">
                           No products found
                         </TableCell>
                       </TableRow>
@@ -775,29 +681,15 @@ export default function ProductsPage() {
               />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="price">Price *</Label>
-                <Input
-                  id="price"
-                  type="text"
-                  value={priceDisplay}
-                  onChange={handlePriceChange}
-                  placeholder={formatAmount(0, club?.currency)}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="quantity">Initial Quantity *</Label>
-                <Input
-                  id="quantity"
-                  type="number"
-                  min="0"
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                  placeholder="0"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="price">Price *</Label>
+              <Input
+                id="price"
+                type="text"
+                value={priceDisplay}
+                onChange={handlePriceChange}
+                placeholder={formatAmount(0, club?.currency)}
+              />
             </div>
             
             <div className="space-y-2">
@@ -880,7 +772,7 @@ export default function ProductsPage() {
             </DialogClose>
             <Button 
               onClick={handleSubmit}
-              disabled={!productName || !price || !quantity}
+              disabled={!productName || !price}
             >
               Add Product
             </Button>
