@@ -781,7 +781,7 @@ export default function ViewClubPage() {
                         Bookings
                       </TabsTrigger>
                     )}
-                    {!data?.resubmission_required && (
+                    {!data?.resubmission_required && data?.enable_shop && (
                       <ShopTab
                         clubId={clubId!}
                         isMobile={isMobile}
@@ -807,6 +807,7 @@ export default function ViewClubPage() {
                   clubAccountId={data.club_account_id}
                 />
 
+                {data?.enable_shop && (
                 <TabsContent value="shop" className="mt-6">
                   <div className="space-y-6">
                     <Card>
@@ -1074,7 +1075,9 @@ export default function ViewClubPage() {
                     </Card>
                   </div>
                 </TabsContent>
+                )}
 
+                {data?.venues_enabled && (
                 <TabsContent value="bookings" className="mt-6">
                   <MemberBookings
                     venues={venues}
@@ -1083,6 +1086,7 @@ export default function ViewClubPage() {
                     memberName={data?.member_name || ""}
                   />
                 </TabsContent>
+                )}
 
                 <TabsContent value="home" className="mt-6">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-12">

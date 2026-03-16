@@ -1,22 +1,26 @@
 import { useState, useEffect, useContext, useRef } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, AlertCircle, Loader2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { getVenues } from "@/services/admin-features/venues";
 import { getBookings, removeBooking } from "@/services/admin-features/bookings";
+import { updateClubDetails } from "@/services/admin/club";
 
 export default function BookingsPage() {
-  const { club } = useContext(ClubContext) as ClubContextType;
+  const { club, setClub } = useContext(ClubContext) as ClubContextType;
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(() => {
     const today = new Date();
     const day = today.getDay();
@@ -51,6 +55,33 @@ export default function BookingsPage() {
     bookingName: string | null;
   }>({ isOpen: false, slotTime: null, bookingName: null });
   const [isDeletingBooking, setIsDeletingBooking] = useState(false);
+  const [isTogglingVenues, setIsTogglingVenues] = useState(false);
+  const [showVenuesSettings, setShowVenuesSettings] = useState(false);
+
+  const handleToggleVenues = async (enabled: boolean) => {
+    if (!club?.club_account_id) return;
+
+    try {
+      setIsTogglingVenues(true);
+      const response = await updateClubDetails({
+        club_account_id: club.club_account_id,
+        venues_enabled: enabled,
+      });
+      if (response?.message) {
+        toast.success(
+          enabled ? "Bookings enabled successfully" : "Bookings disabled successfully"
+        );
+        setClub({ ...club, venues_enabled: enabled });
+      } else {
+        toast.error("Failed to update bookings settings");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Error updating bookings settings");
+      console.error("Error toggling venues:", err);
+    } finally {
+      setIsTogglingVenues(false);
+    }
+  };
 
   useEffect(() => {
     if (!club?.club_account_id) return;
@@ -447,7 +478,48 @@ export default function BookingsPage() {
             Manage your club's bookings for venues.
           </p>
         </div>
+        <Button
+          onClick={() => setShowVenuesSettings(true)}
+          variant="outline"
+          size="sm"
+          className="text-gray-600 hover:text-gray-900"
+          title="Bookings settings"
+        >
+          <Settings className="h-4 w-4" />
+        </Button>
       </div>
+
+      {!club?.venues_enabled && (
+        <Card className="mb-6 border-orange-200 bg-orange-50">
+          <CardContent className="py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-orange-600" />
+              <div>
+                <p className="font-semibold text-orange-900">
+                  Bookings are currently disabled
+                </p>
+                <p className="text-sm text-orange-700">
+                  Enable bookings to allow members to book your venues
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={() => handleToggleVenues(true)}
+              disabled={isTogglingVenues}
+              className="bg-orange-600 hover:bg-orange-700 text-white"
+            >
+              {isTogglingVenues ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Enabling...
+                </>
+              ) : (
+                "Enable Bookings"
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Venue Tabs */}
       {!loading && venues.length > 0 && (
@@ -806,6 +878,37 @@ export default function BookingsPage() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showVenuesSettings} onOpenChange={setShowVenuesSettings}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bookings Settings</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-base font-semibold">Enable Bookings</Label>
+                <p className="text-sm text-gray-600 mt-1">
+                  Toggle to enable or disable bookings for your venues
+                </p>
+              </div>
+              <Switch
+                checked={club?.venues_enabled || false}
+                onCheckedChange={handleToggleVenues}
+                disabled={isTogglingVenues}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => setShowVenuesSettings(false)}
+              variant="outline"
+            >
+              Close
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

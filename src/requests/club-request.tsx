@@ -25,21 +25,23 @@ export interface ClubOpeningTimesRequest {
 export interface ClubDetailsRequest {
   club_account_id: string;
   opening_times?: ClubOpeningTimesRequest[];
-  bank_details: ClubBankDetailsRequest;
+  bank_details?: ClubBankDetailsRequest;
   payfast_details?: ClubPayFastDetailsRequest;
-  country_of_operation: string;
-  currency: string;
-  support_email: string;
+  country_of_operation?: string;
+  currency?: string;
+  support_email?: string;
   club_url?: string;
   about_club?: string;
   facebook_url?: string;
   instagram_url?: string;
   hide_from_public?: boolean;
-  registration_submission_email_template_body: string;
-  registration_submission_email_subject: string;
-  registration_success_email_template_body: string;
-  registration_success_email_subject: string;
-  use_success_email_template: boolean;
-  use_submission_email_template: boolean;
+  enable_shop?: boolean;
+  venues_enabled?: boolean;
+  registration_submission_email_template_body?: string;
+  registration_submission_email_subject?: string;
+  registration_success_email_template_body?: string;
+  registration_success_email_subject?: string;
+  use_success_email_template?: boolean;
+  use_submission_email_template?: boolean;
   notify_on_member_registration?: boolean;
 }
