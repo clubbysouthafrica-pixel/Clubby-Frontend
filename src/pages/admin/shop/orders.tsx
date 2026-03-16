@@ -286,16 +286,12 @@ export default function OrdersPage() {
 
   const handleRefundClick = (order: Record<string, unknown>) => {
     setSelectedOrderForRefund(order);
-    // Initialize all individual units as selected by default
+    // Initialize all individual units as unchecked by default
     const orderItems = (order.items as any[]) || [];
     const allUnits = new Set<string>();
     const expandedItems = new Set<string>();
     orderItems.forEach((item: any, idx: number) => {
       expandedItems.add(`${item.product_id}-${idx}`);
-      for (let i = 0; i < item.quantity; i++) {
-        const unitId = `${item.product_id}-${idx}-${i}`;
-        allUnits.add(unitId);
-      }
     });
     setSelectedItemsForRefund(allUnits);
     setExpandedRefundItems(expandedItems);
@@ -314,11 +310,16 @@ export default function OrdersPage() {
       const selectedItems: any[] = [];
 
       orderItems.forEach((item: any, idx: number) => {
+        const selectedUnits: any[] = [];
         let selectedQuantity = 0;
         for (let i = 0; i < item.quantity; i++) {
           const unitId = `${item.product_id}-${idx}-${i}`;
           if (selectedItemsForRefund.has(unitId)) {
             selectedQuantity++;
+            const isDelivered = i < (item.fulfillment_quantity || 0);
+            selectedUnits.push({
+              is_delivered: isDelivered,
+            });
           }
         }
 
@@ -330,6 +331,7 @@ export default function OrdersPage() {
             ...item,
             quantity: selectedQuantity,
             subtotal: itemRefundAmount,
+            units: selectedUnits,
           });
         }
       });
@@ -352,9 +354,11 @@ export default function OrdersPage() {
           quantity: item.quantity,
           price: item.price,
           subtotal: item.subtotal,
+          units: item.units,
         })),
       };
 
+      // Call the refund endpoint
       const response = await refundOrRemoveOrder({
         ...refundPayload,
         club_account_id: club?.club_account_id as string,
@@ -476,9 +480,6 @@ export default function OrdersPage() {
         })
         .filter((item) => item !== null);
 
-      const payload = { orders: deliveryItems };
-      console.log("Confirming delivery for items:", payload);
-
       const response = await updateAdminOrderFulfillment({
         orders: deliveryItems,
         club_account_id: club?.club_account_id || "",
@@ -502,6 +503,8 @@ export default function OrdersPage() {
       setIsConfirmingDelivery(false);
     }
   };
+
+  console.log(club)
 
   return (
     <div className="p-5">
@@ -1416,6 +1419,15 @@ export default function OrdersPage() {
                                             club?.currency,
                                           )}
                                         </span>
+                                        {unitIdx < (item.fulfillment_quantity || 0) ? (
+                                          <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 font-semibold">
+                                            Delivered
+                                          </span>
+                                        ) : (
+                                          <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 font-semibold">
+                                            Not Delivered
+                                          </span>
+                                        )}
                                       </label>
                                     </div>
                                   );

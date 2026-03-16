@@ -319,19 +319,14 @@ export default function ViewClubPage() {
 
   useEffect(() => {
     if (activeTab !== "bookings" || !data?.club_account_id) {
-      console.log("Skipping venues fetch:", { activeTab, clubAccountId: data?.club_account_id });
       return;
     }
-
-    console.log("Fetching venues for tab:", activeTab);
 
     const fetchVenues = async () => {
       try {
         setVenuesLoading(true);
         setVenuesError(null);
-        console.log("Fetching venues with club_account_id:", data.club_account_id);
         const venuseData = await getVenues(data.club_account_id);
-        console.log("Venues fetched:", venuseData);
         setVenues(venuseData.venues || []);
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Failed to load venues";

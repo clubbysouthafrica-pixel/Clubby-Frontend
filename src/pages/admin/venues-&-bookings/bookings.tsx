@@ -13,7 +13,7 @@ import {
 import { toast } from "sonner";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { getVenues } from "@/services/admin-features/venues";
-import { getBookings, createBooking, removeBooking } from "@/services/admin-features/bookings";
+import { getBookings, removeBooking } from "@/services/admin-features/bookings";
 
 export default function BookingsPage() {
   const { club } = useContext(ClubContext) as ClubContextType;
@@ -710,20 +710,9 @@ export default function BookingsPage() {
                     const bookingDate = new Date(daysInWeek[selectedSlot.dayIdx]);
                     const [startHour, startMinute] = timeSlots[selectedSlot.startTimeIdx].split(":").map(Number);
                     bookingDate.setHours(startHour, startMinute, 0, 0);
-                    const startTimeEpoch = Math.floor(bookingDate.getTime() / 1000);
-
-                    const bookingRequest = {
-                      venue_id: selectedVenueId!,
-                      name: bookingName,
-                      start_time: startTimeEpoch,
-                      duration: bookingDurationMinutes,
-                      smallest_booking_unit: getBookingUnit(),
-                    };
 
                     try {
                       setIsCreatingBooking(true);
-                      const response = await createBooking(bookingRequest);
-                      console.log("Booking created successfully:", response);
                       
                       // Refresh bookings for the week
                       const weekStart = new Date(currentWeekStart);

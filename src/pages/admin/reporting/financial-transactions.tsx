@@ -152,13 +152,6 @@ export default function FinancialTransactionsPage() {
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="p-5 min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
   return (
     <div className="p-5">
       <div className="mb-4">
@@ -331,10 +324,21 @@ export default function FinancialTransactionsPage() {
                             className="mt-1 rounded flex-shrink-0 cursor-pointer"
                           />
                           <div className="flex-1">
-                            <p className="font-medium text-sm text-gray-900">
-                              {refund.name}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="font-medium text-sm text-gray-900">
+                                {refund.name}
+                              </p>
+                              <span
+                                className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                                  refund.refund_completed
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-yellow-100 text-yellow-800"
+                                }`}
+                              >
+                                {refund.refund_completed ? "Confirmed" : "Pending"}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500">
                               Type: {refund.type}
                             </p>
                             <div className="flex items-center gap-1">
@@ -379,9 +383,16 @@ export default function FinancialTransactionsPage() {
             </div>
           )}
         </div>
-        <h2 className="text-xl font-medium text-gray-700">
+        {!(isLoading || clubLoading) && (<h2 className="text-xl font-medium text-gray-700">
           Showing <span className="font-bold">{allTransactions.length}</span> items
         </h2>
+        )}
+        {(isLoading || clubLoading) && (
+          <div className="flex items-center gap-2 mt-2">
+            <Loader2 className="h-4 w-4 animate-spin text-gray-600" />
+            <span className="text-sm text-gray-600">Loading transactions...</span>
+          </div>
+        )}
       </div>
 
       {transactions?.pageToken && transactions.pageToken !== "" && (
@@ -400,7 +411,10 @@ export default function FinancialTransactionsPage() {
             className="px-4 py-2 bg-orange-100 hover:bg-orange-200 cursor-pointer rounded-[20px] border border-black text-black font-semibold rounded-md hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading...
+              </>
             ) : (
               "Load More"
             )}
@@ -659,7 +673,20 @@ export default function FinancialTransactionsPage() {
                                     )}
                                   </TableCell>
                                   <TableCell className="text-center">
-                                    {entry.type}
+                                    <div className="flex items-center justify-center gap-2">
+                                      <span>{entry.type}</span>
+                                      {entry.type === "REFUND" && (
+                                        <span
+                                          className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                                            entry.refund_completed
+                                              ? "bg-green-100 text-green-800"
+                                              : "bg-yellow-100 text-yellow-800"
+                                          }`}
+                                        >
+                                          {entry.refund_completed ? "Confirmed" : "Pending"}
+                                        </span>
+                                      )}
+                                    </div>
                                   </TableCell>
                                   <TableCell className="text-center">
                                     {entry.description}

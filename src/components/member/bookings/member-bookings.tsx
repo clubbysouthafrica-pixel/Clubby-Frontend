@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { createBooking, getBookings } from "@/services/bookings";
+import { getBookings } from "@/services/bookings";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -869,28 +869,14 @@ export default function MemberBookings({
                       .split(":")
                       .map(Number);
                     bookingDate.setHours(startHour, startMinute, 0, 0);
-                    const startTimeEpoch = Math.floor(
-                      bookingDate.getTime() / 1000
-                    );
 
                     if (!bookingName.trim()) {
                       setBookingDialogError("Please enter a booking name");
                       return;
                     }
 
-                    const bookingRequest = {
-                      venue_id: selectedVenueId!,
-                      name: bookingName.trim(),
-                      start_time: startTimeEpoch,
-                      duration: bookingDurationMinutes,
-                      smallest_booking_unit: getBookingUnit(),
-                    };
-
                     try {
                       setIsCreatingBooking(true);
-
-                      const response = await createBooking(bookingRequest);
-                      console.log("Booking created successfully:", response);
 
                       const weekStart = new Date(currentWeekStart);
                       weekStart.setHours(0, 0, 0, 0);
