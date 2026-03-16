@@ -30,7 +30,7 @@ export default function FinancialTransactionsPage() {
     ClubContext
   ) as ClubContextType;
   
-  const [transactionLimit, setTransactionLimit] = useState(25);
+  const [transactionLimit, setTransactionLimit] = useState(100);
   const [pageToken, setPageToken] = useState<string | undefined>(undefined);
   const [allTransactions, setAllTransactions] = useState<any[]>([]);
   const isLoadingMoreRef = useRef(false);
@@ -241,8 +241,8 @@ export default function FinancialTransactionsPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="25">25</SelectItem>
-              <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+              <SelectItem value="200">200</SelectItem>
             </SelectContent>
           </Select>
         </div>
