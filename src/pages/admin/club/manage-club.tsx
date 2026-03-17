@@ -46,9 +46,7 @@ export default function ManageClubDashboard() {
     <div className="p-6 space-y-6 min-h-screen">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Manage Club Page</h1>
-        <p className="text-muted-foreground">
-          Manage your club
-        </p>
+        <p className="text-muted-foreground">Manage your club</p>
       </div>
       {!detailsLoading && club?.club_account_id && (
         <div className="w-full">

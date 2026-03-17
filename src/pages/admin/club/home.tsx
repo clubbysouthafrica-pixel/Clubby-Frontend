@@ -1,20 +1,48 @@
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useGeneralReportingQuery } from "@/queries/admin/useReporting";
 import { useContext, useEffect } from "react";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { HomeSectionCards } from "@/components/admin/club/home/section-cards";
-import { Loader2 } from "lucide-react";
-import { CardDescription } from "@/components/ui/card";
+import { Loader2, Users, FileText, BarChart2, Settings } from "lucide-react";
 import { useFetchClub } from "@/queries/admin/clubs";
+
+const manageRoutes = [
+  {
+    name: "Club",
+    description:
+      "Edit your club page, update bank details, support email, and email templates.",
+    route: "/manage/club",
+    icon: Settings,
+  },
+  {
+    name: "Members",
+    description:
+      "Register new members or manage all current and past club members.",
+    route: "/manage/members",
+    icon: Users,
+  },
+  {
+    name: "Registration Form",
+    description:
+      "Create and manage your club's registration form. Changes update reporting automatically.",
+    route: "/manage/registrations/forms",
+    icon: FileText,
+  },
+  {
+    name: "Reporting",
+    description: "View financial and general reports for your club.",
+    route: "/reporting/general",
+    icon: BarChart2,
+  },
+];
 
 export default function HomeDashboardPage() {
   const {
@@ -38,78 +66,73 @@ export default function HomeDashboardPage() {
       }
     }
   }, [fetchedClub, club, setClub]);
-  const manageRoutes = [
-    {
-      name: "Club",
-      description:
-        "Manage and edit your club page displayed to members here. You can update key details such as your bank information (visible to members), the support email address they can contact, and customize the email templates sent to members during registration and upon successful registration.",
-      route: "/manage/club",
-    },
-    {
-      name: "Members",
-      description:
-        "Register new members or manage individuals who are or have previously been associated with your club. You can oversee Active Members (registered), Pending Members (awaiting registration), and Deregistered Members.",
-      route: "/manage/members",
-    },
-    {
-      name: "Registration Form",
-      description:
-        "Create and manage a registration form specific to your club. Changes to this form are reflected for all members and automatically adjust related reporting for your club.",
-      route: "/manage/registrations/forms",
-    },
-    {
-      name: "Reporting",
-      description: "View financial and general reports for your club.",
-      route: "/reporting/general",
-    },
-  ];
 
   if (reportLoading || clubLoading) {
     return (
-      <div className="p-5 min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="p-5">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Current Season: {club?.season_cycle}</h1>
-      </div>
-      <CardDescription className="mb-4">
-        To view reports from the current or previous seasons, please visit the
-        Reporting section.
-      </CardDescription>
-      {!reportLoading && (
-        <div>
-          <HomeSectionCards report={report} currency={club?.currency} />
-          <div className="rounded-md border overflow-hidden md:my-3">
-            <Table>
-              <TableHeader className="bg-muted">
-                <TableRow>
-                  <TableHead className="pl-5">Manage</TableHead>
-                  <TableHead className="px-5">Description</TableHead>
-                  <TableHead className="pr-10 items-center">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {manageRoutes.map((r) => (
-                  <TableRow onClick={() => navigate(r.route)} key={r.name}>
-                    <TableCell className="font-bold pl-5">{r.name}</TableCell>
-                    <TableCell className="w-full whitespace-normal break-words align-middle px-5">
-                      <CardDescription> {r.description}</CardDescription>
-                    </TableCell>
-                    <TableCell className="pr-10 items-center">
-                      <Button>View</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+    <div className="p-6 max-w-5xl mx-auto space-y-8">
+      {/* Club Summary Card */}
+      <Card className="shadow-none bg-none">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold flex items-center gap-2">
+            {club?.club_name}
+            <span className="ml-2 text-base font-medium text-muted-foreground">
+              (Season {club?.season_cycle})
+            </span>
+          </CardTitle>
+          <CardDescription>
+            Welcome to your club dashboard. Manage your club, members, and
+            reporting from here.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-4">
+            {/* You can add more club stats here if desired */}
+            <div>
+              <span className="text-muted-foreground text-sm">Currency:</span>
+              <span className="ml-2 font-semibold">{club?.currency}</span>
+            </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Reporting Section Cards */}
+      <div>
+        <HomeSectionCards report={report} currency={club?.currency} />
+      </div>
+
+      {/* Management Quick Actions */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Quick Management</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {manageRoutes.map((r) => (
+            <Card
+              key={r.name}
+              className="hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => navigate(r.route)}
+            >
+              <CardHeader className="flex flex-row items-center gap-3 pb-2">
+                <r.icon className="h-6 w-6 text-primary" />
+                <CardTitle className="text-lg">{r.name}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="mb-4">
+                  {r.description}
+                </CardDescription>
+                <Button variant="outline" onClick={() => navigate(r.route)}>
+                  Manage {r.name}
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      )}
+      </div>
     </div>
   );
 }
