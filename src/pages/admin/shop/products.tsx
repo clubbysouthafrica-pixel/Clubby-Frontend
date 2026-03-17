@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Package, Eye, ChevronsUpDown, ImageIcon, Upload, AlertCircle, Loader2, Settings } from "lucide-react";
+import { Plus, Package, ChevronsUpDown, ImageIcon, Upload, AlertCircle, Loader2, Settings } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -716,52 +716,7 @@ export default function ProductsPage() {
           </CardContent>
         </Card>
       </div>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Inventory
-            </CardTitle>
-            <CardDescription>Manage stock levels and product variants</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Track inventory, set stock alerts, and manage product variations.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5" />
-              Product Catalog
-            </CardTitle>
-            <CardDescription>View and organize your products</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Browse your complete product catalog and manage categories.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Pricing</CardTitle>
-            <CardDescription>Set prices and manage discounts</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Configure product pricing, member discounts, and promotional offers.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
       
-      {/* Add Product Dialog */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
