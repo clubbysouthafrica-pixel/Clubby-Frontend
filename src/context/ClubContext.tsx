@@ -39,7 +39,8 @@ const ClubProvider: React.FC<ClubProviderProps> = ({ children }) => {
         const hasActiveClub = localStorage.getItem(activeClub)
        
         if (hasActiveClub) {
-            setActiveClub(JSON.parse(hasActiveClub))
+            const parsedClub = JSON.parse(hasActiveClub)
+            setActiveClub(parsedClub)
         }
         setIsLoading(false);
     }, [])

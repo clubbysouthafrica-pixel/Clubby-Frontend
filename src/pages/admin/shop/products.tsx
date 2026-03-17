@@ -359,7 +359,7 @@ export default function ProductsPage() {
         club_account_id: club.club_account_id,
         enable_shop: true,
       });
-      console.log("Enable shop response:", response);
+
       if (response?.message) {
         toast.success("Shop enabled successfully");
         setClub({ ...club, enable_shop: true });
@@ -383,7 +383,7 @@ export default function ProductsPage() {
         club_account_id: club.club_account_id,
         enable_shop: enabled,
       });
-      console.log("Toggle shop response:", response);
+      
       if (response?.message) {
         toast.success(
           enabled ? "Shop enabled successfully" : "Shop disabled successfully"

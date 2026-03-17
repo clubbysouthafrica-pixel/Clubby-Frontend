@@ -531,8 +531,6 @@ export default function OrdersPage() {
     }
   };
 
-  console.log(club)
-
   return (
     <div className="p-5">
       <div className="mb-4">

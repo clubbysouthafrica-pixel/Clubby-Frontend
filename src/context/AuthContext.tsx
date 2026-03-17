@@ -63,6 +63,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (isAdmin) {
             localStorage.setItem(adminKey, "true")
             setIsAdmin(true)
+            setUser(true)
             
             // Fetch clubs for admin users
             axios.defaults.headers.common['Authorization'] = `${response.data.accessToken}`;
