@@ -353,7 +353,7 @@ export default function EditClubDetails({
             {/* Club View Tab */}
             <TabsContent value="club-view">
               <Card className="border-0 shadow-none">
-                <CardHeader className="flex flex-row items-start justify-between space-y-0">
+                <CardHeader className="sticky top-0 p-6 bg-white flex flex-row items-start justify-between space-y-0">
                   <div className="space-y-1.5">
                     <CardTitle>Club View</CardTitle>
                     <CardDescription>
@@ -607,7 +607,7 @@ export default function EditClubDetails({
             {/* Location Tab */}
             <TabsContent value="location">
               <Card className="h-[630px] border-0 shadow-none">
-                <CardHeader className="flex flex-row items-start justify-between space-y-0">
+                <CardHeader className="sticky top-0 p-6 bg-white flex flex-row items-start justify-between space-y-0">
                   <div className="space-y-1.5">
                     <CardTitle>Location</CardTitle>
                     <CardDescription>
@@ -688,7 +688,7 @@ export default function EditClubDetails({
             {/* Emailing Tab */}
             <TabsContent value="emailing">
               <Card className="flex flex-col border-0 shadow-none">
-                <CardHeader className="flex flex-row items-start justify-between space-y-0">
+                <CardHeader className="sticky top-0 p-6 bg-white flex flex-row items-start justify-between space-y-0">
                   <div className="space-y-1.5">
                     <CardTitle>Emailing</CardTitle>
                     <CardDescription>
