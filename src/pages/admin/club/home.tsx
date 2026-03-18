@@ -76,8 +76,8 @@ export default function HomeDashboardPage() {
   }
 
   return (
-    <>
-      <div className="p-6 shadow-none rounded-none bg-none border-b">
+    <div className="bg-gray-50">
+      <div className="p-6 shadow-none rounded-none bg-none border-b bg-white">
         <div>
           <div className="text-3xl font-bold flex items-center gap-2">
             {club?.club_name}
@@ -133,6 +133,6 @@ export default function HomeDashboardPage() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

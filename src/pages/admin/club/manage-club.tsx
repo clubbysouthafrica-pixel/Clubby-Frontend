@@ -43,8 +43,8 @@ export default function ManageClubDashboard() {
   }
 
   return (
-    <>
-      <div className="p-6 border-b">
+    <div className="bg-gray-50">
+      <div className="p-6 border-b bg-white">
         <h1 className="text-3xl font-bold tracking-tight">Manage Club Page</h1>
         <p className="text-muted-foreground">Manage your club</p>
       </div>
@@ -82,6 +82,6 @@ export default function ManageClubDashboard() {
         )}
         <EditClubDetails initialTab={initialTab} />
       </div>
-    </>
+    </div>
   );
 }
