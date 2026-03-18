@@ -43,43 +43,45 @@ export default function ManageClubDashboard() {
   }
 
   return (
-    <div className="p-6 space-y-6 min-h-screen">
-      <div>
+    <>
+      <div className="p-6 border-b">
         <h1 className="text-3xl font-bold tracking-tight">Manage Club Page</h1>
         <p className="text-muted-foreground">Manage your club</p>
       </div>
-      {!detailsLoading && club?.club_account_id && (
-        <div className="w-full">
-          <ImageUploadDialog
-            title="Cover Image"
-            className="h-28 md:h-28"
-            description="Upload a new cover image."
-            presignedUrl={clubDetails.images.cover.uploadUrl}
-            imageUrl={clubDetails.images.cover?.fetchUrl ?? ""}
-          />
-          <div className="flex content-center">
+      <div className="p-6 max-w-5xl mx-auto w-full space-y-6 min-h-screen">
+        {!detailsLoading && club?.club_account_id && (
+          <div className="w-full">
             <ImageUploadDialog
-              title="Profile Image"
-              description="Upload a new profile image."
-              presignedUrl={clubDetails.images.profile.uploadUrl}
-              imageUrl={clubDetails.images.profile?.fetchUrl ?? ""}
-              className="rounded-full w-28 h-28 -mt-14 ml-6 border-4 border-background shadow-lg"
+              title="Cover Image"
+              className="h-28 md:h-28"
+              description="Upload a new cover image."
+              presignedUrl={clubDetails.images.cover.uploadUrl}
+              imageUrl={clubDetails.images.cover?.fetchUrl ?? ""}
             />
-            <div className="mt-2 ml-auto">
-              <ShareClubDialog clubId={club.club_account_id} />
+            <div className="flex content-center">
+              <ImageUploadDialog
+                title="Profile Image"
+                description="Upload a new profile image."
+                presignedUrl={clubDetails.images.profile.uploadUrl}
+                imageUrl={clubDetails.images.profile?.fetchUrl ?? ""}
+                className="rounded-full w-28 h-28 -mt-14 ml-6 border-4 border-background shadow-lg"
+              />
+              <div className="mt-2 ml-auto">
+                <ShareClubDialog clubId={club.club_account_id} />
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      {!detailsLoading && (
-        <div className="flex space-x-4 content-center">
-          <div className="text-4xl">{clubDetails?.club_name}</div>
-          <div className="content-ceter self-center">
-            <Badge>{clubDetails?.club_type}</Badge>
+        )}
+        {!detailsLoading && (
+          <div className="flex space-x-4 content-center">
+            <div className="text-4xl">{clubDetails?.club_name}</div>
+            <div className="content-ceter self-center">
+              <Badge>{clubDetails?.club_type}</Badge>
+            </div>
           </div>
-        </div>
-      )}
-      <EditClubDetails initialTab={initialTab} />
-    </div>
+        )}
+        <EditClubDetails initialTab={initialTab} />
+      </div>
+    </>
   );
 }

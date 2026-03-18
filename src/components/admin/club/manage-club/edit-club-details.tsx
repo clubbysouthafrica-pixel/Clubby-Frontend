@@ -34,7 +34,11 @@ import { BankingDetailsForm } from "@/components/admin/club/manage-club/banking-
 import ClubGalleryEdit from "./gallery";
 import { Textarea } from "@/components/ui/textarea";
 
-export default function EditClubDetails({ initialTab }: { initialTab?: string }) {
+export default function EditClubDetails({
+  initialTab,
+}: {
+  initialTab?: string;
+}) {
   const { club, setClub } = useContext(ClubContext) as ClubContextType;
   const { data, isLoading } = useFetchClubDetails(
     club?.club_account_id as string,
@@ -304,7 +308,7 @@ export default function EditClubDetails({ initialTab }: { initialTab?: string })
   function isBankingDetailsIncomplete(): boolean {
     // If the form is currently complete, return false (no star needed)
     if (isBankingDetailsFormComplete) return false;
-    
+
     // Otherwise check if saved data is complete
     const bankDetails = data?.bank_details;
     if (!bankDetails) return true;
@@ -322,7 +326,7 @@ export default function EditClubDetails({ initialTab }: { initialTab?: string })
 
   return (
     <div className="space-y-6">
-      <div className="flex w-[80%] flex-col">
+      <div className="flex w-full flex-col">
         {!isLoading && (
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="w-full h-12">
@@ -330,13 +334,17 @@ export default function EditClubDetails({ initialTab }: { initialTab?: string })
               <TabsTrigger value="account">
                 Banking & Payments
                 {isBankingDetailsIncomplete() && (
-                  <span className="ml-2 text-red-500 font-bold text-2xl leading-none">*</span>
+                  <span className="ml-2 text-red-500 font-bold text-2xl leading-none">
+                    *
+                  </span>
                 )}
               </TabsTrigger>
               <TabsTrigger value="location">
                 Location
                 {isLocationIncomplete() && (
-                  <span className="ml-2 text-red-500 font-bold text-2xl leading-none">*</span>
+                  <span className="ml-2 text-red-500 font-bold text-2xl leading-none">
+                    *
+                  </span>
                 )}
               </TabsTrigger>
               <TabsTrigger value="emailing">Emailing</TabsTrigger>
@@ -469,9 +477,9 @@ export default function EditClubDetails({ initialTab }: { initialTab?: string })
                   </section>
 
                   {/* Other Configurations Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-12 auto-rows-max">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 auto-rows-max">
                     {/* Opening Times Section */}
-                    <section className="h-full flex flex-col">
+                    <section className="h-full flex flex-col col-span-2">
                       <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                         Opening Times
                       </h3>
@@ -628,7 +636,9 @@ export default function EditClubDetails({ initialTab }: { initialTab?: string })
                       <Label>
                         Country of Operation
                         {!country && (
-                          <span className="text-red-500 font-bold text-lg ml-2">*</span>
+                          <span className="text-red-500 font-bold text-lg ml-2">
+                            *
+                          </span>
                         )}
                       </Label>
                       <Select value={country} onValueChange={setCountry}>
@@ -650,7 +660,9 @@ export default function EditClubDetails({ initialTab }: { initialTab?: string })
                       <Label>
                         Currency
                         {!currency && (
-                          <span className="text-red-500 font-bold text-lg ml-2">*</span>
+                          <span className="text-red-500 font-bold text-lg ml-2">
+                            *
+                          </span>
                         )}
                       </Label>
                       <Select value={currency} onValueChange={setCurrency}>
