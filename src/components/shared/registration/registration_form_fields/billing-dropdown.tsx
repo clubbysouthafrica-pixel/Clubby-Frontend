@@ -24,7 +24,7 @@ interface Field {
   field_type: string;
   placeholder?: string;
   required?: boolean;
-  value?: string;
+  value?: string | number;
   billingOptions?: BillingOption[];
   multiplier_value?: number;
 }
@@ -64,7 +64,6 @@ export default function BillingDropdown({
   }, [field?.multiplier_value, field?.value]);
 
   const onBillingSelect = (label: string) => {
-    // If "undefined" is selected, set value to empty string
     const valueToSet = label === "undefined" ? "" : label;
     const option = field.billingOptions?.find((o) => o.label === valueToSet);
     setMultiplier(1);
@@ -102,25 +101,24 @@ export default function BillingDropdown({
   };
 
   return (
-    <div className="grid gap-2" key={field.field_id}>
-      <Label>
+    <div className="space-y-2 relative min-w-0 w-full" key={field.field_id}>
+      <Label className="block text-base font-medium text-gray-900">
         {field.field_name}
-        {field.required ? <span className="text-red-500">*</span> : null}
       </Label>
 
-      <div className="space-y-0 relative min-w-0">
+      <div className="space-y-0 relative min-w-0 w-full">
         <Select
           onValueChange={onBillingSelect}
-          value={field.value || "undefined"}
+          value={typeof field.value === "string" && field.value ? field.value : "undefined"}
           open={isOpen}
           onOpenChange={setIsOpen}
         >
           <SelectTrigger
-            className={
+            className={`w-full border border-gray-300 rounded-md px-3 py-2.5 text-base font-normal focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent ${
               selectedOption?.multiplier && field.value
-                ? "w-full rounded-b-none border-b-0"
-                : "w-full"
-            }
+                ? "rounded-b-none border-b-0"
+                : ""
+            }`}
           >
             <SelectValue
               placeholder={field.placeholder ?? "Select membership type"}
@@ -128,17 +126,14 @@ export default function BillingDropdown({
           </SelectTrigger>
 
           <SelectContent
-            className={`
-              ${(field.billingOptions?.length ?? 0) > 5 ? "max-h-[400px] overflow-y-auto" : ""}
-              w-full max-w-full overflow-x-auto left-0 right-0
-            `}
+            className={`${(field.billingOptions?.length ?? 0) > 5 ? "max-h-[400px] overflow-y-auto" : ""} w-full max-w-full overflow-x-auto left-0 right-0`}
             style={{ minWidth: 0, maxWidth: "90vw" }}
           >
             <SelectGroup>
-              <SelectItem value="undefined" className="text-muted-foreground">
+              <SelectItem value="undefined" className="text-gray-500">
                 -- Not Selected --
               </SelectItem>
-              <SelectLabel className="text-muted-foreground/60">
+              <SelectLabel className="text-gray-500/70">
                 {field.field_name}
               </SelectLabel>
               {field.billingOptions?.map((opt) => (
@@ -165,15 +160,15 @@ export default function BillingDropdown({
 
         {selectedOption?.multiplier && field.value && (
           <div
-            className="flex flex-wrap items-center gap-2 px-3 py-2 border border-t-0 border-input rounded-b-md bg-white"
+            className="flex w-full flex-wrap items-center gap-2 px-3 py-2 border border-gray-300 border-t-0 rounded-b-md bg-white"
             onClick={(e) => {
               if (!(e.target instanceof HTMLInputElement)) {
                 setIsOpen(true);
               }
             }}
           >
-            <p className="text-sm font-medium">{selectedOption.label}</p>
-            <span className="text-gray-1000 font-medium">×</span>
+            <p className="text-sm font-medium text-gray-900">{selectedOption.label}</p>
+            <span className="text-gray-900 font-medium">×</span>
             <input
               type="number"
               value={multiplier}
@@ -184,15 +179,16 @@ export default function BillingDropdown({
                 setMultiplier(val);
                 onMultiplierChange(val);
               }}
-              className="w-16 h-7 px-2 text-center text-sm border border-gray-500 rounded-sm flex-shrink-0"
+              onInvalid={(e) => (e as any).preventDefault()}
+              className="w-16 h-7 px-2 text-center text-sm border border-gray-300 rounded-sm flex-shrink-0"
               style={{
                 MozAppearance: "textfield",
                 WebkitAppearance: "none",
                 margin: 0,
               }}
             />
-            <span className="text-gray-500 font-medium">=</span>
-            <span className="font-semibold text-sm">
+            <span className="text-gray-600 font-medium">=</span>
+            <span className="font-semibold text-sm text-gray-900">
               {formatAmount(
                 (selectedOption?.amount ?? 0) * multiplier,
                 clubCurrency,

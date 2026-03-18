@@ -56,6 +56,9 @@ export function ClubRegisterForm() {
   const [clubName, setClubName] = useState("");
   const [clubProfileUrl, setClubProfileUrl] = useState("");
 
+  const hasEmptyStandardValue = (value?: string | number) =>
+    typeof value !== "string" || value.trim() === "";
+
   useEffect(() => {
     if (data?.currency) {
       setClubCurrency(data.currency);
@@ -81,7 +84,7 @@ export function ClubRegisterForm() {
                 field?.field_type === "STANDARD" &&
                 field?.input_type === "SIGNATURE" &&
                 field?.signature_type === "signature" &&
-                field.value
+                typeof field.value === "string" && field.value
               ) {
                 const dataUrl = await presignedUrlToDataUrl(field.value);
                 return { ...field, value: dataUrl };
@@ -127,7 +130,7 @@ export function ClubRegisterForm() {
             if (!f.value || f.value !== "true")
               missing.push({ page: p.page_index, field: f });
           } else {
-            if (!f.value || f.value.trim() === "")
+            if (hasEmptyStandardValue(f.value))
               missing.push({ page: p.page_index, field: f });
           }
         }
@@ -146,7 +149,7 @@ export function ClubRegisterForm() {
     const currentPage = pages[currentPageIndex];
     const missingOnCurrent = currentPage.fields.filter((f) => {
       if (f.required) {
-        if (f.field_type === "STANDARD") return !f.value?.trim();
+        if (f.field_type === "STANDARD") return hasEmptyStandardValue(f.value);
         if (f.field_type === "BILLING" && f.input_type === "DROPDOWN")
           return f.value == null || f.selectedAmountCents == null;
         if (f.field_type === "BILLING" && f.input_type === "DISCOUNT")

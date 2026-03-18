@@ -112,13 +112,14 @@ export default function DynamicFormBuilder({ currency, clubAccountId, page, allP
   const addField = () => {
     const inputType = fieldItemType.split(";")[0]
     const fieldType = fieldItemType.split(";")[1]
+    const nextFieldNumber = page.fields.length + 1
 
     const type = {
-      field_order_id: page.fields.length + 1,
+      field_order_id: nextFieldNumber,
       field_id: `new-field-${Date.now()}-${Math.random()}`, // Generate unique ID for new fields
       field_type: fieldType.toUpperCase(),
       required: true,
-      field_text: `Field ${page.fields?.length ?? 0 + 1}`,
+      field_text: `Field ${nextFieldNumber}`,
       input_type: fieldType === "text" ? "DISPLAY" : inputType.toUpperCase(),
       field_name: "",
       placeholder: "",
@@ -131,7 +132,7 @@ export default function DynamicFormBuilder({ currency, clubAccountId, page, allP
       type.field_name = "Custom Amount"
       type.placeholder = "Enter amount"
     } else {
-      type.field_name = fieldType === "text" ? "" : `Field ${page?.fields?.length ?? "Field" + 1}`
+      type.field_name = fieldType === "text" ? "" : `Field ${nextFieldNumber}`
       type.placeholder = "Default placeholder"
     }
 

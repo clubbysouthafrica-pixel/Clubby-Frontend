@@ -28,10 +28,16 @@ interface Props {
     field: InputFormRegistration
     allPages: PageFormRegistration[]
     update: (input: InputFormRegistration) => void
+    openDialog?: boolean;
+    setOpenDialog?: (open: boolean) => void;
 }
 
-export default function FieldInputEditorDialog({ currency, field, allPages, update }: Props) {
-    const [openDialog, setOpenDialog] = useState<boolean>(false);
+export default function FieldInputEditorDialog({ currency, field, allPages, update, openDialog: externalOpenDialog, setOpenDialog: externalSetOpenDialog }: Props) {
+    const [internalOpenDialog, setInternalOpenDialog] = useState<boolean>(false);
+    
+    // Use external state if provided, otherwise use internal state
+    const openDialog = externalOpenDialog !== undefined ? externalOpenDialog : internalOpenDialog;
+    const setOpenDialog = externalSetOpenDialog || setInternalOpenDialog;
 
     const [fieldText, setFieldText] = useState("")
     const [fieldName, setFieldName] = useState("")
@@ -154,8 +160,8 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
 
     return (
         <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-            <DialogTrigger asChild>
-                <div className='w-full space-x-2 flex items-center'>
+            {externalSetOpenDialog && <DialogTrigger asChild><div className='hidden' /></DialogTrigger>}
+            {!externalSetOpenDialog && <DialogTrigger asChild><div className='w-full space-x-2 flex items-center'>
                     {
                         field.input_type === "SIGNATURE" && field.field_type === "STANDARD" ?
                             <StandardSignature field={field} />
@@ -222,7 +228,7 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
                         <PencilIcon />
                     </Button>
                 </div>
-            </DialogTrigger>
+            </DialogTrigger>}
             <DialogContent className="sm:max-w-[450px] flex flex-col overflow-hidden">
                 <div className="flex-1 pr-2">
                 {
