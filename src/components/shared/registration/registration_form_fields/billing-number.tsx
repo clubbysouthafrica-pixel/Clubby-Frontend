@@ -62,10 +62,10 @@ export default function BillingNumber({
     };
 
     return (
-        <div className="grid gap-2" key={field.field_id}>
-            <label className="text-sm font-medium">
+        <div className="space-y-2" key={field.field_id}>
+            <label className="block text-base font-medium text-gray-900">
                 {field.field_name}
-                {field.required ? <span className="text-red-500"> *</span> : null}
+
             </label>
             <div className="flex items-center gap-2">
                 <Input
@@ -73,7 +73,8 @@ export default function BillingNumber({
                     value={displayAmount}
                     placeholder={field.placeholder ?? "Enter amount"}
                     onChange={handleFormattedInputChange}
-                    className="flex-1"
+                    onInvalid={(e) => e.preventDefault()}
+                    className="flex-1 border border-gray-300 rounded-md px-3 py-2.5 text-base font-normal focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                 />
             </div>
         </div>

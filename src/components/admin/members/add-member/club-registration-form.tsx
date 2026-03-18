@@ -56,6 +56,9 @@ export function ClubRegisterForm({
   const [totalRegistrationFee, setTotalRegistrationFee] = useState(0);
   const [isRegistering, setIsRegistering] = useState(false);
 
+  const hasEmptyStandardValue = (value?: string | number) =>
+    typeof value !== "string" || value.trim() === "";
+
   useEffect(() => {
     if ((data as PagedFormPayload)?.pages) {
       const sorted = (data as PagedFormPayload).pages
@@ -134,7 +137,7 @@ export function ClubRegisterForm({
             if (!f.value || f.value !== "true")
               missing.push({ page: p.page_index, field: f });
           } else {
-            if (!f.value || f.value.trim() === "")
+            if (hasEmptyStandardValue(f.value))
               missing.push({ page: p.page_index, field: f });
           }
         }
@@ -153,7 +156,7 @@ export function ClubRegisterForm({
     const currentPage = pages[currentPageIndex];
     const missingOnCurrent = currentPage.fields.filter((f) => {
       if (f.required) {
-        if (f.field_type === "STANDARD") return !f.value?.trim();
+        if (f.field_type === "STANDARD") return hasEmptyStandardValue(f.value);
         if (f.field_type === "BILLING" && f.input_type === "DROPDOWN") return f.value == null || f.selectedAmountCents == null;
         if (f.field_type === "BILLING" && f.input_type === "NUMBER") return f.value == null || (typeof f.value === "number" && f.value <= 0);
       }

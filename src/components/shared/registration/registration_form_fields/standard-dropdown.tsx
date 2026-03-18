@@ -16,7 +16,7 @@ interface Field {
   input_type: string;
   placeholder?: string;
   required?: boolean;
-  value?: string;
+  value?: string | number;
   options?: string[];
 }
 
@@ -47,29 +47,28 @@ export default function StandardDropdown({
   };
 
   return (
-    <div className="grid gap-2 relative min-w-0" key={field.field_id}>
-      <Label htmlFor={field.field_id}>
-        {field.field_name}{" "}
-        {field.required ? <span className="text-red-500">*</span> : null}
+    <div className="space-y-2 relative min-w-0" key={field.field_id}>
+      <Label htmlFor={field.field_id} className="block text-base font-medium text-gray-900">
+        {field.field_name}
       </Label>
 
-      <Select onValueChange={onChange} value={field.value || "undefined"}>
-        <SelectTrigger className="w-full">
+      <Select
+        onValueChange={onChange}
+        value={typeof field.value === "string" && field.value ? field.value : "undefined"}
+      >
+        <SelectTrigger className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-base font-normal focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent">
           <SelectValue placeholder={field.placeholder ?? "Select an option"} />
         </SelectTrigger>
 
         <SelectContent
-          className={`
-            ${(field.options?.length ?? 0) > 5 ? "max-h-[400px] overflow-y-auto" : ""}
-               w-full max-w-full overflow-x-auto left-0 right-0
-            `}
+          className={`${(field.options?.length ?? 0) > 5 ? "max-h-[400px] overflow-y-auto" : ""} w-full max-w-full overflow-x-auto left-0 right-0`}
           style={{ minWidth: 0, maxWidth: "90vw" }}
         >
           <SelectGroup>
-            <SelectItem value="undefined" className="text-muted-foreground">
+            <SelectItem value="undefined" className="text-gray-500">
               -- Select an option --
             </SelectItem>
-            <SelectLabel className="text-muted-foreground/60">
+            <SelectLabel className="text-gray-500/70">
               Options
             </SelectLabel>
             {field.options?.map((opt) => (

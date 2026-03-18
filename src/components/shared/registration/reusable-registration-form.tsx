@@ -1,11 +1,4 @@
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { ReactNode } from "react";
@@ -63,7 +56,7 @@ export interface PageFieldBase {
   }>;
   currency?: string;
   amount?: number;
-  value?: string;
+  value?: string | number;
   signature_type?: string;
   selectedAmountCents?: number;
   selectedDiscountPercentage?: number;
@@ -71,6 +64,14 @@ export interface PageFieldBase {
   option_order_id?: string;
   percentage?: number;
   label?: string;
+  editable_by_member?: boolean;
+  phone_number_input?: boolean;
+  sensitive_information?: boolean;
+}
+
+// Helper type for components that require signature_type
+export interface SignatureField extends PageFieldBase {
+  signature_type: string;
 }
 
 export interface FormPage {
@@ -156,49 +157,53 @@ export function ReusableRegistrationForm({
 
   return (
     <div
-      className={`flex justify-center items-center px-0 lg:px-0 w-full overflow-x-hidden ${className ?? "py-4 lg:py-8"}`}
+      className={`flex flex-col gap-10 justify-center items-center px-3 lg:px-4 w-full overflow-x-hidden  bg-gradient-to-b from-gray-50 to-white ${className ?? "py-6 lg:py-12"}`}
     >
-      <Card
-        className={`w-full max-w-full lg:w-[800px] gap-2 border shadow-sm pt-0 ${className}`}
+      <div
+        className={`w-full max-w-2xl bg-white rounded-lg shadow-md overflow-hidden ${className}`}
       >
         {showHeader && (
-          <CardHeader className="border-b bg-muted/30 py-4 lg:py-6 pb-4 lg:pb-6 flex flex-col items-center gap-3">
+          <div className="border-b border-gray-200 bg-white py-4 lg:py-6 px-6 lg:px-10 flex flex-col items-center gap-4">
             {clubProfileUrl && (
               <img
                 src={clubProfileUrl}
                 alt="Club Profile"
-                className="w-24 h-24 rounded-full object-cover border-3 border-white shadow-md"
+                className="w-32 h-32 rounded-full object-cover border-2 border-gray-300 shadow-md"
               />
             )}
-            <div className="flex flex-col items-center gap-2">
-              <CardTitle className="text-base lg:text-3xl text-center">
+            <div className="flex flex-col items-center gap-1">
+              <h1 className="text-2xl lg:text-4xl font-bold text-center text-gray-900">
                 {headerTitle || clubName}
-              </CardTitle>
+              </h1>
               {headerDescription && (
-                <CardDescription className="text-center text-xs lg:text-xs">
+                <p className="text-center text-sm lg:text-base text-gray-600 mt-2">
                   {headerDescription}
-                </CardDescription>
+                </p>
               )}
             </div>
-          </CardHeader>
+          </div>
         )}
-        <CardContent className="py-3 lg:py-2 px-2 lg:px-4 overflow-x-hidden">
+      </div>
+      <div
+        className={`w-full max-w-2xl mb-5 bg-white rounded-lg shadow-md overflow-hidden ${className}`}
+      >
+        <div className="px-6 lg:px-10 py-6 lg:py-8 overflow-x-hidden">
           {pages.length > 0 && (
             <form>
-              <div className="space-y-2 lg:space-y-2 min-w-0">
-                <div className="gap-2 lg:gap-2 min-w-0">
+              <div className="space-y-0 min-w-0">
+                <div className="min-w-0">
                   {topContent}
 
                   {pages[currentPageIndex] && (
-                    <h3 className="text-2xl lg:text-2xl font-semibold text-center border-b pb-4">
+                    <h2 className="text-2xl lg:text-2xl font-bold text-gray-900 pb-6 mb-8 border-b border-gray-300">
                       {pages[currentPageIndex].page_header}
-                    </h3>
+                    </h2>
                   )}
 
                   {pages[currentPageIndex] && (
                     <div
                       key={pages[currentPageIndex].page_index}
-                      className="space-y-4 lg:space-y-6 px-1 lg:px-2 py-2 lg:py-2"
+                      className="space-y-6 lg:space-y-8"
                     >
                       {pages[currentPageIndex].fields
                         .sort(
@@ -220,7 +225,7 @@ export function ReusableRegistrationForm({
                             return (
                               <div
                                 key={field.field_order_id}
-                                className="prose prose-sm max-w-none bg-muted/10 break-words overflow-hidden w-full [&_*]:break-words [&_*]:max-w-full [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-semibold [&_h4]:text-base [&_h4]:font-semibold [&_h5]:text-sm [&_h5]:font-semibold [&_h6]:text-xs [&_h6]:font-semibold"
+                                className="prose prose-sm max-w-none bg-blue-50 rounded-md p-4 break-words overflow-hidden w-full text-gray-700 [&_*]:break-words [&_*]:max-w-full [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-semibold [&_h4]:text-base [&_h4]:font-semibold [&_h5]:text-sm [&_h5]:font-semibold [&_h6]:text-xs [&_h6]:font-semibold"
                                 dangerouslySetInnerHTML={{ __html: cleaned }}
                               />
                             );
@@ -278,7 +283,7 @@ export function ReusableRegistrationForm({
                             return (
                               <StandardSignature
                                 key={field.field_id}
-                                field={field as any}
+                                field={field as SignatureField}
                                 currentPageIndex={currentPageIndex}
                                 pages={pages}
                                 setFieldValue={setFieldValue}
@@ -357,49 +362,47 @@ export function ReusableRegistrationForm({
                     customActions
                   ) : showNavigation ? (
                     pages.length === 1 ? (
-                      <Button
-                        type="button"
-                        onClick={onContinue}
-                        disabled={isPending}
-                        className="w-full mt-2"
-                        size="sm"
-                      >
-                        {isPending ? "Processing..." : "Continue"}
-                      </Button>
+                      <div className="mt-8">
+                        <Button
+                          type="button"
+                          onClick={onContinue}
+                          disabled={isPending}
+                          className="w-full bg-black hover:bg-gray-900 text-white font-semibold py-2.5 rounded-md text-base"
+                        >
+                          {isPending ? "Processing..." : "Continue"}
+                        </Button>
+                      </div>
                     ) : (
-                      <div className="flex flex-col lg:flex-row justify-between items-center gap-2 lg:gap-0 pt-3 border-t mt-2">
+                      <div className="flex flex-col lg:flex-row justify-between items-center gap-3 lg:gap-4 pt-8 border-t border-gray-200 mt-8">
                         {currentPageIndex > 0 ? (
                           <Button
                             variant="outline"
                             type="button"
-                            size="sm"
-                            className="w-full lg:w-[90px]"
+                            className="w-full lg:w-auto px-6 py-2 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50"
                             onClick={handlePrevious}
                             disabled={isPending}
                           >
                             Previous
                           </Button>
                         ) : (
-                          <div className="w-full lg:w-[90px]" />
+                          <div className="w-full lg:w-auto" />
                         )}
-                        <div className="text-xs lg:text-xs text-muted-foreground flex-1 text-center order-first lg:order-none">
+                        <div className="text-sm text-gray-600 flex-1 text-center order-first lg:order-none">
                           Page {currentPageIndex + 1} of {pages.length}
                         </div>
                         {isLastPage ? (
                           <Button
                             type="button"
-                            size="sm"
-                            className="w-full lg:w-[90px]"
+                            className="w-full lg:w-auto px-6 py-2 bg-black hover:bg-gray-900 text-white font-semibold rounded-md"
                             onClick={onContinue}
                             disabled={isPending}
                           >
-                            {isPending ? "..." : "Continue"}
+                            {isPending ? "Processing..." : "Submit"}
                           </Button>
                         ) : (
                           <Button
                             type="button"
-                            size="sm"
-                            className="w-full lg:w-[90px]"
+                            className="w-full lg:w-auto px-6 py-2 bg-black hover:bg-gray-900 text-white font-semibold rounded-md"
                             onClick={handleNext}
                             disabled={isPending}
                           >
@@ -411,9 +414,9 @@ export function ReusableRegistrationForm({
                   ) : null}
 
                   {requiredFieldsMissing && (
-                    <Alert className="border border-red-600 text-red-600 mt-2">
-                      <AlertCircle className="h-4 w-4 text-red-600" />
-                      <AlertDescription className="text-xs lg:text-xs text-red-600">
+                    <Alert className="border border-red-400 bg-red-50 text-red-800 mt-6 rounded-md">
+                      <AlertCircle className="h-5 w-5 text-red-600" />
+                      <AlertDescription className="text-sm text-red-800 ml-2">
                         Please fill all required fields.
                         {missingFieldNames && missingFieldNames.length > 0 && (
                           <div className="mt-2">
@@ -430,8 +433,8 @@ export function ReusableRegistrationForm({
               </div>
             </form>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

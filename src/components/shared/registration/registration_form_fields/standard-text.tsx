@@ -11,7 +11,7 @@ interface Field {
   input_type: string
   placeholder?: string
   required?: boolean
-  value?: string
+  value?: string | number
   phone_number_input?: boolean
 }
 
@@ -37,8 +37,8 @@ export default function StandardText({
   
   // Parse prefilled phone number if it exists
   const parsePhoneNumber = () => {
-    if (!isPhoneNumber || !field.value) {
-      return { country: "ZA", number: field.value ?? "" }
+    if (!isPhoneNumber || typeof field.value !== "string" || !field.value) {
+      return { country: "ZA", number: typeof field.value === "string" ? field.value : "" }
     }
     
     // Sort by longest dialing code first to avoid conflicts (e.g., +2 vs +27)
@@ -137,14 +137,13 @@ export default function StandardText({
 
   if (isPhoneNumber) {
     return (
-      <div className="grid gap-2" key={field.field_id}>
-        <Label htmlFor={field.field_id}>
+      <div className="space-y-2" key={field.field_id}>
+        <Label htmlFor={field.field_id} className="block text-base font-medium text-gray-900">
           {field.field_name}{" "}
-          {field.required ? <span className="text-red-500">*</span> : null}
         </Label>
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <Select value={countryCode} onValueChange={setCountryCode}>
-            <SelectTrigger className="w-[80px]">
+            <SelectTrigger className="w-[100px] border border-gray-300 rounded-md px-3 py-2.5 text-base font-normal">
               <SelectValue>
                 {countryCodes.find(c => c.code === countryCode)?.dialingCode}
               </SelectValue>
@@ -165,21 +164,23 @@ export default function StandardText({
             onChange={(e) => onChange(e.target.value)}
             onBlur={handlePhoneBlur}
             required={field.required}
-            className={phoneError ? "border-red-500" : ""}
+            onInvalid={(e) => e.preventDefault()}
+            className={`flex-1 border border-gray-300 rounded-md px-3 py-2.5 text-base font-normal focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent ${
+              phoneError ? "border-red-500 focus:ring-red-500" : ""
+            }`}
           />
         </div>
         {phoneError && (
-          <p className="text-sm text-red-500">{phoneError}</p>
+          <p className="text-sm text-red-600">{phoneError}</p>
         )}
       </div>
     )
   }
 
   return (
-    <div className="grid gap-2" key={field.field_id}>
-      <Label htmlFor={field.field_id}>
-        {field.field_name}{" "}
-        {field.required ? <span className="text-red-500">*</span> : null}
+    <div className="space-y-2" key={field.field_id}>
+      <Label htmlFor={field.field_id} className="block text-base font-medium text-gray-900">
+        {field.field_name}
       </Label>
       <Input
         id={field.field_id}
@@ -188,6 +189,8 @@ export default function StandardText({
         value={field.value ?? ""}
         onChange={(e) => onChange(e.target.value)}
         required={field.required}
+        onInvalid={(e) => e.preventDefault()}
+        className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-base font-normal focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
       />
     </div>
   )

@@ -11,7 +11,7 @@ interface Field {
     signature_type: string
     placeholder?: string
     required?: boolean
-    value?: string
+    value?: string | number
 }
 
 interface StandardFieldInputProps {
@@ -32,7 +32,9 @@ export default function StandardSignature({
     setFieldValue,
 }: StandardFieldInputProps) {
     const [drawSignature, setDrawSignature] = useState(field?.signature_type === "name" ? false : true)
-    const [name, setName] = useState(field?.signature_type === "name" && field?.value ? field.value : "")
+    const [name, setName] = useState(
+        field?.signature_type === "name" && typeof field?.value === "string" ? field.value : ""
+    )
     const isMobile = useIsMobile()
 
     const sigPadRef = useRef<SignaturePad | null>(null);
@@ -77,15 +79,15 @@ export default function StandardSignature({
         <div className="w-full" key={field.field_id}>
             <div className={`flex ${isMobile ? 'flex-col gap-2' : 'flex-row gap-0 items-stretch'}`}>
                 <div className={`${isMobile ? 'w-full text-left' : 'pr-5 flex-shrink-0 flex items-center'}`}>
-                    <Label onClick={save} className={`${isMobile ? 'text-base text-left' : 'text-l'} mb-0`}>
-                        {field.required ? <span className="text-red-500">*</span> : null} {field.field_name}:
+                    <Label onClick={save} className={`${isMobile ? 'text-base text-left font-medium text-gray-900' : 'text-base font-medium text-gray-900'} mb-0`}>
+                        {field.field_name}:
                     </Label>
                 </div>
 
                 <div className={`${isMobile ? 'flex flex-col gap-3' : 'flex flex-row gap-4 items-start'} flex-1`}>
                     {drawSignature ? (
-                        <div className={`border-b-2 border-muted-foreground ${isMobile ? 'w-full max-w-full h-[100px]' : 'w-[300px] h-[70px]'} overflow-hidden`}>
-                            {field.value?.startsWith("data:image/png;base64,") ? (
+                        <div className={`border-b-2 border-gray-300 ${isMobile ? 'w-full max-w-full h-[100px]' : 'w-[300px] h-[70px]'} overflow-hidden`}>
+                            {typeof field.value === "string" && field.value.startsWith("data:image/png;base64,") ? (
                                 <img
                                     src={field.value}
                                     alt="Saved Signature"
@@ -122,11 +124,13 @@ export default function StandardSignature({
                                     );
                                 }}
                                 placeholder="Type your name as signature"
-                                className={`${isMobile ? 'w-full max-w-full' : 'w-[300px]'} rounded-none border-b-2 border-muted-foreground focus:border-black focus:outline-none`}
+                                onInvalid={(e) => (e as any).preventDefault()}
+                                className={`${isMobile ? 'w-full max-w-full' : 'w-[300px]'} border-b-2 border-gray-300 focus:border-blue-400 focus:outline-none`}
                                 style={{
                                     fontFamily: "cursive",
                                     fontSize: isMobile ? "1.1rem" : "1.2rem",
                                     height: isMobile ? "60px" : "70px",
+                                    paddingBottom: "8px"
                                 }}
                             />
                         </div>
@@ -137,7 +141,7 @@ export default function StandardSignature({
                             <button
                                 type="button"
                                 onClick={clearSignature}
-                                className={`${isMobile ? 'text-base px-3 py-1 bg-gray-100 rounded' : 'text-sm'} font-medium text-gray-600 hover:text-gray-800 focus:outline-none cursor-pointer`}
+                                className={`${isMobile ? 'text-base px-4 py-2 bg-gray-200 rounded' : 'text-sm px-3 py-1 bg-gray-100 rounded'} font-medium text-gray-700 hover:bg-gray-300 focus:outline-none cursor-pointer`}
                             >
                                 Clear
                             </button>
@@ -149,7 +153,7 @@ export default function StandardSignature({
                                 setDrawSignature(!drawSignature);
                                 clearSignature();
                             }}
-                            className={`${isMobile ? 'text-base px-3 py-1 bg-gray-100 rounded' : 'text-sm'} font-medium text-gray-600 hover:text-gray-800 focus:outline-none cursor-pointer`}
+                            className={`${isMobile ? 'text-base px-4 py-2 bg-gray-200 rounded' : 'text-sm px-3 py-1 bg-gray-100 rounded'} font-medium text-gray-700 hover:bg-gray-300 focus:outline-none cursor-pointer`}
                         >
                             {drawSignature ? "Type signature" : "Draw signature"}
                         </button>
