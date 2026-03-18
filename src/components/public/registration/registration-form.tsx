@@ -15,7 +15,6 @@ import {
   PageFieldBase,
 } from "../../shared/registration/reusable-registration-form";
 import { ReusableSubmitRegistration } from "../../shared/registration/reusable-submit-registration";
-import { CardHeader } from "@/components/ui/card";
 import { toast } from "sonner";
 interface RegistrationFormProps {
   clubName: string;
@@ -53,6 +52,9 @@ export function PublicRegistrationForm({
   >(undefined);
   const [totalRegistrationFee, setTotalRegistrationFee] = useState(0);
   const [isRegistering, setIsRegistering] = useState(false);
+
+  const hasEmptyStandardValue = (value?: string | number) =>
+    typeof value !== "string" || value.trim() === "";
 
   useEffect(() => {
     if (!(data as PagedFormPayload)?.pages) return;
@@ -99,7 +101,7 @@ export function PublicRegistrationForm({
             if (!f.value || f.value !== "true")
               missing.push({ page: p.page_index, field: f });
           } else {
-            if (!f.value || f.value.trim() === "")
+            if (hasEmptyStandardValue(f.value))
               missing.push({ page: p.page_index, field: f });
           }
         }
@@ -121,7 +123,7 @@ export function PublicRegistrationForm({
     return currentPage.fields
       .filter((f) => {
         if (f.required) {
-          if (f.field_type === "STANDARD") return !f.value?.trim();
+          if (f.field_type === "STANDARD") return hasEmptyStandardValue(f.value);
           if (f.field_type === "BILLING" && f.input_type === "DROPDOWN")
             return f.value == null || f.selectedAmountCents == null;
           if (f.field_type === "BILLING" && f.input_type === "NUMBER") 
@@ -136,7 +138,7 @@ export function PublicRegistrationForm({
     const currentPage = pages[currentPageIndex];
     const missingOnCurrent = currentPage.fields.filter((f) => {
       if (f.required) {
-        if (f.field_type === "STANDARD") return !f.value?.trim();
+        if (f.field_type === "STANDARD") return hasEmptyStandardValue(f.value);
         if (f.field_type === "BILLING" && f.input_type === "DROPDOWN")
           return f.value == null || f.selectedAmountCents == null;
         if (f.field_type === "BILLING" && f.input_type === "NUMBER") return f.value == null || (typeof f.value === "number" && f.value <= 0);
@@ -278,18 +280,18 @@ export function PublicRegistrationForm({
   }
 
   return (
-    <div className="space-y-2">
-      <CardHeader className="pb-1">
-        <h1 className="text-l text-center pt-2">
+    <div className="">
+      <div className="bg-gray-50 rounded-lg rounded-b-none p-4">
+        <h1 className="text-base lg:text-lg font-semibold text-center text-gray-900">
           Name:{" "}
           <strong>
             {firstName} {surname}
           </strong>
         </h1>
-        <h1 className="text-l text-center">
+        <h1 className="text-base lg:text-lg font-medium text-center text-gray-600 mt-1">
           Email: <strong>{email}</strong>
         </h1>
-      </CardHeader>
+      </div>
 
       {pages.length > 0 && (
         <ReusableRegistrationForm
@@ -311,11 +313,11 @@ export function PublicRegistrationForm({
           isPending={isRegistering}
           showNavigation={true}
           bottomContent={
-            <div className="text-center text-xs mt-2 pt-2 border-t">
+            <div className="text-center text-sm mt-4 pt-4 border-t border-gray-200">
               <button
                 type="button"
                 onClick={onEditDetails}
-                className="underline underline-offset-4"
+                className="text-black hover:text-gray-700 underline underline-offset-4 font-medium"
               >
                 Edit your details
               </button>

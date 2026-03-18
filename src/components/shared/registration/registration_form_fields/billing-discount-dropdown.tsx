@@ -22,7 +22,7 @@ interface Field {
     field_type: string
     placeholder?: string
     required?: boolean
-    value?: string
+    value?: string | number
     discountOptions?: DiscountOption[]
 }
 
@@ -60,14 +60,14 @@ export default function BillingDiscountDropdown({
     }
 
     return (
-        <div className="grid gap-2" key={field.field_id}>
-            <Label>
+        <div className="space-y-2" key={field.field_id}>
+            <Label className="block text-base font-medium text-gray-900">
                 {field.field_name}
-                {field.required ? <span className="text-red-500">*</span> : null}
+
             </Label>
 
-            <Select onValueChange={onDiscountSelect} value={field.value}>
-                <SelectTrigger className="w-full">
+            <Select onValueChange={onDiscountSelect} value={typeof field.value === "string" ? field.value : undefined}>
+                <SelectTrigger className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-base font-normal focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent">
                     <SelectValue
                         placeholder={field.placeholder ?? "Select discount"}
                     />
@@ -75,7 +75,7 @@ export default function BillingDiscountDropdown({
 
                 <SelectContent>
                     <SelectGroup>
-                        <SelectLabel>{field.field_name}</SelectLabel>
+                        <SelectLabel className="text-gray-500/70">{field.field_name}</SelectLabel>
                         {field.discountOptions?.map((opt) => (
                             <SelectItem key={opt.option_order_id} value={opt.label}>
                                 {opt.label} <strong>{opt.percentage === 0 ? "No discount" : `${opt.percentage}% off`}</strong>

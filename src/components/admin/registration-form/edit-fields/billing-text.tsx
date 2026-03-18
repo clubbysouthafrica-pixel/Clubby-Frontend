@@ -34,6 +34,8 @@ export default function EditBillingText({
   const [internalMultiplier, setInternalMultiplier] = useState(multiplier)
 
   useEffect(() => setInternalFieldName(fieldName), [fieldName])
+  useEffect(() => setInternalRequired(required), [required])
+  useEffect(() => setInternalMultiplier(multiplier), [multiplier])
   useEffect(() => {
     const num = Number(amount)
     setInternalAmountDisplay(formatAmount(num, currency))
@@ -45,20 +47,23 @@ export default function EditBillingText({
   }
 
   const handleRequiredChange = (checked: boolean) => {
-    if (!internalMultiplier && !checked) return
+    if (!checked && !internalMultiplier) {
+      return
+    }
+
     setInternalRequired(checked)
-    if (onRequiredChange) onRequiredChange(checked)
+    onRequiredChange(checked)
   }
 
   const handleMultiplierChange = (checked: boolean) => {
     setInternalMultiplier(checked)
-    if (!checked) { 
+
+    if (!checked) {
       setInternalRequired(true)
-      onRequiredChange(true) 
-      onMultiplierChange(false)
-    } else {
-      onMultiplierChange(true)
+      onRequiredChange(true)
     }
+
+    onMultiplierChange(checked)
   }
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,7 +98,7 @@ export default function EditBillingText({
 
       <div className="flex items-center gap-3 mt-2">
         <Checkbox checked={internalRequired} onCheckedChange={handleRequiredChange} />
-        <Label>Is required</Label>
+        <Label className={!internalMultiplier ? "text-gray-700" : undefined}>Is required</Label>
       </div>
 
       <div className="flex items-center gap-3 mt-2">
