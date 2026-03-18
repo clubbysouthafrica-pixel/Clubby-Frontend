@@ -44,11 +44,12 @@ import {
   refundOrRemoveOrder,
   updateAdminOrderFulfillment,
 } from "@/services/admin-features/orders";
+import { updateClubDetails } from "@/services/admin/club";
 import { formatAmount } from "@/data/currencies";
 import { Label } from "@/components/ui/label";
 
 export default function OrdersPage() {
-  const { club } = useContext(ClubContext) as ClubContextType;
+  const { club, setClub } = useContext(ClubContext) as ClubContextType;
   const [searchParams] = useSearchParams();
 
   // Parse URL query params first
@@ -83,7 +84,7 @@ export default function OrdersPage() {
       filters.payment_status = paymentStatusParam.toUpperCase();
     return filters;
   });
-  const [ordersLimit, setOrdersLimit] = useState(25);
+  const [ordersLimit, setOrdersLimit] = useState(100);
   const [pageToken, setPageToken] = useState<string | undefined>(undefined);
   const [allOrders, setAllOrders] = useState<any[]>([]);
   const [nextPageToken, setNextPageToken] = useState<string | undefined>(
@@ -121,6 +122,7 @@ export default function OrdersPage() {
     Set<string>
   >(new Set());
   const [isConfirmingDelivery, setIsConfirmingDelivery] = useState(false);
+  const [isEnablingShop, setIsEnablingShop] = useState(false);
 
   // Calculate total undelivered items
   const undeliveredItems = allOrders
@@ -286,16 +288,12 @@ export default function OrdersPage() {
 
   const handleRefundClick = (order: Record<string, unknown>) => {
     setSelectedOrderForRefund(order);
-    // Initialize all individual units as selected by default
+    // Initialize all individual units as unchecked by default
     const orderItems = (order.items as any[]) || [];
     const allUnits = new Set<string>();
     const expandedItems = new Set<string>();
     orderItems.forEach((item: any, idx: number) => {
       expandedItems.add(`${item.product_id}-${idx}`);
-      for (let i = 0; i < item.quantity; i++) {
-        const unitId = `${item.product_id}-${idx}-${i}`;
-        allUnits.add(unitId);
-      }
     });
     setSelectedItemsForRefund(allUnits);
     setExpandedRefundItems(expandedItems);
@@ -314,11 +312,16 @@ export default function OrdersPage() {
       const selectedItems: any[] = [];
 
       orderItems.forEach((item: any, idx: number) => {
+        const selectedUnits: any[] = [];
         let selectedQuantity = 0;
         for (let i = 0; i < item.quantity; i++) {
           const unitId = `${item.product_id}-${idx}-${i}`;
           if (selectedItemsForRefund.has(unitId)) {
             selectedQuantity++;
+            const isDelivered = i < (item.fulfillment_quantity || 0);
+            selectedUnits.push({
+              is_delivered: isDelivered,
+            });
           }
         }
 
@@ -330,6 +333,7 @@ export default function OrdersPage() {
             ...item,
             quantity: selectedQuantity,
             subtotal: itemRefundAmount,
+            units: selectedUnits,
           });
         }
       });
@@ -352,9 +356,11 @@ export default function OrdersPage() {
           quantity: item.quantity,
           price: item.price,
           subtotal: item.subtotal,
+          units: item.units,
         })),
       };
 
+      // Call the refund endpoint
       const response = await refundOrRemoveOrder({
         ...refundPayload,
         club_account_id: club?.club_account_id as string,
@@ -476,9 +482,6 @@ export default function OrdersPage() {
         })
         .filter((item) => item !== null);
 
-      const payload = { orders: deliveryItems };
-      console.log("Confirming delivery for items:", payload);
-
       const response = await updateAdminOrderFulfillment({
         orders: deliveryItems,
         club_account_id: club?.club_account_id || "",
@@ -503,12 +506,69 @@ export default function OrdersPage() {
     }
   };
 
+  const handleEnableShop = async () => {
+    if (!club?.club_account_id) return;
+
+    try {
+      setIsEnablingShop(true);
+      const response = await updateClubDetails({
+        club_account_id: club.club_account_id,
+        enable_shop: true,
+      });
+
+      if (response?.message) {
+        toast.success("Shop enabled successfully");
+        // Update the club context with the new enable_shop value
+        setClub({ ...club, enable_shop: true });
+      } else {
+        toast.error("Failed to enable shop");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Error enabling shop");
+      console.error("Error enabling shop:", err);
+    } finally {
+      setIsEnablingShop(false);
+    }
+  };
+
   return (
     <div className="p-5">
       <div className="mb-4">
         <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
         <p className="text-muted-foreground">Manage your club orders</p>
       </div>
+
+      {!club?.enable_shop && (
+        <Card className="mb-6 border-orange-200 bg-orange-50">
+          <CardContent className="py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-orange-600" />
+              <div>
+                <p className="font-semibold text-orange-900">
+                  Shop is currently disabled
+                </p>
+                <p className="text-sm text-orange-700">
+                  Enable your shop to make it visible to members and start receiving orders
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={handleEnableShop}
+              disabled={isEnablingShop}
+              className="bg-orange-600 hover:bg-orange-700 text-white"
+            >
+              {isEnablingShop ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Enabling...
+                </>
+              ) : (
+                "Enable Shop"
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="p-4 mb-6">
         <div className="flex flex-wrap gap-4">
@@ -610,8 +670,8 @@ export default function OrdersPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="25">25</SelectItem>
-              <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+              <SelectItem value="200">200</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -1416,6 +1476,15 @@ export default function OrdersPage() {
                                             club?.currency,
                                           )}
                                         </span>
+                                        {unitIdx < (item.fulfillment_quantity || 0) ? (
+                                          <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 font-semibold">
+                                            Delivered
+                                          </span>
+                                        ) : (
+                                          <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 font-semibold">
+                                            Not Delivered
+                                          </span>
+                                        )}
                                       </label>
                                     </div>
                                   );

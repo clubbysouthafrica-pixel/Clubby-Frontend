@@ -1,11 +1,12 @@
 import {createContext, ReactNode, useEffect, useState} from 'react';
 import axios, {AxiosResponse} from 'axios';
+import { fetchAdminClubs } from '@/services/admin/admin-clubs';
 
 export interface AuthContextType {
     user: boolean | null;
     isAdmin: boolean | false;
     loading: boolean;
-    login: (isAdmin: boolean, email: string, password: string) => Promise<{onboarded: boolean, new_password_required: boolean}>;
+    login: (isAdmin: boolean, email: string, password: string) => Promise<{onboarded: boolean, new_password_required: boolean, clubs?: any}>;
     register: (email: string, password: string) => Promise<AxiosResponse>;
     logout: () => void;
     verifyConfirmationCode: (email: string, confirmationCode: string) => Promise<AxiosResponse>;
@@ -44,7 +45,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setLoading(false);
     }, []);
 
-    const login = async (isAdmin: boolean, email: string, password: string): Promise<{onboarded: boolean, new_password_required: boolean}> => {
+    const login = async (isAdmin: boolean, email: string, password: string): Promise<{onboarded: boolean, new_password_required: boolean, clubs?: any}> => {
         const response = await axios.post((isAdmin ? adminApiUrl : apiUrl) + ( isAdmin ? '/admin/signIn': '/member/signIn'), { username: email, password });
 
         if (response.data?.new_password_required) {
@@ -62,6 +63,17 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (isAdmin) {
             localStorage.setItem(adminKey, "true")
             setIsAdmin(true)
+            setUser(true)
+            
+            // Fetch clubs for admin users
+            axios.defaults.headers.common['Authorization'] = `${response.data.accessToken}`;
+            try {
+                const clubsResponse = await fetchAdminClubs();
+                return {onboarded: response.data.onboarded, new_password_required: false, clubs: clubsResponse.data?.items}
+            } catch (err) {
+                console.error("Error fetching clubs:", err);
+                return {onboarded: response.data.onboarded, new_password_required: false}
+            }
         }
 
         axios.defaults.headers.common['Authorization'] = `${response.data.accessToken}`;
@@ -88,7 +100,8 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const logout = () => {
         localStorage.removeItem(accessToken);
         localStorage.removeItem(refreshToken);
-        localStorage.removeItem(adminKey)
+        localStorage.removeItem(adminKey);
+        localStorage.removeItem("activeClub");
         
         delete axios.defaults.headers.common['Authorization'];
         setUser(null);

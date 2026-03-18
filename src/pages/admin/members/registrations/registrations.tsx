@@ -39,7 +39,7 @@ export default function RegistrationsPage() {
   ) as ClubContextType;
   const [requestedKeys, setRequestedKeys] = useState<string[]>([]);
   const [selectedTab, setSelectedTab] = useState("registered-members");
-  const [memberLimit, setMemberLimit] = useState(25);
+  const [memberLimit, setMemberLimit] = useState(100);
   const [pageToken, setPageToken] = useState<string | undefined>(undefined);
   const [allRegisteredMembers, setAllRegisteredMembers] = useState<any[]>([]);
   const [allUnregisteredMembers, setAllUnregisteredMembers] = useState<any[]>(
@@ -1085,8 +1085,8 @@ export default function RegistrationsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="25">25</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                    <SelectItem value="200">200</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

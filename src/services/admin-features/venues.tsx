@@ -28,7 +28,6 @@ export const getVenues = (clubAccountId: string): Promise<any> => {
 }
 
 export const enableVenues = (enableVenuesRequest: EnableVenuesRequest): Promise<any> => {
-    console.log("Enabling venues with request:", enableVenuesRequest);
     return api.post("/venues/enableVenues", enableVenuesRequest)
         .then(res => res.data);
 }

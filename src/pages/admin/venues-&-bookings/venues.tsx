@@ -1,15 +1,27 @@
 import { useContext, useEffect, useState } from "react";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
-import { getVenues, createVenue, enableVenues } from "@/services/admin-features/venues";
-import { Loader2, Plus, Edit2, Trash2 } from "lucide-react";
+import { getVenues, createVenue } from "@/services/admin-features/venues";
+import { updateClubDetails } from "@/services/admin/club";
+import { Loader2, Plus, Edit2, Trash2, AlertCircle, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 import {
   CreateVenueDialog,
   CreateVenueData,
 } from "@/components/admin/venues-&-bookings/create-venue-dialog";
 
 export default function VenuesPage() {
-  const { club } = useContext(ClubContext) as ClubContextType;
+  const { club, setClub } = useContext(ClubContext) as ClubContextType;
   const [venues, setVenues] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,6 +31,7 @@ export default function VenuesPage() {
   const [editingVenue, setEditingVenue] = useState<any | null>(null);
   const [venuesEnabled, setVenuesEnabled] = useState(true);
   const [isTogglingVenues, setIsTogglingVenues] = useState(false);
+  const [showVenuesSettings, setShowVenuesSettings] = useState(false);
 
   useEffect(() => {
     if (!club?.club_account_id) return;
@@ -84,11 +97,23 @@ export default function VenuesPage() {
     try {
       setError(null);
       setIsTogglingVenues(true);
-      await enableVenues({ club_account_id: club.club_account_id, venues_enabled: enabled });
-      setVenuesEnabled(enabled);
+      const response = await updateClubDetails({
+        club_account_id: club.club_account_id,
+        venues_enabled: enabled,
+      });
+      if (response?.message) {
+        toast.success(
+          enabled ? "Bookings enabled successfully" : "Bookings disabled successfully"
+        );
+        setClub({ ...club, venues_enabled: enabled });
+        setVenuesEnabled(enabled);
+      } else {
+        toast.error("Failed to update bookings settings");
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to update venues setting";
       setError(errorMessage);
+      toast.error(errorMessage);
       console.error("Error toggling venues:", err);
     } finally {
       setIsTogglingVenues(false);
@@ -104,20 +129,64 @@ export default function VenuesPage() {
             Manage your club's venues for bookings.
           </p>
         </div>
-        <Button
-          onClick={() => {
-            setEditingVenue(null);
-            setIsDialogOpen(true);
-          }}
-          className="gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Create Venue
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setShowVenuesSettings(true)}
+            variant="outline"
+            size="sm"
+            className="text-gray-600 hover:text-gray-900"
+            title="Venues settings"
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
+          <Button
+            onClick={() => {
+              setEditingVenue(null);
+              setIsDialogOpen(true);
+            }}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Create Venue
+          </Button>
+        </div>
       </div>
 
-      {/* Venues Toggle Section */}
-      <div className="rounded-lg border-2 p-6 bg-blue-50 border-blue-200">
+      {!club?.venues_enabled && (
+        <Card className="mb-6 border-orange-200 bg-orange-50">
+          <CardContent className="py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-orange-600" />
+              <div>
+                <p className="font-semibold text-orange-900">
+                  Bookings are currently disabled
+                </p>
+                <p className="text-sm text-orange-700">
+                  Enable bookings to allow members to book your venues
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={() => handleToggleVenues(true)}
+              disabled={isTogglingVenues}
+              className="bg-orange-600 hover:bg-orange-700 text-white"
+            >
+              {isTogglingVenues ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Enabling...
+                </>
+              ) : (
+                "Enable Bookings"
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Legacy Venues Toggle Section - Removed */}
+      {false && (
+        <div className="rounded-lg border-2 p-6 bg-blue-50 border-blue-200">
         <div className="flex items-start justify-between">
           <div className="space-y-2 flex-1">
             <h2 className="text-lg font-semibold text-gray-900">Enable Venues Booking</h2>
@@ -142,6 +211,7 @@ export default function VenuesPage() {
           </Button>
         </div>
       </div>
+      )}
 
       {loading && (
         <div className="flex justify-center py-8">
@@ -243,6 +313,37 @@ export default function VenuesPage() {
         error={dialogError}
         initialData={editingVenue || undefined}
       />
+
+      <Dialog open={showVenuesSettings} onOpenChange={setShowVenuesSettings}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bookings Settings</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-base font-semibold">Enable Bookings</Label>
+                <p className="text-sm text-gray-600 mt-1">
+                  Toggle to enable or disable bookings for your venues
+                </p>
+              </div>
+              <Switch
+                checked={club?.venues_enabled || false}
+                onCheckedChange={handleToggleVenues}
+                disabled={isTogglingVenues}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => setShowVenuesSettings(false)}
+              variant="outline"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

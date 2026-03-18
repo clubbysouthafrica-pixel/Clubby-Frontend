@@ -15,6 +15,8 @@ export interface Club {
     currency: string
     onboarded: boolean
     deregistration_in_progress: boolean
+    enable_shop?: boolean
+    venues_enabled?: boolean
     registration_form_exists?: boolean
     currency_exists?: boolean
     country_exists?: boolean
@@ -37,7 +39,8 @@ const ClubProvider: React.FC<ClubProviderProps> = ({ children }) => {
         const hasActiveClub = localStorage.getItem(activeClub)
        
         if (hasActiveClub) {
-            setActiveClub(JSON.parse(hasActiveClub))
+            const parsedClub = JSON.parse(hasActiveClub)
+            setActiveClub(parsedClub)
         }
         setIsLoading(false);
     }, [])

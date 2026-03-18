@@ -62,11 +62,11 @@ export function LoginForm({
       } else {
         if (isAdminLogin) {
           localStorage.setItem("isAdmin", "true");
-          navigate("/");
+          navigate("/", { replace: true });
           return;
         }
 
-        navigate(onboarded ? "/" : "/onboardMember");
+        navigate(onboarded ? "/" : "/onboardMember", { replace: true });
       }
     } catch (e: unknown) {
       if (!e) {

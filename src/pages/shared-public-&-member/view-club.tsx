@@ -319,19 +319,14 @@ export default function ViewClubPage() {
 
   useEffect(() => {
     if (activeTab !== "bookings" || !data?.club_account_id) {
-      console.log("Skipping venues fetch:", { activeTab, clubAccountId: data?.club_account_id });
       return;
     }
-
-    console.log("Fetching venues for tab:", activeTab);
 
     const fetchVenues = async () => {
       try {
         setVenuesLoading(true);
         setVenuesError(null);
-        console.log("Fetching venues with club_account_id:", data.club_account_id);
         const venuseData = await getVenues(data.club_account_id);
-        console.log("Venues fetched:", venuseData);
         setVenues(venuseData.venues || []);
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Failed to load venues";
@@ -786,7 +781,7 @@ export default function ViewClubPage() {
                         Bookings
                       </TabsTrigger>
                     )}
-                    {!data?.resubmission_required && (
+                    {!data?.resubmission_required && data?.enable_shop && (
                       <ShopTab
                         clubId={clubId!}
                         isMobile={isMobile}
@@ -812,6 +807,7 @@ export default function ViewClubPage() {
                   clubAccountId={data.club_account_id}
                 />
 
+                {data?.enable_shop && (
                 <TabsContent value="shop" className="mt-6">
                   <div className="space-y-6">
                     <Card>
@@ -1079,7 +1075,9 @@ export default function ViewClubPage() {
                     </Card>
                   </div>
                 </TabsContent>
+                )}
 
+                {data?.venues_enabled && (
                 <TabsContent value="bookings" className="mt-6">
                   <MemberBookings
                     venues={venues}
@@ -1088,6 +1086,7 @@ export default function ViewClubPage() {
                     memberName={data?.member_name || ""}
                   />
                 </TabsContent>
+                )}
 
                 <TabsContent value="home" className="mt-6">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-12">

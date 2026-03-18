@@ -1,5 +1,6 @@
 import * as React from "react"
 import { ChevronsUpDown, GalleryVerticalEnd } from "lucide-react"
+import { fetchClub } from "@/services/admin/club"
 
 import {
   DropdownMenu,
@@ -23,6 +24,28 @@ export function ClubSwitcher({
 }) {
   const {club, setClub} = React.useContext(ClubContext) as ClubContextType
 
+  const handleClubSwitch = async (selectedClub: Club) => {
+    // Reset local storage when switching clubs
+    localStorage.removeItem("activeClub");
+    
+    try {
+      // Fetch the full club details to get all properties like country_exists, currency_exists, etc.
+      const fullClubData = await fetchClub(selectedClub.club_account_id)
+      
+      // Merge with the selected club to preserve all fields
+      const completeClubData = {
+        ...selectedClub,
+        ...fullClubData
+      }
+      
+      // Set the club with complete data
+      setClub(completeClubData);
+      
+    } catch (error) {
+      // Fallback to the selected club if fetch fails
+      setClub(selectedClub);
+    }
+  }
 
   if (!clubs?.length) return
 
@@ -70,7 +93,7 @@ export function ClubSwitcher({
             {clubs.map((team, _index) => (
               <DropdownMenuItem
                 key={team.club_account_id}
-                onClick={() => setClub(team)}
+                onClick={() => handleClubSwitch(team)}
                 className="gap-2 p-2"
               >
                 <div className="flex size-6 items-center justify-center rounded-md border">

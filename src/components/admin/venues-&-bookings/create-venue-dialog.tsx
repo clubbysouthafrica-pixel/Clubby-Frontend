@@ -130,8 +130,6 @@ export function CreateVenueDialog({
       times,
     };
 
-    console.log("Creating/Updating venue with data:", venueData);
-
     onSubmit(venueData);
 
     resetForm();

@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Package, Eye, ChevronsUpDown, ImageIcon, Upload } from "lucide-react";
+import { Plus, Package, ChevronsUpDown, ImageIcon, Upload, AlertCircle, Loader2, Settings } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -33,12 +34,13 @@ import {
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { formatAmount } from "@/data/currencies";
 import { addProduct, AddProductRequest, updateProduct, UpdateProductRequest } from "@/services/admin-features/shop";
+import { updateClubDetails } from "@/services/admin/club";
 import { toast } from "sonner";
 import { useFetchClubProducts } from "@/queries/admin-features/shop";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function ProductsPage() {
-  const { club } = useContext(ClubContext) as ClubContextType;
+  const { club, setClub } = useContext(ClubContext) as ClubContextType;
   const queryClient = useQueryClient();
   const { data: productsData, isLoading: productsLoading, error: productsError } = useFetchClubProducts(club?.club_account_id || "");
   
@@ -64,6 +66,9 @@ export default function ProductsPage() {
   const [isActive, setIsActive] = useState(false);
   const [allowMultiple, setAllowMultiple] = useState(true);
   const [productImage, setProductImage] = useState<string>("");
+  const [isEnablingShop, setIsEnablingShop] = useState(false);
+  const [isTogglingShop, setIsTogglingShop] = useState(false);
+  const [showShopSettings, setShowShopSettings] = useState(false);
 
   // Sync API data with local state
   useEffect(() => {
@@ -345,6 +350,56 @@ export default function ProductsPage() {
     }
   };
 
+  const handleEnableShop = async () => {
+    if (!club?.club_account_id) return;
+
+    try {
+      setIsEnablingShop(true);
+      const response = await updateClubDetails({
+        club_account_id: club.club_account_id,
+        enable_shop: true,
+      });
+
+      if (response?.message) {
+        toast.success("Shop enabled successfully");
+        setClub({ ...club, enable_shop: true });
+      } else {
+        toast.error("Failed to enable shop");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Error enabling shop");
+      console.error("Error enabling shop:", err);
+    } finally {
+      setIsEnablingShop(false);
+    }
+  };
+
+  const handleToggleShop = async (enabled: boolean) => {
+    if (!club?.club_account_id) return;
+
+    try {
+      setIsTogglingShop(true);
+      const response = await updateClubDetails({
+        club_account_id: club.club_account_id,
+        enable_shop: enabled,
+      });
+      
+      if (response?.message) {
+        toast.success(
+          enabled ? "Shop enabled successfully" : "Shop disabled successfully"
+        );
+        setClub({ ...club, enable_shop: enabled });
+      } else {
+        toast.error("Failed to update shop settings");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Error updating shop settings");
+      console.error("Error toggling shop:", err);
+    } finally {
+      setIsTogglingShop(false);
+    }
+  };
+
   return (
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
@@ -355,12 +410,55 @@ export default function ProductsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {club?.enable_shop && (
+            <Button
+              onClick={() => setShowShopSettings(true)}
+              variant="outline"
+              size="sm"
+              className="text-gray-600 hover:text-gray-900"
+              title="Shop settings"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          )}
           <Button onClick={() => setOpenDialog(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Add Product
           </Button>
         </div>
       </div>
+
+      {!club?.enable_shop && (
+        <Card className="mb-6 border-orange-200 bg-orange-50">
+          <CardContent className="py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-orange-600" />
+              <div>
+                <p className="font-semibold text-orange-900">
+                  Shop is currently disabled
+                </p>
+                <p className="text-sm text-orange-700">
+                  Enable your shop to make it visible to members and start receiving orders
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={handleEnableShop}
+              disabled={isEnablingShop}
+              className="bg-orange-600 hover:bg-orange-700 text-white"
+            >
+              {isEnablingShop ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Enabling...
+                </>
+              ) : (
+                "Enable Shop"
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Products Table */}
       <div className="mb-6">
@@ -618,52 +716,7 @@ export default function ProductsPage() {
           </CardContent>
         </Card>
       </div>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Inventory
-            </CardTitle>
-            <CardDescription>Manage stock levels and product variants</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Track inventory, set stock alerts, and manage product variations.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5" />
-              Product Catalog
-            </CardTitle>
-            <CardDescription>View and organize your products</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Browse your complete product catalog and manage categories.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Pricing</CardTitle>
-            <CardDescription>Set prices and manage discounts</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Configure product pricing, member discounts, and promotional offers.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
       
-      {/* Add Product Dialog */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -789,6 +842,37 @@ export default function ProductsPage() {
               className="max-h-[80vh] max-w-full object-contain"
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showShopSettings} onOpenChange={setShowShopSettings}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Shop Settings</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-base font-semibold">Enable Shop</Label>
+                <p className="text-sm text-gray-600 mt-1">
+                  Toggle to enable or disable your shop for members
+                </p>
+              </div>
+              <Switch
+                checked={club?.enable_shop || false}
+                onCheckedChange={handleToggleShop}
+                disabled={isTogglingShop}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => setShowShopSettings(false)}
+              variant="outline"
+            >
+              Close
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

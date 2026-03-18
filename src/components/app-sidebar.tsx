@@ -18,7 +18,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navigate = useNavigate();
-  const { club } = React.useContext(ClubContext) as ClubContextType;
+  const { club, setClub } = React.useContext(ClubContext) as ClubContextType;
   const { data: clubData, isLoading: loadingClubs } = useFetchAdminClubs();
 
   const { isAdmin } = React.useContext(AuthContext) as AuthContextType;
@@ -43,6 +43,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       });
     }
   }, [profile, club, navigate]);
+
+  // Auto-set the first club when clubs are loaded after login
+  React.useEffect(() => {
+    if (!club && clubData?.data?.items && clubData.data.items.length > 0) {
+      setClub(clubData.data.items[0]);
+    }
+  }, [clubData, club, setClub]);
 
   const location = useLocation();
   const pathname = location.pathname;
