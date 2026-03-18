@@ -32,7 +32,6 @@ import {
 import { Card } from "@/components/ui/card";
 import { api } from "@/services/admin/api";
 import { toast } from "sonner";
-import { FaMoneyBill } from "react-icons/fa";
 
 export default function FinancialTransactionsPage() {
   const { club, isLoading: clubLoading } = useContext(
