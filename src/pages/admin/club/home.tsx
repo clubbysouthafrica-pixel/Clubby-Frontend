@@ -76,22 +76,21 @@ export default function HomeDashboardPage() {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-8">
-      {/* Club Summary Card */}
-      <Card className="shadow-none bg-none">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold flex items-center gap-2">
+    <>
+      <div className="p-6 shadow-none rounded-none bg-none border-b">
+        <div>
+          <div className="text-3xl font-bold flex items-center gap-2">
             {club?.club_name}
             <span className="ml-2 text-base font-medium text-muted-foreground">
               (Season {club?.season_cycle})
             </span>
-          </CardTitle>
+          </div>
           <CardDescription>
             Welcome to your club dashboard. Manage your club, members, and
             reporting from here.
           </CardDescription>
-        </CardHeader>
-        <CardContent>
+        </div>
+        <div>
           <div className="flex flex-wrap gap-4">
             {/* You can add more club stats here if desired */}
             <div>
@@ -99,40 +98,41 @@ export default function HomeDashboardPage() {
               <span className="ml-2 font-semibold">{club?.currency}</span>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Reporting Section Cards */}
-      <div>
-        <HomeSectionCards report={report} currency={club?.currency} />
-      </div>
-
-      {/* Management Quick Actions */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Quick Management</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {manageRoutes.map((r) => (
-            <Card
-              key={r.name}
-              className="hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => navigate(r.route)}
-            >
-              <CardHeader className="flex flex-row items-center gap-3 pb-2">
-                <r.icon className="h-6 w-6 text-primary" />
-                <CardTitle className="text-lg">{r.name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="mb-4">
-                  {r.description}
-                </CardDescription>
-                <Button variant="outline" onClick={() => navigate(r.route)}>
-                  Manage {r.name}
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
         </div>
       </div>
-    </div>
+      <div className="p-6 max-w-5xl mx-auto space-y-8">
+        {/* Reporting Section Cards */}
+        <div>
+          <HomeSectionCards report={report} currency={club?.currency} />
+        </div>
+
+        {/* Management Quick Actions */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Quick Management</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {manageRoutes.map((r) => (
+              <Card
+                key={r.name}
+                className="hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => navigate(r.route)}
+              >
+                <CardHeader className="flex flex-row items-center gap-3 pb-2">
+                  <r.icon className="h-6 w-6 text-primary" />
+                  <CardTitle className="text-lg">{r.name}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="mb-4">
+                    {r.description}
+                  </CardDescription>
+                  <Button variant="outline" onClick={() => navigate(r.route)}>
+                    Manage {r.name}
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
