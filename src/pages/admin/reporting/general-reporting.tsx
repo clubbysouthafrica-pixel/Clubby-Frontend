@@ -128,7 +128,7 @@ export default function GeneralReportingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 shadow-sm backdrop-blur">
+      <header className="z-40 bg-white/90 dark:bg-slate-900/90 shadow-sm backdrop-blur">
         <div className="max-w-7xl mx-auto px-6 md:px-10 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div className="flex items-center gap-4">
             <span className="p-3 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 shadow-inner">
@@ -180,7 +180,7 @@ export default function GeneralReportingPage() {
         <main className="max-w-7xl mx-auto px-6 md:px-10 py-10">
           <Tabs defaultValue="overall" className="w-full">
             {/* Tab Navigation */}
-            <div className="sticky top-[88px] z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur">
+            <div className="sticky top-0 p-4 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur">
               <TabsList className="flex gap-2 bg-transparent p-0 h-auto">
                 <TabsTrigger
                   value="overall"

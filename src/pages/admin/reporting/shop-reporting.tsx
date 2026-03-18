@@ -65,7 +65,7 @@ export default function ShopReportingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* Sticky Header */}
-      <header className="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 shadow-sm backdrop-blur">
+      <header className="z-40 bg-white/90 dark:bg-slate-900/90 shadow-sm backdrop-blur">
         <div className="max-w-7xl mx-auto px-6 md:px-10 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div className="flex items-center gap-4">
             <span className="p-3 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 shadow-inner">

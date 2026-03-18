@@ -65,7 +65,7 @@ export function ShopProductReport({
       className="w-full"
     >
       {/* Tab Navigation */}
-      <div className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 border-b border-slate-200/60 dark:border-slate-800/60 backdrop-blur">
+      <div className="sticky top-0 p-4 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur">
         <div className="px-2 md:px-4">
           <TabsList className="flex flex-row gap-2 bg-transparent p-0 h-auto overflow-x-auto">
             {report.report.map((product) => (
