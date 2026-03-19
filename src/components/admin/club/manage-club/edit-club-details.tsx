@@ -29,10 +29,11 @@ import {
   REGISTRATION_SUBMISSION_EMAIL_TEMPLATE,
   REGISTRATION_SUCCESS_EMAIL_TEMPLATE,
 } from "@/helpers/admin/constants/registration_submission_email_template";
-import EditableEmailTemplate from "@/components/admin/manage/emailing/editable_email_template";
 import { BankingDetailsForm } from "@/components/admin/club/manage-club/banking-details-form";
 import ClubGalleryEdit from "./gallery";
 import { Textarea } from "@/components/ui/textarea";
+import { ClubVariablesForm, type ClubVariable } from "@/components/admin/club/manage-club/club-variables-form";
+import { EmailSettingsForm } from "@/components/admin/club/manage-club/email-settings-form";
 
 export default function EditClubDetails({
   initialTab,
@@ -96,9 +97,11 @@ export default function EditClubDetails({
     useState<boolean>(false);
   const [isBankingDetailsFormComplete, setIsBankingDetailsFormComplete] =
     useState<boolean>(false);
+  const [clubVariables, setClubVariables] = useState<ClubVariable[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    if (data) {
+    if (data && !isInitialized) {
       setCurrency(data?.currency);
       setCountry(data?.country_of_operation);
       setSupportEmail(data.support_email);
@@ -138,8 +141,10 @@ export default function EditClubDetails({
       setNotifyOnMemberRegistration(
         data?.notify_on_member_registration ?? true,
       );
+      setClubVariables(data?.club_variables || []);
+      setIsInitialized(true);
     }
-  }, [data]);
+  }, [data, isInitialized]);
 
   useEffect(() => {
     if (initialTab) {
@@ -178,6 +183,7 @@ export default function EditClubDetails({
         use_success_email_template: useSuccessEmailTemplate,
         use_submission_email_template: useSubmissionEmailTemplate,
         notify_on_member_registration: notifyOnMemberRegistration,
+        club_variables: clubVariables,
       },
       {
         onSuccess: () => {
@@ -245,6 +251,7 @@ export default function EditClubDetails({
         use_success_email_template: useSuccessEmailTemplate,
         use_submission_email_template: useSubmissionEmailTemplate,
         notify_on_member_registration: notifyOnMemberRegistration,
+        club_variables: clubVariables,
       },
       {
         onSuccess: () => {
@@ -277,6 +284,35 @@ export default function EditClubDetails({
         },
       },
     );
+
+  const updateEmailSettings = (emailData: {
+    club_account_id: string;
+    registration_submission_email_subject: string;
+    registration_submission_email_template_body: string;
+    registration_success_email_subject: string;
+    registration_success_email_template_body: string;
+    support_email: string;
+    use_submission_email_template: boolean;
+    use_success_email_template: boolean;
+  }) =>
+    mutate(emailData, {
+      onSuccess: () => {
+        toast.success("Successfully updated email settings");
+      },
+      onError: (error: unknown) => {
+        const errorMessage =
+          (
+            error as {
+              response?: { data?: { message?: string } };
+              message?: string;
+            }
+          )?.response?.data?.message ||
+          (error as { message?: string })?.message ||
+          "Something went wrong";
+        toast.error(errorMessage);
+      },
+    });
+
   if (isLoading) {
     return (
       <div className="p-5 min-h-screen">
@@ -340,7 +376,7 @@ export default function EditClubDetails({
                 )}
               </TabsTrigger>
               <TabsTrigger value="location">
-                Location
+                Club Configuration
                 {isLocationIncomplete() && (
                   <span className="ml-2 text-red-500 font-bold text-2xl leading-none">
                     *
@@ -604,21 +640,68 @@ export default function EditClubDetails({
               />
             </TabsContent>
 
-            {/* Location Tab */}
+
             <TabsContent value="location">
-              <Card className="h-[630px] border-0 shadow-none">
-                <CardHeader className="sticky top-0 p-6 bg-white flex flex-row items-start justify-between space-y-0">
+              <Card className="border-0 shadow-none">
+                <CardHeader className="flex flex-row items-start justify-between space-y-0">
                   <div className="space-y-1.5">
-                    <CardTitle>Location</CardTitle>
+                    <CardTitle>Club Configuration</CardTitle>
                     <CardDescription>
-                      Set the country the club is operating out of and preferred
-                      currency. Save after updating.
+                      Set the configuration settings for your club.
                     </CardDescription>
                   </div>
                   <Button
                     variant="outline"
                     disabled={isPending}
-                    onClick={update}
+                    onClick={() => {
+                      const filteredVariables = clubVariables.filter(v => v.name.trim());
+
+                      const visitedNames = new Set<string>();
+                      for (const variable of filteredVariables) {
+                        const lowerName = variable.name.trim().toLowerCase();
+                        if (visitedNames.has(lowerName)) {
+                          toast.error(`Duplicate variable name: "${variable.name}"`);
+                          return;
+                        }
+                        visitedNames.add(lowerName);
+                      }
+
+                      const visitedKeys = new Set<string>();
+                      for (const variable of filteredVariables) {
+                        const lowerKey = variable.key.trim().toLowerCase();
+                        if (visitedKeys.has(lowerKey)) {
+                          toast.error(`Duplicate variable key: "${variable.key}"`);
+                          return;
+                        }
+                        visitedKeys.add(lowerKey);
+                      }
+
+                      mutate(
+                        {
+                          club_account_id: club?.club_account_id as string,
+                          country_of_operation: country,
+                          currency,
+                          club_variables: filteredVariables,
+                        },
+                        {
+                          onSuccess: () => {
+                            toast.success("Successfully updated club configuration");
+                          },
+                          onError: (error: unknown) => {
+                            const errorMessage =
+                              (
+                                error as {
+                                  response?: { data?: { message?: string } };
+                                  message?: string;
+                                }
+                              )?.response?.data?.message ||
+                              (error as { message?: string })?.message ||
+                              "Something went wrong";
+                            toast.error(errorMessage);
+                          },
+                        }
+                      );
+                    }}
                   >
                     {isPending ? (
                       <p className="flex space-x-2 items-center">
@@ -626,199 +709,118 @@ export default function EditClubDetails({
                         <span>Saving...</span>
                       </p>
                     ) : (
-                      "Save changes"
+                      "Save Configuration"
                     )}
                   </Button>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid gap-6">
-                    <div className="grid gap-2">
-                      <Label>
-                        Country of Operation
-                        {!country && (
-                          <span className="text-red-500 font-bold text-lg ml-2">
-                            *
-                          </span>
-                        )}
-                      </Label>
-                      <Select value={country} onValueChange={setCountry}>
-                        <SelectTrigger className="w-[280px]">
-                          <SelectValue placeholder="Select country" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            {countries.map((c) => (
-                              <SelectItem key={c.code} value={c.code}>
-                                {c.name}
-                              </SelectItem>
-                            ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
+                <CardContent className="space-y-6">
+                  {/* Location Section */}
+                  <section>
+                    <h3 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                      Location & Currency
+                    </h3>
+                    <div className="grid gap-6">
+                      <div className="grid gap-2">
+                        <Label>
+                          Country of Operation
+                          {!country && (
+                            <span className="text-red-500 font-bold text-lg ml-2">*</span>
+                          )}
+                        </Label>
+                        <Select value={country} onValueChange={setCountry}>
+                          <SelectTrigger className="w-[280px]">
+                            <SelectValue placeholder="Select country" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              {countries.map((c) => (
+                                <SelectItem key={c.code} value={c.code}>
+                                  {c.name}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label>
+                          Currency
+                          {!currency && (
+                            <span className="text-red-500 font-bold text-lg ml-2">*</span>
+                          )}
+                        </Label>
+                        <Select value={currency} onValueChange={setCurrency}>
+                          <SelectTrigger className="w-[280px]">
+                            <SelectValue placeholder="Select currency" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              {currencies.map((curr) => (
+                                <SelectItem key={curr.code} value={curr.code}>
+                                  {curr.name} ({curr.code})
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
-                    <div className="grid gap-2">
-                      <Label>
-                        Currency
-                        {!currency && (
-                          <span className="text-red-500 font-bold text-lg ml-2">
-                            *
-                          </span>
-                        )}
-                      </Label>
-                      <Select value={currency} onValueChange={setCurrency}>
-                        <SelectTrigger className="w-[280px]">
-                          <SelectValue placeholder="Select currency" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            {currencies.map((curr) => (
-                              <SelectItem key={curr.code} value={curr.code}>
-                                {curr.name} ({curr.code})
-                              </SelectItem>
-                            ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+                  </section>
+
+                  <section>
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mt-10">
+                      Tags
+                    </h3>
+                    <ClubVariablesForm
+                      variables={clubVariables}
+                      onSave={setClubVariables}
+                      onChange={setClubVariables}
+                      showSaveButton={false}
+                      isPending={isPending}
+                    />
+                  </section>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            {/* Emailing Tab */}
             <TabsContent value="emailing">
-              <Card className="flex flex-col border-0 shadow-none">
-                <CardHeader className="sticky top-0 p-6 bg-white flex flex-row items-start justify-between space-y-0">
-                  <div className="space-y-1.5">
-                    <CardTitle>Emailing</CardTitle>
-                    <CardDescription>
-                      Draft custom automated emails and handle member
-                      communications.
-                    </CardDescription>
-                  </div>
-                  <Button
-                    onClick={update}
-                    disabled={isPending}
-                    variant="outline"
-                  >
-                    {isPending ? (
-                      <p className="flex space-x-2 items-center">
-                        <Loader2 className="animate-spin" />
-                        <span>Saving...</span>
-                      </p>
-                    ) : (
-                      "Save email settings"
-                    )}
-                  </Button>
-                </CardHeader>
-                <Tabs defaultValue="support-email" className="px-5">
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="support-email">
-                      Support Email
-                    </TabsTrigger>
-                    <TabsTrigger value="registration-submission">
-                      Registration Submission
-                    </TabsTrigger>
-                    <TabsTrigger value="registration-success">
-                      Registration Success
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent
-                    value="support-email"
-                    className="flex flex-col py-2 gap-2"
-                  >
-                    <CardTitle>Support Email</CardTitle>
-                    <CardDescription>
-                      Set the support email members can contact. This mailbox
-                      will also receive a notification each time a member
-                      submits a registration form.
-                    </CardDescription>
-                    <Input
-                      id="tabs-demo-name"
-                      type="text"
-                      value={supportEmail}
-                      onChange={(e) => setSupportEmail(e.target.value)}
-                      placeholder="Set support email"
-                    />
-                    <div className="flex items-center gap-3 mt-4 p-4 bg-gray-50 rounded-lg dark:bg-gray-900">
-                      <input
-                        type="checkbox"
-                        id="notify-registration"
-                        checked={notifyOnMemberRegistration !== false}
-                        onChange={(e) =>
-                          setNotifyOnMemberRegistration(e.target.checked)
-                        }
-                        className="h-4 w-4 accent-primary rounded"
-                      />
-                      <Label
-                        htmlFor="notify-registration"
-                        className="cursor-pointer text-sm"
-                      >
-                        <div className="flex flex-col">
-                          <span className="font-medium">
-                            Send email notification on new member registration
-                          </span>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            The support email will receive a notification
-                            whenever a member successfully registers for a club
-                            activity.
-                          </p>
-                        </div>
-                      </Label>
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent
-                    value="registration-submission"
-                    className="flex flex-col py-2 gap-2"
-                  >
-                    <CardTitle>Registration Submission Email</CardTitle>
-                    <CardDescription>
-                      This is an editable draft of the email sent to a member
-                      when they submit their registration. To insert the
-                      member’s name, use <strong>{"{{member_name}}"}</strong>.
-                    </CardDescription>
-                    <EditableEmailTemplate
-                      template={registrationSubmissionEmailTemplate}
-                      subject={registrationSubmissionEmailSubject}
-                      clubName={club?.club_name ?? ""}
-                      supportEmail={supportEmail}
-                      setTemplate={setRegistrationSubmissionEmailTemplate}
-                      setSubject={setRegistrationSubmissionEmailSubject}
-                      useTemplate={useSubmissionEmailTemplate}
-                      setUseTemplate={setUseSubmissionEmailTemplate}
-                    />
-                  </TabsContent>
-
-                  <TabsContent
-                    value="registration-success"
-                    className="flex flex-col py-2 gap-2"
-                  >
-                    <CardTitle>Registration Success Email</CardTitle>
-                    <CardDescription>
-                      Customize the email template sent to members upon
-                      successful registration. Use{" "}
-                      <strong>{"{{member_name}}"}</strong> to include the
-                      member's name and <strong>{"{{custom_field}}"}</strong> to
-                      reference custom registration fields (use lowercase with
-                      underscores between words). Custom field values will be
-                      requested for the admin to enter when registering the
-                      member.
-                    </CardDescription>
-                    <EditableEmailTemplate
-                      template={registrationSuccessEmailTemplate}
-                      subject={registrationSuccessEmailSubject}
-                      clubName={club?.club_name ?? ""}
-                      supportEmail={supportEmail}
-                      setTemplate={setRegistrationSuccessEmailTemplate}
-                      setSubject={setRegistrationSuccessEmailSubject}
-                      useTemplate={useSuccessEmailTemplate}
-                      setUseTemplate={setUseSuccessEmailTemplate}
-                    />
-                  </TabsContent>
-                </Tabs>
-              </Card>
+              <EmailSettingsForm
+                supportEmail={supportEmail}
+                setSupportEmail={setSupportEmail}
+                notifyOnMemberRegistration={notifyOnMemberRegistration}
+                setNotifyOnMemberRegistration={setNotifyOnMemberRegistration}
+                registrationSubmissionEmailTemplate={
+                  registrationSubmissionEmailTemplate
+                }
+                setRegistrationSubmissionEmailTemplate={
+                  setRegistrationSubmissionEmailTemplate
+                }
+                registrationSubmissionEmailSubject={
+                  registrationSubmissionEmailSubject
+                }
+                setRegistrationSubmissionEmailSubject={
+                  setRegistrationSubmissionEmailSubject
+                }
+                useSubmissionEmailTemplate={useSubmissionEmailTemplate}
+                setUseSubmissionEmailTemplate={setUseSubmissionEmailTemplate}
+                registrationSuccessEmailTemplate={
+                  registrationSuccessEmailTemplate
+                }
+                setRegistrationSuccessEmailTemplate={
+                  setRegistrationSuccessEmailTemplate
+                }
+                registrationSuccessEmailSubject={registrationSuccessEmailSubject}
+                setRegistrationSuccessEmailSubject={
+                  setRegistrationSuccessEmailSubject
+                }
+                useSuccessEmailTemplate={useSuccessEmailTemplate}
+                setUseSuccessEmailTemplate={setUseSuccessEmailTemplate}
+                clubName={club?.club_name ?? ""}
+                clubVariables={clubVariables}
+                onSave={updateEmailSettings}
+                isPending={isPending}
+                clubAccountId={club?.club_account_id ?? ""}
+              />
             </TabsContent>
           </Tabs>
         )}

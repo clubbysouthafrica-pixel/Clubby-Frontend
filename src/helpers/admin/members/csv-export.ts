@@ -76,10 +76,32 @@ export const generateCSVContent = (options: CSVExportOptions): string => {
       }
 
       if (column.type === "standard") {
-        const standardField = member.meta_standard?.find(
-          (f: any) => f.field_name === column.field_name
+        const standardFields = Array.isArray(member.meta_standard)
+          ? member.meta_standard
+          : Object.values(member.meta_standard ?? {});
+        const standardField = standardFields.find(
+          (f: any) =>
+            f.field_name === column.field_name ||
+            f.field_id === column.field_id
         );
         value = standardField?.value || "N/A";
+      }
+
+      if (column.type === "club_variable") {
+        const clubVariableKey = column.key?.startsWith("club_variable:")
+          ? column.key.replace("club_variable:", "")
+          : column.field_id || column.field_name;
+        const clubVariables = Array.isArray(member.meta_club_variables)
+          ? member.meta_club_variables
+          : Object.values(member.meta_club_variables ?? {});
+        const clubVariable = clubVariables.find(
+          (f: any) =>
+            f.name === clubVariableKey ||
+            f.field_name === clubVariableKey ||
+            f.field_name === column.field_name ||
+            f.name === column.field_id
+        );
+        value = clubVariable?.value || "N/A";
       }
 
       row.push(`"${value.toString().replace(/"/g, '""')}"`);

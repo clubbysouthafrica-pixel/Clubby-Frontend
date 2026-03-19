@@ -28,6 +28,7 @@ export interface ClubMember {
     total_fee?: number
     meta_billing: Record<string, any>
     meta_standard: Record<string, any>
+    meta_club_variables?: Record<string, any>
     outstanding_amount: number
     primary_member: string
     registered_on: string

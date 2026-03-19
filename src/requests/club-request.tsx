@@ -22,6 +22,12 @@ export interface ClubOpeningTimesRequest {
   closed: boolean;
 }
 
+export interface ClubVariableRequest {
+  name: string;
+  key: string;
+  visible: boolean;
+}
+
 export interface ClubDetailsRequest {
   club_account_id: string;
   opening_times?: ClubOpeningTimesRequest[];
@@ -44,4 +50,5 @@ export interface ClubDetailsRequest {
   use_success_email_template?: boolean;
   use_submission_email_template?: boolean;
   notify_on_member_registration?: boolean;
+  club_variables?: ClubVariableRequest[];
 }
