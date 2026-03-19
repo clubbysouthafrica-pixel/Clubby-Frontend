@@ -1,4 +1,3 @@
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -10,6 +9,7 @@ import {
 } from "@/components/ui/select";
 import { formatAmount } from "@/data/currencies";
 import { useState, useEffect } from "react";
+import RequiredLabel from "./required-label";
 
 interface BillingOption {
   label: string;
@@ -102,9 +102,9 @@ export default function BillingDropdown({
 
   return (
     <div className="space-y-2 relative min-w-0 w-full" key={field.field_id}>
-      <Label className="block text-base font-medium text-gray-900">
+      <RequiredLabel required={field.required} className="block text-base font-medium text-gray-900">
         {field.field_name}
-      </Label>
+      </RequiredLabel>
 
       <div className="space-y-0 relative min-w-0 w-full">
         <Select

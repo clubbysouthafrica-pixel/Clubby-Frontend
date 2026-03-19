@@ -330,6 +330,7 @@ function renderPreviewField(
       <StandardCheckbox
         field={field}
         currentPageIndex={currentPageIndex}
+        pages={pages}
         setFieldValue={setFieldValue}
       />
     );

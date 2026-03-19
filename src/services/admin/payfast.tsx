@@ -2,9 +2,10 @@ import { api } from "./api";
 
 export interface UpdatePayFastDetailsRequest {
   club_account_id: string;
-  merchant_id: string;
-  merchant_key: string;
+  merchant_id?: string;
+  merchant_key?: string;
   passphrase?: string;
+  auto_register_members_if_paid?: boolean;
 }
 
 export interface ResetPayFastDetailsRequest {

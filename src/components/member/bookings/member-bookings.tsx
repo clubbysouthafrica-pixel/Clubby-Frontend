@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useLayoutEffect } from "react";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef, useLayoutEffect, useCallback } from "react";
+import { ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -11,12 +11,32 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { getBookings } from "@/services/bookings";
+import { createBooking, getBookings } from "@/services/bookings";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+interface VenueSchedule {
+  day_of_week: number;
+  is_closed: boolean;
+  start_time: string;
+  end_time: string;
+}
+
+interface Venue {
+  venue_id: string;
+  venue_name: string;
+  smallest_booking_unit?: number;
+  max_daily_booking_time?: number;
+  times: VenueSchedule[];
+}
+
+interface Booking {
+  slot_time: number;
+  name?: string;
+}
+
 interface MemberBookingsProps {
-  venues: any[];
+  venues: Venue[];
   loading: boolean;
   error: string | null;
   memberName?: string;
@@ -36,21 +56,17 @@ export default function MemberBookings({
     return new Date(today.setDate(diff));
   });
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
-  const [bookings, setBookings] = useState<any[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [hasInitialScrolled, setHasInitialScrolled] = useState(false);
-  const [dragStart, setDragStart] = useState<{
-    dayIdx: number;
-    timeIdx: number;
-  } | null>(null);
-  const [dragEnd, setDragEnd] = useState<{
-    dayIdx: number;
-    timeIdx: number;
-  } | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<{
     dayIdx: number;
     startTimeIdx: number;
     endTimeIdx: number;
+  } | null>(null);
+  const [selectionAnchor, setSelectionAnchor] = useState<{
+    dayIdx: number;
+    timeIdx: number;
   } | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [bookingDialogError, setBookingDialogError] = useState<string | null>(null);
@@ -80,7 +96,6 @@ export default function MemberBookings({
   }, [venues, selectedVenueId]);
 
   useEffect(() => {
-    // Clear bookings when loading starts
     if (bookingsLoading) {
       setBookings([]);
     }
@@ -94,7 +109,8 @@ export default function MemberBookings({
   useLayoutEffect(() => {
     // Scroll to 8am when venue is selected, don't wait for bookings
     if (timeSlotsRef.current && !hasInitialScrolled && selectedVenueId) {
-      const bookingUnit = getBookingUnit();
+      const selectedVenue = venues.find((venue) => venue.venue_id === selectedVenueId);
+      const bookingUnit = selectedVenue?.smallest_booking_unit || 60;
       let rowHeight: number;
 
       if (bookingUnit === 15) rowHeight = 12;
@@ -107,7 +123,7 @@ export default function MemberBookings({
       timeSlotsRef.current.scrollTop = scrollPosition;
       setHasInitialScrolled(true);
     }
-  }, [selectedVenueId, hasInitialScrolled]);
+  }, [selectedVenueId, hasInitialScrolled, venues]);
 
   useEffect(() => {
     if (!selectedVenueId) return;
@@ -142,14 +158,14 @@ export default function MemberBookings({
     fetchBookingsForWeek();
   }, [selectedVenueId, currentWeekStart]);
 
-  const getSelectedVenue = () => {
+  const getSelectedVenue = useCallback(() => {
     return venues.find((v) => v.venue_id === selectedVenueId);
-  };
+  }, [venues, selectedVenueId]);
 
-  const getBookingUnit = () => {
+  const getBookingUnit = useCallback(() => {
     const venue = getSelectedVenue();
     return venue?.smallest_booking_unit || 60;
-  };
+  }, [getSelectedVenue]);
 
   const getRowHeightClass = () => {
     const bookingUnit = getBookingUnit();
@@ -159,7 +175,7 @@ export default function MemberBookings({
     return "min-h-12";
   };
 
-  const validateSelectionDuration = (
+  const validateSelectionDuration = useCallback((
     startTimeIdx: number,
     endTimeIdx: number
   ): { isValid: boolean; error?: string } => {
@@ -184,7 +200,7 @@ export default function MemberBookings({
     }
 
     return { isValid: true };
-  };
+  }, [getBookingUnit, getSelectedVenue]);
 
   const shouldShowTimeLabel = (timeSlot: string) => {
     return timeSlot.endsWith(":00");
@@ -207,13 +223,13 @@ export default function MemberBookings({
 
   const timeSlots = generateTimeSlots();
 
-  const getDaySchedule = (dayOfWeek: number) => {
+  const getDaySchedule = useCallback((dayOfWeek: number) => {
     const venue = getSelectedVenue();
     if (!venue) return null;
-    return venue.times.find((t: any) => t.day_of_week === dayOfWeek);
-  };
+    return venue.times.find((t) => t.day_of_week === dayOfWeek);
+  }, [getSelectedVenue]);
 
-  const isTimeInOperatingHours = (time: string, dayOfWeek: number): boolean => {
+  const isTimeInOperatingHours = useCallback((time: string, dayOfWeek: number): boolean => {
     const schedule = getDaySchedule(dayOfWeek);
     if (!schedule || schedule.is_closed) return false;
 
@@ -227,12 +243,12 @@ export default function MemberBookings({
     const endInMinutes = endHour * 60 + endMin;
 
     return timeInMinutes >= startInMinutes && timeInMinutes < endInMinutes;
-  };
+  }, [getDaySchedule]);
 
-  const isDayClosedForVenue = (dayOfWeek: number): boolean => {
+  const isDayClosedForVenue = useCallback((dayOfWeek: number): boolean => {
     const schedule = getDaySchedule(dayOfWeek);
     return schedule ? schedule.is_closed : false;
-  };
+  }, [getDaySchedule]);
 
   const isPastDay = (date: Date): boolean => {
     const today = new Date();
@@ -240,7 +256,7 @@ export default function MemberBookings({
     return date < today;
   };
 
-  const isSlotBooked = (dayIdx: number, timeIdx: number): boolean => {
+  const isSlotBooked = useCallback((dayIdx: number, timeIdx: number): boolean => {
     const slotDate = new Date(daysInWeek[dayIdx]);
     const [slotHour, slotMin] = timeSlots[timeIdx].split(":").map(Number);
     slotDate.setHours(slotHour, slotMin, 0, 0);
@@ -255,7 +271,7 @@ export default function MemberBookings({
 
       return slotTime < bookingEnd && slotEndTime > bookingStart;
     });
-  };
+  }, [bookings, daysInWeek, getBookingUnit, timeSlots]);
 
   const getBookingNameForSlot = (dayIdx: number, timeIdx: number): string | null => {
     const slotDate = new Date(daysInWeek[dayIdx]);
@@ -275,6 +291,15 @@ export default function MemberBookings({
 
     return booking?.name || null;
   };
+
+  const isSlotDisabled = useCallback((dayIdx: number, timeIdx: number): boolean => {
+    const isPast = isPastDay(daysInWeek[dayIdx]);
+    const isClosed = isDayClosedForVenue(dayIdx);
+    const isAvailable = isTimeInOperatingHours(timeSlots[timeIdx], dayIdx);
+    const isBooked = isSlotBooked(dayIdx, timeIdx);
+
+    return isPast || isClosed || !isAvailable || isBooked;
+  }, [daysInWeek, isDayClosedForVenue, isSlotBooked, isTimeInOperatingHours, timeSlots]);
 
   const formatWeekRange = () => {
     const startDate = daysInWeek[0];
@@ -316,15 +341,6 @@ export default function MemberBookings({
   };
 
   const isSlotSelected = (dayIdx: number, timeIdx: number): boolean => {
-    if (dragStart && dragEnd) {
-      if (dragStart.dayIdx !== dayIdx) return false;
-
-      const minTime = Math.min(dragStart.timeIdx, dragEnd.timeIdx);
-      const maxTime = Math.max(dragStart.timeIdx, dragEnd.timeIdx);
-
-      if (timeIdx >= minTime && timeIdx <= maxTime) return true;
-    }
-
     if (selectedSlot) {
       if (selectedSlot.dayIdx !== dayIdx) return false;
 
@@ -337,54 +353,74 @@ export default function MemberBookings({
     return false;
   };
 
-  const handleSlotMouseDown = (dayIdx: number, timeIdx: number) => {
-    const isPast = isPastDay(daysInWeek[dayIdx]);
-    const isClosed = isDayClosedForVenue(dayIdx);
-    const isAvailable = isTimeInOperatingHours(timeSlots[timeIdx], dayIdx);
-    const isBooked = isSlotBooked(dayIdx, timeIdx);
-    const isDisabled = isPast || isClosed || !isAvailable || isBooked;
+  const createRangeSelection = useCallback((
+    dayIdx: number,
+    startTimeIdx: number,
+    endTimeIdx: number,
+  ) => {
+    const minTime = Math.min(startTimeIdx, endTimeIdx);
+    const maxTime = Math.max(startTimeIdx, endTimeIdx);
 
-    if (!isDisabled && !isMobile) {
-      setDragStart({ dayIdx, timeIdx });
-      setDragEnd({ dayIdx, timeIdx });
+    for (let timeIdx = minTime; timeIdx <= maxTime; timeIdx += 1) {
+      if (isSlotDisabled(dayIdx, timeIdx)) {
+        return {
+          selection: null,
+          error: "Selection can only include available, unbooked slots.",
+        };
+      }
     }
-  };
 
-  const handleSlotMouseEnter = (dayIdx: number, timeIdx: number) => {
-    if (dragStart && !isMobile) {
-      setDragEnd({ dayIdx, timeIdx });
+    const validation = validateSelectionDuration(minTime, maxTime);
+
+    if (!validation.isValid) {
+      return {
+        selection: null,
+        error: validation.error || "Invalid slot selection.",
+      };
     }
-  };
 
-  const handleSlotMouseUp = () => {
-    if (dragStart && dragEnd) {
-      const minTime = Math.min(dragStart.timeIdx, dragEnd.timeIdx);
-      const maxTime = Math.max(dragStart.timeIdx, dragEnd.timeIdx);
-
-      const validation = validateSelectionDuration(minTime, maxTime);
-      setSelectionError(validation.error || null);
-
-      setSelectedSlot({
-        dayIdx: dragStart.dayIdx,
+    return {
+      selection: {
+        dayIdx,
         startTimeIdx: minTime,
         endTimeIdx: maxTime,
-      });
-    }
-    setDragStart(null);
-    setDragEnd(null);
-  };
+      },
+      error: null,
+    };
+  }, [isSlotDisabled, validateSelectionDuration]);
 
-  useEffect(() => {
-    if (dragStart || dragEnd || selectedSlot) {
-      window.addEventListener("mouseup", handleSlotMouseUp);
-      return () => window.removeEventListener("mouseup", handleSlotMouseUp);
+  const applySelection = useCallback((
+    dayIdx: number,
+    startTimeIdx: number,
+    endTimeIdx: number,
+  ) => {
+    const { selection, error } = createRangeSelection(
+      dayIdx,
+      startTimeIdx,
+      endTimeIdx,
+    );
+
+    setSelectionError(error);
+
+    if (selection) {
+      setSelectedSlot(selection);
+      return true;
     }
-  }, [dragStart, dragEnd, selectedSlot]);
+
+    return false;
+  }, [createRangeSelection]);
+
+  const clearSelection = () => {
+    setSelectedSlot(null);
+    setSelectionAnchor(null);
+    setSelectionError(null);
+    setIsDialogOpen(false);
+  };
 
   const handleDialogClose = (open: boolean) => {
     setIsDialogOpen(open);
     if (!open) {
-      setSelectedSlot(null);
+      clearSelection();
       setBookingDialogError(null);
       setBookingName(memberName);
     }
@@ -394,123 +430,43 @@ export default function MemberBookings({
     setBookingName(memberName);
   }, [memberName]);
 
-  const handleSlotTouchStart = (dayIdx: number, timeIdx: number) => {
-    const isPast = isPastDay(daysInWeek[dayIdx]);
-    const isClosed = isDayClosedForVenue(dayIdx);
-    const isAvailable = isTimeInOperatingHours(timeSlots[timeIdx], dayIdx);
-    const isBooked = isSlotBooked(dayIdx, timeIdx);
-    const isDisabled = isPast || isClosed || !isAvailable || isBooked;
+  const handleSelectableSlotClick = (dayIdx: number, timeIdx: number) => {
+    const isDisabled = isSlotDisabled(dayIdx, timeIdx);
 
-    if (!isDisabled) {
-      if (isMobile) {
-        // On mobile, handle tap-to-select for multiple slots
-        if (!selectedSlot) {
-          // No selection yet - start new selection
-          setSelectedSlot({
-            dayIdx,
-            startTimeIdx: timeIdx,
-            endTimeIdx: timeIdx,
-          });
-          setSelectionError(null);
-        } else if (selectedSlot.dayIdx !== dayIdx) {
-          // Different day - reset selection
-          setSelectedSlot(null);
-          setSelectionError(null);
-        } else {
-          // Same day - check if clicked slot is within current selection
-          const isWithinSelection =
-            timeIdx >= selectedSlot.startTimeIdx &&
-            timeIdx <= selectedSlot.endTimeIdx;
-
-          if (isWithinSelection) {
-            // Clicking within current selection - deselect it
-            setSelectedSlot(null);
-            setSelectionError(null);
-          } else {
-            // Clicking outside current selection - expand the range
-            const minTime = Math.min(selectedSlot.startTimeIdx, timeIdx);
-            const maxTime = Math.max(selectedSlot.endTimeIdx, timeIdx);
-            
-            const validation = validateSelectionDuration(minTime, maxTime);
-            setSelectionError(validation.error || null);
-            
-            setSelectedSlot({
-              dayIdx,
-              startTimeIdx: minTime,
-              endTimeIdx: maxTime,
-            });
-          }
-        }
-      } else {
-        // Desktop: start drag selection
-        setDragStart({ dayIdx, timeIdx });
-        setDragEnd({ dayIdx, timeIdx });
-      }
+    if (isDisabled) {
+      clearSelection();
+      return;
     }
+
+    if (!selectedSlot) {
+      setSelectionAnchor({ dayIdx, timeIdx });
+      applySelection(dayIdx, timeIdx, timeIdx);
+      return;
+    }
+
+    if (selectedSlot.dayIdx !== dayIdx) {
+      setSelectionAnchor({ dayIdx, timeIdx });
+      applySelection(dayIdx, timeIdx, timeIdx);
+      return;
+    }
+
+    const anchorTimeIdx = selectionAnchor?.timeIdx ?? selectedSlot.startTimeIdx;
+    if (!selectionAnchor || selectionAnchor.dayIdx !== dayIdx) {
+      setSelectionAnchor({ dayIdx, timeIdx });
+      applySelection(dayIdx, timeIdx, timeIdx);
+      return;
+    }
+
+    applySelection(dayIdx, anchorTimeIdx, timeIdx);
   };
 
-  const handleSlotTouchMove = (e: React.TouchEvent) => {
-    if (isMobile) {
-      // Mobile: expand selection when dragging
-      if (!selectedSlot) return;
-      
-      const touch = e.touches[0];
-      const element = document.elementFromPoint(touch.clientX, touch.clientY);
-      
-      if (element) {
-        const dayIdxAttr = element.getAttribute("data-day-idx");
-        const timeIdxAttr = element.getAttribute("data-time-idx");
-        
-        if (dayIdxAttr !== null && timeIdxAttr !== null) {
-          const dayIdx = parseInt(dayIdxAttr);
-          const timeIdx = parseInt(timeIdxAttr);
-          
-          // Only allow dragging on the same day
-          if (dayIdx === selectedSlot.dayIdx) {
-            const minTime = Math.min(selectedSlot.startTimeIdx, timeIdx);
-            const maxTime = Math.max(selectedSlot.startTimeIdx, timeIdx);
-            
-            const validation = validateSelectionDuration(minTime, maxTime);
-            setSelectionError(validation.error || null);
-            
-            setSelectedSlot({
-              dayIdx,
-              startTimeIdx: minTime,
-              endTimeIdx: maxTime,
-            });
-          }
-        }
-      }
-    } else {
-      // Desktop: drag to select
-      if (!dragStart) return;
-      
-      const touch = e.touches[0];
-      const element = document.elementFromPoint(touch.clientX, touch.clientY);
-      
-      if (element) {
-        const dayIdxAttr = element.getAttribute("data-day-idx");
-        const timeIdxAttr = element.getAttribute("data-time-idx");
-        
-        if (dayIdxAttr !== null && timeIdxAttr !== null) {
-          const dayIdx = parseInt(dayIdxAttr);
-          const timeIdx = parseInt(timeIdxAttr);
-          
-          // Only allow dragging on the same day
-          if (dayIdx === dragStart.dayIdx) {
-            setDragEnd({ dayIdx, timeIdx });
-          }
-        }
-      }
-    }
-  };
-
-  useEffect(() => {
-    if (dragStart || dragEnd || selectedSlot) {
-      window.addEventListener("touchend", handleSlotMouseUp);
-      return () => window.removeEventListener("touchend", handleSlotMouseUp);
-    }
-  }, [dragStart, dragEnd, selectedSlot]);
+  const selectedSlotSummary = selectedSlot
+    ? `${dayNames[selectedSlot.dayIdx]} ${daysInWeek[selectedSlot.dayIdx].getDate()} • ${timeSlots[selectedSlot.startTimeIdx]} - ${
+        selectedSlot.endTimeIdx + 1 < timeSlots.length
+          ? timeSlots[selectedSlot.endTimeIdx + 1]
+          : "23:59"
+      }`
+    : null;
 
   if (loading) {
     return (
@@ -548,25 +504,49 @@ export default function MemberBookings({
 
   return (
     <div className="space-y-6">
-      {/* Venue Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
-        {venues.map((venue) => (
-          <button
-            key={venue.venue_id}
-            onClick={() => {
-              setSelectedVenueId(venue.venue_id);
-              setBookings([]);
-            }}
-            className={`px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${
-              selectedVenueId === venue.venue_id
-                ? "bg-primary text-primary-foreground"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
-          >
-            {venue.venue_name}
-          </button>
-        ))}
-      </div>
+      {selectedSlot && (
+        <div className="fixed top-4 left-1/2 z-50 w-[calc(100vw-1.5rem)] max-w-5xl -translate-x-1/2">
+          <div className="relative flex flex-col gap-3 rounded-2xl border-[3px] border-blue-500 bg-white/95 px-4 py-3 shadow-xl ring-2 ring-blue-200/80 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+            <button
+              type="button"
+              onClick={clearSelection}
+              aria-label="Close booking selection"
+              className="absolute right-3 top-3 rounded-full p-1 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">
+                Booking Selection
+              </p>
+              <p className="truncate text-sm font-semibold text-gray-900 sm:text-base">
+                {selectedSlotSummary}
+              </p>
+              {selectionError ? (
+                <p className="mt-1 text-xs text-orange-700">{selectionError}</p>
+              ) : (
+                <p className="mt-1 text-xs text-gray-600">
+                  Continue when you are happy with the selected booking range.
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 sm:flex-shrink-0 mr-10">
+              <Button variant="outline" size="sm" onClick={clearSelection}>
+                Clear
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => setIsDialogOpen(true)}
+                disabled={!!selectionError}
+              >
+                Create Booking
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {selectedVenueId && (
         <div className="p-4 space-y-4 border-3 rounded-lg">
@@ -575,6 +555,26 @@ export default function MemberBookings({
             <h3 className="font-semibold text-lg">
               {getSelectedVenue()?.venue_name}
             </h3>
+          </div>
+
+          {/* Venue Tabs */}
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {venues.map((venue) => (
+              <button
+                key={venue.venue_id}
+                onClick={() => {
+                  setSelectedVenueId(venue.venue_id);
+                  setBookings([]);
+                }}
+                className={`px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${
+                  selectedVenueId === venue.venue_id
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                {venue.venue_name}
+              </button>
+            ))}
           </div>
 
           {/* Week Navigation */}
@@ -604,22 +604,6 @@ export default function MemberBookings({
               </Button>
             </div>
           </div>
-
-          <div className="space-y-2">
-            {selectionError && (
-              <div className="rounded-md bg-orange-50 p-3 text-sm text-orange-700 border border-orange-200">
-                {selectionError}
-              </div>
-            )}
-            <Button
-              onClick={() => setIsDialogOpen(true)}
-              disabled={!selectedSlot || !!selectionError}
-              className="w-full"
-            >
-              Create Booking
-            </Button>
-          </div>
-
 
           <div className="border rounded-lg overflow-hidden bg-white">
             <div
@@ -664,7 +648,6 @@ export default function MemberBookings({
               </Button>
             )}
 
-            {/* Time Slots */}
             <div
               ref={timeSlotsRef}
               className="max-h-[600px] overflow-y-auto"
@@ -706,40 +689,18 @@ export default function MemberBookings({
                           key={`${dayIdx}-${timeIdx}`}
                           data-day-idx={dayIdx}
                           data-time-idx={timeIdx}
-                          onMouseDown={() =>
-                            handleSlotMouseDown(dayIdx, timeIdx)
-                          }
-                          onMouseEnter={() =>
-                            handleSlotMouseEnter(dayIdx, timeIdx)
-                          }
-                          onTouchStart={(e) => {
-                            e.preventDefault();
-                            handleSlotTouchStart(dayIdx, timeIdx);
-                          }}
-                          onTouchMove={(e) => {
-                            e.preventDefault();
-                            handleSlotTouchMove(e);
-                          }}
-                          onClick={() => {
-                            if (isDisabled || !selectedSlot) {
-                              setSelectedSlot(null);
-                              setIsDialogOpen(false);
-                            }
-                          }}
-                          style={{ touchAction: "manipulation" }}
+                          onClick={() => handleSelectableSlotClick(dayIdx, timeIdx)}
                           className={`border-r border-gray-200 p-2 transition-colors relative group select-none flex items-center justify-center ${
                             isBooked
                               ? "bg-red-500 cursor-default pointer-events-none"
                               : isDisabled
                                 ? "bg-gray-200 opacity-50 cursor-default pointer-events-none"
-                                : dragStart
-                                  ? "cursor-grabbing"
-                                  : "cursor-pointer"
+                                : "cursor-pointer"
                           } ${isDragging ? "bg-blue-600 hover:bg-blue-600" : !isDisabled ? "hover:bg-blue-50" : ""}`}
                         >
                           {isBooked && bookingName && (
                             <div className="text-xs font-semibold text-white text-center truncate px-1">
-                              <div>{time} - {timeIdx + 1 < timeSlots.length ? timeSlots[timeIdx + 1] : "23:59"}</div>
+                              {/* <div>{time} - {timeIdx + 1 < timeSlots.length ? timeSlots[timeIdx + 1] : "23:59"}</div> */}
                               <div>{bookingName}</div>
                             </div>
                           )}
@@ -770,9 +731,9 @@ export default function MemberBookings({
           
           <div className="text-xs text-gray-600">
             {isMobile ? (
-              <>Tap slots to select them and build your booking time range</>
+              <>Tap available slots one by one to build your booking range</>
             ) : (
-              <>Drag across time slots to create a booking</>
+              <>Click available slots one by one to build your booking range</>
             )}
           </div>
         </div>
@@ -878,6 +839,14 @@ export default function MemberBookings({
                     try {
                       setIsCreatingBooking(true);
 
+                      await createBooking({
+                        venue_id: selectedVenueId!,
+                        smallest_booking_unit: getBookingUnit(),
+                        start_time: Math.floor(bookingDate.getTime() / 1000),
+                        name: bookingName.trim(),
+                        duration: bookingDurationMinutes,
+                      });
+
                       const weekStart = new Date(currentWeekStart);
                       weekStart.setHours(0, 0, 0, 0);
                       const startSlotTime = Math.floor(
@@ -912,7 +881,7 @@ export default function MemberBookings({
                           typeof error.response === "object" &&
                           "data" in error.response
                         ) {
-                          const data = error.response.data as any;
+                          const data = error.response.data as { message?: string } | undefined;
                           if (data?.message) {
                             errorMessage = data.message;
                           } else {

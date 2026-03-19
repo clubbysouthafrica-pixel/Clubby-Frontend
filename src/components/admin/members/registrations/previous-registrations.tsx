@@ -51,6 +51,9 @@ interface PreviousMembersListProps {
   setDeregisteredMembersLength: React.Dispatch<React.SetStateAction<number>>;
 }
 
+const getRegistrationKey = (member: Pick<ClubMember, "registration_id" | "user_id">) =>
+  member.registration_id || member.user_id;
+
 export default function PreviousMembersList({
   sensors,
   sortableId,
@@ -65,7 +68,10 @@ export default function PreviousMembersList({
   onShowArchivedChange,
 }: PreviousMembersListProps) {
   // Use raw clubMembers.deregistered - backend already handles pagination and member_name/member_id filtering
-  const baseDeregisteredMembers = clubMembers?.deregistered || [];
+  const baseDeregisteredMembers = useMemo<ClubMember[]>(
+    () => clubMembers?.deregistered || [],
+    [clubMembers?.deregistered],
+  );
   const [deregSortAsc, setDeregSortAsc] = useState<boolean | null>(null);
   const [memberNameSortAsc, setMemberNameSortAsc] = useState<boolean | null>(
     null,
@@ -75,6 +81,9 @@ export default function PreviousMembersList({
   const [selectedMembersToRemove, setSelectedMembersToRemove] = useState<
     ClubMember[]
   >([]);
+  const [removedRegistrationKeys, setRemovedRegistrationKeys] = useState<string[]>(
+    [],
+  );
   const [localArchivedToggle, setLocalArchivedToggle] = useState<
     Record<string, boolean | undefined>
   >({});
@@ -82,11 +91,14 @@ export default function PreviousMembersList({
     useArchiveRegistrationMutation();
 
   const sortedDeregisteredMembers = useMemo(() => {
-    let sortedCopy = [...baseDeregisteredMembers];
+    let sortedCopy = baseDeregisteredMembers.filter(
+      (member: ClubMember) =>
+        !removedRegistrationKeys.includes(getRegistrationKey(member)),
+    );
 
     // Filter out locally archived entries (only when not showing archived)
     if (!showArchived) {
-      sortedCopy = sortedCopy.filter((member) => {
+      sortedCopy = sortedCopy.filter((member: ClubMember) => {
         const isArchived =
           localArchivedToggle[member.user_id] !== undefined
             ? localArchivedToggle[member.user_id]
@@ -129,12 +141,19 @@ export default function PreviousMembersList({
     deregSortAsc,
     memberNameSortAsc,
     totalFeeSortAsc,
+    removedRegistrationKeys,
     localArchivedToggle,
+    showArchived,
   ]);
 
   useEffect(() => {
-    setDeregisteredMembersLength(baseDeregisteredMembers.length);
-  }, [baseDeregisteredMembers, setDeregisteredMembersLength]);
+    setDeregisteredMembersLength(
+      baseDeregisteredMembers.filter(
+        (member: ClubMember) =>
+          !removedRegistrationKeys.includes(getRegistrationKey(member)),
+      ).length,
+    );
+  }, [baseDeregisteredMembers, removedRegistrationKeys, setDeregisteredMembersLength]);
 
   return (
     <>
@@ -501,17 +520,24 @@ export default function PreviousMembersList({
           open={openRemoveDialog}
           onOpenChange={setOpenRemoveDialog}
           members={selectedMembersToRemove}
-          onRemoveSuccess={() => {
-            setlistActionItems(
-              listActionItems.filter(
+          onRemoveSuccess={(removedMembers) => {
+            const removedKeys = removedMembers.map((member) =>
+              getRegistrationKey(member),
+            );
+
+            setRemovedRegistrationKeys((prev) => [
+              ...prev,
+              ...removedKeys.filter((key) => !prev.includes(key)),
+            ]);
+            setlistActionItems((prev) =>
+              prev.filter(
                 (item) =>
-                  !selectedMembersToRemove.some(
+                  !removedMembers.some(
                     (member) => member.member_email === item.email,
                   ),
               ),
             );
             setSelectedMembersToRemove([]);
-            window.location.reload();
           }}
         />
       </div>

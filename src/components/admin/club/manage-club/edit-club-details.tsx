@@ -632,6 +632,10 @@ export default function EditClubDetails({
               <BankingDetailsForm
                 club_account_id={club?.club_account_id as string}
                 bankDetails={data?.bank_details}
+                payfastDetails={data?.payfast_details}
+                autoRegisterMembersIfPaid={
+                  data?.auto_register_members_if_paid ?? false
+                }
                 payfastEnabled={data?.payfast_enabled}
                 customPaymentMethods={data?.custom_payment_methods}
                 onSave={handleBankingDetailsSave}

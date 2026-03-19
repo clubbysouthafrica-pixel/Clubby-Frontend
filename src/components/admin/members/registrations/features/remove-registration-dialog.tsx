@@ -13,7 +13,7 @@ interface RemoveRegistrationDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     members: ClubMember[];
-    onRemoveSuccess?: () => void;
+    onRemoveSuccess?: (removedMembers: ClubMember[]) => void;
 }
 
 export default function RemoveRegistrationDialog({
@@ -56,7 +56,7 @@ export default function RemoveRegistrationDialog({
                                 setDisplaySuccess(true);
                                 setTimeout(() => {
                                     onOpenChange(false);
-                                    onRemoveSuccess?.();
+                                    onRemoveSuccess?.(members);
                                 }, 500);
                             }
                         },

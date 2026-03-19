@@ -9,6 +9,7 @@ export interface ClubPayFastDetailsRequest {
   merchant_id: string;
   merchant_key: string;
   passphrase?: string;
+  auto_register_members_if_paid?: boolean;
 }
 
 export interface ClubLocationDetailsRequest {
@@ -30,6 +31,7 @@ export interface ClubVariableRequest {
 
 export interface ClubDetailsRequest {
   club_account_id: string;
+  auto_register_members_if_paid?: boolean;
   opening_times?: ClubOpeningTimesRequest[];
   bank_details?: ClubBankDetailsRequest;
   payfast_details?: ClubPayFastDetailsRequest;

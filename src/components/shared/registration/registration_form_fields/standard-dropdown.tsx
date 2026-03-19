@@ -1,4 +1,3 @@
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -8,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import RequiredLabel from "./required-label";
 
 interface Field {
   field_id: string;
@@ -48,9 +48,9 @@ export default function StandardDropdown({
 
   return (
     <div className="space-y-2 relative min-w-0" key={field.field_id}>
-      <Label htmlFor={field.field_id} className="block text-base font-medium text-gray-900">
+      <RequiredLabel htmlFor={field.field_id} required={field.required} className="block text-base font-medium text-gray-900">
         {field.field_name}
-      </Label>
+      </RequiredLabel>
 
       <Select
         onValueChange={onChange}

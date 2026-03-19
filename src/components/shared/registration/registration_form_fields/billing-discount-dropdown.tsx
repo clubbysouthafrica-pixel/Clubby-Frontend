@@ -1,4 +1,4 @@
-import { Label } from "@/components/ui/label"
+import { FormPage, PageFieldBase } from "@/components/shared/registration/reusable-registration-form"
 import {
     Select,
     SelectContent,
@@ -8,32 +8,16 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-
-interface DiscountOption {
-    label: string
-    percentage: number
-    option_order_id: string
-    applicable_billing_fields: string[]
-}
-
-interface Field {
-    field_id: string
-    field_name: string
-    field_type: string
-    placeholder?: string
-    required?: boolean
-    value?: string | number
-    discountOptions?: DiscountOption[]
-}
+import RequiredLabel from "./required-label"
 
 interface BillingDiscountDropdownProps {
-    field: Field
+    field: PageFieldBase
     currentPageIndex: number
-    pages: any[]
+    pages: FormPage[]
     setFieldValue: (
         pageIndex: number,
         fieldId: string,
-        updater: (f: any) => any
+        updater: (f: PageFieldBase) => PageFieldBase
     ) => void
 }
 
@@ -61,10 +45,9 @@ export default function BillingDiscountDropdown({
 
     return (
         <div className="space-y-2" key={field.field_id}>
-            <Label className="block text-base font-medium text-gray-900">
+            <RequiredLabel required={field.required} className="block text-base font-medium text-gray-900">
                 {field.field_name}
-
-            </Label>
+            </RequiredLabel>
 
             <Select onValueChange={onDiscountSelect} value={typeof field.value === "string" ? field.value : undefined}>
                 <SelectTrigger className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-base font-normal focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent">

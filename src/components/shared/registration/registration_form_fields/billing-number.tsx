@@ -1,6 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { formatAmount } from "@/data/currencies";
 import { useState } from "react";
+import RequiredLabel from "./required-label";
 
 interface Field {
     field_id: string
@@ -63,12 +64,12 @@ export default function BillingNumber({
 
     return (
         <div className="space-y-2" key={field.field_id}>
-            <label className="block text-base font-medium text-gray-900">
+            <RequiredLabel htmlFor={field.field_id} required={field.required} className="block text-base font-medium text-gray-900">
                 {field.field_name}
-
-            </label>
+            </RequiredLabel>
             <div className="flex items-center gap-2">
                 <Input
+                    id={field.field_id}
                     type="text"
                     value={displayAmount}
                     placeholder={field.placeholder ?? "Enter amount"}

@@ -31,8 +31,6 @@ import {
   Loader2,
   Mail,
   MapPin,
-  Building2,
-  Hash,
   Copy,
   CheckCircle2,
   ExternalLink,
@@ -126,19 +124,20 @@ export default function ViewClubPage() {
   // Handle query params on component mount and when search changes
   useEffect(() => {
     const queryParams = new URLSearchParams(search);
-    const tabParam = queryParams.get('tab');
-    const orderIdParam = queryParams.get('orderId');
-    
+    const tabParam = queryParams.get("tab");
+    const orderIdParam = queryParams.get("orderId");
+
     if (tabParam) {
       setActiveTab(tabParam);
     }
-    
+
     // Auto-select order if orderId is in query params and bankDetails are loaded
     if (orderIdParam && bankDetails?.order_options && !bankDetailsLoading) {
       const matchedOrder = bankDetails.order_options.find(
-        (order: any) => order.order_id === orderIdParam || order.id === orderIdParam
+        (order: any) =>
+          order.order_id === orderIdParam || order.id === orderIdParam,
       );
-      
+
       if (matchedOrder) {
         setNewOrderId(orderIdParam);
         setShowOrderSelection(true);
@@ -154,13 +153,28 @@ export default function ViewClubPage() {
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [showOrderSelection, setShowOrderSelection] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
+    "eft" | "payfast" | null
+  >("eft");
   const [newOrderId, setNewOrderId] = useState<string | null>(null);
-  const [orderSortColumn, setOrderSortColumn] = useState<'date' | 'payment_status' | 'fulfillment_status' | 'total' | null>(null);
-  const [orderSortDirection, setOrderSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [orderSortColumn, setOrderSortColumn] = useState<
+    "date" | "payment_status" | "fulfillment_status" | "total" | null
+  >(null);
+  const [orderSortDirection, setOrderSortDirection] = useState<"asc" | "desc">(
+    "asc",
+  );
   const [venues, setVenues] = useState<any[]>([]);
   const [venuesLoading, setVenuesLoading] = useState(false);
   const [venuesError, setVenuesError] = useState<string | null>(null);
-  const [selectedGalleryImageIndex, setSelectedGalleryImageIndex] = useState<number | null>(null);
+  const [selectedGalleryImageIndex, setSelectedGalleryImageIndex] = useState<
+    number | null
+  >(null);
+
+  const canViewBookings =
+    isLoggedIn &&
+    !!data?.club_member_exists &&
+    !!data?.registered &&
+    !!data?.venues_enabled;
 
   const {
     data: memberOrders,
@@ -318,6 +332,12 @@ export default function ViewClubPage() {
   }, [bankDetails?.registration_payment_reference]);
 
   useEffect(() => {
+    if (!paymentDialogOpen) {
+      setSelectedPaymentMethod("eft");
+    }
+  }, [paymentDialogOpen]);
+
+  useEffect(() => {
     if (activeTab !== "bookings" || !data?.club_account_id) {
       return;
     }
@@ -329,7 +349,8 @@ export default function ViewClubPage() {
         const venuseData = await getVenues(data.club_account_id);
         setVenues(venuseData.venues || []);
       } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : "Failed to load venues";
+        const errorMsg =
+          err instanceof Error ? err.message : "Failed to load venues";
         setVenuesError(errorMsg);
         console.error("Error fetching venues:", err, errorMsg);
       } finally {
@@ -339,6 +360,12 @@ export default function ViewClubPage() {
 
     fetchVenues();
   }, [activeTab, data?.club_account_id]);
+
+  useEffect(() => {
+    if (activeTab === "bookings" && !canViewBookings) {
+      setActiveTab("home");
+    }
+  }, [activeTab, canViewBookings]);
 
   const getStatusIcon = (
     isRegistered: boolean,
@@ -767,7 +794,7 @@ export default function ViewClubPage() {
                         Registration
                       </TabsTrigger>
                     )}
-                    {data?.club_member_exists && data?.venues_enabled && (
+                    {canViewBookings && (
                       <TabsTrigger
                         className={cn(
                           "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium",
@@ -808,284 +835,291 @@ export default function ViewClubPage() {
                 />
 
                 {data?.enable_shop && (
-                <TabsContent value="shop" className="mt-6">
-                  <div className="space-y-6">
-                    <Card>
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                              <ShoppingBag className="w-5 h-5 text-primary" />
+                  <TabsContent value="shop" className="mt-6">
+                    <div className="space-y-6">
+                      <Card>
+                        <CardHeader>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                                <ShoppingBag className="w-5 h-5 text-primary" />
+                              </div>
+                              <div>
+                                <CardTitle className="text-xl">
+                                  My Orders
+                                </CardTitle>
+                                <CardDescription className="text-base">
+                                  View your order history and shop for new items
+                                </CardDescription>
+                              </div>
                             </div>
-                            <div>
-                              <CardTitle className="text-xl">
-                                My Orders
-                              </CardTitle>
-                              <CardDescription className="text-base">
-                                View your order history and shop for new items
-                              </CardDescription>
-                            </div>
+                            <Button
+                              onClick={() =>
+                                navigate(`/myclubs/${clubId}/shop`)
+                              }
+                              className="flex items-center gap-2"
+                            >
+                              <ShoppingBag className="h-4 w-4" />
+                              Go to Shop
+                            </Button>
                           </div>
-                          <Button
-                            onClick={() => navigate(`/myclubs/${clubId}/shop`)}
-                            className="flex items-center gap-2"
+                        </CardHeader>
+                        <CardContent className="p-0">
+                          <div
+                            className={`${memberOrders?.orders && memberOrders.orders.length > 5 ? "max-h-96 overflow-y-auto" : "overflow-hidden"}`}
                           >
-                            <ShoppingBag className="h-4 w-4" />
-                            Go to Shop
-                          </Button>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="p-0">
-                        <div
-                          className={`${memberOrders?.orders && memberOrders.orders.length > 5 ? "max-h-96 overflow-y-auto" : "overflow-hidden"}`}
-                        >
-                          <Table className="border-0">
-                            <TableHeader className="bg-gradient-to-r from-muted/50 to-muted/30 sticky top-0 z-10">
-                              <TableRow className="border-primary/10 hover:bg-transparent">
-                                <TableHead className="text-center flex-1 font-semibold">
-                                  Order #
-                                </TableHead>
-                                <TableHead
-                                  className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                                  onClick={() => handleOrderSort("date")}
-                                >
-                                  <div className="flex items-center justify-center gap-2">
-                                    Date
-                                    {orderSortColumn === "date" &&
-                                      (orderSortDirection === "asc" ? (
-                                        <ArrowUp className="h-4 w-4" />
-                                      ) : (
-                                        <ArrowDown className="h-4 w-4" />
-                                      ))}
-                                  </div>
-                                </TableHead>
-                                <TableHead className="text-center flex-1 font-semibold">
-                                  Items
-                                </TableHead>
-                                <TableHead
-                                  className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                                  onClick={() => handleOrderSort("total")}
-                                >
-                                  <div className="flex items-center justify-center gap-2">
-                                    Total
-                                    {orderSortColumn === "total" &&
-                                      (orderSortDirection === "asc" ? (
-                                        <ArrowUp className="h-4 w-4" />
-                                      ) : (
-                                        <ArrowDown className="h-4 w-4" />
-                                      ))}
-                                  </div>
-                                </TableHead>
-                                <TableHead className="text-center flex-1 font-semibold">
-                                  Amount Paid
-                                </TableHead>
-                                <TableHead
-                                  className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                                  onClick={() =>
-                                    handleOrderSort("payment_status")
-                                  }
-                                >
-                                  <div className="flex items-center justify-center gap-2">
-                                    Payment Status
-                                    {orderSortColumn === "payment_status" &&
-                                      (orderSortDirection === "asc" ? (
-                                        <ArrowUp className="h-4 w-4" />
-                                      ) : (
-                                        <ArrowDown className="h-4 w-4" />
-                                      ))}
-                                  </div>
-                                </TableHead>
-                                <TableHead
-                                  className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                                  onClick={() =>
-                                    handleOrderSort("fulfillment_status")
-                                  }
-                                >
-                                  <div className="flex items-center justify-center gap-2">
-                                    Fulfillment Status
-                                    {orderSortColumn === "fulfillment_status" &&
-                                      (orderSortDirection === "asc" ? (
-                                        <ArrowUp className="h-4 w-4" />
-                                      ) : (
-                                        <ArrowDown className="h-4 w-4" />
-                                      ))}
-                                  </div>
-                                </TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {isOrdersLoading && (
-                                <TableRow>
-                                  <TableCell
-                                    colSpan={7}
-                                    className="text-center py-8"
+                            <Table className="border-0">
+                              <TableHeader className="bg-gradient-to-r from-muted/50 to-muted/30 sticky top-0 z-10">
+                                <TableRow className="border-primary/10 hover:bg-transparent">
+                                  <TableHead className="text-center flex-1 font-semibold">
+                                    Order #
+                                  </TableHead>
+                                  <TableHead
+                                    className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                                    onClick={() => handleOrderSort("date")}
                                   >
-                                    <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                                    <p className="text-muted-foreground mt-2">
-                                      Loading orders...
-                                    </p>
-                                  </TableCell>
-                                </TableRow>
-                              )}
-                              {ordersError && (
-                                <TableRow>
-                                  <TableCell
-                                    colSpan={7}
-                                    className="text-center py-8 text-red-600"
+                                    <div className="flex items-center justify-center gap-2">
+                                      Date
+                                      {orderSortColumn === "date" &&
+                                        (orderSortDirection === "asc" ? (
+                                          <ArrowUp className="h-4 w-4" />
+                                        ) : (
+                                          <ArrowDown className="h-4 w-4" />
+                                        ))}
+                                    </div>
+                                  </TableHead>
+                                  <TableHead className="text-center flex-1 font-semibold">
+                                    Items
+                                  </TableHead>
+                                  <TableHead
+                                    className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                                    onClick={() => handleOrderSort("total")}
                                   >
-                                    Failed to load orders. Please try again
-                                    later.
-                                  </TableCell>
+                                    <div className="flex items-center justify-center gap-2">
+                                      Total
+                                      {orderSortColumn === "total" &&
+                                        (orderSortDirection === "asc" ? (
+                                          <ArrowUp className="h-4 w-4" />
+                                        ) : (
+                                          <ArrowDown className="h-4 w-4" />
+                                        ))}
+                                    </div>
+                                  </TableHead>
+                                  <TableHead className="text-center flex-1 font-semibold">
+                                    Amount Paid
+                                  </TableHead>
+                                  <TableHead
+                                    className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                                    onClick={() =>
+                                      handleOrderSort("payment_status")
+                                    }
+                                  >
+                                    <div className="flex items-center justify-center gap-2">
+                                      Payment Status
+                                      {orderSortColumn === "payment_status" &&
+                                        (orderSortDirection === "asc" ? (
+                                          <ArrowUp className="h-4 w-4" />
+                                        ) : (
+                                          <ArrowDown className="h-4 w-4" />
+                                        ))}
+                                    </div>
+                                  </TableHead>
+                                  <TableHead
+                                    className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                                    onClick={() =>
+                                      handleOrderSort("fulfillment_status")
+                                    }
+                                  >
+                                    <div className="flex items-center justify-center gap-2">
+                                      Fulfillment Status
+                                      {orderSortColumn ===
+                                        "fulfillment_status" &&
+                                        (orderSortDirection === "asc" ? (
+                                          <ArrowUp className="h-4 w-4" />
+                                        ) : (
+                                          <ArrowDown className="h-4 w-4" />
+                                        ))}
+                                    </div>
+                                  </TableHead>
                                 </TableRow>
-                              )}
-                              {!isOrdersLoading &&
-                                !ordersError &&
-                                memberOrders?.orders?.length === 0 && (
+                              </TableHeader>
+                              <TableBody>
+                                {isOrdersLoading && (
                                   <TableRow>
                                     <TableCell
                                       colSpan={7}
-                                      className="text-center py-8 text-muted-foreground"
+                                      className="text-center py-8"
                                     >
-                                      No orders yet. Start shopping to see your
-                                      orders here!
+                                      <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                                      <p className="text-muted-foreground mt-2">
+                                        Loading orders...
+                                      </p>
                                     </TableCell>
                                   </TableRow>
                                 )}
-                              {!isOrdersLoading &&
-                                !ordersError &&
-                                sortedOrders?.map((order: any) => (
-                                  <TableRow
-                                    key={order.order_id}
-                                    className="hover:bg-primary/5 transition-colors border-primary/10 group"
-                                  >
-                                    <TableCell className="text-center flex-1 py-4">
-                                      <span className="font-mono text-sm bg-muted/50 px-2 py-1 rounded">
-                                        #{order.order_id?.slice(0, 8) || "N/A"}
-                                      </span>
-                                    </TableCell>
-                                    <TableCell className="text-center flex-1 py-4">
-                                      {order.created_date
-                                        ? new Date(
-                                            order.created_date * 1000,
-                                          ).toLocaleDateString()
-                                        : "N/A"}
-                                    </TableCell>
-                                    <TableCell className="text-center flex-1 py-4">
-                                      <div className="space-y-1">
-                                        {order.items?.map(
-                                          (item: any, index: number) => (
-                                            <div
-                                              key={index}
-                                              className="text-sm"
-                                            >
-                                              {item.name} x{item.quantity}
-                                            </div>
-                                          ),
-                                        ) || (
-                                          <div className="text-sm">
-                                            No items
-                                          </div>
-                                        )}
-                                      </div>
-                                    </TableCell>
-                                    <TableCell className="text-center flex-1 py-4 font-semibold">
-                                      {formatAmount(
-                                        order.total_amount || 0,
-                                        data.currency,
-                                      )}
-                                    </TableCell>
-                                    <TableCell className="text-center flex-1 py-4 font-semibold">
-                                      {formatAmount(
-                                        order.amount_paid || 0,
-                                        data.currency,
-                                      )}
-                                    </TableCell>
-                                    <TableCell className="text-center flex-1 py-4">
-                                      <div className="flex flex-col items-center gap-2">
-                                        <Badge
-                                          className={`font-medium ${
-                                            order.payment_status === "PAID" ||
-                                            order.payment_status ===
-                                              "PAID (Partial Refund)"
-                                              ? "bg-green-100 text-green-800 border-green-200"
-                                              : order.payment_status ===
-                                                  "PENDING"
-                                                ? "bg-orange-100 text-orange-800 border-orange-200 mt-2"
-                                                : order.payment_status ===
-                                                    "PARTIALLY_PAID"
-                                                  ? "bg-purple-100 text-purple-800 border-purple-200"
-                                                  : order.payment_status ===
-                                                        "CANCELLED" ||
-                                                      order.payment_status ===
-                                                        "REFUND"
-                                                    ? "bg-red-100 text-red-800 border-red-200"
-                                                    : "bg-gray-100 text-gray-800 border-gray-200"
-                                          }`}
-                                        >
-                                          {order.payment_status || "Unknown"}
-                                        </Badge>
-                                        {(order.payment_status === "PENDING" ||
-                                          order.payment_status ===
-                                            "PARTIALLY_PAID") && (
-                                          <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            className="text-xs underline h-6 px-2 text-red-600"
-                                            onClick={() => setActiveTab("bank")}
-                                          >
-                                            Pay Now
-                                          </Button>
-                                        )}
-                                      </div>
-                                    </TableCell>
-                                    <TableCell className="text-center flex-1 py-4">
-                                      <div className="flex items-center justify-center gap-2">
-                                        <Badge
-                                          className={`font-medium ${
-                                            order.fulfillment_status ===
-                                            "DELIVERED"
-                                              ? "bg-green-100 text-green-800 border-green-200"
-                                              : order.fulfillment_status ===
-                                                  "NOT_PROCESSED"
-                                                ? "bg-orange-100 text-orange-800 border-orange-200"
-                                                : order.fulfillment_status ===
-                                                    "PROCESSING"
-                                                  ? "bg-purple-100 text-purple-800 border-purple-200"
-                                                  : order.fulfillment_status ===
-                                                        "CANCELLED" ||
-                                                      order.fulfillment_status ===
-                                                        "REFUND" ||
-                                                      order.fulfillment_status ===
-                                                        "REFUNDED"
-                                                    ? "bg-red-100 text-red-800 border-red-200"
-                                                    : "bg-green-100 text-green-800 border-green-200"
-                                          }`}
-                                        >
-                                          {order.fulfillment_status ||
-                                            "Unknown"}
-                                        </Badge>
-                                      </div>
+                                {ordersError && (
+                                  <TableRow>
+                                    <TableCell
+                                      colSpan={7}
+                                      className="text-center py-8 text-red-600"
+                                    >
+                                      Failed to load orders. Please try again
+                                      later.
                                     </TableCell>
                                   </TableRow>
-                                ))}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </TabsContent>
+                                )}
+                                {!isOrdersLoading &&
+                                  !ordersError &&
+                                  memberOrders?.orders?.length === 0 && (
+                                    <TableRow>
+                                      <TableCell
+                                        colSpan={7}
+                                        className="text-center py-8 text-muted-foreground"
+                                      >
+                                        No orders yet. Start shopping to see
+                                        your orders here!
+                                      </TableCell>
+                                    </TableRow>
+                                  )}
+                                {!isOrdersLoading &&
+                                  !ordersError &&
+                                  sortedOrders?.map((order: any) => (
+                                    <TableRow
+                                      key={order.order_id}
+                                      className="hover:bg-primary/5 transition-colors border-primary/10 group"
+                                    >
+                                      <TableCell className="text-center flex-1 py-4">
+                                        <span className="font-mono text-sm bg-muted/50 px-2 py-1 rounded">
+                                          #
+                                          {order.order_id?.slice(0, 8) || "N/A"}
+                                        </span>
+                                      </TableCell>
+                                      <TableCell className="text-center flex-1 py-4">
+                                        {order.created_date
+                                          ? new Date(
+                                              order.created_date * 1000,
+                                            ).toLocaleDateString()
+                                          : "N/A"}
+                                      </TableCell>
+                                      <TableCell className="text-center flex-1 py-4">
+                                        <div className="space-y-1">
+                                          {order.items?.map(
+                                            (item: any, index: number) => (
+                                              <div
+                                                key={index}
+                                                className="text-sm"
+                                              >
+                                                {item.name} x{item.quantity}
+                                              </div>
+                                            ),
+                                          ) || (
+                                            <div className="text-sm">
+                                              No items
+                                            </div>
+                                          )}
+                                        </div>
+                                      </TableCell>
+                                      <TableCell className="text-center flex-1 py-4 font-semibold">
+                                        {formatAmount(
+                                          order.total_amount || 0,
+                                          data.currency,
+                                        )}
+                                      </TableCell>
+                                      <TableCell className="text-center flex-1 py-4 font-semibold">
+                                        {formatAmount(
+                                          order.amount_paid || 0,
+                                          data.currency,
+                                        )}
+                                      </TableCell>
+                                      <TableCell className="text-center flex-1 py-4">
+                                        <div className="flex flex-col items-center gap-2">
+                                          <Badge
+                                            className={`font-medium ${
+                                              order.payment_status === "PAID" ||
+                                              order.payment_status ===
+                                                "PAID (Partial Refund)"
+                                                ? "bg-green-100 text-green-800 border-green-200"
+                                                : order.payment_status ===
+                                                    "PENDING"
+                                                  ? "bg-orange-100 text-orange-800 border-orange-200 mt-2"
+                                                  : order.payment_status ===
+                                                      "PARTIALLY_PAID"
+                                                    ? "bg-purple-100 text-purple-800 border-purple-200"
+                                                    : order.payment_status ===
+                                                          "CANCELLED" ||
+                                                        order.payment_status ===
+                                                          "REFUND"
+                                                      ? "bg-red-100 text-red-800 border-red-200"
+                                                      : "bg-gray-100 text-gray-800 border-gray-200"
+                                            }`}
+                                          >
+                                            {order.payment_status || "Unknown"}
+                                          </Badge>
+                                          {(order.payment_status ===
+                                            "PENDING" ||
+                                            order.payment_status ===
+                                              "PARTIALLY_PAID") && (
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              className="text-xs underline h-6 px-2 text-red-600"
+                                              onClick={() =>
+                                                setActiveTab("bank")
+                                              }
+                                            >
+                                              Pay Now
+                                            </Button>
+                                          )}
+                                        </div>
+                                      </TableCell>
+                                      <TableCell className="text-center flex-1 py-4">
+                                        <div className="flex items-center justify-center gap-2">
+                                          <Badge
+                                            className={`font-medium ${
+                                              order.fulfillment_status ===
+                                              "DELIVERED"
+                                                ? "bg-green-100 text-green-800 border-green-200"
+                                                : order.fulfillment_status ===
+                                                    "NOT_PROCESSED"
+                                                  ? "bg-orange-100 text-orange-800 border-orange-200"
+                                                  : order.fulfillment_status ===
+                                                      "PROCESSING"
+                                                    ? "bg-purple-100 text-purple-800 border-purple-200"
+                                                    : order.fulfillment_status ===
+                                                          "CANCELLED" ||
+                                                        order.fulfillment_status ===
+                                                          "REFUND" ||
+                                                        order.fulfillment_status ===
+                                                          "REFUNDED"
+                                                      ? "bg-red-100 text-red-800 border-red-200"
+                                                      : "bg-green-100 text-green-800 border-green-200"
+                                            }`}
+                                          >
+                                            {order.fulfillment_status ||
+                                              "Unknown"}
+                                          </Badge>
+                                        </div>
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </TabsContent>
                 )}
 
-                {data?.venues_enabled && (
-                <TabsContent value="bookings" className="mt-6">
-                  <MemberBookings
-                    venues={venues}
-                    loading={venuesLoading}
-                    error={venuesError}
-                    memberName={data?.member_name || ""}
-                  />
-                </TabsContent>
+                {canViewBookings && (
+                  <TabsContent value="bookings" className="mt-6">
+                    <MemberBookings
+                      venues={venues}
+                      loading={venuesLoading}
+                      error={venuesError}
+                      memberName={data?.member_name || ""}
+                    />
+                  </TabsContent>
                 )}
 
                 <TabsContent value="home" className="mt-6">
@@ -1202,22 +1236,29 @@ export default function ViewClubPage() {
                         </h3>
 
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                          {data?.gallery_images && data.gallery_images.length > 0 ? (
-                            data.gallery_images.map((image: any, idx: number) => (
-                              <button
-                                key={image.key}
-                                onClick={() => setSelectedGalleryImageIndex(idx)}
-                                className="relative rounded-lg overflow-hidden shadow-sm bg-muted transition-shadow hover:shadow-md cursor-pointer hover:opacity-90"
-                              >
-                                <img
-                                  src={image.url}
-                                  alt="Gallery"
-                                  className="w-full h-32 object-cover block"
-                                />
-                              </button>
-                            ))
+                          {data?.gallery_images &&
+                          data.gallery_images.length > 0 ? (
+                            data.gallery_images.map(
+                              (image: any, idx: number) => (
+                                <button
+                                  key={image.key}
+                                  onClick={() =>
+                                    setSelectedGalleryImageIndex(idx)
+                                  }
+                                  className="relative rounded-lg overflow-hidden shadow-sm bg-muted transition-shadow hover:shadow-md cursor-pointer hover:opacity-90"
+                                >
+                                  <img
+                                    src={image.url}
+                                    alt="Gallery"
+                                    className="w-full h-32 object-cover block"
+                                  />
+                                </button>
+                              ),
+                            )
                           ) : (
-                            <p className="text-sm text-muted-foreground">No gallery images</p>
+                            <p className="text-sm text-muted-foreground">
+                              No gallery images
+                            </p>
                           )}
                         </div>
                       </section>
@@ -1272,7 +1313,7 @@ export default function ViewClubPage() {
                 <div
                   key={index}
                   className={`p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors ${
-                    (order.order_id === newOrderId || order.id === newOrderId)
+                    order.order_id === newOrderId || order.id === newOrderId
                       ? "border-yellow-400 bg-yellow-50 border-2"
                       : ""
                   }`}
@@ -1395,321 +1436,251 @@ export default function ViewClubPage() {
               )}
             </div>
           </DialogHeader>
-          <Tabs
-            defaultValue="eft"
-            className="w-full flex flex-col flex-1 overflow-hidden px-6"
-          >
-            <TabsList
-              className={`grid w-full flex-shrink-0 ${(() => {
-                let cols = 1;
-                if (
-                  data?.payfast_enabled &&
-                  data?.club_member_exists &&
-                  (bankDetails?.outstanding_amount ?? 0) > 0
-                ) {
-                  cols++;
-                }
-                if (
-                  data?.custom_payment_methods &&
-                  data.custom_payment_methods.length > 0
-                ) {
-                  cols += data.custom_payment_methods.length;
-                }
-                return `grid-cols-${cols}`;
-              })()}`}
-            >
-              <TabsTrigger value="eft">Bank Transfer (EFT)</TabsTrigger>
-              {data?.payfast_enabled &&
-                data?.club_member_exists &&
-                (bankDetails?.outstanding_amount ?? 0) > 0 && (
-                  <TabsTrigger value="online">Online Payment</TabsTrigger>
-                )}
-              {data?.custom_payment_methods &&
-                data.custom_payment_methods.map(
-                  (method: any, index: number) => (
-                    <TabsTrigger key={index} value={`custom-${index}`}>
-                      {method.name}
-                    </TabsTrigger>
-                  ),
-                )}
-            </TabsList>
-            <TabsContent value="eft" className="pt-4 flex-1 overflow-y-auto">
-              <div className="space-y-3 sm:space-y-6 pr-2 sm:pr-4">
-                <div className="text-center space-y-2 sm:space-y-3">
-                  <div className="flex items-center justify-center gap-1 sm:gap-2">
-                    <Building2 className="w-4 h-4 sm:w-6 sm:h-6 text-primary" />
-                    <h3 className="text-sm sm:text-xl font-semibold">
-                      Bank Transfer (EFT)
-                    </h3>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                      Transfer funds directly to the club's bank account using
-                      the details below.
-                    </p>
-                  </div>
-                </div>
-
-                {bankDetailsLoading && (
-                  <div className="flex justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                  </div>
-                )}
-
-                {!bankDetailsLoading && (
-                  <div className="flex justify-center">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-6 max-w-2xl w-full">
-                      <Card className="group hover:shadow-md transition-shadow border-primary/10">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3 flex-1">
-                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                <Building2 className="h-5 w-5 text-primary" />
-                              </div>
-                              <div>
-                                <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                                  Bank Name
-                                </p>
-                                <p className="font-semibold text-lg">
-                                  {bankDetails?.bank}
-                                </p>
-                              </div>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                copyToClipboard(bankDetails?.bank || "", "bank")
-                              }
-                              className="opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              {copiedField === "bank" ? (
-                                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                              ) : (
-                                <Copy className="h-4 w-4" />
-                              )}
-                            </Button>
+          <div className="flex-1 overflow-hidden px-6 pb-6">
+            <div className="h-full overflow-y-auto pr-2">
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <div className="space-y-4">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSelectedPaymentMethod((prev) =>
+                          prev === "eft" ? null : "eft",
+                        )
+                      }
+                      className={cn(
+                        "flex w-full items-center justify-between rounded-2xl border bg-white px-5 py-4 text-left shadow-md transition-all duration-200",
+                        selectedPaymentMethod === "eft"
+                          ? "border-slate-400 ring-2 ring-slate-200"
+                          : "border-gray-200 hover:border-slate-300 hover:shadow-lg",
+                      )}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div
+                          className={cn(
+                            "flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors",
+                            selectedPaymentMethod === "eft"
+                              ? "border-slate-300 bg-slate-200"
+                              : "border-slate-300 bg-white",
+                          )}
+                        >
+                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-black text-white">
+                            {selectedPaymentMethod === "eft" ? (
+                              <CheckCircle2 className="h-4 w-4" />
+                            ) : null}
                           </div>
-                        </CardContent>
-                      </Card>
-                      <Card className="group hover:shadow-md transition-shadow border-primary/10">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3 flex-1">
-                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                <Hash className="h-5 w-5 text-primary" />
-                              </div>
-                              <div>
-                                <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                                  Account Number
-                                </p>
-                                <p className="font-semibold font-mono text-lg">
-                                  {bankDetails?.account_number}
-                                </p>
-                              </div>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                copyToClipboard(
-                                  bankDetails?.account_number || "",
-                                  "account",
-                                )
-                              }
-                              className="opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              {copiedField === "account" ? (
-                                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                              ) : (
-                                <Copy className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
+                        </div>
 
-                      <Card className="group hover:shadow-md transition-shadow border-primary/10">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3 flex-1">
-                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                <Hash className="h-5 w-5 text-primary" />
-                              </div>
-                              <div>
-                                <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                                  Branch Code
-                                </p>
-                                <p className="font-semibold font-mono text-lg">
-                                  {bankDetails?.branch_code}
-                                </p>
-                              </div>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                copyToClipboard(
-                                  bankDetails?.branch_code || "",
-                                  "branch",
-                                )
-                              }
-                              className="opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              {copiedField === "branch" ? (
-                                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                              ) : (
-                                <Copy className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
+                        <div>
+                          <p className="text-xl font-semibold text-gray-950 sm:text-2xl">
+                            Pay via EFT
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Transfer directly into the club bank account.
+                          </p>
+                        </div>
+                      </div>
 
-                      <Card className="group hover:shadow-md transition-shadow border-primary/10">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3 flex-1">
-                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                <Building2 className="h-5 w-5 text-primary" />
-                              </div>
-                              <div>
-                                <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                                  Account Type
-                                </p>
-                                <p className="font-semibold text-lg">
-                                  {bankDetails?.account_type}
-                                </p>
-                              </div>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                copyToClipboard(
-                                  bankDetails?.account_type || "",
-                                  "type",
-                                )
-                              }
-                              className="opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              {copiedField === "type" ? (
-                                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                              ) : (
-                                <Copy className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
+                      <div className="rounded-2xl bg-slate-100 px-4 py-3 text-right">
+                        <p className="text-sm font-semibold text-slate-800">
+                          Bank Transfer
+                        </p>
+                        <p className="text-xs text-slate-600">
+                          Manual payment with reference
+                        </p>
+                      </div>
+                    </button>
 
-                      {bankDetails?.payment_reference && (
-                        <Card className="group hover:shadow-lg transition-shadow sm:col-span-2 border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
-                          <CardContent className="p-6">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-4 flex-1">
-                                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                                  <Hash className="h-6 w-6 text-primary" />
-                                </div>
-                                <div>
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <p className="text-sm text-muted-foreground uppercase tracking-wide">
-                                      Payment Reference
+                    {selectedPaymentMethod === "eft" && (
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4">
+                        <div className="space-y-4">
+                          {bankDetailsLoading ? (
+                            <div className="flex justify-center py-8">
+                              <Loader2 className="h-8 w-8 animate-spin text-slate-600" />
+                            </div>
+                          ) : (
+                            <>
+                              <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
+                                <div className="flex items-center justify-between gap-4 px-4 py-3">
+                                  <div>
+                                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                      Bank Name
                                     </p>
-                                    <Badge className="bg-primary/20 text-primary text-xs">
-                                      Important!
-                                    </Badge>
-                                  </div>
-                                  <p className="font-bold font-mono text-xl text-primary">
-                                    {bankDetails?.payment_reference}
-                                  </p>
-                                  <div className="mt-3 space-y-1">
-                                    <p className="text-xs text-muted-foreground">
-                                      Always include this reference with your
-                                      payment
-                                    </p>
-                                    <p className="text-xs text-muted-foreground leading-relaxed">
-                                      <strong>Note:</strong> This reference
-                                      number is displayed on the admin side.
-                                      When you make a payment (e.g., via EFT),
-                                      include this number as your proof of
-                                      reference so the admin can verify and
-                                      match your payment to your account.
+                                    <p className="text-sm font-semibold text-slate-950">
+                                      {bankDetails?.bank}
                                     </p>
                                   </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() =>
+                                      copyToClipboard(bankDetails?.bank || "", "bank")
+                                    }
+                                    className="shrink-0"
+                                  >
+                                    {copiedField === "bank" ? (
+                                      <CheckCircle2 className="h-4 w-4 text-slate-700" />
+                                    ) : (
+                                      <Copy className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                </div>
+
+                                <div className="flex items-center justify-between gap-4 px-4 py-3">
+                                  <div>
+                                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                      Account Number
+                                    </p>
+                                    <p className="font-mono text-sm font-semibold text-slate-950">
+                                      {bankDetails?.account_number}
+                                    </p>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() =>
+                                      copyToClipboard(
+                                        bankDetails?.account_number || "",
+                                        "account",
+                                      )
+                                    }
+                                    className="shrink-0"
+                                  >
+                                    {copiedField === "account" ? (
+                                      <CheckCircle2 className="h-4 w-4 text-slate-700" />
+                                    ) : (
+                                      <Copy className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                </div>
+
+                                <div className="flex items-center justify-between gap-4 px-4 py-3">
+                                  <div>
+                                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                      Branch Code
+                                    </p>
+                                    <p className="font-mono text-sm font-semibold text-slate-950">
+                                      {bankDetails?.branch_code}
+                                    </p>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() =>
+                                      copyToClipboard(
+                                        bankDetails?.branch_code || "",
+                                        "branch",
+                                      )
+                                    }
+                                    className="shrink-0"
+                                  >
+                                    {copiedField === "branch" ? (
+                                      <CheckCircle2 className="h-4 w-4 text-slate-700" />
+                                    ) : (
+                                      <Copy className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                </div>
+
+                                <div className="flex items-center justify-between gap-4 px-4 py-3">
+                                  <div>
+                                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                      Account Type
+                                    </p>
+                                    <p className="text-sm font-semibold text-slate-950">
+                                      {bankDetails?.account_type}
+                                    </p>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() =>
+                                      copyToClipboard(
+                                        bankDetails?.account_type || "",
+                                        "type",
+                                      )
+                                    }
+                                    className="shrink-0"
+                                  >
+                                    {copiedField === "type" ? (
+                                      <CheckCircle2 className="h-4 w-4 text-slate-700" />
+                                    ) : (
+                                      <Copy className="h-4 w-4" />
+                                    )}
+                                  </Button>
                                 </div>
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  copyToClipboard(
-                                    bankDetails?.payment_reference || "",
-                                    "reference",
-                                  )
-                                }
-                                className="opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                {copiedField === "reference" ? (
-                                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                ) : (
-                                  <Copy className="h-4 w-4" />
-                                )}
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-                    </div>
-                  </div>
-                )}
 
-                <div className="flex flex-col items-center space-y-2 sm:space-y-3">
-                  <div className="w-full sm:w-[100%] p-2 sm:p-3 bg-primary/5 rounded-lg border border-primary/20">
-                    <p className="text-xs sm:text-sm">
-                      <strong className="text-primary">Important:</strong>{" "}
-                      Always include your payment reference number to ensure
-                      proper allocation of your payment.
-                    </p>
-                  </div>
-                </div>
+                              {bankDetails?.payment_reference && (
+                                <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                                  <div className="flex items-start justify-between gap-4">
+                                    <div>
+                                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                        Payment Reference
+                                      </p>
+                                      <p className="mt-1 font-mono text-lg font-semibold text-slate-950">
+                                        {bankDetails?.payment_reference}
+                                      </p>
+                                      <p className="mt-1 text-sm text-muted-foreground">
+                                        Include this reference with your EFT payment.
+                                      </p>
+                                    </div>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() =>
+                                        copyToClipboard(
+                                          bankDetails?.payment_reference || "",
+                                          "reference",
+                                        )
+                                      }
+                                      className="shrink-0"
+                                    >
+                                      {copiedField === "reference" ? (
+                                        <>
+                                          <CheckCircle2 className="mr-2 h-4 w-4 text-slate-700" />
+                                          Copied
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Copy className="mr-2 h-4 w-4" />
+                                          Copy
+                                        </>
+                                      )}
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
 
-                <div className="flex flex-col items-center">
-                  <div className="w-full sm:w-[100%] p-2 sm:p-3 bg-amber-50 rounded-lg border border-amber-200">
-                    <p className="text-xs sm:text-sm text-amber-900">
-                      <strong className="text-amber-700">
-                        Registration Status:
-                      </strong>{" "}
-                      Your registration will remain <strong>Pending</strong>{" "}
-                      until the club administrator confirms receipt of your
-                      payment.
-                      {data.support_email && (
-                        <>
-                          {" "}
-                          If you don't receive confirmation within a reasonable
-                          timeframe, please contact the club at:{" "}
-                          <a
-                            href={`mailto:${data.support_email}`}
-                            className="font-semibold text-amber-700 hover:text-amber-800 underline"
-                          >
-                            {data.support_email}
-                          </a>
-                        </>
-                      )}
-                    </p>
+                              <div className="space-y-2 text-sm text-muted-foreground">
+                                <p>
+                                  <strong className="text-slate-950">Important:</strong> Always include your payment reference number to ensure proper allocation of your payment.
+                                </p>
+                                <p>
+                                  <strong className="text-slate-950">Registration Status:</strong> Your registration will remain <strong>Pending</strong> until the club administrator confirms receipt of your payment.
+                                  {data.support_email && (
+                                    <>
+                                      {" "}If you do not receive confirmation in a reasonable timeframe, contact{" "}
+                                      <a
+                                        href={`mailto:${data.support_email}`}
+                                        className="font-semibold text-slate-700 underline"
+                                      >
+                                        {data.support_email}
+                                      </a>
+                                      .
+                                    </>
+                                  )}
+                                </p>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              </div>
-            </TabsContent>
-            {data?.payfast_enabled &&
-              data?.club_member_exists &&
-              (bankDetails?.outstanding_amount ?? 0) > 0 && (
-                <TabsContent
-                  value="online"
-                  className="pt-4 flex-1 overflow-y-auto"
-                >
-                  <div className="flex justify-center pr-4">
-                    <div className="max-w-2xl w-full">
+
+                  {data?.payfast_enabled && (
+                    <div className="space-y-4">
                       <PayFastPayment
                         clubAccountId={data?.club_account_id ?? ""}
                         outstandingAmount={
@@ -1718,43 +1689,60 @@ export default function ViewClubPage() {
                             : (bankDetails?.outstanding_amount ?? 0)
                         }
                         orderId={selectedOrder?.order_id}
+                        showHeader={false}
+                        buttonVariant="logo"
+                        isSelected={selectedPaymentMethod === "payfast"}
+                        onSelectedChange={(isSelected) =>
+                          setSelectedPaymentMethod(isSelected ? "payfast" : null)
+                        }
                       />
                     </div>
-                  </div>
-                </TabsContent>
-              )}
-            {data?.custom_payment_methods &&
-              data.custom_payment_methods.map((method: any, index: number) => (
-                <TabsContent
-                  key={index}
-                  value={`custom-${index}`}
-                  className="pt-4 flex-1 overflow-y-auto"
-                >
-                  <div className="space-y-6">
-                    <div className="text-center space-y-4">
-                      <div className="flex items-center justify-center gap-2">
-                        <CreditCard className="w-6 h-6 text-primary" />
-                        <h3 className="text-xl font-semibold">{method.name}</h3>
-                      </div>
-                      <p className="text-muted-foreground">
-                        Click the button below to proceed to {method.name} for
-                        payment
+                  )}
+                </div>
+
+                {data?.custom_payment_methods && data.custom_payment_methods.length > 0 && (
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        More Payment Options
                       </p>
                     </div>
-                    <div className="flex justify-center">
-                      <Button
-                        size="lg"
-                        onClick={() => window.open(method.url, "_blank")}
-                        className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300"
-                      >
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        Pay with {method.name}
-                      </Button>
+                    <div className="space-y-3">
+                      {data.custom_payment_methods.map((method: any, index: number) => (
+                        <Card
+                          key={index}
+                          className="rounded-2xl border border-primary/20 bg-white/85 shadow-sm transition-shadow hover:shadow-md"
+                        >
+                          <CardContent className="flex items-center justify-between gap-4 p-5">
+                            <div className="flex items-start gap-3">
+                              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                                <ExternalLink className="h-5 w-5" />
+                              </div>
+                              <div>
+                                <p className="text-base font-semibold text-slate-950">
+                                  {method.name}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  Proceed to {method.name} to complete payment.
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              onClick={() => window.open(method.url, "_blank")}
+                              className="rounded-full bg-primary px-5 hover:bg-primary/90"
+                            >
+                              <ExternalLink className="mr-2 h-4 w-4" />
+                              Continue
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      ))}
                     </div>
                   </div>
-                </TabsContent>
-              ))}
-          </Tabs>
+                )}
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -1771,7 +1759,7 @@ export default function ViewClubPage() {
                 alt="Gallery"
                 className="w-full h-full object-contain"
               />
-              
+
               {data.gallery_images.length > 1 && (
                 <>
                   <button
@@ -1787,11 +1775,12 @@ export default function ViewClubPage() {
                   >
                     <ArrowLeft className="w-6 h-6 text-white" />
                   </button>
-                  
+
                   <button
                     onClick={() =>
                       setSelectedGalleryImageIndex(
-                        selectedGalleryImageIndex === data.gallery_images.length - 1
+                        selectedGalleryImageIndex ===
+                          data.gallery_images.length - 1
                           ? 0
                           : selectedGalleryImageIndex + 1,
                       )
@@ -1801,10 +1790,11 @@ export default function ViewClubPage() {
                   >
                     <ArrowRight className="w-6 h-6 text-white" />
                   </button>
-                  
+
                   <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 px-3 py-1 rounded-full">
                     <p className="text-white text-sm">
-                      {selectedGalleryImageIndex + 1} / {data.gallery_images.length}
+                      {selectedGalleryImageIndex + 1} /{" "}
+                      {data.gallery_images.length}
                     </p>
                   </div>
                 </>
