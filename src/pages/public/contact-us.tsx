@@ -9,7 +9,7 @@ export default function ContactPage() {
   return (
     <div>
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-muted/20">
+      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-50 via-background to-indigo-50">
         <div className="absolute inset-0 bg-grid-white/10 bg-grid-16 [mask-image:radial-gradient(white,transparent_85%)]" />
         <div className="container mx-auto px-4 py-24 relative">
           <div className="text-center max-w-4xl mx-auto">
@@ -259,7 +259,7 @@ export default function ContactPage() {
       </div>
 
       {/* Bottom CTA Section */}
-      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-background border-t border-primary/10">
+      <div className="bg-indigo-50">
         <div className="container mx-auto px-4 py-16 text-center">
           <div className="max-w-2xl mx-auto space-y-6">
             <h3 className="text-2xl font-bold">Ready to Get Started?</h3>

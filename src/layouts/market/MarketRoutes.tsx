@@ -23,15 +23,19 @@ import TermsPage from "@/pages/public/terms";
 import PrivacyPage from "@/pages/public/privacy";
 import RegistrationPolicy from "@/pages/public/privacy-clubs";
 import ResetTemporaryPasswordPage from "@/pages/public/login/reset-temporary-password/page";
+import HomeLayout from "@/pages/member/home-layout";
 export default function MarketRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<HomePage />}></Route>
+      <Route path="/" element={<HomeLayout />}></Route>
       <Route path="/terms" element={<TermsPage />}></Route>
       <Route path="/privacy" element={<PrivacyPage />}></Route>
       <Route path="/legal" element={<RegistrationPolicy />}></Route>
       <Route path="/login" element={<LoginPage />}></Route>
-      <Route path="/login/reset-email" element={<ResetTemporaryPasswordPage />}></Route>
+      <Route
+        path="/login/reset-email"
+        element={<ResetTemporaryPasswordPage />}
+      ></Route>
       <Route path="/register" element={<RegisterPage />}></Route>
       <Route path="/forgotpassword" element={<ForgotPasswordPage />}></Route>
       <Route path="/activateAccount" element={<ActivateAccount />}></Route>
