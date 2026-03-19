@@ -676,7 +676,7 @@ export default function PendingMembersList({
                                           className="flex items-center justify-between w-full p-3 bg-muted/40 rounded-lg hover:bg-muted/50 transition-colors"
                                         >
                                           <Label className="text-sm font-semibold mb-0 cursor-pointer">
-                                            Email Template Fields
+                                            Club tags
                                           </Label>
                                           <ChevronDown
                                             className={`h-4 w-4 transition-transform ${
