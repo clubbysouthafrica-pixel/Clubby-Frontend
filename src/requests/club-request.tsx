@@ -44,6 +44,7 @@ export interface ClubDetailsRequest {
   instagram_url?: string;
   hide_from_public?: boolean;
   enable_shop?: boolean;
+  enable_events?: boolean;
   venues_enabled?: boolean;
   registration_submission_email_template_body?: string;
   registration_submission_email_subject?: string;

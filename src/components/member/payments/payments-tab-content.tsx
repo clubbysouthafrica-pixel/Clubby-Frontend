@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatAmount } from "@/data/currencies";
+import { useFetchUserTransactions } from "@/queries/transactions";
+import {
+  BankDetails,
+  PaymentTransactionOption,
+} from "./payment-types.ts";
 
 interface Transaction {
   transaction_id: string;
@@ -40,11 +45,21 @@ interface TransactionEntry {
   payment_type?: string;
 }
 
+interface PaymentsData {
+  currency?: string;
+  resubmission_required?: boolean;
+}
+
 interface PaymentsTabContentProps {
-  data: any;
-  bankDetails: any;
-  transactions: any;
-  isUserTransactionsLoading: boolean;
+  data: PaymentsData;
+  bankDetails: BankDetails | null | undefined;
+  clubAccountId: string;
+  userId: string;
+  isActive: boolean;
+  scrollToOutstandingTrigger?: number;
+  highlightedOrderId?: string | null;
+  highlightedTransactionId?: string | null;
+  highlightedEventRegistrationId?: string | null;
   expandedRows: Record<string, boolean>;
   editingReference: boolean;
   newReference: string;
@@ -54,14 +69,20 @@ interface PaymentsTabContentProps {
   setNewReference: (reference: string) => void;
   handleSaveReference: () => void;
   handleCancelEdit: () => void;
-  handlePayHereClick: () => void;
+  handlePayHereClick: (paymentOption?: PaymentTransactionOption) => void;
+  onViewPaymentTarget: (paymentOption: PaymentTransactionOption) => void;
 }
 
 export default function PaymentsTabContent({
   data,
   bankDetails,
-  transactions,
-  isUserTransactionsLoading,
+  clubAccountId,
+  userId,
+  isActive,
+  scrollToOutstandingTrigger = 0,
+  highlightedOrderId,
+  highlightedTransactionId,
+  highlightedEventRegistrationId,
   expandedRows,
   editingReference,
   newReference,
@@ -71,10 +92,94 @@ export default function PaymentsTabContent({
   setNewReference,
   handleSaveReference,
   handleCancelEdit,
-  handlePayHereClick
+  handlePayHereClick,
+  onViewPaymentTarget,
 }: PaymentsTabContentProps) {
   const [sortColumn, setSortColumn] = useState<'type' | 'status' | 'amount' | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [transactionSearch, setTransactionSearch] = useState("");
+  const [copiedPaymentId, setCopiedPaymentId] = useState<string | null>(null);
+  const outstandingBalanceRef = useRef<HTMLDivElement | null>(null);
+  const highlightedPaymentRef = useRef<HTMLDivElement | null>(null);
+  const outstandingAmount = bankDetails?.outstanding_amount ?? 0;
+  const {
+    data: transactions,
+    isLoading: isUserTransactionsLoading,
+  } = useFetchUserTransactions(clubAccountId, userId, isActive);
+
+  const transactionOptions = useMemo(() => {
+    return Array.isArray(bankDetails?.transaction_options)
+      ? bankDetails.transaction_options
+      : [];
+  }, [bankDetails?.transaction_options]);
+
+  useEffect(() => {
+    if (!isActive || scrollToOutstandingTrigger === 0) {
+      return;
+    }
+
+    const scrollTimeout = window.setTimeout(() => {
+      outstandingBalanceRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 100);
+
+    return () => window.clearTimeout(scrollTimeout);
+  }, [isActive, scrollToOutstandingTrigger]);
+
+  useEffect(() => {
+    if (
+      !isActive ||
+      (!highlightedOrderId &&
+        !highlightedTransactionId &&
+        !highlightedEventRegistrationId)
+    ) {
+      return;
+    }
+
+    const scrollTimeout = window.setTimeout(() => {
+      highlightedPaymentRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 100);
+
+    return () => window.clearTimeout(scrollTimeout);
+  }, [
+    highlightedEventRegistrationId,
+    highlightedOrderId,
+    highlightedTransactionId,
+    isActive,
+    transactionOptions.length,
+  ]);
+
+  const transactionItems = useMemo(() => {
+    return Array.isArray(transactions?.transactions) ? transactions.transactions : [];
+  }, [transactions?.transactions]);
+
+  const filteredTransactionItems = useMemo(() => {
+    const query = transactionSearch.trim().toLowerCase();
+
+    if (!query) {
+      return transactionItems;
+    }
+
+    return transactionItems.filter((transaction: Transaction) => {
+      const lifecycleText = Object.values(transaction.lifecycle || {})
+        .map((entry: TransactionEntry) => `${entry.type} ${entry.description} ${entry.payment_type ?? ""}`)
+        .join(" ")
+        .toLowerCase();
+
+      return [
+        transaction.transaction_id,
+        transaction.type,
+        transaction.status,
+        String(transaction.amount),
+        lifecycleText,
+      ].some((value) => value.toLowerCase().includes(query));
+    });
+  }, [transactionItems, transactionSearch]);
 
   const handleSort = (column: 'type' | 'status' | 'amount') => {
     if (sortColumn === column) {
@@ -85,16 +190,22 @@ export default function PaymentsTabContent({
     }
   };
 
+  const handleCopyPaymentValue = (value: string, fieldKey: string) => {
+    navigator.clipboard.writeText(value);
+    setCopiedPaymentId(fieldKey);
+    setTimeout(() => setCopiedPaymentId((current) => (current === fieldKey ? null : current)), 2000);
+  };
+
   const sortedTransactions = useMemo(() => {
-    if (!transactions?.transactions) return [];
-    
-    const sorted = [...transactions.transactions];
+    if (filteredTransactionItems.length === 0) return [];
+
+    const sorted = [...filteredTransactionItems];
     
     if (!sortColumn) return sorted;
 
     sorted.sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
+      let aValue: string | number = "";
+      let bValue: string | number = "";
 
       if (sortColumn === 'type') {
         aValue = a.type;
@@ -107,24 +218,27 @@ export default function PaymentsTabContent({
         bValue = b.amount;
       }
 
-      if (typeof aValue === 'string') {
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
         return sortDirection === 'asc' 
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);
-      } else {
-        return sortDirection === 'asc'
-          ? aValue - bValue
-          : bValue - aValue;
       }
+
+      const leftAmount = typeof aValue === 'number' ? aValue : 0;
+      const rightAmount = typeof bValue === 'number' ? bValue : 0;
+
+      return sortDirection === 'asc'
+        ? leftAmount - rightAmount
+        : rightAmount - leftAmount;
     });
 
     return sorted;
-  }, [transactions, sortColumn, sortDirection]);
+  }, [filteredTransactionItems, sortColumn, sortDirection]);
 
   return (
     <TabsContent value="bank" className="mt-6">
       {!data?.resubmission_required && (
-        <Card className="border-primary/20 shadow-lg mb-6">
+        <Card ref={outstandingBalanceRef} className="border-primary/20 shadow-lg mb-6 scroll-mt-24">
           <CardHeader className="pb-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
@@ -136,20 +250,20 @@ export default function PaymentsTabContent({
                 </CardTitle>
                 <CardDescription className="text-lg">
                   {formatAmount(
-                    bankDetails?.outstanding_amount,
+                    outstandingAmount,
                     data.currency
                   )}
                 </CardDescription>
               </div>
-              {bankDetails?.outstanding_amount === 0 && (
+              {outstandingAmount === 0 && (
                 <Badge className="bg-green-100 text-green-800 border-green-200">
                   <CheckCircle className="w-4 h-4 mr-1" />
                   Paid in Full
                 </Badge>
               )}
-              {bankDetails?.outstanding_amount > 0 && (
+              {outstandingAmount > 0 && transactionOptions.length === 0 && (
                 <Button
-                  onClick={handlePayHereClick}
+                  onClick={() => handlePayHereClick()}
                   className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   Pay Now
@@ -234,30 +348,192 @@ export default function PaymentsTabContent({
                 )}
               </div>
             )}
+            {transactionOptions.length > 0 && (
+              <div className="mt-4 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      Payments ready
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Select a payment below to continue to payment options.
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="font-medium">
+                    {transactionOptions.length} {transactionOptions.length === 1 ? "payment" : "payments"}
+                  </Badge>
+                </div>
+                <div
+                  className={cn(
+                    "space-y-3",
+                    transactionOptions.length > 2 &&
+                      "max-h-[22rem] overflow-y-auto pr-1",
+                  )}
+                >
+                  {transactionOptions.map((paymentOption: PaymentTransactionOption, index: number) => {
+                    const totalAmount = paymentOption.total_amount ?? 0;
+                    const paymentOutstandingAmount = paymentOption.outstanding_amount ?? totalAmount;
+                    const isHighlighted =
+                      paymentOption.transaction_id === highlightedTransactionId ||
+                      paymentOption.order_id === highlightedOrderId ||
+                      paymentOption.event_registration_id === highlightedEventRegistrationId;
+                    const paymentTitle = paymentOption.type || `Payment ${index + 1}`;
+                    const orderId = paymentOption.order_id;
+                    const eventRegistrationId = paymentOption.event_registration_id;
+
+                    return (
+                      <div
+                        key={paymentOption.transaction_id}
+                        ref={isHighlighted ? highlightedPaymentRef : null}
+                        className={cn(
+                          "rounded-xl border bg-background p-4 shadow-sm transition-colors",
+                          isHighlighted && "border-yellow-400 bg-yellow-50/60",
+                        )}
+                      >
+                        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                          <div className="space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="font-semibold text-foreground">
+                                {paymentTitle === "ORDER" ? "SHOP ORDER" : paymentTitle}
+                              </p>
+                              <Badge variant="outline" className="font-medium">
+                                {paymentOption.type}
+                              </Badge>
+                            </div>
+                            <p className="text-sm font-medium text-orange-600">
+                              Amount to pay: {formatAmount(paymentOutstandingAmount, data.currency)}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span className="font-mono">
+                                Transaction ID: {paymentOption.transaction_id}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  handleCopyPaymentValue(
+                                    paymentOption.transaction_id,
+                                    `transaction-${paymentOption.transaction_id}`,
+                                  )
+                                }
+                                title="Copy Transaction ID"
+                                className="h-6 w-6 p-0"
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                              {copiedPaymentId === `transaction-${paymentOption.transaction_id}` && (
+                                <span className="text-[11px] text-muted-foreground">Copied</span>
+                              )}
+                            </div>
+                            {orderId && (
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <span className="font-mono">
+                                  Order ID: {orderId}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleCopyPaymentValue(orderId, `order-${paymentOption.transaction_id}`)
+                                  }
+                                  title="Copy Order ID"
+                                  className="h-6 w-6 p-0"
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                                {copiedPaymentId === `order-${paymentOption.transaction_id}` && (
+                                  <span className="text-[11px] text-muted-foreground">Copied</span>
+                                )}
+                              </div>
+                            )}
+                            {eventRegistrationId && (
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <span className="font-mono">
+                                  Event Registration ID: {eventRegistrationId}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleCopyPaymentValue(
+                                      eventRegistrationId,
+                                      `event-${paymentOption.transaction_id}`,
+                                    )
+                                  }
+                                  title="Copy Event Registration ID"
+                                  className="h-6 w-6 p-0"
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                                {copiedPaymentId === `event-${paymentOption.transaction_id}` && (
+                                  <span className="text-[11px] text-muted-foreground">Copied</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap justify-end gap-2">
+                            {(orderId || eventRegistrationId) && (
+                              <Button
+                                variant="outline"
+                                onClick={() => onViewPaymentTarget(paymentOption)}
+                                className="md:min-w-24"
+                              >
+                                View
+                              </Button>
+                            )}
+                            <Button
+                              onClick={() => handlePayHereClick(paymentOption)}
+                              disabled={paymentOutstandingAmount <= 0}
+                              className="md:min-w-32"
+                            >
+                              {paymentOutstandingAmount > 0 ? "Pay Now" : "Paid"}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </CardHeader>
         </Card>
       )}
       <div className="flex flex-col w-full gap-6">
-        {!isUserTransactionsLoading && transactions && (
-          <Card className="border-primary/20 shadow-lg">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl">
-                    Transaction History
-                  </CardTitle>
-                  <CardDescription className="text-base">
-                    View your payment transactions and membership
-                    activity
-                  </CardDescription>
-                </div>
+        <Card className="border-primary/20 shadow-lg">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                <FileText className="w-5 h-5 text-primary" />
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className={`${transactions?.transactions && transactions.transactions.length > 5 ? 'max-h-96 overflow-y-auto' : 'overflow-hidden'}`}>
+              <div>
+                <CardTitle className="text-xl">
+                  Transaction History
+                </CardTitle>
+                <CardDescription className="text-base">
+                  View your payment transactions and membership
+                  activity
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            {isUserTransactionsLoading ? (
+              <div className="flex items-center justify-center py-12 text-muted-foreground">
+                <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+                Loading transactions...
+              </div>
+            ) : (
+              <div>
+                <div className="border-b border-primary/10 p-4">
+                  <Input
+                    value={transactionSearch}
+                    onChange={(event) => setTransactionSearch(event.target.value)}
+                    placeholder="Search by transaction ID, type, status, amount, or lifecycle details"
+                    className="max-w-md"
+                  />
+                </div>
+                <div className={`${sortedTransactions.length > 5 ? 'max-h-96 overflow-y-auto' : 'overflow-hidden'}`}>
                 <Table className="border-0">
                   <TableHeader className="bg-gradient-to-r from-muted/50 to-muted/30 sticky top-0 z-10">
                     <TableRow className="border-primary/10 hover:bg-transparent">
@@ -307,13 +583,23 @@ export default function PaymentsTabContent({
                   </TableHeader>
 
                   <TableBody>
-                    {transactions.transactions.length === 0 && (
+                    {transactionItems.length === 0 && (
                       <TableRow>
                         <TableCell
                           colSpan={5}
                           className="text-center py-8 text-muted-foreground"
                         >
                           No transactions yet.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {transactionItems.length > 0 && sortedTransactions.length === 0 && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={5}
+                          className="text-center py-8 text-muted-foreground"
+                        >
+                          No transactions match your search.
                         </TableCell>
                       </TableRow>
                     )}
@@ -530,9 +816,10 @@ export default function PaymentsTabContent({
                   </TableBody>
                 </Table>
               </div>
-            </CardContent>
-          </Card>
-        )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </TabsContent>
   );

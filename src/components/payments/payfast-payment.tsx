@@ -12,7 +12,10 @@ type PayfastResponse = {
 interface PayFastPaymentProps {
   clubAccountId: string;
   outstandingAmount: number;
+  transactionId?: string;
   orderId?: string;
+  eventId?: string;
+  eventRegistrationId?: string;
   showHeader?: boolean;
   buttonVariant?: "default" | "logo";
   isSelected?: boolean;
@@ -22,7 +25,10 @@ interface PayFastPaymentProps {
 export function PayFastPayment({
   clubAccountId,
   outstandingAmount,
+  transactionId,
   orderId,
+  eventId,
+  eventRegistrationId,
   showHeader = true,
   buttonVariant = "default",
   isSelected,
@@ -32,7 +38,12 @@ export function PayFastPayment({
   const [internalSelected, setInternalSelected] = useState(false);
 
   const { data: payfastData, refetch: refetchPayfast } =
-    useFetchPayFastCheckoutUrlQuery(clubAccountId, orderId);
+    useFetchPayFastCheckoutUrlQuery(clubAccountId, {
+      transactionId,
+      orderId,
+      eventId,
+      eventRegistrationId,
+    });
 
   const handlePayfastClick = async () => {
     setIsPayfastLoading(true);

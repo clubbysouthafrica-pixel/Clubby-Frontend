@@ -12,6 +12,7 @@ import SettingsPage from "@/pages/shared-admin-&-member/user-settings";
 import ProtectedRoute from "@/guards/ProtectedRoute.tsx";
 import ViewClubPage from "@/pages/shared-public-&-member/view-club";
 import MemberShopPage from "@/components/member/shop/shop";
+import EventRegistrationPage from "@/components/member/events/event-registration-page";
 import OnboardMember from "@/pages/member/onboard-member";
 import AdminRegistrationFormPage from "@/pages/admin/registration-form/create-form";
 import BrowseClubsPage from "@/pages/public/browse-clubs";
@@ -88,6 +89,14 @@ export default function MarketRoutes() {
         element={
           <ProtectedRoute>
             <MemberShopPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/myclubs/:clubId/events/:eventId/register"
+        element={
+          <ProtectedRoute>
+            <EventRegistrationPage />
           </ProtectedRoute>
         }
       ></Route>

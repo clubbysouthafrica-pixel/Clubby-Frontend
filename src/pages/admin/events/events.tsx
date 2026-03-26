@@ -14,18 +14,22 @@ import { CSS } from "@dnd-kit/utilities";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   CalendarDays,
+  AlertCircle,
   ChevronLeft,
   ChevronRight,
   Clock3,
+  Loader2,
   MenuIcon,
   Pencil,
   Plus,
+  Settings,
   Trash2,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
+import { updateClubDetails } from "@/services/admin/club";
 import {
   Card,
   CardContent,
@@ -34,6 +38,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -44,8 +55,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createOrUpdateEvents, getEvents } from "@/services/admin-features/events";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { formatAmount } from "@/data/currencies";
 import { cn } from "@/lib/utils";
+import { getApiErrorMessage } from "@/utils/apiError";
+import { toast } from "sonner";
 
 type EventFormInputType = "TEXT" | "DROPDOWN" | "CHECKBOX";
 
@@ -371,14 +386,14 @@ function getPricingSummary(pricing: EventPricing) {
     case "FREE":
       return "Free";
     case "SINGLE":
-      return pricing.options[0] ? `R${pricing.options[0].amount} per entry` : "Fixed price";
+      return pricing.options[0] ? `${formatCurrency(pricing.options[0].amount)} per entry` : "Fixed price";
     case "MULTIPLE":
       return pricing.options.length > 0
-        ? pricing.options.map((option) => `${option.label}: R${option.amount}`).join(" | ")
+        ? pricing.options.map((option) => `${option.label}: ${formatCurrency(option.amount)}`).join(" | ")
         : "Selectable pricing";
     case "ADDITIONAL":
       return pricing.options.length > 0
-        ? pricing.options.map((option) => `${option.label}: R${option.amount}`).join(" + ")
+        ? pricing.options.map((option) => `${option.label}: ${formatCurrency(option.amount)}`).join(" + ")
         : "Add-on pricing";
     default:
       return "Free";
@@ -397,8 +412,10 @@ function formatCurrency(value: number | string) {
     return "R0";
   }
 
-  const hasDecimals = Math.round(amount * 100) % 100 !== 0;
-  return `R${hasDecimals ? amount.toFixed(2) : amount.toFixed(0)}`;
+  const actualAmount = amount / 100;
+
+  const hasDecimals = Math.round(actualAmount * 100) % 100 !== 0;
+  return `R${hasDecimals ? actualAmount.toFixed(2) : actualAmount.toFixed(0)}`;
 }
 
 function formatPriceBadgeAmount(value: number | string) {
@@ -440,6 +457,34 @@ function sanitizePreviewFieldOrder(
 
 function areStringArraysEqual(left: string[], right: string[]) {
   return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function buildEventRequestPayload(params: {
+  clubAccountId: string;
+  eventId?: string;
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  registrationOpenDate: string;
+  registrationCloseDate: string;
+  formFields: EventFormField[];
+  pricing: EventPricing;
+  previewFieldOrder: string[];
+}) {
+  return {
+    club_account_id: params.clubAccountId,
+    event_id: params.eventId,
+    title: params.title.trim(),
+    description: params.description.trim(),
+    startDate: dateKeyToEpoch(params.startDate),
+    endDate: dateKeyToEpoch(params.endDate),
+    registrationOpenDate: dateKeyToEpoch(params.registrationOpenDate),
+    registrationCloseDate: dateKeyToEpoch(params.registrationCloseDate),
+    formFields: params.formFields,
+    pricing: params.pricing,
+    previewFieldOrder: params.previewFieldOrder,
+  };
 }
 
 function SortablePreviewField({ id, children }: { id: string; children: React.ReactNode }) {
@@ -500,7 +545,7 @@ function sanitizeLoadedEvents(events: EventItem[]) {
 }
 
 export default function EventsPage() {
-  const { club } = React.useContext(ClubContext) as ClubContextType;
+  const { club, setClub } = React.useContext(ClubContext) as ClubContextType;
   const [events, setEvents] = React.useState<EventItem[]>([]);
   const [monthDate, setMonthDate] = React.useState(() => getMonthStart(today));
   const [selectedDate, setSelectedDate] = React.useState(todayKey);
@@ -527,6 +572,39 @@ export default function EventsPage() {
   const [fieldDraft, setFieldDraft] = React.useState<EventFieldDraft>(getDefaultFieldDraft());
   const [pricing, setPricing] = React.useState<EventPricing>(getDefaultPricing());
   const [pricingDraft, setPricingDraft] = React.useState<EventPricingDraft>(getDefaultPricingDraft());
+  const [isTogglingEvents, setIsTogglingEvents] = React.useState(false);
+  const [isSavingPreviewOrder, setIsSavingPreviewOrder] = React.useState(false);
+  const [showEventsSettings, setShowEventsSettings] = React.useState(false);
+
+  const handleToggleEvents = React.useCallback(
+    async (enabled: boolean) => {
+      if (!club?.club_account_id) {
+        return;
+      }
+
+      try {
+        setIsTogglingEvents(true);
+        const response = await updateClubDetails({
+          club_account_id: club.club_account_id,
+          enable_events: enabled,
+        });
+
+        if (response?.message) {
+          toast.success(enabled ? "Events enabled successfully" : "Events disabled successfully");
+          if (club) {
+            setClub({ ...club, enable_events: enabled });
+          }
+        } else {
+          toast.error("Failed to update events settings");
+        }
+      } catch (error) {
+        toast.error(getApiErrorMessage(error, "Error updating events settings"));
+      } finally {
+        setIsTogglingEvents(false);
+      }
+    },
+    [club, setClub],
+  );
 
   React.useEffect(() => {
     if (!club?.club_account_id) {
@@ -741,6 +819,7 @@ export default function EventsPage() {
   const handleAddPricingOption = () => {
     const nextLabel = pricingDraft.label.trim();
     const nextAmount = pricingDraft.amount.trim();
+    const nextAmountValue = Number(nextAmount);
 
     if (pricing.type === "FREE") {
       return;
@@ -751,7 +830,7 @@ export default function EventsPage() {
       return;
     }
 
-    if (!nextAmount || Number(nextAmount) <= 0) {
+    if (!nextAmount || !Number.isFinite(nextAmountValue) || nextAmountValue <= 0) {
       setFormError("Each price option needs a valid amount greater than zero.");
       return;
     }
@@ -855,24 +934,24 @@ export default function EventsPage() {
 
     const existingEvent = events.find((event) => event.id === editingEventId);
 
-    const eventRequestPayload = {
-      club_account_id: club.club_account_id,
-      event_id: existingEvent?.eventId ?? undefined,
+    const eventRequestPayload = buildEventRequestPayload({
+      clubAccountId: club.club_account_id,
+      eventId: existingEvent?.eventId,
       title,
       description,
-      startDate: dateKeyToEpoch(formState.startDate),
-      endDate: dateKeyToEpoch(formState.endDate),
-      registrationOpenDate: dateKeyToEpoch(formState.registrationOpenDate),
-      registrationCloseDate: dateKeyToEpoch(formState.registrationCloseDate),
+      startDate: formState.startDate,
+      endDate: formState.endDate,
+      registrationOpenDate: formState.registrationOpenDate,
+      registrationCloseDate: formState.registrationCloseDate,
       formFields: eventFormFields,
       pricing,
       previewFieldOrder: sanitizedPreviewFieldOrder,
-    };
+    });
 
     try {
       await createOrUpdateEvents(eventRequestPayload);
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "Unable to save the event right now.");
+      setFormError(getApiErrorMessage(error, "Unable to save the event right now."));
       return;
     }
 
@@ -1079,21 +1158,44 @@ export default function EventsPage() {
     });
   }, []);
 
-  const handleSavePreviewFieldOrder = React.useCallback(() => {
-    if (!previewEventId || !previewEvent) {
+  const handleSavePreviewFieldOrder = React.useCallback(async () => {
+    if (!club?.club_account_id || !previewEventId || !previewEvent) {
       return;
     }
 
     const nextOrder = sanitizePreviewFieldOrder(previewFieldOrder, previewEvent.formFields, previewEvent.pricing);
 
-    setEvents((current) =>
-      current.map((event) =>
-        event.id === previewEventId
-          ? { ...event, previewFieldOrder: nextOrder }
-          : event,
-      ),
-    );
-  }, [previewEvent, previewEventId, previewFieldOrder]);
+    const eventRequestPayload = buildEventRequestPayload({
+      clubAccountId: club.club_account_id,
+      eventId: previewEvent.eventId ?? previewEvent.id,
+      title: previewEvent.title,
+      description: previewEvent.description,
+      startDate: previewEvent.startDate,
+      endDate: previewEvent.endDate,
+      registrationOpenDate: previewEvent.registrationOpenDate,
+      registrationCloseDate: previewEvent.registrationCloseDate,
+      formFields: previewEvent.formFields,
+      pricing: previewEvent.pricing,
+      previewFieldOrder: nextOrder,
+    });
+
+    try {
+      setIsSavingPreviewOrder(true);
+      await createOrUpdateEvents(eventRequestPayload);
+      setEvents((current) =>
+        current.map((event) =>
+          event.id === previewEventId
+            ? { ...event, previewFieldOrder: nextOrder }
+            : event,
+        ),
+      );
+      toast.success("Preview field order saved successfully");
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Unable to save the field order right now."));
+    } finally {
+      setIsSavingPreviewOrder(false);
+    }
+  }, [club?.club_account_id, previewEvent, previewEventId, previewFieldOrder]);
 
   return (
     <div className="space-y-6 p-6">
@@ -1104,11 +1206,51 @@ export default function EventsPage() {
             Add one-day or multi-day events directly onto your club calendar.
           </p>
         </div>
-        <Button className="gap-2 self-start" onClick={() => openCreateDialog()}>
-          <Plus className="h-4 w-4" />
-          Add Event
-        </Button>
+        <div className="flex items-center gap-2 self-start">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setShowEventsSettings(true)}
+            title="Events settings"
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
+          <Button className="gap-2" onClick={() => openCreateDialog()}>
+            <Plus className="h-4 w-4" />
+            Add Event
+          </Button>
+        </div>
       </div>
+
+      {!club?.enable_events && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardContent className="flex items-center justify-between gap-4 py-3">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-orange-600" />
+              <div>
+                <p className="font-semibold text-orange-900">Events are currently disabled</p>
+                <p className="text-sm text-orange-700">
+                  Enable events to allow your club to manage and publish event registrations.
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={() => handleToggleEvents(true)}
+              disabled={isTogglingEvents}
+              className="bg-orange-600 text-white hover:bg-orange-700"
+            >
+              {isTogglingEvents ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Enabling...
+                </>
+              ) : (
+                "Enable Events"
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -1312,8 +1454,12 @@ export default function EventsPage() {
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {hasUnsavedPreviewOrderChanges && (
-                          <Button variant="default" onClick={handleSavePreviewFieldOrder}>
-                            Save Changes
+                          <Button
+                            variant="default"
+                            onClick={handleSavePreviewFieldOrder}
+                            disabled={isSavingPreviewOrder}
+                          >
+                            {isSavingPreviewOrder ? "Saving..." : "Save Changes"}
                           </Button>
                         )}
                         <Button variant="outline" onClick={() => resetEditorState(false)}>
@@ -1733,7 +1879,7 @@ export default function EventsPage() {
                                     <div key={option.id} className="flex items-center justify-between gap-3 rounded-lg border p-3">
                                       <div>
                                         <p className="font-medium">{option.label}</p>
-                                        <p className="text-sm text-muted-foreground">R{option.amount}</p>
+                                        <p className="text-sm text-muted-foreground">{formatCurrency(option.amount)}</p>
                                       </div>
                                       <Button
                                         type="button"
@@ -1775,14 +1921,17 @@ export default function EventsPage() {
                                 <div className="grid gap-2">
                                   <Label>Amount (R)</Label>
                                   <Input
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    value={pricingDraft.amount}
-                                    onChange={(event) =>
-                                      setPricingDraft((current) => ({ ...current, amount: event.target.value }))
-                                    }
-                                    placeholder="100"
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={formatAmount(Number(pricingDraft.amount || 0), club?.currency || "ZAR")}
+                                    onChange={(event) => {
+                                      const cleaned = event.target.value.replace(/[^\d]/g, "");
+                                      setPricingDraft((current) => ({
+                                        ...current,
+                                        amount: cleaned,
+                                      }));
+                                    }}
+                                    placeholder={formatAmount(0, club?.currency || "ZAR")}
                                   />
                                 </div>
                                 <Button type="button" variant="outline" onClick={handleAddPricingOption}>
@@ -2110,6 +2259,34 @@ export default function EventsPage() {
           </Card>
         </div>
       </div>
+
+      <Dialog open={showEventsSettings} onOpenChange={setShowEventsSettings}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Events Settings</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <Label className="text-base font-semibold">Enable Events</Label>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Toggle to enable or disable events for your club.
+                </p>
+              </div>
+              <Switch
+                checked={club?.enable_events || false}
+                onCheckedChange={handleToggleEvents}
+                disabled={isTogglingEvents}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEventsSettings(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

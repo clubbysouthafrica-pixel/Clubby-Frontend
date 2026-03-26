@@ -6,6 +6,7 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar.tsx";
 import { Button } from "@/components/ui/button.tsx";
+import { Input } from "@/components/ui/input";
 import {
   Tabs,
   TabsContent,
@@ -22,18 +23,13 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog.tsx";
 import {
   Calendar,
+  CalendarDays,
   Loader2,
   Mail,
   MapPin,
-  Copy,
-  CheckCircle2,
-  ExternalLink,
   Users,
   Shield,
   CreditCard,
@@ -44,15 +40,16 @@ import {
   CheckCircle,
   Globe,
   ShoppingBag,
-  ShoppingCart,
   ArrowUp,
   ArrowDown,
   ArrowLeft,
   ArrowRight,
+  ChevronDown,
+  Search,
 } from "lucide-react";
 import { useFetchClub, useFetchClubBankDetails } from "@/queries/clubs";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { useEffect, useState, useMemo } from "react";
+import { Fragment, useEffect, useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -64,7 +61,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatAmount } from "@/data/currencies";
-import { useFetchUserTransactions } from "@/queries/transactions";
 import { getMemberOrders } from "@/services/orders";
 import { getVenues } from "@/services/venues";
 import { useQuery } from "@tanstack/react-query";
@@ -73,8 +69,12 @@ import { Label } from "@/components/ui/label";
 import { RegistrationTabContent } from "@/components/member/registration/registration-tab-content";
 import { ShopTab } from "@/components/member/shop/shop-tab";
 import PaymentsTabContent from "@/components/member/payments/payments-tab-content";
+import PaymentOptionsScreen from "@/components/member/payments/payment-options-screen";
+import type {
+  PaymentTransactionOption,
+} from "@/components/member/payments/payment-types.ts";
 import MemberBookings from "@/components/member/bookings/member-bookings";
-import { PayFastPayment } from "@/components/payments/payfast-payment";
+import MemberEvents from "@/components/member/events/member-events";
 import { AuthContext } from "@/context/AuthContext";
 import { useContext } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -102,6 +102,87 @@ const countryMap: Record<string, string> = {
   FR: "France",
 };
 
+type MemberOrderItem = {
+  product_id?: string;
+  name?: string;
+  quantity?: number;
+  refund_quantity?: number;
+  fulfillment_quantity?: number;
+  price?: number;
+  subtotal?: number;
+};
+
+type MemberOrder = {
+  order_id?: string;
+  transaction_id?: string;
+  created_date?: number;
+  payment_status?: string;
+  fulfillment_status?: string;
+  total_amount?: number;
+  amount_paid?: number;
+  items?: MemberOrderItem[];
+};
+
+const getOrderPaymentBadgeClassName = (status?: string) => {
+  if (status === "PAID" || status === "PAID (Partial Refund)") {
+    return "bg-green-100 text-green-800 border-green-200";
+  }
+
+  if (status === "PENDING") {
+    return "bg-orange-100 text-orange-800 border-orange-200";
+  }
+
+  if (status === "PARTIALLY_PAID") {
+    return "bg-purple-100 text-purple-800 border-purple-200";
+  }
+
+  if (
+    status === "CANCELLED" ||
+    status === "REFUND" ||
+    status === "REFUNDED"
+  ) {
+    return "bg-red-100 text-red-800 border-red-200";
+  }
+
+  return "bg-gray-100 text-gray-800 border-gray-200";
+};
+
+const getOrderFulfillmentBadgeClassName = (status?: string) => {
+  if (status === "DELIVERED") {
+    return "bg-green-100 text-green-800 border-green-200";
+  }
+
+  if (status === "NOT_PROCESSED") {
+    return "bg-orange-100 text-orange-800 border-orange-200";
+  }
+
+  if (status === "PROCESSING" || status === "PARTIALLY_DELIVERED") {
+    return "bg-purple-100 text-purple-800 border-purple-200";
+  }
+
+  if (
+    status === "CANCELLED" ||
+    status === "REFUND" ||
+    status === "REFUNDED"
+  ) {
+    return "bg-red-100 text-red-800 border-red-200";
+  }
+
+  return "bg-gray-100 text-gray-800 border-gray-200";
+};
+
+const getRefundedAmount = (order: MemberOrder) => {
+  if (
+    order.payment_status !== "PAID (Partial Refund)" &&
+    order.payment_status !== "REFUND" &&
+    order.payment_status !== "REFUNDED"
+  ) {
+    return 0;
+  }
+
+  return Math.max((order.total_amount || 0) - (order.amount_paid || 0), 0);
+};
+
 export default function ViewClubPage() {
   const auth = useContext(AuthContext);
   const isLoggedIn = !!auth?.user;
@@ -114,8 +195,6 @@ export default function ViewClubPage() {
 
   const { data: bankDetails, isLoading: bankDetailsLoading } =
     useFetchClubBankDetails(clubId as string, !!data?.club_member_exists);
-  const { data: transactions, isLoading: isUserTransactionsLoading } =
-    useFetchUserTransactions(data?.club_account_id ?? "", data?.user_id ?? "");
 
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState("home");
@@ -126,43 +205,94 @@ export default function ViewClubPage() {
     const queryParams = new URLSearchParams(search);
     const tabParam = queryParams.get("tab");
     const orderIdParam = queryParams.get("orderId");
+    const transactionIdParam = queryParams.get("transactionId");
+    const eventRegistrationIdParam = queryParams.get("eventRegistrationId");
+    const shouldOpenPaymentScreen = queryParams.get("paymentScreen") === "true";
 
     if (tabParam) {
       setActiveTab(tabParam);
     }
 
-    // Auto-select order if orderId is in query params and bankDetails are loaded
-    if (orderIdParam && bankDetails?.order_options && !bankDetailsLoading) {
-      const matchedOrder = bankDetails.order_options.find(
-        (order: any) =>
-          order.order_id === orderIdParam || order.id === orderIdParam,
+    // Auto-select payment if orderId is in query params and bankDetails are loaded
+    if (orderIdParam && bankDetails?.transaction_options && !bankDetailsLoading) {
+      const matchedPayment = bankDetails.transaction_options.find(
+        (payment: PaymentTransactionOption) => payment.order_id === orderIdParam,
       );
 
-      if (matchedOrder) {
+      if (matchedPayment) {
+        setPaymentReturnTab(tabParam || "bank");
+        setActiveTab("bank");
         setNewOrderId(orderIdParam);
-        setShowOrderSelection(true);
+        setSelectedPaymentOption(matchedPayment);
+        if (shouldOpenPaymentScreen) {
+          setIsPaymentScreenOpen(true);
+        }
       }
     }
-  }, [search, bankDetails?.order_options, bankDetailsLoading]);
+
+    if (transactionIdParam && bankDetails?.transaction_options && !bankDetailsLoading) {
+      const matchedPayment = bankDetails.transaction_options.find(
+        (payment: PaymentTransactionOption) =>
+          payment.transaction_id === transactionIdParam,
+      );
+
+      if (matchedPayment) {
+        setPaymentReturnTab(tabParam || "bank");
+        setActiveTab("bank");
+        setHighlightedTransactionId(transactionIdParam);
+        setSelectedPaymentOption(matchedPayment);
+        if (shouldOpenPaymentScreen) {
+          setIsPaymentScreenOpen(true);
+        }
+      }
+    }
+
+    if (
+      eventRegistrationIdParam &&
+      bankDetails?.transaction_options &&
+      !bankDetailsLoading
+    ) {
+      const matchedPayment = bankDetails.transaction_options.find(
+        (payment: PaymentTransactionOption) =>
+          payment.event_registration_id === eventRegistrationIdParam,
+      );
+
+      if (matchedPayment) {
+        setPaymentReturnTab(tabParam || "bank");
+        setActiveTab("bank");
+        setHighlightedEventRegistrationId(eventRegistrationIdParam);
+        setSelectedPaymentOption(matchedPayment);
+        if (shouldOpenPaymentScreen) {
+          setIsPaymentScreenOpen(true);
+        }
+      }
+    }
+  }, [search, bankDetails?.transaction_options, bankDetailsLoading]);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [editingReference, setEditingReference] = useState(false);
+  const [scrollToOutstandingTrigger, setScrollToOutstandingTrigger] = useState(0);
   const [newReference, setNewReference] = useState(
     bankDetails?.registration_payment_reference || "",
   );
   const [savingReference, setSavingReference] = useState(false);
-  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
-  const [showOrderSelection, setShowOrderSelection] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [isPaymentScreenOpen, setIsPaymentScreenOpen] = useState(false);
+  const [selectedPaymentOption, setSelectedPaymentOption] = useState<PaymentTransactionOption | null>(null);
+  const [paymentReturnTab, setPaymentReturnTab] = useState("bank");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     "eft" | "payfast" | null
-  >("eft");
+  >(null);
   const [newOrderId, setNewOrderId] = useState<string | null>(null);
+  const [highlightedTransactionId, setHighlightedTransactionId] = useState<string | null>(null);
+  const [highlightedEventRegistrationId, setHighlightedEventRegistrationId] =
+    useState<string | null>(null);
   const [orderSortColumn, setOrderSortColumn] = useState<
     "date" | "payment_status" | "fulfillment_status" | "total" | null
   >(null);
   const [orderSortDirection, setOrderSortDirection] = useState<"asc" | "desc">(
     "asc",
   );
+  const [orderSearch, setOrderSearch] = useState("");
+  const [eventRegistrationSearch, setEventRegistrationSearch] = useState("");
   const [venues, setVenues] = useState<any[]>([]);
   const [venuesLoading, setVenuesLoading] = useState(false);
   const [venuesError, setVenuesError] = useState<string | null>(null);
@@ -175,6 +305,12 @@ export default function ViewClubPage() {
     !!data?.club_member_exists &&
     !!data?.registered &&
     !!data?.venues_enabled;
+
+  const canViewEvents =
+    isLoggedIn &&
+    !!data?.club_member_exists &&
+    !!data?.registered &&
+    !!data?.enable_events;
 
   const {
     data: memberOrders,
@@ -189,6 +325,12 @@ export default function ViewClubPage() {
       activeTab === "shop",
   });
 
+  const memberOrderList = useMemo(() => {
+    return Array.isArray(memberOrders?.orders)
+      ? (memberOrders.orders as MemberOrder[])
+      : [];
+  }, [memberOrders?.orders]);
+
   const handleOrderSort = (
     column: "date" | "payment_status" | "fulfillment_status" | "total",
   ) => {
@@ -200,16 +342,42 @@ export default function ViewClubPage() {
     }
   };
 
-  const sortedOrders = useMemo(() => {
-    if (!memberOrders?.orders) return [];
+  const filteredOrders = useMemo(() => {
+    const query = orderSearch.trim().toLowerCase();
 
-    const sorted = [...memberOrders.orders];
+    if (!query) {
+      return memberOrderList;
+    }
+
+    return memberOrderList.filter((order) => {
+      const itemsText = Array.isArray(order.items)
+        ? order.items
+            .map((item) => {
+              return `${String(item.name ?? "")} ${String(item.quantity ?? "")}`;
+            })
+            .join(" ")
+            .toLowerCase()
+        : "";
+
+      return [
+        order.order_id,
+        order.payment_status,
+        order.fulfillment_status,
+        String(order.total_amount ?? ""),
+        String(order.amount_paid ?? ""),
+        itemsText,
+      ].some((value) => String(value ?? "").toLowerCase().includes(query));
+    });
+  }, [memberOrderList, orderSearch]);
+
+  const sortedOrders = useMemo(() => {
+    const sorted = [...filteredOrders];
 
     if (!orderSortColumn) return sorted;
 
     sorted.sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
+      let aValue: string | number = "";
+      let bValue: string | number = "";
 
       if (orderSortColumn === "date") {
         aValue = a.created_date || 0;
@@ -225,17 +393,22 @@ export default function ViewClubPage() {
         bValue = b.total_amount || 0;
       }
 
-      if (typeof aValue === "string") {
+      if (typeof aValue === "string" && typeof bValue === "string") {
         return orderSortDirection === "asc"
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);
       } else {
-        return orderSortDirection === "asc" ? aValue - bValue : bValue - aValue;
+        const leftValue = typeof aValue === "number" ? aValue : 0;
+        const rightValue = typeof bValue === "number" ? bValue : 0;
+
+        return orderSortDirection === "asc"
+          ? leftValue - rightValue
+          : rightValue - leftValue;
       }
     });
 
     return sorted;
-  }, [memberOrders, orderSortColumn, orderSortDirection]);
+  }, [filteredOrders, orderSortColumn, orderSortDirection]);
 
   const toggleRow = (id: string) => {
     setExpandedRows((prev) => ({
@@ -244,22 +417,24 @@ export default function ViewClubPage() {
     }));
   };
 
-  const handlePayHereClick = (order?: any) => {
-    if (order) {
-      setSelectedOrder(order);
+  const handlePayHereClick = (paymentOption?: PaymentTransactionOption) => {
+    if (paymentOption) {
+      setSelectedPaymentOption(paymentOption);
+      setPaymentReturnTab(activeTab);
       if (!bankDetailsLoading && bankDetails) {
-        setPaymentDialogOpen(true);
+        setIsPaymentScreenOpen(true);
       } else {
         toast.error("Payment details are still loading. Please wait...");
       }
-    } else if (
-      bankDetails?.order_options &&
-      bankDetails.order_options.length > 0
-    ) {
-      setShowOrderSelection(true);
     } else {
+      setPaymentReturnTab(activeTab);
+      if (bankDetails?.transaction_options && bankDetails.transaction_options.length > 0) {
+        setActiveTab("bank");
+        return;
+      }
+
       if (!bankDetailsLoading && bankDetails) {
-        setPaymentDialogOpen(true);
+        setIsPaymentScreenOpen(true);
       } else {
         toast.error("Payment details are still loading. Please wait...");
       }
@@ -268,6 +443,81 @@ export default function ViewClubPage() {
 
   const handlePayNowClick = () => {
     handlePayHereClick();
+  };
+
+  const handleMainTabChange = (value: string) => {
+    setActiveTab(value);
+    setNewOrderId(null);
+    setHighlightedTransactionId(null);
+    setHighlightedEventRegistrationId(null);
+
+    if (!clubId) {
+      return;
+    }
+
+    navigate(`/myclubs/${clubId}?tab=${value}`, { replace: true });
+  };
+
+  const handleOrderPayNowClick = (orderId?: string) => {
+    if (!orderId) {
+      toast.error("This order is missing its payment reference.");
+      return;
+    }
+
+    if (bankDetailsLoading) {
+      toast.error("Payment details are still loading. Please wait...");
+      return;
+    }
+
+    const matchedPayment = bankDetails?.transaction_options?.find(
+      (payment: PaymentTransactionOption) => payment.order_id === orderId,
+    );
+
+    if (!matchedPayment) {
+      toast.error("No payment option was found for this order.");
+      return;
+    }
+
+    handlePayHereClick(matchedPayment);
+  };
+
+  const handleEventRegistrationPayNowClick = (eventRegistrationId?: string) => {
+    if (!eventRegistrationId) {
+      toast.error("This registration is missing its payment reference.");
+      return;
+    }
+
+    if (bankDetailsLoading) {
+      toast.error("Payment details are still loading. Please wait...");
+      return;
+    }
+
+    const matchedPayment = bankDetails?.transaction_options?.find(
+      (payment: PaymentTransactionOption) =>
+        payment.event_registration_id === eventRegistrationId,
+    );
+
+    if (!matchedPayment) {
+      toast.error("No payment option was found for this registration.");
+      return;
+    }
+
+    handlePayHereClick(matchedPayment);
+  };
+
+  const handleViewPaymentTarget = (paymentOption: PaymentTransactionOption) => {
+    if (paymentOption.order_id) {
+      setEventRegistrationSearch("");
+      setOrderSearch(paymentOption.order_id);
+      setActiveTab("shop");
+      return;
+    }
+
+    if (paymentOption.event_registration_id) {
+      setOrderSearch("");
+      setEventRegistrationSearch(paymentOption.event_registration_id);
+      setActiveTab("events");
+    }
   };
 
   const copyToClipboard = (text: string, field: string) => {
@@ -332,10 +582,10 @@ export default function ViewClubPage() {
   }, [bankDetails?.registration_payment_reference]);
 
   useEffect(() => {
-    if (!paymentDialogOpen) {
-      setSelectedPaymentMethod("eft");
+    if (!isPaymentScreenOpen) {
+      setSelectedPaymentMethod(null);
     }
-  }, [paymentDialogOpen]);
+  }, [isPaymentScreenOpen]);
 
   useEffect(() => {
     if (activeTab !== "bookings" || !data?.club_account_id) {
@@ -414,11 +664,41 @@ export default function ViewClubPage() {
     return "Your registration is currently pending. The club admin still needs to verify your submitted registration and confirm if your registration fee has been paid. If you haven't paid yet, please visit Payments & Billing to complete the outstanding payment using a supported method.";
   };
 
-  if (isLoading || isUserTransactionsLoading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center py-8">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
+    );
+  }
+
+  if (
+    isPaymentScreenOpen &&
+    !isError &&
+    data?.onboarded &&
+    data?.deregistration_in_progress !== true
+  ) {
+    return (
+      <Pager>
+        <PaymentOptionsScreen
+          bankDetails={bankDetails}
+          bankDetailsLoading={bankDetailsLoading}
+          clubAccountId={data?.club_account_id ?? ""}
+          currency={data?.currency}
+          supportEmail={data?.support_email}
+          selectedPaymentOption={selectedPaymentOption}
+          selectedPaymentMethod={selectedPaymentMethod}
+          onSelectedPaymentMethodChange={setSelectedPaymentMethod}
+          customPaymentMethods={data?.custom_payment_methods}
+          copiedField={copiedField}
+          onCopyToClipboard={copyToClipboard}
+          onBack={() => {
+            setIsPaymentScreenOpen(false);
+            setActiveTab(paymentReturnTab);
+            navigate(`/myclubs/${clubId}?tab=${paymentReturnTab}`);
+          }}
+        />
+      </Pager>
     );
   }
 
@@ -628,9 +908,9 @@ export default function ViewClubPage() {
                                         variant="outline"
                                         onClick={() => {
                                           setActiveTab("bank");
-                                          setTimeout(() => {
-                                            handlePayHereClick();
-                                          }, 100);
+                                          setScrollToOutstandingTrigger(
+                                            (current) => current + 1,
+                                          );
                                         }}
                                         className="text-xs h-auto py-1"
                                       >
@@ -739,9 +1019,7 @@ export default function ViewClubPage() {
             <div className="container mx-auto px-4 mt-8 mb-6">
               <Tabs
                 value={activeTab}
-                onValueChange={(value) => {
-                  setActiveTab(value);
-                }}
+                onValueChange={handleMainTabChange}
               >
                 {data?.club_member_exists && (
                   <TabsList
@@ -808,6 +1086,20 @@ export default function ViewClubPage() {
                         Bookings
                       </TabsTrigger>
                     )}
+                    {canViewEvents && (
+                      <TabsTrigger
+                        className={cn(
+                          "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium",
+                          isMobile
+                            ? "w-full justify-center text-sm h-10"
+                            : "w-[200px] h-10",
+                        )}
+                        value="events"
+                      >
+                        <CalendarDays className="w-4 h-4 mr-2" />
+                        Events
+                      </TabsTrigger>
+                    )}
                     {!data?.resubmission_required && data?.enable_shop && (
                       <ShopTab
                         clubId={clubId!}
@@ -865,12 +1157,25 @@ export default function ViewClubPage() {
                           </div>
                         </CardHeader>
                         <CardContent className="p-0">
+                          <div className="border-b border-primary/10 p-4">
+                            <div className="relative max-w-md">
+                              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                              <Input
+                                value={orderSearch}
+                                onChange={(event) => setOrderSearch(event.target.value)}
+                                placeholder="Search by order ID, item, payment status, fulfillment status, or amount"
+                                className="pl-9"
+                              />
+                            </div>
+                          </div>
                           <div
-                            className={`${memberOrders?.orders && memberOrders.orders.length > 5 ? "max-h-96 overflow-y-auto" : "overflow-hidden"}`}
+                            className={`${sortedOrders.length > 5 ? "max-h-96 overflow-y-auto" : "overflow-hidden"}`}
                           >
                             <Table className="border-0">
                               <TableHeader className="bg-gradient-to-r from-muted/50 to-muted/30 sticky top-0 z-10">
                                 <TableRow className="border-primary/10 hover:bg-transparent">
+                                  <TableHead className="w-12 text-center font-semibold">
+                                  </TableHead>
                                   <TableHead className="text-center flex-1 font-semibold">
                                     Order #
                                   </TableHead>
@@ -887,9 +1192,6 @@ export default function ViewClubPage() {
                                           <ArrowDown className="h-4 w-4" />
                                         ))}
                                     </div>
-                                  </TableHead>
-                                  <TableHead className="text-center flex-1 font-semibold">
-                                    Items
                                   </TableHead>
                                   <TableHead
                                     className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
@@ -947,7 +1249,7 @@ export default function ViewClubPage() {
                                 {isOrdersLoading && (
                                   <TableRow>
                                     <TableCell
-                                      colSpan={7}
+                                      colSpan={8}
                                       className="text-center py-8"
                                     >
                                       <Loader2 className="h-6 w-6 animate-spin mx-auto" />
@@ -960,7 +1262,7 @@ export default function ViewClubPage() {
                                 {ordersError && (
                                   <TableRow>
                                     <TableCell
-                                      colSpan={7}
+                                      colSpan={8}
                                       className="text-center py-8 text-red-600"
                                     >
                                       Failed to load orders. Please try again
@@ -970,10 +1272,10 @@ export default function ViewClubPage() {
                                 )}
                                 {!isOrdersLoading &&
                                   !ordersError &&
-                                  memberOrders?.orders?.length === 0 && (
+                                  memberOrderList.length === 0 && (
                                     <TableRow>
                                       <TableCell
-                                        colSpan={7}
+                                        colSpan={8}
                                         className="text-center py-8 text-muted-foreground"
                                       >
                                         No orders yet. Start shopping to see
@@ -983,125 +1285,228 @@ export default function ViewClubPage() {
                                   )}
                                 {!isOrdersLoading &&
                                   !ordersError &&
-                                  sortedOrders?.map((order: any) => (
-                                    <TableRow
-                                      key={order.order_id}
-                                      className="hover:bg-primary/5 transition-colors border-primary/10 group"
-                                    >
-                                      <TableCell className="text-center flex-1 py-4">
-                                        <span className="font-mono text-sm bg-muted/50 px-2 py-1 rounded">
-                                          #
-                                          {order.order_id?.slice(0, 8) || "N/A"}
-                                        </span>
-                                      </TableCell>
-                                      <TableCell className="text-center flex-1 py-4">
-                                        {order.created_date
-                                          ? new Date(
-                                              order.created_date * 1000,
-                                            ).toLocaleDateString()
-                                          : "N/A"}
-                                      </TableCell>
-                                      <TableCell className="text-center flex-1 py-4">
-                                        <div className="space-y-1">
-                                          {order.items?.map(
-                                            (item: any, index: number) => (
-                                              <div
-                                                key={index}
-                                                className="text-sm"
-                                              >
-                                                {item.name} x{item.quantity}
-                                              </div>
-                                            ),
-                                          ) || (
-                                            <div className="text-sm">
-                                              No items
-                                            </div>
-                                          )}
-                                        </div>
-                                      </TableCell>
-                                      <TableCell className="text-center flex-1 py-4 font-semibold">
-                                        {formatAmount(
-                                          order.total_amount || 0,
-                                          data.currency,
-                                        )}
-                                      </TableCell>
-                                      <TableCell className="text-center flex-1 py-4 font-semibold">
-                                        {formatAmount(
-                                          order.amount_paid || 0,
-                                          data.currency,
-                                        )}
-                                      </TableCell>
-                                      <TableCell className="text-center flex-1 py-4">
-                                        <div className="flex flex-col items-center gap-2">
-                                          <Badge
-                                            className={`font-medium ${
-                                              order.payment_status === "PAID" ||
-                                              order.payment_status ===
-                                                "PAID (Partial Refund)"
-                                                ? "bg-green-100 text-green-800 border-green-200"
-                                                : order.payment_status ===
-                                                    "PENDING"
-                                                  ? "bg-orange-100 text-orange-800 border-orange-200 mt-2"
-                                                  : order.payment_status ===
-                                                      "PARTIALLY_PAID"
-                                                    ? "bg-purple-100 text-purple-800 border-purple-200"
-                                                    : order.payment_status ===
-                                                          "CANCELLED" ||
-                                                        order.payment_status ===
-                                                          "REFUND"
-                                                      ? "bg-red-100 text-red-800 border-red-200"
-                                                      : "bg-gray-100 text-gray-800 border-gray-200"
-                                            }`}
-                                          >
-                                            {order.payment_status || "Unknown"}
-                                          </Badge>
-                                          {(order.payment_status ===
-                                            "PENDING" ||
-                                            order.payment_status ===
-                                              "PARTIALLY_PAID") && (
-                                            <Button
-                                              size="sm"
-                                              variant="ghost"
-                                              className="text-xs underline h-6 px-2 text-red-600"
-                                              onClick={() =>
-                                                setActiveTab("bank")
-                                              }
-                                            >
-                                              Pay Now
-                                            </Button>
-                                          )}
-                                        </div>
-                                      </TableCell>
-                                      <TableCell className="text-center flex-1 py-4">
-                                        <div className="flex items-center justify-center gap-2">
-                                          <Badge
-                                            className={`font-medium ${
-                                              order.fulfillment_status ===
-                                              "DELIVERED"
-                                                ? "bg-green-100 text-green-800 border-green-200"
-                                                : order.fulfillment_status ===
-                                                    "NOT_PROCESSED"
-                                                  ? "bg-orange-100 text-orange-800 border-orange-200"
-                                                  : order.fulfillment_status ===
-                                                      "PROCESSING"
-                                                    ? "bg-purple-100 text-purple-800 border-purple-200"
-                                                    : order.fulfillment_status ===
-                                                          "CANCELLED" ||
-                                                        order.fulfillment_status ===
-                                                          "REFUND" ||
-                                                        order.fulfillment_status ===
-                                                          "REFUNDED"
-                                                      ? "bg-red-100 text-red-800 border-red-200"
-                                                      : "bg-green-100 text-green-800 border-green-200"
-                                            }`}
-                                          >
-                                            {order.fulfillment_status ||
-                                              "Unknown"}
-                                          </Badge>
-                                        </div>
+                                  memberOrderList.length > 0 &&
+                                  sortedOrders.length === 0 && (
+                                    <TableRow>
+                                      <TableCell
+                                        colSpan={8}
+                                        className="text-center py-8 text-muted-foreground"
+                                      >
+                                        No orders match your search.
                                       </TableCell>
                                     </TableRow>
-                                  ))}
+                                  )}
+                                {!isOrdersLoading &&
+                                  !ordersError &&
+                                  sortedOrders.map((order) => {
+                                    const orderItems = Array.isArray(order.items)
+                                      ? order.items.filter(
+                                          (item) => Number(item.quantity || 0) > 0,
+                                        )
+                                      : [];
+                                    const refundedAmount = getRefundedAmount(order);
+
+                                    return (
+                                      <Fragment key={order.order_id}>
+                                        <TableRow className="hover:bg-primary/5 transition-colors border-primary/10 group">
+                                          <TableCell className="w-12 py-4 text-center">
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() => toggleRow(order.order_id || "")}
+                                              className="h-8 w-8 p-0"
+                                              disabled={!order.order_id}
+                                            >
+                                              <ChevronDown
+                                                className={cn(
+                                                  "h-4 w-4 transition-transform",
+                                                  expandedRows[order.order_id || ""] &&
+                                                    "rotate-180",
+                                                )}
+                                              />
+                                            </Button>
+                                          </TableCell>
+                                          <TableCell className="text-center flex-1 py-4">
+                                            <span className="font-mono text-sm bg-muted/50 px-2 py-1 rounded">
+                                              #{order.order_id?.slice(0, 8) || "N/A"}
+                                            </span>
+                                          </TableCell>
+                                          <TableCell className="text-center flex-1 py-4">
+                                            {order.created_date
+                                              ? new Date(
+                                                  order.created_date * 1000,
+                                                ).toLocaleDateString()
+                                              : "N/A"}
+                                          </TableCell>
+                                          <TableCell className="text-center flex-1 py-4 font-semibold">
+                                            {order.payment_status === "PAID (Partial Refund)" && refundedAmount > 0 ? (
+                                              <div className="space-y-1">
+                                                <div className="text-xs line-through text-muted-foreground">
+                                                  {formatAmount(
+                                                    order.total_amount || 0,
+                                                    data.currency,
+                                                  )}
+                                                </div>
+                                                <div>
+                                                  {formatAmount(
+                                                    order.amount_paid || 0,
+                                                    data.currency,
+                                                  )}
+                                                </div>
+                                              </div>
+                                            ) : (
+                                              formatAmount(
+                                                order.total_amount || 0,
+                                                data.currency,
+                                              )
+                                            )}
+                                          </TableCell>
+                                          <TableCell className="text-center flex-1 py-4 font-semibold">
+                                            {formatAmount(
+                                              order.amount_paid || 0,
+                                              data.currency,
+                                            )}
+                                          </TableCell>
+                                          <TableCell className="text-center flex-1 py-4">
+                                            <div className="flex flex-col items-center gap-2">
+                                              <Badge
+                                                className={cn(
+                                                  "font-medium",
+                                                  getOrderPaymentBadgeClassName(
+                                                    order.payment_status,
+                                                  ),
+                                                )}
+                                              >
+                                                {order.payment_status || "Unknown"}
+                                              </Badge>
+                                              {(order.payment_status === "PENDING" ||
+                                                order.payment_status === "PARTIALLY_PAID") && (
+                                                <Button
+                                                  size="sm"
+                                                  variant="ghost"
+                                                  className="text-xs underline h-6 px-2 text-red-600"
+                                                  onClick={() =>
+                                                    handleOrderPayNowClick(
+                                                      order.order_id,
+                                                    )
+                                                  }
+                                                >
+                                                  Pay Now
+                                                </Button>
+                                              )}
+                                            </div>
+                                          </TableCell>
+                                          <TableCell className="text-center flex-1 py-4">
+                                            <div className="flex items-center justify-center gap-2">
+                                              <Badge
+                                                className={cn(
+                                                  "font-medium",
+                                                  getOrderFulfillmentBadgeClassName(
+                                                    order.fulfillment_status,
+                                                  ),
+                                                )}
+                                              >
+                                                {order.fulfillment_status || "Unknown"}
+                                              </Badge>
+                                            </div>
+                                          </TableCell>
+                                        </TableRow>
+                                        {expandedRows[order.order_id || ""] && (
+                                          <TableRow className="bg-muted/30 hover:bg-muted/30 border-primary/10">
+                                            <TableCell colSpan={8} className="p-4">
+                                              <div className="space-y-4">
+                                                <div className="space-y-3">
+                                                  <h4 className="text-sm font-semibold">
+                                                    Order Items
+                                                  </h4>
+                                                  {orderItems.length > 0 ? (
+                                                    <div className="space-y-2">
+                                                      {orderItems.map((item, index) => {
+                                                        const quantity = Number(item.quantity || 0);
+                                                        const refundQuantity = Number(
+                                                          item.refund_quantity || 0,
+                                                        );
+                                                        const fulfillmentQuantity = Number(
+                                                          item.fulfillment_quantity || 0,
+                                                        );
+                                                        const outstandingQuantity = Math.max(
+                                                          quantity - fulfillmentQuantity,
+                                                          0,
+                                                        );
+                                                        const refundedSubtotal =
+                                                          refundQuantity * Number(item.price || 0);
+
+                                                        return (
+                                                          <div
+                                                            key={`${item.product_id || item.name || "item"}-${index}-expanded`}
+                                                            className="rounded-lg border border-primary/10 bg-background px-4 py-3"
+                                                          >
+                                                            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                                                              <div className="space-y-2">
+                                                                <p className="font-medium text-sm">
+                                                                  {item.name || "Unnamed item"}
+                                                                </p>
+                                                                <div className="flex flex-wrap gap-2 text-xs">
+                                                                  <span className="rounded bg-blue-50 px-2 py-1 text-blue-700">
+                                                                    Qty: {quantity} x {formatAmount(
+                                                                      item.price || 0,
+                                                                      data.currency,
+                                                                    )}
+                                                                  </span>
+                                                                  {refundQuantity > 0 && (
+                                                                    <span className="rounded bg-red-50 px-2 py-1 text-red-700">
+                                                                      Refunded: {refundQuantity} x {formatAmount(
+                                                                        item.price || 0,
+                                                                        data.currency,
+                                                                      )}
+                                                                    </span>
+                                                                  )}
+                                                                  {fulfillmentQuantity > 0 && (
+                                                                    <span className="rounded border border-green-200 bg-green-50 px-2 py-1 text-green-700">
+                                                                      Received: {fulfillmentQuantity} / {quantity}
+                                                                    </span>
+                                                                  )}
+                                                                  {outstandingQuantity > 0 && (
+                                                                    <span className="rounded border border-orange-200 bg-orange-50 px-2 py-1 text-orange-700">
+                                                                      Not Received: {outstandingQuantity} / {quantity}
+                                                                    </span>
+                                                                  )}
+                                                                </div>
+                                                              </div>
+                                                              <div className="space-y-1 text-left lg:text-right">
+                                                                <p className="text-sm font-semibold">
+                                                                  {formatAmount(
+                                                                    item.subtotal || 0,
+                                                                    data.currency,
+                                                                  )}
+                                                                </p>
+                                                                {refundQuantity > 0 && (
+                                                                  <p className="text-xs text-red-700">
+                                                                    Refunded total: {formatAmount(
+                                                                      refundedSubtotal,
+                                                                      data.currency,
+                                                                    )}
+                                                                  </p>
+                                                                )}
+                                                              </div>
+                                                            </div>
+                                                          </div>
+                                                        );
+                                                      })}
+                                                    </div>
+                                                  ) : (
+                                                    <div className="rounded-lg border border-dashed border-primary/20 bg-background px-4 py-6 text-sm text-muted-foreground">
+                                                      No order items are available for this order.
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            </TableCell>
+                                          </TableRow>
+                                        )}
+                                      </Fragment>
+                                    );
+                                  })}
                               </TableBody>
                             </Table>
                           </div>
@@ -1118,6 +1523,18 @@ export default function ViewClubPage() {
                       loading={venuesLoading}
                       error={venuesError}
                       memberName={data?.member_name || ""}
+                    />
+                  </TabsContent>
+                )}
+
+                {canViewEvents && (
+                  <TabsContent value="events" className="mt-6">
+                    <MemberEvents
+                      clubId={clubId || ""}
+                      clubAccountId={data?.club_account_id || ""}
+                      currency={data?.currency}
+                      registrationSearchQuery={eventRegistrationSearch}
+                      onPayRegistration={handleEventRegistrationPayNowClick}
                     />
                   </TabsContent>
                 )}
@@ -1270,8 +1687,13 @@ export default function ViewClubPage() {
                   <PaymentsTabContent
                     data={data}
                     bankDetails={bankDetails}
-                    transactions={transactions}
-                    isUserTransactionsLoading={isUserTransactionsLoading}
+                    clubAccountId={data?.club_account_id ?? ""}
+                    userId={data?.user_id ?? ""}
+                    isActive={activeTab === "bank"}
+                    scrollToOutstandingTrigger={scrollToOutstandingTrigger}
+                    highlightedOrderId={newOrderId}
+                    highlightedTransactionId={highlightedTransactionId}
+                    highlightedEventRegistrationId={highlightedEventRegistrationId}
                     expandedRows={expandedRows}
                     editingReference={editingReference}
                     newReference={newReference}
@@ -1281,470 +1703,14 @@ export default function ViewClubPage() {
                     setNewReference={setNewReference}
                     handleSaveReference={handleSaveReference}
                     handleCancelEdit={handleCancelEdit}
-                    handlePayHereClick={handlePayNowClick}
+                    handlePayHereClick={handlePayHereClick}
+                    onViewPaymentTarget={handleViewPaymentTarget}
                   />
                 )}
               </Tabs>
             </div>
           </div>
         )}
-
-      {/* Order Selection Dialog */}
-      <Dialog open={showOrderSelection} onOpenChange={setShowOrderSelection}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ShoppingCart className="w-5 h-5 text-primary" />
-              Select Order to Pay
-            </DialogTitle>
-            <DialogDescription>
-              Choose which order you want to make a payment for.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 max-h-96 overflow-y-auto">
-            {bankDetails?.order_options?.map((order: any, index: number) => {
-              const totalAmount =
-                order.items?.reduce(
-                  (sum: number, item: any) => sum + (item.subtotal || 0),
-                  0,
-                ) || 0;
-
-              return (
-                <div
-                  key={index}
-                  className={`p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors ${
-                    order.order_id === newOrderId || order.id === newOrderId
-                      ? "border-yellow-400 bg-yellow-50 border-2"
-                      : ""
-                  }`}
-                  onClick={() => {
-                    setSelectedOrder(order);
-                    setShowOrderSelection(false);
-                    handlePayHereClick(order);
-                  }}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-semibold">
-                      {order.title || `Order ${index + 1}`}
-                    </h4>
-                    <span className="font-bold text-primary">
-                      {formatAmount(totalAmount, data?.currency)}
-                    </span>
-                  </div>
-                  {order.description && (
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {order.description}
-                    </p>
-                  )}
-                  {order.items && order.items.length > 0 && (
-                    <div className="space-y-1">
-                      {order.items.map((item: any, itemIndex: number) => (
-                        <div
-                          key={itemIndex}
-                          className="flex justify-between text-sm"
-                        >
-                          <span>
-                            {item.name} (x{item.quantity})
-                          </span>
-                          <span>
-                            {formatAmount(item.subtotal || 0, data?.currency)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={paymentDialogOpen}
-        onOpenChange={(open) => {
-          setPaymentDialogOpen(open);
-          if (!open) {
-            setSelectedOrder(null);
-          }
-        }}
-      >
-        <DialogContent className="!w-[1000px] !h-[820px] !max-w-none !max-h-none p-5 gap-4 flex flex-col min-h-0">
-          <DialogHeader className="flex-shrink-0 px-6 pt-6 pb-4 space-y-2">
-            <DialogTitle className="flex items-center gap-2 text-2xl">
-              <CreditCard className="w-6 h-6 text-primary" />
-              Payment Options
-            </DialogTitle>
-            <div className="space-y-1">
-              {selectedOrder ? (
-                <>
-                  <DialogDescription className="text-base">
-                    Order Total:{" "}
-                    <span className="font-semibold text-foreground">
-                      {formatAmount(
-                        selectedOrder.total_amount || 0,
-                        data?.currency,
-                      )}
-                    </span>
-                  </DialogDescription>
-                  <DialogDescription className="text-base">
-                    Amount Paid:{" "}
-                    <span className="font-semibold text-foreground">
-                      {formatAmount(
-                        selectedOrder?.total_amount -
-                          selectedOrder?.outstanding_amount || 0,
-                        data?.currency,
-                      )}
-                    </span>
-                  </DialogDescription>
-                  <DialogDescription className="text-base">
-                    Outstanding Amount:{" "}
-                    <span className="font-semibold text-foreground text-orange-600">
-                      {formatAmount(
-                        selectedOrder?.outstanding_amount || 0,
-                        data?.currency,
-                      )}
-                    </span>
-                  </DialogDescription>
-                  {selectedOrder.order_id && (
-                    <DialogDescription className="text-base">
-                      Order ID:{" "}
-                      <span className="font-semibold text-foreground">
-                        {selectedOrder.order_id}
-                      </span>
-                    </DialogDescription>
-                  )}
-                </>
-              ) : (
-                <DialogDescription className="text-base">
-                  Outstanding Balance:{" "}
-                  <span className="font-semibold text-foreground">
-                    {formatAmount(
-                      bankDetails?.outstanding_amount,
-                      data?.currency,
-                    )}
-                  </span>
-                </DialogDescription>
-              )}
-              {bankDetails?.registration_payment_reference && (
-                <DialogDescription className="text-base">
-                  Payment Reference:{" "}
-                  <span className="font-semibold text-foreground">
-                    {bankDetails?.registration_payment_reference}
-                  </span>
-                </DialogDescription>
-              )}
-            </div>
-          </DialogHeader>
-          <div className="flex-1 overflow-hidden px-6 pb-6">
-            <div className="h-full overflow-y-auto pr-2">
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <div className="space-y-4">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setSelectedPaymentMethod((prev) =>
-                          prev === "eft" ? null : "eft",
-                        )
-                      }
-                      className={cn(
-                        "flex w-full items-center justify-between rounded-2xl border bg-white px-5 py-4 text-left shadow-md transition-all duration-200",
-                        selectedPaymentMethod === "eft"
-                          ? "border-slate-400 ring-2 ring-slate-200"
-                          : "border-gray-200 hover:border-slate-300 hover:shadow-lg",
-                      )}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div
-                          className={cn(
-                            "flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors",
-                            selectedPaymentMethod === "eft"
-                              ? "border-slate-300 bg-slate-200"
-                              : "border-slate-300 bg-white",
-                          )}
-                        >
-                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-black text-white">
-                            {selectedPaymentMethod === "eft" ? (
-                              <CheckCircle2 className="h-4 w-4" />
-                            ) : null}
-                          </div>
-                        </div>
-
-                        <div>
-                          <p className="text-xl font-semibold text-gray-950 sm:text-2xl">
-                            Pay via EFT
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Transfer directly into the club bank account.
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="rounded-2xl bg-slate-100 px-4 py-3 text-right">
-                        <p className="text-sm font-semibold text-slate-800">
-                          Bank Transfer
-                        </p>
-                        <p className="text-xs text-slate-600">
-                          Manual payment with reference
-                        </p>
-                      </div>
-                    </button>
-
-                    {selectedPaymentMethod === "eft" && (
-                      <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4">
-                        <div className="space-y-4">
-                          {bankDetailsLoading ? (
-                            <div className="flex justify-center py-8">
-                              <Loader2 className="h-8 w-8 animate-spin text-slate-600" />
-                            </div>
-                          ) : (
-                            <>
-                              <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
-                                <div className="flex items-center justify-between gap-4 px-4 py-3">
-                                  <div>
-                                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                                      Bank Name
-                                    </p>
-                                    <p className="text-sm font-semibold text-slate-950">
-                                      {bankDetails?.bank}
-                                    </p>
-                                  </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() =>
-                                      copyToClipboard(bankDetails?.bank || "", "bank")
-                                    }
-                                    className="shrink-0"
-                                  >
-                                    {copiedField === "bank" ? (
-                                      <CheckCircle2 className="h-4 w-4 text-slate-700" />
-                                    ) : (
-                                      <Copy className="h-4 w-4" />
-                                    )}
-                                  </Button>
-                                </div>
-
-                                <div className="flex items-center justify-between gap-4 px-4 py-3">
-                                  <div>
-                                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                                      Account Number
-                                    </p>
-                                    <p className="font-mono text-sm font-semibold text-slate-950">
-                                      {bankDetails?.account_number}
-                                    </p>
-                                  </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() =>
-                                      copyToClipboard(
-                                        bankDetails?.account_number || "",
-                                        "account",
-                                      )
-                                    }
-                                    className="shrink-0"
-                                  >
-                                    {copiedField === "account" ? (
-                                      <CheckCircle2 className="h-4 w-4 text-slate-700" />
-                                    ) : (
-                                      <Copy className="h-4 w-4" />
-                                    )}
-                                  </Button>
-                                </div>
-
-                                <div className="flex items-center justify-between gap-4 px-4 py-3">
-                                  <div>
-                                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                                      Branch Code
-                                    </p>
-                                    <p className="font-mono text-sm font-semibold text-slate-950">
-                                      {bankDetails?.branch_code}
-                                    </p>
-                                  </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() =>
-                                      copyToClipboard(
-                                        bankDetails?.branch_code || "",
-                                        "branch",
-                                      )
-                                    }
-                                    className="shrink-0"
-                                  >
-                                    {copiedField === "branch" ? (
-                                      <CheckCircle2 className="h-4 w-4 text-slate-700" />
-                                    ) : (
-                                      <Copy className="h-4 w-4" />
-                                    )}
-                                  </Button>
-                                </div>
-
-                                <div className="flex items-center justify-between gap-4 px-4 py-3">
-                                  <div>
-                                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                                      Account Type
-                                    </p>
-                                    <p className="text-sm font-semibold text-slate-950">
-                                      {bankDetails?.account_type}
-                                    </p>
-                                  </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() =>
-                                      copyToClipboard(
-                                        bankDetails?.account_type || "",
-                                        "type",
-                                      )
-                                    }
-                                    className="shrink-0"
-                                  >
-                                    {copiedField === "type" ? (
-                                      <CheckCircle2 className="h-4 w-4 text-slate-700" />
-                                    ) : (
-                                      <Copy className="h-4 w-4" />
-                                    )}
-                                  </Button>
-                                </div>
-                              </div>
-
-                              {bankDetails?.payment_reference && (
-                                <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-                                  <div className="flex items-start justify-between gap-4">
-                                    <div>
-                                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                                        Payment Reference
-                                      </p>
-                                      <p className="mt-1 font-mono text-lg font-semibold text-slate-950">
-                                        {bankDetails?.payment_reference}
-                                      </p>
-                                      <p className="mt-1 text-sm text-muted-foreground">
-                                        Include this reference with your EFT payment.
-                                      </p>
-                                    </div>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() =>
-                                        copyToClipboard(
-                                          bankDetails?.payment_reference || "",
-                                          "reference",
-                                        )
-                                      }
-                                      className="shrink-0"
-                                    >
-                                      {copiedField === "reference" ? (
-                                        <>
-                                          <CheckCircle2 className="mr-2 h-4 w-4 text-slate-700" />
-                                          Copied
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Copy className="mr-2 h-4 w-4" />
-                                          Copy
-                                        </>
-                                      )}
-                                    </Button>
-                                  </div>
-                                </div>
-                              )}
-
-                              <div className="space-y-2 text-sm text-muted-foreground">
-                                <p>
-                                  <strong className="text-slate-950">Important:</strong> Always include your payment reference number to ensure proper allocation of your payment.
-                                </p>
-                                <p>
-                                  <strong className="text-slate-950">Registration Status:</strong> Your registration will remain <strong>Pending</strong> until the club administrator confirms receipt of your payment.
-                                  {data.support_email && (
-                                    <>
-                                      {" "}If you do not receive confirmation in a reasonable timeframe, contact{" "}
-                                      <a
-                                        href={`mailto:${data.support_email}`}
-                                        className="font-semibold text-slate-700 underline"
-                                      >
-                                        {data.support_email}
-                                      </a>
-                                      .
-                                    </>
-                                  )}
-                                </p>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {data?.payfast_enabled && (
-                    <div className="space-y-4">
-                      <PayFastPayment
-                        clubAccountId={data?.club_account_id ?? ""}
-                        outstandingAmount={
-                          selectedOrder
-                            ? selectedOrder?.outstanding_amount || 0
-                            : (bankDetails?.outstanding_amount ?? 0)
-                        }
-                        orderId={selectedOrder?.order_id}
-                        showHeader={false}
-                        buttonVariant="logo"
-                        isSelected={selectedPaymentMethod === "payfast"}
-                        onSelectedChange={(isSelected) =>
-                          setSelectedPaymentMethod(isSelected ? "payfast" : null)
-                        }
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {data?.custom_payment_methods && data.custom_payment_methods.length > 0 && (
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                        More Payment Options
-                      </p>
-                    </div>
-                    <div className="space-y-3">
-                      {data.custom_payment_methods.map((method: any, index: number) => (
-                        <Card
-                          key={index}
-                          className="rounded-2xl border border-primary/20 bg-white/85 shadow-sm transition-shadow hover:shadow-md"
-                        >
-                          <CardContent className="flex items-center justify-between gap-4 p-5">
-                            <div className="flex items-start gap-3">
-                              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                                <ExternalLink className="h-5 w-5" />
-                              </div>
-                              <div>
-                                <p className="text-base font-semibold text-slate-950">
-                                  {method.name}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  Proceed to {method.name} to complete payment.
-                                </p>
-                              </div>
-                            </div>
-                            <Button
-                              onClick={() => window.open(method.url, "_blank")}
-                              className="rounded-full bg-primary px-5 hover:bg-primary/90"
-                            >
-                              <ExternalLink className="mr-2 h-4 w-4" />
-                              Continue
-                            </Button>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Gallery Image Dialog */}
       <Dialog
