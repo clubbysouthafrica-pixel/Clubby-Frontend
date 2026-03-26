@@ -104,6 +104,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: CalendarDays,
         items: [
           { title: "Events", url: "/events" },
+          { title: "Registrations", url: "/events/registrations" },
         ],
       },
       {

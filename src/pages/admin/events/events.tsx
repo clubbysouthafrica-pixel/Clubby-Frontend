@@ -381,6 +381,10 @@ function sanitizeEventIdentifier(value: unknown, fallback: string) {
   return typeof value === "string" && value.trim() ? value : fallback;
 }
 
+function sanitizeEventText(value: unknown, fallback = "") {
+  return typeof value === "string" ? value : fallback;
+}
+
 function getPricingSummary(pricing: EventPricing) {
   switch (pricing.type) {
     case "FREE":
@@ -475,8 +479,8 @@ function buildEventRequestPayload(params: {
   return {
     club_account_id: params.clubAccountId,
     event_id: params.eventId,
-    title: params.title.trim(),
-    description: params.description.trim(),
+    title: sanitizeEventText(params.title).trim(),
+    description: sanitizeEventText(params.description).trim(),
     startDate: dateKeyToEpoch(params.startDate),
     endDate: dateKeyToEpoch(params.endDate),
     registrationOpenDate: dateKeyToEpoch(params.registrationOpenDate),
@@ -532,6 +536,8 @@ function sanitizeLoadedEvents(events: EventItem[]) {
         ...event,
         id: sanitizeEventIdentifier(event.id, `${event.title ?? "event"}-${Date.now()}`),
         eventId: sanitizeEventIdentifier((event as { event_id?: unknown }).event_id, event.id),
+        title: sanitizeEventText(event.title),
+        description: sanitizeEventText(event.description),
         startDate,
         endDate,
         registrationOpenDate: sanitizeRegistrationDate(event.registrationOpenDate, startDate),
@@ -574,6 +580,7 @@ export default function EventsPage() {
   const [pricingDraft, setPricingDraft] = React.useState<EventPricingDraft>(getDefaultPricingDraft());
   const [isTogglingEvents, setIsTogglingEvents] = React.useState(false);
   const [isSavingPreviewOrder, setIsSavingPreviewOrder] = React.useState(false);
+  const [isSavingEvent, setIsSavingEvent] = React.useState(false);
   const [showEventsSettings, setShowEventsSettings] = React.useState(false);
 
   const handleToggleEvents = React.useCallback(
@@ -667,6 +674,11 @@ export default function EventsPage() {
     return sortedEvents.filter((event) => event.startDate !== event.endDate).length;
   }, [sortedEvents]);
 
+  const editingEvent = React.useMemo(
+    () => events.find((event) => event.id === editingEventId) ?? null,
+    [editingEventId, events],
+  );
+
   const openCreateDialog = React.useCallback(
     (dateKey?: string) => {
       const nextDate = dateKey ?? selectedDate;
@@ -700,8 +712,8 @@ export default function EventsPage() {
     setPreviewEventId(null);
     setIsPreviewOpen(false);
     setFormState({
-      title: event.title,
-      description: event.description,
+      title: sanitizeEventText(event.title),
+      description: sanitizeEventText(event.description),
       startDate: event.startDate,
       endDate: event.endDate,
       registrationOpenDate: event.registrationOpenDate,
@@ -873,70 +885,75 @@ export default function EventsPage() {
   };
 
   const handleSaveEvent = async () => {
-    const title = formState.title.trim();
-    const description = formState.description.trim();
+    const title = sanitizeEventText(formState.title).trim();
+    const description = sanitizeEventText(formState.description).trim();
+    const isKeepingExistingStartDate = Boolean(
+      editingEvent && editingEvent.startDate === formState.startDate,
+    );
+    const isUpdatingExistingPastEvent = Boolean(
+      editingEvent && isKeepingExistingStartDate && editingEvent.startDate < todayKey,
+    );
+    const showSaveError = (message: string) => {
+      setFormError(message);
+      toast.error(message);
+    };
+
+    setFormError("");
 
     if (!club?.club_account_id) {
-      setFormError("A club must be selected before saving an event.");
+      showSaveError("A club must be selected before saving an event.");
       return;
     }
 
     if (!title) {
-      setFormError("Event title is required.");
+      showSaveError("Event title is required.");
       return;
     }
 
     if (!formState.startDate || !formState.endDate) {
-      setFormError("Start and end dates are required.");
+      showSaveError("Start and end dates are required.");
       return;
     }
 
     if (!formState.registrationOpenDate || !formState.registrationCloseDate) {
-      setFormError("Registration open and close dates are required.");
+      showSaveError("Registration open and close dates are required.");
       return;
     }
 
-    if (formState.startDate < todayKey) {
-      setFormError("Events cannot start in the past.");
+    if (formState.startDate < todayKey && !isKeepingExistingStartDate) {
+      showSaveError("Events cannot start in the past.");
       return;
     }
 
     if (formState.endDate < formState.startDate) {
-      setFormError("End date cannot be before the start date.");
-      return;
-    }
-
-    if (formState.registrationOpenDate < todayKey) {
-      setFormError("Registration cannot open in the past.");
+      showSaveError("End date cannot be before the start date.");
       return;
     }
 
     if (formState.registrationCloseDate < formState.registrationOpenDate) {
-      setFormError("Registration close date cannot be before the registration open date.");
+      showSaveError("Registration close date cannot be before the registration open date.");
       return;
     }
 
-    if (formState.registrationCloseDate > formState.startDate) {
-      setFormError("Registration must close on or before the event start date.");
+    if (formState.registrationCloseDate > formState.startDate && !isUpdatingExistingPastEvent) {
+      showSaveError("Registration must close on or before the event start date.");
       return;
     }
 
     if (pricing.type !== "FREE" && pricing.options.length === 0) {
-      setFormError("Add at least one pricing option, or set the event pricing to Free.");
+      showSaveError("Add at least one pricing option, or set the event pricing to Free.");
       return;
     }
 
     const sanitizedPreviewFieldOrder = sanitizePreviewFieldOrder(
-      events.find((event) => event.id === editingEventId)?.previewFieldOrder,
+      editingEvent?.previewFieldOrder,
       eventFormFields,
       pricing,
     );
 
-    const existingEvent = events.find((event) => event.id === editingEventId);
-
     const eventRequestPayload = buildEventRequestPayload({
       clubAccountId: club.club_account_id,
-      eventId: existingEvent?.eventId,
+      eventId: editingEvent?.eventId,
       title,
       description,
       startDate: formState.startDate,
@@ -949,15 +966,22 @@ export default function EventsPage() {
     });
 
     try {
+      setIsSavingEvent(true);
       await createOrUpdateEvents(eventRequestPayload);
     } catch (error) {
-      setFormError(getApiErrorMessage(error, "Unable to save the event right now."));
+      const message = getApiErrorMessage(error, "Unable to save the event right now.");
+      setFormError(message);
+      toast.error(message);
       return;
+    } finally {
+      setIsSavingEvent(false);
     }
+
+    toast.success(editingEventId ? "Event updated successfully" : "Event saved successfully");
 
     const nextEvent: EventItem = {
       id: editingEventId ?? `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`,
-      eventId: existingEvent?.eventId,
+      eventId: editingEvent?.eventId,
       title,
       description,
       startDate: formState.startDate,
@@ -1727,7 +1751,11 @@ export default function EventsPage() {
                           <Input
                             type="date"
                             value={formState.startDate}
-                            min={todayKey}
+                            min={
+                              editingEvent?.startDate && editingEvent.startDate < todayKey
+                                ? editingEvent.startDate
+                                : todayKey
+                            }
                             onChange={(event) =>
                               setFormState((current) => {
                                 const nextStartDate = event.target.value;
@@ -1750,7 +1778,13 @@ export default function EventsPage() {
                           <Input
                             type="date"
                             value={formState.endDate}
-                            min={formState.startDate < todayKey ? todayKey : formState.startDate}
+                            min={
+                              formState.startDate < todayKey
+                                ? editingEvent?.endDate && editingEvent.endDate < todayKey
+                                  ? editingEvent.endDate
+                                  : formState.startDate
+                                : formState.startDate
+                            }
                             onChange={(event) =>
                               setFormState((current) => ({ ...current, endDate: event.target.value }))
                             }
@@ -1764,7 +1798,12 @@ export default function EventsPage() {
                           <Input
                             type="date"
                             value={formState.registrationOpenDate}
-                            min={todayKey}
+                            min={
+                              editingEvent?.registrationOpenDate &&
+                              editingEvent.registrationOpenDate < todayKey
+                                ? editingEvent.registrationOpenDate
+                                : todayKey
+                            }
                             max={formState.startDate}
                             onChange={(event) =>
                               setFormState((current) => {
@@ -1786,7 +1825,14 @@ export default function EventsPage() {
                           <Input
                             type="date"
                             value={formState.registrationCloseDate}
-                            min={formState.registrationOpenDate < todayKey ? todayKey : formState.registrationOpenDate}
+                            min={
+                              formState.registrationOpenDate < todayKey
+                                ? editingEvent?.registrationCloseDate &&
+                                  editingEvent.registrationCloseDate < todayKey
+                                  ? editingEvent.registrationCloseDate
+                                  : formState.registrationOpenDate
+                                : formState.registrationOpenDate
+                            }
                             max={formState.startDate}
                             onChange={(event) =>
                               setFormState((current) => ({
@@ -2119,8 +2165,12 @@ export default function EventsPage() {
                         <Button variant="outline" onClick={() => resetEditorState(false)}>
                           Cancel
                         </Button>
-                        <Button onClick={handleSaveEvent}>
-                          {editingEventId ? "Save Changes" : "Save Event"}
+                        <Button type="button" onClick={handleSaveEvent} disabled={isSavingEvent}>
+                          {isSavingEvent
+                            ? "Saving..."
+                            : editingEventId
+                              ? "Save Changes"
+                              : "Save Event"}
                         </Button>
                       </div>
                     </div>
