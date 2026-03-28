@@ -211,10 +211,9 @@ export default function MemberShopPage() {
         queryParams.append('orderId', orderId);
       }
       queryParams.append('tab', 'bank');
-      
-      setTimeout(() => {
-        navigate(`/myclubs/${clubId}?${queryParams.toString()}`);
-      }, 1000);
+      queryParams.append('paymentScreen', 'true');
+
+      navigate(`/myclubs/${clubId}?${queryParams.toString()}`);
     } catch (error: any) {
       console.error("Error creating order:", error);
       const errorMessage = error.response?.data?.message || error.message || "Failed to create order. Please try again.";
@@ -280,7 +279,6 @@ export default function MemberShopPage() {
                     ) : (
                       <Package className="h-16 w-16 text-gray-400" />
                     )}
-                    {/* Placeholder for product image */}
                   </div>
                   <CardHeader>
                     <div className="flex items-start justify-between">

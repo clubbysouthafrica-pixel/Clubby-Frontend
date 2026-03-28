@@ -1,10 +1,29 @@
 import { api } from "./api";
 
-export const fetchPayFastCheckoutURL = (clubAccountId: string, orderId?: string): Promise<any> => {
-    const params = new URLSearchParams({ club_account_id: clubAccountId });
-    if (orderId) {
-        params.append('order_id', orderId);
+interface PayFastCheckoutParams {
+    transactionId?: string;
+    orderId?: string;
+    eventId?: string;
+    eventRegistrationId?: string;
+}
+
+export const fetchPayFastCheckoutURL = (
+    clubAccountId: string,
+    checkoutParams?: PayFastCheckoutParams,
+): Promise<any> => {
+    const queryParams = new URLSearchParams({ club_account_id: clubAccountId });
+    if (checkoutParams?.transactionId) {
+        queryParams.append('transaction_id', checkoutParams.transactionId);
     }
-    return api.get(`/payfast/checkoutUrl?${params.toString()}`)
+    if (checkoutParams?.orderId) {
+        queryParams.append('order_id', checkoutParams.orderId);
+    }
+    if (checkoutParams?.eventId) {
+        queryParams.append('event_id', checkoutParams.eventId);
+    }
+    if (checkoutParams?.eventRegistrationId) {
+        queryParams.append('event_registration_id', checkoutParams.eventRegistrationId);
+    }
+    return api.get(`/payfast/checkoutUrl?${queryParams.toString()}`)
         .then(res => res.data);
 } 

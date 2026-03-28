@@ -29,6 +29,8 @@ import RegistrationsPage from "@/pages/admin/members/registrations/registrations
 import MembersPage from "@/pages/admin/members/members/members";
 import VenuesPage from "@/pages/admin/venues-&-bookings/venues";
 import BookingsPage from "@/pages/admin/venues-&-bookings/bookings";
+import EventsPage from "@/pages/admin/events/events";
+import EventRegistrationsPage from "@/pages/admin/events/registrations";
 
 export default function AdminRoutes() {
   return (
@@ -194,6 +196,22 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <BookingsPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/events"
+        element={
+          <ProtectedRoute>
+            <EventsPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/events/registrations"
+        element={
+          <ProtectedRoute>
+            <EventRegistrationsPage />
           </ProtectedRoute>
         }
       ></Route>
