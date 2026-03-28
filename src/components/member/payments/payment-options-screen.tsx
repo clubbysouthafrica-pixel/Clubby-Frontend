@@ -30,6 +30,7 @@ interface PaymentOptionsScreenProps {
   clubAccountId: string;
   currency?: string;
   supportEmail?: string;
+  payfastEnabled?: boolean;
   selectedPaymentOption: PaymentTransactionOption | null;
   selectedPaymentMethod: PaymentMethod;
   onSelectedPaymentMethodChange: (method: PaymentMethod) => void;
@@ -45,6 +46,7 @@ export default function PaymentOptionsScreen({
   clubAccountId,
   currency,
   supportEmail,
+  payfastEnabled = false,
   selectedPaymentOption,
   selectedPaymentMethod,
   onSelectedPaymentMethodChange,
@@ -58,6 +60,12 @@ export default function PaymentOptionsScreen({
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
   }, []);
+
+  useEffect(() => {
+    if (!payfastEnabled && selectedPaymentMethod === "payfast") {
+      onSelectedPaymentMethodChange(null);
+    }
+  }, [onSelectedPaymentMethodChange, payfastEnabled, selectedPaymentMethod]);
 
   return (
     <div className="min-h-screen bg-background px-3 py-4 sm:px-4 sm:py-6 md:px-8 md:py-10">
@@ -306,22 +314,24 @@ export default function PaymentOptionsScreen({
               )}
             </div>
 
-            <div className="space-y-4">
-              <PayFastPayment
-                clubAccountId={clubAccountId}
-                outstandingAmount={outstandingAmount}
-                transactionId={selectedPaymentOption?.transaction_id}
-                orderId={selectedPaymentOption?.order_id}
-                eventId={selectedPaymentOption?.event_id}
-                eventRegistrationId={selectedPaymentOption?.event_registration_id}
-                showHeader={false}
-                buttonVariant="logo"
-                isSelected={selectedPaymentMethod === "payfast"}
-                onSelectedChange={(isSelected) =>
-                  onSelectedPaymentMethodChange(isSelected ? "payfast" : null)
-                }
-              />
-            </div>
+            {payfastEnabled && (
+              <div className="space-y-4">
+                <PayFastPayment
+                  clubAccountId={clubAccountId}
+                  outstandingAmount={outstandingAmount}
+                  transactionId={selectedPaymentOption?.transaction_id}
+                  orderId={selectedPaymentOption?.order_id}
+                  eventId={selectedPaymentOption?.event_id}
+                  eventRegistrationId={selectedPaymentOption?.event_registration_id}
+                  showHeader={false}
+                  buttonVariant="logo"
+                  isSelected={selectedPaymentMethod === "payfast"}
+                  onSelectedChange={(isSelected) =>
+                    onSelectedPaymentMethodChange(isSelected ? "payfast" : null)
+                  }
+                />
+              </div>
+            )}
 
             {customPaymentMethods && customPaymentMethods.length > 0 && (
               <div className="space-y-3">
