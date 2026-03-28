@@ -686,6 +686,7 @@ export default function ViewClubPage() {
           clubAccountId={data?.club_account_id ?? ""}
           currency={data?.currency}
           supportEmail={data?.support_email}
+          payfastEnabled={data?.payfast_enabled}
           selectedPaymentOption={selectedPaymentOption}
           selectedPaymentMethod={selectedPaymentMethod}
           onSelectedPaymentMethodChange={setSelectedPaymentMethod}
