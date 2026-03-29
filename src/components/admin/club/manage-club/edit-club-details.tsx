@@ -294,6 +294,7 @@ export default function EditClubDetails({
     support_email: string;
     use_submission_email_template: boolean;
     use_success_email_template: boolean;
+    notify_on_member_registration: boolean;
   }) =>
     mutate(emailData, {
       onSuccess: () => {

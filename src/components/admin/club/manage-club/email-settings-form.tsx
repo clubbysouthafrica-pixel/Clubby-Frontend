@@ -41,6 +41,7 @@ interface EmailSettingsFormProps {
     support_email: string;
     use_submission_email_template: boolean;
     use_success_email_template: boolean;
+    notify_on_member_registration: boolean;
   }) => void;
   isPending: boolean;
   clubAccountId: string;
@@ -110,6 +111,7 @@ export function EmailSettingsForm({
         support_email: supportEmail,
         use_submission_email_template: useSubmissionEmailTemplate,
         use_success_email_template: useSuccessEmailTemplate,
+        notify_on_member_registration: notifyOnMemberRegistration,
       })
     }
   }
