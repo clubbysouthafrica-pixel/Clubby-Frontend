@@ -1,5 +1,6 @@
 import { Fragment, useContext, useEffect, useMemo, useState } from "react";
 import {
+  AlertCircle,
   CheckCircle2,
   ChevronDown,
   Copy,
@@ -46,6 +47,7 @@ import {
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { formatAmount } from "@/data/currencies";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   confirmEventPayment,
@@ -538,6 +540,7 @@ function formatPricingOptionLabel(
 
 export default function EventRegistrationsPage() {
   const { club } = useContext(ClubContext) as ClubContextType;
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedEvent, setSelectedEvent] = useState<string>("");
   const [selectedPaymentStatus, setSelectedPaymentStatus] =
@@ -1012,6 +1015,32 @@ export default function EventRegistrationsPage() {
           </p>
         </div>
       </div>
+
+      {!club?.enable_events && (
+        <Card className="mb-6 overflow-hidden border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 p-0 shadow-sm">
+          <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-300 bg-amber-100">
+                <AlertCircle className="h-4 w-4 text-amber-700" />
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-sm font-semibold text-amber-950 sm:text-base">
+                  Events are currently disabled
+                </p>
+                <p className="max-w-2xl text-sm leading-snug text-amber-800">
+                  Go to the events page to enable events before managing registrations.
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={() => navigate("/events")}
+              className="w-full bg-amber-700 text-white hover:bg-amber-800 sm:w-auto"
+            >
+              Go to Events
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="border-sky-200 bg-gradient-to-r from-sky-50 via-background to-cyan-50 shadow-sm">
         <CardContent className="flex flex-col gap-4 p-5">

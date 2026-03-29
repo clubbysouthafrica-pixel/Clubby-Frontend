@@ -1,9 +1,5 @@
 import * as React from "react";
-import {
-  DndContext,
-  DragEndEvent,
-  closestCenter,
-} from "@dnd-kit/core";
+import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
 import {
   SortableContext,
   arrayMove,
@@ -54,7 +50,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createOrUpdateEvents, getEvents } from "@/services/admin-features/events";
+import {
+  createOrUpdateEvents,
+  getEvents,
+} from "@/services/admin-features/events";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { formatAmount } from "@/data/currencies";
@@ -154,7 +153,11 @@ const FIELD_TYPE_OPTIONS: {
     inputType: "CHECKBOX",
   },
 ];
-const PRICING_TYPE_OPTIONS: { value: EventPricingType; label: string; description: string }[] = [
+const PRICING_TYPE_OPTIONS: {
+  value: EventPricingType;
+  label: string;
+  description: string;
+}[] = [
   {
     value: "FREE",
     label: "Free",
@@ -168,12 +171,14 @@ const PRICING_TYPE_OPTIONS: { value: EventPricingType; label: string; descriptio
   {
     value: "MULTIPLE",
     label: "Selectable pricing",
-    description: "Offer several price options and let the registrant choose one, for example Junior or Senior.",
+    description:
+      "Offer several price options and let the registrant choose one, for example Junior or Senior.",
   },
   {
     value: "ADDITIONAL",
     label: "Add-on pricing",
-    description: "Offer extra price options that can be combined, for example U12 plus U15.",
+    description:
+      "Offer extra price options that can be combined, for example U12 plus U15.",
   },
 ];
 const EVENT_COLORS = ["bg-sky-100 text-sky-800 border-sky-200"];
@@ -299,16 +304,23 @@ function getDefaultPricingDraft(): EventPricingDraft {
 }
 
 function getFieldConfig(variant: EventFieldVariant) {
-  return FIELD_TYPE_OPTIONS.find((option) => option.value === variant) ?? FIELD_TYPE_OPTIONS[0];
+  return (
+    FIELD_TYPE_OPTIONS.find((option) => option.value === variant) ??
+    FIELD_TYPE_OPTIONS[0]
+  );
 }
 
 function getFieldVariant(inputType: EventFormInputType): EventFieldVariant {
-  const match = FIELD_TYPE_OPTIONS.find((option) => option.inputType === inputType);
+  const match = FIELD_TYPE_OPTIONS.find(
+    (option) => option.inputType === inputType,
+  );
 
   return match?.value ?? "TEXT";
 }
 
-function sanitizeField(rawField: Partial<EventFormField>): EventFormField | null {
+function sanitizeField(
+  rawField: Partial<EventFormField>,
+): EventFormField | null {
   if (!rawField.label || typeof rawField.label !== "string") {
     return null;
   }
@@ -335,12 +347,16 @@ function sanitizeField(rawField: Partial<EventFormField>): EventFormField | null
     placeholder: rawField.placeholder?.trim() || "",
     options:
       nextInputType === "DROPDOWN"
-        ? (rawField.options || []).map((option) => option.trim()).filter(Boolean)
+        ? (rawField.options || [])
+            .map((option) => option.trim())
+            .filter(Boolean)
         : [],
   };
 }
 
-function sanitizePricing(rawPricing: Partial<EventPricing> | undefined): EventPricing {
+function sanitizePricing(
+  rawPricing: Partial<EventPricing> | undefined,
+): EventPricing {
   const nextType: EventPricingType =
     rawPricing?.type === "SINGLE" ||
     rawPricing?.type === "MULTIPLE" ||
@@ -348,7 +364,9 @@ function sanitizePricing(rawPricing: Partial<EventPricing> | undefined): EventPr
       ? rawPricing.type
       : "FREE";
 
-  const rawOptions = Array.isArray(rawPricing?.options) ? rawPricing?.options : [];
+  const rawOptions = Array.isArray(rawPricing?.options)
+    ? rawPricing?.options
+    : [];
 
   return {
     type: nextType,
@@ -390,14 +408,24 @@ function getPricingSummary(pricing: EventPricing) {
     case "FREE":
       return "Free";
     case "SINGLE":
-      return pricing.options[0] ? `${formatCurrency(pricing.options[0].amount)} per entry` : "Fixed price";
+      return pricing.options[0]
+        ? `${formatCurrency(pricing.options[0].amount)} per entry`
+        : "Fixed price";
     case "MULTIPLE":
       return pricing.options.length > 0
-        ? pricing.options.map((option) => `${option.label}: ${formatCurrency(option.amount)}`).join(" | ")
+        ? pricing.options
+            .map(
+              (option) => `${option.label}: ${formatCurrency(option.amount)}`,
+            )
+            .join(" | ")
         : "Selectable pricing";
     case "ADDITIONAL":
       return pricing.options.length > 0
-        ? pricing.options.map((option) => `${option.label}: ${formatCurrency(option.amount)}`).join(" + ")
+        ? pricing.options
+            .map(
+              (option) => `${option.label}: ${formatCurrency(option.amount)}`,
+            )
+            .join(" + ")
         : "Add-on pricing";
     default:
       return "Free";
@@ -432,7 +460,10 @@ function formatPriceBadgeAmount(value: number | string) {
   return formatCurrency(amount);
 }
 
-function getPreviewFieldIds(formFields: EventFormField[], pricing: EventPricing) {
+function getPreviewFieldIds(
+  formFields: EventFormField[],
+  pricing: EventPricing,
+) {
   const ids = formFields.map((field) => field.id);
 
   if (pricing.type === "MULTIPLE" || pricing.type === "ADDITIONAL") {
@@ -453,14 +484,21 @@ function sanitizePreviewFieldOrder(
     : [];
 
   const orderedIds = requestedOrder.filter(
-    (id, index) => availableIds.includes(id) && requestedOrder.indexOf(id) === index,
+    (id, index) =>
+      availableIds.includes(id) && requestedOrder.indexOf(id) === index,
   );
 
-  return [...orderedIds, ...availableIds.filter((id) => !orderedIds.includes(id))];
+  return [
+    ...orderedIds,
+    ...availableIds.filter((id) => !orderedIds.includes(id)),
+  ];
 }
 
 function areStringArraysEqual(left: string[], right: string[]) {
-  return left.length === right.length && left.every((value, index) => value === right[index]);
+  return (
+    left.length === right.length &&
+    left.every((value, index) => value === right[index])
+  );
 }
 
 function buildEventRequestPayload(params: {
@@ -491,8 +529,21 @@ function buildEventRequestPayload(params: {
   };
 }
 
-function SortablePreviewField({ id, children }: { id: string; children: React.ReactNode }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+function SortablePreviewField({
+  id,
+  children,
+}: {
+  id: string;
+  children: React.ReactNode;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -526,7 +577,9 @@ function sanitizeLoadedEvents(events: EventItem[]) {
     .filter((event) => !REMOVED_MOCK_EVENT_IDS.has(event.id))
     .map((event) => {
       const formFields = Array.isArray(event.formFields)
-        ? event.formFields.map(sanitizeField).filter(Boolean) as EventFormField[]
+        ? (event.formFields
+            .map(sanitizeField)
+            .filter(Boolean) as EventFormField[])
         : [];
       const pricing = sanitizePricing(event.pricing);
       const startDate = sanitizeRegistrationDate(event.startDate, todayKey);
@@ -534,18 +587,34 @@ function sanitizeLoadedEvents(events: EventItem[]) {
 
       return {
         ...event,
-        id: sanitizeEventIdentifier(event.id, `${event.title ?? "event"}-${Date.now()}`),
-        eventId: sanitizeEventIdentifier((event as { event_id?: unknown }).event_id, event.id),
+        id: sanitizeEventIdentifier(
+          event.id,
+          `${event.title ?? "event"}-${Date.now()}`,
+        ),
+        eventId: sanitizeEventIdentifier(
+          (event as { event_id?: unknown }).event_id,
+          event.id,
+        ),
         title: sanitizeEventText(event.title),
         description: sanitizeEventText(event.description),
         startDate,
         endDate,
-        registrationOpenDate: sanitizeRegistrationDate(event.registrationOpenDate, startDate),
-        registrationCloseDate: sanitizeRegistrationDate(event.registrationCloseDate, endDate),
+        registrationOpenDate: sanitizeRegistrationDate(
+          event.registrationOpenDate,
+          startDate,
+        ),
+        registrationCloseDate: sanitizeRegistrationDate(
+          event.registrationCloseDate,
+          endDate,
+        ),
         colorClass: EVENT_COLORS[0],
         formFields,
         pricing,
-        previewFieldOrder: sanitizePreviewFieldOrder(event.previewFieldOrder, formFields, pricing),
+        previewFieldOrder: sanitizePreviewFieldOrder(
+          event.previewFieldOrder,
+          formFields,
+          pricing,
+        ),
       };
     });
 }
@@ -557,13 +626,27 @@ export default function EventsPage() {
   const [selectedDate, setSelectedDate] = React.useState(todayKey);
   const [isEditorOpen, setIsEditorOpen] = React.useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
-  const [editingEventId, setEditingEventId] = React.useState<string | null>(null);
-  const [editingFieldId, setEditingFieldId] = React.useState<string | null>(null);
-  const [previewEventId, setPreviewEventId] = React.useState<string | null>(null);
-  const [previewValues, setPreviewValues] = React.useState<Record<string, string | boolean>>({});
-  const [previewPricingSelection, setPreviewPricingSelection] = React.useState<string[]>([]);
-  const [previewFieldOrder, setPreviewFieldOrder] = React.useState<string[]>([]);
-  const [previewFieldErrors, setPreviewFieldErrors] = React.useState<Record<string, string>>({});
+  const [editingEventId, setEditingEventId] = React.useState<string | null>(
+    null,
+  );
+  const [editingFieldId, setEditingFieldId] = React.useState<string | null>(
+    null,
+  );
+  const [previewEventId, setPreviewEventId] = React.useState<string | null>(
+    null,
+  );
+  const [previewValues, setPreviewValues] = React.useState<
+    Record<string, string | boolean>
+  >({});
+  const [previewPricingSelection, setPreviewPricingSelection] = React.useState<
+    string[]
+  >([]);
+  const [previewFieldOrder, setPreviewFieldOrder] = React.useState<string[]>(
+    [],
+  );
+  const [previewFieldErrors, setPreviewFieldErrors] = React.useState<
+    Record<string, string>
+  >({});
   const [previewError, setPreviewError] = React.useState("");
   const [formError, setFormError] = React.useState("");
   const [formState, setFormState] = React.useState<EventFormState>({
@@ -574,10 +657,17 @@ export default function EventsPage() {
     registrationOpenDate: todayKey,
     registrationCloseDate: todayKey,
   });
-  const [eventFormFields, setEventFormFields] = React.useState<EventFormField[]>([]);
-  const [fieldDraft, setFieldDraft] = React.useState<EventFieldDraft>(getDefaultFieldDraft());
-  const [pricing, setPricing] = React.useState<EventPricing>(getDefaultPricing());
-  const [pricingDraft, setPricingDraft] = React.useState<EventPricingDraft>(getDefaultPricingDraft());
+  const [eventFormFields, setEventFormFields] = React.useState<
+    EventFormField[]
+  >([]);
+  const [fieldDraft, setFieldDraft] = React.useState<EventFieldDraft>(
+    getDefaultFieldDraft(),
+  );
+  const [pricing, setPricing] =
+    React.useState<EventPricing>(getDefaultPricing());
+  const [pricingDraft, setPricingDraft] = React.useState<EventPricingDraft>(
+    getDefaultPricingDraft(),
+  );
   const [isTogglingEvents, setIsTogglingEvents] = React.useState(false);
   const [isSavingPreviewOrder, setIsSavingPreviewOrder] = React.useState(false);
   const [isSavingEvent, setIsSavingEvent] = React.useState(false);
@@ -597,7 +687,11 @@ export default function EventsPage() {
         });
 
         if (response?.message) {
-          toast.success(enabled ? "Events enabled successfully" : "Events disabled successfully");
+          toast.success(
+            enabled
+              ? "Events enabled successfully"
+              : "Events disabled successfully",
+          );
           if (club) {
             setClub({ ...club, enable_events: enabled });
           }
@@ -605,7 +699,9 @@ export default function EventsPage() {
           toast.error("Failed to update events settings");
         }
       } catch (error) {
-        toast.error(getApiErrorMessage(error, "Error updating events settings"));
+        toast.error(
+          getApiErrorMessage(error, "Error updating events settings"),
+        );
       } finally {
         setIsTogglingEvents(false);
       }
@@ -646,7 +742,10 @@ export default function EventsPage() {
     };
   }, [club?.club_account_id]);
 
-  const calendarDays = React.useMemo(() => getCalendarGrid(monthDate), [monthDate]);
+  const calendarDays = React.useMemo(
+    () => getCalendarGrid(monthDate),
+    [monthDate],
+  );
 
   const sortedEvents = React.useMemo(() => {
     return [...events].sort((left, right) => {
@@ -667,11 +766,14 @@ export default function EventsPage() {
   }, [selectedDate, sortedEvents]);
 
   const upcomingEvents = React.useMemo(() => {
-    return sortedEvents.filter((event) => event.endDate >= todayKey).slice(0, 5);
+    return sortedEvents
+      .filter((event) => event.endDate >= todayKey)
+      .slice(0, 5);
   }, [sortedEvents]);
 
   const multiDayCount = React.useMemo(() => {
-    return sortedEvents.filter((event) => event.startDate !== event.endDate).length;
+    return sortedEvents.filter((event) => event.startDate !== event.endDate)
+      .length;
   }, [sortedEvents]);
 
   const editingEvent = React.useMemo(
@@ -736,7 +838,10 @@ export default function EventsPage() {
     setPreviewEventId(event.id);
     setPreviewValues(
       Object.fromEntries(
-        event.formFields.map((field) => [field.id, field.inputType === "CHECKBOX" ? false : ""]),
+        event.formFields.map((field) => [
+          field.id,
+          field.inputType === "CHECKBOX" ? false : "",
+        ]),
       ),
     );
     setPreviewFieldOrder(event.previewFieldOrder);
@@ -800,7 +905,9 @@ export default function EventsPage() {
         return [...current, nextField];
       }
 
-      return current.map((field) => (field.id === editingFieldId ? nextField : field));
+      return current.map((field) =>
+        field.id === editingFieldId ? nextField : field,
+      );
     });
 
     setEditingFieldId(null);
@@ -825,7 +932,9 @@ export default function EventsPage() {
   };
 
   const handleRemoveFormField = (fieldId: string) => {
-    setEventFormFields((current) => current.filter((field) => field.id !== fieldId));
+    setEventFormFields((current) =>
+      current.filter((field) => field.id !== fieldId),
+    );
   };
 
   const handleAddPricingOption = () => {
@@ -842,7 +951,11 @@ export default function EventsPage() {
       return;
     }
 
-    if (!nextAmount || !Number.isFinite(nextAmountValue) || nextAmountValue <= 0) {
+    if (
+      !nextAmount ||
+      !Number.isFinite(nextAmountValue) ||
+      nextAmountValue <= 0
+    ) {
       setFormError("Each price option needs a valid amount greater than zero.");
       return;
     }
@@ -891,7 +1004,9 @@ export default function EventsPage() {
       editingEvent && editingEvent.startDate === formState.startDate,
     );
     const isUpdatingExistingPastEvent = Boolean(
-      editingEvent && isKeepingExistingStartDate && editingEvent.startDate < todayKey,
+      editingEvent &&
+      isKeepingExistingStartDate &&
+      editingEvent.startDate < todayKey,
     );
     const showSaveError = (message: string) => {
       setFormError(message);
@@ -931,17 +1046,26 @@ export default function EventsPage() {
     }
 
     if (formState.registrationCloseDate < formState.registrationOpenDate) {
-      showSaveError("Registration close date cannot be before the registration open date.");
+      showSaveError(
+        "Registration close date cannot be before the registration open date.",
+      );
       return;
     }
 
-    if (formState.registrationCloseDate > formState.startDate && !isUpdatingExistingPastEvent) {
-      showSaveError("Registration must close on or before the event start date.");
+    if (
+      formState.registrationCloseDate > formState.startDate &&
+      !isUpdatingExistingPastEvent
+    ) {
+      showSaveError(
+        "Registration must close on or before the event start date.",
+      );
       return;
     }
 
     if (pricing.type !== "FREE" && pricing.options.length === 0) {
-      showSaveError("Add at least one pricing option, or set the event pricing to Free.");
+      showSaveError(
+        "Add at least one pricing option, or set the event pricing to Free.",
+      );
       return;
     }
 
@@ -969,7 +1093,10 @@ export default function EventsPage() {
       setIsSavingEvent(true);
       await createOrUpdateEvents(eventRequestPayload);
     } catch (error) {
-      const message = getApiErrorMessage(error, "Unable to save the event right now.");
+      const message = getApiErrorMessage(
+        error,
+        "Unable to save the event right now.",
+      );
       setFormError(message);
       toast.error(message);
       return;
@@ -977,10 +1104,16 @@ export default function EventsPage() {
       setIsSavingEvent(false);
     }
 
-    toast.success(editingEventId ? "Event updated successfully" : "Event saved successfully");
+    toast.success(
+      editingEventId
+        ? "Event updated successfully"
+        : "Event saved successfully",
+    );
 
     const nextEvent: EventItem = {
-      id: editingEventId ?? `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`,
+      id:
+        editingEventId ??
+        `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`,
       eventId: editingEvent?.eventId,
       title,
       description,
@@ -999,7 +1132,9 @@ export default function EventsPage() {
         return [...current, nextEvent];
       }
 
-      return current.map((event) => (event.id === editingEventId ? nextEvent : event));
+      return current.map((event) =>
+        event.id === editingEventId ? nextEvent : event,
+      );
     });
     setSelectedDate(formState.startDate);
     setMonthDate(getMonthStart(parseDateKey(formState.startDate)));
@@ -1024,7 +1159,10 @@ export default function EventsPage() {
       previewPricingSelection.includes(option.id),
     );
 
-    return selectedOptions.reduce((sum, option) => sum + getPricingAmount(option), 0);
+    return selectedOptions.reduce(
+      (sum, option) => sum + getPricingAmount(option),
+      0,
+    );
   }, [previewEvent, previewPricingSelection]);
 
   const previewPricingFieldLabel = React.useMemo(() => {
@@ -1076,7 +1214,9 @@ export default function EventsPage() {
       return;
     }
 
-    const nextFieldErrors = previewEvent.formFields.reduce<Record<string, string>>((errors, field) => {
+    const nextFieldErrors = previewEvent.formFields.reduce<
+      Record<string, string>
+    >((errors, field) => {
       if (!field.required) {
         return errors;
       }
@@ -1088,7 +1228,8 @@ export default function EventsPage() {
           : typeof value !== "string" || value.trim().length === 0;
 
       if (isMissing) {
-        errors[field.id] = `Please complete "${field.label}" before submitting the preview form.`;
+        errors[field.id] =
+          `Please complete "${field.label}" before submitting the preview form.`;
       }
 
       return errors;
@@ -1097,10 +1238,13 @@ export default function EventsPage() {
     setPreviewFieldErrors(nextFieldErrors);
 
     if (
-      (previewEvent.pricing.type === "MULTIPLE" || previewEvent.pricing.type === "ADDITIONAL") &&
+      (previewEvent.pricing.type === "MULTIPLE" ||
+        previewEvent.pricing.type === "ADDITIONAL") &&
       previewPricingSelection.length === 0
     ) {
-      setPreviewError(`Please select ${previewPricingFieldLabel.toLowerCase()} before submitting the preview form.`);
+      setPreviewError(
+        `Please select ${previewPricingFieldLabel.toLowerCase()} before submitting the preview form.`,
+      );
       return;
     }
 
@@ -1110,7 +1254,12 @@ export default function EventsPage() {
     }
 
     setPreviewError("");
-  }, [previewEvent, previewPricingFieldLabel, previewPricingSelection.length, previewValues]);
+  }, [
+    previewEvent,
+    previewPricingFieldLabel,
+    previewPricingSelection.length,
+    previewValues,
+  ]);
 
   const hasPreviewFormFields = React.useMemo(() => {
     if (!previewEvent) {
@@ -1129,7 +1278,11 @@ export default function EventsPage() {
       return [];
     }
 
-    return sanitizePreviewFieldOrder(previewEvent.previewFieldOrder, previewEvent.formFields, previewEvent.pricing);
+    return sanitizePreviewFieldOrder(
+      previewEvent.previewFieldOrder,
+      previewEvent.formFields,
+      previewEvent.pricing,
+    );
   }, [previewEvent]);
 
   const previewFieldItems = React.useMemo<PreviewFieldItem[]>(() => {
@@ -1143,7 +1296,10 @@ export default function EventsPage() {
       field,
     }));
 
-    if (previewEvent.pricing.type === "MULTIPLE" || previewEvent.pricing.type === "ADDITIONAL") {
+    if (
+      previewEvent.pricing.type === "MULTIPLE" ||
+      previewEvent.pricing.type === "ADDITIONAL"
+    ) {
       items.push({
         id: PRICING_PREVIEW_FIELD_ID,
         kind: "pricing",
@@ -1152,7 +1308,11 @@ export default function EventsPage() {
     }
 
     const itemMap = new Map(items.map((item) => [item.id, item]));
-    const orderedIds = sanitizePreviewFieldOrder(previewFieldOrder, previewEvent.formFields, previewEvent.pricing);
+    const orderedIds = sanitizePreviewFieldOrder(
+      previewFieldOrder,
+      previewEvent.formFields,
+      previewEvent.pricing,
+    );
 
     return orderedIds
       .map((id) => itemMap.get(id))
@@ -1187,7 +1347,11 @@ export default function EventsPage() {
       return;
     }
 
-    const nextOrder = sanitizePreviewFieldOrder(previewFieldOrder, previewEvent.formFields, previewEvent.pricing);
+    const nextOrder = sanitizePreviewFieldOrder(
+      previewFieldOrder,
+      previewEvent.formFields,
+      previewEvent.pricing,
+    );
 
     const eventRequestPayload = buildEventRequestPayload({
       clubAccountId: club.club_account_id,
@@ -1215,7 +1379,9 @@ export default function EventsPage() {
       );
       toast.success("Preview field order saved successfully");
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Unable to save the field order right now."));
+      toast.error(
+        getApiErrorMessage(error, "Unable to save the field order right now."),
+      );
     } finally {
       setIsSavingPreviewOrder(false);
     }
@@ -1231,14 +1397,16 @@ export default function EventsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 self-start">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setShowEventsSettings(true)}
-            title="Events settings"
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
+          {club?.enable_events && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShowEventsSettings(true)}
+              title="Events settings"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          )}
           <Button className="gap-2" onClick={() => openCreateDialog()}>
             <Plus className="h-4 w-4" />
             Add Event
@@ -1247,21 +1415,31 @@ export default function EventsPage() {
       </div>
 
       {!club?.enable_events && (
-        <Card className="border-orange-200 bg-orange-50">
-          <CardContent className="flex items-center justify-between gap-4 py-3">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 text-orange-600" />
-              <div>
-                <p className="font-semibold text-orange-900">Events are currently disabled</p>
-                <p className="text-sm text-orange-700">
-                  Enable events to allow your club to manage and publish event registrations.
+        <Card className="mb-6 overflow-hidden border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 shadow-sm p-0">
+          <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-300 bg-amber-100">
+                <AlertCircle className="h-4 w-4 text-amber-700" />
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-sm font-semibold text-amber-950 sm:text-base">
+                  Events is currently disabled
+                </p>
+                <p className="max-w-2xl text-sm leading-snug text-amber-800">
+                  Enable your events to make them visible to members and start
+                  receiving registrations.
+                </p>
+                <p className="pt-1 text-xs leading-snug text-amber-700/90">
+                  Enabling events and accepting paid registrations incurs a
+                  2% Clubby fee on each paid registration. Free registrations
+                  do not incur any Clubby fees.
                 </p>
               </div>
             </div>
             <Button
               onClick={() => handleToggleEvents(true)}
               disabled={isTogglingEvents}
-              className="bg-orange-600 text-white hover:bg-orange-700"
+              className="w-full bg-amber-700 text-white hover:bg-amber-800 sm:w-auto"
             >
               {isTogglingEvents ? (
                 <>
@@ -1302,7 +1480,9 @@ export default function EventsPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Selected day</CardDescription>
-            <CardTitle className="text-lg">{formatLongDate(selectedDate)}</CardTitle>
+            <CardTitle className="text-lg">
+              {formatLongDate(selectedDate)}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
@@ -1340,7 +1520,11 @@ export default function EventsPage() {
                         size="icon"
                         onClick={() =>
                           setMonthDate(
-                            new Date(monthDate.getFullYear(), monthDate.getMonth() - 1, 1),
+                            new Date(
+                              monthDate.getFullYear(),
+                              monthDate.getMonth() - 1,
+                              1,
+                            ),
                           )
                         }
                       >
@@ -1360,7 +1544,11 @@ export default function EventsPage() {
                         size="icon"
                         onClick={() =>
                           setMonthDate(
-                            new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 1),
+                            new Date(
+                              monthDate.getFullYear(),
+                              monthDate.getMonth() + 1,
+                              1,
+                            ),
                           )
                         }
                       >
@@ -1382,11 +1570,14 @@ export default function EventsPage() {
                     <div className="grid grid-cols-7 gap-2">
                       {calendarDays.map((date) => {
                         const dayKey = formatDateKey(date);
-                        const isCurrentMonth = date.getMonth() === monthDate.getMonth();
+                        const isCurrentMonth =
+                          date.getMonth() === monthDate.getMonth();
                         const isSelected = selectedDate === dayKey;
                         const isToday = dayKey === todayKey;
                         const isPastDay = dayKey < todayKey;
-                        const dayEvents = sortedEvents.filter((event) => isEventOnDay(event, dayKey));
+                        const dayEvents = sortedEvents.filter((event) =>
+                          isEventOnDay(event, dayKey),
+                        );
 
                         return (
                           <button
@@ -1397,18 +1588,27 @@ export default function EventsPage() {
                             onDoubleClick={() => openCreateDialog(dayKey)}
                             className={cn(
                               "relative min-h-28 rounded-2xl border p-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400",
-                              isCurrentMonth ? "bg-white" : "bg-muted/40 text-muted-foreground",
-                              !isPastDay && "border-slate-200 bg-linear-to-br from-slate-50 via-white to-white shadow-sm hover:border-slate-300 hover:shadow-md",
-                              isSelected && "border-orange-400 bg-orange-50 shadow-sm",
-                              isPastDay && "cursor-not-allowed border-slate-200 bg-slate-100/80 opacity-45",
+                              isCurrentMonth
+                                ? "bg-white"
+                                : "bg-muted/40 text-muted-foreground",
+                              !isPastDay &&
+                                "border-slate-200 bg-linear-to-br from-slate-50 via-white to-white shadow-sm hover:border-slate-300 hover:shadow-md",
+                              isSelected &&
+                                "border-orange-400 bg-orange-50 shadow-sm",
+                              isPastDay &&
+                                "cursor-not-allowed border-slate-200 bg-slate-100/80 opacity-45",
                             )}
                           >
                             <span
                               className={cn(
                                 "absolute left-2 top-2 flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold",
                                 isToday && "bg-orange-600 text-white",
-                                !isToday && !isPastDay && "bg-slate-100 text-slate-700",
-                                !isToday && isSelected && "bg-orange-100 text-orange-700",
+                                !isToday &&
+                                  !isPastDay &&
+                                  "bg-slate-100 text-slate-700",
+                                !isToday &&
+                                  isSelected &&
+                                  "bg-orange-100 text-orange-700",
                               )}
                             >
                               {date.getDate()}
@@ -1473,7 +1673,8 @@ export default function EventsPage() {
                       <div>
                         <CardTitle>Form Preview</CardTitle>
                         <CardDescription>
-                          Interactive preview of how the registration form for {previewEvent.title} will behave.
+                          Interactive preview of how the registration form for{" "}
+                          {previewEvent.title} will behave.
                         </CardDescription>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -1483,13 +1684,21 @@ export default function EventsPage() {
                             onClick={handleSavePreviewFieldOrder}
                             disabled={isSavingPreviewOrder}
                           >
-                            {isSavingPreviewOrder ? "Saving..." : "Save Changes"}
+                            {isSavingPreviewOrder
+                              ? "Saving..."
+                              : "Save Changes"}
                           </Button>
                         )}
-                        <Button variant="outline" onClick={() => resetEditorState(false)}>
+                        <Button
+                          variant="outline"
+                          onClick={() => resetEditorState(false)}
+                        >
                           Back To Calendar
                         </Button>
-                        <Button variant="outline" onClick={() => openEditDialog(previewEvent)}>
+                        <Button
+                          variant="outline"
+                          onClick={() => openEditDialog(previewEvent)}
+                        >
                           Edit Event
                         </Button>
                       </div>
@@ -1498,90 +1707,140 @@ export default function EventsPage() {
                   <CardContent className="space-y-6 p-4 sm:p-6">
                     <div className="space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-xl font-semibold">{previewEvent.title}</h3>
-                        <Badge className="bg-green-100 text-green-800 border-green-200 text-sm" variant="outline">{previewPriceBadgeLabel}</Badge>
+                        <h3 className="text-xl font-semibold">
+                          {previewEvent.title}
+                        </h3>
+                        <Badge
+                          className="bg-green-100 text-green-800 border-green-200 text-sm"
+                          variant="outline"
+                        >
+                          {previewPriceBadgeLabel}
+                        </Badge>
                       </div>
-                      <p className="mt-2 text-sm text-muted-foreground">{getRangeLabel(previewEvent)}</p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {getRangeLabel(previewEvent)}
+                      </p>
                       {previewEvent.description && (
-                        <p className="mt-2 text-sm text-muted-foreground">{previewEvent.description}</p>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          {previewEvent.description}
+                        </p>
                       )}
                     </div>
 
                     <div className="space-y-4 pt-2">
                       {!hasPreviewFormFields ? (
                         <div className="rounded-lg bg-muted/20 p-4 text-sm text-muted-foreground">
-                          This event does not currently have any registration form fields.
+                          This event does not currently have any registration
+                          form fields.
                         </div>
                       ) : (
-                        <DndContext collisionDetection={closestCenter} onDragEnd={handlePreviewDragEnd}>
+                        <DndContext
+                          collisionDetection={closestCenter}
+                          onDragEnd={handlePreviewDragEnd}
+                        >
                           <SortableContext
                             items={previewFieldItems.map((item) => item.id)}
                             strategy={verticalListSortingStrategy}
                           >
                             <div className="space-y-4">
                               {previewFieldItems.map((item) => (
-                                <SortablePreviewField key={item.id} id={item.id}>
+                                <SortablePreviewField
+                                  key={item.id}
+                                  id={item.id}
+                                >
                                   {item.kind === "form" ? (
                                     <div className="grid gap-2 rounded-lg bg-muted/10 p-4">
                                       {item.field.inputType !== "CHECKBOX" && (
-                                        <Label className="text-sm font-medium">{item.field.label}</Label>
+                                        <Label className="text-sm font-medium">
+                                          {item.field.label}
+                                        </Label>
                                       )}
 
                                       {item.field.inputType === "TEXT" && (
                                         <Input
-                                          value={String(previewValues[item.field.id] ?? "")}
+                                          value={String(
+                                            previewValues[item.field.id] ?? "",
+                                          )}
                                           onChange={(event) => {
-                                            const nextValue = event.target.value;
+                                            const nextValue =
+                                              event.target.value;
                                             setPreviewValues((current) => ({
                                               ...current,
                                               [item.field.id]: nextValue,
                                             }));
                                             if (nextValue.trim()) {
-                                              setPreviewFieldErrors((current) => {
-                                                if (!current[item.field.id]) {
-                                                  return current;
-                                                }
+                                              setPreviewFieldErrors(
+                                                (current) => {
+                                                  if (!current[item.field.id]) {
+                                                    return current;
+                                                  }
 
-                                                const nextErrors = { ...current };
-                                                delete nextErrors[item.field.id];
-                                                return nextErrors;
-                                              });
+                                                  const nextErrors = {
+                                                    ...current,
+                                                  };
+                                                  delete nextErrors[
+                                                    item.field.id
+                                                  ];
+                                                  return nextErrors;
+                                                },
+                                              );
                                             }
                                           }}
-                                          placeholder={item.field.placeholder || `Enter ${item.field.label.toLowerCase()}`}
+                                          placeholder={
+                                            item.field.placeholder ||
+                                            `Enter ${item.field.label.toLowerCase()}`
+                                          }
                                         />
                                       )}
 
                                       {item.field.inputType === "DROPDOWN" && (
                                         <Select
-                                          value={String(previewValues[item.field.id] ?? "")}
+                                          value={String(
+                                            previewValues[item.field.id] ?? "",
+                                          )}
                                           onValueChange={(value) => {
                                             setPreviewValues((current) => ({
                                               ...current,
                                               [item.field.id]: value,
                                             }));
                                             if (value.trim()) {
-                                              setPreviewFieldErrors((current) => {
-                                                if (!current[item.field.id]) {
-                                                  return current;
-                                                }
+                                              setPreviewFieldErrors(
+                                                (current) => {
+                                                  if (!current[item.field.id]) {
+                                                    return current;
+                                                  }
 
-                                                const nextErrors = { ...current };
-                                                delete nextErrors[item.field.id];
-                                                return nextErrors;
-                                              });
+                                                  const nextErrors = {
+                                                    ...current,
+                                                  };
+                                                  delete nextErrors[
+                                                    item.field.id
+                                                  ];
+                                                  return nextErrors;
+                                                },
+                                              );
                                             }
                                           }}
                                         >
                                           <SelectTrigger className="w-full">
-                                            <SelectValue placeholder={item.field.placeholder || `Select ${item.field.label.toLowerCase()}`} />
+                                            <SelectValue
+                                              placeholder={
+                                                item.field.placeholder ||
+                                                `Select ${item.field.label.toLowerCase()}`
+                                              }
+                                            />
                                           </SelectTrigger>
                                           <SelectContent>
-                                            {item.field.options.map((option) => (
-                                              <SelectItem key={option} value={option}>
-                                                {option}
-                                              </SelectItem>
-                                            ))}
+                                            {item.field.options.map(
+                                              (option) => (
+                                                <SelectItem
+                                                  key={option}
+                                                  value={option}
+                                                >
+                                                  {option}
+                                                </SelectItem>
+                                              ),
+                                            )}
                                           </SelectContent>
                                         </Select>
                                       )}
@@ -1590,27 +1849,41 @@ export default function EventsPage() {
                                         <div className="flex items-center gap-3 rounded-md bg-background px-3 py-3">
                                           <Checkbox
                                             id={`preview-${item.field.id}`}
-                                            checked={previewValues[item.field.id] === true}
+                                            checked={
+                                              previewValues[item.field.id] ===
+                                              true
+                                            }
                                             onCheckedChange={(checked) => {
-                                              const isChecked = checked === true;
+                                              const isChecked =
+                                                checked === true;
                                               setPreviewValues((current) => ({
                                                 ...current,
                                                 [item.field.id]: isChecked,
                                               }));
                                               if (isChecked) {
-                                                setPreviewFieldErrors((current) => {
-                                                  if (!current[item.field.id]) {
-                                                    return current;
-                                                  }
+                                                setPreviewFieldErrors(
+                                                  (current) => {
+                                                    if (
+                                                      !current[item.field.id]
+                                                    ) {
+                                                      return current;
+                                                    }
 
-                                                  const nextErrors = { ...current };
-                                                  delete nextErrors[item.field.id];
-                                                  return nextErrors;
-                                                });
+                                                    const nextErrors = {
+                                                      ...current,
+                                                    };
+                                                    delete nextErrors[
+                                                      item.field.id
+                                                    ];
+                                                    return nextErrors;
+                                                  },
+                                                );
                                               }
                                             }}
                                           />
-                                          <Label htmlFor={`preview-${item.field.id}`}>
+                                          <Label
+                                            htmlFor={`preview-${item.field.id}`}
+                                          >
                                             {item.field.placeholder}
                                           </Label>
                                         </div>
@@ -1624,7 +1897,9 @@ export default function EventsPage() {
                                     </div>
                                   ) : item.pricingType === "MULTIPLE" ? (
                                     <div className="grid gap-2 rounded-lg bg-muted/10 p-4">
-                                      <Label className="text-sm font-medium">{previewPricingFieldLabel}</Label>
+                                      <Label className="text-sm font-medium">
+                                        {previewPricingFieldLabel}
+                                      </Label>
                                       <Select
                                         value={previewPricingSelection[0] ?? ""}
                                         onValueChange={(value) => {
@@ -1633,63 +1908,109 @@ export default function EventsPage() {
                                         }}
                                       >
                                         <SelectTrigger className="w-full">
-                                          <SelectValue placeholder={`Select ${previewPricingFieldLabel.toLowerCase()}`} />
+                                          <SelectValue
+                                            placeholder={`Select ${previewPricingFieldLabel.toLowerCase()}`}
+                                          />
                                         </SelectTrigger>
                                         <SelectContent>
-                                          {previewEvent.pricing.options.map((option) => (
-                                            <SelectItem key={option.id} value={option.id}>
-                                              {option.label} ({formatCurrency(option.amount)})
-                                            </SelectItem>
-                                          ))}
+                                          {previewEvent.pricing.options.map(
+                                            (option) => (
+                                              <SelectItem
+                                                key={option.id}
+                                                value={option.id}
+                                              >
+                                                {option.label} (
+                                                {formatCurrency(option.amount)})
+                                              </SelectItem>
+                                            ),
+                                          )}
                                         </SelectContent>
                                       </Select>
                                       <p className="text-sm text-muted-foreground">
                                         {`Choose one ${previewPricingFieldLabel.toLowerCase()} for this entry.`}
                                       </p>
                                       {previewError && (
-                                        <p className="text-sm font-medium text-destructive">{previewError}</p>
+                                        <p className="text-sm font-medium text-destructive">
+                                          {previewError}
+                                        </p>
                                       )}
                                     </div>
                                   ) : (
                                     <div className="grid gap-3 rounded-lg bg-muted/10 p-4">
-                                      <Label className="text-sm font-medium">{previewPricingFieldLabel}</Label>
+                                      <Label className="text-sm font-medium">
+                                        {previewPricingFieldLabel}
+                                      </Label>
                                       <div className="space-y-2">
-                                        {previewEvent.pricing.options.map((option) => {
-                                          const isSelected = previewPricingSelection.includes(option.id);
+                                        {previewEvent.pricing.options.map(
+                                          (option) => {
+                                            const isSelected =
+                                              previewPricingSelection.includes(
+                                                option.id,
+                                              );
 
-                                          return (
-                                            <div key={option.id} className="flex items-center justify-between rounded-md border px-3 py-3">
-                                              <div className="flex items-center gap-3">
-                                                <Checkbox
-                                                  id={`pricing-preview-${option.id}`}
-                                                  checked={isSelected}
-                                                  onCheckedChange={(checked) =>
-                                                    setPreviewPricingSelection((current) => {
-                                                      const nextSelection =
-                                                        checked === true
-                                                          ? current.includes(option.id)
-                                                            ? current
-                                                            : [...current, option.id]
-                                                          : current.filter((id) => id !== option.id);
-                                                      if (nextSelection.length > 0) {
-                                                        setPreviewError("");
-                                                      }
-                                                      return nextSelection;
-                                                    })
-                                                  }
-                                                />
-                                                <Label htmlFor={`pricing-preview-${option.id}`}>{option.label}</Label>
+                                            return (
+                                              <div
+                                                key={option.id}
+                                                className="flex items-center justify-between rounded-md border px-3 py-3"
+                                              >
+                                                <div className="flex items-center gap-3">
+                                                  <Checkbox
+                                                    id={`pricing-preview-${option.id}`}
+                                                    checked={isSelected}
+                                                    onCheckedChange={(
+                                                      checked,
+                                                    ) =>
+                                                      setPreviewPricingSelection(
+                                                        (current) => {
+                                                          const nextSelection =
+                                                            checked === true
+                                                              ? current.includes(
+                                                                  option.id,
+                                                                )
+                                                                ? current
+                                                                : [
+                                                                    ...current,
+                                                                    option.id,
+                                                                  ]
+                                                              : current.filter(
+                                                                  (id) =>
+                                                                    id !==
+                                                                    option.id,
+                                                                );
+                                                          if (
+                                                            nextSelection.length >
+                                                            0
+                                                          ) {
+                                                            setPreviewError("");
+                                                          }
+                                                          return nextSelection;
+                                                        },
+                                                      )
+                                                    }
+                                                  />
+                                                  <Label
+                                                    htmlFor={`pricing-preview-${option.id}`}
+                                                  >
+                                                    {option.label}
+                                                  </Label>
+                                                </div>
+                                                <span className="text-sm font-medium">
+                                                  {formatCurrency(
+                                                    option.amount,
+                                                  )}
+                                                </span>
                                               </div>
-                                              <span className="text-sm font-medium">{formatCurrency(option.amount)}</span>
-                                            </div>
-                                          );
-                                        })}
+                                            );
+                                          },
+                                        )}
                                       </div>
                                       <p className="text-sm text-muted-foreground">
                                         {`Select one or multiple ${previewPricingFieldLabel.toLowerCase()}. The total in the header updates from all selected ${previewPricingFieldLabel.toLowerCase()}.`}
                                       </p>
                                       {previewError && (
-                                        <p className="text-sm font-medium text-destructive">{previewError}</p>
+                                        <p className="text-sm font-medium text-destructive">
+                                          {previewError}
+                                        </p>
                                       )}
                                     </div>
                                   )}
@@ -1702,7 +2023,9 @@ export default function EventsPage() {
                     </div>
 
                     <div className="flex justify-end border-t pt-4">
-                      <Button type="button" onClick={handlePreviewSubmit}>Preview Submit</Button>
+                      <Button type="button" onClick={handlePreviewSubmit}>
+                        Preview Submit
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -1720,14 +2043,19 @@ export default function EventsPage() {
                   <CardHeader className="border-b pb-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <CardTitle>{editingEventId ? "Edit Event" : "Create Event"}</CardTitle>
+                        <CardTitle>
+                          {editingEventId ? "Edit Event" : "Create Event"}
+                        </CardTitle>
                         <CardDescription>
                           {editingEventId
                             ? "Update the event details, pricing, and attached registration form."
                             : "Configure the event details, pricing, and registration form before publishing it."}
                         </CardDescription>
                       </div>
-                      <Button variant="outline" onClick={() => resetEditorState(false)}>
+                      <Button
+                        variant="outline"
+                        onClick={() => resetEditorState(false)}
+                      >
                         Back To Calendar
                       </Button>
                     </div>
@@ -1735,11 +2063,16 @@ export default function EventsPage() {
                   <CardContent className="space-y-4 p-4 sm:p-6">
                     <div className="grid gap-4">
                       <div className="grid gap-2">
-                        <label className="text-sm font-medium">Event title</label>
+                        <label className="text-sm font-medium">
+                          Event title
+                        </label>
                         <Input
                           value={formState.title}
                           onChange={(event) =>
-                            setFormState((current) => ({ ...current, title: event.target.value }))
+                            setFormState((current) => ({
+                              ...current,
+                              title: event.target.value,
+                            }))
                           }
                           placeholder="Club championship"
                         />
@@ -1747,12 +2080,15 @@ export default function EventsPage() {
 
                       <div className="grid gap-2 md:grid-cols-2">
                         <div className="grid gap-2">
-                          <label className="text-sm font-medium">Start date</label>
+                          <label className="text-sm font-medium">
+                            Start date
+                          </label>
                           <Input
                             type="date"
                             value={formState.startDate}
                             min={
-                              editingEvent?.startDate && editingEvent.startDate < todayKey
+                              editingEvent?.startDate &&
+                              editingEvent.startDate < todayKey
                                 ? editingEvent.startDate
                                 : todayKey
                             }
@@ -1763,9 +2099,12 @@ export default function EventsPage() {
                                   ...current,
                                   startDate: nextStartDate,
                                   endDate:
-                                    current.endDate < nextStartDate ? nextStartDate : current.endDate,
+                                    current.endDate < nextStartDate
+                                      ? nextStartDate
+                                      : current.endDate,
                                   registrationCloseDate:
-                                    current.registrationCloseDate > nextStartDate
+                                    current.registrationCloseDate >
+                                    nextStartDate
                                       ? nextStartDate
                                       : current.registrationCloseDate,
                                 };
@@ -1774,19 +2113,25 @@ export default function EventsPage() {
                           />
                         </div>
                         <div className="grid gap-2">
-                          <label className="text-sm font-medium">End date</label>
+                          <label className="text-sm font-medium">
+                            End date
+                          </label>
                           <Input
                             type="date"
                             value={formState.endDate}
                             min={
                               formState.startDate < todayKey
-                                ? editingEvent?.endDate && editingEvent.endDate < todayKey
+                                ? editingEvent?.endDate &&
+                                  editingEvent.endDate < todayKey
                                   ? editingEvent.endDate
                                   : formState.startDate
                                 : formState.startDate
                             }
                             onChange={(event) =>
-                              setFormState((current) => ({ ...current, endDate: event.target.value }))
+                              setFormState((current) => ({
+                                ...current,
+                                endDate: event.target.value,
+                              }))
                             }
                           />
                         </div>
@@ -1794,7 +2139,9 @@ export default function EventsPage() {
 
                       <div className="grid gap-2 md:grid-cols-2">
                         <div className="grid gap-2">
-                          <label className="text-sm font-medium">Open registration date</label>
+                          <label className="text-sm font-medium">
+                            Open registration date
+                          </label>
                           <Input
                             type="date"
                             value={formState.registrationOpenDate}
@@ -1821,7 +2168,9 @@ export default function EventsPage() {
                           />
                         </div>
                         <div className="grid gap-2">
-                          <label className="text-sm font-medium">Close registration date</label>
+                          <label className="text-sm font-medium">
+                            Close registration date
+                          </label>
                           <Input
                             type="date"
                             value={formState.registrationCloseDate}
@@ -1845,11 +2194,16 @@ export default function EventsPage() {
                       </div>
 
                       <div className="grid gap-2">
-                        <label className="text-sm font-medium">Description</label>
+                        <label className="text-sm font-medium">
+                          Description
+                        </label>
                         <Textarea
                           value={formState.description}
                           onChange={(event) =>
-                            setFormState((current) => ({ ...current, description: event.target.value }))
+                            setFormState((current) => ({
+                              ...current,
+                              description: event.target.value,
+                            }))
                           }
                           placeholder="Optional notes for staff or members"
                           rows={4}
@@ -1861,10 +2215,13 @@ export default function EventsPage() {
                           <div>
                             <h3 className="font-semibold">Event Pricing</h3>
                             <p className="text-sm text-muted-foreground">
-                              Set whether the event is free, fixed-fee, category-based, or additive across divisions.
+                              Set whether the event is free, fixed-fee,
+                              category-based, or additive across divisions.
                             </p>
                           </div>
-                          <Badge variant="outline">{getPricingSummary(pricing)}</Badge>
+                          <Badge variant="outline">
+                            {getPricingSummary(pricing)}
+                          </Badge>
                         </div>
 
                         <div className="grid gap-3">
@@ -1877,7 +2234,8 @@ export default function EventsPage() {
                                 setPricing({
                                   type: nextType,
                                   fieldName:
-                                    nextType === "MULTIPLE" || nextType === "ADDITIONAL"
+                                    nextType === "MULTIPLE" ||
+                                    nextType === "ADDITIONAL"
                                       ? pricing.fieldName
                                       : "",
                                   options: [],
@@ -1890,18 +2248,26 @@ export default function EventsPage() {
                               </SelectTrigger>
                               <SelectContent>
                                 {PRICING_TYPE_OPTIONS.map((option) => (
-                                  <SelectItem key={option.value} value={option.value}>
+                                  <SelectItem
+                                    key={option.value}
+                                    value={option.value}
+                                  >
                                     {option.label}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
                             <p className="text-xs text-muted-foreground">
-                              {PRICING_TYPE_OPTIONS.find((option) => option.value === pricing.type)?.description}
+                              {
+                                PRICING_TYPE_OPTIONS.find(
+                                  (option) => option.value === pricing.type,
+                                )?.description
+                              }
                             </p>
                           </div>
 
-                          {(pricing.type === "MULTIPLE" || pricing.type === "ADDITIONAL") && (
+                          {(pricing.type === "MULTIPLE" ||
+                            pricing.type === "ADDITIONAL") && (
                             <div className="grid gap-2">
                               <Label>Pricing field name</Label>
                               <Input
@@ -1912,7 +2278,11 @@ export default function EventsPage() {
                                     fieldName: event.target.value,
                                   }))
                                 }
-                                placeholder={pricing.type === "MULTIPLE" ? "Entry category" : "Divisions"}
+                                placeholder={
+                                  pricing.type === "MULTIPLE"
+                                    ? "Entry category"
+                                    : "Divisions"
+                                }
                               />
                             </div>
                           )}
@@ -1922,16 +2292,25 @@ export default function EventsPage() {
                               {pricing.options.length > 0 && (
                                 <div className="space-y-2">
                                   {pricing.options.map((option) => (
-                                    <div key={option.id} className="flex items-center justify-between gap-3 rounded-lg border p-3">
+                                    <div
+                                      key={option.id}
+                                      className="flex items-center justify-between gap-3 rounded-lg border p-3"
+                                    >
                                       <div>
-                                        <p className="font-medium">{option.label}</p>
-                                        <p className="text-sm text-muted-foreground">{formatCurrency(option.amount)}</p>
+                                        <p className="font-medium">
+                                          {option.label}
+                                        </p>
+                                        <p className="text-sm text-muted-foreground">
+                                          {formatCurrency(option.amount)}
+                                        </p>
                                       </div>
                                       <Button
                                         type="button"
                                         variant="ghost"
                                         size="icon"
-                                        onClick={() => handleRemovePricingOption(option.id)}
+                                        onClick={() =>
+                                          handleRemovePricingOption(option.id)
+                                        }
                                       >
                                         <Trash2 className="h-4 w-4 text-muted-foreground" />
                                       </Button>
@@ -1951,15 +2330,22 @@ export default function EventsPage() {
                                 {pricing.type !== "SINGLE" && (
                                   <div className="grid gap-2">
                                     <Label>
-                                      {pricing.type === "MULTIPLE" ? "Option label" : "Add-on label"}
+                                      {pricing.type === "MULTIPLE"
+                                        ? "Option label"
+                                        : "Add-on label"}
                                     </Label>
                                     <Input
                                       value={pricingDraft.label}
                                       onChange={(event) =>
-                                        setPricingDraft((current) => ({ ...current, label: event.target.value }))
+                                        setPricingDraft((current) => ({
+                                          ...current,
+                                          label: event.target.value,
+                                        }))
                                       }
                                       placeholder={
-                                        pricing.type === "MULTIPLE" ? "Junior Division" : "Equipment Rental"
+                                        pricing.type === "MULTIPLE"
+                                          ? "Junior Division"
+                                          : "Equipment Rental"
                                       }
                                     />
                                   </div>
@@ -1969,18 +2355,32 @@ export default function EventsPage() {
                                   <Input
                                     type="text"
                                     inputMode="numeric"
-                                    value={formatAmount(Number(pricingDraft.amount || 0), club?.currency || "ZAR")}
+                                    value={formatAmount(
+                                      Number(pricingDraft.amount || 0),
+                                      club?.currency || "ZAR",
+                                    )}
                                     onChange={(event) => {
-                                      const cleaned = event.target.value.replace(/[^\d]/g, "");
+                                      const cleaned =
+                                        event.target.value.replace(
+                                          /[^\d]/g,
+                                          "",
+                                        );
                                       setPricingDraft((current) => ({
                                         ...current,
                                         amount: cleaned,
                                       }));
                                     }}
-                                    placeholder={formatAmount(0, club?.currency || "ZAR")}
+                                    placeholder={formatAmount(
+                                      0,
+                                      club?.currency || "ZAR",
+                                    )}
                                   />
                                 </div>
-                                <Button type="button" variant="outline" onClick={handleAddPricingOption}>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={handleAddPricingOption}
+                                >
                                   {pricing.type === "SINGLE"
                                     ? "Set Price"
                                     : pricing.type === "MULTIPLE"
@@ -1996,41 +2396,56 @@ export default function EventsPage() {
                       <div className="rounded-xl border border-dashed p-4">
                         <div className="mb-4 flex items-start justify-between gap-4">
                           <div>
-                            <h3 className="font-semibold">Event Registration Form</h3>
+                            <h3 className="font-semibold">
+                              Event Registration Form
+                            </h3>
                             <p className="text-sm text-muted-foreground">
-                              Build the form attendees must complete for this event.
+                              Build the form attendees must complete for this
+                              event.
                             </p>
                           </div>
-                          <Badge variant="outline">{eventFormFields.length} fields</Badge>
+                          <Badge variant="outline">
+                            {eventFormFields.length} fields
+                          </Badge>
                         </div>
 
                         <div className="space-y-3">
                           {eventFormFields.length === 0 && (
                             <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-                              Add text, dropdown, or checkbox fields for attendees to complete.
+                              Add text, dropdown, or checkbox fields for
+                              attendees to complete.
                             </div>
                           )}
 
                           {eventFormFields.map((field) => (
-                            <div key={field.id} className="flex items-start justify-between gap-3 rounded-lg border p-3">
+                            <div
+                              key={field.id}
+                              className="flex items-start justify-between gap-3 rounded-lg border p-3"
+                            >
                               <div>
                                 <div className="flex flex-wrap items-center gap-2">
                                   <p className="font-medium">{field.label}</p>
-                                  <Badge variant="outline" className="capitalize">
+                                  <Badge
+                                    variant="outline"
+                                    className="capitalize"
+                                  >
                                     {field.inputType.toLowerCase()}
                                   </Badge>
-                                  {field.required && <Badge variant="secondary">Required</Badge>}
+                                  {field.required && (
+                                    <Badge variant="secondary">Required</Badge>
+                                  )}
                                 </div>
                                 {field.placeholder && (
                                   <p className="mt-1 text-sm text-muted-foreground">
                                     Placeholder: {field.placeholder}
                                   </p>
                                 )}
-                                {field.inputType === "DROPDOWN" && field.options.length > 0 && (
-                                  <p className="mt-1 text-sm text-muted-foreground">
-                                    Options: {field.options.join(", ")}
-                                  </p>
-                                )}
+                                {field.inputType === "DROPDOWN" &&
+                                  field.options.length > 0 && (
+                                    <p className="mt-1 text-sm text-muted-foreground">
+                                      Options: {field.options.join(", ")}
+                                    </p>
+                                  )}
                               </div>
                               <div className="flex items-center gap-1">
                                 <Button
@@ -2045,7 +2460,9 @@ export default function EventsPage() {
                                   type="button"
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => handleRemoveFormField(field.id)}
+                                  onClick={() =>
+                                    handleRemoveFormField(field.id)
+                                  }
                                 >
                                   <Trash2 className="h-4 w-4 text-muted-foreground" />
                                 </Button>
@@ -2061,7 +2478,10 @@ export default function EventsPage() {
                               <Input
                                 value={fieldDraft.label}
                                 onChange={(event) =>
-                                  setFieldDraft((current) => ({ ...current, label: event.target.value }))
+                                  setFieldDraft((current) => ({
+                                    ...current,
+                                    label: event.target.value,
+                                  }))
                                 }
                                 placeholder="Full name"
                               />
@@ -2074,9 +2494,11 @@ export default function EventsPage() {
                                   setFieldDraft((current) => ({
                                     ...current,
                                     variant: value as EventFieldVariant,
-                                    optionsText: getFieldConfig(value as EventFieldVariant).inputType === "DROPDOWN"
-                                      ? current.optionsText
-                                      : "",
+                                    optionsText:
+                                      getFieldConfig(value as EventFieldVariant)
+                                        .inputType === "DROPDOWN"
+                                        ? current.optionsText
+                                        : "",
                                   }))
                                 }
                               >
@@ -2085,7 +2507,10 @@ export default function EventsPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                   {FIELD_TYPE_OPTIONS.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
+                                    <SelectItem
+                                      key={option.value}
+                                      value={option.value}
+                                    >
                                       {option.label}
                                     </SelectItem>
                                   ))}
@@ -2097,17 +2522,22 @@ export default function EventsPage() {
                           <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
                             <div className="grid gap-2">
                               <Label>
-                                {getFieldConfig(fieldDraft.variant).inputType === "CHECKBOX"
+                                {getFieldConfig(fieldDraft.variant)
+                                  .inputType === "CHECKBOX"
                                   ? "Checkbox text"
                                   : "Placeholder or helper text"}
                               </Label>
                               <Input
                                 value={fieldDraft.placeholder}
                                 onChange={(event) =>
-                                  setFieldDraft((current) => ({ ...current, placeholder: event.target.value }))
+                                  setFieldDraft((current) => ({
+                                    ...current,
+                                    placeholder: event.target.value,
+                                  }))
                                 }
                                 placeholder={
-                                  getFieldConfig(fieldDraft.variant).inputType === "CHECKBOX"
+                                  getFieldConfig(fieldDraft.variant)
+                                    .inputType === "CHECKBOX"
                                     ? "I agree to the event rules"
                                     : "Enter your full name"
                                 }
@@ -2118,21 +2548,30 @@ export default function EventsPage() {
                                 id="event-field-required"
                                 checked={fieldDraft.required}
                                 onCheckedChange={(checked) =>
-                                  setFieldDraft((current) => ({ ...current, required: checked === true }))
+                                  setFieldDraft((current) => ({
+                                    ...current,
+                                    required: checked === true,
+                                  }))
                                 }
                               />
-                              <Label htmlFor="event-field-required">Required</Label>
+                              <Label htmlFor="event-field-required">
+                                Required
+                              </Label>
                             </div>
                           </div>
 
-                          {getFieldConfig(fieldDraft.variant).inputType === "DROPDOWN" && (
+                          {getFieldConfig(fieldDraft.variant).inputType ===
+                            "DROPDOWN" && (
                             <div className="grid gap-2">
                               <Label>Dropdown options</Label>
                               <Textarea
                                 rows={4}
                                 value={fieldDraft.optionsText}
                                 onChange={(event) =>
-                                  setFieldDraft((current) => ({ ...current, optionsText: event.target.value }))
+                                  setFieldDraft((current) => ({
+                                    ...current,
+                                    optionsText: event.target.value,
+                                  }))
                                 }
                                 placeholder={"Option 1\nOption 2\nOption 3"}
                               />
@@ -2143,11 +2582,21 @@ export default function EventsPage() {
                           )}
 
                           <div className="flex flex-wrap gap-2">
-                            <Button type="button" variant="outline" onClick={handleAddFormField}>
-                              {editingFieldId ? "Update Form Field" : "Add Form Field"}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={handleAddFormField}
+                            >
+                              {editingFieldId
+                                ? "Update Form Field"
+                                : "Add Form Field"}
                             </Button>
                             {editingFieldId && (
-                              <Button type="button" variant="ghost" onClick={handleCancelFieldEdit}>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={handleCancelFieldEdit}
+                              >
                                 Cancel Field Edit
                               </Button>
                             )}
@@ -2162,10 +2611,17 @@ export default function EventsPage() {
                       )}
 
                       <div className="flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
-                        <Button variant="outline" onClick={() => resetEditorState(false)}>
+                        <Button
+                          variant="outline"
+                          onClick={() => resetEditorState(false)}
+                        >
                           Cancel
                         </Button>
-                        <Button type="button" onClick={handleSaveEvent} disabled={isSavingEvent}>
+                        <Button
+                          type="button"
+                          onClick={handleSaveEvent}
+                          disabled={isSavingEvent}
+                        >
                           {isSavingEvent
                             ? "Saving..."
                             : editingEventId
@@ -2200,20 +2656,32 @@ export default function EventsPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-semibold text-foreground">{event.title}</h3>
-                        <Badge variant="secondary">{event.formFields.length} form fields</Badge>
-                        <Badge variant="outline">{getPricingSummary(event.pricing)}</Badge>
+                        <h3 className="font-semibold text-foreground">
+                          {event.title}
+                        </h3>
+                        <Badge variant="secondary">
+                          {event.formFields.length} form fields
+                        </Badge>
+                        <Badge variant="outline">
+                          {getPricingSummary(event.pricing)}
+                        </Badge>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Clock3 className="h-4 w-4" />
                         <span>{getRangeLabel(event)}</span>
                       </div>
                       {event.description && (
-                        <p className="text-sm text-muted-foreground">{event.description}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {event.description}
+                        </p>
                       )}
                       <div className="flex flex-wrap gap-2 pt-1">
                         {event.formFields.map((field) => (
-                          <Badge key={field.id} variant="outline" className="capitalize">
+                          <Badge
+                            key={field.id}
+                            variant="outline"
+                            className="capitalize"
+                          >
                             {field.label}
                           </Badge>
                         ))}
@@ -2247,7 +2715,11 @@ export default function EventsPage() {
                   </div>
                 </div>
               ))}
-              <Button variant="outline" className="w-full" onClick={() => openCreateDialog(selectedDate)}>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => openCreateDialog(selectedDate)}
+              >
                 <Plus className="mr-2 h-4 w-4" />
                 Add Event On This Day
               </Button>
@@ -2262,27 +2734,44 @@ export default function EventsPage() {
                 </div>
                 <div>
                   <CardTitle>Upcoming Events</CardTitle>
-                  <CardDescription>Next items currently on the calendar.</CardDescription>
+                  <CardDescription>
+                    Next items currently on the calendar.
+                  </CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
               {upcomingEvents.length === 0 && (
-                <p className="text-sm text-muted-foreground">No upcoming events yet.</p>
+                <p className="text-sm text-muted-foreground">
+                  No upcoming events yet.
+                </p>
               )}
               {upcomingEvents.map((event) => (
-                <div key={event.id} className="flex items-start justify-between gap-3 rounded-xl border p-3">
+                <div
+                  key={event.id}
+                  className="flex items-start justify-between gap-3 rounded-xl border p-3"
+                >
                   <div>
                     <p className="font-medium">{event.title}</p>
-                    <p className="text-sm text-muted-foreground">{getRangeLabel(event)}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {event.formFields.length} required form field{event.formFields.length === 1 ? "" : "s"} configured
+                    <p className="text-sm text-muted-foreground">
+                      {getRangeLabel(event)}
                     </p>
-                    <p className="text-xs text-muted-foreground">{getPricingSummary(event.pricing)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {event.formFields.length} required form field
+                      {event.formFields.length === 1 ? "" : "s"} configured
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {getPricingSummary(event.pricing)}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge className={cn("border", event.colorClass)} variant="outline">
-                      {getEventDuration(event) === 1 ? "1 day" : `${getEventDuration(event)} days`}
+                    <Badge
+                      className={cn("border", event.colorClass)}
+                      variant="outline"
+                    >
+                      {getEventDuration(event) === 1
+                        ? "1 day"
+                        : `${getEventDuration(event)} days`}
                     </Badge>
                     <Button
                       type="button"
@@ -2331,7 +2820,10 @@ export default function EventsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEventsSettings(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowEventsSettings(false)}
+            >
               Close
             </Button>
           </DialogFooter>

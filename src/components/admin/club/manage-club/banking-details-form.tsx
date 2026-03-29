@@ -644,7 +644,6 @@ export function BankingDetailsForm({
                       </Label>
                       <p className="text-sm text-muted-foreground">
                         If enabled, members who pay successfully through PayFast will be registered automatically.
-                        If this setting does not exist yet for this club, it defaults to off.
                       </p>
                     </div>
                     <Switch

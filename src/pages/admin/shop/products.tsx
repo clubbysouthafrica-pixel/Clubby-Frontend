@@ -429,23 +429,28 @@ export default function ProductsPage() {
       </div>
 
       {!club?.enable_shop && (
-        <Card className="mb-6 border-orange-200 bg-orange-50">
-          <CardContent className="py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 text-orange-600" />
-              <div>
-                <p className="font-semibold text-orange-900">
+        <Card className="mb-6 overflow-hidden border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 shadow-sm p-0">
+          <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-300 bg-amber-100">
+                <AlertCircle className="h-4 w-4 text-amber-700" />
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-sm font-semibold text-amber-950 sm:text-base">
                   Shop is currently disabled
                 </p>
-                <p className="text-sm text-orange-700">
-                  Enable your shop to make it visible to members and start receiving orders
+                <p className="max-w-2xl text-sm leading-snug text-amber-800">
+                  Enable your shop to make it visible to members and start receiving orders.
+                </p>
+                <p className="pt-1 text-xs leading-snug text-amber-700/90">
+                  Enabling the shop and selling items results in a Clubby charge of 2% of each product sold.
                 </p>
               </div>
             </div>
             <Button
               onClick={handleEnableShop}
               disabled={isEnablingShop}
-              className="bg-orange-600 hover:bg-orange-700 text-white"
+              className="w-full bg-amber-700 text-white hover:bg-amber-800 sm:w-auto"
             >
               {isEnablingShop ? (
                 <>

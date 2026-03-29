@@ -1,5 +1,5 @@
 import { Fragment, useContext, useEffect, useState, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,12 +44,12 @@ import {
   refundOrRemoveOrder,
   updateAdminOrderFulfillment,
 } from "@/services/admin-features/orders";
-import { updateClubDetails } from "@/services/admin/club";
 import { formatAmount } from "@/data/currencies";
 import { Label } from "@/components/ui/label";
 
 export default function OrdersPage() {
-  const { club, setClub } = useContext(ClubContext) as ClubContextType;
+  const { club } = useContext(ClubContext) as ClubContextType;
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   // Parse URL query params first
@@ -122,8 +122,6 @@ export default function OrdersPage() {
     Set<string>
   >(new Set());
   const [isConfirmingDelivery, setIsConfirmingDelivery] = useState(false);
-  const [isEnablingShop, setIsEnablingShop] = useState(false);
-
   // Calculate total undelivered items
   const undeliveredItems = allOrders
     .filter(
@@ -506,31 +504,6 @@ export default function OrdersPage() {
     }
   };
 
-  const handleEnableShop = async () => {
-    if (!club?.club_account_id) return;
-
-    try {
-      setIsEnablingShop(true);
-      const response = await updateClubDetails({
-        club_account_id: club.club_account_id,
-        enable_shop: true,
-      });
-
-      if (response?.message) {
-        toast.success("Shop enabled successfully");
-        // Update the club context with the new enable_shop value
-        setClub({ ...club, enable_shop: true });
-      } else {
-        toast.error("Failed to enable shop");
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Error enabling shop");
-      console.error("Error enabling shop:", err);
-    } finally {
-      setIsEnablingShop(false);
-    }
-  };
-
   return (
     <div className="p-5">
       <div className="mb-4">
@@ -539,32 +512,26 @@ export default function OrdersPage() {
       </div>
 
       {!club?.enable_shop && (
-        <Card className="mb-6 border-orange-200 bg-orange-50">
-          <CardContent className="py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 text-orange-600" />
-              <div>
-                <p className="font-semibold text-orange-900">
+        <Card className="mb-6 overflow-hidden border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 shadow-sm p-0">
+          <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-300 bg-amber-100">
+                <AlertCircle className="h-4 w-4 text-amber-700" />
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-sm font-semibold text-amber-950 sm:text-base">
                   Shop is currently disabled
                 </p>
-                <p className="text-sm text-orange-700">
-                  Enable your shop to make it visible to members and start receiving orders
+                <p className="max-w-2xl text-sm leading-snug text-amber-800">
+                  Enable your shop to make it visible to members and start receiving orders.
                 </p>
               </div>
             </div>
             <Button
-              onClick={handleEnableShop}
-              disabled={isEnablingShop}
-              className="bg-orange-600 hover:bg-orange-700 text-white"
+              onClick={() => navigate("/shop/products")}
+              className="w-full bg-amber-700 text-white hover:bg-amber-800 sm:w-auto"
             >
-              {isEnablingShop ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Enabling...
-                </>
-              ) : (
-                "Enable Shop"
-              )}
+              Go to Shop
             </Button>
           </CardContent>
         </Card>
