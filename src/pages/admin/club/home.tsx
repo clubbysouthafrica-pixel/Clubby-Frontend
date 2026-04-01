@@ -50,9 +50,14 @@ export default function HomeDashboardPage() {
     setClub,
     isLoading: clubLoading,
   } = useContext(ClubContext) as ClubContextType;
-  const { data: fetchedClub } = useFetchClub(club?.club_account_id as string);
+  const clubAccountId = club?.club_account_id ?? "";
+  const { data: fetchedClub, isLoading: fetchedClubLoading } = useFetchClub(
+    clubAccountId,
+  );
+  const currentClub = fetchedClub ?? club;
   const { data: report, isLoading: reportLoading } = useGeneralReportingQuery(
-    club?.club_account_id as string,
+    clubAccountId,
+    currentClub?.season_cycle,
   );
   const navigate = useNavigate();
 
@@ -67,7 +72,15 @@ export default function HomeDashboardPage() {
     }
   }, [fetchedClub, club, setClub]);
 
-  if (reportLoading || clubLoading) {
+  const isInitialLoad =
+    clubLoading ||
+    !clubAccountId ||
+    fetchedClubLoading ||
+    reportLoading ||
+    !currentClub ||
+    !report;
+
+  if (isInitialLoad) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -80,9 +93,9 @@ export default function HomeDashboardPage() {
       <div className="p-6 shadow-none rounded-none bg-none border-b bg-white">
         <div>
           <div className="text-3xl font-bold flex items-center gap-2">
-            {club?.club_name}
+            {currentClub?.club_name}
             <span className="ml-2 text-base font-medium text-muted-foreground">
-              (Season {club?.season_cycle})
+              (Season {currentClub?.season_cycle})
             </span>
           </div>
           <CardDescription>
@@ -95,7 +108,7 @@ export default function HomeDashboardPage() {
             {/* You can add more club stats here if desired */}
             <div>
               <span className="text-muted-foreground text-sm">Currency:</span>
-              <span className="ml-2 font-semibold">{club?.currency}</span>
+              <span className="ml-2 font-semibold">{currentClub?.currency}</span>
             </div>
           </div>
         </div>
@@ -103,7 +116,7 @@ export default function HomeDashboardPage() {
       <div className="p-6 max-w-5xl mx-auto space-y-8">
         {/* Reporting Section Cards */}
         <div>
-          <HomeSectionCards report={report} currency={club?.currency} />
+          <HomeSectionCards report={report} currency={currentClub?.currency} />
         </div>
 
         {/* Management Quick Actions */}

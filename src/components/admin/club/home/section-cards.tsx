@@ -9,11 +9,11 @@ import { formatAmount } from "@/data/currencies";
 import { TrendingUp, Clock, Users, UserPlus } from "lucide-react";
 
 interface props {
-  report: GeneralReport;
+  report?: GeneralReport;
   currency: string | undefined;
 }
 
-const cardData = (report: GeneralReport, currency: string | undefined) => [
+const cardData = (report: GeneralReport | undefined, currency: string | undefined) => [
   {
     label: "Total Revenue",
     value: formatAmount(report?.total_revenue, currency),
@@ -26,12 +26,12 @@ const cardData = (report: GeneralReport, currency: string | undefined) => [
   },
   {
     label: "Active Members",
-    value: report?.total_active_members,
+    value: report?.total_active_members ?? 0,
     icon: <Users className="h-7 w-7 text-blue-600" />,
   },
   {
     label: "Pending Members",
-    value: report?.total_pending_members,
+    value: report?.total_pending_members ?? 0,
     icon: <UserPlus className="h-7 w-7 text-purple-600" />,
   },
 ];
