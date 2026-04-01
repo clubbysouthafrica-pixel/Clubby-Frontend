@@ -180,7 +180,11 @@ export function LoginForm({
                           <div className="flex items-center">
                             <Label htmlFor="password">Password</Label>
                             <Link
-                              to="/forgotpassword"
+                              to={
+                                isAdminLogin
+                                  ? "/forgotpassword?admin=true"
+                                  : "/forgotpassword"
+                              }
                               className="ml-auto text-xs underline-offset-4 hover:underline"
                             >
                               Forgot your password?

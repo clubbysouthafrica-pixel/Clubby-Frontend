@@ -11,11 +11,16 @@ export const getAuthToken = async () => {
 }
 
 export const forgotPassword = async (username: string) => {
-    const response = await api.post('/member/forgotPassword', {
-        username
-    });
+    const response = await api.post('/member/forgotPassword',
+        {
+            username
+        },
+        {
+            validateStatus: (status) => status === 200 || status === 404 || status === 411,
+        }
+    );
 
-    return response.data;
+    return response;
 }
 
 export const activateMemberUser = async (email: string, session: string, password: string) => {
@@ -43,5 +48,5 @@ export const resetMemberTemporaryPassword = async (email: string) => {
         username: email
     });
 
-    return response.data;
+    return response;
 }

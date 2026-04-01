@@ -15,5 +15,18 @@ export const resetAdminTemporaryPassword = async (email: string) => {
         username: email
     });
 
-    return response.data;
+    return response;
+}
+
+export const forgotPassword = async (username: string) => {
+    const response = await api.post('/admin/forgotPassword',
+        {
+            username
+        },
+        {
+            validateStatus: (status) => status === 200 || status === 404 || status === 411,
+        }
+    );
+
+    return response;
 }

@@ -41,16 +41,23 @@ export function ResetTemporaryPasswordForm({
       const response = isAdminLogin
         ? await resetAdminTemporaryPassword(email)
         : await resetMemberTemporaryPassword(email);
-      const message =
-        response.message ||
-        response.data?.message ||
-        "Temporary credentials sent successfully!";
-      setSuccessMessage(message);
-      toast.success(message);
 
-      setTimeout(() => {
-        navigate("/login");
-      }, 2000);
+      if (response.status === 200) {
+        const message =
+          response.data?.message || "Temporary credentials sent successfully!";
+        setSuccessMessage(message);
+        toast.success(message);
+
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
+        return;
+      }
+
+      const errorMessage =
+        response.data?.message || "Failed to send temporary credentials";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } catch (e: unknown) {
       if (e instanceof AxiosError) {
         const errorMessage =
@@ -71,6 +78,9 @@ export function ResetTemporaryPasswordForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="border-none shadow-lg">
         <CardHeader className="text-center">
+          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 text-left mb-1">
+            {isAdminLogin ? "Admin Account Recovery" : "Member Account Recovery"}
+          </div>
           <CardTitle className="text-xl text-left mb-3">
             Reset Temporary Password
           </CardTitle>
