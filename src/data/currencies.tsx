@@ -32,7 +32,10 @@ export function formatAmount(
     currencyCode?: string
   ): string {
     const currency = currencies.find(c => c.code === currencyCode);
-    const safeAmountCents = Number.isFinite(amountCents) ? amountCents : 0;
+    const safeAmountCents =
+      typeof amountCents === "number" && Number.isFinite(amountCents)
+        ? amountCents
+        : 0;
     const amount = safeAmountCents / 100;
   
     if (!currency) {
