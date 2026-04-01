@@ -57,7 +57,7 @@ export default function HomeDashboardPage() {
   const currentClub = fetchedClub ?? club;
   const { data: report, isLoading: reportLoading } = useGeneralReportingQuery(
     clubAccountId,
-    currentClub?.season_cycle,
+    currentClub?.season_cycle ,
   );
   const navigate = useNavigate();
 
