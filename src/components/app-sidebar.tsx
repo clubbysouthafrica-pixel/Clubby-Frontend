@@ -1,5 +1,13 @@
 import * as React from "react";
-import { HomeIcon, UserPlusIcon, UsersIcon, BarChart, ShoppingBag, MapPin } from "lucide-react";
+import {
+  HomeIcon,
+  UserPlusIcon,
+  UsersIcon,
+  BarChart,
+  ShoppingBag,
+  MapPin,
+  BoxIcon,
+} from "lucide-react";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import { ClubSwitcher } from "@/components/club-switcher.tsx";
@@ -60,13 +68,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         title: "Club",
         url: "/manage/club",
         icon: HomeIcon,
-        hasMissingFields: Boolean(club && (!club.country_exists || !club.currency_exists || !club.bank_details_exists)),
+        hasMissingFields: Boolean(
+          club &&
+          (!club.country_exists ||
+            !club.currency_exists ||
+            !club.bank_details_exists),
+        ),
         items: [
           { title: "Home", url: "/" },
-          { 
-            title: "Manage Club", 
+          {
+            title: "Manage Club",
             url: "/manage/club",
-            hasMissingFields: Boolean(club && (!club.country_exists || !club.currency_exists || !club.bank_details_exists))
+            hasMissingFields: Boolean(
+              club &&
+              (!club.country_exists ||
+                !club.currency_exists ||
+                !club.bank_details_exists),
+            ),
           },
         ],
       },
@@ -99,15 +117,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ],
       },
       {
+        title: "Storage & Requests",
+        url: "/venues",
+        icon: BoxIcon,
+        items: [
+          { title: "Storage", url: "/storage" },
+          { title: "Storage requests", url: "/storage/requests" },
+        ],
+      },
+      {
         title: "Registration form",
         url: "/manage/registrations",
         icon: UserPlusIcon,
-        hasMissingFields: Boolean(club && club.registration_form_exists === false),
+        hasMissingFields: Boolean(
+          club && club.registration_form_exists === false,
+        ),
         items: [
-          { 
-            title: "Create Form", 
+          {
+            title: "Create Form",
             url: "/manage/registrations/forms",
-            hasMissingFields: Boolean(club && club.registration_form_exists === false)
+            hasMissingFields: Boolean(
+              club && club.registration_form_exists === false,
+            ),
           },
         ],
       },

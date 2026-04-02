@@ -29,6 +29,8 @@ import RegistrationsPage from "@/pages/admin/members/registrations/registrations
 import MembersPage from "@/pages/admin/members/members/members";
 import VenuesPage from "@/pages/admin/venues-&-bookings/venues";
 import BookingsPage from "@/pages/admin/venues-&-bookings/bookings";
+import StorageAdmin from "@/pages/admin/storage-requests/storage";
+import StorageRequestsAdmin from "@/pages/admin/storage-requests/storage-requests";
 
 export default function AdminRoutes() {
   return (
@@ -194,6 +196,22 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <BookingsPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/storage"
+        element={
+          <ProtectedRoute>
+            <StorageAdmin />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/storage/requests"
+        element={
+          <ProtectedRoute>
+            <StorageRequestsAdmin />
           </ProtectedRoute>
         }
       ></Route>

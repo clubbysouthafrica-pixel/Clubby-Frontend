@@ -77,30 +77,32 @@ export default function HomeDashboardPage() {
 
   return (
     <div className="bg-gray-50">
-      <div className="p-6 shadow-none rounded-none bg-none border-b bg-white">
-        <div>
-          <div className="text-3xl font-bold flex items-center gap-2">
-            {club?.club_name}
-            <span className="ml-2 text-base font-medium text-muted-foreground">
-              (Season {club?.season_cycle})
-            </span>
+      <div className="shadow-none rounded-none bg-none border-b bg-white">
+        <div className="p-6 max-w-7xl mx-auto">
+          <div>
+            <div className="text-3xl font-bold flex items-center gap-2">
+              {club?.club_name}
+              <span className="ml-2 text-base font-medium text-muted-foreground">
+                (Season {club?.season_cycle})
+              </span>
+            </div>
+            <CardDescription>
+              Welcome to your club dashboard. Manage your club, members, and
+              reporting from here.
+            </CardDescription>
           </div>
-          <CardDescription>
-            Welcome to your club dashboard. Manage your club, members, and
-            reporting from here.
-          </CardDescription>
-        </div>
-        <div>
-          <div className="flex flex-wrap gap-4">
-            {/* You can add more club stats here if desired */}
-            <div>
-              <span className="text-muted-foreground text-sm">Currency:</span>
-              <span className="ml-2 font-semibold">{club?.currency}</span>
+          <div>
+            <div className="flex flex-wrap gap-4">
+              {/* You can add more club stats here if desired */}
+              <div>
+                <span className="text-muted-foreground text-sm">Currency:</span>
+                <span className="ml-2 font-semibold">{club?.currency}</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      <div className="p-6 max-w-5xl mx-auto space-y-8">
+      <div className="p-6 max-w-7xl mx-auto space-y-8">
         {/* Reporting Section Cards */}
         <div>
           <HomeSectionCards report={report} currency={club?.currency} />

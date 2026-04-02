@@ -137,38 +137,40 @@ export default function VenuesPage() {
 
   return (
     <div className="bg-gray-50 h-full">
-      <div className="flex items-center justify-between bg-white border-b p-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Venues Management
-          </h1>
-          <p className="text-muted-foreground">
-            Manage your club's venues for bookings.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => setShowVenuesSettings(true)}
-            variant="outline"
-            size="sm"
-            className="text-gray-600 hover:text-gray-900"
-            title="Venues settings"
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
-          <Button
-            onClick={() => {
-              setEditingVenue(null);
-              setIsDialogOpen(true);
-            }}
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Create Venue
-          </Button>
+      <div className="bg-white border-b">
+        <div className="flex items-center justify-between max-w-7xl mx-auto w-full p-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Venues Management
+            </h1>
+            <p className="text-muted-foreground">
+              Manage your club's venues for bookings.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShowVenuesSettings(true)}
+              variant="outline"
+              size="sm"
+              className="text-gray-600 hover:text-gray-900"
+              title="Venues settings"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={() => {
+                setEditingVenue(null);
+                setIsDialogOpen(true);
+              }}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Create Venue
+            </Button>
+          </div>
         </div>
       </div>
-      <div className="p-6 space-y-6 max-w-5xl mx-auto">
+      <div className="p-6 space-y-6 max-w-7xl mx-auto">
         {!club?.venues_enabled && (
           <Card className="mb-6 border-orange-200 bg-orange-50">
             <CardContent className="py-3 flex items-center justify-between">
