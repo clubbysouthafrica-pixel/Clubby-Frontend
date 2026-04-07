@@ -185,7 +185,7 @@ export default function MarketingHomePage() {
       </section>
 
       {/* Call to Action */}
-      <section className="w-full py-20 bg-gradient-to-br from-primary/10 to-white flex flex-col items-center text-center">
+      <section className="w-full py-20 bg-gradient-to-br from-indigo-100 to-white flex flex-col items-center text-center">
         <h2 className="text-3xl md:text-4xl font-bold mb-4">
           Ready to transform your club?
         </h2>

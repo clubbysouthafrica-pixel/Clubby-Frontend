@@ -12,89 +12,21 @@ import { Check, X, Folder, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { useFetchClubStorageRequests } from "@/queries/admin-features/storage";
-
 const statusColors = {
   pending: "text-yellow-600",
   approved: "text-green-600",
   rejected: "text-red-600",
 };
 
-// Dummy data for storage requests (for local/dev use)
-const DUMMY_STORAGE_UNITS = [
-  {
-    id: "s1",
-    name: "Storage A",
-    requests: [
-      {
-        id: "r1",
-        user: "John Doe",
-        date: "2024-06-01",
-        status: "pending",
-        costCents: 2500,
-        paymentMethod: "eft",
-        paid: false,
-      },
-      {
-        id: "r2",
-        user: "Jane Smith",
-        date: "2024-06-02",
-        status: "approved",
-        costCents: 2500,
-        paymentMethod: "card",
-        paid: true,
-      },
-    ],
-  },
-  {
-    id: "s2",
-    name: "Storage B",
-    requests: [
-      {
-        id: "r3",
-        user: "Alice Johnson",
-        date: "2024-06-03",
-        status: "pending",
-        costCents: 3000,
-        paymentMethod: "eft",
-        paid: false,
-        storage_id: "",
-        transaction_id: "",
-      },
-      {
-        id: "r4",
-        user: "Bob Lee",
-        date: "2024-05-28",
-        status: "rejected",
-        costCents: 1500,
-        paymentMethod: "card",
-        paid: false,
-      },
-    ],
-  },
-  {
-    id: "s3",
-    name: "Storage C (Subunit)",
-    requests: [
-      {
-        id: "r5",
-        user: "Charlie Kim",
-        date: "2024-05-30",
-        status: "approved",
-        costCents: 2000,
-        paymentMethod: "eft",
-        paid: true,
-      },
-    ],
-  },
-];
 
 export default function StorageRequestsAdmin() {
   const { club } = useContext(ClubContext) as ClubContextType;
-  // const { data, isLoading } = useFetchClubStorageRequests(
-  //   (club?.club_account_id as string) ?? undefined,
-  // );
-  // Flatten all requests for table display
-  const [units, setUnits] = useState(DUMMY_STORAGE_UNITS);
+  const { data, isLoading } = useFetchClubStorageRequests(
+    (club?.club_account_id as string) ?? undefined,
+  );
+
+  // Local state for storage requests
+  const [requests, setRequests] = useState([]);
 
   // Search & filter state
   const [searchTerm, setSearchTerm] = useState("");
@@ -105,26 +37,21 @@ export default function StorageRequestsAdmin() {
     "all" | "eft" | "card" | "other"
   >("all");
 
-  // useEffect(() => {
-  //   if (data) setUnits(data?.items || []);
-  // }, [data]);
 
-  const allRequests = units.flatMap((unit) =>
-    unit.requests.map((req) => ({
-      ...req,
-      storageName: unit.name,
-      storageId: unit.id,
-    })),
-  );
+  useEffect(() => {
+    if (data) setRequests(data?.items || []);
+  }, [data]);
+
   // Memoized filtered list
   const filteredRequests = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
-    return allRequests.filter((req) => {
-      // Search by user or storage name
+    return requests.filter((req) => {
+      // Search by userId or storage_id (or add more fields as needed)
       if (q) {
+        // You may want to fetch/display user name and storage name if available
         const matchesSearch =
-          (req.user && req.user.toLowerCase().includes(q)) ||
-          (req.storageName && req.storageName.toLowerCase().includes(q));
+          (req.userId && req.userId.toLowerCase().includes(q)) ||
+          (req.storage_id && req.storage_id.toLowerCase().includes(q));
         if (!matchesSearch) return false;
       }
 
@@ -146,33 +73,24 @@ export default function StorageRequestsAdmin() {
 
       return true;
     });
-  }, [allRequests, searchTerm, statusFilter, paymentFilter]);
-  const handleMarkPaid = (unitId, requestId) => {
-    setUnits((prev) =>
-      prev.map((unit) =>
-        unit.id === unitId
-          ? {
-              ...unit,
-              requests: unit.requests.map((req) =>
-                req.id === requestId ? { ...req, paid: true } : req,
-              ),
-            }
-          : unit,
+  }, [requests, searchTerm, statusFilter, paymentFilter]);
+
+  // TODO: Replace with backend mutation hooks if available
+  const handleMarkPaid = async (requestId, action) => {
+    // Example: await markPaidMutation.mutateAsync(requestId);
+    setRequests((prev) =>
+      prev.map((req) =>
+        req.storage_request_id === requestId ? { ...req, paid: true, status: action } : req,
       ),
     );
   };
 
-  const handleRequestAction = (unitId, requestId, action) => {
-    setUnits((prev) =>
-      prev.map((unit) =>
-        unit.id === unitId
-          ? {
-              ...unit,
-              requests: unit.requests.map((req) =>
-                req.id === requestId ? { ...req, status: action } : req,
-              ),
-            }
-          : unit,
+  const handleRequestAction = async (requestId, action) => {
+    const paymentType = "EFT"
+    // Example: await updateRequestStatusMutation.mutateAsync({ requestId, status: action });
+    setRequests((prev) =>
+      prev.map((req) =>
+        req.storage_request_id === requestId ? { ...req, status: action } : req,
       ),
     );
   };
@@ -254,21 +172,21 @@ export default function StorageRequestsAdmin() {
                 </TableRow>
               ) : (
                 filteredRequests.map((req) => (
-                  <TableRow key={req.id}>
+                  <TableRow key={req.storage_request_id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4 text-muted-foreground" />
-                        <span>{req.user}</span>
+                        <span>{req.userId}</span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Folder className="h-4 w-4 text-primary" />
-                        <span>{req.storageName}</span>
+                        <span>{req.storage_id}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="text-xs">{req.date}</span>
+                      <span className="text-xs">{req.date || req.createdAt}</span>
                     </TableCell>
                     {/* Storage Cost */}
                     <TableCell>
@@ -293,21 +211,9 @@ export default function StorageRequestsAdmin() {
                               ? "Card"
                               : req.paymentMethod}
                         </span>
-                        {/* Mark as Paid button for EFT */}
-                        {!req.paid && req.paymentMethod === "eft" && (
-                          <Button
-                            size="xs"
-                            variant="outline"
-                            className="mt-1 p-1 px-2"
-                            onClick={() =>
-                              handleMarkPaid(req.storageId, req.id)
-                            }
-                          >
-                            Mark as Paid
-                          </Button>
-                        )}
                       </div>
                     </TableCell>
+                    
                     {/* Status */}
                     <TableCell>
                       <span
@@ -319,30 +225,28 @@ export default function StorageRequestsAdmin() {
                     </TableCell>
                     {/* Actions */}
                     <TableCell className="text-right">
-                      {req.status === "pending" && (
+                      {!req.paid && (
                         <>
                           <Button
                             size="sm"
                             variant="success"
                             className="mr-2"
                             onClick={() =>
-                              handleRequestAction(
-                                req.storageId,
-                                req.id,
+                              handleMarkPaid(
+                                req.storage_request_id,
                                 "approved",
                               )
                             }
                           >
                             <Check className="h-4 w-4 mr-1" />
-                            Approve
+                            Mark Paid
                           </Button>
                           <Button
                             size="sm"
                             variant="destructive"
                             onClick={() =>
                               handleRequestAction(
-                                req.storageId,
-                                req.id,
+                                req.storage_request_id,
                                 "rejected",
                               )
                             }

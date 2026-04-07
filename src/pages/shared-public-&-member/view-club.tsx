@@ -51,6 +51,7 @@ import {
   ArrowDown,
   ArrowLeft,
   ArrowRight,
+  Box,
 } from "lucide-react";
 import { useFetchClub, useFetchClubBankDetails } from "@/queries/clubs";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
@@ -85,6 +86,8 @@ import { toast } from "sonner";
 import { FaFacebook, FaInstagram, FaTwitter } from "react-icons/fa";
 import InfoRow from "@/components/info-row";
 import SocialLink from "@/components/social-links";
+import MemberStorage from "@/components/member/storage/storage";
+import StorageRequestDialog from "@/components/storage-request-dialog/StorageRequestDialog";
 
 function epochToJoinedString(epoch: number): string {
   const date = new Date(epoch); // if epoch is in seconds, use new Date(epoch * 1000)
@@ -110,6 +113,7 @@ export default function ViewClubPage() {
   const isMobile = useIsMobile();
 
   const navigate = useNavigate();
+  const { search } = useLocation();
   const { clubId } = useParams();
   const [countryName, setCountryName] = useState("");
   const { data, isLoading, isError } = useFetchClub(clubId as string);
@@ -121,24 +125,25 @@ export default function ViewClubPage() {
 
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState("home");
-  const { search } = useLocation();
+  const [selectedStorageItem, setSelectedStorageItem] = useState<any>(null);
 
   // Handle query params on component mount and when search changes
   useEffect(() => {
     const queryParams = new URLSearchParams(search);
-    const tabParam = queryParams.get('tab');
-    const orderIdParam = queryParams.get('orderId');
-    
+    const tabParam = queryParams.get("tab");
+    const orderIdParam = queryParams.get("orderId");
+
     if (tabParam) {
       setActiveTab(tabParam);
     }
-    
+
     // Auto-select order if orderId is in query params and bankDetails are loaded
     if (orderIdParam && bankDetails?.order_options && !bankDetailsLoading) {
       const matchedOrder = bankDetails.order_options.find(
-        (order: any) => order.order_id === orderIdParam || order.id === orderIdParam
+        (order: any) =>
+          order.order_id === orderIdParam || order.id === orderIdParam,
       );
-      
+
       if (matchedOrder) {
         setNewOrderId(orderIdParam);
         setShowOrderSelection(true);
@@ -155,12 +160,18 @@ export default function ViewClubPage() {
   const [showOrderSelection, setShowOrderSelection] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [newOrderId, setNewOrderId] = useState<string | null>(null);
-  const [orderSortColumn, setOrderSortColumn] = useState<'date' | 'payment_status' | 'fulfillment_status' | 'total' | null>(null);
-  const [orderSortDirection, setOrderSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [orderSortColumn, setOrderSortColumn] = useState<
+    "date" | "payment_status" | "fulfillment_status" | "total" | null
+  >(null);
+  const [orderSortDirection, setOrderSortDirection] = useState<"asc" | "desc">(
+    "asc",
+  );
   const [venues, setVenues] = useState<any[]>([]);
   const [venuesLoading, setVenuesLoading] = useState(false);
   const [venuesError, setVenuesError] = useState<string | null>(null);
-  const [selectedGalleryImageIndex, setSelectedGalleryImageIndex] = useState<number | null>(null);
+  const [selectedGalleryImageIndex, setSelectedGalleryImageIndex] = useState<
+    number | null
+  >(null);
 
   const {
     data: memberOrders,
@@ -329,7 +340,8 @@ export default function ViewClubPage() {
         const venuseData = await getVenues(data.club_account_id);
         setVenues(venuseData.venues || []);
       } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : "Failed to load venues";
+        const errorMsg =
+          err instanceof Error ? err.message : "Failed to load venues";
         setVenuesError(errorMsg);
         console.error("Error fetching venues:", err, errorMsg);
       } finally {
@@ -781,6 +793,21 @@ export default function ViewClubPage() {
                         Bookings
                       </TabsTrigger>
                     )}
+
+                    {data?.club_member_exists && true && (
+                      <TabsTrigger
+                        className={cn(
+                          "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300 font-medium",
+                          isMobile
+                            ? "w-full justify-center text-sm h-10"
+                            : "w-[200px] h-10",
+                        )}
+                        value="storage"
+                      >
+                        <Box className="w-4 h-4 mr-2" />
+                        Storage
+                      </TabsTrigger>
+                    )}
                     {!data?.resubmission_required && data?.enable_shop && (
                       <ShopTab
                         clubId={clubId!}
@@ -808,285 +835,296 @@ export default function ViewClubPage() {
                 />
 
                 {data?.enable_shop && (
-                <TabsContent value="shop" className="mt-6">
-                  <div className="space-y-6">
-                    <Card>
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                              <ShoppingBag className="w-5 h-5 text-primary" />
+                  <TabsContent value="shop" className="mt-6">
+                    <div className="space-y-6">
+                      <Card>
+                        <CardHeader>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                                <ShoppingBag className="w-5 h-5 text-primary" />
+                              </div>
+                              <div>
+                                <CardTitle className="text-xl">
+                                  My Orders
+                                </CardTitle>
+                                <CardDescription className="text-base">
+                                  View your order history and shop for new items
+                                </CardDescription>
+                              </div>
                             </div>
-                            <div>
-                              <CardTitle className="text-xl">
-                                My Orders
-                              </CardTitle>
-                              <CardDescription className="text-base">
-                                View your order history and shop for new items
-                              </CardDescription>
-                            </div>
+                            <Button
+                              onClick={() =>
+                                navigate(`/myclubs/${clubId}/shop`)
+                              }
+                              className="flex items-center gap-2"
+                            >
+                              <ShoppingBag className="h-4 w-4" />
+                              Go to Shop
+                            </Button>
                           </div>
-                          <Button
-                            onClick={() => navigate(`/myclubs/${clubId}/shop`)}
-                            className="flex items-center gap-2"
+                        </CardHeader>
+                        <CardContent className="p-0">
+                          <div
+                            className={`${memberOrders?.orders && memberOrders.orders.length > 5 ? "max-h-96 overflow-y-auto" : "overflow-hidden"}`}
                           >
-                            <ShoppingBag className="h-4 w-4" />
-                            Go to Shop
-                          </Button>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="p-0">
-                        <div
-                          className={`${memberOrders?.orders && memberOrders.orders.length > 5 ? "max-h-96 overflow-y-auto" : "overflow-hidden"}`}
-                        >
-                          <Table className="border-0">
-                            <TableHeader className="bg-gradient-to-r from-muted/50 to-muted/30 sticky top-0 z-10">
-                              <TableRow className="border-primary/10 hover:bg-transparent">
-                                <TableHead className="text-center flex-1 font-semibold">
-                                  Order #
-                                </TableHead>
-                                <TableHead
-                                  className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                                  onClick={() => handleOrderSort("date")}
-                                >
-                                  <div className="flex items-center justify-center gap-2">
-                                    Date
-                                    {orderSortColumn === "date" &&
-                                      (orderSortDirection === "asc" ? (
-                                        <ArrowUp className="h-4 w-4" />
-                                      ) : (
-                                        <ArrowDown className="h-4 w-4" />
-                                      ))}
-                                  </div>
-                                </TableHead>
-                                <TableHead className="text-center flex-1 font-semibold">
-                                  Items
-                                </TableHead>
-                                <TableHead
-                                  className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                                  onClick={() => handleOrderSort("total")}
-                                >
-                                  <div className="flex items-center justify-center gap-2">
-                                    Total
-                                    {orderSortColumn === "total" &&
-                                      (orderSortDirection === "asc" ? (
-                                        <ArrowUp className="h-4 w-4" />
-                                      ) : (
-                                        <ArrowDown className="h-4 w-4" />
-                                      ))}
-                                  </div>
-                                </TableHead>
-                                <TableHead className="text-center flex-1 font-semibold">
-                                  Amount Paid
-                                </TableHead>
-                                <TableHead
-                                  className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                                  onClick={() =>
-                                    handleOrderSort("payment_status")
-                                  }
-                                >
-                                  <div className="flex items-center justify-center gap-2">
-                                    Payment Status
-                                    {orderSortColumn === "payment_status" &&
-                                      (orderSortDirection === "asc" ? (
-                                        <ArrowUp className="h-4 w-4" />
-                                      ) : (
-                                        <ArrowDown className="h-4 w-4" />
-                                      ))}
-                                  </div>
-                                </TableHead>
-                                <TableHead
-                                  className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                                  onClick={() =>
-                                    handleOrderSort("fulfillment_status")
-                                  }
-                                >
-                                  <div className="flex items-center justify-center gap-2">
-                                    Fulfillment Status
-                                    {orderSortColumn === "fulfillment_status" &&
-                                      (orderSortDirection === "asc" ? (
-                                        <ArrowUp className="h-4 w-4" />
-                                      ) : (
-                                        <ArrowDown className="h-4 w-4" />
-                                      ))}
-                                  </div>
-                                </TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {isOrdersLoading && (
-                                <TableRow>
-                                  <TableCell
-                                    colSpan={7}
-                                    className="text-center py-8"
+                            <Table className="border-0">
+                              <TableHeader className="bg-gradient-to-r from-muted/50 to-muted/30 sticky top-0 z-10">
+                                <TableRow className="border-primary/10 hover:bg-transparent">
+                                  <TableHead className="text-center flex-1 font-semibold">
+                                    Order #
+                                  </TableHead>
+                                  <TableHead
+                                    className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                                    onClick={() => handleOrderSort("date")}
                                   >
-                                    <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                                    <p className="text-muted-foreground mt-2">
-                                      Loading orders...
-                                    </p>
-                                  </TableCell>
-                                </TableRow>
-                              )}
-                              {ordersError && (
-                                <TableRow>
-                                  <TableCell
-                                    colSpan={7}
-                                    className="text-center py-8 text-red-600"
+                                    <div className="flex items-center justify-center gap-2">
+                                      Date
+                                      {orderSortColumn === "date" &&
+                                        (orderSortDirection === "asc" ? (
+                                          <ArrowUp className="h-4 w-4" />
+                                        ) : (
+                                          <ArrowDown className="h-4 w-4" />
+                                        ))}
+                                    </div>
+                                  </TableHead>
+                                  <TableHead className="text-center flex-1 font-semibold">
+                                    Items
+                                  </TableHead>
+                                  <TableHead
+                                    className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                                    onClick={() => handleOrderSort("total")}
                                   >
-                                    Failed to load orders. Please try again
-                                    later.
-                                  </TableCell>
+                                    <div className="flex items-center justify-center gap-2">
+                                      Total
+                                      {orderSortColumn === "total" &&
+                                        (orderSortDirection === "asc" ? (
+                                          <ArrowUp className="h-4 w-4" />
+                                        ) : (
+                                          <ArrowDown className="h-4 w-4" />
+                                        ))}
+                                    </div>
+                                  </TableHead>
+                                  <TableHead className="text-center flex-1 font-semibold">
+                                    Amount Paid
+                                  </TableHead>
+                                  <TableHead
+                                    className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                                    onClick={() =>
+                                      handleOrderSort("payment_status")
+                                    }
+                                  >
+                                    <div className="flex items-center justify-center gap-2">
+                                      Payment Status
+                                      {orderSortColumn === "payment_status" &&
+                                        (orderSortDirection === "asc" ? (
+                                          <ArrowUp className="h-4 w-4" />
+                                        ) : (
+                                          <ArrowDown className="h-4 w-4" />
+                                        ))}
+                                    </div>
+                                  </TableHead>
+                                  <TableHead
+                                    className="text-center flex-1 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                                    onClick={() =>
+                                      handleOrderSort("fulfillment_status")
+                                    }
+                                  >
+                                    <div className="flex items-center justify-center gap-2">
+                                      Fulfillment Status
+                                      {orderSortColumn ===
+                                        "fulfillment_status" &&
+                                        (orderSortDirection === "asc" ? (
+                                          <ArrowUp className="h-4 w-4" />
+                                        ) : (
+                                          <ArrowDown className="h-4 w-4" />
+                                        ))}
+                                    </div>
+                                  </TableHead>
                                 </TableRow>
-                              )}
-                              {!isOrdersLoading &&
-                                !ordersError &&
-                                memberOrders?.orders?.length === 0 && (
+                              </TableHeader>
+                              <TableBody>
+                                {isOrdersLoading && (
                                   <TableRow>
                                     <TableCell
                                       colSpan={7}
-                                      className="text-center py-8 text-muted-foreground"
+                                      className="text-center py-8"
                                     >
-                                      No orders yet. Start shopping to see your
-                                      orders here!
+                                      <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                                      <p className="text-muted-foreground mt-2">
+                                        Loading orders...
+                                      </p>
                                     </TableCell>
                                   </TableRow>
                                 )}
-                              {!isOrdersLoading &&
-                                !ordersError &&
-                                sortedOrders?.map((order: any) => (
-                                  <TableRow
-                                    key={order.order_id}
-                                    className="hover:bg-primary/5 transition-colors border-primary/10 group"
-                                  >
-                                    <TableCell className="text-center flex-1 py-4">
-                                      <span className="font-mono text-sm bg-muted/50 px-2 py-1 rounded">
-                                        #{order.order_id?.slice(0, 8) || "N/A"}
-                                      </span>
-                                    </TableCell>
-                                    <TableCell className="text-center flex-1 py-4">
-                                      {order.created_date
-                                        ? new Date(
-                                            order.created_date * 1000,
-                                          ).toLocaleDateString()
-                                        : "N/A"}
-                                    </TableCell>
-                                    <TableCell className="text-center flex-1 py-4">
-                                      <div className="space-y-1">
-                                        {order.items?.map(
-                                          (item: any, index: number) => (
-                                            <div
-                                              key={index}
-                                              className="text-sm"
-                                            >
-                                              {item.name} x{item.quantity}
-                                            </div>
-                                          ),
-                                        ) || (
-                                          <div className="text-sm">
-                                            No items
-                                          </div>
-                                        )}
-                                      </div>
-                                    </TableCell>
-                                    <TableCell className="text-center flex-1 py-4 font-semibold">
-                                      {formatAmount(
-                                        order.total_amount || 0,
-                                        data.currency,
-                                      )}
-                                    </TableCell>
-                                    <TableCell className="text-center flex-1 py-4 font-semibold">
-                                      {formatAmount(
-                                        order.amount_paid || 0,
-                                        data.currency,
-                                      )}
-                                    </TableCell>
-                                    <TableCell className="text-center flex-1 py-4">
-                                      <div className="flex flex-col items-center gap-2">
-                                        <Badge
-                                          className={`font-medium ${
-                                            order.payment_status === "PAID" ||
-                                            order.payment_status ===
-                                              "PAID (Partial Refund)"
-                                              ? "bg-green-100 text-green-800 border-green-200"
-                                              : order.payment_status ===
-                                                  "PENDING"
-                                                ? "bg-orange-100 text-orange-800 border-orange-200 mt-2"
-                                                : order.payment_status ===
-                                                    "PARTIALLY_PAID"
-                                                  ? "bg-purple-100 text-purple-800 border-purple-200"
-                                                  : order.payment_status ===
-                                                        "CANCELLED" ||
-                                                      order.payment_status ===
-                                                        "REFUND"
-                                                    ? "bg-red-100 text-red-800 border-red-200"
-                                                    : "bg-gray-100 text-gray-800 border-gray-200"
-                                          }`}
-                                        >
-                                          {order.payment_status || "Unknown"}
-                                        </Badge>
-                                        {(order.payment_status === "PENDING" ||
-                                          order.payment_status ===
-                                            "PARTIALLY_PAID") && (
-                                          <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            className="text-xs underline h-6 px-2 text-red-600"
-                                            onClick={() => setActiveTab("bank")}
-                                          >
-                                            Pay Now
-                                          </Button>
-                                        )}
-                                      </div>
-                                    </TableCell>
-                                    <TableCell className="text-center flex-1 py-4">
-                                      <div className="flex items-center justify-center gap-2">
-                                        <Badge
-                                          className={`font-medium ${
-                                            order.fulfillment_status ===
-                                            "DELIVERED"
-                                              ? "bg-green-100 text-green-800 border-green-200"
-                                              : order.fulfillment_status ===
-                                                  "NOT_PROCESSED"
-                                                ? "bg-orange-100 text-orange-800 border-orange-200"
-                                                : order.fulfillment_status ===
-                                                    "PROCESSING"
-                                                  ? "bg-purple-100 text-purple-800 border-purple-200"
-                                                  : order.fulfillment_status ===
-                                                        "CANCELLED" ||
-                                                      order.fulfillment_status ===
-                                                        "REFUND" ||
-                                                      order.fulfillment_status ===
-                                                        "REFUNDED"
-                                                    ? "bg-red-100 text-red-800 border-red-200"
-                                                    : "bg-green-100 text-green-800 border-green-200"
-                                          }`}
-                                        >
-                                          {order.fulfillment_status ||
-                                            "Unknown"}
-                                        </Badge>
-                                      </div>
+                                {ordersError && (
+                                  <TableRow>
+                                    <TableCell
+                                      colSpan={7}
+                                      className="text-center py-8 text-red-600"
+                                    >
+                                      Failed to load orders. Please try again
+                                      later.
                                     </TableCell>
                                   </TableRow>
-                                ))}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </TabsContent>
+                                )}
+                                {!isOrdersLoading &&
+                                  !ordersError &&
+                                  memberOrders?.orders?.length === 0 && (
+                                    <TableRow>
+                                      <TableCell
+                                        colSpan={7}
+                                        className="text-center py-8 text-muted-foreground"
+                                      >
+                                        No orders yet. Start shopping to see
+                                        your orders here!
+                                      </TableCell>
+                                    </TableRow>
+                                  )}
+                                {!isOrdersLoading &&
+                                  !ordersError &&
+                                  sortedOrders?.map((order: any) => (
+                                    <TableRow
+                                      key={order.order_id}
+                                      className="hover:bg-primary/5 transition-colors border-primary/10 group"
+                                    >
+                                      <TableCell className="text-center flex-1 py-4">
+                                        <span className="font-mono text-sm bg-muted/50 px-2 py-1 rounded">
+                                          #
+                                          {order.order_id?.slice(0, 8) || "N/A"}
+                                        </span>
+                                      </TableCell>
+                                      <TableCell className="text-center flex-1 py-4">
+                                        {order.created_date
+                                          ? new Date(
+                                              order.created_date * 1000,
+                                            ).toLocaleDateString()
+                                          : "N/A"}
+                                      </TableCell>
+                                      <TableCell className="text-center flex-1 py-4">
+                                        <div className="space-y-1">
+                                          {order.items?.map(
+                                            (item: any, index: number) => (
+                                              <div
+                                                key={index}
+                                                className="text-sm"
+                                              >
+                                                {item.name} x{item.quantity}
+                                              </div>
+                                            ),
+                                          ) || (
+                                            <div className="text-sm">
+                                              No items
+                                            </div>
+                                          )}
+                                        </div>
+                                      </TableCell>
+                                      <TableCell className="text-center flex-1 py-4 font-semibold">
+                                        {formatAmount(
+                                          order.total_amount || 0,
+                                          data.currency,
+                                        )}
+                                      </TableCell>
+                                      <TableCell className="text-center flex-1 py-4 font-semibold">
+                                        {formatAmount(
+                                          order.amount_paid || 0,
+                                          data.currency,
+                                        )}
+                                      </TableCell>
+                                      <TableCell className="text-center flex-1 py-4">
+                                        <div className="flex flex-col items-center gap-2">
+                                          <Badge
+                                            className={`font-medium ${
+                                              order.payment_status === "PAID" ||
+                                              order.payment_status ===
+                                                "PAID (Partial Refund)"
+                                                ? "bg-green-100 text-green-800 border-green-200"
+                                                : order.payment_status ===
+                                                    "PENDING"
+                                                  ? "bg-orange-100 text-orange-800 border-orange-200 mt-2"
+                                                  : order.payment_status ===
+                                                      "PARTIALLY_PAID"
+                                                    ? "bg-purple-100 text-purple-800 border-purple-200"
+                                                    : order.payment_status ===
+                                                          "CANCELLED" ||
+                                                        order.payment_status ===
+                                                          "REFUND"
+                                                      ? "bg-red-100 text-red-800 border-red-200"
+                                                      : "bg-gray-100 text-gray-800 border-gray-200"
+                                            }`}
+                                          >
+                                            {order.payment_status || "Unknown"}
+                                          </Badge>
+                                          {(order.payment_status ===
+                                            "PENDING" ||
+                                            order.payment_status ===
+                                              "PARTIALLY_PAID") && (
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              className="text-xs underline h-6 px-2 text-red-600"
+                                              onClick={() =>
+                                                setActiveTab("bank")
+                                              }
+                                            >
+                                              Pay Now
+                                            </Button>
+                                          )}
+                                        </div>
+                                      </TableCell>
+                                      <TableCell className="text-center flex-1 py-4">
+                                        <div className="flex items-center justify-center gap-2">
+                                          <Badge
+                                            className={`font-medium ${
+                                              order.fulfillment_status ===
+                                              "DELIVERED"
+                                                ? "bg-green-100 text-green-800 border-green-200"
+                                                : order.fulfillment_status ===
+                                                    "NOT_PROCESSED"
+                                                  ? "bg-orange-100 text-orange-800 border-orange-200"
+                                                  : order.fulfillment_status ===
+                                                      "PROCESSING"
+                                                    ? "bg-purple-100 text-purple-800 border-purple-200"
+                                                    : order.fulfillment_status ===
+                                                          "CANCELLED" ||
+                                                        order.fulfillment_status ===
+                                                          "REFUND" ||
+                                                        order.fulfillment_status ===
+                                                          "REFUNDED"
+                                                      ? "bg-red-100 text-red-800 border-red-200"
+                                                      : "bg-green-100 text-green-800 border-green-200"
+                                            }`}
+                                          >
+                                            {order.fulfillment_status ||
+                                              "Unknown"}
+                                          </Badge>
+                                        </div>
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </TabsContent>
                 )}
 
                 {data?.venues_enabled && (
-                <TabsContent value="bookings" className="mt-6">
-                  <MemberBookings
-                    venues={venues}
-                    loading={venuesLoading}
-                    error={venuesError}
-                    memberName={data?.member_name || ""}
-                  />
-                </TabsContent>
+                  <TabsContent value="bookings" className="mt-6">
+                    <MemberBookings
+                      venues={venues}
+                      loading={venuesLoading}
+                      error={venuesError}
+                      memberName={data?.member_name || ""}
+                    />
+                  </TabsContent>
                 )}
+
+                <TabsContent value="storage" className="mt-6">
+                  <MemberStorage clubId={clubId} currency={data?.currency} onSelectUnit={setSelectedStorageItem}/>
+                </TabsContent>
 
                 <TabsContent value="home" className="mt-6">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-12">
@@ -1202,22 +1240,29 @@ export default function ViewClubPage() {
                         </h3>
 
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                          {data?.gallery_images && data.gallery_images.length > 0 ? (
-                            data.gallery_images.map((image: any, idx: number) => (
-                              <button
-                                key={image.key}
-                                onClick={() => setSelectedGalleryImageIndex(idx)}
-                                className="relative rounded-lg overflow-hidden shadow-sm bg-muted transition-shadow hover:shadow-md cursor-pointer hover:opacity-90"
-                              >
-                                <img
-                                  src={image.url}
-                                  alt="Gallery"
-                                  className="w-full h-32 object-cover block"
-                                />
-                              </button>
-                            ))
+                          {data?.gallery_images &&
+                          data.gallery_images.length > 0 ? (
+                            data.gallery_images.map(
+                              (image: any, idx: number) => (
+                                <button
+                                  key={image.key}
+                                  onClick={() =>
+                                    setSelectedGalleryImageIndex(idx)
+                                  }
+                                  className="relative rounded-lg overflow-hidden shadow-sm bg-muted transition-shadow hover:shadow-md cursor-pointer hover:opacity-90"
+                                >
+                                  <img
+                                    src={image.url}
+                                    alt="Gallery"
+                                    className="w-full h-32 object-cover block"
+                                  />
+                                </button>
+                              ),
+                            )
                           ) : (
-                            <p className="text-sm text-muted-foreground">No gallery images</p>
+                            <p className="text-sm text-muted-foreground">
+                              No gallery images
+                            </p>
                           )}
                         </div>
                       </section>
@@ -1272,7 +1317,7 @@ export default function ViewClubPage() {
                 <div
                   key={index}
                   className={`p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors ${
-                    (order.order_id === newOrderId || order.id === newOrderId)
+                    order.order_id === newOrderId || order.id === newOrderId
                       ? "border-yellow-400 bg-yellow-50 border-2"
                       : ""
                   }`}
@@ -1771,7 +1816,7 @@ export default function ViewClubPage() {
                 alt="Gallery"
                 className="w-full h-full object-contain"
               />
-              
+
               {data.gallery_images.length > 1 && (
                 <>
                   <button
@@ -1787,11 +1832,12 @@ export default function ViewClubPage() {
                   >
                     <ArrowLeft className="w-6 h-6 text-white" />
                   </button>
-                  
+
                   <button
                     onClick={() =>
                       setSelectedGalleryImageIndex(
-                        selectedGalleryImageIndex === data.gallery_images.length - 1
+                        selectedGalleryImageIndex ===
+                          data.gallery_images.length - 1
                           ? 0
                           : selectedGalleryImageIndex + 1,
                       )
@@ -1801,10 +1847,11 @@ export default function ViewClubPage() {
                   >
                     <ArrowRight className="w-6 h-6 text-white" />
                   </button>
-                  
+
                   <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 px-3 py-1 rounded-full">
                     <p className="text-white text-sm">
-                      {selectedGalleryImageIndex + 1} / {data.gallery_images.length}
+                      {selectedGalleryImageIndex + 1} /{" "}
+                      {data.gallery_images.length}
                     </p>
                   </div>
                 </>
@@ -1813,6 +1860,12 @@ export default function ViewClubPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <StorageRequestDialog
+        clubAccountId={data?.club_account_id ?? ""}
+        selectedStorageItem={selectedStorageItem}
+        setSelectedStorageItem={setSelectedStorageItem}
+      />
     </Pager>
   );
 }

@@ -12,9 +12,9 @@ export const listStorageRequestQuery = () => {
   return api.get(`/storage/listStorageRequests`).then((res) => res.data);
 };
 
-// Update a storage request unit
-export const updateStorageRequestUnit = (storageRequest: any) => {
+// Create a storage request unit
+export const createStorageRequest = (storageRequest: any) => {
   return api
-    .put(`/storage/updateStorageRequest`, storageRequest)
+    .post(`/storage/createStorageRequest`, storageRequest)
     .then((res) => res.data);
 };
