@@ -116,9 +116,9 @@ export default function StorageRequestsAdmin() {
           req.storage_request_id === storageRequest.storage_request_id ? { ...req, status: action, paid: false } : req,
         ),
       );
-      toast.success("Marked as paid successfully.");
+      toast.success("Rejected successfully.");
     } catch (_error) {
-      toast.error("Failed to mark as paid. Please try again.");
+      toast.error("Failed to reject. Please try again.");
     }
 
   };
