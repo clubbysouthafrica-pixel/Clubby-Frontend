@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import * as React from "react";
 import {
   Loader2,
@@ -28,10 +29,179 @@ import {
   X,
   CheckCircle2,
   DollarSign,
+  ArrowUpRight,
+  ArrowDownRight,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { api } from "@/services/admin/api";
 import { toast } from "sonner";
+
+function getTransactionPaymentLabel(status: string) {
+  const normalizedStatus = status.trim().toUpperCase();
+
+  switch (status) {
+    case "PENDING":
+      return "Awaiting payment";
+    case "PARTIALLY_PAID":
+      return "Partially paid";
+    case "PAID":
+      return "Paid";
+    case "REFUND":
+      return "Refund";
+    case "CANCELLED":
+      return "Cancelled";
+    default:
+      if (
+        normalizedStatus === "PAID_PARTIAL_REFUND" ||
+        normalizedStatus === "PAID (PARTIAL REFUND)"
+      ) {
+        return "Paid (partial refund)";
+      }
+
+      return status
+        .toLowerCase()
+        .split("_")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+  }
+}
+
+function getTransactionFlowLabel(tx: {
+  club_income?: boolean | string | null;
+  type?: string | null;
+}) {
+  if (tx.club_income === true || tx.club_income === "true") {
+    return "Club Income";
+  }
+
+  if (tx.club_income === false || tx.club_income === "false") {
+    return "Club Expense";
+  }
+
+  return tx.type || "-";
+}
+
+function getTransactionTypeBadgeClassName() {
+  return "border-slate-200 bg-slate-100 text-slate-700";
+}
+
+function getTransactionFlowBadgeClassName(tx: {
+  club_income?: boolean | string | null;
+}) {
+  if (tx.club_income === true || tx.club_income === "true") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  }
+
+  if (tx.club_income === false || tx.club_income === "false") {
+    return "border-red-200 bg-red-50 text-red-700";
+  }
+
+  return "border-slate-200 bg-slate-100 text-slate-700";
+}
+
+function getTransactionTypeIcon(tx: {
+  club_income?: boolean | string | null;
+}) {
+  if (tx.club_income === true || tx.club_income === "true") {
+    return ArrowUpRight;
+  }
+
+  if (tx.club_income === false || tx.club_income === "false") {
+    return ArrowDownRight;
+  }
+
+  return null;
+}
+
+function isExpenseTransaction(tx: {
+  club_income?: boolean | string | null;
+}) {
+  return tx.club_income === false || tx.club_income === "false";
+}
+
+function getLifecycleAmountClassName(
+  tx: { club_income?: boolean | string | null },
+  entryType: string,
+) {
+  if (
+    entryType === "CANCELLATION" ||
+    entryType === "REFUND" ||
+    isExpenseTransaction(tx)
+  ) {
+    return "text-red-700";
+  }
+
+  if (entryType === "SUBMISSION") {
+    return "text-black-700";
+  }
+
+  return "text-green-700";
+}
+
+function getLifecycleAmountPrefix(
+  tx: { club_income?: boolean | string | null },
+  entryType: string,
+) {
+  if (entryType === "SUBMISSION") {
+    return "";
+  }
+
+  if (entryType === "CANCELLATION") {
+    return "N/A";
+  }
+
+  if (entryType === "REFUND" || isExpenseTransaction(tx)) {
+    return "-";
+  }
+
+  return "+";
+}
+
+function getTransactionPaymentClassName(status: string) {
+  const normalizedStatus = status.trim().toUpperCase();
+
+  if (normalizedStatus === "PENDING") {
+    return "text-blue-700";
+  }
+
+  if (normalizedStatus === "PARTIALLY_PAID") {
+    return "text-orange-600";
+  }
+
+  if (normalizedStatus === "REFUND" || normalizedStatus === "CANCELLED") {
+    return "text-red-700";
+  }
+
+  return "text-green-700";
+}
+
+function shouldShowTransactionPaymentProgress(tx: {
+  status?: string;
+  amount?: number | null;
+}) {
+  const normalizedStatus = tx.status?.trim().toUpperCase();
+
+  return (
+    (normalizedStatus === "PENDING" ||
+      normalizedStatus === "PARTIALLY_PAID") &&
+    typeof tx.amount === "number" &&
+    tx.amount > 0
+  );
+}
+
+function shouldShowSingleTransactionAmount(tx: {
+  status?: string;
+  amount?: number | null;
+}) {
+  const normalizedStatus = tx.status?.trim().toUpperCase();
+
+  return (
+    normalizedStatus !== "PENDING" &&
+    normalizedStatus !== "PARTIALLY_PAID" &&
+    typeof tx.amount === "number" &&
+    tx.amount > 0
+  );
+}
 
 export default function FinancialTransactionsPage() {
   const { club, isLoading: clubLoading } = useContext(
@@ -58,10 +228,6 @@ export default function FinancialTransactionsPage() {
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [nameSortAsc, setNameSortAsc] = useState<boolean | null>(null);
   const [statusSortAsc, setStatusSortAsc] = useState<boolean | null>(null);
-  const [amountSortAsc, setAmountSortAsc] = useState<boolean | null>(null);
-  const [amountPaidSortAsc, setAmountPaidSortAsc] = useState<boolean | null>(
-    null,
-  );
   const [showRefundsDropdown, setShowRefundsDropdown] = useState(false);
   const [selectedRefunds, setSelectedRefunds] = useState<Set<string>>(
     new Set(),
@@ -191,10 +357,10 @@ export default function FinancialTransactionsPage() {
             </span>
             <div>
               <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-                Revenue Transactions
+                Financial Transactions
               </h1>
               <p className="text-base text-slate-500 dark:text-slate-400 mt-1">
-                Manage your club's revenue transactions
+                Manage your club's income and expense transactions
               </p>
             </div>
           </div>
@@ -226,8 +392,10 @@ export default function FinancialTransactionsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All</SelectItem>
-                <SelectItem value="REGISTRATION">Registration</SelectItem>
-                <SelectItem value="ORDER">Order</SelectItem>
+                <SelectItem value="REGISTRATION">Club Registration Income</SelectItem>
+                <SelectItem value="ORDER">Shop Income</SelectItem>
+                <SelectItem value="CLUBBY">Clubby Charges</SelectItem>
+                <SelectItem value="EVENT REGISTRATION">Event Registration Income</SelectItem>
               </SelectContent>
             </Select>
 
@@ -243,8 +411,8 @@ export default function FinancialTransactionsPage() {
                 <SelectItem value="PENDING">Pending</SelectItem>
                 <SelectItem value="PARTIALLY_PAID">Partially paid</SelectItem>
                 <SelectItem value="PAID">Paid</SelectItem>
-                <SelectItem value="CANCELLED">CANCELLED</SelectItem>
-                <SelectItem value="REFUND">REFUND</SelectItem>
+                <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                <SelectItem value="REFUND">Refund</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -503,8 +671,6 @@ export default function FinancialTransactionsPage() {
                     onClick={() => {
                       setNameSortAsc((prev) => (prev === null ? true : !prev));
                       setStatusSortAsc(null);
-                      setAmountSortAsc(null);
-                      setAmountPaidSortAsc(null);
                     }}
                     title="Toggle sort by Member Name"
                   >
@@ -525,73 +691,10 @@ export default function FinancialTransactionsPage() {
                     )}
                   </button>
                 </TableHead>
-                <TableHead className="text-center flex-1">Type</TableHead>
                 <TableHead className="text-center flex-1">
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1 hover:underline w-full justify-center"
-                    onClick={() => {
-                      setAmountSortAsc((prev) =>
-                        prev === null ? true : !prev,
-                      );
-                      setNameSortAsc(null);
-                      setStatusSortAsc(null);
-                      setAmountPaidSortAsc(null);
-                    }}
-                    title="Toggle sort by Amount"
-                  >
-                    Amount
-                    {amountSortAsc === null ? (
-                      <svg
-                        className="h-3 w-3 opacity-60"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M12 5v14M19 12l-7 7-7-7" />
-                      </svg>
-                    ) : (
-                      <span className="text-xs">
-                        {amountSortAsc ? "▲" : "▼"}
-                      </span>
-                    )}
-                  </button>
+                  Transaction Type
                 </TableHead>
-                <TableHead className="text-center flex-1">
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1 hover:underline w-full justify-center"
-                    onClick={() => {
-                      setAmountPaidSortAsc((prev) =>
-                        prev === null ? true : !prev,
-                      );
-                      setNameSortAsc(null);
-                      setStatusSortAsc(null);
-                      setAmountSortAsc(null);
-                    }}
-                    title="Toggle sort by Amount Paid"
-                  >
-                    Amount Paid
-                    {amountPaidSortAsc === null ? (
-                      <svg
-                        className="h-3 w-3 opacity-60"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M12 5v14M19 12l-7 7-7-7" />
-                      </svg>
-                    ) : (
-                      <span className="text-xs">
-                        {amountPaidSortAsc ? "▲" : "▼"}
-                      </span>
-                    )}
-                  </button>
-                </TableHead>
+                <TableHead className="text-center flex-1">Flow</TableHead>
                 <TableHead className="text-center flex-1">
                   <button
                     type="button"
@@ -601,12 +704,10 @@ export default function FinancialTransactionsPage() {
                         prev === null ? true : !prev,
                       );
                       setNameSortAsc(null);
-                      setAmountSortAsc(null);
-                      setAmountPaidSortAsc(null);
                     }}
-                    title="Toggle sort by Status"
+                    title="Toggle sort by payment status"
                   >
-                    Status
+                    Payment
                     {statusSortAsc === null ? (
                       <svg
                         className="h-3 w-3 opacity-60"
@@ -645,20 +746,6 @@ export default function FinancialTransactionsPage() {
                     return statusSortAsc
                       ? aStatus.localeCompare(bStatus)
                       : bStatus.localeCompare(aStatus);
-                  }
-                  if (amountSortAsc !== null) {
-                    const aAmount = a.amount || 0;
-                    const bAmount = b.amount || 0;
-                    return amountSortAsc
-                      ? aAmount - bAmount
-                      : bAmount - aAmount;
-                  }
-                  if (amountPaidSortAsc !== null) {
-                    const aAmountPaid = a.amount_paid || 0;
-                    const bAmountPaid = b.amount_paid || 0;
-                    return amountPaidSortAsc
-                      ? aAmountPaid - bAmountPaid
-                      : bAmountPaid - aAmountPaid;
                   }
                   return 0;
                 })
@@ -718,33 +805,152 @@ export default function FinancialTransactionsPage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
-                        {tx.name || "N/A"}
+                        <div className="space-y-1">
+                          <p>{tx.name || "N/A"}</p>
+                          {typeof tx.user_id === "string" && tx.user_id.trim() && (
+                            <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground font-mono">
+                              <span title={tx.user_id}>
+                                User ID: {tx.user_id.slice(0, 8)}...
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigator.clipboard.writeText(tx.user_id);
+                                }}
+                                title="Copy full User ID"
+                                className="hover:text-foreground transition cursor-pointer"
+                              >
+                                <Copy className="h-3 w-3" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </TableCell>
-                      <TableCell className="text-center">{tx.type}</TableCell>
                       <TableCell className="text-center">
-                        {tx.amount != null
-                          ? formatAmount(tx.amount, club?.currency)
-                          : "N/A"}
+                        <div className="space-y-1">
+                          <Badge
+                            variant="outline"
+                            className={getTransactionTypeBadgeClassName()}
+                          >
+                            {tx.type || "-"}
+                          </Badge>
+                          {tx.type === "REGISTRATION" &&
+                            typeof tx.registration_id === "string" &&
+                            tx.registration_id.trim() && (
+                              <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground font-mono">
+                                <span title={tx.registration_id}>
+                                  Reg. ID: {tx.registration_id.slice(0, 8)}...
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigator.clipboard.writeText(
+                                      tx.registration_id,
+                                    );
+                                  }}
+                                  title="Copy full Registration ID"
+                                  className="hover:text-foreground transition cursor-pointer"
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </button>
+                              </div>
+                            )}
+                          {tx.type === "EVENT REGISTRATION" &&
+                            typeof tx.event_registration_id === "string" &&
+                            tx.event_registration_id.trim() && (
+                              <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground font-mono">
+                                <span title={tx.event_registration_id}>
+                                  Event Reg. ID: {tx.event_registration_id.slice(0, 8)}...
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigator.clipboard.writeText(
+                                      tx.event_registration_id,
+                                    );
+                                  }}
+                                  title="Copy full Event Registration ID"
+                                  className="hover:text-foreground transition cursor-pointer"
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </button>
+                              </div>
+                            )}
+                          {tx.type === "ORDER" &&
+                            typeof tx.order_id === "string" &&
+                            tx.order_id.trim() && (
+                              <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground font-mono">
+                                <span title={tx.order_id}>
+                                  Order ID: {tx.order_id.slice(0, 8)}...
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigator.clipboard.writeText(tx.order_id);
+                                  }}
+                                  title="Copy full Order ID"
+                                  className="hover:text-foreground transition cursor-pointer"
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </button>
+                              </div>
+                            )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-center">
-                        {tx.amount_paid != null
-                          ? formatAmount(tx.amount_paid, club?.currency)
-                          : "N/A"}
+                        {(() => {
+                          const TransactionTypeIcon = getTransactionTypeIcon(tx);
+
+                          return (
+                            <Badge
+                              variant="outline"
+                              className={getTransactionFlowBadgeClassName(tx)}
+                            >
+                              <span className="inline-flex items-center gap-1">
+                                {TransactionTypeIcon && (
+                                  <TransactionTypeIcon className="h-3.5 w-3.5" />
+                                )}
+                                {getTransactionFlowLabel(tx)}
+                              </span>
+                            </Badge>
+                          );
+                        })()}
                       </TableCell>
-                      <TableCell
-                        className={`text-center font-bold ${
-                          tx.status === "PENDING"
-                            ? "text-blue-700"
-                            : tx.status === "PARTIALLY_PAID"
-                              ? "text-orange-600"
-                              : tx.status === "REFUND"
-                                ? "text-purple-700"
-                                : tx.status === "CANCELLED"
-                                  ? "text-red-700"
-                                  : "text-green-700"
-                        }`}
-                      >
-                        {tx.status}
+                      <TableCell className="text-center">
+                        <div className="space-y-1">
+                          <p
+                            className={`font-bold ${getTransactionPaymentClassName(
+                              tx.status || "",
+                            )}`}
+                          >
+                            {getTransactionPaymentLabel(tx.status || "")}
+                          </p>
+                          {shouldShowTransactionPaymentProgress(tx) && (
+                            <p className="text-xs text-muted-foreground">
+                              {formatAmount(
+                                tx.amount_paid || 0,
+                                club?.currency || "ZAR",
+                              )}{" "}
+                              of{" "}
+                              {formatAmount(
+                                tx.amount || 0,
+                                club?.currency || "ZAR",
+                              )}
+                            </p>
+                          )}
+                          {shouldShowSingleTransactionAmount(tx) && (
+                            <p className="text-xs text-muted-foreground">
+                              {formatAmount(
+                                tx.amount || 0,
+                                club?.currency || "ZAR",
+                              )}
+                            </p>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
 
@@ -813,33 +1019,28 @@ export default function FinancialTransactionsPage() {
                                         {entry.description}
                                       </TableCell>
                                       <TableCell
-                                        className={`text-center ${
-                                          entry.type === "SUBMISSION"
-                                            ? "text-black-700"
-                                            : entry.type === "CANCELLATION"
-                                              ? "text-red-700"
-                                              : entry.type === "REFUND"
-                                                ? "text-red-700"
-                                                : "text-green-700"
-                                        }`}
+                                        className={`text-center ${getLifecycleAmountClassName(
+                                          tx,
+                                          entry.type,
+                                        )}`}
                                       >
-                                        {entry.type === "SUBMISSION"
-                                          ? ""
-                                          : entry.type === "REFUND"
-                                            ? "-"
-                                            : entry.type === "CANCELLATION"
-                                              ? "N/A"
-                                              : "+"}
+                                        {getLifecycleAmountPrefix(tx, entry.type)}
                                         {entry.type !== "CANCELLATION" &&
                                           formatAmount(
-                                            entry.type === "REFUND"
+                                            entry.type === "REFUND" ||
+                                              isExpenseTransaction(tx)
                                               ? Math.abs(entry.amount)
                                               : entry.amount,
                                             club?.currency || "",
                                           )}
                                       </TableCell>
                                       <TableCell className="text-center">
-                                        {entry.payment_type || "N/A"}
+                                        {typeof entry.payment_type === "string" &&
+                                        entry.payment_type.trim() &&
+                                        entry.payment_type.trim().toUpperCase() !==
+                                          "N/A"
+                                          ? entry.payment_type
+                                          : "-"}
                                       </TableCell>
                                     </TableRow>
                                   ))}

@@ -11,6 +11,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   CalendarDays,
   AlertCircle,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock3,
@@ -34,6 +35,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -88,6 +94,20 @@ type EventPricing = {
   options: EventPricingOption[];
 };
 
+type EventRegistrationSettings = {
+  autoConfirmIfPaid: boolean;
+  registrationTags: EventRegistrationTag[];
+};
+
+type EventRegistrationTag = {
+  id: string;
+  label: string;
+};
+
+type EventRegistrationTagDraft = {
+  label: string;
+};
+
 type EventItem = {
   id: string;
   eventId?: string;
@@ -100,6 +120,7 @@ type EventItem = {
   colorClass: string;
   formFields: EventFormField[];
   pricing: EventPricing;
+  registrationSettings: EventRegistrationSettings;
   previewFieldOrder: string[];
 };
 
@@ -303,6 +324,19 @@ function getDefaultPricingDraft(): EventPricingDraft {
   };
 }
 
+function getDefaultRegistrationSettings(): EventRegistrationSettings {
+  return {
+    autoConfirmIfPaid: true,
+    registrationTags: [],
+  };
+}
+
+function getDefaultRegistrationTagDraft(): EventRegistrationTagDraft {
+  return {
+    label: "",
+  };
+}
+
 function getFieldConfig(variant: EventFieldVariant) {
   return (
     FIELD_TYPE_OPTIONS.find((option) => option.value === variant) ??
@@ -387,6 +421,110 @@ function sanitizePricing(
   };
 }
 
+function sanitizeRegistrationTags(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((entry, index) => {
+      if (typeof entry === "string") {
+        const label = entry.trim();
+
+        if (!label) {
+          return null;
+        }
+
+        return {
+          id: `registration-tag-${index}-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+          label,
+        } satisfies EventRegistrationTag;
+      }
+
+      if (!entry || typeof entry !== "object") {
+        return null;
+      }
+
+      const record = entry as Record<string, unknown>;
+      const label = String(record.label || record.name || record.key || "").trim();
+      const id = String(record.id || record.key || label).trim();
+
+      if (!label || !id) {
+        return null;
+      }
+
+      return {
+        id,
+        label,
+      } satisfies EventRegistrationTag;
+    })
+    .filter(
+      (entry, index, entries): entry is EventRegistrationTag =>
+        Boolean(entry) && entries.findIndex((candidate) => candidate?.id === entry?.id) === index,
+    );
+}
+
+function getRegistrationSettingsSource(value: unknown) {
+  if (!value || typeof value !== "object") {
+    return {} as Record<string, unknown>;
+  }
+
+  const record = value as Record<string, unknown>;
+  const nestedCandidates = [
+    record.eventRegistration,
+    record.event_registration,
+    record.registrationSettings,
+    record.registration_settings,
+    record.registration,
+  ];
+
+  for (const candidate of nestedCandidates) {
+    if (typeof candidate === "object" && candidate !== null) {
+      return candidate as Record<string, unknown>;
+    }
+  }
+
+  return record;
+}
+
+function sanitizeEventRegistrationSettings(
+  rawValue: unknown,
+): EventRegistrationSettings {
+  const source = getRegistrationSettingsSource(rawValue);
+  const registrationTags = sanitizeRegistrationTags(
+    source.registrationTags ??
+      source.registration_tags ??
+      source.registrationTagKeys ??
+      source.registration_tag_keys ??
+      source.tagKeys ??
+      source.tags,
+  );
+  const autoConfirmValue =
+    source.autoConfirmIfPaid ??
+    source.auto_confirm_if_paid ??
+    source.auto_confirm_registration_if_paid;
+
+  return {
+    autoConfirmIfPaid:
+      registrationTags.length > 0
+        ? false
+        : typeof autoConfirmValue === "boolean"
+          ? autoConfirmValue
+          : true,
+    registrationTags,
+  };
+}
+
+function createRegistrationTagId(label: string) {
+  const normalizedLabel = label
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return `registration-tag-${normalizedLabel || Date.now()}`;
+}
+
 function sanitizeRegistrationDate(value: unknown, fallback: string) {
   if (typeof value === "number" && Number.isFinite(value)) {
     return epochToDateKey(value);
@@ -397,6 +535,33 @@ function sanitizeRegistrationDate(value: unknown, fallback: string) {
 
 function sanitizeEventIdentifier(value: unknown, fallback: string) {
   return typeof value === "string" && value.trim() ? value : fallback;
+}
+
+function getResponseEventIdentifier(response: unknown) {
+  if (!response || typeof response !== "object") {
+    return undefined;
+  }
+
+  const record = response as {
+    event_id?: unknown;
+    eventId?: unknown;
+    data?: {
+      event_id?: unknown;
+      eventId?: unknown;
+    };
+  };
+
+  const possibleValues = [
+    record.event_id,
+    record.eventId,
+    record.data?.event_id,
+    record.data?.eventId,
+  ];
+
+  return possibleValues.find(
+    (value): value is string =>
+      typeof value === "string" && value.trim().length > 0,
+  );
 }
 
 function sanitizeEventText(value: unknown, fallback = "") {
@@ -512,10 +677,12 @@ function buildEventRequestPayload(params: {
   registrationCloseDate: string;
   formFields: EventFormField[];
   pricing: EventPricing;
+  registrationSettings: EventRegistrationSettings;
   previewFieldOrder: string[];
 }) {
   return {
     club_account_id: params.clubAccountId,
+    id: params.eventId,
     event_id: params.eventId,
     title: sanitizeEventText(params.title).trim(),
     description: sanitizeEventText(params.description).trim(),
@@ -525,6 +692,20 @@ function buildEventRequestPayload(params: {
     registrationCloseDate: dateKeyToEpoch(params.registrationCloseDate),
     formFields: params.formFields,
     pricing: params.pricing,
+    eventRegistration: {
+      autoConfirmIfPaid:
+        params.registrationSettings.registrationTags.length > 0
+          ? false
+          : params.registrationSettings.autoConfirmIfPaid,
+      ...(params.registrationSettings.registrationTags.length > 0
+        ? {
+            registrationTags:
+              params.registrationSettings.registrationTags.map((tag) => ({
+                label: tag.label,
+              })),
+          }
+        : {}),
+    },
     previewFieldOrder: params.previewFieldOrder,
   };
 }
@@ -584,6 +765,7 @@ function sanitizeLoadedEvents(events: EventItem[]) {
       const pricing = sanitizePricing(event.pricing);
       const startDate = sanitizeRegistrationDate(event.startDate, todayKey);
       const endDate = sanitizeRegistrationDate(event.endDate, startDate);
+      const registrationSettings = sanitizeEventRegistrationSettings(event);
 
       return {
         ...event,
@@ -592,7 +774,8 @@ function sanitizeLoadedEvents(events: EventItem[]) {
           `${event.title ?? "event"}-${Date.now()}`,
         ),
         eventId: sanitizeEventIdentifier(
-          (event as { event_id?: unknown }).event_id,
+          (event as { event_id?: unknown; eventId?: unknown }).event_id ??
+            (event as { event_id?: unknown; eventId?: unknown }).eventId,
           event.id,
         ),
         title: sanitizeEventText(event.title),
@@ -610,6 +793,7 @@ function sanitizeLoadedEvents(events: EventItem[]) {
         colorClass: EVENT_COLORS[0],
         formFields,
         pricing,
+        registrationSettings,
         previewFieldOrder: sanitizePreviewFieldOrder(
           event.previewFieldOrder,
           formFields,
@@ -665,9 +849,18 @@ export default function EventsPage() {
   );
   const [pricing, setPricing] =
     React.useState<EventPricing>(getDefaultPricing());
+  const [registrationSettings, setRegistrationSettings] =
+    React.useState<EventRegistrationSettings>(getDefaultRegistrationSettings());
+  const [registrationTagDraft, setRegistrationTagDraft] =
+    React.useState<EventRegistrationTagDraft>(getDefaultRegistrationTagDraft());
   const [pricingDraft, setPricingDraft] = React.useState<EventPricingDraft>(
     getDefaultPricingDraft(),
   );
+  const [isPricingSectionOpen, setIsPricingSectionOpen] = React.useState(true);
+  const [isRegistrationSectionOpen, setIsRegistrationSectionOpen] =
+    React.useState(false);
+  const [isRegistrationFormSectionOpen, setIsRegistrationFormSectionOpen] =
+    React.useState(false);
   const [isTogglingEvents, setIsTogglingEvents] = React.useState(false);
   const [isSavingPreviewOrder, setIsSavingPreviewOrder] = React.useState(false);
   const [isSavingEvent, setIsSavingEvent] = React.useState(false);
@@ -800,8 +993,13 @@ export default function EventsPage() {
       setEventFormFields([]);
       setFieldDraft(getDefaultFieldDraft());
       setPricing(getDefaultPricing());
+      setRegistrationSettings(getDefaultRegistrationSettings());
+      setRegistrationTagDraft(getDefaultRegistrationTagDraft());
       setPricingDraft(getDefaultPricingDraft());
       setPreviewFieldOrder([]);
+      setIsPricingSectionOpen(true);
+      setIsRegistrationSectionOpen(false);
+      setIsRegistrationFormSectionOpen(false);
       setIsEditorOpen(true);
     },
     [selectedDate],
@@ -824,8 +1022,15 @@ export default function EventsPage() {
     setEventFormFields(event.formFields);
     setFieldDraft(getDefaultFieldDraft());
     setPricing(sanitizePricing(event.pricing));
+    setRegistrationSettings(
+      sanitizeEventRegistrationSettings(event.registrationSettings),
+    );
+    setRegistrationTagDraft(getDefaultRegistrationTagDraft());
     setPricingDraft(getDefaultPricingDraft());
     setPreviewFieldOrder(event.previewFieldOrder);
+    setIsPricingSectionOpen(true);
+    setIsRegistrationSectionOpen(false);
+    setIsRegistrationFormSectionOpen(false);
     setIsEditorOpen(true);
   }, []);
 
@@ -860,6 +1065,8 @@ export default function EventsPage() {
       setEditingFieldId(null);
       setFormError("");
       setFieldDraft(getDefaultFieldDraft());
+      setRegistrationSettings(getDefaultRegistrationSettings());
+      setRegistrationTagDraft(getDefaultRegistrationTagDraft());
       setPricingDraft(getDefaultPricingDraft());
       setIsPreviewOpen(false);
       setPreviewEventId(null);
@@ -868,6 +1075,9 @@ export default function EventsPage() {
       setPreviewFieldOrder([]);
       setPreviewFieldErrors({});
       setPreviewError("");
+      setIsPricingSectionOpen(true);
+      setIsRegistrationSectionOpen(false);
+      setIsRegistrationFormSectionOpen(false);
     }
   }, []);
 
@@ -997,6 +1207,50 @@ export default function EventsPage() {
     }));
   };
 
+  const handleAddRegistrationTag = () => {
+    const label = registrationTagDraft.label.trim();
+
+    if (!label) {
+      setFormError("Each registration tag needs a label.");
+      return;
+    }
+
+    setRegistrationSettings((current) => {
+      const nextTagId = createRegistrationTagId(label);
+
+      if (current.registrationTags.some((tag) => tag.id === nextTagId)) {
+        return current;
+      }
+
+      return {
+        autoConfirmIfPaid: false,
+        registrationTags: [
+          ...current.registrationTags,
+          {
+            id: nextTagId,
+            label,
+          },
+        ],
+      };
+    });
+    setRegistrationTagDraft(getDefaultRegistrationTagDraft());
+    setFormError("");
+  };
+
+  const handleRemoveRegistrationTag = (tagId: string) => {
+    setRegistrationSettings((current) => {
+      const nextRegistrationTags = current.registrationTags.filter(
+        (tag) => tag.id !== tagId,
+      );
+
+      return {
+        autoConfirmIfPaid:
+          nextRegistrationTags.length > 0 ? false : current.autoConfirmIfPaid,
+        registrationTags: nextRegistrationTags,
+      };
+    });
+  };
+
   const handleSaveEvent = async () => {
     const title = sanitizeEventText(formState.title).trim();
     const description = sanitizeEventText(formState.description).trim();
@@ -1069,6 +1323,9 @@ export default function EventsPage() {
       return;
     }
 
+    const sanitizedRegistrationSettings =
+      sanitizeEventRegistrationSettings(registrationSettings);
+
     const sanitizedPreviewFieldOrder = sanitizePreviewFieldOrder(
       editingEvent?.previewFieldOrder,
       eventFormFields,
@@ -1086,12 +1343,16 @@ export default function EventsPage() {
       registrationCloseDate: formState.registrationCloseDate,
       formFields: eventFormFields,
       pricing,
+      registrationSettings: sanitizedRegistrationSettings,
       previewFieldOrder: sanitizedPreviewFieldOrder,
     });
 
+    let savedEventId = editingEvent?.eventId;
+
     try {
       setIsSavingEvent(true);
-      await createOrUpdateEvents(eventRequestPayload);
+      const response = await createOrUpdateEvents(eventRequestPayload);
+      savedEventId = getResponseEventIdentifier(response) ?? savedEventId;
     } catch (error) {
       const message = getApiErrorMessage(
         error,
@@ -1112,9 +1373,10 @@ export default function EventsPage() {
 
     const nextEvent: EventItem = {
       id:
+        savedEventId ??
         editingEventId ??
         `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`,
-      eventId: editingEvent?.eventId,
+      eventId: savedEventId,
       title,
       description,
       startDate: formState.startDate,
@@ -1124,6 +1386,7 @@ export default function EventsPage() {
       colorClass: EVENT_COLORS[0],
       formFields: eventFormFields,
       pricing,
+      registrationSettings: sanitizedRegistrationSettings,
       previewFieldOrder: sanitizedPreviewFieldOrder,
     };
 
@@ -1364,6 +1627,7 @@ export default function EventsPage() {
       registrationCloseDate: previewEvent.registrationCloseDate,
       formFields: previewEvent.formFields,
       pricing: previewEvent.pricing,
+      registrationSettings: previewEvent.registrationSettings,
       previewFieldOrder: nextOrder,
     });
 
@@ -1728,12 +1992,7 @@ export default function EventsPage() {
                     </div>
 
                     <div className="space-y-4 pt-2">
-                      {!hasPreviewFormFields ? (
-                        <div className="rounded-lg bg-muted/20 p-4 text-sm text-muted-foreground">
-                          This event does not currently have any registration
-                          form fields.
-                        </div>
-                      ) : (
+                      {!hasPreviewFormFields ? null : (
                         <DndContext
                           collisionDetection={closestCenter}
                           onDragEnd={handlePreviewDragEnd}
@@ -2210,399 +2469,568 @@ export default function EventsPage() {
                         />
                       </div>
 
-                      <div className="rounded-xl border border-dashed p-4">
-                        <div className="mb-4 flex items-start justify-between gap-4">
-                          <div>
-                            <h3 className="font-semibold">Event Pricing</h3>
-                            <p className="text-sm text-muted-foreground">
-                              Set whether the event is free, fixed-fee,
-                              category-based, or additive across divisions.
-                            </p>
-                          </div>
-                          <Badge variant="outline">
-                            {getPricingSummary(pricing)}
-                          </Badge>
-                        </div>
-
-                        <div className="grid gap-3">
-                          <div className="grid gap-2">
-                            <Label>Pricing model</Label>
-                            <Select
-                              value={pricing.type}
-                              onValueChange={(value) => {
-                                const nextType = value as EventPricingType;
-                                setPricing({
-                                  type: nextType,
-                                  fieldName:
-                                    nextType === "MULTIPLE" ||
-                                    nextType === "ADDITIONAL"
-                                      ? pricing.fieldName
-                                      : "",
-                                  options: [],
-                                });
-                                setPricingDraft(getDefaultPricingDraft());
-                              }}
+                      <Collapsible
+                        open={isPricingSectionOpen}
+                        onOpenChange={setIsPricingSectionOpen}
+                      >
+                        <div className="rounded-xl border border-dashed">
+                          <CollapsibleTrigger asChild>
+                            <button
+                              type="button"
+                              className="flex w-full items-start justify-between gap-4 p-4 text-left"
                             >
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select pricing model" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {PRICING_TYPE_OPTIONS.map((option) => (
-                                  <SelectItem
-                                    key={option.value}
-                                    value={option.value}
-                                  >
-                                    {option.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <p className="text-xs text-muted-foreground">
-                              {
-                                PRICING_TYPE_OPTIONS.find(
-                                  (option) => option.value === pricing.type,
-                                )?.description
-                              }
-                            </p>
-                          </div>
-
-                          {(pricing.type === "MULTIPLE" ||
-                            pricing.type === "ADDITIONAL") && (
-                            <div className="grid gap-2">
-                              <Label>Pricing field name</Label>
-                              <Input
-                                value={pricing.fieldName}
-                                onChange={(event) =>
-                                  setPricing((current) => ({
-                                    ...current,
-                                    fieldName: event.target.value,
-                                  }))
-                                }
-                                placeholder={
-                                  pricing.type === "MULTIPLE"
-                                    ? "Entry category"
-                                    : "Divisions"
-                                }
-                              />
-                            </div>
-                          )}
-
-                          {pricing.type !== "FREE" && (
-                            <>
-                              {pricing.options.length > 0 && (
-                                <div className="space-y-2">
-                                  {pricing.options.map((option) => (
-                                    <div
-                                      key={option.id}
-                                      className="flex items-center justify-between gap-3 rounded-lg border p-3"
-                                    >
-                                      <div>
-                                        <p className="font-medium">
-                                          {option.label}
-                                        </p>
-                                        <p className="text-sm text-muted-foreground">
-                                          {formatCurrency(option.amount)}
-                                        </p>
-                                      </div>
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() =>
-                                          handleRemovePricingOption(option.id)
-                                        }
+                              <div>
+                                <h3 className="font-semibold">Event Pricing</h3>
+                                <p className="text-sm text-muted-foreground">
+                                  Set whether the event is free, fixed-fee,
+                                  category-based, or additive across divisions.
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <Badge variant="outline">
+                                  {getPricingSummary(pricing)}
+                                </Badge>
+                                <ChevronDown
+                                  className={cn(
+                                    "h-4 w-4 text-muted-foreground transition-transform",
+                                    isPricingSectionOpen && "rotate-180",
+                                  )}
+                                />
+                              </div>
+                            </button>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="border-t px-4 pb-4">
+                            <div className="grid gap-3 pt-4">
+                              <div className="grid gap-2">
+                                <Label>Pricing model</Label>
+                                <Select
+                                  value={pricing.type}
+                                  onValueChange={(value) => {
+                                    const nextType = value as EventPricingType;
+                                    setPricing({
+                                      type: nextType,
+                                      fieldName:
+                                        nextType === "MULTIPLE" ||
+                                        nextType === "ADDITIONAL"
+                                          ? pricing.fieldName
+                                          : "",
+                                      options: [],
+                                    });
+                                    setPricingDraft(getDefaultPricingDraft());
+                                  }}
+                                >
+                                  <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Select pricing model" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {PRICING_TYPE_OPTIONS.map((option) => (
+                                      <SelectItem
+                                        key={option.value}
+                                        value={option.value}
                                       >
-                                        <Trash2 className="h-4 w-4 text-muted-foreground" />
-                                      </Button>
-                                    </div>
-                                  ))}
+                                        {option.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <p className="text-xs text-muted-foreground">
+                                  {
+                                    PRICING_TYPE_OPTIONS.find(
+                                      (option) => option.value === pricing.type,
+                                    )?.description
+                                  }
+                                </p>
+                              </div>
+
+                              {(pricing.type === "MULTIPLE" ||
+                                pricing.type === "ADDITIONAL") && (
+                                <div className="grid gap-2">
+                                  <Label>Pricing field name</Label>
+                                  <Input
+                                    value={pricing.fieldName}
+                                    onChange={(event) =>
+                                      setPricing((current) => ({
+                                        ...current,
+                                        fieldName: event.target.value,
+                                      }))
+                                    }
+                                    placeholder={
+                                      pricing.type === "MULTIPLE"
+                                        ? "Entry category"
+                                        : "Divisions"
+                                    }
+                                  />
                                 </div>
                               )}
 
-                              <div
-                                className={cn(
-                                  "grid gap-3 rounded-lg border bg-muted/20 p-3 md:items-end",
-                                  pricing.type === "SINGLE"
-                                    ? "md:grid-cols-[minmax(0,1fr)_auto]"
-                                    : "md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto]",
-                                )}
-                              >
-                                {pricing.type !== "SINGLE" && (
+                              {pricing.type !== "FREE" && (
+                                <>
+                                  {pricing.options.length > 0 && (
+                                    <div className="space-y-2">
+                                      {pricing.options.map((option) => (
+                                        <div
+                                          key={option.id}
+                                          className="flex items-center justify-between gap-3 rounded-lg border p-3"
+                                        >
+                                          <div>
+                                            <p className="font-medium">
+                                              {option.label}
+                                            </p>
+                                            <p className="text-sm text-muted-foreground">
+                                              {formatCurrency(option.amount)}
+                                            </p>
+                                          </div>
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() =>
+                                              handleRemovePricingOption(option.id)
+                                            }
+                                          >
+                                            <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                          </Button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+
+                                  <div
+                                    className={cn(
+                                      "grid gap-3 rounded-lg border bg-muted/20 p-3 md:items-end",
+                                      pricing.type === "SINGLE"
+                                        ? "md:grid-cols-[minmax(0,1fr)_auto]"
+                                        : "md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto]",
+                                    )}
+                                  >
+                                    {pricing.type !== "SINGLE" && (
+                                      <div className="grid gap-2">
+                                        <Label>
+                                          {pricing.type === "MULTIPLE"
+                                            ? "Option label"
+                                            : "Add-on label"}
+                                        </Label>
+                                        <Input
+                                          value={pricingDraft.label}
+                                          onChange={(event) =>
+                                            setPricingDraft((current) => ({
+                                              ...current,
+                                              label: event.target.value,
+                                            }))
+                                          }
+                                          placeholder={
+                                            pricing.type === "MULTIPLE"
+                                              ? "Junior Division"
+                                              : "Equipment Rental"
+                                          }
+                                        />
+                                      </div>
+                                    )}
+                                    <div className="grid gap-2">
+                                      <Label>Amount (R)</Label>
+                                      <Input
+                                        type="text"
+                                        inputMode="numeric"
+                                        value={formatAmount(
+                                          Number(pricingDraft.amount || 0),
+                                          club?.currency || "ZAR",
+                                        )}
+                                        onChange={(event) => {
+                                          const cleaned = event.target.value.replace(
+                                            /[^\d]/g,
+                                            "",
+                                          );
+                                          setPricingDraft((current) => ({
+                                            ...current,
+                                            amount: cleaned,
+                                          }));
+                                        }}
+                                        placeholder={formatAmount(
+                                          0,
+                                          club?.currency || "ZAR",
+                                        )}
+                                      />
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      onClick={handleAddPricingOption}
+                                    >
+                                      {pricing.type === "SINGLE"
+                                        ? "Set Price"
+                                        : pricing.type === "MULTIPLE"
+                                          ? "Add Option"
+                                          : "Add Add-on"}
+                                    </Button>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </CollapsibleContent>
+                        </div>
+                      </Collapsible>
+
+                      <Collapsible
+                        open={isRegistrationSectionOpen}
+                        onOpenChange={setIsRegistrationSectionOpen}
+                      >
+                        <div className="rounded-xl border border-dashed">
+                          <CollapsibleTrigger asChild>
+                            <button
+                              type="button"
+                              className="flex w-full items-start justify-between gap-4 p-4 text-left"
+                            >
+                              <div>
+                                <h3 className="font-semibold">Event Registration</h3>
+                                <p className="text-sm text-muted-foreground">
+                                  Configure how paid registrations are confirmed
+                                  and which event registration tags must be captured during
+                                  registration.
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <Badge variant="outline">
+                                  {registrationSettings.registrationTags.length} tags
+                                </Badge>
+                                <ChevronDown
+                                  className={cn(
+                                    "h-4 w-4 text-muted-foreground transition-transform",
+                                    isRegistrationSectionOpen && "rotate-180",
+                                  )}
+                                />
+                              </div>
+                            </button>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="border-t px-4 pb-4">
+                            <div className="space-y-4 pt-4">
+                              <div className="flex items-start justify-between gap-4 rounded-lg border bg-muted/20 p-4">
+                                <div className="space-y-1">
+                                  <Label className="text-sm font-medium">
+                                    Automatically confirm registration if paid
+                                  </Label>
+                                  <p className="text-sm text-muted-foreground">
+                                    Paid entries will be treated as confirmed
+                                    without separate manual confirmation.
+                                  </p>
+                                  {registrationSettings.registrationTags.length > 0 && (
+                                    <p className="text-xs text-amber-700">
+                                      Auto-confirm is disabled while registration
+                                      tags are required.
+                                    </p>
+                                  )}
+                                </div>
+                                <Switch
+                                  checked={registrationSettings.autoConfirmIfPaid}
+                                  disabled={
+                                    registrationSettings.registrationTags.length > 0
+                                  }
+                                  onCheckedChange={(checked) =>
+                                    setRegistrationSettings((current) => ({
+                                      ...current,
+                                      autoConfirmIfPaid:
+                                        checked === true &&
+                                        current.registrationTags.length === 0,
+                                    }))
+                                  }
+                                />
+                              </div>
+
+                              <div className="space-y-3 rounded-lg border bg-muted/20 p-4">
+                                <div>
+                                  <Label className="text-sm font-medium">
+                                    Registration tags
+                                  </Label>
+                                  <p className="text-sm text-muted-foreground">
+                                    Add event-specific registration tags that
+                                    members must complete for this event. These
+                                    are separate from the club registration tags
+                                    used elsewhere.
+                                  </p>
+                                </div>
+
+                                {registrationSettings.registrationTags.length === 0 ? (
+                                  <div className="rounded-lg border border-dashed bg-background px-3 py-3 text-sm text-muted-foreground">
+                                    No event registration tags added yet.
+                                  </div>
+                                ) : (
                                   <div className="grid gap-2">
-                                    <Label>
-                                      {pricing.type === "MULTIPLE"
-                                        ? "Option label"
-                                        : "Add-on label"}
-                                    </Label>
-                                    <Input
-                                      value={pricingDraft.label}
-                                      onChange={(event) =>
-                                        setPricingDraft((current) => ({
-                                          ...current,
-                                          label: event.target.value,
-                                        }))
-                                      }
-                                      placeholder={
-                                        pricing.type === "MULTIPLE"
-                                          ? "Junior Division"
-                                          : "Equipment Rental"
-                                      }
-                                    />
+                                    {registrationSettings.registrationTags.map((tag) => (
+                                      <div
+                                        key={tag.id}
+                                        className="flex items-center justify-between gap-3 rounded-lg border bg-background px-3 py-3"
+                                      >
+                                        <p className="font-medium text-sm">
+                                          {tag.label}
+                                        </p>
+                                        <Button
+                                          type="button"
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => handleRemoveRegistrationTag(tag.id)}
+                                        >
+                                          <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                        </Button>
+                                      </div>
+                                    ))}
                                   </div>
                                 )}
+
+                                <div className="grid gap-3 rounded-lg border bg-background p-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                                  <div className="grid gap-2">
+                                    <Label>New registration tag</Label>
+                                    <Input
+                                      value={registrationTagDraft.label}
+                                      onChange={(event) =>
+                                        setRegistrationTagDraft({
+                                          label: event.target.value,
+                                        })
+                                      }
+                                      placeholder="Boat class"
+                                    />
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={handleAddRegistrationTag}
+                                  >
+                                    Add Tag
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </CollapsibleContent>
+                        </div>
+                      </Collapsible>
+
+                      <Collapsible
+                        open={isRegistrationFormSectionOpen}
+                        onOpenChange={setIsRegistrationFormSectionOpen}
+                      >
+                        <div className="rounded-xl border border-dashed">
+                          <CollapsibleTrigger asChild>
+                            <button
+                              type="button"
+                              className="flex w-full items-start justify-between gap-4 p-4 text-left"
+                            >
+                              <div>
+                                <h3 className="font-semibold">
+                                  Event Registration Form
+                                </h3>
+                                <p className="text-sm text-muted-foreground">
+                                  Build the form attendees must complete for this
+                                  event.
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <Badge variant="outline">
+                                  {eventFormFields.length} fields
+                                </Badge>
+                                <ChevronDown
+                                  className={cn(
+                                    "h-4 w-4 text-muted-foreground transition-transform",
+                                    isRegistrationFormSectionOpen && "rotate-180",
+                                  )}
+                                />
+                              </div>
+                            </button>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="border-t px-4 pb-4">
+                            <div className="space-y-3 pt-4">
+                              {eventFormFields.length === 0 && (
+                                <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+                                  Add text, dropdown, or checkbox fields for
+                                  attendees to complete.
+                                </div>
+                              )}
+
+                              {eventFormFields.map((field) => (
+                                <div
+                                  key={field.id}
+                                  className="flex items-start justify-between gap-3 rounded-lg border p-3"
+                                >
+                                  <div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <p className="font-medium">{field.label}</p>
+                                      <Badge
+                                        variant="outline"
+                                        className="capitalize"
+                                      >
+                                        {field.inputType.toLowerCase()}
+                                      </Badge>
+                                      {field.required && (
+                                        <Badge variant="secondary">Required</Badge>
+                                      )}
+                                    </div>
+                                    {field.placeholder && (
+                                      <p className="mt-1 text-sm text-muted-foreground">
+                                        Placeholder: {field.placeholder}
+                                      </p>
+                                    )}
+                                    {field.inputType === "DROPDOWN" &&
+                                      field.options.length > 0 && (
+                                        <p className="mt-1 text-sm text-muted-foreground">
+                                          Options: {field.options.join(", ")}
+                                        </p>
+                                      )}
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => handleEditFormField(field)}
+                                    >
+                                      <Pencil className="h-4 w-4 text-muted-foreground" />
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() =>
+                                        handleRemoveFormField(field.id)
+                                      }
+                                    >
+                                      <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="mt-4 grid gap-3 rounded-lg border bg-muted/20 p-3">
+                              <div className="grid gap-3 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
                                 <div className="grid gap-2">
-                                  <Label>Amount (R)</Label>
+                                  <Label>Field label</Label>
                                   <Input
-                                    type="text"
-                                    inputMode="numeric"
-                                    value={formatAmount(
-                                      Number(pricingDraft.amount || 0),
-                                      club?.currency || "ZAR",
-                                    )}
-                                    onChange={(event) => {
-                                      const cleaned =
-                                        event.target.value.replace(
-                                          /[^\d]/g,
-                                          "",
-                                        );
-                                      setPricingDraft((current) => ({
+                                    value={fieldDraft.label}
+                                    onChange={(event) =>
+                                      setFieldDraft((current) => ({
                                         ...current,
-                                        amount: cleaned,
-                                      }));
-                                    }}
-                                    placeholder={formatAmount(
-                                      0,
-                                      club?.currency || "ZAR",
-                                    )}
+                                        label: event.target.value,
+                                      }))
+                                    }
+                                    placeholder="Full name"
                                   />
                                 </div>
+                                <div className="grid gap-2">
+                                  <Label>Field type</Label>
+                                  <Select
+                                    value={fieldDraft.variant}
+                                    onValueChange={(value) =>
+                                      setFieldDraft((current) => ({
+                                        ...current,
+                                        variant: value as EventFieldVariant,
+                                        optionsText:
+                                          getFieldConfig(value as EventFieldVariant)
+                                            .inputType === "DROPDOWN"
+                                            ? current.optionsText
+                                            : "",
+                                      }))
+                                    }
+                                  >
+                                    <SelectTrigger className="w-full">
+                                      <SelectValue placeholder="Select field type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {FIELD_TYPE_OPTIONS.map((option) => (
+                                        <SelectItem
+                                          key={option.value}
+                                          value={option.value}
+                                        >
+                                          {option.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+
+                              <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                                <div className="grid gap-2">
+                                  <Label>
+                                    {getFieldConfig(fieldDraft.variant)
+                                      .inputType === "CHECKBOX"
+                                      ? "Checkbox text"
+                                      : "Placeholder or helper text"}
+                                  </Label>
+                                  <Input
+                                    value={fieldDraft.placeholder}
+                                    onChange={(event) =>
+                                      setFieldDraft((current) => ({
+                                        ...current,
+                                        placeholder: event.target.value,
+                                      }))
+                                    }
+                                    placeholder={
+                                      getFieldConfig(fieldDraft.variant)
+                                        .inputType === "CHECKBOX"
+                                        ? "I agree to the event rules"
+                                        : "Enter your full name"
+                                    }
+                                  />
+                                </div>
+                                <div className="flex items-center gap-2 rounded-lg border px-3 py-2">
+                                  <Checkbox
+                                    id="event-field-required"
+                                    checked={fieldDraft.required}
+                                    onCheckedChange={(checked) =>
+                                      setFieldDraft((current) => ({
+                                        ...current,
+                                        required: checked === true,
+                                      }))
+                                    }
+                                  />
+                                  <Label htmlFor="event-field-required">
+                                    Required
+                                  </Label>
+                                </div>
+                              </div>
+
+                              {getFieldConfig(fieldDraft.variant).inputType ===
+                                "DROPDOWN" && (
+                                <div className="grid gap-2">
+                                  <Label>Dropdown options</Label>
+                                  <Textarea
+                                    rows={4}
+                                    value={fieldDraft.optionsText}
+                                    onChange={(event) =>
+                                      setFieldDraft((current) => ({
+                                        ...current,
+                                        optionsText: event.target.value,
+                                      }))
+                                    }
+                                    placeholder={"Option 1\nOption 2\nOption 3"}
+                                  />
+                                  <p className="text-xs text-muted-foreground">
+                                    Enter one option per line.
+                                  </p>
+                                </div>
+                              )}
+
+                              <div className="flex flex-wrap gap-2">
                                 <Button
                                   type="button"
                                   variant="outline"
-                                  onClick={handleAddPricingOption}
+                                  onClick={handleAddFormField}
                                 >
-                                  {pricing.type === "SINGLE"
-                                    ? "Set Price"
-                                    : pricing.type === "MULTIPLE"
-                                      ? "Add Option"
-                                      : "Add Add-on"}
+                                  {editingFieldId
+                                    ? "Update Form Field"
+                                    : "Add Form Field"}
                                 </Button>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="rounded-xl border border-dashed p-4">
-                        <div className="mb-4 flex items-start justify-between gap-4">
-                          <div>
-                            <h3 className="font-semibold">
-                              Event Registration Form
-                            </h3>
-                            <p className="text-sm text-muted-foreground">
-                              Build the form attendees must complete for this
-                              event.
-                            </p>
-                          </div>
-                          <Badge variant="outline">
-                            {eventFormFields.length} fields
-                          </Badge>
-                        </div>
-
-                        <div className="space-y-3">
-                          {eventFormFields.length === 0 && (
-                            <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-                              Add text, dropdown, or checkbox fields for
-                              attendees to complete.
-                            </div>
-                          )}
-
-                          {eventFormFields.map((field) => (
-                            <div
-                              key={field.id}
-                              className="flex items-start justify-between gap-3 rounded-lg border p-3"
-                            >
-                              <div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <p className="font-medium">{field.label}</p>
-                                  <Badge
-                                    variant="outline"
-                                    className="capitalize"
+                                {editingFieldId && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={handleCancelFieldEdit}
                                   >
-                                    {field.inputType.toLowerCase()}
-                                  </Badge>
-                                  {field.required && (
-                                    <Badge variant="secondary">Required</Badge>
-                                  )}
-                                </div>
-                                {field.placeholder && (
-                                  <p className="mt-1 text-sm text-muted-foreground">
-                                    Placeholder: {field.placeholder}
-                                  </p>
+                                    Cancel Field Edit
+                                  </Button>
                                 )}
-                                {field.inputType === "DROPDOWN" &&
-                                  field.options.length > 0 && (
-                                    <p className="mt-1 text-sm text-muted-foreground">
-                                      Options: {field.options.join(", ")}
-                                    </p>
-                                  )}
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleEditFormField(field)}
-                                >
-                                  <Pencil className="h-4 w-4 text-muted-foreground" />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() =>
-                                    handleRemoveFormField(field.id)
-                                  }
-                                >
-                                  <Trash2 className="h-4 w-4 text-muted-foreground" />
-                                </Button>
                               </div>
                             </div>
-                          ))}
+                          </CollapsibleContent>
                         </div>
-
-                        <div className="mt-4 grid gap-3 rounded-lg border bg-muted/20 p-3">
-                          <div className="grid gap-3 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-                            <div className="grid gap-2">
-                              <Label>Field label</Label>
-                              <Input
-                                value={fieldDraft.label}
-                                onChange={(event) =>
-                                  setFieldDraft((current) => ({
-                                    ...current,
-                                    label: event.target.value,
-                                  }))
-                                }
-                                placeholder="Full name"
-                              />
-                            </div>
-                            <div className="grid gap-2">
-                              <Label>Field type</Label>
-                              <Select
-                                value={fieldDraft.variant}
-                                onValueChange={(value) =>
-                                  setFieldDraft((current) => ({
-                                    ...current,
-                                    variant: value as EventFieldVariant,
-                                    optionsText:
-                                      getFieldConfig(value as EventFieldVariant)
-                                        .inputType === "DROPDOWN"
-                                        ? current.optionsText
-                                        : "",
-                                  }))
-                                }
-                              >
-                                <SelectTrigger className="w-full">
-                                  <SelectValue placeholder="Select field type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {FIELD_TYPE_OPTIONS.map((option) => (
-                                    <SelectItem
-                                      key={option.value}
-                                      value={option.value}
-                                    >
-                                      {option.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-
-                          <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-                            <div className="grid gap-2">
-                              <Label>
-                                {getFieldConfig(fieldDraft.variant)
-                                  .inputType === "CHECKBOX"
-                                  ? "Checkbox text"
-                                  : "Placeholder or helper text"}
-                              </Label>
-                              <Input
-                                value={fieldDraft.placeholder}
-                                onChange={(event) =>
-                                  setFieldDraft((current) => ({
-                                    ...current,
-                                    placeholder: event.target.value,
-                                  }))
-                                }
-                                placeholder={
-                                  getFieldConfig(fieldDraft.variant)
-                                    .inputType === "CHECKBOX"
-                                    ? "I agree to the event rules"
-                                    : "Enter your full name"
-                                }
-                              />
-                            </div>
-                            <div className="flex items-center gap-2 rounded-lg border px-3 py-2">
-                              <Checkbox
-                                id="event-field-required"
-                                checked={fieldDraft.required}
-                                onCheckedChange={(checked) =>
-                                  setFieldDraft((current) => ({
-                                    ...current,
-                                    required: checked === true,
-                                  }))
-                                }
-                              />
-                              <Label htmlFor="event-field-required">
-                                Required
-                              </Label>
-                            </div>
-                          </div>
-
-                          {getFieldConfig(fieldDraft.variant).inputType ===
-                            "DROPDOWN" && (
-                            <div className="grid gap-2">
-                              <Label>Dropdown options</Label>
-                              <Textarea
-                                rows={4}
-                                value={fieldDraft.optionsText}
-                                onChange={(event) =>
-                                  setFieldDraft((current) => ({
-                                    ...current,
-                                    optionsText: event.target.value,
-                                  }))
-                                }
-                                placeholder={"Option 1\nOption 2\nOption 3"}
-                              />
-                              <p className="text-xs text-muted-foreground">
-                                Enter one option per line.
-                              </p>
-                            </div>
-                          )}
-
-                          <div className="flex flex-wrap gap-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={handleAddFormField}
-                            >
-                              {editingFieldId
-                                ? "Update Form Field"
-                                : "Add Form Field"}
-                            </Button>
-                            {editingFieldId && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                onClick={handleCancelFieldEdit}
-                              >
-                                Cancel Field Edit
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                      </Collapsible>
 
                       {formError && (
                         <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">

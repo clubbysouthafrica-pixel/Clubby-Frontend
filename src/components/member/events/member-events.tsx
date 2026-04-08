@@ -42,9 +42,15 @@ import {
 } from "@/components/member/events/event-utils";
 import { formatAmount } from "@/data/currencies";
 
-type RegistrationStatus = "Registered" | "Pending payment" | "Confirmed";
+type RegistrationStatus = "Pending Approval" | "Pending payment" | "Confirmed";
 
 type PaymentStatus = "Paid" | "Awaiting payment" | "Reserved";
+
+type MemberRegistrationTag = {
+  id: string;
+  label: string;
+  value: string;
+};
 
 type MemberEventRegistration = {
   id: string;
@@ -60,6 +66,7 @@ type MemberEventRegistration = {
   }>;
   selectedPricingOptionIds: string[];
   amountLabel: string;
+  registrationTags: MemberRegistrationTag[];
 };
 
 interface MemberEventsProps {
@@ -78,7 +85,9 @@ export default function MemberEvents({
 }: MemberEventsProps) {
   const navigate = useNavigate();
   const todayKey = useMemo(() => formatDateKey(new Date()), []);
-  const [activeTab, setActiveTab] = useState<"events" | "registrations">("events");
+  const [activeTab, setActiveTab] = useState<"events" | "registrations">(
+    "events",
+  );
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["member-events", clubAccountId],
@@ -107,10 +116,16 @@ export default function MemberEvents({
   }, [events, todayKey]);
 
   const registrations = useMemo(() => {
-    return sanitizeRegistrations(getRegistrationItems(registrationsData), events, currency);
+    return sanitizeRegistrations(
+      getRegistrationItems(registrationsData),
+      events,
+      currency,
+    );
   }, [currency, events, registrationsData]);
 
-  const [selectedRegistrationId, setSelectedRegistrationId] = useState<string | null>(null);
+  const [selectedRegistrationId, setSelectedRegistrationId] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     if (!registrations.length) {
@@ -150,8 +165,13 @@ export default function MemberEvents({
 
   const selectedRegistration = useMemo(() => {
     const fallbackRegistrationId = registrations[0]?.id ?? null;
-    const currentRegistrationId = selectedRegistrationId ?? fallbackRegistrationId;
-    return registrations.find((registration) => registration.id === currentRegistrationId) ?? null;
+    const currentRegistrationId =
+      selectedRegistrationId ?? fallbackRegistrationId;
+    return (
+      registrations.find(
+        (registration) => registration.id === currentRegistrationId,
+      ) ?? null
+    );
   }, [registrations, selectedRegistrationId]);
 
   const selectedRegisteredEvent = useMemo(() => {
@@ -174,7 +194,9 @@ export default function MemberEvents({
       isError={isError}
       isRegistrationsLoading={isRegistrationsLoading}
       isRegistrationsError={isRegistrationsError}
-      hasRequestedRegistrations={isRegistrationsLoading || registrationsData !== undefined}
+      hasRequestedRegistrations={
+        isRegistrationsLoading || registrationsData !== undefined
+      }
       allEvents={events}
       events={upcomingEvents}
       todayKey={todayKey}
@@ -233,8 +255,12 @@ function TabsSection({
   onSelectRegistration: (registrationId: string) => void;
   onPayRegistration?: (eventRegistrationId?: string) => void;
 }) {
-  const [copiedRegistrationKey, setCopiedRegistrationKey] = useState<string | null>(null);
-  const [registrationSearch, setRegistrationSearch] = useState(registrationSearchQuery);
+  const [copiedRegistrationKey, setCopiedRegistrationKey] = useState<
+    string | null
+  >(null);
+  const [registrationSearch, setRegistrationSearch] = useState(
+    registrationSearchQuery,
+  );
   const selectedFormCardRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -264,7 +290,11 @@ function TabsSection({
         registration.paymentStatus,
         registration.amountLabel,
         registration.submittedAt,
-      ].some((value) => String(value ?? "").toLowerCase().includes(query));
+      ].some((value) =>
+        String(value ?? "")
+          .toLowerCase()
+          .includes(query),
+      );
     });
   }, [allEvents, registrationSearch, registrations]);
 
@@ -272,7 +302,9 @@ function TabsSection({
     await navigator.clipboard.writeText(value);
     setCopiedRegistrationKey(key);
     window.setTimeout(() => {
-      setCopiedRegistrationKey((currentValue) => (currentValue === key ? null : currentValue));
+      setCopiedRegistrationKey((currentValue) =>
+        currentValue === key ? null : currentValue,
+      );
     }, 1500);
   };
 
@@ -322,7 +354,8 @@ function TabsSection({
               <div>
                 <CardTitle>Club Events</CardTitle>
                 <CardDescription>
-                  Browse upcoming events and review the registrations you have already submitted.
+                  Browse upcoming events and review the registrations you have
+                  already submitted.
                 </CardDescription>
               </div>
             </div>
@@ -332,7 +365,9 @@ function TabsSection({
                 <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
                   Upcoming
                 </p>
-                <p className="mt-1 text-2xl font-semibold text-foreground">{events.length}</p>
+                <p className="mt-1 text-2xl font-semibold text-foreground">
+                  {events.length}
+                </p>
               </div>
               <div className="rounded-2xl border bg-background/80 p-3 shadow-sm">
                 <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
@@ -373,7 +408,8 @@ function TabsSection({
                 const status = getRegistrationStatus(event, todayKey);
                 const canRegister = isRegistrationOpen(event, todayKey);
                 const registrationCount = registrations.filter(
-                  (registration) => registration.eventId === (event.eventId ?? event.id),
+                  (registration) =>
+                    registration.eventId === (event.eventId ?? event.id),
                 ).length;
 
                 return (
@@ -382,11 +418,14 @@ function TabsSection({
                       <div className="space-y-2">
                         {registrationCount > 0 && (
                           <div className="rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900">
-                            You have submitted {registrationCount} registration{registrationCount === 1 ? "" : "s"} for this event.
+                            You have submitted {registrationCount} registration
+                            {registrationCount === 1 ? "" : "s"} for this event.
                           </div>
                         )}
                         <div className="flex flex-wrap items-center gap-2">
-                          <CardTitle className="text-xl">{event.title}</CardTitle>
+                          <CardTitle className="text-xl">
+                            {event.title}
+                          </CardTitle>
                           <Badge variant="outline" className={status.className}>
                             {status.label}
                           </Badge>
@@ -417,7 +456,8 @@ function TabsSection({
                             Registration window
                           </div>
                           <p className="mt-2 text-sm text-muted-foreground">
-                            {event.registrationOpenDate && event.registrationCloseDate
+                            {event.registrationOpenDate &&
+                            event.registrationCloseDate
                               ? `${formatLongDate(event.registrationOpenDate)} to ${formatLongDate(event.registrationCloseDate)}`
                               : "To be confirmed"}
                           </p>
@@ -426,7 +466,10 @@ function TabsSection({
 
                       <div className="flex justify-end border-t pt-4">
                         {canRegister && (
-                          <Button type="button" onClick={() => onRegister(event)}>
+                          <Button
+                            type="button"
+                            onClick={() => onRegister(event)}
+                          >
                             Register
                           </Button>
                         )}
@@ -460,7 +503,8 @@ function TabsSection({
               <CardHeader>
                 <CardTitle>No Registrations Yet</CardTitle>
                 <CardDescription>
-                  Your submitted event forms and payment progress will appear here once you register.
+                  Your submitted event forms and payment progress will appear
+                  here once you register.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -479,7 +523,9 @@ function TabsSection({
                       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         value={registrationSearch}
-                        onChange={(event) => setRegistrationSearch(event.target.value)}
+                        onChange={(event) =>
+                          setRegistrationSearch(event.target.value)
+                        }
                         placeholder="Search by event, registration ID, status, payment, or amount"
                         className="pl-9"
                       />
@@ -488,257 +534,337 @@ function TabsSection({
                   <div
                     className={`${filteredRegistrations.length > 5 ? "max-h-96 overflow-y-auto" : "overflow-hidden"}`}
                   >
-                  <Table className="border-0">
-                    <TableHeader className="bg-gradient-to-r from-muted/50 to-muted/30 sticky top-0 z-10">
-                      <TableRow className="border-primary/10 hover:bg-transparent">
-                        <TableHead className="text-center flex-1 font-semibold">Event</TableHead>
-                        <TableHead className="text-center flex-1 font-semibold">Registration ID</TableHead>
-                        <TableHead className="text-center flex-1 font-semibold">Submitted</TableHead>
-                        <TableHead className="text-center flex-1 font-semibold">Amount</TableHead>
-                        <TableHead className="text-center flex-1 font-semibold">Payment</TableHead>
-                        <TableHead className="text-center flex-1 font-semibold">Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredRegistrations.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                            No registrations match your search.
-                          </TableCell>
+                    <Table className="border-0">
+                      <TableHeader className="bg-gradient-to-r from-muted/50 to-muted/30 sticky top-0 z-10">
+                        <TableRow className="border-primary/10 hover:bg-transparent">
+                          <TableHead className="text-center flex-1 font-semibold">
+                            Event
+                          </TableHead>
+                          <TableHead className="text-center flex-1 font-semibold">
+                            Registration ID
+                          </TableHead>
+                          <TableHead className="text-center flex-1 font-semibold">
+                            Submitted
+                          </TableHead>
+                          <TableHead className="text-center flex-1 font-semibold">
+                            Amount
+                          </TableHead>
+                          <TableHead className="text-center flex-1 font-semibold">
+                            Payment
+                          </TableHead>
+                          <TableHead className="text-center flex-1 font-semibold">
+                            Status
+                          </TableHead>
                         </TableRow>
-                      )}
-                      {filteredRegistrations.map((registration) => {
-                        const event = allEvents.find(
-                          (entry) => (entry.eventId ?? entry.id) === registration.eventId,
-                        );
-                        const isSelected = registration.id === selectedRegistration?.id;
-                        const requiresPayment =
-                          registration.paymentStatus === "Awaiting payment";
-
-                        return (
-                          <TableRow
-                            key={registration.id}
-                            data-state={isSelected ? "selected" : undefined}
-                            className="cursor-pointer hover:bg-primary/5 transition-colors border-primary/10 group"
-                            onClick={() => onSelectRegistration(registration.id)}
-                          >
-                            <TableCell className="text-center flex-1 py-4 font-medium">
-                              {event?.title || "Event registration"}
-                            </TableCell>
-                            <TableCell className="text-center flex-1 py-4">
-                              <div className="flex items-center justify-center gap-2">
-                                <span className="font-mono text-sm bg-muted/50 px-2 py-1 rounded">
-                                  {getShortRegistrationId(registration.eventRegistrationId)}
-                                </span>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    void handleCopyRegistrationId(
-                                      registration.eventRegistrationId,
-                                      `table-${registration.id}`,
-                                    );
-                                  }}
-                                  title="Copy Event Registration ID"
-                                  className="h-6 w-6 p-0"
-                                >
-                                  <Copy className="h-3 w-3" />
-                                </Button>
-                                {copiedRegistrationKey === `table-${registration.id}` && (
-                                  <span className="text-[11px] text-muted-foreground">Copied</span>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-center flex-1 py-4">
-                              {formatLongDate(registration.submittedAt)}
-                            </TableCell>
-                            <TableCell className="text-center flex-1 py-4 font-semibold">
-                              {registration.amountLabel}
-                            </TableCell>
-                            <TableCell className="text-center flex-1 py-4">
-                              <div className="flex flex-col items-center gap-2">
-                                <Badge
-                                  variant="outline"
-                                  className={getPaymentBadgeClassName(registration.paymentStatus)}
-                                >
-                                  {registration.paymentStatus}
-                                </Badge>
-                                {requiresPayment && onPayRegistration && (
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-6 px-2 text-xs text-red-600 underline"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      onPayRegistration(
-                                        registration.eventRegistrationId,
-                                      );
-                                    }}
-                                  >
-                                    Pay Now
-                                  </Button>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-center flex-1 py-4">
-                              <Badge
-                                variant="outline"
-                                className={getRegistrationBadgeClassName(registration.status)}
-                              >
-                                {registration.status}
-                              </Badge>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredRegistrations.length === 0 && (
+                          <TableRow>
+                            <TableCell
+                              colSpan={6}
+                              className="text-center py-8 text-muted-foreground"
+                            >
+                              No registrations match your search.
                             </TableCell>
                           </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
+                        )}
+                        {filteredRegistrations.map((registration) => {
+                          const event = allEvents.find(
+                            (entry) =>
+                              (entry.eventId ?? entry.id) ===
+                              registration.eventId,
+                          );
+                          const isSelected =
+                            registration.id === selectedRegistration?.id;
+                          const requiresPayment =
+                            registration.paymentStatus === "Awaiting payment";
+
+                          return (
+                            <TableRow
+                              key={registration.id}
+                              data-state={isSelected ? "selected" : undefined}
+                              className="cursor-pointer hover:bg-primary/5 transition-colors border-primary/10 group"
+                              onClick={() =>
+                                onSelectRegistration(registration.id)
+                              }
+                            >
+                              <TableCell className="text-center flex-1 py-4 font-medium">
+                                {event?.title || "Event registration"}
+                              </TableCell>
+                              <TableCell className="text-center flex-1 py-4">
+                                <div className="flex items-center justify-center gap-2">
+                                  <span className="font-mono text-sm bg-muted/50 px-2 py-1 rounded">
+                                    {getShortRegistrationId(
+                                      registration.eventRegistrationId,
+                                    )}
+                                  </span>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      void handleCopyRegistrationId(
+                                        registration.eventRegistrationId,
+                                        `table-${registration.id}`,
+                                      );
+                                    }}
+                                    title="Copy Event Registration ID"
+                                    className="h-6 w-6 p-0"
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                  {copiedRegistrationKey ===
+                                    `table-${registration.id}` && (
+                                    <span className="text-[11px] text-muted-foreground">
+                                      Copied
+                                    </span>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-center flex-1 py-4">
+                                {formatLongDate(registration.submittedAt)}
+                              </TableCell>
+                              <TableCell className="text-center flex-1 py-4 font-semibold">
+                                {registration.amountLabel}
+                              </TableCell>
+                              <TableCell className="text-center flex-1 py-4">
+                                <div className="flex flex-col items-center gap-2">
+                                  <Badge
+                                    variant="outline"
+                                    className={getPaymentBadgeClassName(
+                                      registration.paymentStatus,
+                                    )}
+                                  >
+                                    {registration.paymentStatus}
+                                  </Badge>
+                                  {requiresPayment && onPayRegistration && (
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-6 px-2 text-xs text-red-600 underline"
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        onPayRegistration(
+                                          registration.eventRegistrationId,
+                                        );
+                                      }}
+                                    >
+                                      Pay Now
+                                    </Button>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-center flex-1 py-4">
+                                <Badge
+                                  variant="outline"
+                                  className={getRegistrationBadgeClassName(
+                                    registration.status,
+                                  )}
+                                >
+                                  {registration.status}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
                   </div>
                 </CardContent>
               </Card>
 
               <div ref={selectedFormCardRef}>
                 <Card className="border-primary/20 bg-gradient-to-br from-background to-muted/40">
-                <CardHeader className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-                      <FileText className="h-5 w-5" />
+                  <CardHeader className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                        <FileText className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <CardTitle>Your Submitted Form</CardTitle>
+                        <CardDescription>
+                          Review the registration answers and payment details
+                          returned for your submission.
+                        </CardDescription>
+                      </div>
                     </div>
-                    <div>
-                      <CardTitle>Your Submitted Form</CardTitle>
-                      <CardDescription>
-                        Review the registration answers and payment details returned for your submission.
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-5">
-                  {selectedRegistration ? (
-                    <>
-                      <div className="rounded-2xl border bg-background/80 p-4 shadow-sm">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <p className="text-lg font-semibold text-foreground">
-                              {selectedRegisteredEvent?.title || "Event registration"}
-                            </p>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                              {selectedRegisteredEvent ? formatRangeLabel(selectedRegisteredEvent) : "Date to be confirmed"}
-                            </p>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
+                    {selectedRegistration ? (
+                      <>
+                        <div className="rounded-2xl border bg-background/80 p-4 shadow-sm">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <p className="text-lg font-semibold text-foreground">
+                                {selectedRegisteredEvent?.title ||
+                                  "Event registration"}
+                              </p>
+                              <p className="mt-1 text-sm text-muted-foreground">
+                                {selectedRegisteredEvent
+                                  ? formatRangeLabel(selectedRegisteredEvent)
+                                  : "Date to be confirmed"}
+                              </p>
+                            </div>
+                            <Badge
+                              variant="outline"
+                              className={getRegistrationBadgeClassName(
+                                selectedRegistration.status,
+                              )}
+                            >
+                              {selectedRegistration.status}
+                            </Badge>
                           </div>
-                          <Badge
-                            variant="outline"
-                            className={getRegistrationBadgeClassName(selectedRegistration.status)}
-                          >
-                            {selectedRegistration.status}
-                          </Badge>
-                        </div>
 
-                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                          <CopyableDetailItem
-                            label="Registration ID"
-                            value={selectedRegistration.eventRegistrationId}
-                            displayValue={getShortRegistrationId(selectedRegistration.eventRegistrationId)}
-                            copyTitle="Copy Event Registration ID"
-                            copied={copiedRegistrationKey === `detail-${selectedRegistration.id}`}
-                            onCopy={() =>
-                              handleCopyRegistrationId(
+                          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                            <CopyableDetailItem
+                              label="Registration ID"
+                              value={selectedRegistration.eventRegistrationId}
+                              displayValue={getShortRegistrationId(
                                 selectedRegistration.eventRegistrationId,
-                                `detail-${selectedRegistration.id}`,
-                              )
-                            }
-                          />
-                          <DetailItem
-                            label="Submitted"
-                            value={formatLongDate(selectedRegistration.submittedAt)}
-                          />
-                          <DetailItem
-                            label="Amount"
-                            value={selectedRegistration.amountLabel}
-                          />
-                          <DetailItem
-                            label="Payment status"
-                            value={selectedRegistration.paymentStatus}
-                          />
-                        </div>
-
-                        {selectedRegistration.paymentStatus === "Awaiting payment" &&
-                          onPayRegistration && (
-                          <div className="flex justify-end">
-                            <Button
-                              type="button"
-                              onClick={() =>
-                                onPayRegistration(
+                              )}
+                              copyTitle="Copy Event Registration ID"
+                              copied={
+                                copiedRegistrationKey ===
+                                `detail-${selectedRegistration.id}`
+                              }
+                              onCopy={() =>
+                                handleCopyRegistrationId(
                                   selectedRegistration.eventRegistrationId,
+                                  `detail-${selectedRegistration.id}`,
                                 )
                               }
-                            >
-                              Pay Now
-                            </Button>
+                            />
+                            <DetailItem
+                              label="Submitted"
+                              value={formatLongDate(
+                                selectedRegistration.submittedAt,
+                              )}
+                            />
+                            <DetailItem
+                              label="Amount"
+                              value={selectedRegistration.amountLabel}
+                            />
+                            <DetailItem
+                              label="Payment status"
+                              value={selectedRegistration.paymentStatus}
+                            />
                           </div>
-                        )}
-                      </div>
 
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4 text-emerald-700" />
-                          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                            Submitted Answers
-                          </p>
+                          {selectedRegistration.status === "Confirmed" &&
+                            selectedRegistration.registrationTags.length > 0 && (
+                              <div className="mt-4 rounded-xl border bg-muted/20 p-4">
+                                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                  Registration Tags
+                                </p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                  {selectedRegistration.registrationTags.map((tag) => (
+                                    <Badge
+                                      key={`${selectedRegistration.id}-${tag.id}`}
+                                      variant="secondary"
+                                      className="px-3 py-1"
+                                    >
+                                      {tag.label}: {tag.value}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                          {selectedRegistration.paymentStatus ===
+                            "Awaiting payment" &&
+                            onPayRegistration && (
+                              <div className="flex justify-end">
+                                <Button
+                                  type="button"
+                                  onClick={() =>
+                                    onPayRegistration(
+                                      selectedRegistration.eventRegistrationId,
+                                    )
+                                  }
+                                >
+                                  Pay Now
+                                </Button>
+                              </div>
+                            )}
                         </div>
 
                         <div className="space-y-3">
-                          {selectedRegistration.formResponses.map((response) => (
-                            <div
-                              key={`${selectedRegistration.id}-${response.fieldId}`}
-                              className="rounded-xl border bg-background/80 p-4 shadow-sm"
-                            >
-                              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                                {response.label}
-                              </p>
-                              <p className="mt-2 text-sm font-medium text-foreground whitespace-pre-wrap">
-                                {response.value}
+                          {selectedRegistration.formResponses.length > 0 && (
+                            <div className="flex items-center gap-2">
+                              <CheckCircle2 className="h-4 w-4 text-emerald-700" />
+                              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                                Submitted Fields
                               </p>
                             </div>
-                          ))}
-                        </div>
-                      </div>
+                          )}
 
-                      {selectedRegisteredEvent &&
-                        (selectedRegisteredEvent.pricing.type === "MULTIPLE" ||
-                          selectedRegisteredEvent.pricing.type === "ADDITIONAL") &&
-                        selectedRegistration.selectedPricingOptionIds.length > 0 && (
-                        <div className="rounded-xl border bg-background/70 p-4 shadow-sm">
-                          <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                            {selectedRegisteredEvent.pricing.fieldName || "Pricing selection"}
-                          </p>
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {selectedRegistration.selectedPricingOptionIds.map((optionId) => {
-                              const option = selectedRegisteredEvent.pricing.options.find(
-                                (pricingOption) => pricingOption.id === optionId,
-                              );
-                              const optionLabel = option
-                                ? `${option.label} (${formatPriceLabel(option.amount, currency)})`
-                                : optionId;
-
-                              return (
-                                <Badge key={optionId} variant="secondary" className="px-3 py-1">
-                                  {optionLabel}
-                                </Badge>
-                              );
-                            })}
+                          <div className="space-y-3">
+                            {selectedRegistration.formResponses.map(
+                              (response) => (
+                                <div
+                                  key={`${selectedRegistration.id}-${response.fieldId}`}
+                                  className="rounded-xl border bg-background/80 p-4 shadow-sm"
+                                >
+                                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                    {response.label}
+                                  </p>
+                                  <p className="mt-2 text-sm font-medium text-foreground whitespace-pre-wrap">
+                                    {response.value}
+                                  </p>
+                                </div>
+                              ),
+                            )}
                           </div>
                         </div>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Select a registration to inspect the submitted form details.
-                    </p>
-                  )}
-                </CardContent>
+
+                        {selectedRegisteredEvent &&
+                          (selectedRegisteredEvent.pricing.type ===
+                            "MULTIPLE" ||
+                            selectedRegisteredEvent.pricing.type ===
+                              "ADDITIONAL") &&
+                          selectedRegistration.selectedPricingOptionIds.length >
+                            0 && (
+                            <div className="rounded-xl border bg-background/70 p-4 shadow-sm">
+                              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                {selectedRegisteredEvent.pricing.fieldName ||
+                                  "Pricing selection"}
+                              </p>
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {selectedRegistration.selectedPricingOptionIds.map(
+                                  (optionId) => {
+                                    const option =
+                                      selectedRegisteredEvent.pricing.options.find(
+                                        (pricingOption) =>
+                                          pricingOption.id === optionId,
+                                      );
+                                    const optionLabel = option
+                                      ? `${option.label} (${formatPriceLabel(option.amount, currency)})`
+                                      : optionId;
+
+                                    return (
+                                      <Badge
+                                        key={optionId}
+                                        variant="secondary"
+                                        className="px-3 py-1"
+                                      >
+                                        {optionLabel}
+                                      </Badge>
+                                    );
+                                  },
+                                )}
+                              </div>
+                            </div>
+                          )}
+                      </>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Select a registration to inspect the submitted form
+                        details.
+                      </p>
+                    )}
+                  </CardContent>
                 </Card>
               </div>
             </div>
@@ -760,14 +886,23 @@ function getRegistrationItems(response: unknown): unknown[] {
 
   const record = response as Record<string, unknown>;
 
-  const directKeys = ["event_registrations", "eventRegistrations", "registrations", "items"];
+  const directKeys = [
+    "event_registrations",
+    "eventRegistrations",
+    "registrations",
+    "items",
+  ];
   for (const key of directKeys) {
     if (Array.isArray(record[key])) {
       return record[key];
     }
   }
 
-  if (record.data && typeof record.data === "object" && !Array.isArray(record.data)) {
+  if (
+    record.data &&
+    typeof record.data === "object" &&
+    !Array.isArray(record.data)
+  ) {
     const nestedRecord = record.data as Record<string, unknown>;
     for (const key of directKeys) {
       if (Array.isArray(nestedRecord[key])) {
@@ -785,8 +920,12 @@ function sanitizeRegistrations(
   currency: string,
 ): MemberEventRegistration[] {
   return rawRegistrations
-    .map((rawRegistration, index) => sanitizeRegistration(rawRegistration, index, events, currency))
-    .filter((registration): registration is MemberEventRegistration => Boolean(registration))
+    .map((rawRegistration, index) =>
+      sanitizeRegistration(rawRegistration, index, events, currency),
+    )
+    .filter((registration): registration is MemberEventRegistration =>
+      Boolean(registration),
+    )
     .sort((left, right) => right.submittedAt.localeCompare(left.submittedAt));
 }
 
@@ -817,34 +956,49 @@ function sanitizeRegistration(
     return null;
   }
 
-  const matchedEvent = events.find((event) => (event.eventId ?? event.id) === eventId);
+  const matchedEvent = events.find(
+    (event) => (event.eventId ?? event.id) === eventId,
+  );
   const selectedPricingOptionIds = getStringArray(registration, [
     "selected_pricing_option_ids",
     "selectedPricingOptionIds",
   ]);
   const amountPaid = getNumber(registration, ["amount_paid", "amountPaid"]);
-  const entryFeeAmount = getNumber(registration, ["entry_fee_amount", "entryFeeAmount", "amount"]);
+  const entryFeeAmount = getNumber(registration, [
+    "entry_fee_amount",
+    "entryFeeAmount",
+    "amount",
+  ]);
+  const isConfirmed =
+    registration.confirmed_status === true ||
+    registration.confirmedStatus === true;
   const status = normalizeRegistrationStatus(
     getString(registration, ["status", "registration_status"]),
+    isConfirmed,
     getString(registration, ["payment_status", "paymentStatus"]),
     amountPaid,
     entryFeeAmount,
   );
   const paymentStatus = normalizePaymentStatus(
     getString(registration, ["payment_status", "paymentStatus"]),
-    status,
     amountPaid,
     entryFeeAmount,
   );
   const amountLabel = getAmountLabel(registration, matchedEvent, currency);
+  const registrationTags = getRegistrationTags(registration);
 
   return {
-    id: getString(registration, ["id", "event_registration_id", "registration_id"]) || `${eventId}-${index}`,
+    id:
+      getString(registration, [
+        "id",
+        "event_registration_id",
+        "registration_id",
+      ]) || `${eventId}-${index}`,
     eventId,
     eventRegistrationId,
     submittedAt: toDateKey(
       registration.submitted_on ??
-      registration.submitted_at ??
+        registration.submitted_at ??
         registration.submittedAt ??
         registration.created_at ??
         registration.createdAt ??
@@ -855,8 +1009,46 @@ function sanitizeRegistration(
     paymentStatus,
     selectedPricingOptionIds,
     amountLabel,
+    registrationTags,
     formResponses: getFormResponses(registration),
   };
+}
+
+function getRegistrationTags(registration: Record<string, unknown>) {
+  const rawTags = [registration.registration_tags, registration.registrationTags].find(
+    Array.isArray,
+  );
+
+  if (!Array.isArray(rawTags)) {
+    return [];
+  }
+
+  return rawTags
+    .map((rawTag) => {
+      const tag = toRecord(rawTag);
+
+      if (!tag) {
+        return null;
+      }
+
+      const id = getString(tag, ["id", "key", "label"]);
+      const label = getString(tag, ["label", "name", "key"]);
+      const value = formatResponseValue(tag.value);
+
+      if (!id || !label || value === "-") {
+        return null;
+      }
+
+      return {
+        id,
+        label,
+        value,
+      } satisfies MemberRegistrationTag;
+    })
+    .filter(
+      (tag, index, tags): tag is MemberRegistrationTag =>
+        Boolean(tag) && tags.findIndex((candidate) => candidate?.id === tag?.id) === index,
+    );
 }
 
 function toRecord(value: unknown): Record<string, unknown> | null {
@@ -880,7 +1072,10 @@ function getString(record: Record<string, unknown> | null, keys: string[]) {
   return "";
 }
 
-function getStringArray(record: Record<string, unknown> | null, keys: string[]) {
+function getStringArray(
+  record: Record<string, unknown> | null,
+  keys: string[],
+) {
   if (!record) {
     return [];
   }
@@ -888,7 +1083,10 @@ function getStringArray(record: Record<string, unknown> | null, keys: string[]) 
   for (const key of keys) {
     const value = record[key];
     if (Array.isArray(value)) {
-      return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+      return value.filter(
+        (item): item is string =>
+          typeof item === "string" && item.trim().length > 0,
+      );
     }
   }
 
@@ -949,7 +1147,8 @@ function getFormResponses(registration: Record<string, unknown>) {
     .filter(
       (
         response,
-      ): response is { fieldId: string; label: string; value: string } => Boolean(response),
+      ): response is { fieldId: string; label: string; value: string } =>
+        Boolean(response),
     );
 }
 
@@ -993,7 +1192,9 @@ function toDateKey(value: unknown): string {
 
   if (/^\d+$/.test(trimmed)) {
     const numericValue = Number(trimmed);
-    return Number.isFinite(numericValue) ? formatDateKey(new Date(numericValue)) : formatDateKey(new Date());
+    return Number.isFinite(numericValue)
+      ? formatDateKey(new Date(numericValue))
+      : formatDateKey(new Date());
   }
 
   const parsedTimestamp = Date.parse(trimmed);
@@ -1004,21 +1205,15 @@ function toDateKey(value: unknown): string {
 
 function normalizeRegistrationStatus(
   rawStatus: string,
+  isConfirmed: boolean,
   rawPaymentStatus: string,
   amountPaid: number | null,
   entryFeeAmount: number | null,
 ): RegistrationStatus {
   const normalizedStatus = rawStatus.toLowerCase();
   const normalizedPaymentStatus = rawPaymentStatus.toLowerCase();
-  const isPaidInFull =
-    amountPaid !== null && entryFeeAmount !== null ? amountPaid >= entryFeeAmount : false;
 
-  if (
-    normalizedStatus.includes("confirm") ||
-    normalizedStatus.includes("paid") ||
-    normalizedPaymentStatus.includes("paid") ||
-    isPaidInFull
-  ) {
+  if (isConfirmed) {
     return "Confirmed";
   }
 
@@ -1027,37 +1222,45 @@ function normalizeRegistrationStatus(
     normalizedStatus.includes("await") ||
     normalizedPaymentStatus.includes("pending") ||
     normalizedPaymentStatus.includes("await") ||
-    (amountPaid !== null && entryFeeAmount !== null && amountPaid < entryFeeAmount)
+    (amountPaid !== null &&
+      entryFeeAmount !== null &&
+      amountPaid < entryFeeAmount)
   ) {
     return "Pending payment";
   }
 
-  return "Registered";
+  return "Pending Approval";
 }
 
 function normalizePaymentStatus(
   rawPaymentStatus: string,
-  status: RegistrationStatus,
   amountPaid: number | null,
   entryFeeAmount: number | null,
 ): PaymentStatus {
   const normalizedPaymentStatus = rawPaymentStatus.toLowerCase();
   const isPaidInFull =
-    amountPaid !== null && entryFeeAmount !== null ? amountPaid >= entryFeeAmount : false;
+    amountPaid !== null && entryFeeAmount !== null
+      ? amountPaid >= entryFeeAmount
+      : false;
 
-  if (normalizedPaymentStatus.includes("paid") || status === "Confirmed" || isPaidInFull) {
+  if (
+    normalizedPaymentStatus.includes("paid") ||
+    isPaidInFull
+  ) {
     return "Paid";
   }
 
   if (
     normalizedPaymentStatus.includes("pending") ||
     normalizedPaymentStatus.includes("await") ||
-    (amountPaid !== null && entryFeeAmount !== null && amountPaid < entryFeeAmount)
+    (amountPaid !== null &&
+      entryFeeAmount !== null &&
+      amountPaid < entryFeeAmount)
   ) {
     return "Awaiting payment";
   }
 
-  return status === "Pending payment" ? "Awaiting payment" : "Reserved";
+  return "Reserved";
 }
 
 function getAmountLabel(
@@ -1065,18 +1268,19 @@ function getAmountLabel(
   event: MemberEvent | undefined,
   currency: string,
 ) {
+  if (event && event.pricing.type === "FREE") {
+    return "FREE";
+  }
+
   const rawAmount =
     registration.total_amount ??
     registration.entry_fee_amount ??
     registration.entryFeeAmount ??
     registration.amount ??
     null;
+
   if (typeof rawAmount === "number" || typeof rawAmount === "string") {
     return formatPriceLabel(rawAmount, currency);
-  }
-
-  if (event && event.pricing.type === "FREE") {
-    return "Included";
   }
 
   return "TBC";
@@ -1091,7 +1295,9 @@ function formatPriceLabel(amount: string | number, currency: string) {
   return formatAmount(numericAmount, currency);
 }
 
-function getRegistrationBadgeClassName(status: MemberEventRegistration["status"]) {
+function getRegistrationBadgeClassName(
+  status: MemberEventRegistration["status"],
+) {
   if (status === "Confirmed") {
     return "border-emerald-200 bg-emerald-100 text-emerald-800";
   }
@@ -1100,10 +1306,12 @@ function getRegistrationBadgeClassName(status: MemberEventRegistration["status"]
     return "border-amber-200 bg-amber-100 text-amber-800";
   }
 
-  return "border-sky-200 bg-sky-100 text-sky-800";
+  return "border-slate-200 bg-slate-100 text-slate-700";
 }
 
-function getPaymentBadgeClassName(status: MemberEventRegistration["paymentStatus"]) {
+function getPaymentBadgeClassName(
+  status: MemberEventRegistration["paymentStatus"],
+) {
   if (status === "Paid") {
     return "border-emerald-200 bg-emerald-100 text-emerald-800";
   }
@@ -1122,7 +1330,9 @@ function getShortRegistrationId(value: string) {
 function DetailItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border bg-muted/20 p-3">
-      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
+      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+        {label}
+      </p>
       <p className="mt-2 text-sm font-medium text-foreground">{value}</p>
     </div>
   );
@@ -1145,7 +1355,9 @@ function CopyableDetailItem({
 }) {
   return (
     <div className="rounded-xl border bg-muted/20 p-3">
-      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
+      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+        {label}
+      </p>
       <div className="mt-2 flex items-center gap-2">
         <p className="text-sm font-medium text-foreground">{displayValue}</p>
         <Button
@@ -1158,7 +1370,9 @@ function CopyableDetailItem({
         >
           <Copy className="h-3 w-3" />
         </Button>
-        {copied && <span className="text-[11px] text-muted-foreground">Copied</span>}
+        {copied && (
+          <span className="text-[11px] text-muted-foreground">Copied</span>
+        )}
       </div>
       <span className="sr-only">{value}</span>
     </div>

@@ -1,4 +1,4 @@
-import { Fragment, useContext, useEffect, useMemo, useState } from "react";
+import { Fragment, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
   CheckCircle2,
@@ -9,6 +9,7 @@ import {
   Loader2,
   Ticket,
   Users,
+  X,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -50,17 +57,26 @@ import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  confirmEventRegistration,
   confirmEventPayment,
+  getEvents,
   getEventRegistration,
   getEventRegistrations,
+  type GetEventRegistrationsFilters,
 } from "@/services/admin-features/events";
 import { toast } from "sonner";
 
-type RegistrationStatus = "Submitted" | "Confirmed" | "Waitlisted";
+type RegistrationStatus = "Pending Confirmation" | "Confirmed" | "Waitlisted";
 type PaymentStatus = "Paid" | "Awaiting payment" | "Partially paid";
 
 type RegistrationAnswer = {
   fieldId: string;
+  label: string;
+  value: string;
+};
+
+type RegistrationTagValue = {
+  id: string;
   label: string;
   value: string;
 };
@@ -99,6 +115,7 @@ type EventRegistration = {
   pricingType: RegistrationPricingType;
   pricingFieldName: string;
   pricingOptions: RegistrationPricingOption[];
+  registrationTags: RegistrationTagValue[];
   teamName?: string;
   notes?: string;
   answers: RegistrationAnswer[];
@@ -132,11 +149,45 @@ type ApiChosenEventFormField = {
   options?: string[];
 };
 
+type ApiChosenEventRegistrationTag = {
+  id?: string;
+  label?: string;
+  name?: string;
+  key?: string;
+  value?: unknown;
+};
+
+type ApiChosenEventRegistrationSettings = {
+  autoConfirmIfPaid?: boolean;
+  auto_confirm_if_paid?: boolean;
+  auto_confirm_registration_if_paid?: boolean;
+  registrationTags?: ApiChosenEventRegistrationTag[];
+  registration_tags?: ApiChosenEventRegistrationTag[];
+  registrationTagKeys?: string[];
+  registration_tag_keys?: string[];
+  tagKeys?: string[];
+  tags?: Array<ApiChosenEventRegistrationTag | string>;
+};
+
 type ApiChosenEvent = {
   event_id?: string;
   title?: string;
   formFields?: ApiChosenEventFormField[];
   pricing?: ApiChosenEventPricing;
+  autoConfirmIfPaid?: boolean;
+  auto_confirm_if_paid?: boolean;
+  auto_confirm_registration_if_paid?: boolean;
+  registrationTags?: ApiChosenEventRegistrationTag[];
+  registration_tags?: ApiChosenEventRegistrationTag[];
+  registrationTagKeys?: string[];
+  registration_tag_keys?: string[];
+  tagKeys?: string[];
+  tags?: Array<ApiChosenEventRegistrationTag | string>;
+  eventRegistration?: ApiChosenEventRegistrationSettings;
+  event_registration?: ApiChosenEventRegistrationSettings;
+  registrationSettings?: ApiChosenEventRegistrationSettings;
+  registration_settings?: ApiChosenEventRegistrationSettings;
+  registration?: ApiChosenEventRegistrationSettings;
 };
 
 type ApiEventRegistration = {
@@ -153,6 +204,10 @@ type ApiEventRegistration = {
   transaction_id?: string;
   event_registration_id?: string;
   payment_status?: string;
+  registration_tags?: ApiChosenEventRegistrationTag[];
+  registrationTags?: ApiChosenEventRegistrationTag[];
+  confirmed_status?: boolean;
+  confirmedStatus?: boolean;
   status?: string;
   chosen_event?: ApiChosenEvent;
 };
@@ -162,10 +217,19 @@ type ApiEventFilter = {
   event_name?: string;
 };
 
+type ApiEventSummary = {
+  id?: string;
+  event_id?: string;
+  title?: string;
+  name?: string;
+};
+
 type EventRegistrationsPayload = {
   event_registrations?: ApiEventRegistration[];
   eventsFilters?: ApiEventFilter[];
   chosen_event?: ApiChosenEvent;
+  pageToken?: string;
+  page_token?: string;
 };
 
 type EventRegistrationDetailPayload = {
@@ -179,6 +243,19 @@ type EventRegistrationFilterField = {
   inputType: "TEXT" | "DROPDOWN" | "CHECKBOX";
   options: string[];
 };
+
+type EventRegistrationTag = {
+  id: string;
+  label: string;
+};
+
+const DEFAULT_REGISTRATIONS_LIMIT = 10;
+
+function isFreeRegistration(
+  registration: Pick<EventRegistration, "pricingType" | "amountDue">,
+) {
+  return registration.pricingType === "FREE" || registration.amountDue <= 0;
+}
 
 function formatSubmittedDate(value: string) {
   return new Date(value).toLocaleDateString("en-US", {
@@ -196,7 +273,11 @@ function getShortUserId(value: string) {
   return value.length > 10 ? `${value.slice(0, 10)}...` : value;
 }
 
-function getPaymentBadgeClassName(status: PaymentStatus) {
+function getPaymentBadgeClassName(status: PaymentStatus | "FREE") {
+  if (status === "FREE") {
+    return "bg-sky-100 text-sky-800 border-sky-200";
+  }
+
   if (status === "Paid") {
     return "bg-green-100 text-green-800 border-green-200";
   }
@@ -206,6 +287,15 @@ function getPaymentBadgeClassName(status: PaymentStatus) {
   }
 
   return "bg-red-100 text-red-800 border-red-200";
+}
+
+function formatRegistrationAmount(
+  registration: Pick<EventRegistration, "pricingType" | "amountDue">,
+  currency: string,
+) {
+  return isFreeRegistration(registration)
+    ? "FREE"
+    : formatAmount(registration.amountDue, currency);
 }
 
 function getRegistrationBadgeClassName(status: RegistrationStatus) {
@@ -248,6 +338,107 @@ function getPricingAmount(value: unknown) {
   return null;
 }
 
+function getRegistrationSettingsSource(event: ApiChosenEvent | undefined) {
+  if (!event || typeof event !== "object") {
+    return null;
+  }
+
+  const nestedCandidates = [
+    event.eventRegistration,
+    event.event_registration,
+    event.registrationSettings,
+    event.registration_settings,
+    event.registration,
+  ];
+
+  for (const candidate of nestedCandidates) {
+    if (candidate && typeof candidate === "object") {
+      return candidate;
+    }
+  }
+
+  return event;
+}
+
+function normalizeRegistrationTags(
+  source: ApiChosenEventRegistrationSettings | null,
+) {
+  const rawTags =
+    source?.registrationTags ??
+    source?.registration_tags ??
+    source?.tags ??
+    [];
+
+  if (!Array.isArray(rawTags)) {
+    return [];
+  }
+
+  return rawTags
+    .map((entry, index) => {
+      if (typeof entry === "string") {
+        const label = entry.trim();
+
+        if (!label) {
+          return null;
+        }
+
+        return {
+          id: `registration-tag-${index}-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+          label,
+        } satisfies EventRegistrationTag;
+      }
+
+      if (!entry || typeof entry !== "object") {
+        return null;
+      }
+
+      const label = String(entry.label || entry.name || entry.key || "").trim();
+      const id = String(entry.id || entry.key || label).trim();
+
+      if (!label || !id) {
+        return null;
+      }
+
+      return {
+        id,
+        label,
+      } satisfies EventRegistrationTag;
+    })
+    .filter(
+      (tag, index, tags): tag is EventRegistrationTag =>
+        Boolean(tag) && tags.findIndex((candidate) => candidate?.id === tag?.id) === index,
+    );
+}
+
+function normalizeRegistrationTagValues(
+  tags: ApiChosenEventRegistrationTag[] | undefined,
+) {
+  if (!Array.isArray(tags)) {
+    return [];
+  }
+
+  return tags
+    .map((tag) => {
+      const id = String(tag.id || tag.key || tag.label || "").trim();
+      const label = String(tag.label || tag.name || tag.key || "").trim();
+      const value = String(tag.value || "").trim();
+
+      if (!id || !label || !value) {
+        return null;
+      }
+
+      return {
+        id,
+        label,
+        value,
+      } satisfies RegistrationTagValue;
+    })
+    .filter(
+      (tag, index, tags): tag is RegistrationTagValue =>
+        Boolean(tag) && tags.findIndex((candidate) => candidate?.id === tag?.id) === index,
+    );
+}
+
 function normalizePaymentStatus(
   registration: ApiEventRegistration,
 ): PaymentStatus {
@@ -276,16 +467,19 @@ function normalizeRegistrationStatus(
   paymentStatus: PaymentStatus,
 ): RegistrationStatus {
   const rawStatus = String(registration.status || "").toUpperCase();
+  const isConfirmed =
+    registration.confirmed_status === true ||
+    registration.confirmedStatus === true;
 
   if (rawStatus === "WAITLISTED" || rawStatus === "WAITLIST") {
     return "Waitlisted";
   }
 
-  if (rawStatus === "CONFIRMED" || paymentStatus === "Paid") {
+  if (isConfirmed && paymentStatus === "Paid") {
     return "Confirmed";
   }
 
-  return "Submitted";
+  return "Pending Confirmation";
 }
 
 function buildTicketLabel(registration: ApiEventRegistration) {
@@ -438,6 +632,9 @@ function normalizeRegistrations(
         registration.event_registration_id || `${submittedAt}`;
       const userId = registration.user_id || "Unknown user";
       const pricingMetadata = getPricingMetadata(registration, chosenEvent);
+      const registrationTags = normalizeRegistrationTagValues(
+        registration.registration_tags || registration.registrationTags,
+      );
 
       return {
         id: eventRegistrationId,
@@ -467,6 +664,7 @@ function normalizeRegistrations(
         pricingType: pricingMetadata.pricingType,
         pricingFieldName: pricingMetadata.pricingFieldName,
         pricingOptions: pricingMetadata.pricingOptions,
+        registrationTags,
         answers: fields.map((field) => ({
           fieldId: field.field_id || field.field_label || "",
           label: field.field_label || "Field",
@@ -538,17 +736,179 @@ function formatPricingOptionLabel(
   return option.label;
 }
 
+function normalizeEventOptions(events: unknown[]) {
+  return events
+    .map((rawEvent) => {
+      if (!rawEvent || typeof rawEvent !== "object") {
+        return null;
+      }
+
+      const event = rawEvent as ApiEventSummary;
+      const value = String(event.event_id || event.id || "").trim();
+      const label = String(event.title || event.name || "").trim();
+
+      if (!value || !label) {
+        return null;
+      }
+
+      return { value, label };
+    })
+    .filter(
+      (
+        eventOption,
+      ): eventOption is {
+        value: string;
+        label: string;
+      } => Boolean(eventOption),
+    );
+}
+
+function getNextPageToken(payload: EventRegistrationsPayload | undefined) {
+  const rawValue = payload?.pageToken ?? payload?.page_token;
+
+  if (typeof rawValue !== "string") {
+    return "";
+  }
+
+  return rawValue.trim();
+}
+
+function mergeRegistrationsPages(
+  existingRegistrations: EventRegistration[],
+  nextRegistrations: EventRegistration[],
+) {
+  const registrationMap = new Map<string, EventRegistration>();
+
+  existingRegistrations.forEach((registration) => {
+    registrationMap.set(registration.id, registration);
+  });
+
+  nextRegistrations.forEach((registration) => {
+    registrationMap.set(registration.id, registration);
+  });
+
+  return Array.from(registrationMap.values()).sort(
+    (left, right) =>
+      new Date(right.submittedAt).getTime() -
+      new Date(left.submittedAt).getTime(),
+  );
+}
+
+function buildRegistrationRequestFilters(
+  paymentStatus: string,
+  pricingFilters: string[],
+  fieldFilters: Record<string, string>,
+): GetEventRegistrationsFilters | undefined {
+  const filters: GetEventRegistrationsFilters = {};
+
+  if (paymentStatus !== "all") {
+    filters.payment_status = paymentStatus;
+  }
+
+  const normalizedPricingFilters = pricingFilters
+    .map((pricingFilter) => pricingFilter.trim())
+    .filter((pricingFilter) => pricingFilter.length > 0);
+
+  if (normalizedPricingFilters.length > 1) {
+    filters.pricing_option_ids = normalizedPricingFilters;
+  } else if (normalizedPricingFilters[0]) {
+    filters.pricing_option_id = normalizedPricingFilters[0];
+  }
+
+  const normalizedFieldFilters = Object.entries(fieldFilters)
+    .map(([fieldId, value]) => ({
+      field_id: fieldId,
+      value: value.trim(),
+    }))
+    .filter((fieldFilter) => fieldFilter.value.length > 0);
+
+  if (normalizedFieldFilters.length > 0) {
+    filters.field_filters = normalizedFieldFilters;
+  }
+
+  return Object.keys(filters).length > 0 ? filters : undefined;
+}
+
+function normalizePricingFilterValues(pricingFilters: string[]) {
+  return pricingFilters
+    .map((pricingFilter) => pricingFilter.trim())
+    .filter((pricingFilter) => pricingFilter.length > 0)
+    .sort((left, right) => left.localeCompare(right));
+}
+
+function arePricingFiltersEqual(left: string[], right: string[]) {
+  const normalizedLeft = normalizePricingFilterValues(left);
+  const normalizedRight = normalizePricingFilterValues(right);
+
+  if (normalizedLeft.length !== normalizedRight.length) {
+    return false;
+  }
+
+  return normalizedLeft.every(
+    (pricingFilter, index) => pricingFilter === normalizedRight[index],
+  );
+}
+
+function areFieldFiltersEqual(
+  left: Record<string, string>,
+  right: Record<string, string>,
+) {
+  const normalize = (filters: Record<string, string>) =>
+    Object.entries(filters)
+      .map(([fieldId, value]) => [fieldId, value.trim()] as const)
+      .filter(([, value]) => value.length > 0)
+      .sort(([leftId], [rightId]) => leftId.localeCompare(rightId));
+
+  const leftEntries = normalize(left);
+  const rightEntries = normalize(right);
+
+  if (leftEntries.length !== rightEntries.length) {
+    return false;
+  }
+
+  return leftEntries.every(
+    ([leftId, leftValue], index) =>
+      leftId === rightEntries[index]?.[0] && leftValue === rightEntries[index]?.[1],
+  );
+}
+
 export default function EventRegistrationsPage() {
   const { club } = useContext(ClubContext) as ClubContextType;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedEvent, setSelectedEvent] = useState<string>("");
+  const [registrationsLimit, setRegistrationsLimit] = useState(
+    DEFAULT_REGISTRATIONS_LIMIT,
+  );
+  const [pendingRegistrationsLimit, setPendingRegistrationsLimit] = useState(
+    DEFAULT_REGISTRATIONS_LIMIT,
+  );
+  const [runRegistrationsRequestKey, setRunRegistrationsRequestKey] = useState(0);
+  const [registrationsPageToken, setRegistrationsPageToken] = useState<
+    string | undefined
+  >(undefined);
+  const [allRegistrations, setAllRegistrations] = useState<EventRegistration[]>(
+    [],
+  );
   const [selectedPaymentStatus, setSelectedPaymentStatus] =
     useState<string>("all");
+  const [appliedPaymentStatus, setAppliedPaymentStatus] = useState<string>(
+    "all",
+  );
   const [fieldFilters, setFieldFilters] = useState<Record<string, string>>({});
-  const [selectedPricingFilter, setSelectedPricingFilter] =
-    useState<string>("all");
+  const [appliedFieldFilters, setAppliedFieldFilters] = useState<
+    Record<string, string>
+  >({});
+  const [selectedPricingFilters, setSelectedPricingFilters] = useState<string[]>(
+    [],
+  );
+  const [appliedPricingFilters, setAppliedPricingFilters] = useState<string[]>(
+    [],
+  );
   const [expandedRegistrationId, setExpandedRegistrationId] = useState<
+    string | null
+  >(null);
+  const [highlightedRegistrationId, setHighlightedRegistrationId] = useState<
     string | null
   >(null);
   const [copiedRegistrationId, setCopiedRegistrationId] = useState<
@@ -557,8 +917,43 @@ export default function EventRegistrationsPage() {
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [selectedRegistrationForPayment, setSelectedRegistrationForPayment] =
     useState<EventRegistration | null>(null);
+  const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false);
+  const [selectedRegistrationForConfirmation, setSelectedRegistrationForConfirmation] =
+    useState<EventRegistration | null>(null);
+  const [confirmationTagValues, setConfirmationTagValues] = useState<
+    Record<string, string>
+  >({});
+  const [confirmationTagErrors, setConfirmationTagErrors] = useState<
+    Record<string, string>
+  >({});
   const [paymentAmount, setPaymentAmount] = useState("");
   const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
+  const [isConfirmingRegistration, setIsConfirmingRegistration] =
+    useState(false);
+  const [showPendingRegistrationsDropdown, setShowPendingRegistrationsDropdown] =
+    useState(false);
+  const [showPendingPaymentsDropdown, setShowPendingPaymentsDropdown] =
+    useState(false);
+  const [pricingFilterDropdownOpen, setPricingFilterDropdownOpen] =
+    useState(false);
+  const isLoadingMoreRef = useRef(false);
+  const appliedRegistrationFilters = useMemo(
+    () =>
+      buildRegistrationRequestFilters(
+        appliedPaymentStatus,
+        appliedPricingFilters,
+        appliedFieldFilters,
+      ),
+    [appliedFieldFilters, appliedPaymentStatus, appliedPricingFilters],
+  );
+
+  const {
+    data: eventsResponse,
+  } = useQuery({
+    queryKey: ["admin-events", club?.club_account_id],
+    queryFn: () => getEvents(club?.club_account_id || ""),
+    enabled: !!club?.club_account_id,
+  });
 
   const {
     data: registrationsResponse,
@@ -570,15 +965,31 @@ export default function EventRegistrationsPage() {
       "admin-event-registrations",
       club?.club_account_id,
       selectedEvent,
+      registrationsLimit,
+      registrationsPageToken,
+      appliedRegistrationFilters,
+      runRegistrationsRequestKey,
     ],
     queryFn: () =>
       getEventRegistrations(
         club?.club_account_id || "",
         selectedEvent || undefined,
+        registrationsLimit,
+        registrationsPageToken,
+        appliedRegistrationFilters,
       ),
-    enabled: !!club?.club_account_id,
+    enabled: !!club?.club_account_id && !!selectedEvent,
     placeholderData: (previousData) => previousData,
   });
+
+  const pricingFilterType = useMemo(() => {
+    const payload = registrationsResponse as
+      | EventRegistrationsPayload
+      | undefined;
+    return normalizePricingType(payload?.chosen_event?.pricing?.type);
+  }, [registrationsResponse]);
+
+  const allowsMultiplePricingFilters = pricingFilterType === "ADDITIONAL";
 
   const registrations = useMemo(
     () =>
@@ -588,57 +999,20 @@ export default function EventRegistrationsPage() {
     [registrationsResponse],
   );
 
-  const chosenEventId = useMemo(() => {
-    const payload = registrationsResponse as
-      | EventRegistrationsPayload
-      | undefined;
-    return payload?.chosen_event?.event_id?.trim() || "";
-  }, [registrationsResponse]);
-
-  const selectedEventTitle = useMemo(() => {
-    const payload = registrationsResponse as
-      | EventRegistrationsPayload
-      | undefined;
-    const chosenEvent = payload?.chosen_event;
-
-    if (selectedEvent) {
-      const matchedEvent = payload?.eventsFilters?.find(
-        (eventFilter) => eventFilter.event_id === selectedEvent,
-      );
-
-      if (matchedEvent?.event_name) {
-        return matchedEvent.event_name;
-      }
-
-      const matchedRegistration = registrations.find(
-        (registration) => registration.eventId === selectedEvent,
-      );
-
-      return matchedRegistration?.eventTitle || "Selected event";
-    }
-
-    if (chosenEvent?.title?.trim()) {
-      return chosenEvent.title.trim();
-    }
-
-    const chosenEventId = chosenEvent?.event_id?.trim();
-    if (!chosenEventId) {
-      return "No event selected";
-    }
-
-    const matchedEvent = payload?.eventsFilters?.find(
-      (eventFilter) => eventFilter.event_id === chosenEventId,
-    );
-
-    return matchedEvent?.event_name || "Selected event";
-  }, [registrations, registrationsResponse, selectedEvent]);
+  const nextRegistrationsPageToken = useMemo(
+    () =>
+      getNextPageToken(
+        registrationsResponse as EventRegistrationsPayload | undefined,
+      ),
+    [registrationsResponse],
+  );
 
   const expandedRegistration = useMemo(
     () =>
-      registrations.find(
+      allRegistrations.find(
         (registration) => registration.id === expandedRegistrationId,
       ) ?? null,
-    [expandedRegistrationId, registrations],
+    [allRegistrations, expandedRegistrationId],
   );
 
   const {
@@ -703,35 +1077,30 @@ export default function EventRegistrationsPage() {
   ]);
 
   const eventOptions = useMemo(() => {
-    const responsePayload = registrationsResponse as
-      | EventRegistrationsPayload
-      | undefined;
-    const directOptions = Array.isArray(responsePayload?.eventsFilters)
-      ? responsePayload.eventsFilters
-          .filter((eventFilter): eventFilter is Required<ApiEventFilter> =>
-            Boolean(eventFilter.event_id && eventFilter.event_name),
-          )
-          .map((eventFilter) => ({
-            value: eventFilter.event_id,
-            label: eventFilter.event_name,
-          }))
-      : [];
+    return normalizeEventOptions(
+      Array.isArray(eventsResponse?.events) ? eventsResponse.events : [],
+    );
+  }, [eventsResponse?.events]);
 
-    if (directOptions.length > 0) {
-      return directOptions;
+  const selectedEventTitle = useMemo(() => {
+    if (!selectedEvent) {
+      return "No event selected";
     }
 
-    const uniqueEvents = new Map<string, string>();
+    const matchedEvent = eventOptions.find(
+      (eventOption) => eventOption.value === selectedEvent,
+    );
 
-    registrations.forEach((registration) => {
-      uniqueEvents.set(registration.eventId, registration.eventTitle);
-    });
+    if (matchedEvent) {
+      return matchedEvent.label;
+    }
 
-    return Array.from(uniqueEvents.entries()).map(([value, label]) => ({
-      value,
-      label,
-    }));
-  }, [registrations, registrationsResponse]);
+    const matchedRegistration = allRegistrations.find(
+      (registration) => registration.eventId === selectedEvent,
+    );
+
+    return matchedRegistration?.eventTitle || "Selected event";
+  }, [allRegistrations, eventOptions, selectedEvent]);
 
   const registrationFilterFields = useMemo(() => {
     const payload = registrationsResponse as
@@ -838,49 +1207,141 @@ export default function EventRegistrationsPage() {
     );
   }, [registrationsResponse]);
 
+  const selectedPricingFilterOptions = useMemo(
+    () =>
+      pricingFilterOptions.filter((option) =>
+        selectedPricingFilters.includes(option.value),
+      ),
+    [pricingFilterOptions, selectedPricingFilters],
+  );
+
+  const registrationTags = useMemo(() => {
+    const payload = registrationsResponse as
+      | EventRegistrationsPayload
+      | undefined;
+
+    return normalizeRegistrationTags(
+      getRegistrationSettingsSource(payload?.chosen_event),
+    );
+  }, [registrationsResponse]);
+
+  const handleSelectEvent = (eventId: string) => {
+    isLoadingMoreRef.current = false;
+    setSelectedEvent(eventId);
+    setRegistrationsLimit(DEFAULT_REGISTRATIONS_LIMIT);
+    setPendingRegistrationsLimit(DEFAULT_REGISTRATIONS_LIMIT);
+    setSelectedPaymentStatus("all");
+    setAppliedPaymentStatus("all");
+    setFieldFilters({});
+    setAppliedFieldFilters({});
+    setSelectedPricingFilters([]);
+    setAppliedPricingFilters([]);
+    setPricingFilterDropdownOpen(false);
+    setRegistrationsPageToken(undefined);
+    setAllRegistrations([]);
+  };
+
   useEffect(() => {
     if (!eventOptions.length) {
       return;
     }
 
-    setSelectedEvent((currentValue) => {
-      if (
-        currentValue &&
-        eventOptions.some((eventOption) => eventOption.value === currentValue)
-      ) {
-        return currentValue;
-      }
+    const nextEventId =
+      selectedEvent &&
+      eventOptions.some((eventOption) => eventOption.value === selectedEvent)
+        ? selectedEvent
+        : eventOptions[0]?.value || "";
 
-      if (
-        chosenEventId &&
-        eventOptions.some((eventOption) => eventOption.value === chosenEventId)
-      ) {
-        return chosenEventId;
-      }
+    if (!nextEventId || nextEventId === selectedEvent) {
+      return;
+    }
 
-      return eventOptions[0]?.value || "";
-    });
-  }, [chosenEventId, eventOptions]);
+    isLoadingMoreRef.current = false;
+    setSelectedEvent(nextEventId);
+    setRegistrationsLimit(DEFAULT_REGISTRATIONS_LIMIT);
+    setPendingRegistrationsLimit(DEFAULT_REGISTRATIONS_LIMIT);
+    setSelectedPaymentStatus("all");
+    setAppliedPaymentStatus("all");
+    setFieldFilters({});
+    setAppliedFieldFilters({});
+    setSelectedPricingFilters([]);
+    setAppliedPricingFilters([]);
+    setPricingFilterDropdownOpen(false);
+    setRegistrationsPageToken(undefined);
+    setAllRegistrations([]);
+  }, [eventOptions, selectedEvent]);
+
+  useEffect(() => {
+    if (!registrationsResponse) {
+      return;
+    }
+
+    if (isLoadingMoreRef.current) {
+      setAllRegistrations((currentRegistrations) =>
+        mergeRegistrationsPages(currentRegistrations, registrations),
+      );
+      isLoadingMoreRef.current = false;
+      return;
+    }
+
+    setAllRegistrations(registrations);
+  }, [registrations, registrationsResponse]);
 
   useEffect(() => {
     setExpandedRegistrationId(null);
+    setHighlightedRegistrationId(null);
   }, [selectedEvent]);
 
   useEffect(() => {
     setFieldFilters({});
-    setSelectedPricingFilter("all");
+    setAppliedFieldFilters({});
+    setSelectedPaymentStatus("all");
+    setAppliedPaymentStatus("all");
+    setSelectedPricingFilters([]);
+    setAppliedPricingFilters([]);
+    setPricingFilterDropdownOpen(false);
   }, [selectedEvent]);
 
-  const filteredRegistrations = useMemo(() => registrations, [registrations]);
+  useEffect(() => {
+    if (!highlightedRegistrationId) {
+      return;
+    }
 
-  const totalRegistrations = registrations.length;
-  const awaitingPaymentCount = registrations.filter(
+    const timeoutId = window.setTimeout(() => {
+      setHighlightedRegistrationId((currentValue) =>
+        currentValue === highlightedRegistrationId ? null : currentValue,
+      );
+    }, 5000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [highlightedRegistrationId]);
+
+  const filteredRegistrations = useMemo(
+    () => allRegistrations,
+    [allRegistrations],
+  );
+
+  const totalRegistrations = allRegistrations.length;
+  const awaitingPaymentCount = allRegistrations.filter(
     (registration) => registration.paymentStatus === "Awaiting payment",
   ).length;
-  const confirmedCount = registrations.filter(
+  const pendingPaymentRegistrations = allRegistrations.filter(
+    (registration) =>
+      !isFreeRegistration(registration) &&
+      registration.paymentStatus !== "Paid" &&
+      Math.max(registration.amountDue - registration.amountPaid, 0) > 0,
+  );
+  const pendingConfirmationRegistrations = allRegistrations.filter(
+    (registration) =>
+      registration.registrationStatus === "Pending Confirmation" &&
+      registration.paymentStatus === "Paid",
+  );
+  const confirmedCount = allRegistrations.filter(
     (registration) => registration.registrationStatus === "Confirmed",
   ).length;
-  const totalRevenue = registrations.reduce(
+  const totalRevenue = allRegistrations.reduce(
     (sum, registration) => sum + registration.amountPaid,
     0,
   );
@@ -901,14 +1362,64 @@ export default function EventRegistrationsPage() {
     setPaymentAmount(formatAmount(amount, club?.currency || "ZAR"));
   };
 
+  const handleFocusRegistration = (registration: EventRegistration) => {
+    setHighlightedRegistrationId(registration.id);
+    setExpandedRegistrationId(registration.id);
+
+    window.setTimeout(() => {
+      document
+        .getElementById(`registration-row-${registration.id}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 0);
+  };
+
   const handleOpenPaymentDialog = (registration: EventRegistration) => {
     const outstandingAmount = Math.max(
       registration.amountDue - registration.amountPaid,
       0,
     );
+    setShowPendingRegistrationsDropdown(false);
+    setShowPendingPaymentsDropdown(false);
     setSelectedRegistrationForPayment(registration);
     setPaymentAmount(formatAmount(outstandingAmount, club?.currency || "ZAR"));
     setPaymentDialogOpen(true);
+  };
+
+  const handleOpenConfirmationDialog = (registration: EventRegistration) => {
+    if (registration.paymentStatus !== "Paid") {
+      toast.error("This registration must be fully paid before it can be confirmed.");
+      return;
+    }
+
+    setShowPendingRegistrationsDropdown(false);
+    setShowPendingPaymentsDropdown(false);
+    setSelectedRegistrationForConfirmation(registration);
+    setConfirmationTagValues(
+      Object.fromEntries(registrationTags.map((tag) => [tag.id, ""])),
+    );
+    setConfirmationTagErrors({});
+    setConfirmationDialogOpen(true);
+  };
+
+  const handleSelectPendingPayment = (registration: EventRegistration) => {
+    handleFocusRegistration(registration);
+    setShowPendingRegistrationsDropdown(false);
+    setShowPendingPaymentsDropdown(false);
+  };
+
+  const handleSelectPendingRegistration = (registration: EventRegistration) => {
+    handleOpenConfirmationDialog(registration);
+  };
+
+  const handleCloseConfirmationDialog = () => {
+    if (isConfirmingRegistration) {
+      return;
+    }
+
+    setConfirmationDialogOpen(false);
+    setSelectedRegistrationForConfirmation(null);
+    setConfirmationTagValues({});
+    setConfirmationTagErrors({});
   };
 
   const handleClosePaymentDialog = () => {
@@ -969,14 +1480,23 @@ export default function EventRegistrationsPage() {
         amount_paid: paymentAmountInCents,
       });
 
+      const responseMessage =
+        response.data &&
+        typeof response.data === "object" &&
+        "message" in response.data &&
+        typeof response.data.message === "string"
+          ? response.data.message
+          : undefined;
+
       if (response.status !== 200) {
-        toast.error(response.data?.message || "Failed to confirm payment.");
+        toast.error(responseMessage || "Failed to confirm payment.");
         return;
       }
 
-      toast.success(
-        response.data?.message || "Payment confirmed successfully.",
-      );
+      toast.success(responseMessage || "Payment confirmed successfully.");
+      isLoadingMoreRef.current = false;
+      setRegistrationsPageToken(undefined);
+      setAllRegistrations([]);
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: ["admin-event-registrations", club.club_account_id],
@@ -995,7 +1515,116 @@ export default function EventRegistrationsPage() {
     }
   };
 
-  const isTableLoading = isLoading || isFetching;
+  const handleRunRegistrationsQuery = () => {
+    if (!selectedEvent || !club?.club_account_id) {
+      return;
+    }
+
+    const nextLimit = pendingRegistrationsLimit;
+    isLoadingMoreRef.current = false;
+
+    if (nextLimit !== registrationsLimit) {
+      setRegistrationsLimit(nextLimit);
+    }
+
+    if (selectedPaymentStatus !== appliedPaymentStatus) {
+      setAppliedPaymentStatus(selectedPaymentStatus);
+    }
+
+    if (!arePricingFiltersEqual(selectedPricingFilters, appliedPricingFilters)) {
+      setAppliedPricingFilters(selectedPricingFilters);
+    }
+
+    if (!areFieldFiltersEqual(fieldFilters, appliedFieldFilters)) {
+      setAppliedFieldFilters(fieldFilters);
+    }
+
+    setRegistrationsPageToken(undefined);
+    setRunRegistrationsRequestKey((currentValue) => currentValue + 1);
+  };
+
+  const handleConfirmRegistration = async () => {
+    if (!selectedRegistrationForConfirmation || !club?.club_account_id) {
+      return;
+    }
+
+    if (selectedRegistrationForConfirmation.paymentStatus !== "Paid") {
+      toast.error("This registration must be fully paid before it can be confirmed.");
+      return;
+    }
+
+    const nextTagErrors = registrationTags.reduce<Record<string, string>>(
+      (errors, tag) => {
+        if (!String(confirmationTagValues[tag.id] || "").trim()) {
+          errors[tag.id] = `Please complete "${tag.label}".`;
+        }
+
+        return errors;
+      },
+      {},
+    );
+
+    setConfirmationTagErrors(nextTagErrors);
+
+    if (Object.keys(nextTagErrors).length > 0) {
+      return;
+    }
+
+    setIsConfirmingRegistration(true);
+
+    try {
+      const confirmationPayload = {
+        club_account_id: club.club_account_id,
+        event_id: selectedRegistrationForConfirmation.eventId,
+        event_registration_id: selectedRegistrationForConfirmation.id,
+        registration_fields: registrationTags.map((tag) => ({
+          field_id: `event_registration_tag:${tag.id}`,
+          field_label: tag.label,
+          value: String(confirmationTagValues[tag.id] || "").trim(),
+        })),
+      };
+
+      const response = await confirmEventRegistration(confirmationPayload);
+
+      const responseMessage =
+        response.data &&
+        typeof response.data === "object" &&
+        "message" in response.data &&
+        typeof response.data.message === "string"
+          ? response.data.message
+          : undefined;
+
+      if (response.status !== 200) {
+        toast.error(responseMessage || "Failed to confirm registration.");
+        return;
+      }
+
+      toast.success(responseMessage || "Registration confirmed successfully.");
+      isLoadingMoreRef.current = false;
+      setRegistrationsPageToken(undefined);
+      setAllRegistrations([]);
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["admin-event-registrations", club.club_account_id],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["admin-event-registration", club.club_account_id],
+        }),
+      ]);
+      handleCloseConfirmationDialog();
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Error confirming registration.";
+      toast.error(message);
+    } finally {
+      setIsConfirmingRegistration(false);
+    }
+  };
+
+  const isLoadingMore = isFetching && allRegistrations.length > 0;
+  const isTableLoading = (isLoading || isFetching) && allRegistrations.length === 0;
 
   return (
     <div className="space-y-6 p-6">
@@ -1071,7 +1700,7 @@ export default function EventRegistrationsPage() {
                   selectedEvent === eventOption.value &&
                     "bg-sky-600 text-white hover:bg-sky-700",
                 )}
-                onClick={() => setSelectedEvent(eventOption.value)}
+                onClick={() => handleSelectEvent(eventOption.value)}
               >
                 {eventOption.label}
               </Button>
@@ -1135,14 +1764,239 @@ export default function EventRegistrationsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Registration Queue</CardTitle>
-          <CardDescription>
-            Review and expand registrations to inspect event details and
-            submitted answers.
-          </CardDescription>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <CardTitle>Registration Queue</CardTitle>
+              <CardDescription>
+                Review and expand registrations to inspect event details and
+                submitted answers.
+              </CardDescription>
+            </div>
+
+            <div className="flex items-center gap-1 self-start">
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPendingRegistrationsDropdown(
+                      (currentValue) => !currentValue,
+                    );
+                    setShowPendingPaymentsDropdown(false);
+                  }}
+                  className="relative rounded-lg p-2 transition-colors hover:bg-muted"
+                  title="Pending registrations"
+                >
+                  <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
+                  {pendingConfirmationRegistrations.length > 0 && (
+                    <span className="absolute right-0 top-0 inline-flex -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-amber-600 px-2 py-0.5 text-xs font-bold leading-none text-white">
+                      {pendingConfirmationRegistrations.length}
+                    </span>
+                  )}
+                </button>
+
+                {showPendingRegistrationsDropdown && (
+                  <div className="absolute right-0 top-full z-50 mt-2 max-h-96 w-[min(24rem,calc(100vw-3rem))] overflow-y-auto rounded-lg border bg-background shadow-xl">
+                    <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b bg-background p-4">
+                      <h3 className="font-semibold text-foreground">
+                        Pending Registrations ({pendingConfirmationRegistrations.length})
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setShowPendingRegistrationsDropdown(false)}
+                        className="text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    {pendingConfirmationRegistrations.length === 0 ? (
+                      <div className="p-4 text-sm text-muted-foreground">
+                        No pending registrations.
+                      </div>
+                    ) : (
+                      <div className="divide-y">
+                        {pendingConfirmationRegistrations.map((registration) => (
+                          <div
+                            key={registration.id}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() =>
+                              handleSelectPendingRegistration(registration)
+                            }
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                handleSelectPendingRegistration(registration);
+                              }
+                            }}
+                            className="cursor-pointer space-y-3 p-4 transition-colors hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                          >
+                            <div className="space-y-1">
+                              <p className="text-sm font-medium text-foreground">
+                                {registration.memberName}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {registration.eventTitle}
+                              </p>
+                              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                                <span>{registration.eventDateLabel}</span>
+                                <span>&bull;</span>
+                                <span>{formatSubmittedDate(registration.submittedAt)}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-3">
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  "border",
+                                  getRegistrationBadgeClassName(
+                                    registration.registrationStatus,
+                                  ),
+                                )}
+                              >
+                                {registration.registrationStatus}
+                              </Badge>
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleOpenConfirmationDialog(registration);
+                                }}
+                              >
+                                Confirm Registration
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPendingPaymentsDropdown((currentValue) => !currentValue);
+                  setShowPendingRegistrationsDropdown(false);
+                }}
+                className="relative rounded-lg p-2 transition-colors hover:bg-muted"
+                title="Pending payments"
+              >
+                <CreditCard className="h-5 w-5 text-muted-foreground" />
+                {pendingPaymentRegistrations.length > 0 && (
+                  <span className="absolute right-0 top-0 inline-flex -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold leading-none text-white">
+                    {pendingPaymentRegistrations.length}
+                  </span>
+                )}
+              </button>
+
+              {showPendingPaymentsDropdown && (
+                <div className="absolute right-0 top-full z-50 mt-2 max-h-96 w-[min(24rem,calc(100vw-3rem))] overflow-y-auto rounded-lg border bg-background shadow-xl">
+                  <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b bg-background p-4">
+                    <h3 className="font-semibold text-foreground">
+                      Pending Payments ({pendingPaymentRegistrations.length})
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setShowPendingPaymentsDropdown(false)}
+                      className="text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {pendingPaymentRegistrations.length === 0 ? (
+                    <div className="p-4 text-sm text-muted-foreground">
+                      No pending payments.
+                    </div>
+                  ) : (
+                    <div className="divide-y">
+                      {pendingPaymentRegistrations.map((registration) => {
+                        const outstandingAmount = Math.max(
+                          registration.amountDue - registration.amountPaid,
+                          0,
+                        );
+
+                        return (
+                          <div
+                            key={registration.id}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() =>
+                              handleSelectPendingPayment(registration)
+                            }
+                            onKeyDown={(event) => {
+                              if (
+                                event.key === "Enter" ||
+                                event.key === " "
+                              ) {
+                                event.preventDefault();
+                                handleSelectPendingPayment(registration);
+                              }
+                            }}
+                            className="cursor-pointer space-y-3 p-4 transition-colors hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                          >
+                            <div className="space-y-1">
+                              <p className="text-sm font-medium text-foreground">
+                                {registration.memberName}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {registration.eventTitle}
+                              </p>
+                              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                                <span>{registration.eventDateLabel}</span>
+                                <span>&bull;</span>
+                                <span>
+                                  Outstanding {formatAmount(outstandingAmount, club?.currency || "ZAR")}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-3">
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  "border",
+                                  getPaymentBadgeClassName(
+                                    registration.paymentStatus,
+                                  ),
+                                )}
+                              >
+                                {registration.paymentStatus}
+                              </Badge>
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleOpenPaymentDialog(registration);
+                                }}
+                              >
+                                Confirm Payment
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+              </div>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid auto-rows-fr gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div
+            className={cn(
+              "grid items-start gap-3 sm:grid-cols-2 xl:grid-cols-4",
+              allowsMultiplePricingFilters && selectedPricingFilterOptions.length > 0 && "pb-10",
+            )}
+          >
             <div className="grid h-full min-w-0 gap-2">
               <label className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 Payment Status
@@ -1231,45 +2085,150 @@ export default function EventRegistrationsPage() {
 
             {pricingFilterOptions.length > 0 && (
               <div className="grid h-full min-w-0 gap-2">
-                <label className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                  {pricingFilterLabel}
-                </label>
-                <Select
-                  value={selectedPricingFilter}
-                  onValueChange={setSelectedPricingFilter}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue
-                      placeholder={`Filter by ${pricingFilterLabel.toLowerCase()}`}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    {pricingFilterOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {allowsMultiplePricingFilters ? (
+                  <div className="relative grid gap-2">
+                    <div className="grid gap-2">
+                      <label className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        {pricingFilterLabel}
+                      </label>
+                      <DropdownMenu
+                        open={pricingFilterDropdownOpen}
+                        onOpenChange={setPricingFilterDropdownOpen}
+                      >
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full justify-between font-normal"
+                          >
+                            {selectedPricingFilters.length > 0
+                              ? `${selectedPricingFilters.length} option${selectedPricingFilters.length === 1 ? "" : "s"} selected`
+                              : `Filter by ${pricingFilterLabel.toLowerCase()}`}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-[16rem]">
+                          {pricingFilterOptions.map((option) => (
+                            <DropdownMenuCheckboxItem
+                              key={option.value}
+                              checked={selectedPricingFilters.includes(option.value)}
+                              onSelect={(event) => event.preventDefault()}
+                              onCheckedChange={(checked) => {
+                                setSelectedPricingFilters((currentFilters) => {
+                                  if (checked) {
+                                    return currentFilters.includes(option.value)
+                                      ? currentFilters
+                                      : [...currentFilters, option.value];
+                                  }
+
+                                  return currentFilters.filter(
+                                    (pricingFilter) => pricingFilter !== option.value,
+                                  );
+                                });
+                              }}
+                            >
+                              {option.label}
+                            </DropdownMenuCheckboxItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    {selectedPricingFilterOptions.length > 0 && (
+                      <div className="absolute left-0 right-0 top-full mt-2 flex flex-wrap items-start gap-2">
+                        {selectedPricingFilterOptions.map((option) => (
+                          <Badge
+                            key={`selected-pricing-filter-${option.value}`}
+                            variant="secondary"
+                            className="px-2 py-0.5 text-xs"
+                          >
+                            {option.label}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <label className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      {pricingFilterLabel}
+                    </label>
+                    <Select
+                      value={selectedPricingFilters[0] || "all"}
+                      onValueChange={(value) =>
+                        setSelectedPricingFilters(value === "all" ? [] : [value])
+                      }
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue
+                          placeholder={`Filter by ${pricingFilterLabel.toLowerCase()}`}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        {pricingFilterOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </>
+                )}
               </div>
             )}
           </div>
 
-          {(registrationFilterFields.length > 0 ||
-            pricingFilterOptions.length > 0) && (
-            <div className="flex justify-end">
-              <Button
+          <div className="flex items-center gap-3 border-t pt-4">
+            <label className="text-sm font-medium">Results per page:</label>
+            <Select
+              value={pendingRegistrationsLimit.toString()}
+              onValueChange={(value) => {
+                setPendingRegistrationsLimit(Number.parseInt(value, 10));
+              }}
+            >
+              <SelectTrigger className="w-[100px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+              </SelectContent>
+            </Select>
+            <button
+              type="button"
+              onClick={handleRunRegistrationsQuery}
+              title="Run database query to refresh event registrations data"
+              disabled={!selectedEvent || isFetching}
+              className="px-4 py-1 w-[100px] bg-orange-400 hover:bg-orange-500 rounded-[20px] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center font-bold"
+            >
+              Run
+            </button>
+          </div>
+
+          {nextRegistrationsPageToken && (
+            <div className="flex items-center justify-between rounded-md border border-orange-600 bg-orange-100 p-4">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-orange-600" />
+                <p className="font-medium text-black">More results available</p>
+              </div>
+              <button
                 type="button"
-                variant="outline"
-                size="sm"
                 onClick={() => {
-                  setFieldFilters({});
-                  setSelectedPricingFilter("all");
+                  isLoadingMoreRef.current = true;
+                  setRegistrationsPageToken(nextRegistrationsPageToken);
                 }}
+                disabled={isLoadingMore}
+                className="flex items-center gap-2 rounded-[20px] border border-black bg-orange-100 px-4 py-2 font-semibold text-black transition hover:bg-orange-200 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Reset form filters
-              </Button>
+                {isLoadingMore ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  "Load More"
+                )}
+              </button>
             </div>
           )}
 
@@ -1326,7 +2285,14 @@ export default function EventRegistrationsPage() {
                 ) : (
                   filteredRegistrations.map((registration) => (
                     <Fragment key={registration.id}>
-                      <TableRow className="border-border/60">
+                      <TableRow
+                        id={`registration-row-${registration.id}`}
+                        className={cn(
+                          "border-border/60 transition-colors",
+                          highlightedRegistrationId === registration.id &&
+                            "bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-50",
+                        )}
+                      >
                         <TableCell className="text-center">
                           <Button
                             variant="ghost"
@@ -1406,26 +2372,38 @@ export default function EventRegistrationsPage() {
                         </TableCell>
                         <TableCell className="w-[20%] text-center">
                           <div className="space-y-1">
-                            <Badge
-                              className={getPaymentBadgeClassName(
-                                registration.paymentStatus,
-                              )}
-                            >
-                              {registration.paymentStatus}
-                            </Badge>
-                            {registration.amountDue > 0 && registration.paymentStatus !== "Paid" && (
-                              <p className="text-xs text-muted-foreground">
-                                {formatAmount(
-                                  registration.amountPaid,
-                                  club?.currency || "ZAR",
-                                )}{" "}
-                                of{" "}
-                                {formatAmount(
-                                  registration.amountDue,
-                                  club?.currency || "ZAR",
-                                )}
-                              </p>
-                            )}
+                            {(() => {
+                              const paymentLabel = isFreeRegistration(registration)
+                                ? "FREE"
+                                : registration.paymentStatus;
+
+                              return (
+                                <>
+                                  <Badge
+                                    className={getPaymentBadgeClassName(
+                                      paymentLabel,
+                                    )}
+                                  >
+                                    {paymentLabel}
+                                  </Badge>
+                                  {!isFreeRegistration(registration) &&
+                                    registration.amountDue > 0 &&
+                                    registration.paymentStatus !== "Paid" && (
+                                      <p className="text-xs text-muted-foreground">
+                                        {formatAmount(
+                                          registration.amountPaid,
+                                          club?.currency || "ZAR",
+                                        )}{" "}
+                                        of{" "}
+                                        {formatAmount(
+                                          registration.amountDue,
+                                          club?.currency || "ZAR",
+                                        )}
+                                      </p>
+                                    )}
+                                </>
+                              );
+                            })()}
                           </div>
                         </TableCell>
                         <TableCell className="w-[20%] text-center">
@@ -1470,6 +2448,26 @@ export default function EventRegistrationsPage() {
                                     </div>
                                   </div>
 
+                                  {registration.registrationStatus === "Confirmed" &&
+                                    registration.registrationTags.length > 0 && (
+                                      <div className="mt-4 rounded-lg border bg-muted/20 p-3">
+                                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                          Registration Tags
+                                        </p>
+                                        <div className="mt-3 flex flex-wrap gap-2">
+                                          {registration.registrationTags.map((tag) => (
+                                            <Badge
+                                              key={`${registration.id}-${tag.id}`}
+                                              variant="secondary"
+                                              className="px-3 py-1"
+                                            >
+                                              {tag.label}: {tag.value}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+
                                   <div className="mt-4 grid gap-3 md:grid-cols-2">
                                     <div className="rounded-lg border bg-muted/20 p-3">
                                       <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
@@ -1484,98 +2482,112 @@ export default function EventRegistrationsPage() {
                                         Registration amount
                                       </p>
                                       <p className="mt-2 font-medium">
-                                        {formatAmount(
-                                          registration.amountDue,
+                                        {formatRegistrationAmount(
+                                          registration,
                                           club?.currency || "ZAR",
                                         )}
                                       </p>
-                                      <p className="mt-2 text-sm text-muted-foreground">
-                                        Paid:{" "}
-                                        {formatAmount(
-                                          registration.amountPaid,
-                                          club?.currency || "ZAR",
-                                        )}
-                                      </p>
-                                      <p className="text-sm text-muted-foreground">
-                                        Outstanding:{" "}
-                                        {formatAmount(
-                                          Math.max(
+                                      {!isFreeRegistration(registration) && (
+                                        <>
+                                          <p className="mt-2 text-sm text-muted-foreground">
+                                            Paid:{" "}
+                                            {formatAmount(
+                                              registration.amountPaid,
+                                              club?.currency || "ZAR",
+                                            )}
+                                          </p>
+                                          {Math.max(
                                             registration.amountDue -
                                               registration.amountPaid,
                                             0,
-                                          ),
-                                          club?.currency || "ZAR",
-                                        )}
-                                      </p>
-                                      {registration.paymentStatus !== "Paid" &&
-                                        Math.max(
-                                          registration.amountDue -
-                                            registration.amountPaid,
-                                          0,
-                                        ) > 0 && (
-                                          <Button
-                                            type="button"
-                                            className="mt-3"
-                                            onClick={() =>
-                                              handleOpenPaymentDialog(
-                                                registration,
-                                              )
-                                            }
-                                          >
-                                            Confirm Payment
-                                          </Button>
-                                        )}
+                                          ) > 0 && (
+                                            <p className="text-sm text-muted-foreground">
+                                              Outstanding:{" "}
+                                              {formatAmount(
+                                                Math.max(
+                                                  registration.amountDue -
+                                                    registration.amountPaid,
+                                                  0,
+                                                ),
+                                                club?.currency || "ZAR",
+                                              )}
+                                            </p>
+                                          )}
+                                          {registration.paymentStatus !== "Paid" &&
+                                            Math.max(
+                                              registration.amountDue -
+                                                registration.amountPaid,
+                                              0,
+                                            ) > 0 && (
+                                              <Button
+                                                type="button"
+                                                className="mt-3"
+                                                onClick={() =>
+                                                  handleOpenPaymentDialog(
+                                                    registration,
+                                                  )
+                                                }
+                                              >
+                                                Confirm Payment
+                                              </Button>
+                                            )}
+                                        </>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
 
-                                <div className="rounded-xl border bg-background p-4">
-                                  <div className="flex items-center gap-2">
-                                    <Users className="h-4 w-4 text-muted-foreground" />
-                                    <h4 className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                                      Registration Form
-                                    </h4>
-                                  </div>
-                                  <div className="mt-4 grid gap-3 md:grid-cols-2">
-                                    {expandedPricingSelections.length > 0 && (
-                                      <div className="h-full rounded-lg border bg-muted/20 p-3">
-                                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                                          {registration.pricingFieldName}
-                                        </p>
-                                        <div className="mt-3 flex flex-wrap gap-2">
-                                          {expandedPricingSelections.map(
-                                            (option) => (
-                                              <Badge
-                                                key={`${registration.id}-${option.id}`}
-                                                variant="secondary"
-                                                className="px-3 py-1"
-                                              >
-                                                {option.label}
-                                              </Badge>
-                                            ),
-                                          )}
+                                {(expandedPricingSelections.length > 0 ||
+                                  (registrationDetail.registration_fields || [])
+                                    .length > 0) && (
+                                  <div className="rounded-xl border bg-background p-4">
+                                    <div className="flex items-center gap-2">
+                                      <Users className="h-4 w-4 text-muted-foreground" />
+                                      <h4 className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                                        Registration Form
+                                      </h4>
+                                    </div>
+                                    <div className="mt-4 grid gap-3 md:grid-cols-2">
+                                      {expandedPricingSelections.length > 0 && (
+                                        <div className="h-full rounded-lg border bg-muted/20 p-3">
+                                          <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                            {registration.pricingFieldName}
+                                          </p>
+                                          <div className="mt-3 flex flex-wrap gap-2">
+                                            {expandedPricingSelections.map(
+                                              (option) => (
+                                                <Badge
+                                                  key={`${registration.id}-${option.id}`}
+                                                  variant="secondary"
+                                                  className="px-3 py-1"
+                                                >
+                                                  {option.label}
+                                                </Badge>
+                                              ),
+                                            )}
+                                          </div>
                                         </div>
-                                      </div>
-                                    )}
-                                    {(
-                                      registrationDetail.registration_fields ||
-                                      []
-                                    ).map((field, index) => (
-                                      <div
-                                        key={`${registration.id}-${field.field_id || field.field_label || index}`}
-                                        className="h-full rounded-lg border bg-muted/20 p-3"
-                                      >
-                                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                                          {field.field_label ||
-                                            `Field ${index + 1}`}
-                                        </p>
-                                        <p className="mt-2 text-sm font-medium whitespace-pre-wrap">
-                                          {formatFieldValue(field.value)}
-                                        </p>
-                                      </div>
-                                    ))}
+                                      )}
+                                      {(
+                                        registrationDetail.registration_fields ||
+                                        []
+                                      ).map((field, index) => (
+                                        <div
+                                          key={`${registration.id}-${field.field_id || field.field_label || index}`}
+                                          className="h-full rounded-lg border bg-muted/20 p-3"
+                                        >
+                                          <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                            {field.field_label ||
+                                              `Field ${index + 1}`}
+                                          </p>
+                                          <p className="mt-2 text-sm font-medium whitespace-pre-wrap">
+                                            {formatFieldValue(field.value)}
+                                          </p>
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
-                                </div>
+                                )}
                                 {registration.notes && (
                                   <Card>
                                     <CardHeader>
@@ -1627,34 +2639,47 @@ export default function EventRegistrationsPage() {
                   Registration amount
                 </span>
                 <span className="font-medium">
-                  {formatAmount(
-                    selectedRegistrationForPayment?.amountDue || 0,
-                    club?.currency || "ZAR",
-                  )}
+                  {selectedRegistrationForPayment
+                    ? formatRegistrationAmount(
+                        selectedRegistrationForPayment,
+                        club?.currency || "ZAR",
+                      )
+                    : formatAmount(0, club?.currency || "ZAR")}
                 </span>
               </div>
-              <div className="mt-2 flex items-center justify-between gap-3 text-sm">
-                <span className="text-muted-foreground">Already paid</span>
-                <span className="font-medium">
-                  {formatAmount(
-                    selectedRegistrationForPayment?.amountPaid || 0,
-                    club?.currency || "ZAR",
+              {!selectedRegistrationForPayment ||
+              !isFreeRegistration(selectedRegistrationForPayment) ? (
+                <>
+                  <div className="mt-2 flex items-center justify-between gap-3 text-sm">
+                    <span className="text-muted-foreground">Already paid</span>
+                    <span className="font-medium">
+                      {formatAmount(
+                        selectedRegistrationForPayment?.amountPaid || 0,
+                        club?.currency || "ZAR",
+                      )}
+                    </span>
+                  </div>
+                  {Math.max(
+                    (selectedRegistrationForPayment?.amountDue || 0) -
+                      (selectedRegistrationForPayment?.amountPaid || 0),
+                    0,
+                  ) > 0 && (
+                    <div className="mt-2 flex items-center justify-between gap-3 text-sm">
+                      <span className="text-muted-foreground">Outstanding</span>
+                      <span className="font-semibold">
+                        {formatAmount(
+                          Math.max(
+                            (selectedRegistrationForPayment?.amountDue || 0) -
+                              (selectedRegistrationForPayment?.amountPaid || 0),
+                            0,
+                          ),
+                          club?.currency || "ZAR",
+                        )}
+                      </span>
+                    </div>
                   )}
-                </span>
-              </div>
-              <div className="mt-2 flex items-center justify-between gap-3 text-sm">
-                <span className="text-muted-foreground">Outstanding</span>
-                <span className="font-semibold">
-                  {formatAmount(
-                    Math.max(
-                      (selectedRegistrationForPayment?.amountDue || 0) -
-                        (selectedRegistrationForPayment?.amountPaid || 0),
-                      0,
-                    ),
-                    club?.currency || "ZAR",
-                  )}
-                </span>
-              </div>
+                </>
+              ) : null}
             </div>
 
             <div className="grid gap-2">
@@ -1684,6 +2709,112 @@ export default function EventRegistrationsPage() {
               disabled={isConfirmingPayment}
             >
               {isConfirmingPayment ? "Processing..." : "Confirm Payment"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={confirmationDialogOpen}
+        onOpenChange={handleCloseConfirmationDialog}
+      >
+        <DialogContent className="sm:max-w-[520px]">
+          <DialogHeader>
+            <DialogTitle>Confirm Event Registration</DialogTitle>
+            <DialogDescription>
+              {selectedRegistrationForConfirmation?.memberName ||
+                "This registration"}{" "}
+              can now be confirmed.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="rounded-lg border bg-muted/20 p-4">
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <span className="text-muted-foreground">Payment status</span>
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "border",
+                    getPaymentBadgeClassName(
+                      selectedRegistrationForConfirmation?.paymentStatus ||
+                        "Awaiting payment",
+                    ),
+                  )}
+                >
+                  {selectedRegistrationForConfirmation?.paymentStatus ||
+                    "Awaiting payment"}
+                </Badge>
+              </div>
+              <div className="mt-2 flex items-center justify-between gap-3 text-sm">
+                <span className="text-muted-foreground">Registration</span>
+                <span className="font-medium">
+                  {selectedRegistrationForConfirmation?.memberName || "N/A"}
+                </span>
+              </div>
+            </div>
+
+            {registrationTags.length > 0 ? (
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm font-medium">Registration tags</p>
+                  <p className="text-sm text-muted-foreground">
+                    Complete the required registration tags before confirming this registration.
+                  </p>
+                </div>
+
+                <div className="grid gap-3">
+                  {registrationTags.map((tag) => (
+                    <div key={tag.id} className="grid gap-2">
+                      <label className="text-sm font-medium">{tag.label}</label>
+                      <Input
+                        value={confirmationTagValues[tag.id] || ""}
+                        onChange={(event) => {
+                          const value = event.target.value;
+                          setConfirmationTagValues((current) => ({
+                            ...current,
+                            [tag.id]: value,
+                          }));
+                          setConfirmationTagErrors((current) => {
+                            if (!current[tag.id]) {
+                              return current;
+                            }
+
+                            const nextErrors = { ...current };
+                            delete nextErrors[tag.id];
+                            return nextErrors;
+                          });
+                        }}
+                        placeholder={`Enter ${tag.label.toLowerCase()}`}
+                        disabled={isConfirmingRegistration}
+                      />
+                      {confirmationTagErrors[tag.id] && (
+                        <p className="text-sm text-destructive">
+                          {confirmationTagErrors[tag.id]}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleCloseConfirmationDialog}
+              disabled={isConfirmingRegistration}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmRegistration}
+              disabled={isConfirmingRegistration}
+            >
+              {isConfirmingRegistration
+                ? "Processing..."
+                : "Confirm Registration"}
             </Button>
           </DialogFooter>
         </DialogContent>

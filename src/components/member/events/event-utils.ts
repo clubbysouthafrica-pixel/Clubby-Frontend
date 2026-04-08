@@ -24,6 +24,16 @@ export type EventPricing = {
   options: EventPricingOption[];
 };
 
+export type EventRegistrationTag = {
+  id: string;
+  label: string;
+};
+
+export type EventRegistrationSettings = {
+  autoConfirmIfPaid: boolean;
+  registrationTags: EventRegistrationTag[];
+};
+
 export type MemberEvent = {
   id: string;
   eventId?: string;
@@ -34,6 +44,7 @@ export type MemberEvent = {
   registrationOpenDate: string;
   registrationCloseDate: string;
   pricing: EventPricing;
+  registrationSettings: EventRegistrationSettings;
   formFields: EventFormField[];
   previewFieldOrder: string[];
 };
@@ -103,6 +114,95 @@ function sanitizePricing(rawPricing: unknown): EventPricing {
   };
 }
 
+function getRegistrationSettingsSource(event: Record<string, unknown>) {
+  const nestedCandidates = [
+    event.eventRegistration,
+    event.event_registration,
+    event.registrationSettings,
+    event.registration_settings,
+    event.registration,
+  ];
+
+  for (const candidate of nestedCandidates) {
+    if (typeof candidate === "object" && candidate !== null) {
+      return candidate as Record<string, unknown>;
+    }
+  }
+
+  return event;
+}
+
+function sanitizeRegistrationTags(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((entry, index) => {
+      if (typeof entry === "string") {
+        const label = entry.trim();
+
+        if (!label) {
+          return null;
+        }
+
+        return {
+          id: `registration-tag-${index}-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+          label,
+        } satisfies EventRegistrationTag;
+      }
+
+      if (!entry || typeof entry !== "object") {
+        return null;
+      }
+
+      const record = entry as Record<string, unknown>;
+      const label = String(record.label || record.name || record.key || "").trim();
+      const id = String(record.id || record.key || label).trim();
+
+      if (!label || !id) {
+        return null;
+      }
+
+      return {
+        id,
+        label,
+      } satisfies EventRegistrationTag;
+    })
+    .filter(
+      (entry, index, entries): entry is EventRegistrationTag =>
+        Boolean(entry) && entries.findIndex((candidate) => candidate?.id === entry?.id) === index,
+    );
+}
+
+function sanitizeRegistrationSettings(
+  rawEvent: Record<string, unknown>,
+): EventRegistrationSettings {
+  const source = getRegistrationSettingsSource(rawEvent);
+  const registrationTags = sanitizeRegistrationTags(
+    source.registrationTags ??
+      source.registration_tags ??
+      source.registrationTagKeys ??
+      source.registration_tag_keys ??
+      source.tagKeys ??
+      source.tags,
+  );
+  const autoConfirmValue =
+    source.autoConfirmIfPaid ??
+    source.auto_confirm_if_paid ??
+    source.auto_confirm_registration_if_paid;
+
+  return {
+    autoConfirmIfPaid:
+      registrationTags.length > 0
+        ? false
+        : typeof autoConfirmValue === "boolean"
+          ? autoConfirmValue
+          : true,
+    registrationTags,
+  };
+}
+
 function sanitizeField(rawField: unknown, index: number): EventFormField | null {
   const field = typeof rawField === "object" && rawField !== null ? (rawField as Partial<EventFormField>) : null;
 
@@ -162,6 +262,7 @@ export function sanitizeEvents(rawEvents: unknown[]) {
       const registrationOpenDate = toDateKey(event.registrationOpenDate) || startDate;
       const registrationCloseDate = toDateKey(event.registrationCloseDate) || endDate;
       const pricing = sanitizePricing(event.pricing);
+      const registrationSettings = sanitizeRegistrationSettings(event);
       const formFields = Array.isArray(event.formFields)
         ? event.formFields
             .map((field, fieldIndex) => sanitizeField(field, fieldIndex))
@@ -178,6 +279,7 @@ export function sanitizeEvents(rawEvents: unknown[]) {
         registrationOpenDate,
         registrationCloseDate,
         pricing,
+        registrationSettings,
         formFields,
         previewFieldOrder: sanitizePreviewFieldOrder(event.previewFieldOrder, formFields, pricing),
       };

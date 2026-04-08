@@ -88,7 +88,47 @@ export default function MarketRoutes() {
         path="/myclubs/:clubId/shop"
         element={
           <ProtectedRoute>
+            <ViewClubPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/myclubs/:clubId/store"
+        element={
+          <ProtectedRoute>
             <MemberShopPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/myclubs/:clubId/payments"
+        element={
+          <ProtectedRoute>
+            <ViewClubPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/myclubs/:clubId/registration"
+        element={
+          <ProtectedRoute>
+            <ViewClubPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/myclubs/:clubId/bookings"
+        element={
+          <ProtectedRoute>
+            <ViewClubPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/myclubs/:clubId/events"
+        element={
+          <ProtectedRoute>
+            <ViewClubPage />
           </ProtectedRoute>
         }
       ></Route>

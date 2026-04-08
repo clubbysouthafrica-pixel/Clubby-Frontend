@@ -41,6 +41,17 @@ type PreviewFieldItem =
   | { id: string; kind: "form"; field: MemberEvent["formFields"][number] }
   | { id: string; kind: "pricing"; pricingType: "MULTIPLE" | "ADDITIONAL" };
 
+function BackToClubButton({ onClick }: { onClick: () => void }) {
+  return (
+    <div className="sticky top-4 z-20 mb-6 w-fit rounded-lg bg-white/95 backdrop-blur-sm">
+      <Button variant="ghost" onClick={onClick}>
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back to Club
+      </Button>
+    </div>
+  );
+}
+
 function formatCurrency(value: number | string) {
   const amount = typeof value === "number" ? value : Number(value);
 
@@ -58,6 +69,10 @@ export default function EventRegistrationPage() {
   const navigate = useNavigate();
   const { clubId, eventId } = useParams();
   const todayKey = useMemo(() => formatDateKey(new Date()), []);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [clubId, eventId]);
 
   const { data: clubData, isLoading: isClubLoading } = useFetchClub(clubId || "");
   const { data: eventsResponse, isLoading: isEventsLoading, isError } = useQuery({
@@ -184,10 +199,12 @@ export default function EventRegistrationPage() {
     return event ? isRegistrationOpen(event, todayKey) : false;
   }, [event, todayKey]);
 
+  const hasRegistrationInputs = orderedItems.length > 0;
+
   const isMemberAllowed = Boolean(clubData?.club_member_exists && clubData?.registered);
 
   const handleBack = () => {
-    navigate(`/myclubs/${clubId}?tab=events`);
+    navigate(`/myclubs/${clubId}/events`);
   };
 
   const handleValidateForm = async () => {
@@ -225,7 +242,9 @@ export default function EventRegistrationPage() {
 
     setPricingError("");
 
-    if (Object.keys(nextFieldErrors).length === 0) {
+    if (
+      Object.keys(nextFieldErrors).length === 0
+    ) {
       const registrationRequest = {
         club_account_id: clubData?.club_account_id,
         event_id: event.eventId ?? event.id,
@@ -233,12 +252,14 @@ export default function EventRegistrationPage() {
         entry_fee_amount: entryFeeAmount,
         pricing_type: event.pricing.type,
         selected_pricing_option_ids: pricingSelection,
-        registration_fields: event.formFields.map((field) => ({
-          field_id: field.id,
-          field_label: field.label,
-          input_type: field.inputType,
-          value: formValues[field.id] ?? null,
-        })),
+        registration_fields: [
+          ...event.formFields.map((field) => ({
+            field_id: field.id,
+            field_label: field.label,
+            input_type: field.inputType,
+            value: formValues[field.id] ?? null,
+          })),
+        ],
       };
 
       try {
@@ -276,10 +297,7 @@ export default function EventRegistrationPage() {
   if (isClubLoading || isEventsLoading) {
     return (
       <div className="min-h-screen bg-white px-4 py-6 md:px-8 md:py-10">
-        <Button variant="ghost" onClick={handleBack} className="mb-8">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Club
-        </Button>
+        <BackToClubButton onClick={handleBack} />
         <div className="flex min-h-[60vh] items-center justify-center">
           <div className="flex items-center gap-3 text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -293,10 +311,7 @@ export default function EventRegistrationPage() {
   if (!isMemberAllowed) {
     return (
       <div className="min-h-screen bg-white px-4 py-6 md:px-8 md:py-10">
-        <Button variant="ghost" onClick={handleBack} className="mb-8">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Club
-        </Button>
+        <BackToClubButton onClick={handleBack} />
         <div className="mx-auto max-w-xl">
           <Card>
             <CardHeader>
@@ -314,10 +329,7 @@ export default function EventRegistrationPage() {
   if (event && !canRegister) {
     return (
       <div className="min-h-screen bg-white px-4 py-6 md:px-8 md:py-10">
-        <Button variant="ghost" onClick={handleBack} className="mb-8">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Club
-        </Button>
+        <BackToClubButton onClick={handleBack} />
         <div className="mx-auto max-w-xl">
           <Card>
             <CardHeader>
@@ -335,10 +347,7 @@ export default function EventRegistrationPage() {
   if (isError || !event || !clubData?.enable_events) {
     return (
       <div className="min-h-screen bg-white px-4 py-6 md:px-8 md:py-10">
-        <Button variant="ghost" onClick={handleBack} className="mb-8">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Club
-        </Button>
+        <BackToClubButton onClick={handleBack} />
         <div className="mx-auto max-w-xl">
           <Card>
             <CardHeader>
@@ -355,10 +364,7 @@ export default function EventRegistrationPage() {
 
   return (
     <div className="min-h-screen bg-white px-4 py-6 md:px-8 md:py-10">
-      <Button variant="ghost" onClick={handleBack} className="mb-8">
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Club
-      </Button>
+      <BackToClubButton onClick={handleBack} />
 
       <div className="mx-auto max-w-4xl space-y-6">
         <Card>
@@ -408,22 +414,16 @@ export default function EventRegistrationPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Event Registration Form</CardTitle>
-            <CardDescription>Complete the fields below to register for this event.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {orderedItems.length === 0 && event.pricing.type === "SINGLE" && (
-              <div className="rounded-lg border bg-muted/10 p-4 text-sm text-muted-foreground">
-                No additional registration fields are required for this event.
-              </div>
-            )}
-
-            {orderedItems.map((item) => (
-              <div key={item.id} className="grid gap-2 rounded-lg bg-muted/10 p-4">
-                {item.kind === "form" ? (
-                  <>
+        {hasRegistrationInputs && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Event Registration Form</CardTitle>
+              <CardDescription>Complete the fields below to register for this event.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {orderedItems.map((item) => (
+                item.kind === "form" ? (
+                  <div key={item.id} className="grid gap-2 rounded-lg bg-muted/10 p-4">
                     {item.field.inputType !== "CHECKBOX" && (
                       <Label className="text-sm font-medium">{item.field.label}</Label>
                     )}
@@ -509,9 +509,9 @@ export default function EventRegistrationPage() {
                     {fieldErrors[item.field.id] && (
                       <p className="text-sm font-medium text-destructive">{fieldErrors[item.field.id]}</p>
                     )}
-                  </>
+                  </div>
                 ) : item.pricingType === "MULTIPLE" ? (
-                  <>
+                  <div key={item.id} className="grid gap-2 rounded-lg bg-muted/10 p-4">
                     <Label className="text-sm font-medium">{pricingFieldLabel}</Label>
                     <Select
                       value={pricingSelection[0] ?? ""}
@@ -532,9 +532,9 @@ export default function EventRegistrationPage() {
                       </SelectContent>
                     </Select>
                     {pricingError && <p className="text-sm font-medium text-destructive">{pricingError}</p>}
-                  </>
+                  </div>
                 ) : (
-                  <>
+                  <div key={item.id} className="grid gap-2 rounded-lg bg-muted/10 p-4">
                     <Label className="text-sm font-medium">{pricingFieldLabel}</Label>
                     <div className="space-y-2">
                       {event.pricing.options.map((option) => {
@@ -569,18 +569,26 @@ export default function EventRegistrationPage() {
                       })}
                     </div>
                     {pricingError && <p className="text-sm font-medium text-destructive">{pricingError}</p>}
-                  </>
-                )}
-              </div>
-            ))}
+                  </div>
+                )
+              ))}
 
-            <div className="flex justify-end border-t pt-4">
-              <Button type="button" onClick={handleValidateForm} disabled={isSubmittingRegistration}>
-                {isSubmittingRegistration ? "Submitting..." : "Register"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="flex justify-end border-t pt-4">
+                <Button type="button" onClick={handleValidateForm} disabled={isSubmittingRegistration}>
+                  {isSubmittingRegistration ? "Submitting..." : "Register"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {!hasRegistrationInputs && (
+          <div className="flex justify-end border-t pt-4">
+            <Button type="button" onClick={handleValidateForm} disabled={isSubmittingRegistration}>
+              {isSubmittingRegistration ? "Submitting..." : "Register"}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -241,7 +241,7 @@ export default function PaymentsTabContent({
         <Card ref={outstandingBalanceRef} className="border-primary/20 shadow-lg mb-6 scroll-mt-24">
           <CardHeader className="pb-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
                 <CreditCard className="w-6 h-6 text-primary" />
               </div>
               <div className="flex-1">
@@ -264,7 +264,7 @@ export default function PaymentsTabContent({
               {outstandingAmount > 0 && transactionOptions.length === 0 && (
                 <Button
                   onClick={() => handlePayHereClick()}
-                  className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   Pay Now
                 </Button>
@@ -503,7 +503,7 @@ export default function PaymentsTabContent({
         <Card className="border-primary/20 shadow-lg">
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
                 <FileText className="w-5 h-5 text-primary" />
               </div>
               <div>
@@ -535,7 +535,7 @@ export default function PaymentsTabContent({
                 </div>
                 <div className={`${sortedTransactions.length > 5 ? 'max-h-96 overflow-y-auto' : 'overflow-hidden'}`}>
                 <Table className="border-0">
-                  <TableHeader className="bg-gradient-to-r from-muted/50 to-muted/30 sticky top-0 z-10">
+                  <TableHeader className="bg-muted/40 sticky top-0 z-10">
                     <TableRow className="border-primary/10 hover:bg-transparent">
                       <TableHead className="text-center w-1/5 font-semibold">
                         Transaction ID
