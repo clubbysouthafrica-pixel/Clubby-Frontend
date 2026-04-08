@@ -12,6 +12,8 @@ import { Check, X, Folder, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { useFetchClubStorageRequests } from "@/queries/admin-features/storage";
+import { updateStorageRequestUnit } from "@/services/admin-features/storage";
+import { toast } from "sonner";
 const statusColors = {
   pending: "text-yellow-600",
   approved: "text-green-600",
@@ -75,24 +77,48 @@ export default function StorageRequestsAdmin() {
     });
   }, [requests, searchTerm, statusFilter, paymentFilter]);
 
-  // TODO: Replace with backend mutation hooks if available
-  const handleMarkPaid = async (requestId, action) => {
-    // Example: await markPaidMutation.mutateAsync(requestId);
-    setRequests((prev) =>
-      prev.map((req) =>
-        req.storage_request_id === requestId ? { ...req, paid: true, status: action } : req,
-      ),
-    );
+  // Handlers for actions
+  const handleMarkPaid = async (storageRequest: any, action: string) => {
+    const paymentType = "EFT"
+
+    try {
+      await updateStorageRequestUnit({
+        storage_request_id: storageRequest.storage_request_id,
+        storage_id: storageRequest.storage_id,
+        paid: true,
+        payment_method: paymentType,
+        status: action,
+      });
+        setRequests((prev) =>
+        prev.map((req) =>
+          req.storage_request_id === storageRequest.storage_request_id ? { ...req, paid: true, status: action } : req,
+        ),
+      );
+      toast.success("Marked as paid successfully.");
+    } catch (_error) {
+      toast.error("Failed to mark as paid. Please try again.");
+    }
   };
 
-  const handleRequestAction = async (requestId, action) => {
-    const paymentType = "EFT"
-    // Example: await updateRequestStatusMutation.mutateAsync({ requestId, status: action });
-    setRequests((prev) =>
-      prev.map((req) =>
-        req.storage_request_id === requestId ? { ...req, status: action } : req,
-      ),
-    );
+  const handleRequestAction = async (storageRequest: any, action: string) => {
+    try {
+      await updateStorageRequestUnit({
+        storage_request_id: storageRequest.storage_request_id,
+        storage_id: storageRequest.storage_id,
+        paid: true,
+        payment_method: "n/a",
+        status: action,
+      });
+      setRequests((prev) =>
+        prev.map((req) =>
+          req.storage_request_id === storageRequest.storage_request_id ? { ...req, status: action, paid: false } : req,
+        ),
+      );
+      toast.success("Marked as paid successfully.");
+    } catch (_error) {
+      toast.error("Failed to mark as paid. Please try again.");
+    }
+
   };
 
   return (
@@ -233,7 +259,7 @@ export default function StorageRequestsAdmin() {
                             className="mr-2"
                             onClick={() =>
                               handleMarkPaid(
-                                req.storage_request_id,
+                                req,
                                 "approved",
                               )
                             }
@@ -246,7 +272,7 @@ export default function StorageRequestsAdmin() {
                             variant="destructive"
                             onClick={() =>
                               handleRequestAction(
-                                req.storage_request_id,
+                                req,
                                 "rejected",
                               )
                             }

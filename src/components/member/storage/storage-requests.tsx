@@ -9,7 +9,7 @@ import {
   TableHead,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2, Folder, User } from "lucide-react";
+import { Loader2, Folder } from "lucide-react";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { useFetchClubStorageRequests } from "@/queries/admin-features/storage";
 
