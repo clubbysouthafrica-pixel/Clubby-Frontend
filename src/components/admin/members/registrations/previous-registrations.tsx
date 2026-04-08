@@ -54,6 +54,37 @@ interface PreviousMembersListProps {
 const getRegistrationKey = (member: Pick<ClubMember, "registration_id" | "user_id">) =>
   member.registration_id || member.user_id;
 
+const getRegistrationPaymentStatus = (member: ClubMember) => {
+  const totalFee = member.total_fee || 0;
+  const outstandingAmount = member.outstanding_amount || 0;
+
+  if (totalFee <= 0) {
+    return {
+      label: "No fee",
+      className: "border-slate-200 bg-slate-100 text-slate-700",
+    };
+  }
+
+  if (outstandingAmount <= 0) {
+    return {
+      label: "Paid",
+      className: "border-green-200 bg-green-100 text-green-800",
+    };
+  }
+
+  if (outstandingAmount < totalFee) {
+    return {
+      label: "Partially paid",
+      className: "border-amber-200 bg-amber-100 text-amber-800",
+    };
+  }
+
+  return {
+    label: "Not paid",
+    className: "border-orange-200 bg-orange-100 text-orange-800",
+  };
+};
+
 export default function PreviousMembersList({
   sensors,
   sortableId,
@@ -187,7 +218,7 @@ export default function PreviousMembersList({
                 <TableHead className="text-center w-[120px] py-2 flex-shrink-0 sticky left-0 z-20 bg-muted">
                   Actions
                 </TableHead>
-                <TableHead className="text-center w-[150px]">
+                <TableHead className="text-center w-[220px]">
                   <button
                     type="button"
                     className="inline-flex items-center gap-1 hover:underline w-full justify-center"
@@ -233,9 +264,6 @@ export default function PreviousMembersList({
                       </span>
                     )}
                   </button>
-                </TableHead>
-                <TableHead className="text-center w-[150px]">
-                  Amount Paid
                 </TableHead>
                 <TableHead className="text-center w-[150px]">
                   <button
@@ -402,18 +430,32 @@ export default function PreviousMembersList({
                       {member.member_email === "n/a" ? <span className="text-gray-400">n/a</span> : member.member_email}
                     </TableCell>
                     <TableCell className="text-center w-[150px]">
-                      {member?.total_fee ? (
-                        formatAmount(member.total_fee, club?.currency)
-                      ) : (
-                        <span className="text-gray-400">n/a</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center w-[150px]">
-                      {member?.total_fee ? (
-                        formatAmount(member.total_fee - (member.outstanding_amount || 0), club?.currency)
-                      ) : (
-                        <span className="text-gray-400">n/a</span>
-                      )}
+                      {(() => {
+                        const paymentStatus = getRegistrationPaymentStatus(member);
+                        const totalFee = member.total_fee || 0;
+                        const outstandingAmount = member.outstanding_amount || 0;
+                        const amountPaid = Math.max(totalFee - outstandingAmount, 0);
+
+                        if (!totalFee) {
+                          return <span className="text-gray-400">n/a</span>;
+                        }
+
+                        return (
+                          <div className="flex flex-col items-center gap-2 text-center">
+                            <Badge className={paymentStatus.className}>
+                              {paymentStatus.label}
+                            </Badge>
+                            <div className="space-y-1 text-xs text-muted-foreground">
+                              <p className="font-medium text-foreground">
+                                Paid: {formatAmount(amountPaid, club?.currency)}
+                              </p>
+                              <p>
+                                Total: {formatAmount(totalFee, club?.currency)}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell className="text-center w-[150px]">
                       {member.missing_club_member && (
