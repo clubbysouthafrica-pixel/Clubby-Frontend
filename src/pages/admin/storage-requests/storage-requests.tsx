@@ -83,6 +83,7 @@ export default function StorageRequestsAdmin() {
 
     try {
       await updateStorageRequestUnit({
+        club_account_id: club?.club_account_id as string,
         storage_request_id: storageRequest.storage_request_id,
         storage_id: storageRequest.storage_id,
         paid: true,
@@ -103,6 +104,7 @@ export default function StorageRequestsAdmin() {
   const handleRequestAction = async (storageRequest: any, action: string) => {
     try {
       await updateStorageRequestUnit({
+        club_account_id: club?.club_account_id as string,
         storage_request_id: storageRequest.storage_request_id,
         storage_id: storageRequest.storage_id,
         paid: true,
