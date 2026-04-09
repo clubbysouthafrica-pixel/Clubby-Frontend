@@ -528,17 +528,24 @@ export function ClubHomeTab({
                                   {day.getDate()}
                                 </span>
                                 {dayEvents.length > 0 && (
-                                  <span className={cn("rounded-full px-1.5 py-0.5 text-[10px] font-semibold sm:px-2 sm:py-1 sm:text-[11px]", isSelected ? "bg-white/90 text-slate-700" : "bg-slate-200 text-slate-700")}>{dayEvents.length}</span>
+                                  <span
+                                    className={cn(
+                                      "hidden rounded-full px-1.5 py-0.5 text-[10px] font-semibold sm:inline-flex sm:px-2 sm:py-1 sm:text-[11px]",
+                                      isSelected ? "bg-white/90 text-slate-700" : "bg-slate-200 text-slate-700",
+                                    )}
+                                  >
+                                    {dayEvents.length}
+                                  </span>
                                 )}
                               </div>
 
                               <div className="mt-2 flex flex-wrap gap-1 sm:hidden">
-                                {dayEvents.slice(0, 3).map((event) => (
+                                {dayEvents.map((event) => (
                                   <span
                                     key={`${dateKey}-${event.eventId ?? event.id}-mobile`}
                                     className={cn(
                                       "h-1.5 w-1.5 rounded-full",
-                                      isSelected || isToday ? "bg-slate-800" : "bg-slate-400",
+                                      isSelected || isToday ? "bg-red-600" : "bg-red-500",
                                     )}
                                   />
                                 ))}
