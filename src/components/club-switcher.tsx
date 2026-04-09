@@ -55,7 +55,7 @@ export function ClubSwitcher({
     if (!club) {
       setClub(clubs[0])
     }
-  })
+  }, [club, clubs, setClub])
 
   if (!club) {
     return null

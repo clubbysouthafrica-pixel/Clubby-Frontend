@@ -20,6 +20,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navigate = useNavigate();
   const { club, setClub } = React.useContext(ClubContext) as ClubContextType;
   const { data: clubData, isLoading: loadingClubs } = useFetchAdminClubs();
+  const syncedClubSummaryRef = React.useRef<string | null>(null);
 
   const { isAdmin } = React.useContext(AuthContext) as AuthContextType;
   const { data: profile } = useGetProfileQuery(isAdmin);
@@ -66,6 +67,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       return;
     }
 
+    const latestClubSummaryKey = [
+      latestClub.club_account_id,
+      latestClub.club_name,
+      latestClub.club_type,
+      latestClub.currency,
+      latestClub.onboarded,
+      latestClub.season_cycle,
+      latestClub.deregistration_in_progress,
+      latestClub.enable_shop,
+      latestClub.enable_events,
+      latestClub.venues_enabled,
+      latestClub.access,
+    ].join("|");
+
     const shouldSyncClubSummary =
       club.club_name !== latestClub.club_name ||
       club.club_type !== latestClub.club_type ||
@@ -78,7 +93,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       club.venues_enabled !== latestClub.venues_enabled ||
       club.access !== latestClub.access;
 
-    if (shouldSyncClubSummary) {
+    if (
+      shouldSyncClubSummary &&
+      syncedClubSummaryRef.current !== latestClubSummaryKey
+    ) {
+      syncedClubSummaryRef.current = latestClubSummaryKey;
       setClub({
         ...club,
         ...latestClub,
