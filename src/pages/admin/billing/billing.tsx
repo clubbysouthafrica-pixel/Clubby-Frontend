@@ -64,7 +64,6 @@ export default function BillingPage() {
     : [];
 
   const hasPreviousSeasons = availableSeasons.length > 0;
-  const totalOutstandingAmount = data?.report?.total_outstanding_amount ?? 0;
   const monthlyPaymentOptions = useMemo<MonthlyPaymentOption[]>(() => {
     const overallMonthData = data?.report?.overall_month_data ?? {};
     const paymentStatuses: Array<{ month: string; month_paid: boolean }> =
@@ -214,7 +213,7 @@ export default function BillingPage() {
         {selectedSeason === "current" ? (
           <h1 className="text-3xl font-bold tracking-tight">
             You Owe Clubby:{" "}
-            {formatAmount(totalOutstandingAmount, club?.currency)}
+            {formatAmount(payableOutstandingAmount, club?.currency)}
           </h1>
         ) : (
           <h1 className="text-3xl font-bold tracking-tight">
