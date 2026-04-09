@@ -61,6 +61,10 @@ function formatWeekday(date: Date, weekday: "short" | "long" = "short") {
   return new Intl.DateTimeFormat("en-US", { weekday }).format(date);
 }
 
+function getVenueDayOfWeek(date: Date) {
+  return (date.getDay() + 6) % 7;
+}
+
 function abbreviateBookingName(name: string) {
   const normalizedName = name.trim();
 
@@ -339,17 +343,18 @@ export default function MemberBookings({
   const timeSlots = generateTimeSlots();
 
   const getDaySchedule = useCallback(
-    (dayOfWeek: number) => {
+    (date: Date) => {
       const venue = getSelectedVenue();
       if (!venue) return null;
+      const dayOfWeek = getVenueDayOfWeek(date);
       return venue.times.find((t) => t.day_of_week === dayOfWeek);
     },
     [getSelectedVenue],
   );
 
   const isTimeInOperatingHours = useCallback(
-    (time: string, dayOfWeek: number): boolean => {
-      const schedule = getDaySchedule(dayOfWeek);
+    (time: string, date: Date): boolean => {
+      const schedule = getDaySchedule(date);
       if (!schedule || schedule.is_closed) return false;
 
       const [timeHour, timeMin] = time.split(":").map(Number);
@@ -367,8 +372,8 @@ export default function MemberBookings({
   );
 
   const isDayClosedForVenue = useCallback(
-    (dayOfWeek: number): boolean => {
-      const schedule = getDaySchedule(dayOfWeek);
+    (date: Date): boolean => {
+      const schedule = getDaySchedule(date);
       return schedule ? schedule.is_closed : false;
     },
     [getDaySchedule],
@@ -424,9 +429,10 @@ export default function MemberBookings({
 
   const isSlotDisabled = useCallback(
     (dayIdx: number, timeIdx: number): boolean => {
-      const isPast = isPastDay(daysInWeek[dayIdx]);
-      const isClosed = isDayClosedForVenue(dayIdx);
-      const isAvailable = isTimeInOperatingHours(timeSlots[timeIdx], dayIdx);
+      const date = daysInWeek[dayIdx];
+      const isPast = isPastDay(date);
+      const isClosed = isDayClosedForVenue(date);
+      const isAvailable = isTimeInOperatingHours(timeSlots[timeIdx], date);
       const isBooked = isSlotBooked(dayIdx, timeIdx);
 
       return isPast || isClosed || !isAvailable || isBooked;
@@ -613,14 +619,11 @@ export default function MemberBookings({
 
   const visibleSlotIndicesByDay = useMemo(
     () =>
-      visibleDays.map((_, dayIdx) =>
+      visibleDays.map((date) =>
         timeSlots.reduce<number[]>((indices, _time, timeIdx) => {
-          const isPast = isPastDay(daysInWeek[dayIdx]);
-          const isClosed = isDayClosedForVenue(dayIdx);
-          const isAvailable = isTimeInOperatingHours(
-            timeSlots[timeIdx],
-            dayIdx,
-          );
+          const isPast = isPastDay(date);
+          const isClosed = isDayClosedForVenue(date);
+          const isAvailable = isTimeInOperatingHours(timeSlots[timeIdx], date);
 
           if (!isPast && !isClosed && isAvailable) {
             indices.push(timeIdx);
@@ -630,7 +633,6 @@ export default function MemberBookings({
         }, []),
       ),
     [
-      daysInWeek,
       isDayClosedForVenue,
       isTimeInOperatingHours,
       timeSlots,
@@ -827,7 +829,7 @@ export default function MemberBookings({
                   </div>
                   {visibleDays.map((date, idx) => {
                     const isPast = isPastDay(date);
-                    const isClosed = isDayClosedForVenue(idx);
+                    const isClosed = isDayClosedForVenue(date);
 
                     return (
                       <div
@@ -890,11 +892,8 @@ export default function MemberBookings({
                       </div>
                       {visibleDays.map((date, dayIdx) => {
                         const isPast = isPastDay(date);
-                        const isClosed = isDayClosedForVenue(dayIdx);
-                        const isAvailable = isTimeInOperatingHours(
-                          time,
-                          dayIdx,
-                        );
+                        const isClosed = isDayClosedForVenue(date);
+                        const isAvailable = isTimeInOperatingHours(time, date);
                         const isBooked = isSlotBooked(dayIdx, timeIdx);
                         const isDisabled =
                           isPast || isClosed || !isAvailable || isBooked;
@@ -961,7 +960,7 @@ export default function MemberBookings({
                 {visibleDays.map((date, dayIdx) => {
                   const visibleSlotIndices =
                     visibleSlotIndicesByDay[dayIdx] || [];
-                  const isClosed = isDayClosedForVenue(dayIdx);
+                  const isClosed = isDayClosedForVenue(date);
 
                   return (
                     <div
