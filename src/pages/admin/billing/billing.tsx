@@ -107,8 +107,7 @@ export default function BillingPage() {
   );
   const hasAllOutstandingOption =
     payableOutstandingAmount > 0 &&
-    payableMonthlyPaymentOptions.length > 1 &&
-    !hasCurrentMonthOutstanding;
+    payableMonthlyPaymentOptions.length > 1;
   const paymentChoices = useMemo<BillingPaymentChoice[]>(() => {
     const monthChoices = payableMonthlyPaymentOptions.map((option) => ({
       value: option.month,
