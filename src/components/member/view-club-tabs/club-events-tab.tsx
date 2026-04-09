@@ -23,7 +23,7 @@ export function ClubEventsTab({
   }
 
   return (
-    <TabsContent value="events" className="mt-0">
+    <TabsContent value="events" className="mt-6">
       <MemberEvents
         clubId={clubId}
         clubAccountId={clubAccountId}

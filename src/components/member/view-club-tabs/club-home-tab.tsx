@@ -165,7 +165,7 @@ export function ClubHomeTab({
       : null;
 
   return (
-    <TabsContent value="home" className="mt-0">
+    <TabsContent value="home" className="mt-6">
       <div className="relative">
         <div className="relative h-64 overflow-hidden md:h-80">
           {coverImage ? (

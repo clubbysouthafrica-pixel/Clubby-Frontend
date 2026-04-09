@@ -90,7 +90,7 @@ export function ClubShopTab({
   }
 
   return (
-    <TabsContent value="shop" className="mt-0">
+    <TabsContent value="shop" className="mt-6">
       <div className="space-y-6">
         <Card>
           <CardHeader>
