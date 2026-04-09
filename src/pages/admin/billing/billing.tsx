@@ -18,6 +18,7 @@ interface MonthlyPaymentOption {
   month: string;
   amount: number;
   isPaid: boolean;
+  isPayable: boolean;
 }
 
 interface BillingPaymentChoice {
@@ -26,15 +27,25 @@ interface BillingPaymentChoice {
   amount: number;
   month?: string;
   isPaid: boolean;
+  isPayable: boolean;
   isAllOutstanding?: boolean;
 }
 
 const ALL_OUTSTANDING_VALUE = "__all_outstanding__";
 
+function getCurrentYearMonth() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+
+  return `${year}-${month}`;
+}
+
 export default function BillingPage() {
   const { club } = useContext(ClubContext) as ClubContextType;
   const [selectedSeason, setSelectedSeason] = useState<string>("current");
   const [selectedMonth, setSelectedMonth] = useState<string>("");
+  const currentYearMonth = getCurrentYearMonth();
 
   const seasonToFetch =
     selectedSeason === "current" ? undefined : parseInt(selectedSeason);
@@ -75,22 +86,37 @@ export default function BillingPage() {
         month,
         amount: monthTotals?.total_amount ?? 0,
         isPaid: paymentStatusByMonth.get(month) ?? false,
+        isPayable: month < currentYearMonth,
       };
     });
-  }, [data]);
-  const unpaidMonthlyPaymentOptions = useMemo(
-    () => monthlyPaymentOptions.filter(({ isPaid }) => !isPaid),
+  }, [currentYearMonth, data]);
+  const payableMonthlyPaymentOptions = useMemo(
+    () => monthlyPaymentOptions.filter(({ isPaid, isPayable }) => !isPaid && isPayable),
     [monthlyPaymentOptions],
   );
+  const payableOutstandingAmount = useMemo(
+    () => payableMonthlyPaymentOptions.reduce((sum, option) => sum + option.amount, 0),
+    [payableMonthlyPaymentOptions],
+  );
+  const hasCurrentMonthOutstanding = useMemo(
+    () =>
+      monthlyPaymentOptions.some(
+        ({ month, isPaid }) => month === currentYearMonth && !isPaid,
+      ),
+    [currentYearMonth, monthlyPaymentOptions],
+  );
   const hasAllOutstandingOption =
-    totalOutstandingAmount > 0 && unpaidMonthlyPaymentOptions.length > 1;
+    payableOutstandingAmount > 0 &&
+    payableMonthlyPaymentOptions.length > 1 &&
+    !hasCurrentMonthOutstanding;
   const paymentChoices = useMemo<BillingPaymentChoice[]>(() => {
-    const monthChoices = monthlyPaymentOptions.map((option) => ({
+    const monthChoices = payableMonthlyPaymentOptions.map((option) => ({
       value: option.month,
       label: `${option.month} - ${formatAmount(option.amount, club?.currency)} ${option.isPaid ? "(Paid)" : "(Unpaid)"}`,
       amount: option.amount,
       month: option.month,
       isPaid: option.isPaid,
+      isPayable: option.isPayable,
       isAllOutstanding: false,
     }));
 
@@ -101,19 +127,20 @@ export default function BillingPage() {
     return [
       {
         value: ALL_OUTSTANDING_VALUE,
-        label: `All outstanding months - ${formatAmount(totalOutstandingAmount, club?.currency)}`,
-        amount: totalOutstandingAmount,
+        label: `All outstanding previous months - ${formatAmount(payableOutstandingAmount, club?.currency)}`,
+        amount: payableOutstandingAmount,
         isPaid: false,
+        isPayable: true,
         isAllOutstanding: true,
       },
       ...monthChoices,
     ];
-  }, [club?.currency, hasAllOutstandingOption, monthlyPaymentOptions, totalOutstandingAmount]);
+  }, [club?.currency, hasAllOutstandingOption, payableMonthlyPaymentOptions, payableOutstandingAmount]);
   const selectedPaymentChoice = useMemo(
     () =>
       paymentChoices.find(({ value }) => value === selectedMonth) ??
       paymentChoices.find(({ isAllOutstanding }) => isAllOutstanding) ??
-      paymentChoices.find(({ isPaid }) => !isPaid),
+      paymentChoices.find(({ isPaid, isPayable }) => !isPaid && isPayable),
     [paymentChoices, selectedMonth],
   );
   const { refetch: refetchClubbyCheckoutUrl } = useGetClubbyCheckoutUrlQuery(
@@ -123,7 +150,7 @@ export default function BillingPage() {
       : selectedPaymentChoice?.month,
     selectedPaymentChoice?.isAllOutstanding,
   );
-  const showPayNow = unpaidMonthlyPaymentOptions.length > 0;
+  const showPayNow = payableMonthlyPaymentOptions.length > 0;
 
   useEffect(() => {
     if (!paymentChoices.length) {
@@ -134,11 +161,11 @@ export default function BillingPage() {
     if (!paymentChoices.some(({ value }) => value === selectedMonth)) {
       setSelectedMonth(
         paymentChoices.find(({ isAllOutstanding }) => isAllOutstanding)?.value ??
-          unpaidMonthlyPaymentOptions[0]?.month ??
+          payableMonthlyPaymentOptions[0]?.month ??
           "",
       );
     }
-  }, [paymentChoices, selectedMonth, unpaidMonthlyPaymentOptions]);
+  }, [payableMonthlyPaymentOptions, paymentChoices, selectedMonth]);
 
   const handlePayNowClick = async () => {
     if (!club?.club_account_id || !selectedPaymentChoice) {
@@ -147,6 +174,11 @@ export default function BillingPage() {
 
     if (selectedPaymentChoice.isPaid) {
       toast.info("This month is already paid and cannot be paid with PayFast again.");
+      return;
+    }
+
+    if (!selectedPaymentChoice.isPayable) {
+      toast.info("Only previous months can be paid. The current month becomes payable next month.");
       return;
     }
 
@@ -196,7 +228,7 @@ export default function BillingPage() {
       </div>
       {showPayNow && (
         <div className="mb-5 space-y-3">
-          {monthlyPaymentOptions.length > 0 && (
+          {paymentChoices.length > 0 && (
             <div className="max-w-xs">
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                 <SelectTrigger className="w-full bg-white">
@@ -215,6 +247,11 @@ export default function BillingPage() {
                 </SelectContent>
               </Select>
             </div>
+          )}
+          {selectedSeason === "current" && hasCurrentMonthOutstanding && (
+            <p className="text-sm text-muted-foreground">
+              The current month is visible in the usage report but can only be paid from next month onward.
+            </p>
           )}
           <button
             type="button"
@@ -260,7 +297,12 @@ export default function BillingPage() {
           </button>
         </div>
       )}
-      {!showPayNow && monthlyPaymentOptions.length > 0 && (
+      {!showPayNow && selectedSeason === "current" && hasCurrentMonthOutstanding && (
+        <p className="mb-5 text-sm text-muted-foreground">
+          Only previous unpaid months can be paid. The current month will become payable next month.
+        </p>
+      )}
+      {!showPayNow && monthlyPaymentOptions.length > 0 && !hasCurrentMonthOutstanding && (
         <p className="mb-5 text-sm text-muted-foreground">
           All listed months are already marked as paid. PayFast is only available for unpaid months.
         </p>

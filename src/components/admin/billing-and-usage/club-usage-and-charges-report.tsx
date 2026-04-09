@@ -84,6 +84,14 @@ type ClubUsageAndChargesProps = {
 
 type ReportingMetricKey = "Registrations" | "Emails" | "Orders";
 
+function getCurrentYearMonth() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+
+  return `${year}-${month}`;
+}
+
 function formatBillingMonth(yearMonth: string) {
   const [year, month] = yearMonth.split("-").map(Number);
 
@@ -274,6 +282,7 @@ export default function ClubUsageAndCharges({
   clubName,
 }: ClubUsageAndChargesProps) {
   const [selectedTab, setSelectedTab] = useState("Registrations");
+  const currentYearMonth = getCurrentYearMonth();
   const paymentStatusByMonth = useMemo(() => {
     const payments = data?.Payments ?? [];
 
@@ -414,6 +423,7 @@ export default function ClubUsageAndCharges({
               {Object.keys(data.overall_month_data || {}).map((month) => {
                 const payment = paymentStatusByMonth.get(month);
                 const isPaid = Boolean(payment?.month_paid);
+                const isPayable = month < currentYearMonth;
                 const registrationCount = getMonthMetricValue(
                   data.Registrations?.month_data,
                   month,
@@ -496,16 +506,22 @@ export default function ClubUsageAndCharges({
                         </button>
                       </div>
                     ) : (
-                      <button
-                        type="button"
-                        onClick={() => onMonthSelect?.(month)}
-                        className={selectedMonth === month
-                          ? "inline-flex rounded-full bg-amber-200 px-3 py-1 text-xs font-medium text-amber-800"
-                          : "inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-200 cursor-pointer"
-                        }
-                      >
-                        Unpaid
-                      </button>
+                      isPayable ? (
+                        <button
+                          type="button"
+                          onClick={() => onMonthSelect?.(month)}
+                          className={selectedMonth === month
+                            ? "inline-flex rounded-full bg-amber-200 px-3 py-1 text-xs font-medium text-amber-800"
+                            : "inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-200 cursor-pointer"
+                          }
+                        >
+                          Unpaid
+                        </button>
+                      ) : (
+                        <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                          Current month
+                        </span>
+                      )
                     )}
                   </TableCell>
                 </TableRow>
