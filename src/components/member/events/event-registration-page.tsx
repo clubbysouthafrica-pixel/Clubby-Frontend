@@ -267,6 +267,11 @@ export default function EventRegistrationPage() {
         const response = await registerEvent(registrationRequest);
         toast.success(response.message || "Event registration submitted successfully.");
 
+        if (entryFeeAmount <= 0) {
+          navigate(`/myclubs/${clubId}`);
+          return;
+        }
+
         const transactionId = response.transaction_id;
         const eventId = response.event_id;
         const eventRegistrationId =

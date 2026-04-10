@@ -11,7 +11,7 @@ import { FormEvent, useContext, useState } from "react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp.tsx";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input.tsx";
-import { AuthContext, AuthContextType } from "@/context/AuthContext.tsx";
+import { AuthContext, AuthContextType } from "@/context/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert.tsx";
 import { AlertCircle } from "lucide-react";
 import { AxiosError } from "axios";

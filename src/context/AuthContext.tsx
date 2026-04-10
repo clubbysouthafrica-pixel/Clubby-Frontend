@@ -1,6 +1,7 @@
 import {createContext, ReactNode, useEffect, useState} from 'react';
 import axios, {AxiosResponse} from 'axios';
 import { fetchAdminClubs } from '@/services/admin/admin-clubs';
+import { clearStoredAuth } from '@/services/auth-session';
 
 export interface AuthContextType {
     user: boolean | null;
@@ -98,12 +99,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     const logout = () => {
-        localStorage.removeItem(accessToken);
-        localStorage.removeItem(refreshToken);
-        localStorage.removeItem(adminKey);
-        localStorage.removeItem("activeClub");
-        
-        delete axios.defaults.headers.common['Authorization'];
+        clearStoredAuth();
         setUser(null);
         setIsAdmin(false)
     };

@@ -44,7 +44,7 @@ import { formatAmount } from "@/data/currencies";
 
 type RegistrationStatus = "Pending Approval" | "Pending payment" | "Confirmed";
 
-type PaymentStatus = "Paid" | "Awaiting payment" | "Reserved";
+type PaymentStatus = "FREE" | "Paid" | "Awaiting payment" | "Reserved";
 
 type MemberRegistrationTag = {
   id: string;
@@ -1237,6 +1237,10 @@ function normalizePaymentStatus(
   amountPaid: number | null,
   entryFeeAmount: number | null,
 ): PaymentStatus {
+  if (entryFeeAmount !== null && entryFeeAmount <= 0) {
+    return "FREE";
+  }
+
   const normalizedPaymentStatus = rawPaymentStatus.toLowerCase();
   const isPaidInFull =
     amountPaid !== null && entryFeeAmount !== null
@@ -1312,6 +1316,10 @@ function getRegistrationBadgeClassName(
 function getPaymentBadgeClassName(
   status: MemberEventRegistration["paymentStatus"],
 ) {
+  if (status === "FREE") {
+    return "border-sky-200 bg-sky-100 text-sky-800";
+  }
+
   if (status === "Paid") {
     return "border-emerald-200 bg-emerald-100 text-emerald-800";
   }
