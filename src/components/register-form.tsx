@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link, useNavigate } from "react-router-dom";
 import { FormEvent, useContext, useState } from "react";
-import { AuthContext, AuthContextType } from "@/context/AuthContext.tsx";
+import { AuthContext, AuthContextType } from "@/context/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert.tsx";
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { AxiosError } from "axios";

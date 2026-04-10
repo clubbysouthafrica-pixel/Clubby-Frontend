@@ -1,8 +1,7 @@
-import React, { useContext, useEffect, useState, ReactNode } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
-import { AuthContext } from "@/context/AuthContext.tsx";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader } from "@/components/ui/card";
+import React, { useContext, useEffect, useRef, ReactNode } from "react";
+import { useNavigate, Navigate, useLocation } from "react-router-dom";
+import { AuthContext } from "@/context/AuthContext";
+import { buildLoginRedirectPath } from "@/services/auth-session";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -11,7 +10,8 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const authContext = useContext(AuthContext);
   const navigate = useNavigate();
-  const [sessionExpired, setSessionExpired] = useState(false);
+  const location = useLocation();
+  const hasHandledSessionExpiry = useRef(false);
 
   if (!authContext) {
     throw new Error("ProtectedRoute must be used within an AuthProvider");
@@ -20,10 +20,23 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading, logout } = authContext;
 
   useEffect(() => {
+    const expireSession = () => {
+      if (hasHandledSessionExpiry.current) {
+        return;
+      }
+
+      hasHandledSessionExpiry.current = true;
+      logout();
+      navigate(
+        buildLoginRedirectPath(`${location.pathname}${location.search}${location.hash}`),
+        { replace: true },
+      );
+    };
+
     const checkTokenValidity = () => {
       const token = localStorage.getItem("accessToken");
       if (!token) {
-        setSessionExpired(true);
+        expireSession();
         return;
       }
       if (import.meta.env.VITE_ENVIRONMENT !== "Dev") {
@@ -32,10 +45,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           const exp = payload.exp * 1000;
 
           if (Date.now() > exp) {
-            setSessionExpired(true);
+            expireSession();
           }
         } catch (e) {
-          setSessionExpired(true);
+          expireSession();
         }
       }
     };
@@ -43,27 +56,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     checkTokenValidity();
     const interval = setInterval(checkTokenValidity, 5 * 1000);
     return () => clearInterval(interval);
-  }, []);
-
-  const handleRelogin = () => {
-    const adminFlag = localStorage.getItem("isAdmin") === "true";
-    navigate(adminFlag ? "/login" : "/login");
-    logout();
-  };
+  }, [location.hash, location.pathname, location.search, logout, navigate]);
 
   if (loading) return <div>Loading...</div>;
-  if (!user && !sessionExpired) return <Navigate to="/login" />;
-
-  if (sessionExpired) {
+  if (!user) {
     return (
-      <Card className="fixed m-1 inset-0 flex items-center justify-center bg-black/50 z-50">
-        <div className="bg-white p-6 rounded shadow-lg text-center max-w-sm">
-          <CardHeader className="mb-1 text-s font-small p-1">
-            Your session has expired.
-          </CardHeader>
-          <Button onClick={handleRelogin}>Click here to re-login</Button>
-        </div>
-      </Card>
+      <Navigate
+        to={buildLoginRedirectPath(`${location.pathname}${location.search}${location.hash}`)}
+        replace
+      />
     );
   }
 

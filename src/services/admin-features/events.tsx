@@ -25,6 +25,16 @@ export interface CreateOrUpdateEventPricingRequest {
   options: CreateOrUpdateEventPricingOptionRequest[];
 }
 
+export interface CreateOrUpdateEventRegistrationTagRequest {
+  label: string;
+}
+
+export interface CreateOrUpdateEventRegistrationRequest {
+  autoConfirmIfPaid: boolean;
+  allowMemberRegistrationOnce: boolean;
+  registrationTags?: CreateOrUpdateEventRegistrationTagRequest[];
+}
+
 export interface CreateOrUpdateEventRequest {
   club_account_id: string;
   id?: string;
@@ -37,8 +47,13 @@ export interface CreateOrUpdateEventRequest {
   registrationCloseDate: number;
   formFields: CreateOrUpdateEventFormFieldRequest[];
   pricing: CreateOrUpdateEventPricingRequest;
+  eventRegistration: CreateOrUpdateEventRegistrationRequest;
   previewFieldOrder: string[];
 }
+
+export type CreateOrUpdateEventsRequest =
+  | CreateOrUpdateEventRequest
+  | CreateOrUpdateEventRequest[];
 
 export interface CreateOrUpdateEventResponse {
   message?: string;
@@ -93,6 +108,11 @@ export interface ConfirmEventRegistrationRequest {
   registration_fields?: ConfirmEventRegistrationFieldRequest[];
 }
 
+export interface DeleteEventRequest {
+  club_account_id: string;
+  event_id: string;
+}
+
 export interface EventAdminActionResponse {
   status: number;
   data: unknown;
@@ -100,7 +120,7 @@ export interface EventAdminActionResponse {
 }
 
 export const createOrUpdateEvents = (
-  request: CreateOrUpdateEventRequest,
+  request: CreateOrUpdateEventsRequest,
 ): Promise<CreateOrUpdateEventResponse> => {
   return api.post("/events/createOrUpdateEvents", request).then((res) => res.data);
 };
@@ -208,6 +228,28 @@ export const confirmEventRegistration = async (
 ): Promise<EventAdminActionResponse> => {
   try {
     const res = await api.post("/events/confirmRegistration", payload);
+    return { status: res.status, data: res.data };
+  } catch (err: unknown) {
+    const apiError = err as {
+      response?: {
+        status: number;
+        data: unknown;
+      };
+    };
+
+    if (apiError.response) {
+      return { status: apiError.response.status, data: apiError.response.data };
+    }
+
+    throw err;
+  }
+};
+
+export const deleteEvent = async (
+  payload: DeleteEventRequest,
+): Promise<EventAdminActionResponse> => {
+  try {
+    const res = await api.post("/events/deleteEvent", payload);
     return { status: res.status, data: res.data };
   } catch (err: unknown) {
     const apiError = err as {

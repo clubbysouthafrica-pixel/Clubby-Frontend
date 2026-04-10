@@ -58,6 +58,7 @@ import {
 } from "@/components/ui/select";
 import {
   createOrUpdateEvents,
+  deleteEvent,
   getEvents,
 } from "@/services/admin-features/events";
 import { Switch } from "@/components/ui/switch";
@@ -96,6 +97,7 @@ type EventPricing = {
 
 type EventRegistrationSettings = {
   autoConfirmIfPaid: boolean;
+  allowMemberRegistrationOnce: boolean;
   registrationTags: EventRegistrationTag[];
 };
 
@@ -106,6 +108,34 @@ type EventRegistrationTag = {
 
 type EventRegistrationTagDraft = {
   label: string;
+};
+
+type EventRecurrenceFrequency = "NONE" | "WEEKLY" | "MONTHLY";
+
+type EventRecurrenceDayOfWeek =
+  | "SUN"
+  | "MON"
+  | "TUE"
+  | "WED"
+  | "THU"
+  | "FRI"
+  | "SAT";
+
+type EventRecurrenceSettings = {
+  frequency: EventRecurrenceFrequency;
+  repeatUntilDate: string;
+  registrationOpenDaysBefore: string;
+  dayOfWeek: EventRecurrenceDayOfWeek;
+  dayOfMonth: string;
+};
+
+type EventScheduleMode = "FIXED" | "RECURRING";
+
+type EventOccurrenceDates = {
+  startDate: string;
+  endDate: string;
+  registrationOpenDate: string;
+  registrationCloseDate: string;
 };
 
 type EventItem = {
@@ -121,6 +151,7 @@ type EventItem = {
   formFields: EventFormField[];
   pricing: EventPricing;
   registrationSettings: EventRegistrationSettings;
+  recurrenceSettings: EventRecurrenceSettings;
   previewFieldOrder: string[];
 };
 
@@ -152,6 +183,18 @@ type EventPricingDraft = {
 
 const PRICING_PREVIEW_FIELD_ID = "pricing-field";
 const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const RECURRENCE_WEEKDAY_OPTIONS: Array<{
+  value: EventRecurrenceDayOfWeek;
+  label: string;
+}> = [
+  { value: "SUN", label: "Sunday" },
+  { value: "MON", label: "Monday" },
+  { value: "TUE", label: "Tuesday" },
+  { value: "WED", label: "Wednesday" },
+  { value: "THU", label: "Thursday" },
+  { value: "FRI", label: "Friday" },
+  { value: "SAT", label: "Saturday" },
+];
 const REMOVED_MOCK_EVENT_IDS = new Set(["launch-regatta", "junior-camp"]);
 const FIELD_TYPE_OPTIONS: {
   value: EventFieldVariant;
@@ -202,6 +245,22 @@ const PRICING_TYPE_OPTIONS: {
       "Offer extra price options that can be combined, for example U12 plus U15.",
   },
 ];
+const EVENT_RECURRENCE_OPTIONS: {
+  value: EventRecurrenceFrequency;
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: "WEEKLY",
+    label: "Weekly",
+    description: "Repeat this event every week from the first event date.",
+  },
+  {
+    value: "MONTHLY",
+    label: "Monthly",
+    description: "Repeat this event every month from the first event date.",
+  },
+];
 const EVENT_COLORS = ["bg-sky-100 text-sky-800 border-sky-200"];
 
 const today = new Date();
@@ -220,6 +279,19 @@ function parseDateKey(value: string) {
 
 function dateKeyToEpoch(value: string) {
   return parseDateKey(value).getTime();
+}
+
+function addDays(dateKey: string, days: number) {
+  const nextDate = parseDateKey(dateKey);
+  nextDate.setDate(nextDate.getDate() + days);
+  return formatDateKey(nextDate);
+}
+
+function getEventSpanInDays(startDate: string, endDate: string) {
+  return Math.max(
+    0,
+    Math.floor((dateKeyToEpoch(endDate) - dateKeyToEpoch(startDate)) / 86400000),
+  );
 }
 
 function epochToDateKey(value: number) {
@@ -327,6 +399,7 @@ function getDefaultPricingDraft(): EventPricingDraft {
 function getDefaultRegistrationSettings(): EventRegistrationSettings {
   return {
     autoConfirmIfPaid: true,
+    allowMemberRegistrationOnce: true,
     registrationTags: [],
   };
 }
@@ -335,6 +408,49 @@ function getDefaultRegistrationTagDraft(): EventRegistrationTagDraft {
   return {
     label: "",
   };
+}
+
+function getDefaultRecurrenceSettings(
+  startDate = todayKey,
+): EventRecurrenceSettings {
+  return {
+    frequency: "NONE",
+    repeatUntilDate: startDate,
+    registrationOpenDaysBefore: "0",
+    dayOfWeek: getDayOfWeekFromDateKey(startDate),
+    dayOfMonth: getDayOfMonthFromDateKey(startDate),
+  };
+}
+
+function getEventScheduleMode(
+  recurrenceSettings: EventRecurrenceSettings,
+): EventScheduleMode {
+  return recurrenceSettings.frequency === "NONE" ? "FIXED" : "RECURRING";
+}
+
+function getNextRecurringFrequency(
+  currentFrequency: EventRecurrenceFrequency,
+): Exclude<EventRecurrenceFrequency, "NONE"> {
+  return currentFrequency === "MONTHLY" ? "MONTHLY" : "WEEKLY";
+}
+
+function getDayOfWeekFromDateKey(dateKey: string): EventRecurrenceDayOfWeek {
+  const weekdayValues: EventRecurrenceDayOfWeek[] = [
+    "SUN",
+    "MON",
+    "TUE",
+    "WED",
+    "THU",
+    "FRI",
+    "SAT",
+  ];
+  const parsedDate = parseDateKey(dateKey);
+
+  return weekdayValues[parsedDate.getDay()] ?? "MON";
+}
+
+function getDayOfMonthFromDateKey(dateKey: string) {
+  return `${parseDateKey(dateKey).getDate()}`;
 }
 
 function getFieldConfig(variant: EventFieldVariant) {
@@ -503,6 +619,13 @@ function sanitizeEventRegistrationSettings(
     source.autoConfirmIfPaid ??
     source.auto_confirm_if_paid ??
     source.auto_confirm_registration_if_paid;
+  const allowMemberRegistrationOnceValue =
+    source.allowMemberRegistrationOnce ??
+    source.allow_member_registration_once ??
+    source.allowOnlyOneRegistration ??
+    source.allow_only_one_registration ??
+    source.singleRegistrationOnly ??
+    source.single_registration_only;
 
   return {
     autoConfirmIfPaid:
@@ -511,6 +634,10 @@ function sanitizeEventRegistrationSettings(
         : typeof autoConfirmValue === "boolean"
           ? autoConfirmValue
           : true,
+    allowMemberRegistrationOnce:
+      typeof allowMemberRegistrationOnceValue === "boolean"
+        ? allowMemberRegistrationOnceValue
+        : true,
     registrationTags,
   };
 }
@@ -533,8 +660,241 @@ function sanitizeRegistrationDate(value: unknown, fallback: string) {
   return typeof value === "string" && value.trim() ? value : fallback;
 }
 
+function sanitizeNonNegativeIntegerString(value: unknown, fallback = "0") {
+  if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
+    return `${Math.floor(value)}`;
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    const numericValue = Number(value);
+    if (Number.isFinite(numericValue) && numericValue >= 0) {
+      return `${Math.floor(numericValue)}`;
+    }
+  }
+
+  return fallback;
+}
+
 function sanitizeEventIdentifier(value: unknown, fallback: string) {
   return typeof value === "string" && value.trim() ? value : fallback;
+}
+
+function getRecurrenceSettingsSource(value: unknown) {
+  if (!value || typeof value !== "object") {
+    return {} as Record<string, unknown>;
+  }
+
+  const record = value as Record<string, unknown>;
+  const nestedCandidates = [
+    record.eventRecurrence,
+    record.event_recurrence,
+    record.recurrence,
+    record.recurringEvent,
+    record.recurring_event,
+  ];
+
+  for (const candidate of nestedCandidates) {
+    if (typeof candidate === "object" && candidate !== null) {
+      return candidate as Record<string, unknown>;
+    }
+  }
+
+  return record;
+}
+
+function sanitizeEventRecurrenceSettings(
+  rawValue: unknown,
+  startDate: string,
+): EventRecurrenceSettings {
+  const source = getRecurrenceSettingsSource(rawValue);
+  const frequencyValue =
+    source.frequency ?? source.type ?? source.recurrenceType ?? source.recurrence_type;
+  const frequency: EventRecurrenceFrequency =
+    frequencyValue === "WEEKLY" || frequencyValue === "MONTHLY"
+      ? frequencyValue
+      : "NONE";
+
+  const repeatUntilDate = sanitizeRegistrationDate(
+    source.repeatUntilDate ??
+      source.repeat_until_date ??
+      source.endDate ??
+      source.end_date,
+    startDate,
+  );
+
+  const dayOfWeekValue =
+    source.dayOfWeek ??
+    source.day_of_week ??
+    source.weekday ??
+    source.week_day;
+  const dayOfMonthValue =
+    source.dayOfMonth ??
+    source.day_of_month ??
+    source.monthDay ??
+    source.month_day;
+  const startDateDayOfWeek = getDayOfWeekFromDateKey(startDate);
+  const startDateDayOfMonth = getDayOfMonthFromDateKey(startDate);
+  const dayOfWeek = RECURRENCE_WEEKDAY_OPTIONS.some(
+    (option) => option.value === dayOfWeekValue,
+  )
+    ? (dayOfWeekValue as EventRecurrenceDayOfWeek)
+    : startDateDayOfWeek;
+  const dayOfMonth = sanitizeNonNegativeIntegerString(
+    dayOfMonthValue,
+    startDateDayOfMonth,
+  );
+
+  return {
+    frequency,
+    repeatUntilDate,
+    registrationOpenDaysBefore: sanitizeNonNegativeIntegerString(
+      source.registrationOpenDaysBefore ??
+        source.registration_open_days_before ??
+        source.registrationOpenLeadDays ??
+        source.registration_open_lead_days,
+      "0",
+    ),
+    dayOfWeek,
+    dayOfMonth:
+      dayOfMonth === "0"
+        ? startDateDayOfMonth
+        : `${Math.min(31, Math.max(1, Number(dayOfMonth)))}`,
+  };
+}
+
+function getWeeklyOccurrenceStarts(
+  startDate: string,
+  repeatUntilDate: string,
+  dayOfWeek: EventRecurrenceDayOfWeek,
+) {
+  const weekdayValues: EventRecurrenceDayOfWeek[] = [
+    "SUN",
+    "MON",
+    "TUE",
+    "WED",
+    "THU",
+    "FRI",
+    "SAT",
+  ];
+  const targetDayIndex = weekdayValues.indexOf(dayOfWeek);
+  const firstOccurrence = parseDateKey(startDate);
+  const offset = (targetDayIndex - firstOccurrence.getDay() + 7) % 7;
+
+  firstOccurrence.setDate(firstOccurrence.getDate() + offset);
+
+  const starts: string[] = [];
+  const repeatUntilEpoch = dateKeyToEpoch(repeatUntilDate);
+  const cursor = new Date(firstOccurrence);
+
+  while (cursor.getTime() <= repeatUntilEpoch) {
+    starts.push(formatDateKey(cursor));
+    cursor.setDate(cursor.getDate() + 7);
+  }
+
+  return starts;
+}
+
+function getMonthlyOccurrenceStarts(
+  startDate: string,
+  repeatUntilDate: string,
+  dayOfMonth: number,
+) {
+  const starts: string[] = [];
+  const baseStart = parseDateKey(startDate);
+  const repeatUntilEpoch = dateKeyToEpoch(repeatUntilDate);
+  const normalizedDayOfMonth = Math.min(31, Math.max(1, dayOfMonth));
+  let cursorYear = baseStart.getFullYear();
+  let cursorMonth = baseStart.getMonth();
+
+  while (true) {
+    const lastDayOfMonth = new Date(cursorYear, cursorMonth + 1, 0).getDate();
+    const occurrenceDate = new Date(
+      cursorYear,
+      cursorMonth,
+      Math.min(normalizedDayOfMonth, lastDayOfMonth),
+    );
+    const occurrenceKey = formatDateKey(occurrenceDate);
+
+    if (occurrenceKey >= startDate) {
+      if (occurrenceDate.getTime() > repeatUntilEpoch) {
+        break;
+      }
+
+      starts.push(occurrenceKey);
+    }
+
+    cursorMonth += 1;
+    if (cursorMonth > 11) {
+      cursorMonth = 0;
+      cursorYear += 1;
+    }
+  }
+
+  return starts;
+}
+
+function getFirstRecurringOccurrenceStartDate(
+  startDate: string,
+  recurrenceSettings: EventRecurrenceSettings,
+) {
+  if (recurrenceSettings.frequency === "WEEKLY") {
+    return (
+      getWeeklyOccurrenceStarts(
+        startDate,
+        addDays(startDate, 7),
+        recurrenceSettings.dayOfWeek,
+      )[0] ?? startDate
+    );
+  }
+
+  if (recurrenceSettings.frequency === "MONTHLY") {
+    return (
+      getMonthlyOccurrenceStarts(
+        startDate,
+        addDays(startDate, 62),
+        Number(recurrenceSettings.dayOfMonth || 1),
+      )[0] ?? startDate
+    );
+  }
+
+  return startDate;
+}
+
+function buildRecurringOccurrenceDates(
+  startDate: string,
+  endDate: string,
+  recurrenceSettings: EventRecurrenceSettings,
+) {
+  const eventSpanInDays = getEventSpanInDays(startDate, endDate);
+  const registrationOpenDaysBefore = Math.max(
+    0,
+    Number(recurrenceSettings.registrationOpenDaysBefore || 0),
+  );
+
+  const occurrenceStarts =
+    recurrenceSettings.frequency === "WEEKLY"
+      ? getWeeklyOccurrenceStarts(
+          startDate,
+          recurrenceSettings.repeatUntilDate,
+          recurrenceSettings.dayOfWeek,
+        )
+      : recurrenceSettings.frequency === "MONTHLY"
+        ? getMonthlyOccurrenceStarts(
+            startDate,
+            recurrenceSettings.repeatUntilDate,
+            Number(recurrenceSettings.dayOfMonth || 1),
+          )
+        : [startDate];
+
+  return occurrenceStarts.map((occurrenceStartDate) => ({
+    startDate: occurrenceStartDate,
+    endDate: addDays(occurrenceStartDate, eventSpanInDays),
+    registrationOpenDate: addDays(
+      occurrenceStartDate,
+      -registrationOpenDaysBefore,
+    ),
+    registrationCloseDate: occurrenceStartDate,
+  } satisfies EventOccurrenceDates));
 }
 
 function getResponseEventIdentifier(response: unknown) {
@@ -556,6 +916,31 @@ function getResponseEventIdentifier(response: unknown) {
     record.eventId,
     record.data?.event_id,
     record.data?.eventId,
+  ];
+
+  return possibleValues.find(
+    (value): value is string =>
+      typeof value === "string" && value.trim().length > 0,
+  );
+}
+
+function getActionResponseMessage(response: unknown) {
+  if (!response || typeof response !== "object") {
+    return undefined;
+  }
+
+  const record = response as {
+    message?: unknown;
+    data?: {
+      message?: unknown;
+      error?: unknown;
+    };
+  };
+
+  const possibleValues = [
+    record.message,
+    record.data?.message,
+    record.data?.error,
   ];
 
   return possibleValues.find(
@@ -697,6 +1082,8 @@ function buildEventRequestPayload(params: {
         params.registrationSettings.registrationTags.length > 0
           ? false
           : params.registrationSettings.autoConfirmIfPaid,
+      allowMemberRegistrationOnce:
+        params.registrationSettings.allowMemberRegistrationOnce,
       ...(params.registrationSettings.registrationTags.length > 0
         ? {
             registrationTags:
@@ -708,6 +1095,66 @@ function buildEventRequestPayload(params: {
     },
     previewFieldOrder: params.previewFieldOrder,
   };
+}
+
+function formatOccurrenceEventTitle(title: string, occurrenceStartDate: string) {
+  return `${sanitizeEventText(title).trim()} (${formatLongDate(occurrenceStartDate)})`;
+}
+
+function buildEventRequestPayloads(params: {
+  clubAccountId: string;
+  eventId?: string;
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  registrationOpenDate: string;
+  registrationCloseDate: string;
+  formFields: EventFormField[];
+  pricing: EventPricing;
+  registrationSettings: EventRegistrationSettings;
+  recurrenceSettings: EventRecurrenceSettings;
+  previewFieldOrder: string[];
+}) {
+  if (params.recurrenceSettings.frequency === "NONE") {
+    return buildEventRequestPayload({
+      clubAccountId: params.clubAccountId,
+      eventId: params.eventId,
+      title: params.title,
+      description: params.description,
+      startDate: params.startDate,
+      endDate: params.endDate,
+      registrationOpenDate: params.registrationOpenDate,
+      registrationCloseDate: params.registrationCloseDate,
+      formFields: params.formFields,
+      pricing: params.pricing,
+      registrationSettings: params.registrationSettings,
+      previewFieldOrder: params.previewFieldOrder,
+    });
+  }
+
+  const occurrences = buildRecurringOccurrenceDates(
+    params.startDate,
+    params.endDate,
+    params.recurrenceSettings,
+  );
+
+  return occurrences.map((occurrence, index) =>
+    buildEventRequestPayload({
+      clubAccountId: params.clubAccountId,
+      eventId: index === 0 ? params.eventId : undefined,
+      title: formatOccurrenceEventTitle(params.title, occurrence.startDate),
+      description: params.description,
+      startDate: occurrence.startDate,
+      endDate: occurrence.endDate,
+      registrationOpenDate: occurrence.registrationOpenDate,
+      registrationCloseDate: occurrence.registrationCloseDate,
+      formFields: params.formFields,
+      pricing: params.pricing,
+      registrationSettings: params.registrationSettings,
+      previewFieldOrder: params.previewFieldOrder,
+    }),
+  );
 }
 
 function SortablePreviewField({
@@ -766,6 +1213,10 @@ function sanitizeLoadedEvents(events: EventItem[]) {
       const startDate = sanitizeRegistrationDate(event.startDate, todayKey);
       const endDate = sanitizeRegistrationDate(event.endDate, startDate);
       const registrationSettings = sanitizeEventRegistrationSettings(event);
+      const recurrenceSettings = sanitizeEventRecurrenceSettings(
+        event,
+        startDate,
+      );
 
       return {
         ...event,
@@ -794,6 +1245,7 @@ function sanitizeLoadedEvents(events: EventItem[]) {
         formFields,
         pricing,
         registrationSettings,
+        recurrenceSettings,
         previewFieldOrder: sanitizePreviewFieldOrder(
           event.previewFieldOrder,
           formFields,
@@ -851,6 +1303,9 @@ export default function EventsPage() {
     React.useState<EventPricing>(getDefaultPricing());
   const [registrationSettings, setRegistrationSettings] =
     React.useState<EventRegistrationSettings>(getDefaultRegistrationSettings());
+  const [recurrenceSettings, setRecurrenceSettings] = React.useState<EventRecurrenceSettings>(
+    getDefaultRecurrenceSettings(),
+  );
   const [registrationTagDraft, setRegistrationTagDraft] =
     React.useState<EventRegistrationTagDraft>(getDefaultRegistrationTagDraft());
   const [pricingDraft, setPricingDraft] = React.useState<EventPricingDraft>(
@@ -865,6 +1320,81 @@ export default function EventsPage() {
   const [isSavingPreviewOrder, setIsSavingPreviewOrder] = React.useState(false);
   const [isSavingEvent, setIsSavingEvent] = React.useState(false);
   const [showEventsSettings, setShowEventsSettings] = React.useState(false);
+  const [eventPendingDelete, setEventPendingDelete] = React.useState<EventItem | null>(null);
+  const [isDeletingEvent, setIsDeletingEvent] = React.useState(false);
+  const eventScheduleMode = React.useMemo<EventScheduleMode>(
+    () => getEventScheduleMode(recurrenceSettings),
+    [recurrenceSettings],
+  );
+
+  const alignFirstRecurringEventDates = React.useCallback(
+    (nextRecurrenceSettings: EventRecurrenceSettings) => {
+      const currentEventSpanInDays = getEventSpanInDays(
+        formState.startDate,
+        formState.endDate,
+      );
+      const nextStartDate = getFirstRecurringOccurrenceStartDate(
+        formState.startDate,
+        nextRecurrenceSettings,
+      );
+      const nextEndDate = addDays(nextStartDate, currentEventSpanInDays);
+
+      setFormState((current) => ({
+        ...current,
+        startDate: nextStartDate,
+        endDate: nextEndDate,
+      }));
+
+      setRecurrenceSettings((current) => ({
+        ...current,
+        ...nextRecurrenceSettings,
+        repeatUntilDate:
+          nextRecurrenceSettings.repeatUntilDate < nextEndDate
+            ? nextEndDate
+            : nextRecurrenceSettings.repeatUntilDate,
+      }));
+    },
+    [formState.endDate, formState.startDate],
+  );
+
+  React.useEffect(() => {
+    if (recurrenceSettings.frequency === "NONE") {
+      return;
+    }
+
+    const sanitizedRecurrenceSettings = sanitizeEventRecurrenceSettings(
+      recurrenceSettings,
+      formState.startDate,
+    );
+    const firstOccurrence = buildRecurringOccurrenceDates(
+      formState.startDate,
+      formState.endDate,
+      sanitizedRecurrenceSettings,
+    )[0];
+
+    if (!firstOccurrence) {
+      return;
+    }
+
+    setFormState((current) => {
+      if (
+        current.registrationOpenDate === firstOccurrence.registrationOpenDate &&
+        current.registrationCloseDate === firstOccurrence.registrationCloseDate
+      ) {
+        return current;
+      }
+
+      return {
+        ...current,
+        registrationOpenDate: firstOccurrence.registrationOpenDate,
+        registrationCloseDate: firstOccurrence.registrationCloseDate,
+      };
+    });
+  }, [
+    formState.endDate,
+    formState.startDate,
+    recurrenceSettings,
+  ]);
 
   const handleToggleEvents = React.useCallback(
     async (enabled: boolean) => {
@@ -994,6 +1524,7 @@ export default function EventsPage() {
       setFieldDraft(getDefaultFieldDraft());
       setPricing(getDefaultPricing());
       setRegistrationSettings(getDefaultRegistrationSettings());
+      setRecurrenceSettings(getDefaultRecurrenceSettings(nextDate));
       setRegistrationTagDraft(getDefaultRegistrationTagDraft());
       setPricingDraft(getDefaultPricingDraft());
       setPreviewFieldOrder([]);
@@ -1024,6 +1555,9 @@ export default function EventsPage() {
     setPricing(sanitizePricing(event.pricing));
     setRegistrationSettings(
       sanitizeEventRegistrationSettings(event.registrationSettings),
+    );
+    setRecurrenceSettings(
+      sanitizeEventRecurrenceSettings(event.recurrenceSettings ?? event, event.startDate),
     );
     setRegistrationTagDraft(getDefaultRegistrationTagDraft());
     setPricingDraft(getDefaultPricingDraft());
@@ -1066,6 +1600,7 @@ export default function EventsPage() {
       setFormError("");
       setFieldDraft(getDefaultFieldDraft());
       setRegistrationSettings(getDefaultRegistrationSettings());
+      setRecurrenceSettings(getDefaultRecurrenceSettings());
       setRegistrationTagDraft(getDefaultRegistrationTagDraft());
       setPricingDraft(getDefaultPricingDraft());
       setIsPreviewOpen(false);
@@ -1223,6 +1758,7 @@ export default function EventsPage() {
       }
 
       return {
+        ...current,
         autoConfirmIfPaid: false,
         registrationTags: [
           ...current.registrationTags,
@@ -1244,6 +1780,7 @@ export default function EventsPage() {
       );
 
       return {
+        ...current,
         autoConfirmIfPaid:
           nextRegistrationTags.length > 0 ? false : current.autoConfirmIfPaid,
         registrationTags: nextRegistrationTags,
@@ -1299,6 +1836,34 @@ export default function EventsPage() {
       return;
     }
 
+    if (
+      recurrenceSettings.frequency !== "NONE" &&
+      recurrenceSettings.repeatUntilDate < formState.endDate
+    ) {
+      showSaveError(
+        "Repeat until date cannot be before the event end date for a recurring event.",
+      );
+      return;
+    }
+
+    if (
+      recurrenceSettings.frequency === "WEEKLY" &&
+      !recurrenceSettings.dayOfWeek
+    ) {
+      showSaveError("Select which day of the week this event should recur on.");
+      return;
+    }
+
+    if (
+      recurrenceSettings.frequency === "MONTHLY" &&
+      (!recurrenceSettings.dayOfMonth ||
+        Number(recurrenceSettings.dayOfMonth) < 1 ||
+        Number(recurrenceSettings.dayOfMonth) > 31)
+    ) {
+      showSaveError("Select which day of the month this event should recur on.");
+      return;
+    }
+
     if (formState.registrationCloseDate < formState.registrationOpenDate) {
       showSaveError(
         "Registration close date cannot be before the registration open date.",
@@ -1325,6 +1890,10 @@ export default function EventsPage() {
 
     const sanitizedRegistrationSettings =
       sanitizeEventRegistrationSettings(registrationSettings);
+    const sanitizedRecurrenceSettings = sanitizeEventRecurrenceSettings(
+      recurrenceSettings,
+      formState.startDate,
+    );
 
     const sanitizedPreviewFieldOrder = sanitizePreviewFieldOrder(
       editingEvent?.previewFieldOrder,
@@ -1332,7 +1901,7 @@ export default function EventsPage() {
       pricing,
     );
 
-    const eventRequestPayload = buildEventRequestPayload({
+    const eventRequestPayload = buildEventRequestPayloads({
       clubAccountId: club.club_account_id,
       eventId: editingEvent?.eventId,
       title,
@@ -1344,6 +1913,7 @@ export default function EventsPage() {
       formFields: eventFormFields,
       pricing,
       registrationSettings: sanitizedRegistrationSettings,
+      recurrenceSettings: sanitizedRecurrenceSettings,
       previewFieldOrder: sanitizedPreviewFieldOrder,
     });
 
@@ -1371,42 +1941,127 @@ export default function EventsPage() {
         : "Event saved successfully",
     );
 
-    const nextEvent: EventItem = {
+    const nextEventOccurrences =
+      sanitizedRecurrenceSettings.frequency === "NONE"
+        ? [
+            {
+              startDate: formState.startDate,
+              endDate: formState.endDate,
+              registrationOpenDate: formState.registrationOpenDate,
+              registrationCloseDate: formState.registrationCloseDate,
+            } satisfies EventOccurrenceDates,
+          ]
+        : buildRecurringOccurrenceDates(
+            formState.startDate,
+            formState.endDate,
+            sanitizedRecurrenceSettings,
+          );
+    const nextEvents = nextEventOccurrences.map((occurrence, index) => ({
       id:
-        savedEventId ??
-        editingEventId ??
-        `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`,
-      eventId: savedEventId,
-      title,
+        index === 0
+          ? savedEventId ??
+            editingEventId ??
+            `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`
+          : `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${occurrence.startDate}-${index}`,
+      eventId: index === 0 ? savedEventId : undefined,
+      title:
+        sanitizedRecurrenceSettings.frequency === "NONE"
+          ? title
+          : formatOccurrenceEventTitle(title, occurrence.startDate),
       description,
-      startDate: formState.startDate,
-      endDate: formState.endDate,
-      registrationOpenDate: formState.registrationOpenDate,
-      registrationCloseDate: formState.registrationCloseDate,
+      startDate: occurrence.startDate,
+      endDate: occurrence.endDate,
+      registrationOpenDate: occurrence.registrationOpenDate,
+      registrationCloseDate: occurrence.registrationCloseDate,
       colorClass: EVENT_COLORS[0],
       formFields: eventFormFields,
       pricing,
       registrationSettings: sanitizedRegistrationSettings,
+      recurrenceSettings: getDefaultRecurrenceSettings(occurrence.startDate),
       previewFieldOrder: sanitizedPreviewFieldOrder,
-    };
+    } satisfies EventItem));
 
     setEvents((current) => {
       if (!editingEventId) {
-        return [...current, nextEvent];
+        return [...current, ...nextEvents];
       }
 
-      return current.map((event) =>
-        event.id === editingEventId ? nextEvent : event,
-      );
+      const remainingEvents = current.filter((event) => event.id !== editingEventId);
+      return [...remainingEvents, ...nextEvents];
     });
     setSelectedDate(formState.startDate);
     setMonthDate(getMonthStart(parseDateKey(formState.startDate)));
     resetEditorState(false);
   };
 
-  const handleDeleteEvent = (eventId: string) => {
-    setEvents((current) => current.filter((event) => event.id !== eventId));
-  };
+  const openDeleteEventDialog = React.useCallback((event: EventItem) => {
+    setEventPendingDelete(event);
+  }, []);
+
+  const handleCloseDeleteEventDialog = React.useCallback(() => {
+    if (isDeletingEvent) {
+      return;
+    }
+
+    setEventPendingDelete(null);
+  }, [isDeletingEvent]);
+
+  const handleDeleteEvent = React.useCallback(async () => {
+    if (!club?.club_account_id || !eventPendingDelete) {
+      return;
+    }
+
+    const deleteEventId = eventPendingDelete.eventId ?? eventPendingDelete.id;
+
+    if (!deleteEventId) {
+      toast.error("This event does not have a valid event ID to delete.");
+      return;
+    }
+
+    try {
+      setIsDeletingEvent(true);
+      const response = await deleteEvent({
+        club_account_id: club.club_account_id,
+        event_id: deleteEventId,
+      });
+      const responseMessage = getActionResponseMessage(response);
+
+      if (response.status !== 200) {
+        toast.error(responseMessage || "Unable to delete the event right now.");
+        return;
+      }
+
+      setEvents((current) =>
+        current.filter(
+          (event) =>
+            event.id !== eventPendingDelete.id &&
+            event.eventId !== deleteEventId,
+        ),
+      );
+
+      if (previewEventId === eventPendingDelete.id) {
+        setIsPreviewOpen(false);
+        setPreviewEventId(null);
+      }
+
+      if (editingEventId === eventPendingDelete.id) {
+        resetEditorState(false);
+      }
+
+  toast.success(responseMessage || "Event deleted successfully");
+      setEventPendingDelete(null);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Unable to delete the event right now."));
+    } finally {
+      setIsDeletingEvent(false);
+    }
+  }, [
+    club?.club_account_id,
+    editingEventId,
+    eventPendingDelete,
+    previewEventId,
+    resetEditorState,
+  ]);
 
   const previewEvent = React.useMemo(
     () => events.find((event) => event.id === previewEventId) ?? null,
@@ -1965,6 +2620,13 @@ export default function EventsPage() {
                         >
                           Edit Event
                         </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={() => openDeleteEventDialog(previewEvent)}
+                          disabled={isDeletingEvent}
+                        >
+                          Delete Event
+                        </Button>
                       </div>
                     </div>
                   </CardHeader>
@@ -2337,66 +2999,314 @@ export default function EventsPage() {
                         />
                       </div>
 
-                      <div className="grid gap-2 md:grid-cols-2">
-                        <div className="grid gap-2">
-                          <label className="text-sm font-medium">
-                            Start date
-                          </label>
-                          <Input
-                            type="date"
-                            value={formState.startDate}
-                            min={
-                              editingEvent?.startDate &&
-                              editingEvent.startDate < todayKey
-                                ? editingEvent.startDate
-                                : todayKey
-                            }
-                            onChange={(event) =>
-                              setFormState((current) => {
-                                const nextStartDate = event.target.value;
-                                return {
-                                  ...current,
-                                  startDate: nextStartDate,
-                                  endDate:
-                                    current.endDate < nextStartDate
-                                      ? nextStartDate
-                                      : current.endDate,
-                                  registrationCloseDate:
-                                    current.registrationCloseDate >
-                                    nextStartDate
-                                      ? nextStartDate
-                                      : current.registrationCloseDate,
-                                };
-                              })
-                            }
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <label className="text-sm font-medium">
-                            End date
-                          </label>
-                          <Input
-                            type="date"
-                            value={formState.endDate}
-                            min={
-                              formState.startDate < todayKey
-                                ? editingEvent?.endDate &&
-                                  editingEvent.endDate < todayKey
-                                  ? editingEvent.endDate
-                                  : formState.startDate
-                                : formState.startDate
-                            }
-                            onChange={(event) =>
-                              setFormState((current) => ({
+                      <div className="grid gap-2">
+                        <Label>Event schedule</Label>
+                        <Select
+                          value={eventScheduleMode}
+                          onValueChange={(value) => {
+                            const nextMode = value as EventScheduleMode;
+
+                            if (nextMode === "FIXED") {
+                              setRecurrenceSettings((current) => ({
                                 ...current,
-                                endDate: event.target.value,
-                              }))
+                                frequency: "NONE",
+                                repeatUntilDate: formState.startDate,
+                              }));
+                              return;
                             }
-                          />
-                        </div>
+
+                            setRecurrenceSettings((current) => ({
+                              ...current,
+                              frequency: getNextRecurringFrequency(current.frequency),
+                              repeatUntilDate:
+                                current.repeatUntilDate < formState.endDate
+                                  ? formState.endDate
+                                  : current.repeatUntilDate,
+                              dayOfWeek: getDayOfWeekFromDateKey(formState.startDate),
+                              dayOfMonth: getDayOfMonthFromDateKey(formState.startDate),
+                            }));
+                          }}
+                        >
+                          <SelectTrigger className="w-full md:max-w-sm">
+                            <SelectValue placeholder="Select schedule type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="FIXED">Fixed dates</SelectItem>
+                            <SelectItem value="RECURRING">
+                              Recurrence schedule
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Choose fixed registration dates for a one-time event, or a recurrence schedule to generate repeating event dates automatically.
+                        </p>
                       </div>
 
-                      <div className="grid gap-2 md:grid-cols-2">
+                      {eventScheduleMode === "FIXED" ? (
+                        <div className="grid gap-2 md:grid-cols-2">
+                          <div className="grid gap-2">
+                            <label className="text-sm font-medium">
+                              Start date
+                            </label>
+                            <Input
+                              type="date"
+                              value={formState.startDate}
+                              min={
+                                editingEvent?.startDate &&
+                                editingEvent.startDate < todayKey
+                                  ? editingEvent.startDate
+                                  : todayKey
+                              }
+                              onChange={(event) =>
+                                {
+                                  const nextStartDate = event.target.value;
+                                  setFormState((current) => ({
+                                    ...current,
+                                    startDate: nextStartDate,
+                                    endDate:
+                                      current.endDate < nextStartDate
+                                        ? nextStartDate
+                                        : current.endDate,
+                                    registrationCloseDate:
+                                      current.registrationCloseDate >
+                                      nextStartDate
+                                        ? nextStartDate
+                                        : current.registrationCloseDate,
+                                  }));
+                                  setRecurrenceSettings((current) => ({
+                                    ...current,
+                                    repeatUntilDate:
+                                      current.repeatUntilDate < nextStartDate
+                                        ? nextStartDate
+                                        : current.repeatUntilDate,
+                                    dayOfWeek: getDayOfWeekFromDateKey(nextStartDate),
+                                    dayOfMonth: getDayOfMonthFromDateKey(nextStartDate),
+                                  }));
+                                }
+                              }
+                            />
+                          </div>
+                          <div className="grid gap-2">
+                            <label className="text-sm font-medium">
+                              End date
+                            </label>
+                            <Input
+                              type="date"
+                              value={formState.endDate}
+                              min={
+                                formState.startDate < todayKey
+                                  ? editingEvent?.endDate &&
+                                    editingEvent.endDate < todayKey
+                                    ? editingEvent.endDate
+                                    : formState.startDate
+                                  : formState.startDate
+                              }
+                              onChange={(event) =>
+                                setFormState((current) => ({
+                                  ...current,
+                                  endDate: event.target.value,
+                                }))
+                              }
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="grid gap-4 rounded-xl border border-dashed p-4">
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <div className="grid gap-2">
+                              <Label>First event start date</Label>
+                              <Input
+                                type="date"
+                                value={formState.startDate}
+                                min={
+                                  editingEvent?.startDate &&
+                                  editingEvent.startDate < todayKey
+                                    ? editingEvent.startDate
+                                    : todayKey
+                                }
+                                onChange={(event) => {
+                                  const nextStartDate = event.target.value;
+                                  setFormState((current) => ({
+                                    ...current,
+                                    startDate: nextStartDate,
+                                    endDate:
+                                      current.endDate < nextStartDate
+                                        ? nextStartDate
+                                        : current.endDate,
+                                  }));
+                                  setRecurrenceSettings((current) => ({
+                                    ...current,
+                                    repeatUntilDate:
+                                      current.repeatUntilDate < nextStartDate
+                                        ? nextStartDate
+                                        : current.repeatUntilDate,
+                                    dayOfWeek: getDayOfWeekFromDateKey(nextStartDate),
+                                    dayOfMonth: getDayOfMonthFromDateKey(nextStartDate),
+                                  }));
+                                }}
+                              />
+                            </div>
+                            <div className="grid gap-2">
+                              <Label>First event end date</Label>
+                              <Input
+                                type="date"
+                                value={formState.endDate}
+                                min={formState.startDate}
+                                onChange={(event) =>
+                                  setFormState((current) => ({
+                                    ...current,
+                                    endDate: event.target.value,
+                                  }))
+                                }
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid gap-4 md:grid-cols-2 md:items-start">
+                            <div className="grid gap-2">
+                              <Label>Recurrence frequency</Label>
+                              <Select
+                                value={recurrenceSettings.frequency}
+                                onValueChange={(value) => {
+                                  const nextFrequency =
+                                    value as Exclude<EventRecurrenceFrequency, "NONE">;
+                                  setRecurrenceSettings((current) => ({
+                                    ...current,
+                                    frequency: nextFrequency,
+                                    repeatUntilDate:
+                                      current.repeatUntilDate < formState.endDate
+                                        ? formState.endDate
+                                        : current.repeatUntilDate,
+                                  }));
+                                }}
+                              >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="Select recurrence" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {EVENT_RECURRENCE_OPTIONS.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                      {option.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="grid gap-2">
+                              <Label>Repeat until</Label>
+                              <Input
+                                type="date"
+                                value={recurrenceSettings.repeatUntilDate}
+                                min={formState.endDate}
+                                onChange={(event) =>
+                                  setRecurrenceSettings((current) => ({
+                                    ...current,
+                                    repeatUntilDate: event.target.value,
+                                  }))
+                                }
+                              />
+                            </div>
+                          </div>
+
+                          <p className="text-xs text-muted-foreground">
+                            {
+                              EVENT_RECURRENCE_OPTIONS.find(
+                                (option) =>
+                                  option.value === recurrenceSettings.frequency,
+                              )?.description
+                            }
+                          </p>
+
+                          <div className="grid gap-4 md:grid-cols-2 md:items-start">
+                            <div className="grid gap-2">
+                              <Label>Registration opens days before each event</Label>
+                              <Input
+                                type="number"
+                                min="0"
+                                step="1"
+                                inputMode="numeric"
+                                value={recurrenceSettings.registrationOpenDaysBefore}
+                                onChange={(event) =>
+                                  setRecurrenceSettings((current) => ({
+                                    ...current,
+                                    registrationOpenDaysBefore: event.target.value.replace(
+                                      /[^\d]/g,
+                                      "",
+                                    ),
+                                  }))
+                                }
+                              />
+                              <p className="text-xs text-muted-foreground">
+                                Each generated event opens registration this many days before its event date.
+                              </p>
+                            </div>
+
+                            {recurrenceSettings.frequency === "WEEKLY" && (
+                              <div className="grid gap-2">
+                                <Label>Repeat on</Label>
+                                <Select
+                                  value={recurrenceSettings.dayOfWeek}
+                                  onValueChange={(value) =>
+                                    alignFirstRecurringEventDates({
+                                      ...recurrenceSettings,
+                                      dayOfWeek:
+                                        value as EventRecurrenceDayOfWeek,
+                                    })
+                                  }
+                                >
+                                  <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Select weekday" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {RECURRENCE_WEEKDAY_OPTIONS.map((option) => (
+                                      <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
+
+                            {recurrenceSettings.frequency === "MONTHLY" && (
+                              <div className="grid gap-2">
+                                <Label>Repeat on day of month</Label>
+                                <Select
+                                  value={recurrenceSettings.dayOfMonth}
+                                  onValueChange={(value) =>
+                                    alignFirstRecurringEventDates({
+                                      ...recurrenceSettings,
+                                      dayOfMonth: value,
+                                    })
+                                  }
+                                >
+                                  <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Select day of month" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {Array.from({ length: 31 }, (_, index) => {
+                                      const value = `${index + 1}`;
+                                      return (
+                                        <SelectItem key={value} value={value}>
+                                          {value}
+                                        </SelectItem>
+                                      );
+                                    })}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="rounded-lg bg-muted/40 px-3 py-3 text-sm text-muted-foreground">
+                            Registration dates for recurring events are generated automatically from the first event date and recurrence lead time.
+                          </div>
+                        </div>
+                      )}
+
+                      {eventScheduleMode === "FIXED" && (
+                        <div className="grid gap-2 md:grid-cols-2">
                         <div className="grid gap-2">
                           <label className="text-sm font-medium">
                             Open registration date
@@ -2425,6 +3335,12 @@ export default function EventsPage() {
                               })
                             }
                           />
+                          {recurrenceSettings.frequency !== "NONE" && (
+                            <p className="text-xs text-muted-foreground">
+                              Calculated automatically from the first recurring
+                              event date and the recurrence lead time.
+                            </p>
+                          )}
                         </div>
                         <div className="grid gap-2">
                           <label className="text-sm font-medium">
@@ -2450,7 +3366,8 @@ export default function EventsPage() {
                             }
                           />
                         </div>
-                      </div>
+                        </div>
+                      )}
 
                       <div className="grid gap-2">
                         <label className="text-sm font-medium">
@@ -2706,10 +3623,34 @@ export default function EventsPage() {
                               <div className="flex items-start justify-between gap-4 rounded-lg border bg-muted/20 p-4">
                                 <div className="space-y-1">
                                   <Label className="text-sm font-medium">
-                                    Automatically confirm registration if paid
+                                    Allow members to only register once
                                   </Label>
                                   <p className="text-sm text-muted-foreground">
-                                    Paid entries will be treated as confirmed
+                                    Prevent duplicate registrations for the same
+                                    member on this event.
+                                  </p>
+                                </div>
+                                <Switch
+                                  checked={
+                                    registrationSettings.allowMemberRegistrationOnce
+                                  }
+                                  onCheckedChange={(checked) =>
+                                    setRegistrationSettings((current) => ({
+                                      ...current,
+                                      allowMemberRegistrationOnce:
+                                        checked === true,
+                                    }))
+                                  }
+                                />
+                              </div>
+
+                              <div className="flex items-start justify-between gap-4 rounded-lg border bg-muted/20 p-4">
+                                <div className="space-y-1">
+                                  <Label className="text-sm font-medium">
+                                    Automatically confirm registration
+                                  </Label>
+                                  <p className="text-sm text-muted-foreground">
+                                    Paid & free entries will be treated as confirmed
                                     without separate manual confirmation.
                                   </p>
                                   {registrationSettings.registrationTags.length > 0 && (
@@ -3135,7 +4076,8 @@ export default function EventsPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDeleteEvent(event.id)}
+                        onClick={() => openDeleteEventDialog(event)}
+                        title="Delete event"
                       >
                         <Trash2 className="h-4 w-4 text-muted-foreground" />
                       </Button>
@@ -3219,6 +4161,15 @@ export default function EventsPage() {
                     >
                       <Pencil className="h-4 w-4 text-muted-foreground" />
                     </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => openDeleteEventDialog(event)}
+                      title="Delete event"
+                    >
+                      <Trash2 className="h-4 w-4 text-muted-foreground" />
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -3253,6 +4204,46 @@ export default function EventsPage() {
               onClick={() => setShowEventsSettings(false)}
             >
               Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(eventPendingDelete)}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCloseDeleteEventDialog();
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Event</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-muted-foreground">
+              This will permanently delete
+              {eventPendingDelete ? ` ${eventPendingDelete.title}` : " this event"}.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              This action cannot be undone.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleCloseDeleteEventDialog}
+              disabled={isDeletingEvent}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteEvent}
+              disabled={isDeletingEvent}
+            >
+              {isDeletingEvent ? "Deleting..." : "Delete Event"}
             </Button>
           </DialogFooter>
         </DialogContent>

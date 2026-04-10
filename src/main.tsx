@@ -4,7 +4,7 @@ import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
 
 import './index.css'
 import App from './App.tsx'
-import AuthProvider from "@/context/AuthContext.tsx";
+import AuthProvider from "@/context/AuthContext";
 import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
 
 const queryClient = new QueryClient()

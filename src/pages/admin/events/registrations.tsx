@@ -250,6 +250,8 @@ type EventRegistrationTag = {
 };
 
 const DEFAULT_REGISTRATIONS_LIMIT = 10;
+const EVENT_SEARCH_THRESHOLD = 8;
+const MAX_VISIBLE_EVENT_OPTIONS = 5;
 
 function isFreeRegistration(
   registration: Pick<EventRegistration, "pricingType" | "amountDue">,
@@ -877,6 +879,7 @@ export default function EventRegistrationsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedEvent, setSelectedEvent] = useState<string>("");
+  const [eventSearchQuery, setEventSearchQuery] = useState("");
   const [registrationsLimit, setRegistrationsLimit] = useState(
     DEFAULT_REGISTRATIONS_LIMIT,
   );
@@ -1101,6 +1104,23 @@ export default function EventRegistrationsPage() {
 
     return matchedRegistration?.eventTitle || "Selected event";
   }, [allRegistrations, eventOptions, selectedEvent]);
+
+  const filteredEventOptions = useMemo(() => {
+    const normalizedQuery = eventSearchQuery.trim().toLowerCase();
+
+    if (!normalizedQuery) {
+      return eventOptions;
+    }
+
+    return eventOptions.filter((eventOption) =>
+      eventOption.label.toLowerCase().includes(normalizedQuery),
+    );
+  }, [eventOptions, eventSearchQuery]);
+
+  const visibleEventOptions = useMemo(
+    () => filteredEventOptions.slice(0, MAX_VISIBLE_EVENT_OPTIONS),
+    [filteredEventOptions],
+  );
 
   const registrationFilterFields = useMemo(() => {
     const payload = registrationsResponse as
@@ -1688,23 +1708,48 @@ export default function EventRegistrationsPage() {
             </Badge>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {eventOptions.map((eventOption) => (
-              <Button
-                key={eventOption.value}
-                variant={
-                  selectedEvent === eventOption.value ? "default" : "outline"
-                }
-                className={cn(
-                  "rounded-full",
-                  selectedEvent === eventOption.value &&
-                    "bg-sky-600 text-white hover:bg-sky-700",
-                )}
-                onClick={() => handleSelectEvent(eventOption.value)}
-              >
-                {eventOption.label}
-              </Button>
-            ))}
+          <div className="space-y-3">
+            {eventOptions.length > EVENT_SEARCH_THRESHOLD && (
+              <div className="max-w-md">
+                <Input
+                  value={eventSearchQuery}
+                  onChange={(event) => setEventSearchQuery(event.target.value)}
+                  placeholder="Search events"
+                />
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              {visibleEventOptions.map((eventOption) => (
+                <Button
+                  key={eventOption.value}
+                  variant={
+                    selectedEvent === eventOption.value ? "default" : "outline"
+                  }
+                  className={cn(
+                    "rounded-full",
+                    selectedEvent === eventOption.value &&
+                      "bg-sky-600 text-white hover:bg-sky-700",
+                  )}
+                  onClick={() => handleSelectEvent(eventOption.value)}
+                >
+                  {eventOption.label}
+                </Button>
+              ))}
+            </div>
+
+            {eventOptions.length > EVENT_SEARCH_THRESHOLD &&
+              filteredEventOptions.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  No events match that search.
+                </p>
+              )}
+
+            {filteredEventOptions.length > MAX_VISIBLE_EVENT_OPTIONS && (
+              <p className="text-sm text-muted-foreground">
+                Showing the first {MAX_VISIBLE_EVENT_OPTIONS} matching events. Refine the search to narrow the list.
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
