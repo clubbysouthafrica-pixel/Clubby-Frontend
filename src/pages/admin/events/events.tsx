@@ -11,17 +11,22 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   CalendarDays,
   AlertCircle,
+  Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock3,
+  Copy,
   Loader2,
   MenuIcon,
   Pencil,
   Plus,
+  QrCode,
   Settings,
   Trash2,
 } from "lucide-react";
+import jsPDF from "jspdf";
+import QRCode from "react-qr-code";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -369,6 +374,10 @@ function getRangeLabel(event: EventItem) {
   });
 
   return `${start} - ${end}`;
+}
+
+function buildEventRegistrationUrl(clubAccountId: string, eventId: string) {
+  return `${window.location.origin}/myclubs/${clubAccountId}/events/${eventId}/register`;
 }
 
 function getDefaultFieldDraft(): EventFieldDraft {
@@ -1319,9 +1328,8 @@ export default function EventsPage() {
   const [isTogglingEvents, setIsTogglingEvents] = React.useState(false);
   const [isSavingPreviewOrder, setIsSavingPreviewOrder] = React.useState(false);
   const [isSavingEvent, setIsSavingEvent] = React.useState(false);
-  const [showEventsSettings, setShowEventsSettings] = React.useState(false);
-  const [eventPendingDelete, setEventPendingDelete] = React.useState<EventItem | null>(null);
   const [isDeletingEvent, setIsDeletingEvent] = React.useState(false);
+  const [showEventsSettings, setShowEventsSettings] = React.useState(false);
   const eventScheduleMode = React.useMemo<EventScheduleMode>(
     () => getEventScheduleMode(recurrenceSettings),
     [recurrenceSettings],
@@ -1395,6 +1403,10 @@ export default function EventsPage() {
     formState.startDate,
     recurrenceSettings,
   ]);
+  const [copiedEventLinkId, setCopiedEventLinkId] = React.useState<string | null>(null);
+  const [deleteCandidateEvent, setDeleteCandidateEvent] = React.useState<EventItem | null>(null);
+  const [qrCodeEvent, setQrCodeEvent] = React.useState<EventItem | null>(null);
+  const qrCodeRef = React.useRef<HTMLDivElement | null>(null);
 
   const handleToggleEvents = React.useCallback(
     async (enabled: boolean) => {
@@ -1994,35 +2006,25 @@ export default function EventsPage() {
     resetEditorState(false);
   };
 
-  const openDeleteEventDialog = React.useCallback((event: EventItem) => {
-    setEventPendingDelete(event);
+  const handleDeleteEvent = React.useCallback((event: EventItem) => {
+    setDeleteCandidateEvent(event);
   }, []);
 
-  const handleCloseDeleteEventDialog = React.useCallback(() => {
-    if (isDeletingEvent) {
-      return;
-    }
+  const handleConfirmDeleteEvent = React.useCallback(async () => {
+    const clubAccountId = club?.club_account_id;
+    const event = deleteCandidateEvent;
+    const eventIdentifier = event?.eventId ?? event?.id;
 
-    setEventPendingDelete(null);
-  }, [isDeletingEvent]);
-
-  const handleDeleteEvent = React.useCallback(async () => {
-    if (!club?.club_account_id || !eventPendingDelete) {
-      return;
-    }
-
-    const deleteEventId = eventPendingDelete.eventId ?? eventPendingDelete.id;
-
-    if (!deleteEventId) {
-      toast.error("This event does not have a valid event ID to delete.");
+    if (!clubAccountId || !event || !eventIdentifier) {
+      toast.error("Unable to delete the event right now.");
       return;
     }
 
     try {
       setIsDeletingEvent(true);
       const response = await deleteEvent({
-        club_account_id: club.club_account_id,
-        event_id: deleteEventId,
+        club_account_id: clubAccountId,
+        event_id: eventIdentifier,
       });
       const responseMessage = getActionResponseMessage(response);
 
@@ -2033,40 +2035,125 @@ export default function EventsPage() {
 
       setEvents((current) =>
         current.filter(
-          (event) =>
-            event.id !== eventPendingDelete.id &&
-            event.eventId !== deleteEventId,
+          (item) => item.id !== event.id && item.eventId !== eventIdentifier,
         ),
       );
 
-      if (previewEventId === eventPendingDelete.id) {
-        setIsPreviewOpen(false);
-        setPreviewEventId(null);
-      }
-
-      if (editingEventId === eventPendingDelete.id) {
+      if (previewEventId === event.id || editingEventId === event.id) {
         resetEditorState(false);
       }
 
-  toast.success(responseMessage || "Event deleted successfully");
-      setEventPendingDelete(null);
+      setDeleteCandidateEvent(null);
+      toast.success(responseMessage || "Event deleted successfully.");
     } catch (error) {
-      toast.error(getApiErrorMessage(error, "Unable to delete the event right now."));
+      toast.error(
+        getApiErrorMessage(error, "Unable to delete the event right now."),
+      );
     } finally {
       setIsDeletingEvent(false);
     }
   }, [
     club?.club_account_id,
+    deleteCandidateEvent,
     editingEventId,
-    eventPendingDelete,
     previewEventId,
     resetEditorState,
   ]);
+
+  const handleCopyEventLink = React.useCallback(
+    async (event: EventItem) => {
+      const clubAccountId = club?.club_account_id;
+      const eventIdentifier = event.eventId ?? event.id;
+
+      if (!clubAccountId || !eventIdentifier) {
+        toast.error("Unable to build the event registration link.");
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(
+          buildEventRegistrationUrl(clubAccountId, eventIdentifier),
+        );
+        setCopiedEventLinkId(event.id);
+        toast.success("Event registration link copied.");
+
+        window.setTimeout(() => {
+          setCopiedEventLinkId((currentValue) =>
+            currentValue === event.id ? null : currentValue,
+          );
+        }, 1500);
+      } catch {
+        toast.error("Unable to copy the event registration link.");
+      }
+    },
+    [club?.club_account_id],
+  );
+
+  const handleOpenQrCode = React.useCallback((event: EventItem) => {
+    setQrCodeEvent(event);
+  }, []);
+
+  const handleDownloadQrCode = React.useCallback(() => {
+    if (!qrCodeRef.current || !qrCodeEvent) {
+      return;
+    }
+
+    const svgElement = qrCodeRef.current.querySelector("svg");
+
+    if (!svgElement) {
+      toast.error("Unable to download the QR code right now.");
+      return;
+    }
+
+    const svgString = new XMLSerializer().serializeToString(svgElement);
+    const image = new Image();
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    const svgDataUrl =
+      "data:image/svg+xml;base64," +
+      window.btoa(unescape(encodeURIComponent(svgString)));
+
+    image.onload = () => {
+      canvas.width = image.width;
+      canvas.height = image.height;
+
+      if (!context) {
+        toast.error("Unable to download the QR code right now.");
+        return;
+      }
+
+      context.drawImage(image, 0, 0);
+      const imgDataUrl = canvas.toDataURL("image/png");
+      const pdf = new jsPDF();
+
+      pdf.addImage(imgDataUrl, "PNG", 10, 10, 180, 180);
+      pdf.save(
+        `${qrCodeEvent.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "event"}-qr-code.pdf`,
+      );
+    };
+
+    image.onerror = () => {
+      toast.error("Unable to download the QR code right now.");
+    };
+
+    image.src = svgDataUrl;
+  }, [qrCodeEvent]);
 
   const previewEvent = React.useMemo(
     () => events.find((event) => event.id === previewEventId) ?? null,
     [events, previewEventId],
   );
+
+  const qrCodeLink = React.useMemo(() => {
+    if (!club?.club_account_id || !qrCodeEvent) {
+      return "";
+    }
+
+    return buildEventRegistrationUrl(
+      club.club_account_id,
+      qrCodeEvent.eventId ?? qrCodeEvent.id,
+    );
+  }, [club?.club_account_id, qrCodeEvent]);
 
   const previewPricingTotal = React.useMemo(() => {
     if (!previewEvent || previewEvent.pricing.type === "FREE") {
@@ -2596,7 +2683,7 @@ export default function EventsPage() {
                           {previewEvent.title} will behave.
                         </CardDescription>
                       </div>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap items-center justify-end gap-2">
                         {hasUnsavedPreviewOrderChanges && (
                           <Button
                             variant="default"
@@ -2614,19 +2701,48 @@ export default function EventsPage() {
                         >
                           Back To Calendar
                         </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => openEditDialog(previewEvent)}
-                        >
-                          Edit Event
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          onClick={() => openDeleteEventDialog(previewEvent)}
-                          disabled={isDeletingEvent}
-                        >
-                          Delete Event
-                        </Button>
+                        <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/20 p-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-2"
+                            onClick={() => openEditDialog(previewEvent)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-2"
+                            onClick={() => handleOpenQrCode(previewEvent)}
+                          >
+                            <QrCode className="h-4 w-4" />
+                            QR Code
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-2"
+                            onClick={() => void handleCopyEventLink(previewEvent)}
+                          >
+                            {copiedEventLinkId === previewEvent.id ? (
+                              <Check className="h-4 w-4" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                            Copy Link
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-2 text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteEvent(previewEvent)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </CardHeader>
@@ -4060,6 +4176,26 @@ export default function EventsPage() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        onClick={() => handleOpenQrCode(event)}
+                        title="Show QR code"
+                      >
+                        <QrCode className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => void handleCopyEventLink(event)}
+                        title="Copy event link"
+                      >
+                        {copiedEventLinkId === event.id ? (
+                          <Check className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Copy className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => openPreviewPanel(event)}
                         title="View form"
                       >
@@ -4076,7 +4212,7 @@ export default function EventsPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => openDeleteEventDialog(event)}
+                        onClick={() => handleDeleteEvent(event)}
                         title="Delete event"
                       >
                         <Trash2 className="h-4 w-4 text-muted-foreground" />
@@ -4119,10 +4255,10 @@ export default function EventsPage() {
               {upcomingEvents.map((event) => (
                 <div
                   key={event.id}
-                  className="flex items-start justify-between gap-3 rounded-xl border p-3"
+                  className="flex flex-col gap-3 rounded-xl border p-3 sm:flex-row sm:items-start sm:justify-between"
                 >
-                  <div>
-                    <p className="font-medium">{event.title}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{event.title}</p>
                     <p className="text-sm text-muted-foreground">
                       {getRangeLabel(event)}
                     </p>
@@ -4134,7 +4270,7 @@ export default function EventsPage() {
                       {getPricingSummary(event.pricing)}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
                     <Badge
                       className={cn("border", event.colorClass)}
                       variant="outline"
@@ -4143,33 +4279,62 @@ export default function EventsPage() {
                         ? "1 day"
                         : `${getEventDuration(event)} days`}
                     </Badge>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => openPreviewPanel(event)}
-                      title="View form"
-                    >
-                      <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => openEditDialog(event)}
-                      title="Edit event form"
-                    >
-                      <Pencil className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => openDeleteEventDialog(event)}
-                      title="Delete event"
-                    >
-                      <Trash2 className="h-4 w-4 text-muted-foreground" />
-                    </Button>
+                    <div className="flex items-center gap-1 rounded-lg border bg-muted/20 p-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => handleOpenQrCode(event)}
+                        title="Show QR code"
+                      >
+                        <QrCode className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => void handleCopyEventLink(event)}
+                        title="Copy event link"
+                      >
+                        {copiedEventLinkId === event.id ? (
+                          <Check className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Copy className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => openPreviewPanel(event)}
+                        title="View form"
+                      >
+                        <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => openEditDialog(event)}
+                        title="Edit event form"
+                      >
+                        <Pencil className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => handleDeleteEvent(event)}
+                        title="Delete event"
+                      >
+                        <Trash2 className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -4210,10 +4375,10 @@ export default function EventsPage() {
       </Dialog>
 
       <Dialog
-        open={Boolean(eventPendingDelete)}
+        open={Boolean(deleteCandidateEvent)}
         onOpenChange={(open) => {
-          if (!open) {
-            handleCloseDeleteEventDialog();
+          if (!open && !isDeletingEvent) {
+            setDeleteCandidateEvent(null);
           }
         }}
       >
@@ -4221,30 +4386,79 @@ export default function EventsPage() {
           <DialogHeader>
             <DialogTitle>Delete Event</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 py-2">
-            <p className="text-sm text-muted-foreground">
-              This will permanently delete
-              {eventPendingDelete ? ` ${eventPendingDelete.title}` : " this event"}.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              This action cannot be undone.
+          <div className="space-y-2 py-2 text-sm text-muted-foreground">
+            <p>
+              {deleteCandidateEvent
+                ? `Delete ${deleteCandidateEvent.title}? This cannot be undone.`
+                : "Delete this event? This cannot be undone."}
             </p>
           </div>
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={handleCloseDeleteEventDialog}
+              onClick={() => setDeleteCandidateEvent(null)}
               disabled={isDeletingEvent}
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
-              onClick={handleDeleteEvent}
+              onClick={() => void handleConfirmDeleteEvent()}
               disabled={isDeletingEvent}
             >
-              {isDeletingEvent ? "Deleting..." : "Delete Event"}
+              {isDeletingEvent ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Event"
+              )}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(qrCodeEvent)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setQrCodeEvent(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Event QR Code</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1">
+              <p className="font-medium">{qrCodeEvent?.title}</p>
+              <p className="text-sm text-muted-foreground">
+                Scan this code to open the event registration link.
+              </p>
+            </div>
+            <div
+              ref={qrCodeRef}
+              className="mx-auto w-fit rounded-xl border bg-white p-4"
+            >
+              {qrCodeLink ? <QRCode value={qrCodeLink} size={220} /> : null}
+            </div>
+            <div className="rounded-lg border bg-muted/20 px-3 py-2 text-xs text-muted-foreground break-all">
+              {qrCodeLink}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => qrCodeEvent && void handleCopyEventLink(qrCodeEvent)}
+            >
+              Copy Link
+            </Button>
+            <Button variant="outline" onClick={handleDownloadQrCode}>
+              Download QR
+            </Button>
+            <Button onClick={() => setQrCodeEvent(null)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

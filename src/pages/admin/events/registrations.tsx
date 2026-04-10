@@ -1117,10 +1117,35 @@ export default function EventRegistrationsPage() {
     );
   }, [eventOptions, eventSearchQuery]);
 
-  const visibleEventOptions = useMemo(
-    () => filteredEventOptions.slice(0, MAX_VISIBLE_EVENT_OPTIONS),
-    [filteredEventOptions],
-  );
+  const visibleEventOptions = useMemo(() => {
+    const selectedOption = filteredEventOptions.find(
+      (eventOption) => eventOption.value === selectedEvent,
+    );
+    const initialVisibleOptions = filteredEventOptions.slice(
+      0,
+      MAX_VISIBLE_EVENT_OPTIONS,
+    );
+
+    if (
+      !selectedOption ||
+      initialVisibleOptions.some(
+        (eventOption) => eventOption.value === selectedOption.value,
+      )
+    ) {
+      return initialVisibleOptions;
+    }
+
+    return [
+      selectedOption,
+      ...initialVisibleOptions
+        .filter((eventOption) => eventOption.value !== selectedOption.value)
+        .slice(0, MAX_VISIBLE_EVENT_OPTIONS - 1),
+    ];
+  }, [filteredEventOptions, selectedEvent]);
+
+  const hasHiddenEventOptions =
+    filteredEventOptions.length > visibleEventOptions.length;
+  const showEventSearch = eventOptions.length > EVENT_SEARCH_THRESHOLD;
 
   const registrationFilterFields = useMemo(() => {
     const payload = registrationsResponse as
@@ -1708,49 +1733,46 @@ export default function EventRegistrationsPage() {
             </Badge>
           </div>
 
-          <div className="space-y-3">
-            {eventOptions.length > EVENT_SEARCH_THRESHOLD && (
-              <div className="max-w-md">
-                <Input
-                  value={eventSearchQuery}
-                  onChange={(event) => setEventSearchQuery(event.target.value)}
-                  placeholder="Search events"
-                />
-              </div>
-            )}
-
-            <div className="flex flex-wrap gap-2">
-              {visibleEventOptions.map((eventOption) => (
-                <Button
-                  key={eventOption.value}
-                  variant={
-                    selectedEvent === eventOption.value ? "default" : "outline"
-                  }
-                  className={cn(
-                    "rounded-full",
-                    selectedEvent === eventOption.value &&
-                      "bg-sky-600 text-white hover:bg-sky-700",
-                  )}
-                  onClick={() => handleSelectEvent(eventOption.value)}
-                >
-                  {eventOption.label}
-                </Button>
-              ))}
-            </div>
-
-            {eventOptions.length > EVENT_SEARCH_THRESHOLD &&
-              filteredEventOptions.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  No events match that search.
+          {showEventSearch && (
+            <div className="grid gap-2">
+              <Input
+                value={eventSearchQuery}
+                onChange={(event) => setEventSearchQuery(event.target.value)}
+                placeholder="Search events"
+                className="max-w-md bg-white"
+              />
+              {hasHiddenEventOptions && (
+                <p className="text-xs text-muted-foreground">
+                  Showing {MAX_VISIBLE_EVENT_OPTIONS} of {filteredEventOptions.length} matching events.
                 </p>
               )}
+            </div>
+          )}
 
-            {filteredEventOptions.length > MAX_VISIBLE_EVENT_OPTIONS && (
-              <p className="text-sm text-muted-foreground">
-                Showing the first {MAX_VISIBLE_EVENT_OPTIONS} matching events. Refine the search to narrow the list.
-              </p>
-            )}
+          <div className="flex flex-wrap gap-2">
+            {visibleEventOptions.map((eventOption) => (
+              <Button
+                key={eventOption.value}
+                variant={
+                  selectedEvent === eventOption.value ? "default" : "outline"
+                }
+                className={cn(
+                  "rounded-full",
+                  selectedEvent === eventOption.value &&
+                    "bg-sky-600 text-white hover:bg-sky-700",
+                )}
+                onClick={() => handleSelectEvent(eventOption.value)}
+              >
+                {eventOption.label}
+              </Button>
+            ))}
           </div>
+
+          {showEventSearch && filteredEventOptions.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              No events match that search.
+            </p>
+          )}
         </CardContent>
       </Card>
 

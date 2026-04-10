@@ -60,6 +60,11 @@ export interface CreateOrUpdateEventResponse {
   event_id?: string;
 }
 
+export interface DeleteEventRequest {
+  club_account_id: string;
+  event_id: string;
+}
+
 export interface GetEventsResponse {
   events: unknown[];
 }
@@ -106,11 +111,6 @@ export interface ConfirmEventRegistrationRequest {
   event_id: string;
   event_registration_id: string;
   registration_fields?: ConfirmEventRegistrationFieldRequest[];
-}
-
-export interface DeleteEventRequest {
-  club_account_id: string;
-  event_id: string;
 }
 
 export interface EventAdminActionResponse {
