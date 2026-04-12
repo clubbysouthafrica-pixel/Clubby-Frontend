@@ -21,7 +21,7 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useCallback, useEffect, useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { getMemberOrders } from "@/services/orders";
-import { getEvents, getEventsIncludingAll } from "@/services/events";
+import { getEventsIncludingAll } from "@/services/events";
 import { getVenues } from "@/services/venues";
 import { useQuery } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
