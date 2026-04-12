@@ -34,8 +34,24 @@ export interface RegisterEventResponse {
   id?: string;
 }
 
+function buildGetEventsPath(clubAccountId: string, includeAll?: boolean) {
+  const params = new URLSearchParams({
+    club_account_id: clubAccountId,
+  });
+
+  if (includeAll) {
+    params.append("include_all", "true");
+  }
+
+  return `/events/getEvents?${params.toString()}`;
+}
+
 export const getEvents = (clubAccountId: string): Promise<GetEventsResponse> => {
-  return api.get(`/events/getEvents?club_account_id=${clubAccountId}`).then((res) => res.data);
+  return api.get(buildGetEventsPath(clubAccountId)).then((res) => res.data);
+};
+
+export const getEventsIncludingAll = (clubAccountId: string): Promise<GetEventsResponse> => {
+  return api.get(buildGetEventsPath(clubAccountId, true)).then((res) => res.data);
 };
 
 export const getEventRegistrations = (

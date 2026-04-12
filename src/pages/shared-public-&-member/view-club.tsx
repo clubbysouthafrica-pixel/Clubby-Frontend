@@ -21,7 +21,7 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useCallback, useEffect, useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { getMemberOrders } from "@/services/orders";
-import { getEvents } from "@/services/events";
+import { getEvents, getEventsIncludingAll } from "@/services/events";
 import { getVenues } from "@/services/venues";
 import { useQuery } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
@@ -579,7 +579,7 @@ export default function ViewClubPage() {
     isError: isHomeEventsError,
   } = useQuery({
     queryKey: ["club-home-events", data?.club_account_id],
-    queryFn: () => getEvents(data?.club_account_id || ""),
+    queryFn: () => getEventsIncludingAll(data?.club_account_id || ""),
     enabled:
       activeTab === "home" && !!data?.club_account_id && !!data?.enable_events,
   });
