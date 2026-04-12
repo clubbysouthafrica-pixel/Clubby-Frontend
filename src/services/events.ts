@@ -35,7 +35,9 @@ export interface RegisterEventResponse {
 }
 
 export const getEvents = (clubAccountId: string): Promise<GetEventsResponse> => {
-  return api.get(`/events/getEvents?club_account_id=${clubAccountId}`).then((res) => res.data);
+  return api
+    .get(`/events/getEvents?club_account_id=${clubAccountId}&include_all=true`)
+    .then((res) => res.data);
 };
 
 export const getEventRegistrations = (
