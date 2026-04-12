@@ -6,21 +6,19 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { TabsContent } from "@/components/ui/tabs";
 import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from "@/components/ui/table";
-import { 
   CheckCircle, 
   CreditCard, 
   FileText, 
   Copy,
   Loader2,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  Search,
+  Receipt,
+  Wallet,
+  ChevronRight,
+  Clock3,
+  Landmark,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatAmount } from "@/data/currencies";
@@ -235,87 +233,150 @@ export default function PaymentsTabContent({
     return sorted;
   }, [filteredTransactionItems, sortColumn, sortDirection]);
 
+  const paidTransactionsCount = useMemo(() => {
+    return transactionItems.filter((transaction: Transaction) => transaction.status === "PAID").length;
+  }, [transactionItems]);
+
+  const pendingTransactionsCount = useMemo(() => {
+    return transactionItems.filter((transaction: Transaction) =>
+      ["PENDING", "PARTIALLY_PAID"].includes(transaction.status),
+    ).length;
+  }, [transactionItems]);
+
+  const totalTransactionAmount = useMemo(() => {
+    return transactionItems.reduce((sum: number, transaction: Transaction) => {
+      return sum + (Number(transaction.amount) || 0);
+    }, 0);
+  }, [transactionItems]);
+
+  const statusBadgeClassName = (status: string) => {
+    if (status === "PENDING") {
+      return "border-sky-200 bg-sky-50 text-sky-700";
+    }
+
+    if (status === "PARTIALLY_PAID") {
+      return "border-amber-200 bg-amber-50 text-amber-700";
+    }
+
+    if (status === "REFUND" || status === "CANCELLED") {
+      return "border-rose-200 bg-rose-50 text-rose-700";
+    }
+
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  };
+
   return (
     <TabsContent value="bank" className="mt-6">
-      {!data?.resubmission_required && (
-        <Card ref={outstandingBalanceRef} className="border-primary/20 shadow-lg mb-6 scroll-mt-24">
-          <CardHeader className="pb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                <CreditCard className="w-6 h-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <CardTitle className="text-2xl">
-                  Outstanding Balance
-                </CardTitle>
-                <CardDescription className="text-lg">
-                  {formatAmount(
-                    outstandingAmount,
-                    data.currency
-                  )}
-                </CardDescription>
-              </div>
-              {outstandingAmount === 0 && (
-                <Badge className="bg-green-100 text-green-800 border-green-200">
-                  <CheckCircle className="w-4 h-4 mr-1" />
-                  Paid in Full
-                </Badge>
-              )}
-              {outstandingAmount > 0 && transactionOptions.length === 0 && (
-                <Button
-                  onClick={() => handlePayHereClick()}
-                  className="bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-300"
-                >
-                  Pay Now
-                </Button>
-              )}
-            </div>
-            {bankDetails?.registration_payment_reference && (
-              <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-muted-foreground">
-                    Payment Reference Number
+      <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+        <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
+          <Card className="overflow-hidden border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] text-slate-900 shadow-[0_24px_70px_-34px_rgba(15,23,42,0.22)]">
+            <CardContent className="space-y-6 p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                    Member Payments
                   </p>
-                  {!editingReference && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setEditingReference(true)}
-                      className="h-6 px-2 text-xs"
-                    >
-                      Edit
-                    </Button>
-                  )}
+                  <h2 className="text-2xl font-semibold">Billing overview</h2>
+                  <p className="text-sm leading-6 text-slate-500">
+                    Review outstanding charges, pick a payment target, and trace every transaction from one place.
+                  </p>
                 </div>
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
+                  <Wallet className="h-7 w-7 text-slate-700" />
+                </div>
+              </div>
 
+              <div ref={outstandingBalanceRef} className="scroll-mt-24 rounded-3xl border border-slate-200 bg-white p-5">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Outstanding balance</p>
+                <p className="mt-2 text-4xl font-semibold tracking-tight">
+                  {formatAmount(outstandingAmount, data.currency)}
+                </p>
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  {outstandingAmount === 0 ? (
+                    <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700">
+                      <CheckCircle className="mr-1 h-3.5 w-3.5" />
+                      Paid in full
+                    </Badge>
+                  ) : (
+                    <Badge className="border-amber-200 bg-amber-50 text-amber-700">
+                      Balance due
+                    </Badge>
+                  )}
+                  <Badge className="border-slate-200 bg-slate-50 text-slate-700">
+                    {transactionOptions.length} open {transactionOptions.length === 1 ? "item" : "items"}
+                  </Badge>
+                </div>
+                {outstandingAmount > 0 && transactionOptions.length === 0 ? (
+                  <Button
+                    onClick={() => handlePayHereClick()}
+                    className="mt-5 w-full bg-slate-900 text-white hover:bg-slate-800"
+                  >
+                    Pay outstanding balance
+                  </Button>
+                ) : null}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Paid</p>
+                  <p className="mt-2 text-2xl font-semibold">{paidTransactionsCount}</p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Pending</p>
+                  <p className="mt-2 text-2xl font-semibold">{pendingTransactionsCount}</p>
+                </div>
+                <div className="col-span-2 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Total transaction value</p>
+                  <p className="mt-2 text-2xl font-semibold">{formatAmount(totalTransactionAmount, data.currency)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {bankDetails?.registration_payment_reference ? (
+            <Card className="border-slate-200 bg-white shadow-[0_18px_50px_-32px_rgba(15,23,42,0.35)]">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100">
+                    <Landmark className="h-5 w-5 text-slate-700" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Payment reference</CardTitle>
+                    <CardDescription>Use this reference when paying by transfer.</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 {!editingReference ? (
                   <>
-                    <p className="font-mono font-semibold">
-                      {bankDetails.registration_payment_reference}
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                      <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Reference number</p>
+                      <p className="mt-2 break-all font-mono text-lg font-semibold text-slate-950">
+                        {bankDetails.registration_payment_reference}
+                      </p>
+                    </div>
+                    <p className="text-sm leading-6 text-slate-500">
+                      Club staff uses this reference to reconcile manual payments like EFT deposits against your member account.
                     </p>
-                    <p className="text-xs text-muted-foreground leading-relaxed mt-2">
-                      This reference number is displayed on the
-                      admin side. When you make a payment (e.g.,
-                      via EFT), include this number as your proof
-                      of reference so the admin can verify and
-                      match your payment to your account.
-                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setEditingReference(true)}
+                      className="w-full border-slate-200"
+                    >
+                      Edit reference
+                    </Button>
                   </>
                 ) : (
                   <div className="space-y-3">
-                    <div className="space-y-1">
-                      <Label
-                        htmlFor="reference-input"
-                        className="text-xs"
-                      >
-                        New Reference Number
+                    <div className="space-y-1.5">
+                      <Label htmlFor="reference-input" className="text-xs uppercase tracking-[0.16em] text-slate-500">
+                        New reference number
                       </Label>
                       <Input
                         id="reference-input"
                         value={newReference}
-                        onChange={(e) =>
-                          setNewReference(e.target.value)
-                        }
+                        onChange={(e) => setNewReference(e.target.value)}
                         placeholder="Enter new reference number"
                         className="font-mono"
                       />
@@ -324,14 +385,10 @@ export default function PaymentsTabContent({
                       <Button
                         size="sm"
                         onClick={handleSaveReference}
-                        disabled={
-                          savingReference || !newReference.trim()
-                        }
+                        disabled={savingReference || !newReference.trim()}
                         className="flex-1"
                       >
-                        {savingReference && (
-                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                        )}
+                        {savingReference ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : null}
                         Save
                       </Button>
                       <Button
@@ -339,487 +396,398 @@ export default function PaymentsTabContent({
                         variant="outline"
                         onClick={handleCancelEdit}
                         disabled={savingReference}
-                        className="flex-1"
+                        className="flex-1 border-slate-200"
                       >
                         Cancel
                       </Button>
                     </div>
                   </div>
                 )}
-              </div>
-            )}
-            {transactionOptions.length > 0 && (
-              <div className="mt-4 space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      Payments ready
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Select a payment below to continue to payment options.
-                    </p>
+              </CardContent>
+            </Card>
+          ) : null}
+        </aside>
+
+        <div className="space-y-6">
+          {!data?.resubmission_required ? (
+            <Card className="overflow-hidden border-0 bg-[radial-gradient(circle_at_top_left,_rgba(15,23,42,0.08),_transparent_32%),linear-gradient(180deg,#fff_0%,#f8fafc_100%)] shadow-[0_20px_60px_-34px_rgba(15,23,42,0.35)]">
+              <CardHeader className="border-b border-slate-200 pb-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 shadow-sm">
+                      <CreditCard className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-2xl text-slate-950">Ready to pay</CardTitle>
+                      <CardDescription className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
+                        Choose a charge below to open payment options. Each card keeps the related identifiers visible so you can reconcile orders and event registrations quickly.
+                      </CardDescription>
+                    </div>
                   </div>
-                  <Badge variant="outline" className="font-medium">
-                    {transactionOptions.length} {transactionOptions.length === 1 ? "payment" : "payments"}
+                  <Badge className="w-fit border-slate-200 bg-white text-slate-700">
+                    {transactionOptions.length} pending {transactionOptions.length === 1 ? "payment" : "payments"}
                   </Badge>
                 </div>
-                <div
-                  className={cn(
-                    "space-y-3",
-                    transactionOptions.length > 2 &&
-                      "max-h-[22rem] overflow-y-auto pr-1",
-                  )}
-                >
-                  {transactionOptions.map((paymentOption: PaymentTransactionOption, index: number) => {
-                    const totalAmount = paymentOption.total_amount ?? 0;
-                    const paymentOutstandingAmount = paymentOption.outstanding_amount ?? totalAmount;
-                    const isHighlighted =
-                      paymentOption.transaction_id === highlightedTransactionId ||
-                      paymentOption.order_id === highlightedOrderId ||
-                      paymentOption.event_registration_id === highlightedEventRegistrationId;
-                    const paymentTitle = paymentOption.type || `Payment ${index + 1}`;
-                    const orderId = paymentOption.order_id;
-                    const eventRegistrationId = paymentOption.event_registration_id;
+              </CardHeader>
+              <CardContent className="p-6">
+                {transactionOptions.length === 0 ? (
+                  <div className="rounded-3xl border border-dashed border-slate-200 bg-white/70 px-6 py-10 text-center">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-600">
+                      <Receipt className="h-6 w-6" />
+                    </div>
+                    <p className="mt-4 text-lg font-semibold text-slate-900">No payment items are waiting right now.</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      New charges will appear here automatically when the club creates an order, fee, or event payment.
+                    </p>
+                  </div>
+                ) : (
+                  <div className={cn("grid gap-4", transactionOptions.length > 3 && "xl:max-h-[44rem] xl:overflow-y-auto xl:pr-1")}>
+                    {transactionOptions.map((paymentOption: PaymentTransactionOption, index: number) => {
+                      const totalAmount = paymentOption.total_amount ?? 0;
+                      const paymentOutstandingAmount = paymentOption.outstanding_amount ?? totalAmount;
+                      const isHighlighted =
+                        paymentOption.transaction_id === highlightedTransactionId ||
+                        paymentOption.order_id === highlightedOrderId ||
+                        paymentOption.event_registration_id === highlightedEventRegistrationId;
+                      const paymentTitle = paymentOption.type || `Payment ${index + 1}`;
+                      const orderId = paymentOption.order_id;
+                      const eventRegistrationId = paymentOption.event_registration_id;
 
-                    return (
-                      <div
-                        key={paymentOption.transaction_id}
-                        ref={isHighlighted ? highlightedPaymentRef : null}
-                        className={cn(
-                          "rounded-xl border bg-background p-4 shadow-sm transition-colors",
-                          isHighlighted && "border-yellow-400 bg-yellow-50/60",
-                        )}
-                      >
-                        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                          <div className="space-y-2">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <p className="font-semibold text-foreground">
-                                {paymentTitle === "ORDER" ? "SHOP ORDER" : paymentTitle}
-                              </p>
-                              <Badge variant="outline" className="font-medium">
-                                {paymentOption.type}
-                              </Badge>
-                            </div>
-                            <p className="text-sm font-medium text-orange-600">
-                              Amount to pay: {formatAmount(paymentOutstandingAmount, data.currency)}
-                            </p>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span className="font-mono">
-                                Transaction ID: {paymentOption.transaction_id}
-                              </span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  handleCopyPaymentValue(
-                                    paymentOption.transaction_id,
-                                    `transaction-${paymentOption.transaction_id}`,
-                                  )
-                                }
-                                title="Copy Transaction ID"
-                                className="h-6 w-6 p-0"
-                              >
-                                <Copy className="h-3 w-3" />
-                              </Button>
-                              {copiedPaymentId === `transaction-${paymentOption.transaction_id}` && (
-                                <span className="text-[11px] text-muted-foreground">Copied</span>
-                              )}
-                            </div>
-                            {orderId && (
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <span className="font-mono">
-                                  Order ID: {orderId}
-                                </span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() =>
-                                    handleCopyPaymentValue(orderId, `order-${paymentOption.transaction_id}`)
-                                  }
-                                  title="Copy Order ID"
-                                  className="h-6 w-6 p-0"
-                                >
-                                  <Copy className="h-3 w-3" />
-                                </Button>
-                                {copiedPaymentId === `order-${paymentOption.transaction_id}` && (
-                                  <span className="text-[11px] text-muted-foreground">Copied</span>
+                      return (
+                        <div
+                          key={paymentOption.transaction_id}
+                          ref={isHighlighted ? highlightedPaymentRef : null}
+                          className={cn(
+                            "rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[0_16px_40px_-30px_rgba(15,23,42,0.35)] transition-all",
+                            isHighlighted && "border-amber-300 bg-amber-50/50 ring-2 ring-amber-100",
+                          )}
+                        >
+                          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Badge className="border-slate-200 bg-slate-50 text-slate-700">
+                                  {paymentOption.type}
+                                </Badge>
+                                {paymentOutstandingAmount > 0 ? (
+                                  <Badge className="border-amber-200 bg-amber-50 text-amber-700">Awaiting payment</Badge>
+                                ) : (
+                                  <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700">Settled</Badge>
                                 )}
                               </div>
-                            )}
-                            {eventRegistrationId && (
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <span className="font-mono">
-                                  Event Registration ID: {eventRegistrationId}
-                                </span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() =>
-                                    handleCopyPaymentValue(
-                                      eventRegistrationId,
-                                      `event-${paymentOption.transaction_id}`,
-                                    )
-                                  }
-                                  title="Copy Event Registration ID"
-                                  className="h-6 w-6 p-0"
-                                >
-                                  <Copy className="h-3 w-3" />
-                                </Button>
-                                {copiedPaymentId === `event-${paymentOption.transaction_id}` && (
-                                  <span className="text-[11px] text-muted-foreground">Copied</span>
-                                )}
+                              <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                                <div>
+                                  <h3 className="text-xl font-semibold text-slate-950">
+                                    {paymentTitle === "ORDER" ? "Shop order" : paymentTitle}
+                                  </h3>
+                                  <p className="mt-1 text-sm leading-6 text-slate-500">
+                                    Transaction amount outstanding for this payment target.
+                                  </p>
+                                </div>
+                                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900">
+                                  <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Amount due</p>
+                                  <p className="mt-1 text-2xl font-semibold">
+                                    {formatAmount(paymentOutstandingAmount, data.currency)}
+                                  </p>
+                                </div>
                               </div>
-                            )}
-                          </div>
-                          <div className="flex flex-wrap justify-end gap-2">
-                            {(orderId || eventRegistrationId) && (
-                              <Button
-                                variant="outline"
-                                onClick={() => onViewPaymentTarget(paymentOption)}
-                                className="md:min-w-24"
-                              >
-                                View
-                              </Button>
-                            )}
-                            <Button
-                              onClick={() => handlePayHereClick(paymentOption)}
-                              disabled={paymentOutstandingAmount <= 0}
-                              className="md:min-w-32"
-                            >
-                              {paymentOutstandingAmount > 0 ? "Pay Now" : "Paid"}
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </CardHeader>
-        </Card>
-      )}
-      <div className="flex flex-col w-full gap-6">
-        <Card className="border-primary/20 shadow-lg">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                <FileText className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="text-xl">
-                  Transaction History
-                </CardTitle>
-                <CardDescription className="text-base">
-                  View your payment transactions and membership
-                  activity
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            {isUserTransactionsLoading ? (
-              <div className="flex items-center justify-center py-12 text-muted-foreground">
-                <Loader2 className="mr-3 h-5 w-5 animate-spin" />
-                Loading transactions...
-              </div>
-            ) : (
-              <div>
-                <div className="border-b border-primary/10 p-4">
-                  <Input
-                    value={transactionSearch}
-                    onChange={(event) => setTransactionSearch(event.target.value)}
-                    placeholder="Search by transaction ID, type, status, amount, or lifecycle details"
-                    className="max-w-md"
-                  />
-                </div>
-                <div className={`${sortedTransactions.length > 5 ? 'max-h-96 overflow-y-auto' : 'overflow-hidden'}`}>
-                <Table className="border-0">
-                  <TableHeader className="bg-muted/40 sticky top-0 z-10">
-                    <TableRow className="border-primary/10 hover:bg-transparent">
-                      <TableHead className="text-center w-1/5 font-semibold">
-                        Transaction ID
-                      </TableHead>
-                      <TableHead 
-                        className="text-center w-1/5 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => handleSort('type')}
-                      >
-                        <div className="flex items-center justify-center gap-2">
-                          Type
-                          {sortColumn === 'type' && (
-                            sortDirection === 'asc' ? 
-                              <ArrowUp className="h-4 w-4" /> : 
-                              <ArrowDown className="h-4 w-4" />
-                          )}
-                        </div>
-                      </TableHead>
-                      <TableHead 
-                        className="text-center w-1/5 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => handleSort('status')}
-                      >
-                        <div className="flex items-center justify-center gap-2">
-                          Status
-                          {sortColumn === 'status' && (
-                            sortDirection === 'asc' ? 
-                              <ArrowUp className="h-4 w-4" /> : 
-                              <ArrowDown className="h-4 w-4" />
-                          )}
-                        </div>
-                      </TableHead>
-                      <TableHead 
-                        className="text-center w-1/5 font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => handleSort('amount')}
-                      >
-                        <div className="flex items-center justify-center gap-2">
-                          Amount
-                          {sortColumn === 'amount' && (
-                            sortDirection === 'asc' ? 
-                              <ArrowUp className="h-4 w-4" /> : 
-                              <ArrowDown className="h-4 w-4" />
-                          )}
-                        </div>
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
 
-                  <TableBody>
-                    {transactionItems.length === 0 && (
-                      <TableRow>
-                        <TableCell
-                          colSpan={5}
-                          className="text-center py-8 text-muted-foreground"
-                        >
-                          No transactions yet.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                    {transactionItems.length > 0 && sortedTransactions.length === 0 && (
-                      <TableRow>
-                        <TableCell
-                          colSpan={5}
-                          className="text-center py-8 text-muted-foreground"
-                        >
-                          No transactions match your search.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                    {sortedTransactions.map(
-                      (tx: Transaction) => (
-                        <React.Fragment key={tx.transaction_id}>
-                          {/* Main Transaction Row */}
-                          <TableRow
-                            className="cursor-pointer hover:bg-primary/5 transition-colors border-primary/10 group"
-                            onClick={() =>
-                              toggleRow(tx.transaction_id)
-                            }
-                          >
-                            <TableCell className="text-center w-1/5 py-4">
-                              <div className="inline-flex items-center gap-3 justify-center">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-2 h-2 rounded-full bg-primary/50" />
-                                  <span className="font-mono text-sm bg-muted/50 px-2 py-1 rounded">
-                                    {tx.transaction_id.slice(
-                                      0,
-                                      8
-                                    )}
-                                    ...
-                                  </span>
+                              <div className="mt-5 grid gap-3 md:grid-cols-2">
+                                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                                  <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Transaction ID</p>
+                                  <div className="mt-2 flex items-center gap-2">
+                                    <span className="min-w-0 break-all font-mono text-sm font-medium text-slate-900">
+                                      {paymentOption.transaction_id}
+                                    </span>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleCopyPaymentValue(paymentOption.transaction_id, `transaction-${paymentOption.transaction_id}`)}
+                                      className="h-7 w-7 shrink-0 p-0"
+                                      title="Copy Transaction ID"
+                                    >
+                                      <Copy className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </div>
+                                  {copiedPaymentId === `transaction-${paymentOption.transaction_id}` ? (
+                                    <p className="mt-1 text-[11px] font-medium text-slate-500">Copied</p>
+                                  ) : null}
                                 </div>
 
-                                {/* Copy button */}
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigator.clipboard.writeText(
-                                      tx.transaction_id
-                                    );
-                                  }}
-                                  title="Copy full Transaction ID"
-                                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                  <Copy className="h-3 w-3" />
-                                </Button>
-
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  className={`h-4 w-4 transition-transform text-muted-foreground ${
-                                    expandedRows[
-                                      tx.transaction_id
-                                    ]
-                                      ? "rotate-90"
-                                      : ""
-                                  }`}
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M9 5l7 7-7 7"
-                                  />
-                                </svg>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-center w-1/5 py-4">
-                              <Badge
-                                variant="outline"
-                                className="font-medium"
-                              >
-                                {tx.type}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-center w-1/5 py-4">
-                              <Badge
-                                className={cn(
-                                  "font-medium",
-                                  tx.status === "PENDING"
-                                    ? "bg-blue-100 text-blue-800 border-blue-200"
-                                    : tx.status ===
-                                      "PARTIALLY_PAID"
-                                    ? "bg-orange-100 text-orange-800 border-orange-200"
-                                    : tx.status === "REFUND"
-                                    ? "bg-red-100 text-red-800 border-red-200"
-                                    : tx.status === "CANCELLED"
-                                    ? "bg-red-100 text-red-800 border-red-200"
-                                    : "bg-green-100 text-green-800 border-green-200"
-                                )}
-                              >
-                                {tx.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-center w-1/5 py-4 font-semibold">
-                              {formatAmount(tx.amount, data.currency)}
-                            </TableCell>
-                          </TableRow>
-
-                          {expandedRows[tx.transaction_id] && (
-                            <TableRow className="bg-muted/10">
-                              <TableCell
-                                colSpan={8}
-                                className="p-4"
-                              >
-                                <div className="overflow-hidden rounded-lg">
-                                  <Table className="w-full">
-                                    <TableHeader className="bg-muted sticky top-0 z-10">
-                                      <TableRow>
-                                        <TableHead className="text-center">
-                                          Date
-                                        </TableHead>
-                                        <TableHead className="text-center">
-                                          Type
-                                        </TableHead>
-                                        <TableHead className="text-center">
-                                          Description
-                                        </TableHead>
-                                        <TableHead className="text-center">
-                                          Amount
-                                        </TableHead>
-                                        <TableHead className="text-center">
-                                          Payment type
-                                        </TableHead>
-                                      </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                      {Object.entries(
-                                        tx.lifecycle as Record<
-                                          string,
-                                          TransactionEntry
-                                        >
-                                      )
-                                        // Sort by timestamp descending (latest first)
-                                        .sort(
-                                          ([a], [b]) =>
-                                            Number(b) - Number(a)
-                                        )
-                                        .map(
-                                          ([timestamp, entry]: [
-                                            string,
-                                            TransactionEntry
-                                          ]) => (
-                                            <TableRow
-                                              key={timestamp}
-                                            >
-                                              <TableCell className="text-center">
-                                                {new Date(
-                                                  Number(
-                                                    timestamp
-                                                  )
-                                                ).toLocaleString(
-                                                  "en-GB",
-                                                  {
-                                                    day: "2-digit",
-                                                    month:
-                                                      "2-digit",
-                                                    year: "numeric",
-                                                    hour: "2-digit",
-                                                    minute:
-                                                      "2-digit",
-                                                    hour12: true,
-                                                  }
-                                                )}
-                                              </TableCell>
-                                              <TableCell className="text-center">
-                                                {entry.type}
-                                              </TableCell>
-                                              <TableCell className="text-center">
-                                                {
-                                                  entry.description
-                                                }
-                                              </TableCell>
-                                              <TableCell
-                                                className={`text-center ${
-                                                  entry.type ===
-                                                  "SUBMISSION"
-                                                    ? "text-black-700"
-                                                    : entry.type ===
-                                                      "REFUND"
-                                                    ? "text-red-700"
-                                                    : entry.type ===
-                                                      "CANCELLATION"
-                                                    ? "text-red-700"
-                                                    : "text-green-700"
-                                                }`}
-                                              >
-                                                {entry.type ===
-                                                "SUBMISSION"
-                                                  ? ""
-                                                  : entry.type === "REFUND"
-                                                  ? "-"
-                                                  : entry.type === "CANCELLATION"
-                                                  ? "N/A"
-                                                  : "+"}
-                                                {entry.type !== "CANCELLATION" && formatAmount(
-                                                  entry.type === "REFUND" ? Math.abs(entry.amount) : entry.amount,
-                                                  data.currency
-                                                )}
-                                              </TableCell>
-                                              <TableCell className="text-center">
-                                                {entry.payment_type ??
-                                                  "N/A"}
-                                              </TableCell>
-                                            </TableRow>
+                                {orderId || eventRegistrationId ? (
+                                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
+                                      {orderId ? "Order ID" : "Event Registration ID"}
+                                    </p>
+                                    <div className="mt-2 flex items-center gap-2">
+                                      <span className="min-w-0 break-all font-mono text-sm font-medium text-slate-900">
+                                        {orderId || eventRegistrationId}
+                                      </span>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() =>
+                                          handleCopyPaymentValue(
+                                            orderId || eventRegistrationId || "",
+                                            orderId ? `order-${paymentOption.transaction_id}` : `event-${paymentOption.transaction_id}`,
                                           )
-                                        )}
-                                    </TableBody>
-                                  </Table>
+                                        }
+                                        className="h-7 w-7 shrink-0 p-0"
+                                        title={orderId ? "Copy Order ID" : "Copy Event Registration ID"}
+                                      >
+                                        <Copy className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </div>
+                                    {copiedPaymentId === (orderId ? `order-${paymentOption.transaction_id}` : `event-${paymentOption.transaction_id}`) ? (
+                                      <p className="mt-1 text-[11px] font-medium text-slate-500">Copied</p>
+                                    ) : null}
+                                  </div>
+                                ) : null}
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col gap-2 lg:w-[180px]">
+                              {(orderId || eventRegistrationId) ? (
+                                <Button
+                                  variant="outline"
+                                  onClick={() => onViewPaymentTarget(paymentOption)}
+                                  className="justify-between border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                                >
+                                  View target
+                                  <ChevronRight className="h-4 w-4" />
+                                </Button>
+                              ) : null}
+                              <Button
+                                onClick={() => handlePayHereClick(paymentOption)}
+                                disabled={paymentOutstandingAmount <= 0}
+                                className="justify-between bg-slate-800 text-white hover:bg-slate-700"
+                              >
+                                {paymentOutstandingAmount > 0 ? "Pay now" : "Paid"}
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ) : null}
+
+          <Card className="overflow-hidden border-0 bg-white shadow-[0_20px_60px_-34px_rgba(15,23,42,0.35)]">
+            <CardHeader className="border-b border-slate-200 pb-5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
+                    <FileText className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-2xl text-slate-950">Transaction history</CardTitle>
+                    <CardDescription className="mt-1 text-sm leading-6 text-slate-500">
+                      Search, sort, and inspect your billing timeline. Expand any card to review lifecycle entries in detail.
+                    </CardDescription>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {(["type", "status", "amount"] as const).map((column) => (
+                    <Button
+                      key={column}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleSort(column)}
+                      className={cn(
+                        "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
+                        sortColumn === column && "border-slate-700 bg-slate-700 text-white hover:bg-slate-700",
+                      )}
+                    >
+                      Sort by {column}
+                      {sortColumn === column ? (
+                        sortDirection === "asc" ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />
+                      ) : null}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-5 p-6">
+              {isUserTransactionsLoading ? (
+                <div className="flex items-center justify-center py-16 text-slate-500">
+                  <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+                  Loading transactions...
+                </div>
+              ) : (
+                <>
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="relative max-w-xl flex-1">
+                      <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <Input
+                        value={transactionSearch}
+                        onChange={(event) => setTransactionSearch(event.target.value)}
+                        placeholder="Search transaction ID, type, status, amount, or lifecycle details"
+                        className="h-12 rounded-2xl border-slate-200 bg-slate-50 pl-11 shadow-none"
+                      />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                      <Badge className="border-slate-200 bg-slate-50 text-slate-700">
+                        {transactionItems.length} total
+                      </Badge>
+                      <Badge className="border-slate-200 bg-slate-50 text-slate-700">
+                        {sortedTransactions.length} shown
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {transactionItems.length === 0 ? (
+                    <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50/70 px-6 py-12 text-center">
+                      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-600 shadow-sm">
+                        <Receipt className="h-6 w-6" />
+                      </div>
+                      <p className="mt-4 text-lg font-semibold text-slate-900">No transactions yet</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-500">
+                        Once you start paying fees, orders, or registrations, the history will appear here.
+                      </p>
+                    </div>
+                  ) : sortedTransactions.length === 0 ? (
+                    <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50/70 px-6 py-12 text-center">
+                      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-600 shadow-sm">
+                        <Search className="h-6 w-6" />
+                      </div>
+                      <p className="mt-4 text-lg font-semibold text-slate-900">No matching transactions</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-500">
+                        Try a different search term or clear the filters to see the full transaction list.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className={cn("space-y-4", sortedTransactions.length > 6 && "max-h-[64rem] overflow-y-auto pr-1")}>
+                      {sortedTransactions.map((tx: Transaction) => {
+                        const lifecycleEntries = Object.entries(tx.lifecycle as Record<string, TransactionEntry>)
+                          .sort(([a], [b]) => Number(b) - Number(a));
+
+                        return (
+                          <div
+                            key={tx.transaction_id}
+                            className="rounded-[1.75rem] border border-slate-200 bg-[linear-gradient(180deg,#fff_0%,#f8fafc_100%)] p-5 shadow-[0_16px_40px_-30px_rgba(15,23,42,0.22)]"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => toggleRow(tx.transaction_id)}
+                              className="flex w-full flex-col gap-4 text-left lg:flex-row lg:items-center lg:justify-between"
+                            >
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <Badge className="border-slate-200 bg-white text-slate-700">{tx.type}</Badge>
+                                  <Badge className={cn("border", statusBadgeClassName(tx.status))}>{tx.status}</Badge>
                                 </div>
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </React.Fragment>
-                      )
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                                <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-mono text-sm font-medium text-slate-900">
+                                        {tx.transaction_id}
+                                      </span>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          navigator.clipboard.writeText(tx.transaction_id);
+                                        }}
+                                        className="h-7 w-7 p-0 text-slate-500 hover:bg-slate-100"
+                                        title="Copy full Transaction ID"
+                                      >
+                                        <Copy className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </div>
+                                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                                      {lifecycleEntries.length} lifecycle {lifecycleEntries.length === 1 ? "entry" : "entries"} recorded for this transaction.
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-4">
+                                    <div className="text-left md:text-right">
+                                      <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Amount</p>
+                                      <p className="mt-1 text-2xl font-semibold text-slate-950">
+                                        {formatAmount(tx.amount, data.currency)}
+                                      </p>
+                                    </div>
+                                    <div className={cn("rounded-full border p-2 transition-transform", expandedRows[tx.transaction_id] ? "rotate-90 border-slate-900 bg-slate-900 text-white" : "border-slate-200 bg-white text-slate-500")}>
+                                      <ChevronRight className="h-4 w-4" />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </button>
+
+                            {expandedRows[tx.transaction_id] ? (
+                              <div className="mt-5 border-t border-slate-200 pt-5">
+                                <div className="grid gap-3">
+                                  {lifecycleEntries.map(([timestamp, entry]: [string, TransactionEntry]) => (
+                                    <div
+                                      key={timestamp}
+                                      className="grid gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 lg:grid-cols-[170px_120px_minmax(0,1fr)_140px_140px]"
+                                    >
+                                      <div className="flex items-start gap-2 text-sm text-slate-500">
+                                        <Clock3 className="mt-0.5 h-4 w-4 shrink-0" />
+                                        <span>
+                                          {new Date(Number(timestamp)).toLocaleString("en-GB", {
+                                            day: "2-digit",
+                                            month: "2-digit",
+                                            year: "numeric",
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                            hour12: true,
+                                          })}
+                                        </span>
+                                      </div>
+                                      <div>
+                                        <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Type</p>
+                                        <p className="mt-1 text-sm font-medium text-slate-900">{entry.type}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Description</p>
+                                        <p className="mt-1 text-sm leading-6 text-slate-700">{entry.description}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Amount</p>
+                                        <p
+                                          className={cn(
+                                            "mt-1 text-sm font-semibold",
+                                            entry.type === "REFUND" || entry.type === "CANCELLATION"
+                                              ? "text-rose-700"
+                                              : entry.type === "SUBMISSION"
+                                                ? "text-slate-700"
+                                                : "text-emerald-700",
+                                          )}
+                                        >
+                                          {entry.type === "SUBMISSION"
+                                            ? "Created"
+                                            : entry.type === "REFUND"
+                                              ? `-${formatAmount(Math.abs(entry.amount), data.currency)}`
+                                              : entry.type === "CANCELLATION"
+                                                ? "N/A"
+                                                : `+${formatAmount(entry.amount, data.currency)}`}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Payment type</p>
+                                        <p className="mt-1 text-sm font-medium text-slate-900">{entry.payment_type ?? "N/A"}</p>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </TabsContent>
   );
