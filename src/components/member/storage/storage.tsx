@@ -246,9 +246,10 @@ export default function MemberStorage({
                     </div>
                     <div>
                       <Button
-                      size="sm"
-                      onClick={() => handleSelect(parent)}
-                      disabled={parent.isBooked}>
+                        size="sm"
+                        onClick={() => handleSelect(parent)}
+                        disabled={parent.isBooked}
+                      >
                         <ShoppingCart className="h-4 w-4 mr-1" />
                         Select
                       </Button>

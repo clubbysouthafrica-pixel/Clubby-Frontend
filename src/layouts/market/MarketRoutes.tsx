@@ -116,6 +116,15 @@ export default function MarketRoutes() {
           </ProtectedRoute>
         }
       ></Route>
+
+      <Route
+        path="/myclubs/:clubId/storage"
+        element={
+          <ProtectedRoute>
+            <ViewClubPage />
+          </ProtectedRoute>
+        }
+      ></Route>
       <Route
         path="/myclubs/:clubId/bookings"
         element={

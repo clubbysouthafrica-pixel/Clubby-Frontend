@@ -1,10 +1,7 @@
 // fixed erroneous import from prior patch
 import Pager from "@/components/pager.tsx";
-import { Tabs } from "@/components/ui/tabs.tsx";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog.tsx";
+import { Tabs, TabsContent } from "@/components/ui/tabs.tsx";
+import { Dialog, DialogContent } from "@/components/ui/dialog.tsx";
 import {
   Calendar,
   CalendarDays,
@@ -16,6 +13,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Box,
+  BoxIcon,
 } from "lucide-react";
 import { useFetchClub, useFetchClubBankDetails } from "@/queries/clubs";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
@@ -29,9 +27,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
 
 import PaymentOptionsScreen from "@/components/member/payments/payment-options-screen";
-import type {
-  PaymentTransactionOption,
-} from "@/components/member/payments/payment-types.ts";
+import type { PaymentTransactionOption } from "@/components/member/payments/payment-types.ts";
 import {
   formatDateKey,
   formatLongDate,
@@ -46,11 +42,15 @@ import { toast } from "sonner";
 import { ClubRegistrationTab } from "@/components/member/view-club-tabs/club-registration-tab";
 import { ClubBookingsTab } from "@/components/member/view-club-tabs/club-bookings-tab";
 import { ClubEventsTab } from "@/components/member/view-club-tabs/club-events-tab";
-import { ClubHomeTab, type HomeBookingItem } from "@/components/member/view-club-tabs/club-home-tab";
+import {
+  ClubHomeTab,
+  type HomeBookingItem,
+} from "@/components/member/view-club-tabs/club-home-tab";
 import { ClubPaymentsTab } from "@/components/member/view-club-tabs/club-payments-tab";
 import { ClubShopTab } from "@/components/member/view-club-tabs/club-shop-tab";
 import MemberStorage from "@/components/member/storage/storage";
 import StorageRequestDialog from "@/components/storage-request-dialog/StorageRequestDialog";
+import { ClubStorageTab } from "@/components/member/view-club-tabs/club-storage-tab";
 
 function epochToJoinedString(epoch: number): string {
   const date = new Date(epoch); // if epoch is in seconds, use new Date(epoch * 1000)
@@ -128,7 +128,8 @@ type ClubSection =
   | "member-registration"
   | "bookings"
   | "events"
-  | "shop";
+  | "shop"
+  | "storage";
 
 type ClubNavItem = {
   key: ClubSection;
@@ -346,22 +347,24 @@ function getOpeningTimeEntries(value: unknown) {
   }
 
   if (typeof value === "object" && value !== null) {
-    return Object.entries(value as Record<string, unknown>).map(([day, entry]) => {
-      const times =
-        typeof entry === "object" && entry !== null
-          ? (entry as ClubOpeningTime)
-          : {};
-      const hasRange = Boolean(times.open && times.close);
+    return Object.entries(value as Record<string, unknown>).map(
+      ([day, entry]) => {
+        const times =
+          typeof entry === "object" && entry !== null
+            ? (entry as ClubOpeningTime)
+            : {};
+        const hasRange = Boolean(times.open && times.close);
 
-      return {
-        day,
-        label: times.closed
-          ? "Closed"
-          : hasRange
-            ? `${times.open} - ${times.close}`
-            : "Hours unavailable",
-      };
-    });
+        return {
+          day,
+          label: times.closed
+            ? "Closed"
+            : hasRange
+              ? `${times.open} - ${times.close}`
+              : "Hours unavailable",
+        };
+      },
+    );
   }
 
   return [];
@@ -409,11 +412,7 @@ const getOrderPaymentBadgeClassName = (status?: string) => {
     return "bg-purple-100 text-purple-800 border-purple-200";
   }
 
-  if (
-    status === "CANCELLED" ||
-    status === "REFUND" ||
-    status === "REFUNDED"
-  ) {
+  if (status === "CANCELLED" || status === "REFUND" || status === "REFUNDED") {
     return "bg-red-100 text-red-800 border-red-200";
   }
 
@@ -433,11 +432,7 @@ const getOrderFulfillmentBadgeClassName = (status?: string) => {
     return "bg-purple-100 text-purple-800 border-purple-200";
   }
 
-  if (
-    status === "CANCELLED" ||
-    status === "REFUND" ||
-    status === "REFUNDED"
-  ) {
+  if (status === "CANCELLED" || status === "REFUND" || status === "REFUNDED") {
     return "bg-red-100 text-red-800 border-red-200";
   }
 
@@ -461,7 +456,6 @@ export default function ViewClubPage() {
   const isLoggedIn = !!auth?.user;
 
   const navigate = useNavigate();
-  const { search } = useLocation();
   const { clubId } = useParams();
   const [countryName, setCountryName] = useState("");
   const { data, isLoading, isError } = useFetchClub(clubId as string);
@@ -471,20 +465,19 @@ export default function ViewClubPage() {
 
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState("home");
-<<<<<<< HEAD
   const [selectedStorageItem, setSelectedStorageItem] = useState<any>(null);
-=======
   const { pathname, search } = useLocation();
+
   const routeSection = useMemo(
     () => getClubSectionFromPath(pathname, clubId),
     [clubId, pathname],
   );
+
   const todayKey = useMemo(() => formatDateKey(new Date()), []);
   const [visibleCalendarMonth, setVisibleCalendarMonth] = useState(() =>
     getMonthStart(new Date()),
   );
   const [selectedHomeDateKey, setSelectedHomeDateKey] = useState(todayKey);
->>>>>>> 7e1631d1c304bb1eca06febbc87d181ddc0ccc7b
 
   // Handle query params on component mount and when search changes
   useEffect(() => {
@@ -512,9 +505,14 @@ export default function ViewClubPage() {
     setActiveTab(routeSection);
 
     // Auto-select payment if orderId is in query params and bankDetails are loaded
-    if (orderIdParam && bankDetails?.transaction_options && !bankDetailsLoading) {
+    if (
+      orderIdParam &&
+      bankDetails?.transaction_options &&
+      !bankDetailsLoading
+    ) {
       const matchedPayment = bankDetails.transaction_options.find(
-        (payment: PaymentTransactionOption) => payment.order_id === orderIdParam,
+        (payment: PaymentTransactionOption) =>
+          payment.order_id === orderIdParam,
       );
 
       if (matchedPayment) {
@@ -536,7 +534,11 @@ export default function ViewClubPage() {
       }
     }
 
-    if (transactionIdParam && bankDetails?.transaction_options && !bankDetailsLoading) {
+    if (
+      transactionIdParam &&
+      bankDetails?.transaction_options &&
+      !bankDetailsLoading
+    ) {
       const matchedPayment = bankDetails.transaction_options.find(
         (payment: PaymentTransactionOption) =>
           payment.transaction_id === transactionIdParam,
@@ -599,19 +601,23 @@ export default function ViewClubPage() {
   ]);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [editingReference, setEditingReference] = useState(false);
-  const [scrollToOutstandingTrigger, setScrollToOutstandingTrigger] = useState(0);
+  const [scrollToOutstandingTrigger, setScrollToOutstandingTrigger] =
+    useState(0);
   const [newReference, setNewReference] = useState(
     bankDetails?.registration_payment_reference || "",
   );
   const [savingReference, setSavingReference] = useState(false);
   const [isPaymentScreenOpen, setIsPaymentScreenOpen] = useState(false);
-  const [selectedPaymentOption, setSelectedPaymentOption] = useState<PaymentTransactionOption | null>(null);
+  const [selectedPaymentOption, setSelectedPaymentOption] =
+    useState<PaymentTransactionOption | null>(null);
   const [paymentReturnTab, setPaymentReturnTab] = useState("bank");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     "eft" | "payfast" | null
   >(null);
   const [newOrderId, setNewOrderId] = useState<string | null>(null);
-  const [highlightedTransactionId, setHighlightedTransactionId] = useState<string | null>(null);
+  const [highlightedTransactionId, setHighlightedTransactionId] = useState<
+    string | null
+  >(null);
   const [highlightedEventRegistrationId, setHighlightedEventRegistrationId] =
     useState<string | null>(null);
   const [orderSortColumn, setOrderSortColumn] = useState<
@@ -665,9 +671,7 @@ export default function ViewClubPage() {
       activeTab === "home" && !!data?.club_account_id && !!data?.enable_events,
   });
 
-  const {
-    data: upcomingMemberBookings = [],
-  } = useQuery<HomeBookingItem[]>({
+  const { data: upcomingMemberBookings = [] } = useQuery<HomeBookingItem[]>({
     queryKey: [
       "club-home-bookings",
       data?.member_name,
@@ -680,7 +684,9 @@ export default function ViewClubPage() {
       const rangeEndDate = new Date(today);
       rangeEndDate.setDate(rangeEndDate.getDate() + 7);
       const rangeEnd = Math.floor(rangeEndDate.getTime() / 1000);
-      const normalizedMemberName = normalizeBookingName(data?.member_name || "");
+      const normalizedMemberName = normalizeBookingName(
+        data?.member_name || "",
+      );
 
       const bookingResponses = await Promise.all(
         venues.map(async (venue) => {
@@ -695,10 +701,15 @@ export default function ViewClubPage() {
             : [];
 
           return venueBookings
-            .filter((booking) => normalizeBookingName(booking.name || "") === normalizedMemberName)
+            .filter(
+              (booking) =>
+                normalizeBookingName(booking.name || "") ===
+                normalizedMemberName,
+            )
             .map((booking) => {
               const slotTime = Number(booking.slot_time) || 0;
-              const bookingDurationSeconds = (venue.smallest_booking_unit || 60) * 60;
+              const bookingDurationSeconds =
+                (venue.smallest_booking_unit || 60) * 60;
               const endTime = slotTime + bookingDurationSeconds;
 
               return {
@@ -735,7 +746,9 @@ export default function ViewClubPage() {
   }, [homeEventsData?.events]);
 
   const upcomingHomeEvents = useMemo(() => {
-    return homeEvents.filter((event) => !event.endDate || event.endDate >= todayKey);
+    return homeEvents.filter(
+      (event) => !event.endDate || event.endDate >= todayKey,
+    );
   }, [homeEvents, todayKey]);
 
   const eventsByDate = useMemo(() => {
@@ -774,7 +787,9 @@ export default function ViewClubPage() {
   const homeCalendarDays = useMemo(() => {
     const calendarGridStart = getCalendarGridStart(visibleCalendarMonth);
 
-    return Array.from({ length: 42 }, (_, index) => addDays(calendarGridStart, index));
+    return Array.from({ length: 42 }, (_, index) =>
+      addDays(calendarGridStart, index),
+    );
   }, [visibleCalendarMonth]);
 
   const selectedHomeDateEvents = useMemo(() => {
@@ -871,7 +886,11 @@ export default function ViewClubPage() {
         String(order.total_amount ?? ""),
         String(order.amount_paid ?? ""),
         itemsText,
-      ].some((value) => String(value ?? "").toLowerCase().includes(query));
+      ].some((value) =>
+        String(value ?? "")
+          .toLowerCase()
+          .includes(query),
+      );
     });
   }, [memberOrderList, orderSearch]);
 
@@ -964,7 +983,10 @@ export default function ViewClubPage() {
       }
     } else {
       setPaymentReturnTab(activeTab);
-      if (bankDetails?.transaction_options && bankDetails.transaction_options.length > 0) {
+      if (
+        bankDetails?.transaction_options &&
+        bankDetails.transaction_options.length > 0
+      ) {
         if (clubId) {
           navigate(getClubSectionPath(clubId, "bank"));
         }
@@ -979,33 +1001,36 @@ export default function ViewClubPage() {
     }
   };
 
-  const handleSectionChange = useCallback((
-    value: ClubSection,
-    options?: { replace?: boolean; searchParams?: URLSearchParams },
-  ) => {
-    setActiveTab(value);
-    setNewOrderId(null);
-    setHighlightedTransactionId(null);
-    setHighlightedEventRegistrationId(null);
+  const handleSectionChange = useCallback(
+    (
+      value: ClubSection,
+      options?: { replace?: boolean; searchParams?: URLSearchParams },
+    ) => {
+      setActiveTab(value);
+      setNewOrderId(null);
+      setHighlightedTransactionId(null);
+      setHighlightedEventRegistrationId(null);
 
-    if (!clubId) {
-      return;
-    }
+      if (!clubId) {
+        return;
+      }
 
-    const nextSearch = options?.searchParams?.toString();
+      const nextSearch = options?.searchParams?.toString();
 
-    navigate(
-      {
-        pathname: getClubSectionPath(clubId, value),
-        search: nextSearch ? `?${nextSearch}` : "",
-      },
-      { replace: options?.replace },
-    );
+      navigate(
+        {
+          pathname: getClubSectionPath(clubId, value),
+          search: nextSearch ? `?${nextSearch}` : "",
+        },
+        { replace: options?.replace },
+      );
 
-    requestAnimationFrame(() => {
-      scrollClubPageToTop();
-    });
-  }, [clubId, navigate]);
+      requestAnimationFrame(() => {
+        scrollClubPageToTop();
+      });
+    },
+    [clubId, navigate],
+  );
 
   const handleOrderPayNowClick = (orderId?: string) => {
     if (!orderId) {
@@ -1230,6 +1255,12 @@ export default function ViewClubPage() {
       });
     }
 
+    items.push({
+      key: "storage",
+      label: "Storage",
+      icon: BoxIcon,
+    });
+
     return items;
   }, [
     canViewBookings,
@@ -1347,7 +1378,9 @@ export default function ViewClubPage() {
                           <span
                             className={cn(
                               "absolute inset-y-3 left-0 w-1 rounded-r-full transition-colors duration-200",
-                              isActiveSection ? "bg-slate-800" : "bg-transparent group-hover:bg-slate-300",
+                              isActiveSection
+                                ? "bg-slate-800"
+                                : "bg-transparent group-hover:bg-slate-300",
                             )}
                           />
                           <div
@@ -1361,7 +1394,9 @@ export default function ViewClubPage() {
                             <Icon className="h-4 w-4" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold tracking-[0.01em]">{item.label}</p>
+                            <p className="text-sm font-semibold tracking-[0.01em]">
+                              {item.label}
+                            </p>
                           </div>
                           <div
                             className={cn(
@@ -1384,36 +1419,36 @@ export default function ViewClubPage() {
               {showSidebarNavigation && (
                 <div className="sticky top-16 z-20 -mx-4 mb-4 border-y border-slate-200 bg-white/95 px-4 py-2 shadow-[0_18px_45px_-30px_rgba(15,23,42,0.18)] backdrop-blur sm:mb-6 sm:py-3 lg:hidden">
                   <div className="scrollbar-none -mb-1 flex gap-1.5 overflow-x-auto pb-1 sm:gap-2">
-                      {clubNavItems.map((item) => {
-                        const Icon = item.icon;
-                        const isActiveSection = activeTab === item.key;
+                    {clubNavItems.map((item) => {
+                      const Icon = item.icon;
+                      const isActiveSection = activeTab === item.key;
 
-                        return (
-                          <button
-                            key={item.key}
-                            type="button"
-                            onClick={() => handleSectionChange(item.key)}
+                      return (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => handleSectionChange(item.key)}
+                          className={cn(
+                            "group relative flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm",
+                            isActiveSection
+                              ? "border-slate-900 bg-slate-900 text-white shadow-[0_16px_30px_-20px_rgba(15,23,42,0.35)]"
+                              : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
+                          )}
+                        >
+                          <div
                             className={cn(
-                              "group relative flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm",
+                              "rounded-full p-1 transition-colors duration-200 sm:p-1.5",
                               isActiveSection
-                                ? "border-slate-900 bg-slate-900 text-white shadow-[0_16px_30px_-20px_rgba(15,23,42,0.35)]"
-                                : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
+                                ? "bg-white/15 text-white"
+                                : "bg-slate-100 text-slate-700 group-hover:bg-slate-200",
                             )}
                           >
-                            <div
-                              className={cn(
-                                "rounded-full p-1 transition-colors duration-200 sm:p-1.5",
-                                isActiveSection
-                                  ? "bg-white/15 text-white"
-                                  : "bg-slate-100 text-slate-700 group-hover:bg-slate-200",
-                              )}
-                            >
-                              <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                            </div>
-                            <span>{item.label}</span>
-                          </button>
-                        );
-                      })}
+                            <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          </div>
+                          <span>{item.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -1448,11 +1483,14 @@ export default function ViewClubPage() {
                     onToggleRow={toggleRow}
                     onOpenStore={() => navigate(`/myclubs/${clubId}/store`)}
                     onOrderPayNow={handleOrderPayNowClick}
-                    getOrderPaymentBadgeClassName={getOrderPaymentBadgeClassName}
-                    getOrderFulfillmentBadgeClassName={getOrderFulfillmentBadgeClassName}
+                    getOrderPaymentBadgeClassName={
+                      getOrderPaymentBadgeClassName
+                    }
+                    getOrderFulfillmentBadgeClassName={
+                      getOrderFulfillmentBadgeClassName
+                    }
                     getRefundedAmount={getRefundedAmount}
                   />
-
                   <ClubBookingsTab
                     canViewBookings={canViewBookings}
                     venues={venues}
@@ -1460,7 +1498,6 @@ export default function ViewClubPage() {
                     error={venuesError}
                     memberName={data?.member_name || ""}
                   />
-
                   <ClubEventsTab
                     canViewEvents={canViewEvents}
                     clubId={clubId || ""}
@@ -1469,7 +1506,6 @@ export default function ViewClubPage() {
                     registrationSearchQuery={eventRegistrationSearch}
                     onPayRegistration={handleEventRegistrationPayNowClick}
                   />
-
                   <ClubHomeTab
                     clubName={data?.club_name || "Club"}
                     clubType={data?.club_type}
@@ -1477,7 +1513,11 @@ export default function ViewClubPage() {
                     aboutClub={data?.about_club}
                     supportEmail={data?.support_email}
                     countryName={countryName}
-                    joinedLabel={data?.joined ? epochToJoinedString(data.joined) : "Not provided"}
+                    joinedLabel={
+                      data?.joined
+                        ? epochToJoinedString(data.joined)
+                        : "Not provided"
+                    }
                     isMember={data?.club_member_exists}
                     isRegistered={data?.registered}
                     resubmissionRequired={data?.resubmission_required}
@@ -1488,7 +1528,9 @@ export default function ViewClubPage() {
                           ? "Join Club"
                           : undefined
                     }
-                    primaryActionVariant={data?.resubmission_required ? "destructive" : "default"}
+                    primaryActionVariant={
+                      data?.resubmission_required ? "destructive" : "default"
+                    }
                     onPrimaryAction={
                       data?.resubmission_required
                         ? () => navigate(`/clubs/${clubId}/register`)
@@ -1501,7 +1543,7 @@ export default function ViewClubPage() {
                               )
                           : undefined
                     }
-                            outstandingBalanceAmount={bankDetails?.outstanding_amount}
+                    outstandingBalanceAmount={bankDetails?.outstanding_amount}
                     coverImage={coverImage}
                     profileImage={profileImage}
                     clubUrl={data?.club_url}
@@ -1516,7 +1558,9 @@ export default function ViewClubPage() {
                     isHomeEventsLoading={isHomeEventsLoading}
                     isHomeEventsError={isHomeEventsError}
                     homeEventsThisMonthCount={homeEventsThisMonthCount}
-                    homeBookingsNextSevenDaysCount={upcomingMemberBookings.length}
+                    homeBookingsNextSevenDaysCount={
+                      upcomingMemberBookings.length
+                    }
                     selectedHomeDateEvents={selectedHomeDateEvents}
                     selectedHomeDateBookings={selectedHomeDateBookings}
                     selectedHomeDateLabel={selectedHomeDateLabel}
@@ -1531,21 +1575,33 @@ export default function ViewClubPage() {
                     selectedHomeDateKey={selectedHomeDateKey}
                     todayKey={todayKey}
                     onPreviousMonth={() =>
-                      setVisibleCalendarMonth((currentMonth) => shiftMonth(currentMonth, -1))
+                      setVisibleCalendarMonth((currentMonth) =>
+                        shiftMonth(currentMonth, -1),
+                      )
                     }
                     onToday={() => {
                       setSelectedHomeDateKey(todayKey);
-                      setVisibleCalendarMonth(getMonthStart(parseDateKey(todayKey)));
+                      setVisibleCalendarMonth(
+                        getMonthStart(parseDateKey(todayKey)),
+                      );
                     }}
                     onNextMonth={() =>
-                      setVisibleCalendarMonth((currentMonth) => shiftMonth(currentMonth, 1))
+                      setVisibleCalendarMonth((currentMonth) =>
+                        shiftMonth(currentMonth, 1),
+                      )
                     }
                     onSelectDate={setSelectedHomeDateKey}
                     onOpenEvents={() => handleSectionChange("events")}
                     onOpenBookings={() => handleSectionChange("bookings")}
                     onOpenOutstandingBalance={handleOpenOutstandingBalance}
                   />
-
+                  <TabsContent value="storage" className="mt-3 sm:mt-6">
+                    <MemberStorage
+                      clubId={data?.club_account_id as string}
+                      currency={data?.currency}
+                      onSelectUnit={setSelectedStorageItem}
+                    />
+                  </TabsContent>
                   {data?.club_member_exists && (
                     <ClubPaymentsTab
                       data={data}
@@ -1556,7 +1612,9 @@ export default function ViewClubPage() {
                       scrollToOutstandingTrigger={scrollToOutstandingTrigger}
                       highlightedOrderId={newOrderId}
                       highlightedTransactionId={highlightedTransactionId}
-                      highlightedEventRegistrationId={highlightedEventRegistrationId}
+                      highlightedEventRegistrationId={
+                        highlightedEventRegistrationId
+                      }
                       expandedRows={expandedRows}
                       editingReference={editingReference}
                       newReference={newReference}
@@ -1570,9 +1628,9 @@ export default function ViewClubPage() {
                       onViewPaymentTarget={handleViewPaymentTarget}
                     />
                   )}
-                  </Tabs>
-                </div>
+                </Tabs>
               </div>
+            </div>
           </div>
         )}
 
@@ -1582,54 +1640,54 @@ export default function ViewClubPage() {
         onOpenChange={(open) => !open && setSelectedGalleryImageIndex(null)}
       >
         <DialogContent className="max-w-4xl max-h-screen flex items-center justify-center p-0 bg-black/90 border-0">
-          {selectedGalleryImageIndex !== null && galleryImages[selectedGalleryImageIndex] && (
-            <div className="relative w-full h-full flex items-center justify-center">
-              <img
-                src={galleryImages[selectedGalleryImageIndex].url}
-                alt="Gallery"
-                className="w-full h-full object-contain"
-              />
+          {selectedGalleryImageIndex !== null &&
+            galleryImages[selectedGalleryImageIndex] && (
+              <div className="relative w-full h-full flex items-center justify-center">
+                <img
+                  src={galleryImages[selectedGalleryImageIndex].url}
+                  alt="Gallery"
+                  className="w-full h-full object-contain"
+                />
 
-              {galleryImages.length > 1 && (
-                <>
-                  <button
-                    onClick={() =>
-                      setSelectedGalleryImageIndex(
-                        selectedGalleryImageIndex === 0
-                          ? galleryImages.length - 1
-                          : selectedGalleryImageIndex - 1,
-                      )
-                    }
-                    className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/20 hover:bg-white/40 transition-colors"
-                    aria-label="Previous image"
-                  >
-                    <ArrowLeft className="w-6 h-6 text-white" />
-                  </button>
+                {galleryImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={() =>
+                        setSelectedGalleryImageIndex(
+                          selectedGalleryImageIndex === 0
+                            ? galleryImages.length - 1
+                            : selectedGalleryImageIndex - 1,
+                        )
+                      }
+                      className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/20 hover:bg-white/40 transition-colors"
+                      aria-label="Previous image"
+                    >
+                      <ArrowLeft className="w-6 h-6 text-white" />
+                    </button>
 
-                  <button
-                    onClick={() =>
-                      setSelectedGalleryImageIndex(
-                        selectedGalleryImageIndex ===
-                          galleryImages.length - 1
-                          ? 0
-                          : selectedGalleryImageIndex + 1,
-                      )
-                    }
-                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/20 hover:bg-white/40 transition-colors"
-                    aria-label="Next image"
-                  >
-                    <ArrowRight className="w-6 h-6 text-white" />
-                  </button>
+                    <button
+                      onClick={() =>
+                        setSelectedGalleryImageIndex(
+                          selectedGalleryImageIndex === galleryImages.length - 1
+                            ? 0
+                            : selectedGalleryImageIndex + 1,
+                        )
+                      }
+                      className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/20 hover:bg-white/40 transition-colors"
+                      aria-label="Next image"
+                    >
+                      <ArrowRight className="w-6 h-6 text-white" />
+                    </button>
 
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 px-3 py-1 rounded-full">
-                    <p className="text-white text-sm">
-                      {selectedGalleryImageIndex + 1} / {galleryImages.length}
-                    </p>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 px-3 py-1 rounded-full">
+                      <p className="text-white text-sm">
+                        {selectedGalleryImageIndex + 1} / {galleryImages.length}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
         </DialogContent>
       </Dialog>
 

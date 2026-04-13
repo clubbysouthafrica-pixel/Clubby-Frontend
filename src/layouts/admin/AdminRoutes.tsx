@@ -31,11 +31,17 @@ import EventRegistrationsPage from "@/pages/admin/events/registrations";
 
 export default function AdminRoutes() {
   return (
-    <Route>
+    <Routes>
       <Route path="/login" element={<Navigate to="/" replace />}></Route>
       <Route path="/register" element={<Navigate to="/" replace />}></Route>
-      <Route path="/forgotpassword" element={<Navigate to="/" replace />}></Route>
-      <Route path="/resetpassword" element={<Navigate to="/" replace />}></Route>
+      <Route
+        path="/forgotpassword"
+        element={<Navigate to="/" replace />}
+      ></Route>
+      <Route
+        path="/resetpassword"
+        element={<Navigate to="/" replace />}
+      ></Route>
       <Route path="/otp" element={<Navigate to="/" replace />}></Route>
       <Route
         path="/"
@@ -50,7 +56,6 @@ export default function AdminRoutes() {
       <Route path="/about" element={<AboutPage />}></Route>
       <Route path="/getstarted" element={<GetStartedPage />}></Route>
       <Route path="/contactus" element={<ContactPage />}></Route>
-
       <Route
         path="/myclubs"
         element={
@@ -75,7 +80,6 @@ export default function AdminRoutes() {
           </ProtectedRoute>
         }
       ></Route>
-
       <Route
         path="/manage/members"
         element={
