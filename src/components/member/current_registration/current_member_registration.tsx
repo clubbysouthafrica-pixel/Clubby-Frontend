@@ -609,39 +609,39 @@ export function MemberRegistration({
   };
 
   return (
-    <div className="flex w-full flex-col items-center gap-8 bg-gradient-to-b from-gray-50 to-white px-3 py-6 lg:px-4 lg:py-10">
+    <div className="flex w-full flex-col items-center gap-4 bg-gradient-to-b from-gray-50 to-white px-3 py-4 lg:px-4 lg:gap-8 lg:py-10">
       <div className="w-full max-w-4xl">
         <Card className="overflow-hidden border-0 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)]">
-          <CardHeader className="border-b border-slate-200 bg-white px-6 py-6 lg:px-10 lg:py-8">
-            <div className="flex flex-col items-center gap-4 text-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-2xl font-semibold text-slate-700 shadow-sm">
+          <CardHeader className="border-b border-slate-200 bg-white px-3 py-4 sm:px-6 sm:py-6 lg:px-10 lg:py-8">
+            <div className="flex flex-col items-center gap-3 text-center sm:gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-lg font-semibold text-slate-700 shadow-sm sm:h-20 sm:w-20 sm:text-2xl">
                 {clubName
                   .split(" ")
                   .map((word) => word[0])
                   .join("")
                   .slice(0, 2)}
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5 sm:space-y-2">
                 <Badge className={cn("border px-3 py-1 text-xs font-semibold", membershipTone.badgeClassName)}>
                   {formatMembershipLabel(membershipStatus)}
                 </Badge>
-                <CardTitle className="text-2xl font-bold text-slate-950 lg:text-4xl">
+                <CardTitle className="text-xl font-bold text-slate-950 sm:text-2xl lg:text-4xl">
                   {membershipStatus === "Resubmission required"
                     ? `Review registration for ${clubName}`
                     : `${clubName} registration`}
                 </CardTitle>
-                <CardDescription className="mx-auto max-w-2xl text-sm leading-6 text-slate-600 lg:text-base">
+                <CardDescription className="mx-auto max-w-2xl text-sm leading-5 text-slate-600 sm:leading-6 lg:text-base">
                   {membershipTone.description}
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4 bg-white px-6 py-6 lg:px-10 lg:py-8">
-            <div className={cn("rounded-2xl border px-4 py-4 sm:px-5", membershipTone.panelClassName)}>
+          <CardContent className="space-y-3 bg-white px-3 py-3 sm:space-y-4 sm:px-6 sm:py-6 lg:px-10 lg:py-8">
+            <div className={cn("rounded-2xl border px-3 py-3 sm:px-5 sm:py-4", membershipTone.panelClassName)}>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold">Current registration status</p>
-                  <p className="mt-1 text-sm leading-6 opacity-90">{membershipTone.description}</p>
+                  <p className="mt-1 text-sm leading-5 opacity-90 sm:leading-6">{membershipTone.description}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-left sm:min-w-[220px]">
                   <div className="rounded-xl border border-white/70 bg-white/70 px-3 py-2">
@@ -657,12 +657,12 @@ export function MemberRegistration({
             </div>
 
             {deregReason ? (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-amber-950 sm:px-5">
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-3 text-amber-950 sm:px-5 sm:py-4">
                 <div className="flex items-start gap-3">
                   <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
                   <div className="space-y-1">
                     <p className="text-sm font-semibold">Why was this registration deregistered?</p>
-                    <p className="whitespace-pre-wrap text-sm leading-6 text-amber-900/90">{deregReason}</p>
+                    <p className="whitespace-pre-wrap text-sm leading-5 text-amber-900/90 sm:leading-6">{deregReason}</p>
                   </div>
                 </div>
               </div>
@@ -673,7 +673,7 @@ export function MemberRegistration({
                 <button
                   type="button"
                   onClick={() => setIsTagsOpen((currentValue) => !currentValue)}
-                  className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left sm:px-5"
+                  className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left sm:gap-4 sm:px-5 sm:py-4"
                 >
                   <div>
                     <p className="text-sm font-semibold text-slate-900">Member tags</p>
@@ -689,8 +689,8 @@ export function MemberRegistration({
                   />
                 </button>
                 {isTagsOpen ? (
-                  <div className="border-t border-slate-200 px-4 py-4 sm:px-5">
-                    <div className="flex flex-wrap gap-2">
+                  <div className="border-t border-slate-200 px-3 py-3 sm:px-5 sm:py-4">
+                    <div className="flex flex-wrap gap-1.5 sm:gap-2">
                       {memberTags.map((tag) => (
                         <Badge
                           key={tag.id}
@@ -711,7 +711,7 @@ export function MemberRegistration({
                 <button
                   type="button"
                   onClick={() => setIsVariablesOpen((currentValue) => !currentValue)}
-                  className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left sm:px-5"
+                  className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left sm:gap-4 sm:px-5 sm:py-4"
                 >
                   <div>
                     <p className="text-sm font-semibold text-slate-900">Additional information</p>
@@ -727,13 +727,13 @@ export function MemberRegistration({
                   />
                 </button>
                 {isVariablesOpen ? (
-                  <div className="grid gap-3 border-t border-slate-200 px-4 py-4 sm:grid-cols-2 sm:px-5">
+                  <div className="grid gap-2.5 border-t border-slate-200 px-3 py-3 sm:grid-cols-2 sm:px-5 sm:py-4">
                     {memberVariables.map((variable, index) => (
-                      <div key={`${variable.name}-${index}`} className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                      <div key={`${variable.name}-${index}`} className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm sm:px-4 sm:py-3">
                         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                           {formatVariableName(variable.name)}
                         </p>
-                        <p className="mt-2 text-sm leading-6 text-slate-700">
+                        <p className="mt-1.5 text-sm leading-5 text-slate-700 sm:mt-2 sm:leading-6">
                           {String(variable.value ?? "").trim() || "Does not exist for this member"}
                         </p>
                       </div>
@@ -748,7 +748,7 @@ export function MemberRegistration({
                 <button
                   type="button"
                   onClick={() => setIsAdminNotesOpen((currentValue) => !currentValue)}
-                  className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left sm:px-5"
+                  className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left sm:gap-4 sm:px-5 sm:py-4"
                 >
                   <div>
                     <p className="text-sm font-semibold text-amber-950">Notes from club staff</p>
@@ -761,11 +761,11 @@ export function MemberRegistration({
                   </Badge>
                 </button>
                 {isAdminNotesOpen ? (
-                  <div className="space-y-3 border-t border-amber-200 px-4 py-4 sm:px-5">
+                  <div className="space-y-2.5 border-t border-amber-200 px-3 py-3 sm:space-y-3 sm:px-5 sm:py-4">
                     {visibleAdminNotes.map((note: { id: string; title: string; content: string }) => (
-                      <div key={note.id} className="rounded-xl border border-amber-200 bg-white/80 px-4 py-3 shadow-sm">
+                      <div key={note.id} className="rounded-xl border border-amber-200 bg-white/80 px-3 py-2.5 shadow-sm sm:px-4 sm:py-3">
                         <p className="text-sm font-semibold text-amber-950">{note.title}</p>
-                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-amber-900/85">
+                        <p className="mt-1.5 whitespace-pre-wrap text-sm leading-5 text-amber-900/85 sm:mt-2 sm:leading-6">
                           {note.content}
                         </p>
                       </div>
@@ -781,13 +781,13 @@ export function MemberRegistration({
       {currentPage ? (
         <div id="registration-page-card" className="w-full max-w-4xl">
           <Card className="overflow-hidden border-0 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)]">
-            <CardHeader className="border-b border-slate-200 bg-white px-6 py-6 lg:px-10 lg:py-8">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <CardHeader className="border-b border-slate-200 bg-white px-3 py-4 sm:px-6 sm:py-6 lg:px-10 lg:py-8">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-4">
                 <div>
                   <CardDescription className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                     Submitted registration form
                   </CardDescription>
-                  <CardTitle className="mt-2 text-2xl font-bold text-slate-950">
+                  <CardTitle className="mt-1.5 text-xl font-bold text-slate-950 sm:mt-2 sm:text-2xl">
                     {currentPage.page_header}
                   </CardTitle>
                 </div>
@@ -798,8 +798,8 @@ export function MemberRegistration({
                 ) : null}
               </div>
             </CardHeader>
-            <CardContent className="bg-white px-6 py-6 lg:px-10 lg:py-8">
-              <div className="space-y-4">
+            <CardContent className="bg-white px-3 py-3 sm:px-6 sm:py-6 lg:px-10 lg:py-8">
+              <div className="space-y-3 sm:space-y-4">
                 {currentPage.fields.map((field: RegistrationField, index: number) => {
                   if (field.visible === false && !field.value) {
                     return null;
@@ -816,7 +816,7 @@ export function MemberRegistration({
                     <div
                       key={`${field.label}-${field.field_id || index}`}
                       className={cn(
-                        "rounded-2xl border px-4 py-4 shadow-sm sm:px-5",
+                        "rounded-2xl border px-3 py-3 shadow-sm sm:px-5 sm:py-4",
                         field.type === "TEXT"
                           ? "border-blue-200 bg-blue-50/60"
                           : field.type === "BILLING"
@@ -826,8 +826,8 @@ export function MemberRegistration({
                               : "border-slate-200 bg-slate-50/70",
                       )}
                     >
-                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="min-w-0 flex-1 space-y-3">
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-4">
+                        <div className="min-w-0 flex-1 space-y-2.5 sm:space-y-3">
                           {field.type !== "TEXT" ? (
                             <div className="flex flex-wrap items-center gap-2">
                               <Label className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
@@ -897,12 +897,12 @@ export function MemberRegistration({
               </div>
 
               {visiblePages.length > 1 ? (
-                <div className="mt-8 flex flex-col gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                <div className="mt-5 flex flex-col gap-2.5 border-t border-slate-200 pt-4 sm:mt-8 sm:gap-3 sm:pt-6 sm:flex-row sm:items-center sm:justify-between">
                   {currentPageIndex > 0 ? (
                     <Button
                       type="button"
                       variant="outline"
-                      className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                      className="h-9 border-slate-200 bg-white px-3 text-sm text-slate-700 hover:bg-slate-50"
                       onClick={() => {
                         setCurrentPageIndex((value) => value - 1);
                         document.getElementById("registration-page-card")?.scrollIntoView({
@@ -925,7 +925,7 @@ export function MemberRegistration({
                   {currentPageIndex < visiblePages.length - 1 ? (
                     <Button
                       type="button"
-                      className="bg-black text-white hover:bg-slate-900"
+                      className="h-9 bg-black px-3 text-sm text-white hover:bg-slate-900"
                       onClick={() => {
                         setCurrentPageIndex((value) => value + 1);
                         document.getElementById("registration-page-card")?.scrollIntoView({

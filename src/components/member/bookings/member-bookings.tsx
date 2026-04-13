@@ -6,9 +6,19 @@ import {
   useCallback,
   useMemo,
 } from "react";
-import { ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
+  Grid3X3,
+  Loader2,
+  MapPin,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +37,7 @@ import {
 import { createBooking, getBookings } from "@/services/bookings";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface VenueSchedule {
   day_of_week: number;
@@ -76,13 +87,14 @@ function abbreviateBookingName(name: string) {
 
   if (nameParts.length === 1) {
     return normalizedName.length > 12
-      ? `${normalizedName.slice(0, 12)}...`
+      ? `${normalizedName.slice(0, 8)}...`
       : normalizedName;
   }
 
   const [firstName, ...rest] = nameParts;
   const surname = rest[rest.length - 1] || "";
-  return `${firstName} ${surname.charAt(0)}.`.trim();
+  const abbreviated = `${firstName.slice(0, 8)} ${surname.charAt(0)}.`.trim();
+  return abbreviated.length > 12 ? `${abbreviated.slice(0, 12)}...` : abbreviated;
 }
 
 function normalizeBookingName(name: string) {
@@ -95,6 +107,25 @@ function formatSlotRange(timeSlots: string[], timeIdx: number) {
     timeIdx + 1 < timeSlots.length ? timeSlots[timeIdx + 1] : "23:59";
 
   return `${startTime} - ${endTime}`;
+}
+
+function formatDurationLabel(minutes?: number) {
+  if (!minutes) {
+    return "Flexible";
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (hours && remainingMinutes) {
+    return `${hours}h ${remainingMinutes}m`;
+  }
+
+  if (hours) {
+    return `${hours}h`;
+  }
+
+  return `${remainingMinutes}m`;
 }
 
 export default function MemberBookings({
@@ -119,6 +150,10 @@ export default function MemberBookings({
     endTimeIdx: number;
   } | null>(null);
   const [selectionAnchor, setSelectionAnchor] = useState<{
+    dayIdx: number;
+    timeIdx: number;
+  } | null>(null);
+  const [lastClickedSlot, setLastClickedSlot] = useState<{
     dayIdx: number;
     timeIdx: number;
   } | null>(null);
@@ -240,10 +275,10 @@ export default function MemberBookings({
 
   const getRowHeightClass = () => {
     const bookingUnit = getBookingUnit();
-    if (bookingUnit === 15) return "min-h-3";
-    if (bookingUnit === 30) return "min-h-6";
-    if (bookingUnit === 45) return "min-h-9";
-    return "min-h-12";
+    if (bookingUnit === 15) return "h-3";
+    if (bookingUnit === 30) return "h-5";
+    if (bookingUnit === 45) return "h-7";
+    return "h-9";
   };
 
   const validateSelectionDuration = useCallback(
@@ -554,6 +589,7 @@ export default function MemberBookings({
   const clearSelection = () => {
     setSelectedSlot(null);
     setSelectionAnchor(null);
+    setLastClickedSlot(null);
     setSelectionError(null);
     setIsDialogOpen(false);
   };
@@ -574,6 +610,7 @@ export default function MemberBookings({
   useEffect(() => {
     setSelectedSlot(null);
     setSelectionAnchor(null);
+    setLastClickedSlot(null);
     setSelectionError(null);
     setIsDialogOpen(false);
     setBookingDialogError(null);
@@ -581,9 +618,21 @@ export default function MemberBookings({
 
   const handleSelectableSlotClick = (dayIdx: number, timeIdx: number) => {
     const isDisabled = isSlotDisabled(dayIdx, timeIdx);
+    const clickedSameSlotTwice =
+      bookingViewMode === "availability" &&
+      lastClickedSlot?.dayIdx === dayIdx &&
+      lastClickedSlot?.timeIdx === timeIdx;
 
     if (isDisabled) {
       clearSelection();
+      return;
+    }
+
+    setLastClickedSlot({ dayIdx, timeIdx });
+
+    if (clickedSameSlotTwice) {
+      setSelectionAnchor({ dayIdx, timeIdx });
+      applySelection(dayIdx, timeIdx, timeIdx);
       return;
     }
 
@@ -640,11 +689,32 @@ export default function MemberBookings({
     ],
   );
 
+  const selectedVenue = getSelectedVenue();
+  const bookingUnit = getBookingUnit();
+  const timeColumnWidth = isMobile ? 60 : 80;
+  const openDaysCount = visibleDays.reduce((total, date, dayIdx) => {
+    const visibleSlotIndices = visibleSlotIndicesByDay[dayIdx] || [];
+
+    if (isDayClosedForVenue(date) || visibleSlotIndices.length === 0) {
+      return total;
+    }
+
+    return total + 1;
+  }, 0);
+  const currentMemberBookingCount = memberName.trim()
+    ? bookings.filter(
+        (booking) =>
+          normalizeBookingName(booking.name || "") ===
+          normalizeBookingName(memberName),
+      ).length
+    : 0;
+
   if (loading) {
     return (
-      <Card>
-        <CardContent className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin" />
+      <Card className="border-slate-200 bg-white shadow-[0_20px_60px_-34px_rgba(15,23,42,0.2)]">
+        <CardContent className="flex items-center justify-center gap-3 py-10 text-sm text-slate-500 sm:py-12">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          Loading bookings...
         </CardContent>
       </Card>
     );
@@ -652,9 +722,9 @@ export default function MemberBookings({
 
   if (error) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+      <Card className="border-rose-200 bg-white shadow-[0_20px_60px_-34px_rgba(15,23,42,0.2)]">
+        <CardContent className="p-4 sm:p-6">
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
             {error}
           </div>
         </CardContent>
@@ -664,9 +734,9 @@ export default function MemberBookings({
 
   if (venues.length === 0) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="rounded-md bg-gray-50 p-4 text-center text-sm text-gray-700">
+      <Card className="border-slate-200 bg-white shadow-[0_20px_60px_-34px_rgba(15,23,42,0.2)]">
+        <CardContent className="p-4 sm:p-6">
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center text-sm text-slate-600 sm:p-6">
             No venues are currently available for booking.
           </div>
         </CardContent>
@@ -675,43 +745,53 @@ export default function MemberBookings({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2.5 sm:space-y-4 xl:space-y-5">
       {selectedSlot && (
-        <div className="fixed top-4 left-1/2 z-50 w-[calc(100vw-1.5rem)] max-w-5xl -translate-x-1/2">
-          <div className="relative flex flex-col gap-3 rounded-2xl border-[3px] border-blue-500 bg-white/95 px-4 py-3 shadow-xl ring-2 ring-blue-200/80 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+        <div className="fixed left-1/2 top-2 z-50 w-[calc(100vw-1rem)] max-w-5xl -translate-x-1/2 sm:top-4 sm:w-[calc(100vw-1.5rem)]">
+          <div className="relative flex flex-col gap-2 overflow-hidden rounded-[1.25rem] border border-sky-800 bg-sky-700 px-3 py-2 shadow-[0_28px_80px_-32px_rgba(3,105,161,0.55)] ring-2 ring-sky-900/20 sm:flex-row sm:items-center sm:justify-between sm:gap-2.5 sm:rounded-[1.5rem] sm:px-4 sm:py-2.5">
+            <div className="pointer-events-none absolute inset-y-0 left-0 w-1.5 bg-sky-950" />
             <button
               type="button"
               onClick={clearSelection}
               aria-label="Close booking selection"
-              className="absolute right-3 top-3 rounded-full p-1 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800"
+              className="absolute right-3 top-3 rounded-full border border-sky-200 bg-white p-1 text-sky-800 transition-colors hover:bg-sky-100 hover:text-sky-950"
             >
               <X className="h-4 w-4" />
             </button>
 
-            <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">
-                Booking Selection
-              </p>
-              <p className="truncate text-sm font-semibold text-gray-900 sm:text-base">
+            <div className="min-w-0 pl-1 sm:pl-2">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-2 w-2 rounded-full bg-white shadow-[0_0_0_4px_rgba(224,242,254,0.2)]" />
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-100 sm:text-xs sm:tracking-[0.2em]">
+                  Active Booking Selection
+                </p>
+              </div>
+              <p className="mt-1 truncate text-[13px] font-semibold text-white sm:text-sm">
                 {selectedSlotSummary}
               </p>
               {selectionError ? (
-                <p className="mt-1 text-xs text-orange-700">{selectionError}</p>
+                <p className="mt-0.5 text-[11px] text-amber-100 sm:mt-1 sm:text-xs">{selectionError}</p>
               ) : (
-                <p className="mt-1 text-xs text-gray-600">
+                <p className="mt-0.5 text-[11px] text-sky-100 sm:mt-1 sm:text-xs">
                   Continue when you are happy with the selected booking range.
                 </p>
               )}
             </div>
 
-            <div className="flex items-center gap-2 sm:flex-shrink-0 mr-10">
-              <Button variant="outline" size="sm" onClick={clearSelection}>
+            <div className="mr-8 flex items-center gap-1.5 sm:mr-10 sm:gap-2 sm:flex-shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearSelection}
+                className="h-8 border-sky-200 bg-white px-2.5 text-[11px] text-sky-800 hover:bg-sky-100 sm:h-8.5 sm:px-3 sm:text-xs"
+              >
                 Clear
               </Button>
               <Button
                 size="sm"
                 onClick={() => setIsDialogOpen(true)}
                 disabled={!!selectionError}
+                className="h-8 bg-sky-950 px-2.5 text-[11px] text-white shadow-[0_12px_28px_-18px_rgba(12,74,110,0.85)] hover:bg-sky-900 sm:h-8.5 sm:px-3 sm:text-xs"
               >
                 Create Booking
               </Button>
@@ -721,110 +801,235 @@ export default function MemberBookings({
       )}
 
       {selectedVenueId && (
-        <div className="overflow-hidden rounded-lg border bg-white">
-          <div className="flex overflow-x-auto border-b bg-white">
-            {venues.map((venue) => (
-              <button
-                key={venue.venue_id}
-                onClick={() => {
-                  setSelectedVenueId(venue.venue_id);
-                  setBookings([]);
-                }}
-                className={`whitespace-nowrap px-4 py-3 text-sm font-medium transition-colors ${
-                  selectedVenueId === venue.venue_id
-                    ? "border-b-2 border-blue-500 bg-blue-50 text-blue-600"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                }`}
-              >
-                {venue.venue_name}
-              </button>
-            ))}
-          </div>
+        <div className="grid gap-2.5 sm:gap-4 xl:grid-cols-[280px_minmax(0,1fr)] xl:gap-5">
+          <aside className="space-y-2 sm:space-y-4 xl:sticky xl:top-24 xl:self-start xl:space-y-5">
+            <Card className="hidden overflow-hidden border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] text-slate-900 shadow-[0_24px_70px_-34px_rgba(15,23,42,0.22)] sm:block">
+              <CardContent className="space-y-2.5 p-2 sm:space-y-4 sm:p-4">
+                <div className="flex items-start justify-between gap-2.5 sm:items-center sm:gap-3">
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 sm:text-xs sm:tracking-[0.22em]">
+                      Member Bookings
+                    </p>
+                    <h2 className="text-base font-semibold sm:text-xl">Court schedule</h2>
+                    <p className="hidden text-xs leading-5 text-slate-500 sm:block sm:text-sm sm:leading-5">
+                      Pick a venue, scan availability, and reserve a compact booking range from one place.
+                    </p>
+                  </div>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 sm:h-11 sm:w-11 sm:rounded-2xl">
+                    <CalendarDays className="h-5 w-5 text-slate-700 sm:h-6 sm:w-6" />
+                  </div>
+                </div>
 
-          <div className="space-y-4 p-4">
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold">
-                {getSelectedVenue()?.venue_name}
-              </h3>
-            </div>
+                <div className="rounded-[1rem] border border-slate-200 bg-white p-2.5 sm:rounded-[1.25rem] sm:p-4">
+                  <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                    <Badge className="border-slate-200 bg-slate-50 text-slate-700">
+                      {bookingViewMode === "availability" ? (isMobile ? "Blocks" : "Available blocks") : (isMobile ? "Calendar" : "Calendar view")}
+                    </Badge>
+                    {selectedVenue && !isMobile ? (
+                      <Badge className="border-slate-200 bg-slate-50 text-slate-700">
+                        {selectedVenue.venue_name}
+                      </Badge>
+                    ) : null}
+                  </div>
+                  <p className="mt-1.5 text-lg font-semibold tracking-tight text-slate-950 sm:mt-2 sm:text-2xl">
+                    {bookingsLoading ? "Refreshing..." : formatWeekRange()}
+                  </p>
+                  <p className="mt-0.5 hidden text-xs leading-5 text-slate-500 sm:block sm:text-sm sm:leading-5">
+                    {bookingViewMode === "availability"
+                      ? "Choose adjacent blocks to grow or reset your selection quickly."
+                      : "Review the full venue calendar and book directly from open slots."}
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-1 sm:gap-2">
+                    <Badge className="border-slate-200 bg-slate-50 text-slate-700">
+                      {openDaysCount} open {openDaysCount === 1 ? "day" : "days"}
+                    </Badge>
+                    <Badge className="border-slate-200 bg-slate-50 text-slate-700">
+                      {bookings.length} booked {bookings.length === 1 ? "slot" : "slots"}
+                    </Badge>
+                    {memberName.trim() && !isMobile ? (
+                      <Badge className="border-slate-200 bg-slate-50 text-slate-700">
+                        {currentMemberBookingCount} yours
+                      </Badge>
+                    ) : null}
+                  </div>
+                </div>
 
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant={
-                  bookingViewMode === "availability" ? "default" : "outline"
-                }
-                onClick={() => setBookingViewMode("availability")}
-                className={
-                  bookingViewMode === "availability"
-                    ? "bg-blue-600 text-white hover:bg-blue-700"
-                    : ""
-                }
-              >
-                Available Blocks
-              </Button>
-              <Button
-                type="button"
-                variant={bookingViewMode === "calendar" ? "default" : "outline"}
-                onClick={() => setBookingViewMode("calendar")}
-                className={
-                  bookingViewMode === "calendar"
-                    ? "bg-blue-600 text-white hover:bg-blue-700"
-                    : ""
-                }
-              >
-                Calendar View
-              </Button>
-            </div>
+                <div className="grid grid-cols-2 gap-1 sm:gap-2">
+                  <div className="rounded-[0.9rem] border border-slate-200 bg-slate-50 p-2 sm:rounded-[1rem] sm:p-3">
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Booking unit</p>
+                    <p className="mt-0.5 text-base font-semibold sm:mt-1 sm:text-xl">{bookingUnit}m</p>
+                  </div>
+                  <div className="rounded-[0.9rem] border border-slate-200 bg-slate-50 p-2 sm:rounded-[1rem] sm:p-3">
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Max daily</p>
+                    <p className="mt-0.5 text-base font-semibold sm:mt-1 sm:text-xl">
+                      {formatDurationLabel(selectedVenue?.max_daily_booking_time)}
+                    </p>
+                  </div>
+                  <div className="col-span-2 hidden rounded-[1rem] border border-slate-200 bg-slate-50 p-2.5 sm:block sm:p-3">
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Selection tip</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-700 sm:text-sm sm:leading-5">
+                      {bookingViewMode === "availability"
+                        ? "Tap the same block again to reset the range back to that starting point."
+                        : "Use the calendar when you need a full-day view of booked and open time."}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-            <div className="flex flex-col gap-3 rounded-lg border bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={goToPreviousWeek}
-                disabled={!canGoPrevious()}
-                className="gap-1 w-full sm:w-auto"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                <span className="sm:inline">Previous</span>
-              </Button>
+            <Card className="border-slate-200 bg-white shadow-[0_16px_40px_-30px_rgba(15,23,42,0.28)]">
+              <CardHeader className="px-1.5 pb-1 pt-1.5 sm:px-3 sm:pb-2 sm:pt-3">
+                <div className="flex items-center gap-2 sm:gap-2.5">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-[0.8rem] bg-slate-100 sm:h-9 sm:w-9 sm:rounded-[1rem]">
+                    <MapPin className="h-4 w-4 text-slate-700 sm:h-[18px] sm:w-[18px]" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-[13px] sm:text-sm">Venue selection</CardTitle>
+                    <CardDescription className="hidden sm:block">Switch courts without leaving the booking flow.</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-1 px-1.5 pb-1.5 pt-0 sm:space-y-1.5 sm:px-3 sm:pb-3">
+                {venues.map((venue) => {
+                  const isActive = selectedVenueId === venue.venue_id;
 
-              <div className="order-first text-center sm:order-none">
-                <p className="break-words text-center text-sm font-semibold sm:text-lg">
-                  {formatWeekRange()}
-                </p>
-              </div>
+                  return (
+                    <button
+                      key={venue.venue_id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedVenueId(venue.venue_id);
+                        setBookings([]);
+                      }}
+                      className={cn(
+                        "flex w-full items-center justify-between rounded-[0.8rem] border px-2 py-1.5 text-left transition-colors sm:rounded-[0.95rem] sm:px-2.5 sm:py-2",
+                        isActive
+                          ? "border-slate-900 bg-slate-900 text-white"
+                          : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100",
+                      )}
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-[12px] font-semibold sm:text-[13px]">{venue.venue_name}</p>
+                        <p
+                          className={cn(
+                            "mt-0.5 hidden text-[11px] sm:block",
+                            isActive ? "text-slate-300" : "text-slate-500",
+                          )}
+                        >
+                          {venue.smallest_booking_unit || 60} minute booking unit
+                        </p>
+                      </div>
+                      <ChevronRight className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+                    </button>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          </aside>
 
-              <div className="flex gap-2 w-full sm:w-auto">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToToday}
-                  className="flex-1 sm:flex-none"
-                >
-                  Today
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToNextWeek}
-                  className="gap-1 flex-1 sm:flex-none"
-                >
-                  <span className="sm:inline">Next</span>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+          <div className="space-y-2.5 sm:space-y-4 xl:space-y-5">
+            <Card className="overflow-hidden border-0 bg-[radial-gradient(circle_at_top_left,_rgba(15,23,42,0.08),_transparent_32%),linear-gradient(180deg,#fff_0%,#f8fafc_100%)] shadow-[0_20px_60px_-34px_rgba(15,23,42,0.35)]">
+              <CardHeader className="border-b border-slate-200 px-2 pb-2 pt-2 sm:px-4 sm:pb-4 sm:pt-4">
+                <div className="flex flex-col gap-2.5 lg:flex-row lg:items-end lg:justify-between lg:gap-3">
+                  <div className="flex items-start gap-2.5 sm:gap-4">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700 shadow-sm sm:h-11 sm:w-11 sm:rounded-2xl">
+                      {bookingViewMode === "availability" ? (
+                        <Grid3X3 className="h-5 w-5" />
+                      ) : (
+                        <Clock3 className="h-5 w-5" />
+                      )}
+                    </div>
+                    <div>
+                      <CardTitle className="text-base text-slate-950 sm:text-xl">
+                        {selectedVenue?.venue_name || "Bookings"}
+                      </CardTitle>
+                      <CardDescription className="mt-0.5 hidden max-w-2xl text-xs leading-5 text-slate-500 sm:block sm:text-sm sm:leading-5">
+                        Switch between fast block selection and the full venue timeline without losing your place.
+                      </CardDescription>
+                    </div>
+                  </div>
 
-            {bookingViewMode === "calendar" ? (
-              <div className="overflow-hidden rounded-lg border bg-white">
+                  <div className="grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:items-center sm:gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setBookingViewMode("availability")}
+                      className={cn(
+                        "h-7.5 border-slate-200 bg-white px-2 text-[11px] text-slate-600 hover:bg-slate-50 sm:h-8 sm:px-2.5 sm:text-sm",
+                        bookingViewMode === "availability" &&
+                          "border-slate-900 bg-slate-900 text-white hover:bg-slate-900",
+                      )}
+                    >
+                      Available Blocks
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setBookingViewMode("calendar")}
+                      className={cn(
+                        "h-7.5 border-slate-200 bg-white px-2 text-[11px] text-slate-600 hover:bg-slate-50 sm:h-8 sm:px-2.5 sm:text-sm",
+                        bookingViewMode === "calendar" &&
+                          "border-slate-900 bg-slate-900 text-white hover:bg-slate-900",
+                      )}
+                    >
+                      Calendar View
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+
+              <CardContent className="space-y-2 p-2 sm:space-y-4 sm:p-4">
+                <div className="flex flex-col gap-2 rounded-[1rem] border border-slate-200 bg-white p-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2.5 sm:rounded-[1.25rem] sm:p-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToPreviousWeek}
+                    disabled={!canGoPrevious()}
+                    className="h-7.5 w-full gap-1 border-slate-200 px-2 text-[11px] text-slate-700 sm:h-8 sm:w-auto sm:px-2.5 sm:text-sm"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    <span>{isMobile ? "Prev" : "Previous"}</span>
+                  </Button>
+
+                  <div className="order-first text-center sm:order-none">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 sm:text-xs sm:tracking-[0.16em]">
+                      {isMobile ? "Range" : "Visible range"}
+                    </p>
+                    <p className="mt-0.5 break-words text-[13px] font-semibold text-slate-950 sm:text-base">
+                      {formatWeekRange()}
+                    </p>
+                  </div>
+
+                  <div className="flex w-full gap-1.5 sm:w-auto sm:gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={goToToday}
+                      className="h-7.5 flex-1 border-slate-200 px-2 text-[11px] text-slate-700 sm:h-8 sm:flex-none sm:px-2.5 sm:text-sm"
+                    >
+                      Today
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={goToNextWeek}
+                      className="h-7.5 flex-1 gap-1 border-slate-200 px-2 text-[11px] text-slate-700 sm:h-8 sm:flex-none sm:px-2.5 sm:text-sm"
+                    >
+                      <span>{isMobile ? "Next" : "Next"}</span>
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {bookingViewMode === "calendar" ? (
+                  <div className="overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white shadow-[0_16px_40px_-30px_rgba(15,23,42,0.18)] sm:rounded-[1.5rem]">
                 <div
-                  className={`grid border-b bg-gray-50 ${getRowHeightClass()}`}
+                  className={`grid border-b border-slate-200 bg-slate-50 ${getRowHeightClass()}`}
                   style={{
-                    gridTemplateColumns: `80px repeat(${visibleDays.length}, minmax(0, 1fr))`,
+                    gridTemplateColumns: `${timeColumnWidth}px repeat(${visibleDays.length}, minmax(0, 1fr))`,
                   }}
                 >
-                  <div className="flex items-center justify-center border-r p-2 text-xs font-semibold text-gray-600">
+                  <div className="flex items-center justify-center border-r border-slate-200 p-2 text-xs font-semibold text-slate-500">
                     Time
                   </div>
                   {visibleDays.map((date, idx) => {
@@ -834,16 +1039,16 @@ export default function MemberBookings({
                     return (
                       <div
                         key={idx}
-                        className={`flex flex-col items-center justify-center border-r border-gray-200 p-3 text-center ${
-                          isPast || isClosed ? "bg-gray-100 opacity-50" : ""
+                        className={`flex flex-col items-center justify-center border-r border-slate-200 p-1.5 text-center sm:p-3 ${
+                          isPast || isClosed ? "bg-slate-100 opacity-50" : ""
                         }`}
                       >
-                        <p className="text-xs font-semibold text-gray-600">
+                        <p className="text-[10px] font-semibold text-slate-500 sm:text-xs">
                           {formatWeekday(date)}
                         </p>
-                        <p className="text-sm font-bold">{date.getDate()}</p>
+                        <p className="text-[13px] font-bold text-slate-950 sm:text-sm">{date.getDate()}</p>
                         {isClosed && (
-                          <p className="text-xs text-gray-500">Closed</p>
+                          <p className="text-xs text-slate-500">Closed</p>
                         )}
                       </div>
                     );
@@ -860,7 +1065,7 @@ export default function MemberBookings({
                         });
                       }
                     }}
-                    className="w-full rounded-none border-b bg-blue-100 py-2 font-semibold text-blue-700 hover:bg-blue-200"
+                    className="h-8 w-full rounded-none border-b border-slate-200 bg-slate-100 py-1 font-semibold text-slate-700 hover:bg-slate-200"
                   >
                     <ChevronLeft className="h-5 w-5 rotate-90" />
                   </Button>
@@ -868,17 +1073,17 @@ export default function MemberBookings({
 
                 <div
                   ref={timeSlotsRef}
-                  className="max-h-[600px] overflow-y-auto"
+                  className="max-h-[480px] overflow-y-auto sm:max-h-[560px]"
                 >
                   {timeSlots.map((time, timeIdx) => (
                     <div
                       key={time}
-                      className={`grid border-b transition-all hover:border-t-2 hover:border-t-blue-300 hover:bg-gray-50 hover:shadow-sm ${getRowHeightClass()}`}
+                      className={`grid border-b border-slate-200 transition-all hover:bg-slate-50 ${getRowHeightClass()}`}
                       style={{
-                        gridTemplateColumns: `80px repeat(${visibleDays.length}, minmax(0, 1fr))`,
+                        gridTemplateColumns: `${timeColumnWidth}px repeat(${visibleDays.length}, minmax(0, 1fr))`,
                       }}
                     >
-                      <div className="relative flex items-start border-r bg-gray-50 p-0 text-xs font-extrabold text-gray-600">
+                      <div className="relative flex items-start border-r border-slate-200 bg-slate-50 p-0 text-xs font-extrabold text-slate-500">
                         {shouldShowTimeLabel(time) ? (
                           <span
                             className="relative z-10 bg-white px-1"
@@ -910,27 +1115,30 @@ export default function MemberBookings({
                             onClick={() =>
                               handleSelectableSlotClick(dayIdx, timeIdx)
                             }
-                            className={`relative flex items-center justify-center border-r border-gray-200 p-2 transition-colors group select-none ${
+                            title={isBooked && bookingName ? bookingName : undefined}
+                            className={`group relative flex items-center justify-center border-r border-slate-200 p-1 transition-colors select-none sm:p-2 ${
                               isBooked
-                                ? "cursor-default pointer-events-none bg-red-500"
+                                ? "pointer-events-none cursor-default border-rose-700 bg-[repeating-linear-gradient(135deg,#be123c_0px,#be123c_6px,#e11d48_6px,#e11d48_12px)] shadow-inner"
                                 : isDisabled
-                                  ? "cursor-default pointer-events-none bg-gray-200 opacity-50"
+                                  ? "pointer-events-none cursor-default bg-slate-200 opacity-50"
                                   : "cursor-pointer"
                             } ${
                               isDragging
-                                ? "bg-blue-600 hover:bg-blue-600"
+                                ? "bg-slate-900 hover:bg-slate-900"
                                 : !isDisabled
-                                  ? "hover:bg-blue-50"
+                                  ? "hover:bg-slate-100"
                                   : ""
                             }`}
                           >
                             {isBooked && bookingName && (
-                              <div className="truncate px-1 text-center text-xs font-semibold text-white">
-                                <div>{bookingName}</div>
+                              <div className="pointer-events-none flex h-full w-full items-center justify-center overflow-hidden px-1">
+                                <div className="max-w-full truncate rounded-full border border-white/35 bg-black/15 px-1 py-0.5 text-center text-[8px] font-semibold uppercase tracking-[0.06em] text-white sm:px-1.5 sm:text-[9px] sm:tracking-[0.08em]">
+                                  {abbreviateBookingName(bookingName)}
+                                </div>
                               </div>
                             )}
                             {!isDisabled && !isDragging && (
-                              <div className="absolute inset-0 bg-blue-100 opacity-0 transition-opacity group-hover:opacity-100" />
+                              <div className="absolute inset-0 bg-slate-200/70 opacity-0 transition-opacity group-hover:opacity-100" />
                             )}
                           </div>
                         );
@@ -949,14 +1157,14 @@ export default function MemberBookings({
                         });
                       }
                     }}
-                    className="w-full rounded-none border-t bg-blue-100 py-2 font-semibold text-blue-700 hover:bg-blue-200"
+                    className="h-8 w-full rounded-none border-t border-slate-200 bg-slate-100 py-1 font-semibold text-slate-700 hover:bg-slate-200"
                   >
                     <ChevronLeft className="h-5 w-5 -rotate-90" />
                   </Button>
                 )}
               </div>
             ) : (
-              <div className="grid gap-3 lg:grid-cols-5 sm:grid-cols-2">
+              <div className="grid gap-1 sm:grid-cols-2 sm:gap-2 lg:grid-cols-5">
                 {visibleDays.map((date, dayIdx) => {
                   const visibleSlotIndices =
                     visibleSlotIndicesByDay[dayIdx] || [];
@@ -965,13 +1173,13 @@ export default function MemberBookings({
                   return (
                     <div
                       key={date.toISOString()}
-                      className="rounded-lg border bg-white p-3"
+                      className="rounded-[0.85rem] border border-slate-200 bg-white p-1 shadow-[0_16px_40px_-30px_rgba(15,23,42,0.18)] sm:rounded-[1.1rem] sm:p-2"
                     >
-                      <div className="mb-3 border-b pb-3 text-center">
-                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">
+                      <div className="mb-1 border-b border-slate-200 pb-1 text-center sm:mb-1.5 sm:pb-1.5">
+                        <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-500 sm:text-xs sm:tracking-[0.16em]">
                           {formatWeekday(date)}
                         </p>
-                        <p className="mt-1 text-lg font-semibold text-gray-900">
+                        <p className="mt-0.5 text-[12px] font-semibold text-slate-950 sm:text-base">
                           {date.toLocaleDateString("en-US", {
                             month: "short",
                             day: "numeric",
@@ -980,16 +1188,16 @@ export default function MemberBookings({
                       </div>
 
                       {isClosed ? (
-                        <div className="rounded-md bg-gray-50 px-3 py-6 text-center text-sm text-gray-500">
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 px-1.5 py-2.5 text-center text-[10px] text-slate-500 sm:rounded-2xl sm:px-3 sm:py-5 sm:text-sm">
                           Closed
                         </div>
                       ) : visibleSlotIndices.length === 0 ? (
-                        <div className="rounded-md bg-gray-50 px-3 py-6 text-center text-sm text-gray-500">
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 px-1.5 py-2.5 text-center text-[10px] text-slate-500 sm:rounded-2xl sm:px-3 sm:py-5 sm:text-sm">
                           No booking blocks available
                         </div>
                       ) : (
                         <TooltipProvider>
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="grid grid-cols-4 gap-0.5 sm:grid-cols-2 sm:gap-1">
                             {visibleSlotIndices.map((timeIdx: number) => {
                               const isSelected = isSlotSelected(
                                 dayIdx,
@@ -1008,20 +1216,23 @@ export default function MemberBookings({
                                     handleSelectableSlotClick(dayIdx, timeIdx)
                                   }
                                   disabled={isBooked}
-                                  className={`rounded-md border px-2 py-2 text-xs font-medium transition-colors ${
+                                  title={isBooked && bookingName ? bookingName : undefined}
+                                  className={`h-8 rounded-[0.45rem] border px-0.5 py-0.5 text-[8px] font-medium transition-colors sm:h-12 sm:rounded-lg sm:px-1.5 sm:py-1 sm:text-[11px] ${
                                     isSelected
-                                      ? "border-blue-600 bg-blue-600 text-white"
+                                      ? "border-slate-900 bg-slate-900 text-white"
                                       : isBooked
-                                        ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"
-                                        : "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                                        ? "cursor-not-allowed border-rose-700 bg-[repeating-linear-gradient(135deg,#be123c_0px,#be123c_6px,#e11d48_6px,#e11d48_12px)] text-white shadow-inner"
+                                        : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
                                   }`}
                                 >
-                                  <div className="flex flex-col items-center gap-0.5 leading-tight">
-                                    <span>
-                                      {formatSlotRange(timeSlots, timeIdx)}
+                                  <div className="flex h-full flex-col items-center justify-center gap-0.5 overflow-hidden leading-none">
+                                    <span className="truncate font-semibold">
+                                      {isMobile
+                                        ? timeSlots[timeIdx]
+                                        : formatSlotRange(timeSlots, timeIdx)}
                                     </span>
                                     {isBooked && bookingName && (
-                                      <span className="max-w-full truncate text-[10px] font-semibold text-gray-500">
+                                      <span className="max-w-full truncate rounded-full border border-white/30 bg-black/10 px-0.5 py-0.5 text-[7px] font-semibold uppercase tracking-[0.04em] text-white sm:px-1 sm:text-[9px] sm:tracking-[0.08em]">
                                         {abbreviateBookingName(bookingName)}
                                       </span>
                                     )}
@@ -1053,21 +1264,23 @@ export default function MemberBookings({
               </div>
             )}
 
-            <div className="text-xs text-gray-600">
+                <div className="rounded-[0.85rem] border border-slate-200 bg-slate-50 px-1.5 py-1 text-[9px] text-slate-600 sm:rounded-[1.1rem] sm:px-3 sm:py-2 sm:text-xs">
               {bookingViewMode === "availability" ? (
                 <>
                   {isMobile
-                    ? "Tap available blocks one by one to build your booking range"
+                    ? "Tap blocks to build your range"
                     : "Click available blocks one by one to build your booking range"}
                 </>
               ) : (
                 <>
                   {isMobile
-                    ? "Tap available slots one by one to build your booking range"
+                    ? "Tap slots to build your range"
                     : "Click available slots one by one to build your booking range"}
                 </>
               )}
-            </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       )}
@@ -1086,7 +1299,7 @@ export default function MemberBookings({
 
             <div className="space-y-4">
               <div>
-                <Label htmlFor="booking-name" className="text-sm">
+                <Label htmlFor="booking-name" className="text-sm text-slate-700">
                   Booking name
                 </Label>
                 <Input
@@ -1094,20 +1307,20 @@ export default function MemberBookings({
                   placeholder="Enter booking name"
                   value={bookingName}
                   onChange={(e) => setBookingName(e.target.value)}
-                  className="mt-1 h-8"
+                  className="mt-1 h-9 border-slate-200"
                 />
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="space-y-2">
-                  <p className="text-sm text-gray-700">
+                  <p className="text-sm text-slate-700">
                     <span className="font-semibold">Time:</span>{" "}
                     {timeSlots[selectedSlot.startTimeIdx]} -{" "}
                     {selectedSlot.endTimeIdx + 1 < timeSlots.length
                       ? timeSlots[selectedSlot.endTimeIdx + 1]
                       : "23:59"}
                   </p>
-                  <p className="text-xs text-gray-600">
+                  <p className="text-xs text-slate-500">
                     <span className="font-semibold">Duration:</span>{" "}
                     {(selectedSlot.endTimeIdx - selectedSlot.startTimeIdx + 1) *
                       getBookingUnit()}{" "}
@@ -1117,22 +1330,24 @@ export default function MemberBookings({
               </div>
 
               {bookingDialogError && (
-                <div className="rounded-md bg-red-50 p-3 text-sm text-red-700 border border-red-200">
+                <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                   {bookingDialogError}
                 </div>
               )}
 
-              <div className="flex gap-2 justify-end">
+              <div className="flex justify-end gap-2">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => handleDialogClose(false)}
+                  className="h-9 border-slate-200 text-sm text-slate-700"
                 >
                   Cancel
                 </Button>
                 <Button
                   size="sm"
                   disabled={isCreatingBooking}
+                  className="h-9 bg-slate-900 text-sm text-white hover:bg-slate-800"
                   onClick={async () => {
                     const venue = getSelectedVenue();
                     const bookingDurationMinutes =

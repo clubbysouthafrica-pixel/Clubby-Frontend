@@ -36,7 +36,7 @@ export function ClubBookingsTab({
   }
 
   return (
-    <TabsContent value="bookings" className="mt-6">
+    <TabsContent value="bookings" className="mt-3 sm:mt-6">
       <MemberBookings
         venues={venues}
         loading={loading}

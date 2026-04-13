@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { getMemberOrders } from "@/services/orders";
 import { getEventsIncludingAll } from "@/services/events";
 import { getVenues } from "@/services/venues";
+import { getBookings } from "@/services/bookings";
 import { useQuery } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
 
@@ -44,7 +45,7 @@ import { toast } from "sonner";
 import { ClubRegistrationTab } from "@/components/member/view-club-tabs/club-registration-tab";
 import { ClubBookingsTab } from "@/components/member/view-club-tabs/club-bookings-tab";
 import { ClubEventsTab } from "@/components/member/view-club-tabs/club-events-tab";
-import { ClubHomeTab } from "@/components/member/view-club-tabs/club-home-tab";
+import { ClubHomeTab, type HomeBookingItem } from "@/components/member/view-club-tabs/club-home-tab";
 import { ClubPaymentsTab } from "@/components/member/view-club-tabs/club-payments-tab";
 import { ClubShopTab } from "@/components/member/view-club-tabs/club-shop-tab";
 
@@ -100,6 +101,11 @@ type Venue = {
   smallest_booking_unit?: number;
   max_daily_booking_time?: number;
   times: VenueSchedule[];
+};
+
+type VenueBooking = {
+  slot_time: number;
+  name?: string;
 };
 
 type ClubOpeningTime = {
@@ -193,6 +199,73 @@ function getClubSectionFromPath(pathname: string, clubId?: string) {
   return routeSegment && routeSegment in CLUB_ROUTE_SEGMENT_TO_SECTION
     ? CLUB_ROUTE_SEGMENT_TO_SECTION[routeSegment]
     : "home";
+}
+
+function scrollClubPageToTop() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  document.scrollingElement?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+}
+
+function normalizeBookingName(name: string) {
+  return name.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function formatBookingTimeLabel(startTime: number, endTime: number) {
+  return `${new Date(startTime * 1000).toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  })} - ${new Date(endTime * 1000).toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  })}`;
+}
+
+function mergeAdjacentBookings(bookings: HomeBookingItem[]) {
+  if (bookings.length <= 1) {
+    return bookings;
+  }
+
+  const sortedBookings = [...bookings].sort((left, right) => {
+    if (left.dateKey !== right.dateKey) {
+      return left.dateKey.localeCompare(right.dateKey);
+    }
+
+    if (left.venueId !== right.venueId) {
+      return left.venueId.localeCompare(right.venueId);
+    }
+
+    return left.slotTime - right.slotTime;
+  });
+
+  const mergedBookings: HomeBookingItem[] = [];
+
+  sortedBookings.forEach((booking) => {
+    const lastBooking = mergedBookings[mergedBookings.length - 1];
+
+    if (
+      lastBooking &&
+      lastBooking.dateKey === booking.dateKey &&
+      lastBooking.venueId === booking.venueId &&
+      lastBooking.endTime === booking.slotTime
+    ) {
+      lastBooking.endTime = booking.endTime;
+      lastBooking.timeLabel = formatBookingTimeLabel(
+        lastBooking.slotTime,
+        lastBooking.endTime,
+      );
+      return;
+    }
+
+    mergedBookings.push({ ...booking });
+  });
+
+  return mergedBookings;
 }
 
 function getMonthStart(date: Date) {
@@ -584,6 +657,63 @@ export default function ViewClubPage() {
       activeTab === "home" && !!data?.club_account_id && !!data?.enable_events,
   });
 
+  const {
+    data: upcomingMemberBookings = [],
+  } = useQuery<HomeBookingItem[]>({
+    queryKey: [
+      "club-home-bookings",
+      data?.member_name,
+      venues.map((venue) => venue.venue_id).join(","),
+    ],
+    queryFn: async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const rangeStart = Math.floor(today.getTime() / 1000);
+      const rangeEndDate = new Date(today);
+      rangeEndDate.setDate(rangeEndDate.getDate() + 7);
+      const rangeEnd = Math.floor(rangeEndDate.getTime() / 1000);
+      const normalizedMemberName = normalizeBookingName(data?.member_name || "");
+
+      const bookingResponses = await Promise.all(
+        venues.map(async (venue) => {
+          const response = await getBookings(
+            venue.venue_id,
+            String(rangeStart),
+            String(rangeEnd),
+          );
+
+          const venueBookings = Array.isArray(response?.bookings)
+            ? (response.bookings as VenueBooking[])
+            : [];
+
+          return venueBookings
+            .filter((booking) => normalizeBookingName(booking.name || "") === normalizedMemberName)
+            .map((booking) => {
+              const slotTime = Number(booking.slot_time) || 0;
+              const bookingDurationSeconds = (venue.smallest_booking_unit || 60) * 60;
+              const endTime = slotTime + bookingDurationSeconds;
+
+              return {
+                venueId: venue.venue_id,
+                venueName: venue.venue_name,
+                slotTime,
+                endTime,
+                dateKey: formatDateKey(new Date(slotTime * 1000)),
+                timeLabel: formatBookingTimeLabel(slotTime, endTime),
+              } satisfies HomeBookingItem;
+            });
+        }),
+      );
+
+      return mergeAdjacentBookings(bookingResponses.flat());
+    },
+    enabled:
+      activeTab === "home" &&
+      canViewBookings &&
+      venues.length > 0 &&
+      !!data?.member_name,
+  });
+
   const memberOrderList = useMemo(() => {
     return Array.isArray(memberOrders?.orders)
       ? (memberOrders.orders as MemberOrder[])
@@ -642,6 +772,31 @@ export default function ViewClubPage() {
   const selectedHomeDateEvents = useMemo(() => {
     return eventsByDate.get(selectedHomeDateKey) ?? [];
   }, [eventsByDate, selectedHomeDateKey]);
+
+  const bookingsByDate = useMemo(() => {
+    const nextMap = new Map<string, HomeBookingItem[]>();
+
+    upcomingMemberBookings.forEach((booking) => {
+      const existingBookings = nextMap.get(booking.dateKey);
+
+      if (existingBookings) {
+        existingBookings.push(booking);
+        return;
+      }
+
+      nextMap.set(booking.dateKey, [booking]);
+    });
+
+    nextMap.forEach((bookings) => {
+      bookings.sort((left, right) => left.slotTime - right.slotTime);
+    });
+
+    return nextMap;
+  }, [upcomingMemberBookings]);
+
+  const selectedHomeDateBookings = useMemo(() => {
+    return bookingsByDate.get(selectedHomeDateKey) ?? [];
+  }, [bookingsByDate, selectedHomeDateKey]);
 
   const selectedHomeDateLabel = useMemo(() => {
     return formatLongDate(selectedHomeDateKey);
@@ -838,6 +993,10 @@ export default function ViewClubPage() {
       },
       { replace: options?.replace },
     );
+
+    requestAnimationFrame(() => {
+      scrollClubPageToTop();
+    });
   }, [clubId, navigate]);
 
   const handleOrderPayNowClick = (orderId?: string) => {
@@ -975,7 +1134,11 @@ export default function ViewClubPage() {
   }, [isPaymentScreenOpen]);
 
   useEffect(() => {
-    if (activeTab !== "bookings" || !data?.club_account_id) {
+    if (
+      !data?.club_account_id ||
+      !canViewBookings ||
+      (activeTab !== "bookings" && activeTab !== "home")
+    ) {
       return;
     }
 
@@ -998,7 +1161,7 @@ export default function ViewClubPage() {
     };
 
     fetchVenues();
-  }, [activeTab, data?.club_account_id]);
+  }, [activeTab, canViewBookings, data?.club_account_id]);
 
   useEffect(() => {
     if (activeTab === "bookings" && !canViewBookings) {
@@ -1211,8 +1374,8 @@ export default function ViewClubPage() {
             {/* Section Navigation */}
             <div className="container mx-auto mb-6 px-4">
               {showSidebarNavigation && (
-                <div className="sticky top-16 z-20 -mx-4 mb-6 border-y border-slate-200 bg-white/95 px-4 py-3 shadow-[0_18px_45px_-30px_rgba(15,23,42,0.18)] backdrop-blur lg:hidden">
-                  <div className="scrollbar-none -mb-1 flex gap-2 overflow-x-auto pb-1">
+                <div className="sticky top-16 z-20 -mx-4 mb-4 border-y border-slate-200 bg-white/95 px-4 py-2 shadow-[0_18px_45px_-30px_rgba(15,23,42,0.18)] backdrop-blur sm:mb-6 sm:py-3 lg:hidden">
+                  <div className="scrollbar-none -mb-1 flex gap-1.5 overflow-x-auto pb-1 sm:gap-2">
                       {clubNavItems.map((item) => {
                         const Icon = item.icon;
                         const isActiveSection = activeTab === item.key;
@@ -1223,7 +1386,7 @@ export default function ViewClubPage() {
                             type="button"
                             onClick={() => handleSectionChange(item.key)}
                             className={cn(
-                              "group relative flex shrink-0 items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-all duration-200",
+                              "group relative flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm",
                               isActiveSection
                                 ? "border-slate-900 bg-slate-900 text-white shadow-[0_16px_30px_-20px_rgba(15,23,42,0.35)]"
                                 : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
@@ -1231,13 +1394,13 @@ export default function ViewClubPage() {
                           >
                             <div
                               className={cn(
-                                "rounded-full p-1.5 transition-colors duration-200",
+                                "rounded-full p-1 transition-colors duration-200 sm:p-1.5",
                                 isActiveSection
                                   ? "bg-white/15 text-white"
                                   : "bg-slate-100 text-slate-700 group-hover:bg-slate-200",
                               )}
                             >
-                              <Icon className="h-4 w-4" />
+                              <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             </div>
                             <span>{item.label}</span>
                           </button>
@@ -1345,14 +1508,18 @@ export default function ViewClubPage() {
                     isHomeEventsLoading={isHomeEventsLoading}
                     isHomeEventsError={isHomeEventsError}
                     homeEventsThisMonthCount={homeEventsThisMonthCount}
+                    homeBookingsNextSevenDaysCount={upcomingMemberBookings.length}
                     selectedHomeDateEvents={selectedHomeDateEvents}
+                    selectedHomeDateBookings={selectedHomeDateBookings}
                     selectedHomeDateLabel={selectedHomeDateLabel}
                     nextHomeEvent={nextHomeEvent}
                     canViewEvents={canViewEvents}
+                    canViewBookings={canViewBookings}
                     currency={data?.currency}
                     visibleCalendarMonth={visibleCalendarMonth}
                     homeCalendarDays={homeCalendarDays}
                     eventsByDate={eventsByDate}
+                    bookingsByDate={bookingsByDate}
                     selectedHomeDateKey={selectedHomeDateKey}
                     todayKey={todayKey}
                     onPreviousMonth={() =>
@@ -1367,6 +1534,7 @@ export default function ViewClubPage() {
                     }
                     onSelectDate={setSelectedHomeDateKey}
                     onOpenEvents={() => handleSectionChange("events")}
+                    onOpenBookings={() => handleSectionChange("bookings")}
                     onOpenOutstandingBalance={handleOpenOutstandingBalance}
                   />
 
