@@ -144,6 +144,7 @@ const CLUB_SECTION_ROUTE_SEGMENTS: Record<ClubSection, string> = {
   bookings: "bookings",
   events: "events",
   shop: "shop",
+  storage: "storage",
 };
 
 const CLUB_ROUTE_SEGMENT_TO_SECTION: Record<string, ClubSection> = {

@@ -76,6 +76,7 @@ export default function MemberStorage({
       return (fetchedUnits as any).map((u: any) => ({
         id: u.storage_id ?? u.id,
         name: u.storage_name ?? u.name,
+        isBooked: !!u.is_booked || !!u.isBooked,
         parentId:
           u.parent_id === null || u.parent_id === "" ? undefined : u.parent_id,
         priceCents:
@@ -94,6 +95,7 @@ export default function MemberStorage({
     const normalized = items.map((u: any) => ({
       id: u.storage_id ?? u.id,
       name: u.storage_name ?? u.name,
+      isBooked: !!u.is_booked || !!u.isBooked,
       parentId:
         u.parent_id === null || u.parent_id === "" ? undefined : u.parent_id,
       priceCents:
