@@ -90,7 +90,7 @@ export default function MemberShopPage() {
           <p className="text-gray-600 mb-4">
             You must be a registered member to access the club shop.
           </p>
-          <Button onClick={() => navigate(`/myclubs/${clubId}`)}>
+          <Button onClick={() => navigate(`/myclubs/${clubId}/shop`)}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Club
           </Button>
@@ -109,7 +109,7 @@ export default function MemberShopPage() {
           <p className="text-gray-600 mb-4">
             Failed to load shop products. Please try again later.
           </p>
-          <Button onClick={() => navigate(`/myclubs/${clubId}`)}>
+          <Button onClick={() => navigate(`/myclubs/${clubId}/shop`)}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Club
           </Button>
@@ -204,17 +204,15 @@ export default function MemberShopPage() {
       setOrderDialog(false);
       setShowCart(false);
       
-      // Redirect to view-club page with order id and tab params
+      // Redirect to the payments section with the new order highlighted.
       const orderId = response.order_id || response.id;
       const queryParams = new URLSearchParams();
       if (orderId) {
         queryParams.append('orderId', orderId);
       }
-      queryParams.append('tab', 'bank');
-      
-      setTimeout(() => {
-        navigate(`/myclubs/${clubId}?${queryParams.toString()}`);
-      }, 1000);
+      queryParams.append('paymentScreen', 'true');
+
+      navigate(`/myclubs/${clubId}/payments?${queryParams.toString()}`);
     } catch (error: any) {
       console.error("Error creating order:", error);
       const errorMessage = error.response?.data?.message || error.message || "Failed to create order. Please try again.";
@@ -232,7 +230,7 @@ export default function MemberShopPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate(`/myclubs/${clubId}`)}
+                onClick={() => navigate(`/myclubs/${clubId}/shop`)}
                 className="flex items-center gap-2 w-fit"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -280,7 +278,6 @@ export default function MemberShopPage() {
                     ) : (
                       <Package className="h-16 w-16 text-gray-400" />
                     )}
-                    {/* Placeholder for product image */}
                   </div>
                   <CardHeader>
                     <div className="flex items-start justify-between">

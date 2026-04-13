@@ -1,3 +1,30 @@
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import {
+  AlertCircle,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  PencilIcon,
+  Tag,
+  X,
+} from "lucide-react";
+
+import { useFetchMemberRegisteration } from "@/queries/registration-form";
+import {
+  fetchMemberRegistrationField,
+  updateMemberRegistrationField,
+} from "@/services/registration-form";
+import { countryCodes, getDialingCode } from "@/data/country-codes";
+import { cn } from "@/lib/utils";
+import {
+  getStandardFieldType,
+  validateFieldValue,
+} from "@/utils/fieldValidation";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -6,11 +33,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useState } from "react";
-import { useFetchMemberRegisteration } from "@/queries/registration-form";
-import { Loader2, AlertCircle, PencilIcon, Check, X } from "lucide-react";
-import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -18,17 +43,39 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "sonner";
-import {
-  fetchMemberRegistrationField,
-  updateMemberRegistrationField,
-} from "@/services/registration-form";
-import {
-  validateFieldValue,
-  getStandardFieldType,
-} from "@/utils/fieldValidation";
-import { countryCodes, getDialingCode } from "@/data/country-codes";
+
+type VariableEntry = {
+  name: string;
+  value: string | number | boolean | null | undefined;
+};
+
+type MemberTag = {
+  id: string;
+  label: string;
+  value: string;
+};
+
+type MemberFieldMetadata = {
+  input_type: string;
+  options?: string[];
+  required?: boolean;
+  placeholder?: string;
+  editable_by_member?: boolean;
+  phone_number_input?: boolean;
+  sensitive_information?: boolean;
+};
+
+type RegistrationField = {
+  type: string;
+  label: string;
+  value: string;
+  field_id?: string;
+  signature_type?: string;
+  quantity?: number;
+  discount?: number;
+  editable_by_member?: boolean;
+  visible?: boolean;
+};
 
 function formatVariableName(name: string): string {
   return name
@@ -36,6 +83,115 @@ function formatVariableName(name: string): string {
     .split(" ")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(" ");
+}
+
+function formatMembershipLabel(membershipStatus: string) {
+  if (membershipStatus === "Resubmission required") {
+    return "Needs resubmission";
+  }
+
+  return membershipStatus;
+}
+
+function getMembershipTone(membershipStatus: string) {
+  if (membershipStatus === "Resubmission required") {
+    return {
+      badgeClassName: "border-amber-200 bg-amber-50 text-amber-800",
+      panelClassName: "border-amber-200 bg-amber-50/80 text-amber-900",
+      description:
+        "Your latest registration is no longer active. Review the submitted information below and resubmit where needed.",
+    };
+  }
+
+  if (membershipStatus === "Pending") {
+    return {
+      badgeClassName: "border-sky-200 bg-sky-50 text-sky-800",
+      panelClassName: "border-sky-200 bg-sky-50/80 text-sky-900",
+      description:
+        "Your submitted registration is waiting for club review. You can still inspect the details below and update fields that the club allows members to edit.",
+    };
+  }
+
+  return {
+    badgeClassName: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    panelClassName: "border-emerald-200 bg-emerald-50/80 text-emerald-900",
+    description:
+      "This is the latest registration the club has on file for your membership. Editable fields can still be updated directly from this view.",
+  };
+}
+
+function formatTagValue(value: unknown) {
+  if (typeof value === "string") {
+    return value.trim();
+  }
+
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+
+  return "";
+}
+
+function extractMemberTags(source: unknown): MemberTag[] {
+  if (!source || typeof source !== "object") {
+    return [];
+  }
+
+  const record = source as Record<string, unknown>;
+  const rawTags = [
+    record.registration_tags,
+    record.registrationTags,
+    record.member_tags,
+    record.memberTags,
+    record.tags,
+  ].find(Array.isArray);
+
+  if (!Array.isArray(rawTags)) {
+    return [];
+  }
+
+  return rawTags
+    .map((rawTag, index) => {
+      if (typeof rawTag === "string") {
+        const cleanedValue = rawTag.trim();
+
+        if (!cleanedValue) {
+          return null;
+        }
+
+        return {
+          id: `member-tag-${index}`,
+          label: cleanedValue,
+          value: cleanedValue,
+        } satisfies MemberTag;
+      }
+
+      if (!rawTag || typeof rawTag !== "object") {
+        return null;
+      }
+
+      const tag = rawTag as Record<string, unknown>;
+      const label = formatTagValue(tag.label ?? tag.name ?? tag.key);
+      const value = formatTagValue(tag.value ?? tag.tag_value ?? tag.name ?? tag.label);
+      const id = formatTagValue((tag.id ?? tag.key ?? label) || `member-tag-${index}`);
+
+      if (!label || !value) {
+        return null;
+      }
+
+      return {
+        id,
+        label,
+        value,
+      } satisfies MemberTag;
+    })
+    .filter((entry, index, entries): entry is MemberTag => {
+      if (!entry) {
+        return false;
+      }
+
+      return entries.findIndex((candidate) => candidate?.id === entry.id) === index;
+    });
 }
 
 export function MemberRegistration({
@@ -52,730 +208,744 @@ export function MemberRegistration({
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [isAdminNotesOpen, setIsAdminNotesOpen] = useState(true);
   const [isVariablesOpen, setIsVariablesOpen] = useState(false);
+  const [isTagsOpen, setIsTagsOpen] = useState(true);
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>("");
   const [countryCode, setCountryCode] = useState<string>("ZA");
-  const [updatedFieldValues, setUpdatedFieldValues] = useState<
-    Record<string, string>
-  >({});
+  const [updatedFieldValues, setUpdatedFieldValues] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [loadingFieldId, setLoadingFieldId] = useState<string | null>(null);
-  const [fieldMetadata, setFieldMetadata] = useState<
-    Record<
-      string,
-      {
-        input_type: string;
-        options?: string[];
-        required?: boolean;
-        placeholder?: string;
-        editable_by_member?: boolean;
-        phone_number_input?: boolean;
-        sensitive_information?: boolean;
+  const [fieldMetadata, setFieldMetadata] = useState<Record<string, MemberFieldMetadata>>({});
+
+  const { data, isLoading } = useFetchMemberRegisteration(clubAccountId, currency);
+
+  const deregReason = useMemo(() => {
+    if (typeof data === "object" && data !== null && "deregistration_reason" in data) {
+      const value = (data as { deregistration_reason?: unknown }).deregistration_reason;
+
+      if (typeof value === "string" && value.trim()) {
+        return value;
       }
-    >
-  >({});
-
-  const { data, isLoading } = useFetchMemberRegisteration(
-    clubAccountId,
-    currency
-  );
-
-  const getDeregReason = (d: unknown): string | undefined => {
-    if (typeof d === "object" && d !== null && "deregistration_reason" in d) {
-      const val = (d as { deregistration_reason?: unknown })
-        .deregistration_reason;
-      if (typeof val === "string" && val.trim()) return val;
     }
-    return undefined;
-  };
-  const deregReason = getDeregReason(data);
 
-  // Filter pages to only show pages with at least one visible field
-  const visiblePages = data?.pages?.filter((page: any) =>
-    page.fields.some(
-      (field: any) =>
-        !(field.visible === false && !field.value)
-    )
-  ) || [];
+    return undefined;
+  }, [data]);
+
+  const visiblePages = useMemo(() => {
+    return (
+      data?.pages?.filter((page: { fields: RegistrationField[] }) =>
+        page.fields.some((field) => !(field.visible === false && !field.value)),
+      ) ?? []
+    );
+  }, [data?.pages]);
+
+  const visibleAdminNotes = useMemo(() => {
+    if (!Array.isArray(data?.admin_notes)) {
+      return [];
+    }
+
+    return data.admin_notes.filter((note: { visibleToMember?: boolean }) => note.visibleToMember);
+  }, [data?.admin_notes]);
+
+  const memberVariables = useMemo<VariableEntry[]>(() => {
+    return Array.isArray(data?.variables) ? data.variables : [];
+  }, [data?.variables]);
+
+  const memberTags = useMemo(() => extractMemberTags(data), [data]);
+
+  const membershipTone = getMembershipTone(membershipStatus);
+  const currentPage = visiblePages[currentPageIndex];
 
   if (isLoading || !data) {
     return (
-      <div className="flex justify-center items-center p-5 min-h-[400px]">
+      <div className="flex min-h-[420px] items-center justify-center px-4 py-10">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
-  return (
-    <div className="w-full space-y-2 flex-1 min-h-0 flex flex-col mt-6">
-      {/* Deregistration reason (when provided by the club) */}
-      {deregReason && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 space-y-2">
-          <div className="flex items-center gap-2 text-yellow-700">
-            <AlertCircle className="h-4 w-4" />
-            <h3 className="text-xs font-semibold">Why was I deregistered?</h3>
-          </div>
-          <div className="text-xs text-gray-700 whitespace-pre-wrap">
-            {deregReason}
-          </div>
-        </div>
-      )}
+  const handleCancelEdit = () => {
+    setEditingFieldId(null);
+    setEditValue("");
+  };
 
-      {/* Additional Variables Dropdown */}
-      {data?.variables && data.variables.length > 0 && (
-        <div className="border rounded-lg bg-transparent">
-          <button
-            onClick={() => setIsVariablesOpen(!isVariablesOpen)}
-            className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
-          >
-            <span className="font-semibold text-sm text-foreground">
-              Additional Information
-            </span>
-            <span className="text-lg pr-2">{isVariablesOpen ? "▼" : "▶"}</span>
-          </button>
-          {isVariablesOpen && (
-            <div className="bg-muted/20 border-t p-3 space-y-2">
-              {data.variables.map(
-                (variable: { name: string; value: string | number | boolean | null | undefined }, index: number) => (
-                  <div key={index} className="flex items-start gap-2 py-2 border-b last:border-b-0">
-                    <span className="text-sm font-semibold text-muted-foreground">{formatVariableName(variable.name)}:</span>
-                    <span className="text-sm text-foreground text-right">
-                      {variable.value ? variable.value : <span className="italic text-gray-500">Does not exist for this member</span>}
-                    </span>
-                  </div>
-                )
-              )}
-            </div>
-          )}
-        </div>
-      )}
+  const handleSave = async (field: RegistrationField) => {
+    const metadata = fieldMetadata[field.label];
 
-      {/* Registration Form Card */}
-      <Card
-        className="w-full border shadow-sm pt-0 flex-1 min-h-0 flex flex-col gap-1"
-        id="registration-card-header"
-      >
-        <CardHeader className="border-b bg-muted/30 py-1 pb-1">
-          <CardTitle className="text-l text-center pt-2">{clubName}</CardTitle>
-          <CardDescription className="text-center text-xs">
-            {membershipStatus === "Resubmission required"
-              ? "Deregistered Registration Form"
-              : "Submitted Registration Form"}
-          </CardDescription>
-        </CardHeader>
-        {data.admin_notes && data.admin_notes.length > 0 && (
-          <div className="bg-amber-50 border-b border-amber-200 px-4 py-3">
-            <button
-              onClick={() => setIsAdminNotesOpen(!isAdminNotesOpen)}
-              className="w-full flex items-center justify-between hover:bg-amber-100 transition-colors -mx-4 -my-3 px-4 py-3 rounded cursor-pointer"
-            >
-              <h4 className="text-sm font-semibold text-amber-900">
-                📝 Notes from Club Staff ({data.admin_notes.filter((note: { visibleToMember: boolean }) => note.visibleToMember).length})
-              </h4>
-              <span className="text-lg text-amber-900">
-                {isAdminNotesOpen ? "▼" : "▶"}
-              </span>
-            </button>
-            {isAdminNotesOpen && (
-              <div className="space-y-3 mt-3">
-                {data.admin_notes
-                  .filter((note: { visibleToMember: boolean }) => note.visibleToMember)
-                  .map((note: { id: string; title: string; content: string }) => (
-                    <div key={note.id} className="pb-3 border-b border-amber-100 last:border-b-0 last:pb-0">
-                      <p className="text-sm font-semibold text-amber-900 mb-1">
-                        {note.title}
-                      </p>
-                      <p className="text-xs text-amber-800 whitespace-pre-wrap">
-                        {note.content}
-                      </p>
-                    </div>
-                  ))}
-              </div>
+    setIsSaving(true);
+
+    try {
+      const fieldType = metadata?.input_type || "TEXT";
+      const isPhoneNumber = metadata?.phone_number_input === true;
+      const validationError = validateFieldValue(field.label, editValue, metadata);
+
+      if (validationError) {
+        toast.error(validationError, { duration: 3000 });
+        setIsSaving(false);
+        return;
+      }
+
+      let valueToSave = editValue;
+
+      if (isPhoneNumber) {
+        if (editValue.trim() === "") {
+          valueToSave = "";
+        } else {
+          const dialingCode = getDialingCode(countryCode);
+          const phoneWithoutLeadingZero = editValue.replace(/^0+/, "");
+          valueToSave = `${dialingCode}${phoneWithoutLeadingZero}`;
+        }
+      }
+
+      await updateMemberRegistrationField(
+        data.registration_id,
+        field.field_id || "",
+        field.label,
+        getStandardFieldType(fieldType),
+        valueToSave,
+        metadata?.sensitive_information,
+      );
+
+      setUpdatedFieldValues((previousValues) => ({
+        ...previousValues,
+        [field.label]: valueToSave,
+      }));
+
+      setEditingFieldId(null);
+      toast.success(`${field.label} updated successfully`, { duration: 3000 });
+    } catch (error) {
+      console.error("Error updating field:", error);
+      toast.error("Failed to update field", { duration: 3000 });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleEdit = async (field: RegistrationField) => {
+    const existingMetadata = fieldMetadata[field.label];
+
+    if (!existingMetadata && field.field_id) {
+      setLoadingFieldId(field.label);
+
+      try {
+        const response = await fetchMemberRegistrationField(clubAccountId, field.field_id);
+        const nextMetadata = response.field as MemberFieldMetadata;
+
+        setFieldMetadata((previousValue) => ({
+          ...previousValue,
+          [field.label]: nextMetadata,
+        }));
+
+        const valueToSet = updatedFieldValues[field.label] ?? field.value;
+
+        if (nextMetadata?.phone_number_input === true) {
+          let phoneNumber = valueToSet;
+          const sortedCodes = [...countryCodes].sort(
+            (left, right) => right.dialingCode.length - left.dialingCode.length,
+          );
+
+          for (const country of sortedCodes) {
+            if (valueToSet.startsWith(country.dialingCode)) {
+              phoneNumber = valueToSet.substring(country.dialingCode.length);
+              setCountryCode(country.code);
+              break;
+            }
+          }
+
+          setEditValue(phoneNumber);
+        } else {
+          setEditValue(valueToSet);
+        }
+
+        setEditingFieldId(field.label);
+      } catch (error) {
+        console.error("Error loading field metadata:", error);
+        toast.error("Failed to load field", { duration: 2000 });
+      } finally {
+        setLoadingFieldId(null);
+      }
+
+      return;
+    }
+
+    const valueToSet = updatedFieldValues[field.label] ?? field.value;
+
+    if (existingMetadata?.phone_number_input === true) {
+      let phoneNumber = valueToSet;
+      const sortedCodes = [...countryCodes].sort(
+        (left, right) => right.dialingCode.length - left.dialingCode.length,
+      );
+
+      for (const country of sortedCodes) {
+        if (valueToSet.startsWith(country.dialingCode)) {
+          phoneNumber = valueToSet.substring(country.dialingCode.length);
+          setCountryCode(country.code);
+          break;
+        }
+      }
+
+      setEditValue(phoneNumber);
+    } else {
+      setEditValue(valueToSet);
+    }
+
+    setEditingFieldId(field.label);
+  };
+
+  const renderEditableInput = (field: RegistrationField) => {
+    const metadata = fieldMetadata[field.label];
+    const inputType = metadata?.input_type || "TEXT";
+    const options = metadata?.options || [];
+    const isPhoneNumber = metadata?.phone_number_input === true;
+
+    if (inputType === "DROPDOWN") {
+      return (
+        <Select
+          value={editValue || "undefined"}
+          onValueChange={(value) => setEditValue(value === "undefined" ? "" : value)}
+        >
+          <SelectTrigger className="w-full border-slate-200 bg-white text-sm shadow-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {!metadata?.required && (
+              <SelectItem value="undefined" className="text-muted-foreground">
+                -- Not Selected --
+              </SelectItem>
             )}
-          </div>
-        )}
-        <CardContent className="py-2 px-4 flex-1 min-h-0 flex flex-col">
-          <div
-            key={visiblePages[currentPageIndex].page_index}
-            className="flex-1 min-h-0 flex flex-col"
-          >
-            <h3 className="text-base font-semibold text-center border-b pb-2">
-              {visiblePages[currentPageIndex].page_header}
-            </h3>
+            {options.map((option) => (
+              <SelectItem key={option} value={option}>
+                {option}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      );
+    }
 
-            <div className="flex-none space-y-6 px-2 py-2">
-              {visiblePages[currentPageIndex].fields.map(
-                (field: {
-                  type: string;
-                  label: string;
-                  value: string;
-                  field_id?: string;
-                  signature_type?: string;
-                  quantity?: number;
-                  discount?: number;
-                  editable_by_member?: boolean;
-                  visible?: boolean;
-                }) => {
-                  // Hide fields that were removed from the form and have no value for this user
+    if (inputType === "CHECKBOX") {
+      return (
+        <div className="flex min-h-11 items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+          <Checkbox
+            checked={editValue === "true"}
+            onCheckedChange={(checked) => setEditValue(checked ? "true" : "false")}
+          />
+          <span className="text-sm text-slate-700">{metadata?.placeholder || field.label}</span>
+        </div>
+      );
+    }
+
+    if (inputType === "NUMBER") {
+      return (
+        <Input
+          autoFocus
+          type="number"
+          value={editValue}
+          onChange={(event) => setEditValue(event.target.value)}
+          className="border-slate-200 bg-white shadow-sm"
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              handleSave(field);
+            } else if (event.key === "Escape") {
+              handleCancelEdit();
+            }
+          }}
+        />
+      );
+    }
+
+    if (isPhoneNumber) {
+      return (
+        <div className="flex flex-col gap-3 md:flex-row">
+          <Select value={countryCode} onValueChange={setCountryCode}>
+            <SelectTrigger className="w-full border-slate-200 bg-white text-sm shadow-sm md:w-[160px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {countryCodes.map((country) => (
+                <SelectItem key={country.code} value={country.code}>
+                  {country.dialingCode} {country.code}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            autoFocus
+            type="tel"
+            value={editValue}
+            onChange={(event) => {
+              let nextValue = event.target.value;
+
+              if (nextValue.startsWith("0") && nextValue.length > 1) {
+                nextValue = nextValue.substring(1);
+              }
+
+              const digitsOnly = nextValue.replace(/\D/g, "");
+
+              if (digitsOnly.length <= 15) {
+                setEditValue(nextValue);
+              }
+            }}
+            placeholder="Phone number"
+            className="border-slate-200 bg-white shadow-sm"
+            maxLength={20}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                handleSave(field);
+              } else if (event.key === "Escape") {
+                handleCancelEdit();
+              }
+            }}
+          />
+        </div>
+      );
+    }
+
+    return (
+      <Input
+        autoFocus
+        value={editValue}
+        onChange={(event) => setEditValue(event.target.value)}
+        className="border-slate-200 bg-white shadow-sm"
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            handleSave(field);
+          } else if (event.key === "Escape") {
+            handleCancelEdit();
+          }
+        }}
+      />
+    );
+  };
+
+  const renderFieldValue = (field: RegistrationField) => {
+    const metadata = fieldMetadata[field.label];
+    const displayValue = updatedFieldValues[field.label] ?? field.value;
+
+    if (field.type === "STANDARD_SIGNATURE") {
+      if (field.signature_type === "signature") {
+        return (
+          <img
+            src={displayValue}
+            alt="User signature"
+            className="max-w-xs border-b-2 border-slate-400 pb-2"
+          />
+        );
+      }
+
+      return (
+        <p className="border-b-2 border-slate-400 pb-2 font-[cursive] text-lg text-slate-700">
+          {displayValue}
+        </p>
+      );
+    }
+
+    if (field.type === "STANDARD_OTHER") {
+      if (editingFieldId === field.label) {
+        return renderEditableInput(field);
+      }
+
+      if (metadata?.input_type === "CHECKBOX") {
+        const checked = displayValue === "true";
+
+        return (
+          <div
+            className={cn(
+              "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium",
+              checked
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                : "border-rose-200 bg-rose-50 text-rose-700",
+            )}
+          >
+            <span
+              className={cn(
+                "flex h-5 w-5 items-center justify-center rounded-full border text-xs",
+                checked
+                  ? "border-emerald-500 bg-emerald-100 text-emerald-700"
+                  : "border-rose-500 bg-rose-100 text-rose-700",
+              )}
+            >
+              {checked ? "✓" : "✗"}
+            </span>
+            {checked ? "Yes" : "No"}
+          </div>
+        );
+      }
+
+      return <p className="text-sm leading-6 text-slate-700">{displayValue || "-"}</p>;
+    }
+
+    if (field.type === "BILLING") {
+      return (
+        <div className="space-y-2">
+          <p className="text-sm font-medium leading-6 text-slate-800">{displayValue || "-"}</p>
+          {field.discount ? (
+            <Badge className="border-emerald-200 bg-emerald-50 text-emerald-800">
+              {field.discount}% off
+            </Badge>
+          ) : null}
+        </div>
+      );
+    }
+
+    if (field.type === "TEXT") {
+      const cleaned = field.label
+        .replace(/<ol>(\s*<li[^>]*data-list="bullet"[^>]*>[\s\S]*?)<\/ol>/g, "<ul>$1</ul>")
+        .replace(/<span class="ql-ui"[^>]*><\/span>/g, "");
+
+      return (
+        <div
+          className="prose prose-sm max-w-none text-slate-700 [&_ol]:ml-5 [&_ol]:list-inside [&_ol]:list-decimal [&_ul]:ml-5 [&_ul]:list-inside [&_ul]:list-disc"
+          dangerouslySetInnerHTML={{ __html: cleaned }}
+        />
+      );
+    }
+
+    if (field.type === "DNE") {
+      return <p className="text-sm italic text-slate-500">Not filled in by member.</p>;
+    }
+
+    return <p className="text-sm leading-6 text-slate-700">{displayValue || "-"}</p>;
+  };
+
+  return (
+    <div className="flex w-full flex-col items-center gap-4 bg-gradient-to-b from-gray-50 to-white px-3 py-4 lg:px-4 lg:gap-8 lg:py-10">
+      <div className="w-full max-w-4xl">
+        <Card className="overflow-hidden border-0 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)]">
+          <CardHeader className="border-b border-slate-200 bg-white px-3 py-4 sm:px-6 sm:py-6 lg:px-10 lg:py-8">
+            <div className="flex flex-col items-center gap-3 text-center sm:gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-lg font-semibold text-slate-700 shadow-sm sm:h-20 sm:w-20 sm:text-2xl">
+                {clubName
+                  .split(" ")
+                  .map((word) => word[0])
+                  .join("")
+                  .slice(0, 2)}
+              </div>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Badge className={cn("border px-3 py-1 text-xs font-semibold", membershipTone.badgeClassName)}>
+                  {formatMembershipLabel(membershipStatus)}
+                </Badge>
+                <CardTitle className="text-xl font-bold text-slate-950 sm:text-2xl lg:text-4xl">
+                  {membershipStatus === "Resubmission required"
+                    ? `Review registration for ${clubName}`
+                    : `${clubName} registration`}
+                </CardTitle>
+                <CardDescription className="mx-auto max-w-2xl text-sm leading-5 text-slate-600 sm:leading-6 lg:text-base">
+                  {membershipTone.description}
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3 bg-white px-3 py-3 sm:space-y-4 sm:px-6 sm:py-6 lg:px-10 lg:py-8">
+            <div className={cn("rounded-2xl border px-3 py-3 sm:px-5 sm:py-4", membershipTone.panelClassName)}>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold">Current registration status</p>
+                  <p className="mt-1 text-sm leading-5 opacity-90 sm:leading-6">{membershipTone.description}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-left sm:min-w-[220px]">
+                  <div className="rounded-xl border border-white/70 bg-white/70 px-3 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] opacity-70">Pages</p>
+                    <p className="mt-1 text-lg font-semibold">{visiblePages.length}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/70 bg-white/70 px-3 py-2">
+                    <p className="text-[11px] uppercase tracking-[0.18em] opacity-70">Notes</p>
+                    <p className="mt-1 text-lg font-semibold">{visibleAdminNotes.length}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {deregReason ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-3 text-amber-950 sm:px-5 sm:py-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold">Why was this registration deregistered?</p>
+                    <p className="whitespace-pre-wrap text-sm leading-5 text-amber-900/90 sm:leading-6">{deregReason}</p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {memberTags.length > 0 ? (
+              <section className="rounded-2xl border border-slate-200 bg-slate-50/70">
+                <button
+                  type="button"
+                  onClick={() => setIsTagsOpen((currentValue) => !currentValue)}
+                  className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left sm:gap-4 sm:px-5 sm:py-4"
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Member tags</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Club-assigned tags and identifiers linked to this registration.
+                    </p>
+                  </div>
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+                      isTagsOpen ? "rotate-180" : "rotate-0",
+                    )}
+                  />
+                </button>
+                {isTagsOpen ? (
+                  <div className="border-t border-slate-200 px-3 py-3 sm:px-5 sm:py-4">
+                    <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                      {memberTags.map((tag) => (
+                        <Badge
+                          key={tag.id}
+                          className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700 shadow-sm"
+                        >
+                          <Tag className="h-3.5 w-3.5" />
+                          {tag.label}: {tag.value}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
+
+            {memberVariables.length > 0 ? (
+              <section className="rounded-2xl border border-slate-200 bg-slate-50/70">
+                <button
+                  type="button"
+                  onClick={() => setIsVariablesOpen((currentValue) => !currentValue)}
+                  className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left sm:gap-4 sm:px-5 sm:py-4"
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Additional information</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Extra club-managed information attached to your member profile.
+                    </p>
+                  </div>
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+                      isVariablesOpen ? "rotate-180" : "rotate-0",
+                    )}
+                  />
+                </button>
+                {isVariablesOpen ? (
+                  <div className="grid gap-2.5 border-t border-slate-200 px-3 py-3 sm:grid-cols-2 sm:px-5 sm:py-4">
+                    {memberVariables.map((variable, index) => (
+                      <div key={`${variable.name}-${index}`} className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm sm:px-4 sm:py-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                          {formatVariableName(variable.name)}
+                        </p>
+                        <p className="mt-1.5 text-sm leading-5 text-slate-700 sm:mt-2 sm:leading-6">
+                          {String(variable.value ?? "").trim() || "Does not exist for this member"}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
+
+            {visibleAdminNotes.length > 0 ? (
+              <section className="rounded-2xl border border-amber-200 bg-amber-50/60">
+                <button
+                  type="button"
+                  onClick={() => setIsAdminNotesOpen((currentValue) => !currentValue)}
+                  className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left sm:gap-4 sm:px-5 sm:py-4"
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-amber-950">Notes from club staff</p>
+                    <p className="mt-1 text-sm text-amber-900/70">
+                      Messages your club has chosen to make visible on your registration.
+                    </p>
+                  </div>
+                  <Badge className="border-amber-200 bg-white text-amber-800">
+                    {visibleAdminNotes.length}
+                  </Badge>
+                </button>
+                {isAdminNotesOpen ? (
+                  <div className="space-y-2.5 border-t border-amber-200 px-3 py-3 sm:space-y-3 sm:px-5 sm:py-4">
+                    {visibleAdminNotes.map((note: { id: string; title: string; content: string }) => (
+                      <div key={note.id} className="rounded-xl border border-amber-200 bg-white/80 px-3 py-2.5 shadow-sm sm:px-4 sm:py-3">
+                        <p className="text-sm font-semibold text-amber-950">{note.title}</p>
+                        <p className="mt-1.5 whitespace-pre-wrap text-sm leading-5 text-amber-900/85 sm:mt-2 sm:leading-6">
+                          {note.content}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
+          </CardContent>
+        </Card>
+      </div>
+
+      {currentPage ? (
+        <div id="registration-page-card" className="w-full max-w-4xl">
+          <Card className="overflow-hidden border-0 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)]">
+            <CardHeader className="border-b border-slate-200 bg-white px-3 py-4 sm:px-6 sm:py-6 lg:px-10 lg:py-8">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-4">
+                <div>
+                  <CardDescription className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                    Submitted registration form
+                  </CardDescription>
+                  <CardTitle className="mt-1.5 text-xl font-bold text-slate-950 sm:mt-2 sm:text-2xl">
+                    {currentPage.page_header}
+                  </CardTitle>
+                </div>
+                {visiblePages.length > 1 ? (
+                  <div className="text-sm text-slate-500">
+                    Page {currentPageIndex + 1} of {visiblePages.length}
+                  </div>
+                ) : null}
+              </div>
+            </CardHeader>
+            <CardContent className="bg-white px-3 py-3 sm:px-6 sm:py-6 lg:px-10 lg:py-8">
+              <div className="space-y-3 sm:space-y-4">
+                {currentPage.fields.map((field: RegistrationField, index: number) => {
                   if (field.visible === false && !field.value) {
                     return null;
                   }
 
-                  if (field.type === "STANDARD_SIGNATURE") {
-                    if (field.signature_type === "signature") {
-                      return (
-                        <div
-                          key={field.label}
-                          className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Label className="text-xs font-semibold text-muted-foreground">
-                              {field.label}
-                            </Label>
-                            {field.visible === false && (
-                              <span className="text-[10px] px-1.5 py-0.5 bg-orange-100 text-orange-700 border border-orange-300 rounded">
-                                Removed from registration form
-                              </span>
-                            )}
-                          </div>
-                          <img
-                            src={field.value}
-                            alt="User Signature"
-                            className="border-b-2 border-gray-400 max-w-xs"
-                          />
+                  const canEdit =
+                    membershipStatus !== "Resubmission required" &&
+                    field.field_id &&
+                    (field.editable_by_member === true ||
+                      fieldMetadata[field.label]?.editable_by_member === true) &&
+                    field.visible !== false;
+
+                  return (
+                    <div
+                      key={`${field.label}-${field.field_id || index}`}
+                      className={cn(
+                        "rounded-2xl border px-3 py-3 shadow-sm sm:px-5 sm:py-4",
+                        field.type === "TEXT"
+                          ? "border-blue-200 bg-blue-50/60"
+                          : field.type === "BILLING"
+                            ? "border-emerald-200 bg-emerald-50/40"
+                            : field.type === "DNE"
+                              ? "border-dashed border-slate-200 bg-slate-50"
+                              : "border-slate-200 bg-slate-50/70",
+                      )}
+                    >
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-4">
+                        <div className="min-w-0 flex-1 space-y-2.5 sm:space-y-3">
+                          {field.type !== "TEXT" ? (
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Label className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                {field.label}
+                                {field.type === "BILLING" && field.quantity ? ` (x${field.quantity})` : ""}
+                              </Label>
+                              {field.visible === false ? (
+                                <Badge className="border-orange-200 bg-orange-50 text-orange-700">
+                                  Removed from registration form
+                                </Badge>
+                              ) : null}
+                            </div>
+                          ) : null}
+                          {renderFieldValue(field)}
                         </div>
-                      );
-                    } else {
-                      return (
-                        <div
-                          key={field.label}
-                          className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Label className="text-xs font-semibold text-muted-foreground">
-                              {field.label}
-                            </Label>
-                            {field.visible === false && (
-                              <span className="text-[10px] px-1.5 py-0.5 bg-orange-100 text-orange-700 border border-orange-300 rounded">
-                                Removed from registration form
-                              </span>
-                            )}
-                          </div>
-                          <Label className="text-sm font-[cursive] border-b-2 border-gray-400 pb-1">
-                            {field.value}
-                          </Label>
-                        </div>
-                      );
-                    }
-                  }
 
-                  if (field.type === "STANDARD_OTHER") {
-                    const isEditing = editingFieldId === field.label;
-                    const displayValue = isEditing
-                      ? editValue
-                      : updatedFieldValues[field.label] ?? field.value;
-                    const metadata = fieldMetadata[field.label];
-
-                    const handleSave = async () => {
-                      setIsSaving(true);
-                      try {
-                        const fieldType = metadata?.input_type || "TEXT";
-                        const isPhoneNumber = metadata?.phone_number_input === true;
-
-                        // Validate required fields
-                        const validationError = validateFieldValue(
-                          field.label,
-                          editValue,
-                          metadata
-                        );
-                        if (validationError) {
-                          toast.error(validationError, {
-                            duration: 3000,
-                          });
-                          setIsSaving(false);
-                          return;
-                        }
-
-                        const typeParam = getStandardFieldType(fieldType);
-
-                        // For phone numbers, prepend the country dialing code
-                        let valueToSave = editValue;
-                        if (isPhoneNumber) {
-                          // Allow clearing the phone number if field is not required
-                          if (editValue.trim() === "") {
-                            valueToSave = "";
-                          } else {
-                            const dialingCode = getDialingCode(countryCode);
-                            // Remove leading 0 if present and combine without space
-                            const phoneWithoutLeadingZero = editValue.replace(/^0+/, '');
-                            valueToSave = `${dialingCode}${phoneWithoutLeadingZero}`;
-                          }
-                        }
-
-                        await updateMemberRegistrationField(
-                          data.registration_id,
-                          field.field_id || "",
-                          field.label,
-                          typeParam,
-                          valueToSave,
-                          metadata?.sensitive_information
-                        );
-
-                        toast.success(`${field.label} updated successfully`, {
-                          duration: 3000,
-                        });
-                        setUpdatedFieldValues((prev) => ({
-                          ...prev,
-                          [field.label]: valueToSave,
-                        }));
-                        setEditingFieldId(null);
-                      } catch (error) {
-                        console.error("Error updating field:", error);
-                        toast.error("Failed to update field", {
-                          duration: 3000,
-                        });
-                      } finally {
-                        setIsSaving(false);
-                      }
-                    };
-
-                    const handleEdit = async () => {
-                      if (!metadata && field.field_id) {
-                        setLoadingFieldId(field.label);
-                        try {
-                          const data = await fetchMemberRegistrationField(
-                            clubAccountId,
-                            field.field_id
-                          );
-                          setFieldMetadata((prev) => ({
-                            ...prev,
-                            [field.label]: data.field,
-                          }));
-                          setEditingFieldId(field.label);
-                          const valueToSet = updatedFieldValues[field.label] ?? field.value;
-                          
-                          // If it's a phone number, parse out the country code and number
-                          if (data.field?.phone_number_input === true) {
-                            // Try to match the phone number by checking against known dialing codes
-                            let phoneNumber = valueToSet;
-                            
-                            // Sort by dialing code length (longest first) to match longest first
-                            const sortedCodes = [...countryCodes].sort((a, b) => b.dialingCode.length - a.dialingCode.length);
-                            
-                            for (const country of sortedCodes) {
-                              if (valueToSet.startsWith(country.dialingCode)) {
-                                phoneNumber = valueToSet.substring(country.dialingCode.length);
-                                setCountryCode(country.code);
-                                break;
-                              }
-                            }
-                            
-                            setEditValue(phoneNumber);
-                          } else {
-                            setEditValue(valueToSet);
-                          }
-                        } catch (error) {
-                          console.error("Error loading field metadata:", error);
-                          toast.error("Failed to load field", { duration: 2000 });
-                        } finally {
-                          setLoadingFieldId(null);
-                        }
-                      } else {
-                        setEditingFieldId(field.label);
-                        const valueToSet = updatedFieldValues[field.label] ?? field.value;
-                        
-                        // If it's a phone number, parse out the country code and number
-                        if (metadata?.phone_number_input === true) {
-                          // Try to match the phone number by checking against known dialing codes
-                          let phoneNumber = valueToSet;
-                          
-                          // Sort by dialing code length (longest first) to match longest first
-                          const sortedCodes = [...countryCodes].sort((a, b) => b.dialingCode.length - a.dialingCode.length);
-                          
-                          for (const country of sortedCodes) {
-                            if (valueToSet.startsWith(country.dialingCode)) {
-                              phoneNumber = valueToSet.substring(country.dialingCode.length);
-                              setCountryCode(country.code);
-                              break;
-                            }
-                          }
-                          
-                          setEditValue(phoneNumber);
-                        } else {
-                          setEditValue(valueToSet);
-                        }
-                      }
-                    };
-
-                    const renderInput = () => {
-                      const inputType = metadata?.input_type || "TEXT";
-                      const options = metadata?.options || [];
-                      const isPhoneNumber = metadata?.phone_number_input === true;
-
-                      if (inputType === "DROPDOWN") {
-                        const handleDropdownChange = (val: string) => {
-                          // If "undefined" is selected and field is not required, clear the value
-                          const valueToSet = val === "undefined" ? "" : val
-                          setEditValue(valueToSet)
-                        }
-
-                        return (
-                          <Select
-                            value={editValue || "undefined"}
-                            onValueChange={handleDropdownChange}
-                          >
-                            <SelectTrigger className="w-full text-sm">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {!metadata?.required && (
-                                <SelectItem value="undefined" className="text-muted-foreground">
-                                  -- Not Selected --
-                                </SelectItem>
-                              )}
-                              {options.map((option: string) => (
-                                <SelectItem key={option} value={option}>
-                                  {option}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        );
-                      } else if (inputType === "CHECKBOX") {
-                        return (
-                          <div className="flex items-center gap-2">
-                            <Checkbox
-                              checked={editValue === "true"}
-                              onCheckedChange={(checked) => {
-                                setEditValue(checked ? "true" : "false");
-                              }}
-                            />
-                            {metadata?.placeholder}
-                          </div>
-                        );
-                      } else if (inputType === "NUMBER") {
-                        return (
-                          <Input
-                            autoFocus
-                            type="number"
-                            value={editValue}
-                            onChange={(e) => setEditValue(e.target.value)}
-                            className="text-sm"
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                handleSave();
-                              } else if (e.key === "Escape") {
-                                setEditingFieldId(null);
-                                setEditValue("");
-                              }
-                            }}
-                          />
-                        );
-                      } else if (isPhoneNumber) {
-                        return (
-                          <div className="flex gap-2">
-                            <Select
-                              value={countryCode}
-                              onValueChange={setCountryCode}
-                            >
-                              <SelectTrigger className="w-[130px] text-sm">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {countryCodes.map((country) => (
-                                  <SelectItem key={country.code} value={country.code}>
-                                    {country.dialingCode} {country.code}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <Input
-                              autoFocus
-                              type="tel"
-                              value={editValue}
-                              onChange={(e) => {
-                                let value = e.target.value;
-                                // Remove leading 0 if the user starts with it
-                                if (value.startsWith("0") && value.length > 1) {
-                                  value = value.substring(1);
-                                }
-                                const digitsOnly = value.replace(/\D/g, "");
-                                // Allow max 15 digits for phone numbers
-                                if (digitsOnly.length <= 15) {
-                                  setEditValue(value);
-                                }
-                              }}
-                              placeholder="Phone number"
-                              className="text-sm flex-1"
-                              maxLength={20}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  handleSave();
-                                } else if (e.key === "Escape") {
-                                  setEditingFieldId(null);
-                                  setEditValue("");
-                                }
-                              }}
-                            />
-                          </div>
-                        );
-                      } else {
-                        return (
-                          <Input
-                            autoFocus
-                            value={editValue}
-                            onChange={(e) => setEditValue(e.target.value)}
-                            className="text-sm"
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                handleSave();
-                              } else if (e.key === "Escape") {
-                                setEditingFieldId(null);
-                                setEditValue("");
-                              }
-                            }}
-                          />
-                        );
-                      }
-                    };
-
-                    return (
-                      <div
-                        key={field.label}
-                        className="flex items-center justify-between group"
-                      >
-                        <div className="flex-1 flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg relative">
-                          {field.visible === false && (
-                            <span className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 bg-orange-100 text-orange-700 border border-orange-300 rounded">
-                              Removed from registration form
-                            </span>
-                          )}
-                          <div className="flex items-center gap-2">
-                            <Label className="text-xs font-semibold text-muted-foreground">
-                              {field.label}
-                            </Label>
-                          </div>
-                          {isEditing ? (
-                            renderInput()
-                          ) : (
-                            <>
-                              {metadata?.input_type === "CHECKBOX" ? (
-                                <div className="flex items-center gap-2">
-                                  {displayValue === "true" ? (
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-5 h-5 rounded border-2 border-green-600 bg-green-100 flex items-center justify-center">
-                                        <span className="text-green-700 font-bold text-xs">
-                                          ✓
-                                        </span>
-                                      </div>
-                                      <span className="text-sm text-green-700 font-medium">
-                                        Yes
-                                      </span>
-                                    </div>
-                                  ) : (
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-5 h-5 rounded border-2 border-red-600 bg-red-100 flex items-center justify-center">
-                                        <span className="text-red-700 font-bold text-xs">
-                                          ✗
-                                        </span>
-                                      </div>
-                                      <span className="text-sm text-red-500 font-medium">
-                                        No
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
-                              ) : (
-                                <Label className="text-sm border-b-2 border-gray-300 pb-1">
-                                  {displayValue}
-                                </Label>
-                              )}
-                            </>
-                          )}
-                        </div>
-                        {membershipStatus !== "Resubmission required" &&
-                          field.field_id &&
-                          (field.editable_by_member === true || metadata?.editable_by_member === true) &&
-                          field.visible !== false && (
-                            <div className="flex gap-1 ml-2 opacity-30 group-hover:opacity-100 transition-opacity">
-                              {isEditing ? (
-                                <>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={handleSave}
-                                    disabled={isSaving}
-                                    className="h-8 w-8 p-0"
-                                    title="Save"
-                                  >
-                                    <Check className="h-4 w-4 text-green-600" />
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                      setEditingFieldId(null);
-                                      setEditValue("");
-                                    }}
-                                    disabled={isSaving}
-                                    className="h-8 w-8 p-0"
-                                    title="Cancel"
-                                  >
-                                    <X className="h-4 w-4 text-red-600" />
-                                  </Button>
-                                </>
-                              ) : (
+                        {canEdit ? (
+                          <div className="flex shrink-0 items-center gap-2 lg:ml-4">
+                            {editingFieldId === field.label ? (
+                              <>
                                 <Button
                                   type="button"
-                                  variant="outline"
                                   size="sm"
-                                  onClick={handleEdit}
-                                  disabled={loadingFieldId === field.label}
-                                  className="h-8 w-8 p-0"
-                                  title="Update this field"
+                                  variant="outline"
+                                  className="border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                                  onClick={() => handleSave(field)}
+                                  disabled={isSaving}
                                 >
-                                  {loadingFieldId === field.label ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <PencilIcon className="h-4 w-4" />
-                                  )}
+                                  <Check className="mr-1 h-4 w-4" />
+                                  Save
                                 </Button>
-                              )}
-                            </div>
-                          )}
-                      </div>
-                    );
-                  }
-
-                  if (field.type === "BILLING") {
-                    return (
-                      <div
-                        key={field.label}
-                        className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg border"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Label className="text-xs font-semibold text-muted-foreground">
-                              {field.label}{" "}
-                              {field.quantity ? `(x${field.quantity})` : null}
-                            </Label>
-                            {field.visible === false && (
-                              <span className="text-[10px] px-1.5 py-0.5 bg-orange-100 text-orange-700 border border-orange-300 rounded">
-                                Removed from registration form
-                              </span>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+                                  onClick={handleCancelEdit}
+                                  disabled={isSaving}
+                                >
+                                  <X className="mr-1 h-4 w-4" />
+                                  Cancel
+                                </Button>
+                              </>
+                            ) : (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
+                                onClick={() => handleEdit(field)}
+                                disabled={loadingFieldId === field.label}
+                              >
+                                {loadingFieldId === field.label ? (
+                                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                                ) : (
+                                  <PencilIcon className="mr-1 h-4 w-4" />
+                                )}
+                                Update
+                              </Button>
                             )}
                           </div>
-                          {field.discount && (
-                            <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-1 rounded">
-                              {field.discount}% off
-                            </span>
-                          )}
-                        </div>
-                        <Label className="text-sm font-medium border-b-2 border-gray-300 pb-1">
-                          {field.value}
-                        </Label>
+                        ) : null}
                       </div>
-                    );
-                  }
-
-                  if (field.type === "TEXT") {
-                    const cleaned = field.label
-                      .replace(
-                        /<ol>(\s*<li[^>]*data-list="bullet"[^>]*>[\s\S]*?)<\/ol>/g,
-                        "<ul>$1</ul>"
-                      )
-                      .replace(/<span class="ql-ui"[^>]*><\/span>/g, "");
-
-                    return (
-                      <div
-                        key={field.label}
-                        className="prose prose-sm max-w-none text-gray-700 p-3 bg-muted/10 rounded-lg text-sm [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5"
-                        dangerouslySetInnerHTML={{ __html: cleaned }}
-                      />
-                    );
-                  }
-
-                  if (field.type === "DNE") {
-                    return (
-                      <div
-                        key={field.label}
-                        className="flex flex-col gap-1.5 p-3 bg-gray-50 rounded-lg border border-dashed"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Label className="text-xs font-semibold text-muted-foreground">
-                            {field.label}
-                          </Label>
-                          {field.visible === false && (
-                            <span className="text-[10px] px-1.5 py-0.5 bg-orange-100 text-orange-700 border border-orange-300 rounded">
-                              Removed from registration form
-                            </span>
-                          )}
-                        </div>
-                        <Label className="text-xs italic text-gray-500">
-                          Not filled in by member.
-                        </Label>
-                      </div>
-                    );
-                  }
-                }
-              )}
-            </div>
-
-            {visiblePages.length > 1 && (
-              <div className="flex justify-between items-center pt-3 border-t">
-                {currentPageIndex > 0 ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="w-[90px]"
-                    onClick={() => {
-                      setCurrentPageIndex((i) => i - 1);
-                      document
-                        .getElementById("registration-card-header")
-                        ?.scrollIntoView({
-                          behavior: "smooth",
-                          block: "start",
-                        });
-                    }}
-                  >
-                    Previous
-                  </Button>
-                ) : (
-                  <div />
-                )}
-
-                <div className="text-xs text-muted-foreground">
-                  Page {currentPageIndex + 1} of {visiblePages.length}
-                </div>
-
-                {currentPageIndex < visiblePages.length - 1 ? (
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="w-[90px]"
-                    onClick={() => {
-                      setCurrentPageIndex((i) => i + 1);
-                      document
-                        .getElementById("registration-card-header")
-                        ?.scrollIntoView({
-                          behavior: "smooth",
-                          block: "start",
-                        });
-                    }}
-                  >
-                    Next
-                  </Button>
-                ) : (
-                  <div />
-                )}
+                    </div>
+                  );
+                })}
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+
+              {visiblePages.length > 1 ? (
+                <div className="mt-5 flex flex-col gap-2.5 border-t border-slate-200 pt-4 sm:mt-8 sm:gap-3 sm:pt-6 sm:flex-row sm:items-center sm:justify-between">
+                  {currentPageIndex > 0 ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-9 border-slate-200 bg-white px-3 text-sm text-slate-700 hover:bg-slate-50"
+                      onClick={() => {
+                        setCurrentPageIndex((value) => value - 1);
+                        document.getElementById("registration-page-card")?.scrollIntoView({
+                          behavior: "smooth",
+                          block: "start",
+                        });
+                      }}
+                    >
+                      <ChevronLeft className="mr-1 h-4 w-4" />
+                      Previous
+                    </Button>
+                  ) : (
+                    <div className="hidden sm:block" />
+                  )}
+
+                  <div className="text-center text-sm text-slate-500">
+                    Page {currentPageIndex + 1} of {visiblePages.length}
+                  </div>
+
+                  {currentPageIndex < visiblePages.length - 1 ? (
+                    <Button
+                      type="button"
+                      className="h-9 bg-black px-3 text-sm text-white hover:bg-slate-900"
+                      onClick={() => {
+                        setCurrentPageIndex((value) => value + 1);
+                        document.getElementById("registration-page-card")?.scrollIntoView({
+                          behavior: "smooth",
+                          block: "start",
+                        });
+                      }}
+                    >
+                      Next
+                      <ChevronRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <div className="hidden sm:block" />
+                  )}
+                </div>
+              ) : null}
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
     </div>
   );
 }

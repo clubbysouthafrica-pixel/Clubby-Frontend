@@ -240,6 +240,7 @@ export function ReusableRegistrationForm({
                                 key={field.field_id}
                                 field={field}
                                 currentPageIndex={currentPageIndex}
+                                pages={pages}
                                 setFieldValue={setFieldValue}
                               />
                             );

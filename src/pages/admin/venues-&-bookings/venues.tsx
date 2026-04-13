@@ -36,7 +36,6 @@ export default function VenuesPage() {
   const [isCreatingVenue, setIsCreatingVenue] = useState(false);
   const [dialogError, setDialogError] = useState<string | null>(null);
   const [editingVenue, setEditingVenue] = useState<any | null>(null);
-  const [venuesEnabled, setVenuesEnabled] = useState(true);
   const [isTogglingVenues, setIsTogglingVenues] = useState(false);
   const [showVenuesSettings, setShowVenuesSettings] = useState(false);
   const [search, setSearch] = useState("");
@@ -53,9 +52,6 @@ export default function VenuesPage() {
         setError(null);
         const data = await getVenues(club.club_account_id);
         setVenues(data.venues || []);
-        if (data.venues_enabled !== undefined) {
-          setVenuesEnabled(data.venues_enabled);
-        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to fetch venues");
         console.error("Error fetching venues:", err);
@@ -120,7 +116,6 @@ export default function VenuesPage() {
             : "Bookings disabled successfully",
         );
         setClub({ ...club, venues_enabled: enabled });
-        setVenuesEnabled(enabled);
       } else {
         toast.error("Failed to update bookings settings");
       }
@@ -137,17 +132,17 @@ export default function VenuesPage() {
 
   return (
     <div className="bg-gray-50 h-full">
-      <div className="bg-white border-b">
-        <div className="flex items-center justify-between max-w-7xl mx-auto w-full p-6">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Venues Management
-            </h1>
-            <p className="text-muted-foreground">
-              Manage your club's venues for bookings.
-            </p>
-          </div>
-          <div className="flex gap-2">
+      <div className="flex items-center justify-between bg-white border-b p-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Venues Management
+          </h1>
+          <p className="text-muted-foreground">
+            Manage your club's venues for bookings.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {club?.venues_enabled && (
             <Button
               onClick={() => setShowVenuesSettings(true)}
               variant="outline"
@@ -157,38 +152,41 @@ export default function VenuesPage() {
             >
               <Settings className="h-4 w-4" />
             </Button>
-            <Button
-              onClick={() => {
-                setEditingVenue(null);
-                setIsDialogOpen(true);
-              }}
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Create Venue
-            </Button>
-          </div>
+          )}
+          <Button
+            onClick={() => {
+              setEditingVenue(null);
+              setIsDialogOpen(true);
+            }}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Create Venue
+          </Button>
         </div>
       </div>
       <div className="p-6 space-y-6 max-w-7xl mx-auto">
         {!club?.venues_enabled && (
-          <Card className="mb-6 border-orange-200 bg-orange-50">
-            <CardContent className="py-3 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <AlertCircle className="h-5 w-5 text-orange-600" />
-                <div>
-                  <p className="font-semibold text-orange-900">
-                    Bookings are currently disabled
+          <Card className="mb-6 overflow-hidden border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 shadow-sm p-0">
+            <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-300 bg-amber-100">
+                  <AlertCircle className="h-4 w-4 text-amber-700" />
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-sm font-semibold text-amber-950 sm:text-base">
+                    Venues and Bookings are currently disabled
                   </p>
-                  <p className="text-sm text-orange-700">
-                    Enable bookings to allow members to book your venues
+                  <p className="max-w-2xl text-sm leading-snug text-amber-800">
+                    Enable your venues to make them visible to members and start
+                    receiving bookings.
                   </p>
                 </div>
               </div>
               <Button
                 onClick={() => handleToggleVenues(true)}
+                className="w-full bg-amber-700 text-white hover:bg-amber-800 sm:w-auto"
                 disabled={isTogglingVenues}
-                className="bg-orange-600 hover:bg-orange-700 text-white"
               >
                 {isTogglingVenues ? (
                   <>
@@ -196,44 +194,11 @@ export default function VenuesPage() {
                     Enabling...
                   </>
                 ) : (
-                  "Enable Bookings"
+                  "Enable Venues"
                 )}
               </Button>
             </CardContent>
           </Card>
-        )}
-
-        {/* Legacy Venues Toggle Section - Removed */}
-        {false && (
-          <div className="rounded-lg border-2 p-6 bg-blue-50 border-blue-200">
-            <div className="flex items-start justify-between">
-              <div className="space-y-2 flex-1">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Enable Venues Booking
-                </h2>
-                <p className="text-sm text-gray-600">
-                  When enabled, members will be able to view and book specific
-                  venues at the times you configure. They'll see available time
-                  slots and can reserve them according to your venue's settings.
-                </p>
-              </div>
-              <Button
-                onClick={() => handleToggleVenues(!venuesEnabled)}
-                variant={venuesEnabled ? "default" : "outline"}
-                className="ml-4 whitespace-nowrap gap-2"
-                disabled={venues.length === 0 || isTogglingVenues}
-              >
-                {isTogglingVenues ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    {venuesEnabled ? "Disabling..." : "Enabling..."}
-                  </>
-                ) : (
-                  <>{venuesEnabled ? "Enabled" : "Disabled"}</>
-                )}
-              </Button>
-            </div>
-          </div>
         )}
 
         {loading && (

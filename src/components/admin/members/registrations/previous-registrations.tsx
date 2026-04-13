@@ -51,6 +51,40 @@ interface PreviousMembersListProps {
   setDeregisteredMembersLength: React.Dispatch<React.SetStateAction<number>>;
 }
 
+const getRegistrationKey = (member: Pick<ClubMember, "registration_id" | "user_id">) =>
+  member.registration_id || member.user_id;
+
+const getRegistrationPaymentStatus = (member: ClubMember) => {
+  const totalFee = member.total_fee || 0;
+  const outstandingAmount = member.outstanding_amount || 0;
+
+  if (totalFee <= 0) {
+    return {
+      label: "No fee",
+      className: "border-slate-200 bg-slate-100 text-slate-700",
+    };
+  }
+
+  if (outstandingAmount <= 0) {
+    return {
+      label: "Paid",
+      className: "border-green-200 bg-green-100 text-green-800",
+    };
+  }
+
+  if (outstandingAmount < totalFee) {
+    return {
+      label: "Partially paid",
+      className: "border-amber-200 bg-amber-100 text-amber-800",
+    };
+  }
+
+  return {
+    label: "Not paid",
+    className: "border-orange-200 bg-orange-100 text-orange-800",
+  };
+};
+
 export default function PreviousMembersList({
   sensors,
   sortableId,
@@ -65,7 +99,10 @@ export default function PreviousMembersList({
   onShowArchivedChange,
 }: PreviousMembersListProps) {
   // Use raw clubMembers.deregistered - backend already handles pagination and member_name/member_id filtering
-  const baseDeregisteredMembers = clubMembers?.deregistered || [];
+  const baseDeregisteredMembers = useMemo<ClubMember[]>(
+    () => clubMembers?.deregistered || [],
+    [clubMembers?.deregistered],
+  );
   const [deregSortAsc, setDeregSortAsc] = useState<boolean | null>(null);
   const [memberNameSortAsc, setMemberNameSortAsc] = useState<boolean | null>(
     null,
@@ -75,6 +112,9 @@ export default function PreviousMembersList({
   const [selectedMembersToRemove, setSelectedMembersToRemove] = useState<
     ClubMember[]
   >([]);
+  const [removedRegistrationKeys, setRemovedRegistrationKeys] = useState<string[]>(
+    [],
+  );
   const [localArchivedToggle, setLocalArchivedToggle] = useState<
     Record<string, boolean | undefined>
   >({});
@@ -82,11 +122,14 @@ export default function PreviousMembersList({
     useArchiveRegistrationMutation();
 
   const sortedDeregisteredMembers = useMemo(() => {
-    let sortedCopy = [...baseDeregisteredMembers];
+    let sortedCopy = baseDeregisteredMembers.filter(
+      (member: ClubMember) =>
+        !removedRegistrationKeys.includes(getRegistrationKey(member)),
+    );
 
     // Filter out locally archived entries (only when not showing archived)
     if (!showArchived) {
-      sortedCopy = sortedCopy.filter((member) => {
+      sortedCopy = sortedCopy.filter((member: ClubMember) => {
         const isArchived =
           localArchivedToggle[member.user_id] !== undefined
             ? localArchivedToggle[member.user_id]
@@ -129,12 +172,19 @@ export default function PreviousMembersList({
     deregSortAsc,
     memberNameSortAsc,
     totalFeeSortAsc,
+    removedRegistrationKeys,
     localArchivedToggle,
+    showArchived,
   ]);
 
   useEffect(() => {
-    setDeregisteredMembersLength(baseDeregisteredMembers.length);
-  }, [baseDeregisteredMembers, setDeregisteredMembersLength]);
+    setDeregisteredMembersLength(
+      baseDeregisteredMembers.filter(
+        (member: ClubMember) =>
+          !removedRegistrationKeys.includes(getRegistrationKey(member)),
+      ).length,
+    );
+  }, [baseDeregisteredMembers, removedRegistrationKeys, setDeregisteredMembersLength]);
 
   return (
     <>
@@ -168,7 +218,7 @@ export default function PreviousMembersList({
                 <TableHead className="text-center w-[120px] py-2 flex-shrink-0 sticky left-0 z-20 bg-muted">
                   Actions
                 </TableHead>
-                <TableHead className="text-center w-[150px]">
+                <TableHead className="text-center w-[220px]">
                   <button
                     type="button"
                     className="inline-flex items-center gap-1 hover:underline w-full justify-center"
@@ -214,9 +264,6 @@ export default function PreviousMembersList({
                       </span>
                     )}
                   </button>
-                </TableHead>
-                <TableHead className="text-center w-[150px]">
-                  Amount Paid
                 </TableHead>
                 <TableHead className="text-center w-[150px]">
                   <button
@@ -383,18 +430,32 @@ export default function PreviousMembersList({
                       {member.member_email === "n/a" ? <span className="text-gray-400">n/a</span> : member.member_email}
                     </TableCell>
                     <TableCell className="text-center w-[150px]">
-                      {member?.total_fee ? (
-                        formatAmount(member.total_fee, club?.currency)
-                      ) : (
-                        <span className="text-gray-400">n/a</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center w-[150px]">
-                      {member?.total_fee ? (
-                        formatAmount(member.total_fee - (member.outstanding_amount || 0), club?.currency)
-                      ) : (
-                        <span className="text-gray-400">n/a</span>
-                      )}
+                      {(() => {
+                        const paymentStatus = getRegistrationPaymentStatus(member);
+                        const totalFee = member.total_fee || 0;
+                        const outstandingAmount = member.outstanding_amount || 0;
+                        const amountPaid = Math.max(totalFee - outstandingAmount, 0);
+
+                        if (!totalFee) {
+                          return <span className="text-gray-400">n/a</span>;
+                        }
+
+                        return (
+                          <div className="flex flex-col items-center gap-2 text-center">
+                            <Badge className={paymentStatus.className}>
+                              {paymentStatus.label}
+                            </Badge>
+                            <div className="space-y-1 text-xs text-muted-foreground">
+                              <p className="font-medium text-foreground">
+                                Paid: {formatAmount(amountPaid, club?.currency)}
+                              </p>
+                              <p>
+                                Total: {formatAmount(totalFee, club?.currency)}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell className="text-center w-[150px]">
                       {member.missing_club_member && (
@@ -440,10 +501,32 @@ export default function PreviousMembersList({
                         }
 
                         if (column.type === "standard") {
-                          const standardField = member.meta_standard?.find(
-                            (f: any) => f.field_name === column.field_name,
+                          const standardFields = Array.isArray(member.meta_standard)
+                            ? member.meta_standard
+                            : Object.values(member.meta_standard ?? {});
+                          const standardField = standardFields.find(
+                            (f: any) =>
+                              f.field_name === column.field_name ||
+                              f.field_id === column.field_id,
                           );
                           columnValue = standardField?.value || "N/A";
+                        }
+
+                        if (column.type === "club_variable") {
+                          const clubVariableKey = column.key?.startsWith("club_variable:")
+                            ? column.key.replace("club_variable:", "")
+                            : column.field_id || column.field_name;
+                          const clubVariables = Array.isArray(member.meta_club_variables)
+                            ? member.meta_club_variables
+                            : Object.values(member.meta_club_variables ?? {});
+                          const clubVariable = clubVariables.find(
+                            (f: any) =>
+                              f.name === clubVariableKey ||
+                              f.field_name === clubVariableKey ||
+                              f.field_name === column.field_name ||
+                              f.name === column.field_id,
+                          );
+                          columnValue = clubVariable?.value || "N/A";
                         }
 
                         return (
@@ -479,17 +562,24 @@ export default function PreviousMembersList({
           open={openRemoveDialog}
           onOpenChange={setOpenRemoveDialog}
           members={selectedMembersToRemove}
-          onRemoveSuccess={() => {
-            setlistActionItems(
-              listActionItems.filter(
+          onRemoveSuccess={(removedMembers) => {
+            const removedKeys = removedMembers.map((member) =>
+              getRegistrationKey(member),
+            );
+
+            setRemovedRegistrationKeys((prev) => [
+              ...prev,
+              ...removedKeys.filter((key) => !prev.includes(key)),
+            ]);
+            setlistActionItems((prev) =>
+              prev.filter(
                 (item) =>
-                  !selectedMembersToRemove.some(
+                  !removedMembers.some(
                     (member) => member.member_email === item.email,
                   ),
               ),
             );
             setSelectedMembersToRemove([]);
-            window.location.reload();
           }}
         />
       </div>

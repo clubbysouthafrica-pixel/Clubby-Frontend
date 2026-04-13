@@ -146,7 +146,7 @@ export default function RegistrationsPage() {
       field_id?: string;
       field_name: string;
       type: string;
-      options: string[];
+      options?: string[];
     }[]
   >([]);
   const [activeFilterKeys, setActiveFilterKeys] = useState<string[]>([]);
@@ -337,6 +337,8 @@ export default function RegistrationsPage() {
         const filterObj = value as any;
         actualValue = String(filterObj.value || "");
         condition = filterObj.operator || filterConditions[key];
+      } else if (fieldType === "club_variable") {
+        inputType = "text";
       } else if (
         options.length === 2 &&
         options.includes("true") &&
@@ -351,7 +353,7 @@ export default function RegistrationsPage() {
       }
 
       const filterObj: any = {
-        field_id: `reg_field_${fieldId}`,
+        field_id: fieldType === "club_variable" ? fieldId : `reg_field_${fieldId}`,
         type: fieldType,
         input_type: inputType,
         value: actualValue,
@@ -771,7 +773,11 @@ export default function RegistrationsPage() {
                               );
                             }
 
-                            if (!options) {
+                            if (
+                              type === "club_variable" ||
+                              !options ||
+                              options.length === 0
+                            ) {
                               return (
                                 <div
                                   key={key}

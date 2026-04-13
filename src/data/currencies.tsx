@@ -28,14 +28,18 @@ export const currencies: Currency[] = [
  * @param currencyCode - e.g., 'USD'
  */
 export function formatAmount(
-    amountCents: number,
+    amountCents?: number | null,
     currencyCode?: string
   ): string {
     const currency = currencies.find(c => c.code === currencyCode);
-    const amount = amountCents / 100;
+    const safeAmountCents =
+      typeof amountCents === "number" && Number.isFinite(amountCents)
+        ? amountCents
+        : 0;
+    const amount = safeAmountCents / 100;
   
     if (!currency) {
-      return `${currencyCode ?? ""} ${amount.toFixed(2)}`;
+      return `${currencyCode ? `${currencyCode} ` : ""}${amount.toFixed(2)}`;
     }
   
     return `${currency.symbol}${amount.toFixed(2)}`;

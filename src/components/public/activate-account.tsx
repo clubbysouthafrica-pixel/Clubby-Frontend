@@ -9,7 +9,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { FormEvent, useState, useContext } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { AuthContext, AuthContextType } from "@/context/AuthContext.tsx";
+import { AuthContext, AuthContextType } from "@/context/AuthContext";
 import { Input } from "@/components/ui/input.tsx";
 import { Alert, AlertDescription } from "@/components/ui/alert.tsx";
 import { AlertCircle } from "lucide-react";

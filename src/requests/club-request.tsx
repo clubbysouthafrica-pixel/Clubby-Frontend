@@ -9,6 +9,7 @@ export interface ClubPayFastDetailsRequest {
   merchant_id: string;
   merchant_key: string;
   passphrase?: string;
+  auto_register_members_if_paid?: boolean;
 }
 
 export interface ClubLocationDetailsRequest {
@@ -22,8 +23,15 @@ export interface ClubOpeningTimesRequest {
   closed: boolean;
 }
 
+export interface ClubVariableRequest {
+  name: string;
+  key: string;
+  visible: boolean;
+}
+
 export interface ClubDetailsRequest {
   club_account_id: string;
+  auto_register_members_if_paid?: boolean;
   opening_times?: ClubOpeningTimesRequest[];
   bank_details?: ClubBankDetailsRequest;
   payfast_details?: ClubPayFastDetailsRequest;
@@ -36,6 +44,7 @@ export interface ClubDetailsRequest {
   instagram_url?: string;
   hide_from_public?: boolean;
   enable_shop?: boolean;
+  enable_events?: boolean;
   venues_enabled?: boolean;
   registration_submission_email_template_body?: string;
   registration_submission_email_subject?: string;
@@ -44,4 +53,5 @@ export interface ClubDetailsRequest {
   use_success_email_template?: boolean;
   use_submission_email_template?: boolean;
   notify_on_member_registration?: boolean;
+  club_variables?: ClubVariableRequest[];
 }

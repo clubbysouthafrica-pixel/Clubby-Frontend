@@ -1,7 +1,7 @@
-import { Label } from "@/components/ui/label"
 import { useRef, useState } from "react";
 import SignaturePad from "react-signature-canvas";
 import { useIsMobile } from "@/hooks/use-mobile";
+import RequiredLabel from "./required-label";
 
 interface Field {
     field_id: string
@@ -79,9 +79,9 @@ export default function StandardSignature({
         <div className="w-full" key={field.field_id}>
             <div className={`flex ${isMobile ? 'flex-col gap-2' : 'flex-row gap-0 items-stretch'}`}>
                 <div className={`${isMobile ? 'w-full text-left' : 'pr-5 flex-shrink-0 flex items-center'}`}>
-                    <Label onClick={save} className={`${isMobile ? 'text-base text-left font-medium text-gray-900' : 'text-base font-medium text-gray-900'} mb-0`}>
+                    <RequiredLabel required={field.required} className={`${isMobile ? 'text-base text-left font-medium text-gray-900' : 'text-base font-medium text-gray-900'} mb-0`}>
                         {field.field_name}:
-                    </Label>
+                    </RequiredLabel>
                 </div>
 
                 <div className={`${isMobile ? 'flex flex-col gap-3' : 'flex flex-row gap-4 items-start'} flex-1`}>

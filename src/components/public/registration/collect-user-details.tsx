@@ -89,7 +89,7 @@ export function CollectUserDetails({
               setEmail(e.target.value);
               setError(undefined);
             }}
-            className="text-sm pr-10"
+            className="pr-10 text-base md:text-sm"
             required
           />
           {email && (
@@ -117,7 +117,7 @@ export function CollectUserDetails({
               setConfirmEmail(e.target.value);
               setError(undefined);
             }}
-            className="text-sm pr-10"
+            className="pr-10 text-base md:text-sm"
             required
           />
           {confirmEmail && (
@@ -147,7 +147,7 @@ export function CollectUserDetails({
             setFirstName(formatName(e.target.value));
             setError(undefined);
           }}
-          className="text-sm"
+          className="text-base md:text-sm"
           required
         />
       </div>
@@ -167,7 +167,7 @@ export function CollectUserDetails({
             setSurname(formatName(e.target.value));
             setError(undefined);
           }}
-          className="text-sm"
+          className="text-base md:text-sm"
           required
         />
       </div>

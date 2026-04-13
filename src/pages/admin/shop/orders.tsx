@@ -1,5 +1,5 @@
 import { Fragment, useContext, useEffect, useState, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  Bell,
+  CreditCard,
+  Package,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -44,12 +45,12 @@ import {
   refundOrRemoveOrder,
   updateAdminOrderFulfillment,
 } from "@/services/admin-features/orders";
-import { updateClubDetails } from "@/services/admin/club";
 import { formatAmount } from "@/data/currencies";
 import { Label } from "@/components/ui/label";
 
 export default function OrdersPage() {
-  const { club, setClub } = useContext(ClubContext) as ClubContextType;
+  const { club } = useContext(ClubContext) as ClubContextType;
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   // Parse URL query params first
@@ -118,11 +119,18 @@ export default function OrdersPage() {
   const [isProcessingDelete, setIsProcessingDelete] = useState(false);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [showPendingDropdown, setShowPendingDropdown] = useState(false);
+  const [showPendingPaymentsDropdown, setShowPendingPaymentsDropdown] =
+    useState(false);
   const [selectedDeliveryItems, setSelectedDeliveryItems] = useState<
     Set<string>
   >(new Set());
   const [isConfirmingDelivery, setIsConfirmingDelivery] = useState(false);
-  const [isEnablingShop, setIsEnablingShop] = useState(false);
+
+  const pendingPaymentOrders = allOrders.filter(
+    (order) =>
+      order.payment_status === "PENDING" ||
+      order.payment_status === "PARTIALLY_PAID",
+  );
 
   // Calculate total undelivered items
   const undeliveredItems = allOrders
@@ -199,6 +207,7 @@ export default function OrdersPage() {
             "0";
       setSelectedPaymentType(String(methodId));
     }
+    setShowPendingPaymentsDropdown(false);
     setPaymentDialogOpen(true);
   };
 
@@ -506,31 +515,6 @@ export default function OrdersPage() {
     }
   };
 
-  const handleEnableShop = async () => {
-    if (!club?.club_account_id) return;
-
-    try {
-      setIsEnablingShop(true);
-      const response = await updateClubDetails({
-        club_account_id: club.club_account_id,
-        enable_shop: true,
-      });
-
-      if (response?.message) {
-        toast.success("Shop enabled successfully");
-        // Update the club context with the new enable_shop value
-        setClub({ ...club, enable_shop: true });
-      } else {
-        toast.error("Failed to enable shop");
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Error enabling shop");
-      console.error("Error enabling shop:", err);
-    } finally {
-      setIsEnablingShop(false);
-    }
-  };
-
   return (
     <div className="p-5">
       <div className="mb-4">
@@ -539,32 +523,26 @@ export default function OrdersPage() {
       </div>
 
       {!club?.enable_shop && (
-        <Card className="mb-6 border-orange-200 bg-orange-50">
-          <CardContent className="py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 text-orange-600" />
-              <div>
-                <p className="font-semibold text-orange-900">
+        <Card className="mb-6 overflow-hidden border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 shadow-sm p-0">
+          <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-300 bg-amber-100">
+                <AlertCircle className="h-4 w-4 text-amber-700" />
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-sm font-semibold text-amber-950 sm:text-base">
                   Shop is currently disabled
                 </p>
-                <p className="text-sm text-orange-700">
-                  Enable your shop to make it visible to members and start receiving orders
+                <p className="max-w-2xl text-sm leading-snug text-amber-800">
+                  Enable your shop to make it visible to members and start receiving orders.
                 </p>
               </div>
             </div>
             <Button
-              onClick={handleEnableShop}
-              disabled={isEnablingShop}
-              className="bg-orange-600 hover:bg-orange-700 text-white"
+              onClick={() => navigate("/shop/products")}
+              className="w-full bg-amber-700 text-white hover:bg-amber-800 sm:w-auto"
             >
-              {isEnablingShop ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Enabling...
-                </>
-              ) : (
-                "Enable Shop"
-              )}
+              Go to Shop
             </Button>
           </CardContent>
         </Card>
@@ -680,11 +658,14 @@ export default function OrdersPage() {
       <div className="flex items-center gap-4 mb-4">
         <div className="relative">
           <button
-            onClick={() => setShowPendingDropdown(!showPendingDropdown)}
+            onClick={() => {
+              setShowPendingDropdown(!showPendingDropdown);
+              setShowPendingPaymentsDropdown(false);
+            }}
             className="relative p-2 mr-5 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
             title="Pending deliveries"
           >
-            <Bell className="h-6 w-6 text-gray-600" />
+            <Package className="h-6 w-6 text-gray-600" />
             {undeliveredItems.length > 0 && (
               <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
                 {undeliveredItems.length}
@@ -817,6 +798,116 @@ export default function OrdersPage() {
             </div>
           )}
         </div>
+
+        <div className="relative">
+          <button
+            onClick={() => {
+              setShowPendingPaymentsDropdown(!showPendingPaymentsDropdown);
+              setShowPendingDropdown(false);
+            }}
+            className="relative p-2 mr-5 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+            title="Pending payments"
+          >
+            <CreditCard className="h-6 w-6 text-gray-600" />
+            {pendingPaymentOrders.length > 0 && (
+              <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                {pendingPaymentOrders.length}
+              </span>
+            )}
+          </button>
+
+          {showPendingPaymentsDropdown && (
+            <div className="absolute top-full left-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto">
+              <div className="sticky top-0 z-10 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+                <h3 className="font-semibold text-gray-900">
+                  Pending Payments ({pendingPaymentOrders.length})
+                </h3>
+                <button
+                  onClick={() => setShowPendingPaymentsDropdown(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {pendingPaymentOrders.length === 0 ? (
+                <div className="p-4 text-center text-sm text-gray-500">
+                  No pending payments.
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {pendingPaymentOrders.map((order) => {
+                    const remainingAmount =
+                      (order.total_amount || 0) - (order.amount_paid || 0);
+
+                    return (
+                      <div
+                        key={order.order_id}
+                        className="p-4 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <p className="font-medium text-sm text-gray-900">
+                              {`${order.first_name} ${order.surname}`}
+                            </p>
+                            <div className="flex items-center gap-1">
+                              <p className="text-xs text-gray-500">
+                                Transaction:{" "}
+                                <span className="font-mono">
+                                  {order.transaction_id
+                                    ?.substring(0, 8)
+                                    .toUpperCase()}
+                                </span>
+                              </p>
+                              {order.transaction_id && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(
+                                      order.transaction_id,
+                                    );
+                                    setCopiedTransactionId(order.transaction_id);
+                                    setTimeout(
+                                      () => setCopiedTransactionId(null),
+                                      2000,
+                                    );
+                                  }}
+                                  title="Copy full Transaction ID"
+                                  className="h-4 w-4 p-0 opacity-75 hover:opacity-100 transition-opacity"
+                                >
+                                  {copiedTransactionId === order.transaction_id ? (
+                                    <CheckCircle2 className="h-3 w-3 text-green-600" />
+                                  ) : (
+                                    <Copy className="h-3 w-3" />
+                                  )}
+                                </Button>
+                              )}
+                            </div>
+                            <p className="text-xs text-orange-700 font-medium">
+                              Outstanding: {formatAmount(remainingAmount, club?.currency)}
+                            </p>
+                          </div>
+
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handlePayNowClick(order)}
+                            className="h-8 gap-1.5 text-red-600"
+                          >
+                            <CreditCard className="h-3.5 w-3.5" />
+                            Confirm
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         <h2 className="text-xl font-medium text-gray-700">
           Showing <span className="font-bold">{allOrders.length}</span> items
         </h2>
@@ -1043,17 +1134,6 @@ export default function OrdersPage() {
                         </TableCell>
                         <TableCell className="text-center">
                           <div className="flex flex-col items-center justify-center gap-2">
-                            {(order.payment_status === "PENDING" ||
-                              order.payment_status === "PARTIALLY_PAID") && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handlePayNowClick(order)}
-                                className="text-xs h-7 text-red-600"
-                              >
-                                Confirm Payment
-                              </Button>
-                            )}
                             {order.fulfillment_status === "NOT_PROCESSED" ? (
                               <Button
                                 size="sm"

@@ -1,11 +1,6 @@
 import { useState, useEffect, useContext, useRef } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  AlertCircle,
-  Loader2,
-  Settings,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +22,9 @@ import { updateClubDetails } from "@/services/admin/club";
 
 export default function BookingsPage() {
   const { club, setClub } = useContext(ClubContext) as ClubContextType;
+
+  const navigate = useNavigate();
+
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(() => {
     const today = new Date();
     const day = today.getDay();
@@ -499,45 +497,31 @@ export default function BookingsPage() {
             Manage your club's bookings for venues.
           </p>
         </div>
-        <Button
-          onClick={() => setShowVenuesSettings(true)}
-          variant="outline"
-          size="sm"
-          className="text-gray-600 hover:text-gray-900"
-          title="Bookings settings"
-        >
-          <Settings className="h-4 w-4" />
-        </Button>
       </div>
 
       <div className="p-6 space-y-4">
         {!club?.venues_enabled && (
-          <Card className="mb-6 border-orange-200 bg-orange-50">
-            <CardContent className="py-3 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <AlertCircle className="h-5 w-5 text-orange-600" />
-                <div>
-                  <p className="font-semibold text-orange-900">
-                    Bookings are currently disabled
+          <Card className="mb-6 overflow-hidden border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 shadow-sm p-0">
+            <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-300 bg-amber-100">
+                  <AlertCircle className="h-4 w-4 text-amber-700" />
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-sm font-semibold text-amber-950 sm:text-base">
+                    Venues and bookings are currently disabled
                   </p>
-                  <p className="text-sm text-orange-700">
-                    Enable bookings to allow members to book your venues
+                  <p className="max-w-2xl text-sm leading-snug text-amber-800">
+                    Enable your venues to make them visible to members and start
+                    receiving bookings.
                   </p>
                 </div>
               </div>
               <Button
-                onClick={() => handleToggleVenues(true)}
-                disabled={isTogglingVenues}
-                className="bg-orange-600 hover:bg-orange-700 text-white"
+                onClick={() => navigate("/venues")}
+                className="w-full bg-amber-700 text-white hover:bg-amber-800 sm:w-auto"
               >
-                {isTogglingVenues ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Enabling...
-                  </>
-                ) : (
-                  "Enable Bookings"
-                )}
+                Go to Venues
               </Button>
             </CardContent>
           </Card>

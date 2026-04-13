@@ -1,8 +1,8 @@
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useState } from "react"
 import { countryCodes, validatePhoneNumber } from "@/data/country-codes"
+import RequiredLabel from "./required-label"
 
 interface Field {
   field_id: string
@@ -138,9 +138,9 @@ export default function StandardText({
   if (isPhoneNumber) {
     return (
       <div className="space-y-2" key={field.field_id}>
-        <Label htmlFor={field.field_id} className="block text-base font-medium text-gray-900">
+        <RequiredLabel htmlFor={field.field_id} required={field.required} className="block text-base font-medium text-gray-900">
           {field.field_name}{" "}
-        </Label>
+        </RequiredLabel>
         <div className="flex gap-2">
           <Select value={countryCode} onValueChange={setCountryCode}>
             <SelectTrigger className="w-[100px] border border-gray-300 rounded-md px-3 py-2.5 text-base font-normal">
@@ -179,9 +179,9 @@ export default function StandardText({
 
   return (
     <div className="space-y-2" key={field.field_id}>
-      <Label htmlFor={field.field_id} className="block text-base font-medium text-gray-900">
+      <RequiredLabel htmlFor={field.field_id} required={field.required} className="block text-base font-medium text-gray-900">
         {field.field_name}
-      </Label>
+      </RequiredLabel>
       <Input
         id={field.field_id}
         type={isNumber ? "number" : "text"}

@@ -12,11 +12,11 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button.tsx";
 import { ChevronDown, Menu, X, User, Sparkles } from "lucide-react";
 import { useContext, useState } from "react";
-import { AuthContext, AuthContextType } from "@/context/AuthContext.tsx";
+import { AuthContext } from "@/context/AuthContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,11 +45,20 @@ const components: { title: string; href: string; description: string }[] = [
 ];
 
 export default function Header() {
-  const { user, logout } = useContext(AuthContext) as AuthContextType;
+  const authContext = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const user = authContext?.user ?? null;
+  const logout = authContext?.logout;
+
   const signOut = () => {
+    if (!logout) {
+      navigate("/login", { replace: true });
+      return;
+    }
+
     logout();
     navigate("/login");
   };
@@ -58,7 +67,7 @@ export default function Header() {
     key: "q",
     modifiers: ["cmd", "shift"],
     description: "logout",
-    callback: () => logout(),
+    callback: () => logout?.(),
   });
   useKeyboardShortcut({
     key: "b",
@@ -78,6 +87,10 @@ export default function Header() {
     description: "Open Profile",
     callback: () => navigate("/profile"),
   });
+
+  if (!authContext && location.pathname === "/login") {
+    return null;
+  }
 
   return (
     <nav

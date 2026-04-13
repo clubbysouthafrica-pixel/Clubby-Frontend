@@ -1,6 +1,6 @@
 import { useContext } from 'react'
 import { BrowserRouter as Router } from 'react-router-dom';
-import { AuthContext } from "@/context/AuthContext.tsx";
+import { AuthContext } from "@/context/AuthContext";
 import MarketLayout from "@/layouts/market/MarketLayout.tsx";
 import MarketRoutes from "@/layouts/market/MarketRoutes.tsx";
 import AdminLayout from "@/layouts/admin/AdminLayout.tsx";

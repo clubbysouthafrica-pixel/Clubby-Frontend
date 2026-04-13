@@ -28,11 +28,9 @@ export function NavMain({
     url: string
     icon?: LucideIcon
     isActive?: boolean
-    hasMissingFields?: boolean
     items?: {
       title: string
       url: string
-      hasMissingFields?: boolean
     }[]
   }[]
 }) {
@@ -85,9 +83,6 @@ export function NavMain({
                 >
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
-                  {item.hasMissingFields && (
-                    <span className="text-red-500 font-bold text-lg ml-1">*</span>
-                  )}
                   <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                 </SidebarMenuButton>
               </CollapsibleTrigger>
@@ -98,9 +93,6 @@ export function NavMain({
                           <SidebarMenuSubButton asChild isActive={subItem.url === pathname}>
                             <Link to={subItem.url} className="flex items-center">
                               <span>{subItem.title}</span>
-                              {subItem.hasMissingFields && (
-                                <span className="text-red-500 font-bold text-lg ml-1">*</span>
-                              )}
                             </Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>

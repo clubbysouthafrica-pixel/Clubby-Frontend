@@ -11,10 +11,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useContext, useState, useEffect, useRef } from "react";
-import { AuthContext, AuthContextType } from "@/context/AuthContext.tsx";
+import { AuthContext, AuthContextType } from "@/context/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert.tsx";
 import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 import { AxiosError } from "axios";
+import {
+  getPortalRedirectTarget,
+  getSafeRedirectTarget,
+  isRedirectTargetValidForPortal,
+} from "@/services/auth-session";
 
 export function LoginForm({
   className,
@@ -28,6 +33,7 @@ export function LoginForm({
   const queryEmail = searchParams.get("email");
   const queryTempPassword = searchParams.get("tempPassword");
   const loginType = searchParams.get("login");
+  const redirectTarget = getSafeRedirectTarget(searchParams.get("redirect"));
   
   const [isAdminLogin, setAdminLogin] = useState(loginType === "admin");
   const [loading, setLoading] = useState(false);
@@ -37,6 +43,20 @@ export function LoginForm({
   const [password, setPassword] = useState<string>(queryTempPassword || "");
   const [showPassword, setShowPassword] = useState(false);
   const autoSubmitRef = useRef(false);
+
+  useEffect(() => {
+    const portal = isAdminLogin ? "admin" : "member";
+
+    if (!searchParams.has("redirect") || isRedirectTargetValidForPortal(redirectTarget, portal)) {
+      return;
+    }
+
+    const nextSearchParams = new URLSearchParams(searchParams);
+    nextSearchParams.delete("redirect");
+
+    const nextQuery = nextSearchParams.toString();
+    navigate(nextQuery ? `/login?${nextQuery}` : "/login", { replace: true });
+  }, [isAdminLogin, navigate, redirectTarget, searchParams]);
 
   const signIn = async (emailParam?: string, passwordParam?: string) => {
     const emailToUse = emailParam || email;
@@ -62,11 +82,14 @@ export function LoginForm({
       } else {
         if (isAdminLogin) {
           localStorage.setItem("isAdmin", "true");
-          navigate("/", { replace: true });
+          navigate(getPortalRedirectTarget(redirectTarget, "admin"), { replace: true });
           return;
         }
 
-        navigate(onboarded ? "/" : "/onboardMember", { replace: true });
+        navigate(
+          onboarded ? getPortalRedirectTarget(redirectTarget, "member") : "/onboardMember",
+          { replace: true },
+        );
       }
     } catch (e: unknown) {
       if (!e) {
@@ -180,7 +203,11 @@ export function LoginForm({
                           <div className="flex items-center">
                             <Label htmlFor="password">Password</Label>
                             <Link
-                              to="/forgotpassword"
+                              to={
+                                isAdminLogin
+                                  ? "/forgotpassword?admin=true"
+                                  : "/forgotpassword"
+                              }
                               className="ml-auto text-xs underline-offset-4 hover:underline"
                             >
                               Forgot your password?

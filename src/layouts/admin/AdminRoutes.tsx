@@ -1,12 +1,8 @@
-import { Route, Routes } from "react-router-dom";
-import RegisterPage from "@/pages/public/login/register/page";
+import { Navigate, Route, Routes } from "react-router-dom";
 import MyClubsPage from "@/pages/member/my-clubs";
-import OTPPage from "@/pages/public/login/otp/page";
 import ContactPage from "@/pages/public/contact-us";
 import GetStartedPage from "@/pages/public/get-started";
 import AboutPage from "@/pages/public/about";
-import ForgotPasswordPage from "@/pages/public/login/password/PasswordResetRequest";
-import PasswordResetPage from "@/pages/public/login/password/PasswordReset";
 import SettingsPage from "@/pages/shared-admin-&-member/user-settings";
 import ProtectedRoute from "@/guards/ProtectedRoute.tsx";
 import AdminRegistrationFormPage from "@/pages/admin/registration-form/create-form";
@@ -18,7 +14,6 @@ import GeneralReportingPage from "@/pages/admin/reporting/general-reporting";
 import ShopReportingPage from "@/pages/admin/reporting/shop-reporting";
 import FinancialTransactionsPage from "@/pages/admin/reporting/financial-transactions";
 import AddMemberPage from "@/pages/admin/members/add-member/add-member";
-import LoginPage from "@/pages/public/login/login";
 import TermsPage from "@/pages/public/terms";
 import PrivacyPage from "@/pages/public/privacy";
 import ShopPage from "@/pages/admin/shop/shop";
@@ -31,10 +26,17 @@ import VenuesPage from "@/pages/admin/venues-&-bookings/venues";
 import BookingsPage from "@/pages/admin/venues-&-bookings/bookings";
 import StorageAdmin from "@/pages/admin/storage-requests/storage";
 import StorageRequestsAdmin from "@/pages/admin/storage-requests/storage-requests";
+import EventsPage from "@/pages/admin/events/events";
+import EventRegistrationsPage from "@/pages/admin/events/registrations";
 
 export default function AdminRoutes() {
   return (
-    <Routes>
+    <Route>
+      <Route path="/login" element={<Navigate to="/" replace />}></Route>
+      <Route path="/register" element={<Navigate to="/" replace />}></Route>
+      <Route path="/forgotpassword" element={<Navigate to="/" replace />}></Route>
+      <Route path="/resetpassword" element={<Navigate to="/" replace />}></Route>
+      <Route path="/otp" element={<Navigate to="/" replace />}></Route>
       <Route
         path="/"
         element={
@@ -45,11 +47,6 @@ export default function AdminRoutes() {
       ></Route>
       <Route path="/terms" element={<TermsPage />}></Route>
       <Route path="/privacy" element={<PrivacyPage />}></Route>
-      <Route path="/login" element={<LoginPage />}></Route>
-      <Route path="/register" element={<RegisterPage />}></Route>
-      <Route path="/forgotpassword" element={<ForgotPasswordPage />}></Route>
-      <Route path="/resetpassword" element={<PasswordResetPage />}></Route>
-      <Route path="/otp" element={<OTPPage />}></Route>
       <Route path="/about" element={<AboutPage />}></Route>
       <Route path="/getstarted" element={<GetStartedPage />}></Route>
       <Route path="/contactus" element={<ContactPage />}></Route>
@@ -212,6 +209,22 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <StorageRequestsAdmin />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/events"
+        element={
+          <ProtectedRoute>
+            <EventsPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/events/registrations"
+        element={
+          <ProtectedRoute>
+            <EventRegistrationsPage />
           </ProtectedRoute>
         }
       ></Route>

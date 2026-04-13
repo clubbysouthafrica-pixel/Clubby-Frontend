@@ -6,6 +6,7 @@ import {
   BarChart,
   ShoppingBag,
   MapPin,
+  CalendarDays,
   BoxIcon,
 } from "lucide-react";
 import { NavMain } from "@/components/nav-main";
@@ -28,6 +29,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navigate = useNavigate();
   const { club, setClub } = React.useContext(ClubContext) as ClubContextType;
   const { data: clubData, isLoading: loadingClubs } = useFetchAdminClubs();
+  const syncedClubSummaryRef = React.useRef<string | null>(null);
 
   const { isAdmin } = React.useContext(AuthContext) as AuthContextType;
   const { data: profile } = useGetProfileQuery(isAdmin);
@@ -54,8 +56,62 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Auto-set the first club when clubs are loaded after login
   React.useEffect(() => {
-    if (!club && clubData?.data?.items && clubData.data.items.length > 0) {
-      setClub(clubData.data.items[0]);
+    const adminClubs = clubData?.data?.items;
+
+    if (!adminClubs || adminClubs.length === 0) {
+      return;
+    }
+
+    if (!club) {
+      setClub(adminClubs[0]);
+      return;
+    }
+
+    const latestClub = adminClubs.find(
+      (item: (typeof adminClubs)[number]) =>
+        item.club_account_id === club.club_account_id,
+    );
+
+    if (!latestClub) {
+      return;
+    }
+
+    const latestClubSummaryKey = [
+      latestClub.club_account_id,
+      latestClub.club_name,
+      latestClub.club_type,
+      latestClub.currency,
+      latestClub.onboarded,
+      latestClub.season_cycle,
+      latestClub.deregistration_in_progress,
+      latestClub.enable_shop,
+      latestClub.enable_events,
+      latestClub.venues_enabled,
+      latestClub.access,
+    ].join("|");
+
+    const shouldSyncClubSummary =
+      club.club_name !== latestClub.club_name ||
+      club.club_type !== latestClub.club_type ||
+      club.currency !== latestClub.currency ||
+      club.onboarded !== latestClub.onboarded ||
+      club.season_cycle !== latestClub.season_cycle ||
+      club.deregistration_in_progress !==
+        latestClub.deregistration_in_progress ||
+      club.enable_shop !== latestClub.enable_shop ||
+      club.enable_events !== latestClub.enable_events ||
+      club.venues_enabled !== latestClub.venues_enabled ||
+      club.access !== latestClub.access;
+
+    if (
+      shouldSyncClubSummary &&
+      syncedClubSummaryRef.current !== latestClubSummaryKey
+    ) {
+      syncedClubSummaryRef.current = latestClubSummaryKey;
+      setClub({
+        ...club,
+        ...latestClub,
+      });
     }
   }, [clubData, club, setClub]);
 
@@ -68,24 +124,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         title: "Club",
         url: "/manage/club",
         icon: HomeIcon,
-        hasMissingFields: Boolean(
-          club &&
-          (!club.country_exists ||
-            !club.currency_exists ||
-            !club.bank_details_exists),
-        ),
         items: [
           { title: "Home", url: "/" },
-          {
-            title: "Manage Club",
-            url: "/manage/club",
-            hasMissingFields: Boolean(
-              club &&
-              (!club.country_exists ||
-                !club.currency_exists ||
-                !club.bank_details_exists),
-            ),
-          },
+          { title: "Manage Club", url: "/manage/club" },
         ],
       },
       {
@@ -117,6 +158,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ],
       },
       {
+        title: "Events",
+        url: "/events",
+        icon: CalendarDays,
+        items: [
+          { title: "Events", url: "/events" },
+          { title: "Registrations", url: "/events/registrations" },
+        ],
+      },
+      {
         title: "Storage & Requests",
         url: "/venues",
         icon: BoxIcon,
@@ -129,18 +179,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         title: "Registration form",
         url: "/manage/registrations",
         icon: UserPlusIcon,
-        hasMissingFields: Boolean(
-          club && club.registration_form_exists === false,
-        ),
-        items: [
-          {
-            title: "Create Form",
-            url: "/manage/registrations/forms",
-            hasMissingFields: Boolean(
-              club && club.registration_form_exists === false,
-            ),
-          },
-        ],
+        items: [{ title: "Create Form", url: "/manage/registrations/forms" }],
       },
       {
         title: "Reporting",

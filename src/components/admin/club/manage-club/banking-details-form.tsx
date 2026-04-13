@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -25,7 +26,10 @@ import {
   useResetPayFastDetailsMutation,
   useUpdatePayFastDetailsMutation,
 } from "@/mutations/admin/payfast";
-import { useUpdateCustomPaymentMethodsMutation } from "@/mutations/admin/club";
+import {
+  useUpdateClubDetailsMutation,
+  useUpdateCustomPaymentMethodsMutation,
+} from "@/mutations/admin/club";
 import { useQueryClient } from "@tanstack/react-query";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 
@@ -42,10 +46,19 @@ interface CustomPaymentIntegration {
   url: string;
 }
 
+interface PayFastDetails {
+  merchant_id?: string;
+  merchant_key?: string;
+  passphrase?: string;
+  auto_register_members_if_paid?: boolean;
+}
+
 interface BankingDetailsFormProps {
   club_account_id?: string;
   bankDetails?: BankDetails;
+  payfastDetails?: PayFastDetails;
   payfastEnabled?: boolean;
+  autoRegisterMembersIfPaid?: boolean;
   customPaymentMethods?: Array<{ name: string; url: string }>;
   onSave: (data: { bank_details: Required<BankDetails> }) => void;
   isPending?: boolean;
@@ -55,9 +68,11 @@ interface BankingDetailsFormProps {
 export function BankingDetailsForm({
   club_account_id,
   bankDetails,
+  payfastDetails,
   payfastEnabled = false,
   customPaymentMethods = [],
   onSave,
+  autoRegisterMembersIfPaid: initialAutoRegisterMembersIfPaid = false,
   isPending = false,
   onCompletionChange,
 }: BankingDetailsFormProps) {
@@ -69,6 +84,10 @@ export function BankingDetailsForm({
     useUpdatePayFastDetailsMutation();
   const { mutate: mutateResetPayFast, isPending: resetPayFastLoading } =
     useResetPayFastDetailsMutation();
+  const {
+    mutate: mutateUpdateClubDetails,
+    isPending: updateClubDetailsLoading,
+  } = useUpdateClubDetailsMutation();
   const {
     mutate: mutateUpdateCustomPayments,
     isPending: updateCustomPaymentsLoading,
@@ -82,6 +101,10 @@ export function BankingDetailsForm({
   const [payfastMerchantId, setPayfastMerchantId] = useState("");
   const [payfastMerchantKey, setPayfastMerchantKey] = useState("");
   const [payfastPassphrase, setPayfastPassphrase] = useState("");
+  const [autoRegisterMembersIfPaid, setAutoRegisterMembersIfPaid] =
+    useState(false);
+  const [savedAutoRegisterMembersIfPaid, setSavedAutoRegisterMembersIfPaid] =
+    useState(false);
   const [activeTab, setActiveTab] = useState<"eft" | "payfast" | "custom">(
     "eft",
   );
@@ -118,7 +141,20 @@ export function BankingDetailsForm({
       );
       onCompletionChange?.(isComplete);
     }
-  }, [bankDetails, customPaymentMethods, onCompletionChange]);
+    if (payfastDetails) {
+      setPayfastMerchantId(payfastDetails.merchant_id || "");
+      setPayfastMerchantKey(payfastDetails.merchant_key || "");
+      setPayfastPassphrase(payfastDetails.passphrase || "");
+    }
+    setAutoRegisterMembersIfPaid(initialAutoRegisterMembersIfPaid);
+    setSavedAutoRegisterMembersIfPaid(initialAutoRegisterMembersIfPaid);
+  }, [
+    bankDetails,
+    customPaymentMethods,
+    onCompletionChange,
+    payfastDetails,
+    initialAutoRegisterMembersIfPaid,
+  ]);
 
   useEffect(() => {
     // Check if all EFT fields are filled in
@@ -148,24 +184,88 @@ export function BankingDetailsForm({
     return msg ?? e?.message ?? "An unexpected error occurred";
   };
 
+  const payfastToggleValueChanged =
+    autoRegisterMembersIfPaid !== savedAutoRegisterMembersIfPaid;
+
+  const isSavePayFastDisabled =
+    updatePayFastLoading ||
+    updateClubDetailsLoading ||
+    (payfastEnabled && !payfastToggleValueChanged);
+
   const handleSavePayFast = async () => {
-    mutateUpdatePayFast(
-      {
-        club_account_id: clubAccountId,
+    const payfastPayload = {
+      club_account_id: clubAccountId,
+      ...((!payfastEnabled || payfastMerchantId) && {
         merchant_id: payfastMerchantId,
+      }),
+      ...((!payfastEnabled || payfastMerchantKey) && {
         merchant_key: payfastMerchantKey,
+      }),
+      ...((!payfastEnabled || payfastPassphrase) && {
         passphrase: payfastPassphrase,
-      },
-      {
-        onSuccess: async () => {
-          toast.success("PayFast merchant is connected.");
-          await queryClient.invalidateQueries({
-            queryKey: ["getClubDetails", clubAccountId],
-          });
+      }),
+    };
+
+    const saveAutoRegisterSetting = () => {
+      if (!payfastToggleValueChanged) {
+        return queryClient.invalidateQueries({
+          queryKey: ["getClubDetails", clubAccountId],
+        });
+      }
+
+      return new Promise<void>((resolve, reject) => {
+        mutateUpdateClubDetails(
+          {
+            club_account_id: clubAccountId,
+            auto_register_members_if_paid: autoRegisterMembersIfPaid,
+          },
+          {
+            onSuccess: async () => {
+              setSavedAutoRegisterMembersIfPaid(autoRegisterMembersIfPaid);
+              resolve();
+            },
+            onError: (error) => {
+              reject(error);
+            },
+          },
+        );
+      });
+    };
+
+    if (!payfastEnabled && !payfastMerchantId && !payfastMerchantKey) {
+      toast.error("Please enter your PayFast merchant ID and merchant key.");
+      return;
+    }
+
+    if (!payfastEnabled) {
+      mutateUpdatePayFast(
+        payfastPayload,
+        {
+          onSuccess: async () => {
+            try {
+              await saveAutoRegisterSetting();
+              toast.success("PayFast settings saved.");
+            } catch (error) {
+              toast.error(getApiErrorMessage(error));
+            }
+          },
+          onError: (error) => toast.error(getApiErrorMessage(error)),
         },
-        onError: (error) => toast.error(getApiErrorMessage(error)),
-      },
-    );
+      );
+      return;
+    }
+
+    if (!payfastToggleValueChanged) {
+      toast.success("No PayFast setting changes to save.");
+      return;
+    }
+
+    try {
+      await saveAutoRegisterSetting();
+      toast.success("PayFast settings saved.");
+    } catch (error) {
+      toast.error(getApiErrorMessage(error));
+    }
   };
 
   const handleResetPayFast = async () => {
@@ -311,72 +411,74 @@ export function BankingDetailsForm({
             )}
           </Button>
         )}
-        {activeTab === "payfast" &&
-          (payfastEnabled ? (
-            <>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setResetDialogOpen(true)}
-                disabled={resetPayFastLoading}
-              >
-                <RefreshCw className="mr-2 h-4 w-4" /> Reset PayFast
-              </Button>
-              <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Reset PayFast details?</DialogTitle>
-                    <DialogDescription>
-                      This will remove your saved PayFast credentials and
-                      disconnect PayFast from your club. You can reconfigure at
-                      any time.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <UIDialogFooter>
-                    <Button
-                      variant="outline"
-                      type="button"
-                      onClick={() => setResetDialogOpen(false)}
-                      disabled={resetPayFastLoading}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      type="button"
-                      onClick={handleResetPayFast}
-                      disabled={resetPayFastLoading}
-                    >
-                      {resetPayFastLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Resetting...
-                        </>
-                      ) : (
-                        "Confirm reset"
-                      )}
-                    </Button>
-                  </UIDialogFooter>
-                </DialogContent>
-              </Dialog>
-            </>
-          ) : (
+        {activeTab === "payfast" && (
+          <div className="flex items-center gap-2">
             <Button
               type="button"
               variant="outline"
               onClick={handleSavePayFast}
-              disabled={updatePayFastLoading}
+              disabled={isSavePayFastDisabled}
             >
-              {updatePayFastLoading ? (
+              {updatePayFastLoading || updateClubDetailsLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Saving...
                 </>
               ) : (
-                "Save PayFast details"
+                "Save PayFast settings"
               )}
             </Button>
-          ))}
+            {payfastEnabled && (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setResetDialogOpen(true)}
+                  disabled={resetPayFastLoading}
+                >
+                  <RefreshCw className="h-4 w-4" /> Remove PayFast
+                </Button>
+                <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Reset PayFast details?</DialogTitle>
+                      <DialogDescription>
+                        This will remove your saved PayFast credentials and
+                        disconnect PayFast from your club. You can reconfigure at
+                        any time.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <UIDialogFooter>
+                      <Button
+                        variant="outline"
+                        type="button"
+                        onClick={() => setResetDialogOpen(false)}
+                        disabled={resetPayFastLoading}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        type="button"
+                        onClick={handleResetPayFast}
+                        disabled={resetPayFastLoading}
+                      >
+                        {resetPayFastLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Resetting...
+                          </>
+                        ) : (
+                          "Confirm reset"
+                        )}
+                      </Button>
+                    </UIDialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </>
+            )}
+          </div>
+        )}
       </CardHeader>
       <CardContent className="grid gap-6">
         <Tabs
@@ -482,19 +584,21 @@ export function BankingDetailsForm({
             </div>
           </TabsContent>
           <TabsContent value="payfast" className="space-y-4 mt-4">
-            {payfastEnabled ? (
-              <div className="space-y-4">
+            <div className="space-y-4">
+              {payfastEnabled && (
                 <Alert>
                   <CheckCircle2 className="h-4 w-4" />
                   <AlertTitle>PayFast setup complete</AlertTitle>
                   <AlertDescription>
-                    Your PayFast merchant is connected. You can reset to
-                    reconfigure at any time.
+                    Your PayFast merchant is connected. You can update the
+                    automatic registration setting below or reset to reconfigure
+                    at any time.
                   </AlertDescription>
                 </Alert>
-              </div>
-            ) : (
-              <div className="space-y-4">
+              )}
+
+              {!payfastEnabled && (
+                <>
                 <div className="grid gap-3">
                   <Label htmlFor="merchant-id">Merchant ID</Label>
                   <Input
@@ -525,8 +629,32 @@ export function BankingDetailsForm({
                     placeholder="Enter PayFast passphrase"
                   />
                 </div>
-              </div>
-            )}
+                </>
+              )}
+
+              {payfastEnabled && (
+                <div className="rounded-lg border p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <Label
+                        htmlFor="payfast-auto-register-members"
+                        className="text-sm font-medium"
+                      >
+                        Automatically register members after successful PayFast payment
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        If enabled, members who pay successfully through PayFast will be registered automatically.
+                      </p>
+                    </div>
+                    <Switch
+                      id="payfast-auto-register-members"
+                      checked={autoRegisterMembersIfPaid}
+                      onCheckedChange={setAutoRegisterMembersIfPaid}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </TabsContent>
           <TabsContent value="custom" className="space-y-4 mt-4">
             <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
