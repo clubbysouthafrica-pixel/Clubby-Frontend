@@ -7,6 +7,7 @@ const ADMIN_KEY = "isAdmin";
 const ACTIVE_CLUB_KEY = "activeClub";
 
 let isRedirectingToLogin = false;
+const EXPLICIT_DENY_MESSAGE = "user is not authorized to access this resource with an explicit deny in an identity-based policy";
 
 const ADMIN_REDIRECT_PATTERNS = [
   "/",
@@ -136,4 +137,24 @@ export function handleUnauthorizedSession() {
   if (window.location.pathname !== "/login") {
     window.location.replace(buildLoginRedirectPath(getCurrentPathWithSearch()));
   }
+}
+
+export function shouldHandleUnauthorizedError(error: unknown) {
+  if (!axios.isAxiosError(error)) {
+    return false;
+  }
+
+  const status = error.response?.status;
+
+  if (status === 401) {
+    return true;
+  }
+
+  if (status !== 403) {
+    return false;
+  }
+
+  const responseMessage = error.response?.data?.message;
+
+  return typeof responseMessage === "string" && responseMessage.toLowerCase() === EXPLICIT_DENY_MESSAGE;
 }

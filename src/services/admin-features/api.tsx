@@ -1,5 +1,5 @@
 import axios from "axios";
-import { handleUnauthorizedSession } from "../auth-session";
+import { handleUnauthorizedSession, shouldHandleUnauthorizedError } from "../auth-session";
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_ADMIN_FEATURES_BACKEND_API,
@@ -24,7 +24,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
+        if (shouldHandleUnauthorizedError(error)) {
             handleUnauthorizedSession();
         }
 
