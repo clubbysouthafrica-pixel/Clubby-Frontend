@@ -12,7 +12,6 @@ import {
   ShoppingBag,
   ArrowLeft,
   ArrowRight,
-  Box,
   BoxIcon,
 } from "lucide-react";
 import { useFetchClub, useFetchClubBankDetails } from "@/queries/clubs";
@@ -50,7 +49,6 @@ import { ClubPaymentsTab } from "@/components/member/view-club-tabs/club-payment
 import { ClubShopTab } from "@/components/member/view-club-tabs/club-shop-tab";
 import MemberStorage from "@/components/member/storage/storage";
 import StorageRequestDialog from "@/components/storage-request-dialog/StorageRequestDialog";
-import { ClubStorageTab } from "@/components/member/view-club-tabs/club-storage-tab";
 
 function epochToJoinedString(epoch: number): string {
   const date = new Date(epoch); // if epoch is in seconds, use new Date(epoch * 1000)

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -14,16 +14,15 @@ import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { useFetchClubStorageRequests } from "@/queries/admin-features/storage";
 import { updateStorageRequestUnit } from "@/services/admin-features/storage";
 import { toast } from "sonner";
-const statusColors = {
+const statusColors: any = {
   pending: "text-yellow-600",
   approved: "text-green-600",
   rejected: "text-red-600",
 };
 
-
 export default function StorageRequestsAdmin() {
   const { club } = useContext(ClubContext) as ClubContextType;
-  const { data, isLoading } = useFetchClubStorageRequests(
+  const { data } = useFetchClubStorageRequests(
     (club?.club_account_id as string) ?? undefined,
   );
 
@@ -39,7 +38,6 @@ export default function StorageRequestsAdmin() {
     "all" | "eft" | "card" | "other"
   >("all");
 
-
   useEffect(() => {
     if (data) setRequests(data?.items || []);
   }, [data]);
@@ -47,7 +45,7 @@ export default function StorageRequestsAdmin() {
   // Memoized filtered list
   const filteredRequests = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
-    return requests.filter((req) => {
+    return requests.filter((req: any) => {
       // Search by userId or storage_id (or add more fields as needed)
       if (q) {
         // You may want to fetch/display user name and storage name if available
@@ -79,7 +77,7 @@ export default function StorageRequestsAdmin() {
 
   // Handlers for actions
   const handleMarkPaid = async (storageRequest: any, action: string) => {
-    const paymentType = "EFT"
+    const paymentType = "EFT";
 
     try {
       await updateStorageRequestUnit({
@@ -90,9 +88,11 @@ export default function StorageRequestsAdmin() {
         payment_method: paymentType,
         status: action,
       });
-        setRequests((prev) =>
-        prev.map((req) =>
-          req.storage_request_id === storageRequest.storage_request_id ? { ...req, paid: true, status: action } : req,
+      setRequests((prev: any) =>
+        prev.map((req: any) =>
+          req.storage_request_id === storageRequest.storage_request_id
+            ? { ...req, paid: true, status: action }
+            : req,
         ),
       );
       toast.success("Marked as paid successfully.");
@@ -111,16 +111,17 @@ export default function StorageRequestsAdmin() {
         payment_method: "n/a",
         status: action,
       });
-      setRequests((prev) =>
-        prev.map((req) =>
-          req.storage_request_id === storageRequest.storage_request_id ? { ...req, status: action, paid: false } : req,
+      setRequests((prev: any) =>
+        prev.map((req: any) =>
+          req.storage_request_id === storageRequest.storage_request_id
+            ? { ...req, status: action, paid: false }
+            : req,
         ),
       );
       toast.success("Rejected successfully.");
     } catch (_error) {
       toast.error("Failed to reject. Please try again.");
     }
-
   };
 
   return (
@@ -199,7 +200,7 @@ export default function StorageRequestsAdmin() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredRequests.map((req) => (
+                filteredRequests.map((req: any) => (
                   <TableRow key={req.storage_request_id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -214,7 +215,9 @@ export default function StorageRequestsAdmin() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="text-xs">{req.date || req.createdAt}</span>
+                      <span className="text-xs">
+                        {req.date || req.createdAt}
+                      </span>
                     </TableCell>
                     {/* Storage Cost */}
                     <TableCell>
@@ -241,7 +244,7 @@ export default function StorageRequestsAdmin() {
                         </span>
                       </div>
                     </TableCell>
-                    
+
                     {/* Status */}
                     <TableCell>
                       <span
@@ -257,14 +260,8 @@ export default function StorageRequestsAdmin() {
                         <>
                           <Button
                             size="sm"
-                            variant="success"
                             className="mr-2"
-                            onClick={() =>
-                              handleMarkPaid(
-                                req,
-                                "approved",
-                              )
-                            }
+                            onClick={() => handleMarkPaid(req, "approved")}
                           >
                             <Check className="h-4 w-4 mr-1" />
                             Mark Paid
@@ -272,12 +269,7 @@ export default function StorageRequestsAdmin() {
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() =>
-                              handleRequestAction(
-                                req,
-                                "rejected",
-                              )
-                            }
+                            onClick={() => handleRequestAction(req, "rejected")}
                           >
                             <X className="h-4 w-4 mr-1" />
                             Reject

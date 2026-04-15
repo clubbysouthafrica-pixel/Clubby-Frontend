@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardHeader,
@@ -55,8 +54,6 @@ export default function MemberStorage({
   clubId,
   currency = "ZAR",
 }: StorageProps) {
-  // --- Hooks: keep them all at the top, in a stable order ---
-  const navigate = useNavigate();
   const [expandedParent, setExpandedParent] = useState<string | null>(null);
 
   // fetch hook - always called (pass possibly undefined clubId)

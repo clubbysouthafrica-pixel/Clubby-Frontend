@@ -16,7 +16,7 @@ export const useFetchClubStorage = (clubAccountId: string) => {
   });
 };
 
-export const useFetchClubStorageRequests = (clubAccountId: string) => {
+export const useFetchClubStorageRequests = (clubAccountId?: string) => {
   return useQuery({
     queryKey: ["club/storage/requests", clubAccountId],
     queryFn: ({ queryKey }) => {
