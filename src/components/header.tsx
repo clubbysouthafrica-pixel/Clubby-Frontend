@@ -94,7 +94,7 @@ export default function Header() {
 
   return (
     <nav
-      className="p-3 backdrop-blur-xl border-b border-primary/10 sticky top-0 z-50"
+      className="p-3 backdrop-blur-sm border-b border-primary/10 sticky top-0 z-50"
       style={{
         backgroundColor:
           "color-mix(in oklch, var(--background) 85%, transparent)",
@@ -118,9 +118,6 @@ export default function Header() {
           <div className="flex flex-col">
             <span className="font-bold text-lg bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
               {import.meta.env.VITE_BRAND_NAME}
-            </span>
-            <span className="text-xs text-muted-foreground -mt-1">
-              Club Management
             </span>
           </div>
         </Link>

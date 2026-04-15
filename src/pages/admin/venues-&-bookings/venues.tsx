@@ -165,7 +165,7 @@ export default function VenuesPage() {
           </Button>
         </div>
       </div>
-      <div className="p-6 space-y-6 max-w-5xl mx-auto">
+      <div className="p-6 space-y-6 max-w-7xl mx-auto">
         {!club?.venues_enabled && (
           <Card className="mb-6 overflow-hidden border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 shadow-sm p-0">
             <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">

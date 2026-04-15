@@ -1,5 +1,14 @@
 import * as React from "react";
-import { HomeIcon, UserPlusIcon, UsersIcon, BarChart, ShoppingBag, MapPin, CalendarDays } from "lucide-react";
+import {
+  HomeIcon,
+  UserPlusIcon,
+  UsersIcon,
+  BarChart,
+  ShoppingBag,
+  MapPin,
+  CalendarDays,
+  BoxIcon,
+} from "lucide-react";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import { ClubSwitcher } from "@/components/club-switcher.tsx";
@@ -59,7 +68,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
 
     const latestClub = adminClubs.find(
-      (item: typeof adminClubs[number]) =>
+      (item: (typeof adminClubs)[number]) =>
         item.club_account_id === club.club_account_id,
     );
 
@@ -87,7 +96,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       club.currency !== latestClub.currency ||
       club.onboarded !== latestClub.onboarded ||
       club.season_cycle !== latestClub.season_cycle ||
-      club.deregistration_in_progress !== latestClub.deregistration_in_progress ||
+      club.deregistration_in_progress !==
+        latestClub.deregistration_in_progress ||
       club.enable_shop !== latestClub.enable_shop ||
       club.enable_events !== latestClub.enable_events ||
       club.venues_enabled !== latestClub.venues_enabled ||
@@ -157,12 +167,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ],
       },
       {
+        title: "Storage & Requests",
+        url: "/venues",
+        icon: BoxIcon,
+        items: [
+          { title: "Storage", url: "/storage" },
+          { title: "Storage requests", url: "/storage/requests" },
+        ],
+      },
+      {
         title: "Registration form",
         url: "/manage/registrations",
         icon: UserPlusIcon,
-        items: [
-          { title: "Create Form", url: "/manage/registrations/forms" },
-        ],
+        items: [{ title: "Create Form", url: "/manage/registrations/forms" }],
       },
       {
         title: "Reporting",

@@ -51,13 +51,12 @@ export default function HomeDashboardPage() {
     isLoading: clubLoading,
   } = useContext(ClubContext) as ClubContextType;
   const clubAccountId = club?.club_account_id ?? "";
-  const { data: fetchedClub, isLoading: fetchedClubLoading } = useFetchClub(
-    clubAccountId,
-  );
+  const { data: fetchedClub, isLoading: fetchedClubLoading } =
+    useFetchClub(clubAccountId);
   const currentClub = fetchedClub ?? club;
   const { data: report, isLoading: reportLoading } = useGeneralReportingQuery(
     clubAccountId,
-    currentClub?.season_cycle ,
+    currentClub?.season_cycle,
   );
   const navigate = useNavigate();
 
@@ -108,12 +107,14 @@ export default function HomeDashboardPage() {
             {/* You can add more club stats here if desired */}
             <div>
               <span className="text-muted-foreground text-sm">Currency:</span>
-              <span className="ml-2 font-semibold">{currentClub?.currency}</span>
+              <span className="ml-2 font-semibold">
+                {currentClub?.currency}
+              </span>
             </div>
           </div>
         </div>
       </div>
-      <div className="p-6 max-w-5xl mx-auto space-y-8">
+      <div className="p-6 max-w-7xl mx-auto space-y-8">
         {/* Reporting Section Cards */}
         <div>
           <HomeSectionCards report={report} currency={currentClub?.currency} />

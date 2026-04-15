@@ -24,6 +24,8 @@ import RegistrationsPage from "@/pages/admin/members/registrations/registrations
 import MembersPage from "@/pages/admin/members/members/members";
 import VenuesPage from "@/pages/admin/venues-&-bookings/venues";
 import BookingsPage from "@/pages/admin/venues-&-bookings/bookings";
+import StorageAdmin from "@/pages/admin/storage-requests/storage";
+import StorageRequestsAdmin from "@/pages/admin/storage-requests/storage-requests";
 import EventsPage from "@/pages/admin/events/events";
 import EventRegistrationsPage from "@/pages/admin/events/registrations";
 
@@ -32,8 +34,14 @@ export default function AdminRoutes() {
     <Routes>
       <Route path="/login" element={<Navigate to="/" replace />}></Route>
       <Route path="/register" element={<Navigate to="/" replace />}></Route>
-      <Route path="/forgotpassword" element={<Navigate to="/" replace />}></Route>
-      <Route path="/resetpassword" element={<Navigate to="/" replace />}></Route>
+      <Route
+        path="/forgotpassword"
+        element={<Navigate to="/" replace />}
+      ></Route>
+      <Route
+        path="/resetpassword"
+        element={<Navigate to="/" replace />}
+      ></Route>
       <Route path="/otp" element={<Navigate to="/" replace />}></Route>
       <Route
         path="/"
@@ -48,7 +56,6 @@ export default function AdminRoutes() {
       <Route path="/about" element={<AboutPage />}></Route>
       <Route path="/getstarted" element={<GetStartedPage />}></Route>
       <Route path="/contactus" element={<ContactPage />}></Route>
-
       <Route
         path="/myclubs"
         element={
@@ -73,7 +80,6 @@ export default function AdminRoutes() {
           </ProtectedRoute>
         }
       ></Route>
-
       <Route
         path="/manage/members"
         element={
@@ -191,6 +197,22 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <BookingsPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/storage"
+        element={
+          <ProtectedRoute>
+            <StorageAdmin />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/storage/requests"
+        element={
+          <ProtectedRoute>
+            <StorageRequestsAdmin />
           </ProtectedRoute>
         }
       ></Route>
