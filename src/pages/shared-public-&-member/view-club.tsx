@@ -151,6 +151,7 @@ const CLUB_ROUTE_SEGMENT_TO_SECTION: Record<string, ClubSection> = {
   bookings: "bookings",
   events: "events",
   shop: "shop",
+  storage: "storage",
 };
 
 function normalizeClubSection(value: string | null) {
@@ -181,11 +182,7 @@ function getClubSectionPath(clubId: string, section: ClubSection) {
     : `/myclubs/${clubId}`;
 }
 
-function getClubSectionFromPath(pathname: string, clubId?: string) {
-  if (!clubId) {
-    return "home" as ClubSection;
-  }
-
+function getClubSectionFromPath(pathname: string, clubId: string) {
   const segments = pathname.split("/").filter(Boolean);
   const clubIndex = segments.findIndex(
     (segment, index) =>
@@ -468,7 +465,7 @@ export default function ViewClubPage() {
   const { pathname, search } = useLocation();
 
   const routeSection = useMemo(
-    () => getClubSectionFromPath(pathname, clubId),
+    () => getClubSectionFromPath(pathname, clubId as string),
     [clubId, pathname],
   );
 
