@@ -24,18 +24,18 @@ function StatCard({
 }) {
   return (
     <Card
-      className={`flex-1 min-w-[160px] rounded-2xl shadow-md border-0 bg-gradient-to-br ${
+      className={`flex-1 min-w-[140px] rounded-[20px] shadow-sm border-0 bg-gradient-to-br ${
         highlight
           ? "from-primary/10 to-primary/5 dark:from-primary/20 dark:to-slate-900"
           : "from-slate-50 to-white dark:from-slate-900 dark:to-slate-950"
       } transition-all duration-200`}
       data-slot="card"
     >
-      <CardHeader className="flex flex-col items-center justify-center text-center gap-1 py-6">
-        <CardDescription className="text-base font-medium text-slate-500 dark:text-slate-400">
+      <CardHeader className="flex flex-col items-center justify-center text-center gap-1 py-4">
+        <CardDescription className="text-xs font-medium uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
           {label}
         </CardDescription>
-        <CardTitle className="text-2xl md:text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white">
+        <CardTitle className="text-xl md:text-2xl font-extrabold tabular-nums text-slate-900 dark:text-white">
           {value}
         </CardTitle>
       </CardHeader>
@@ -46,7 +46,7 @@ function StatCard({
 // --- Registration Cards ---
 export function RegistrationReportingSectionCards({ report, currency }: props) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 w-full">
+    <div className="grid grid-cols-2 xl:grid-cols-3 gap-3 w-full">
       <StatCard
         label="Registration Revenue"
         value={formatAmount(report?.total_registration_revenue, currency)}
@@ -76,7 +76,7 @@ export function RegistrationReportingSectionCards({ report, currency }: props) {
 // --- Overall Cards ---
 export function OverallReportingSectionCards({ report, currency }: props) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+    <div className="grid grid-cols-2 gap-3 w-full">
       <StatCard
         label="Total Revenue"
         value={formatAmount(report?.total_revenue, currency)}
@@ -93,7 +93,7 @@ export function OverallReportingSectionCards({ report, currency }: props) {
 // --- Orders Cards ---
 export function OrdersReportingSectionCards({ report, currency }: props) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 w-full">
+    <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 w-full">
       <StatCard
         label="Shop Revenue"
         value={formatAmount(report?.total_shop_revenue, currency)}

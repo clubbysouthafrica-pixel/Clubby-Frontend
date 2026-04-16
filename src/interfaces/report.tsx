@@ -9,34 +9,54 @@ export interface RegistrationReportDataRow {
 
 export interface ReportDataRow {
   date: string;
-  total_pending_revenue: number;
-  total_revenue: number;
+  total_pending_revenue?: number;
+  total_revenue?: number;
+  total_expense?: number;
+  total_pending_expense?: number;
+}
+
+export interface ExpenseTypeDataRow {
+  type: string;
+  total_expense: number;
+  total_pending_expense: number;
+  data: ReportDataRow[];
 }
 
 export interface OrderReportDataRow {
   date: string;
-  total_shop_sold_items: number;
+  total_shop_sold_items?: number;
   total_revenue: number;
-  total_shop_pending_sold_items: number;
+  total_shop_pending_sold_items?: number;
   total_pending_revenue: number;
 }
 
 export interface GeneralReport {
-  total_registered_members: number;
-  total_pending_members: number;
+  total_registered_members?: number;
+  total_pending_members?: number;
   total_registration_revenue: number;
   total_registration_pending_revenue: number;
+  total_event_registration_revenue: number;
+  total_event_registration_pending_revenue: number;
+  total_expense?: number;
+  total_pending_expense?: number;
   total_pending_revenue: number;
   total_revenue: number;
-  total_shop_sold_items: number;
+  total_shop_sold_items?: number;
   total_shop_revenue: number;
-  total_shop_pending_sold_items: number;
+  total_shop_pending_sold_items?: number;
   total_shop_pending_revenue: number;
-  total_active_members: number;
-  total_deregistered_members: number;
+  total_storage_revenue: number;
+  total_storage_pending_revenue: number;
+  total_active_members?: number;
+  total_deregistered_members?: number;
   data: ReportDataRow[];
   registration_data: RegistrationReportDataRow[];
-  order_data: OrderReportDataRow[];
+  event_registration_data: ReportDataRow[];
+  shop_data: ReportDataRow[];
+  storage_data: ReportDataRow[];
+  expense_data?: ReportDataRow[];
+  expense_type_data?: ExpenseTypeDataRow[];
+  order_data?: OrderReportDataRow[];
 }
 
 export interface RegistrationReportRowDataItem {

@@ -1,13 +1,10 @@
 import {
   ReportDataRow,
   RegistrationReportDataRow,
-  OrderReportDataRow,
 } from "@/interfaces/report";
 import { formatAmount } from "@/data/currencies";
 import {
   ResponsiveContainer,
-  AreaChart,
-  Area,
   XAxis,
   YAxis,
   Tooltip,
@@ -18,27 +15,100 @@ import {
   Line,
 } from "recharts";
 
-// Modern, soft color palette for charts
+// Neutral chart palette with restrained highlights.
 const CHART_COLORS = {
   revenue: {
-    stroke: "#6366f1",
-    gradientFrom: "#818cf8",
-    gradientTo: "#e0e7ff",
-    fill: "#6366f1",
+    stroke: "#57534e",
+    gradientFrom: "#78716c",
+    gradientTo: "#f5f5f4",
+    fill: "#78716c",
   },
   pendingRevenue: {
-    stroke: "#a5b4fc",
-    gradientFrom: "#c7d2fe",
-    gradientTo: "#f1f5f9",
-    fill: "#a5b4fc",
+    stroke: "#a8a29e",
+    gradientFrom: "#d6d3d1",
+    gradientTo: "#fafaf9",
+    fill: "#d6d3d1",
   },
-  registered: { fill: "#10b981", stroke: "#059669" },
-  deregistered: { fill: "#f43f5e", stroke: "#e11d48" },
-  total: { fill: "#2dd4bf", stroke: "#0d9488" },
-  pending: { fill: "#fbbf24", stroke: "#d97706" },
-  paid: { stroke: "#7c3aed" },
-  due: { stroke: "#a78bfa" },
+  expense: {
+    stroke: "#b91c1c",
+    gradientFrom: "#fecaca",
+    gradientTo: "#fff1f2",
+    fill: "#f87171",
+  },
+  registered: { fill: "#78716c", stroke: "#57534e" },
+  deregistered: { fill: "#d6d3d1", stroke: "#a8a29e" },
+  total: { fill: "#a8a29e", stroke: "#78716c" },
+  pending: { fill: "#e7e5e4", stroke: "#a8a29e" },
+  paid: { stroke: "#44403c" },
+  due: { stroke: "#a8a29e" },
 };
+
+function InsightRail({
+  items,
+}: {
+  items: Array<{ label: string; value: string | number; note?: string }>;
+}) {
+  return (
+    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+      {items.map((item) => (
+        <div
+          key={item.label}
+          className="rounded-[16px] border border-stone-200 bg-stone-50/90 p-2.5"
+        >
+          <p className="text-[10px] uppercase tracking-[0.18em] text-stone-500">
+            {item.label}
+          </p>
+          <p className="mt-1.5 text-base font-semibold text-stone-900">
+            {item.value}
+          </p>
+          {item.note && (
+            <p className="mt-0.5 text-[11px] text-stone-500">{item.note}</p>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function getChartMinHeight(insightCount: number) {
+  return Math.max(168, insightCount * 52);
+}
+
+function ChartShell({
+  title,
+  subtitle,
+  insights,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  insights: Array<{ label: string; value: string | number; note?: string }>;
+  children: React.ReactNode;
+}) {
+  const chartMinHeight = getChartMinHeight(insights.length);
+
+  return (
+    <div className="rounded-[20px] border border-stone-200 bg-gradient-to-br from-white via-stone-50 to-white p-3.5 shadow-sm md:p-4">
+      <div className="mb-3 flex flex-col gap-0.5">
+        <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-600">
+          {title}
+        </h3>
+        <p className="text-[11px] text-stone-500">{subtitle}</p>
+      </div>
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_200px] lg:items-stretch">
+        <div className="rounded-[18px] border border-stone-200 bg-white p-2.5 md:p-3 lg:h-full">
+          <div
+            className="h-full w-full"
+            style={{ minHeight: `${chartMinHeight}px` }}
+          >
+            {children}
+          </div>
+        </div>
+        <InsightRail items={insights} />
+      </div>
+    </div>
+  );
+}
 
 function formatMonthLabel(date: string) {
   try {
@@ -75,7 +145,9 @@ function ModernTooltip({
           {payload.map((entry, idx) => {
             const isMoney =
               typeof entry.value === "number" &&
-              entry.dataKey?.toLowerCase().includes("revenue");
+              (entry.dataKey?.toLowerCase().includes("revenue") ||
+                entry.dataKey?.toLowerCase().includes("pending") ||
+                entry.dataKey?.toLowerCase().includes("expense"));
             const displayValue = isMoney
               ? formatAmount(Number(entry.value), currency)
               : entry.value;
@@ -106,94 +178,6 @@ function legendFormatter(value: string) {
   );
 }
 
-// --- Revenue Area Chart ---
-export function RevenueAreaChart({
-  data,
-  currency,
-}: {
-  data: ReportDataRow[];
-  currency: string;
-}) {
-  const chartData = data.map((d) => ({
-    name: formatMonthLabel(d.date),
-    revenue: d.total_revenue,
-    pending: d.total_pending_revenue,
-  }));
-
-  return (
-    <div className="w-full h-80 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 p-4">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart
-          data={chartData}
-          margin={{ top: 16, right: 48, left: 24, bottom: 32 }}
-        >
-          <defs>
-            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-              <stop
-                offset="5%"
-                stopColor={CHART_COLORS.revenue.gradientFrom}
-                stopOpacity={0.7}
-              />
-              <stop
-                offset="95%"
-                stopColor={CHART_COLORS.revenue.gradientTo}
-                stopOpacity={0.1}
-              />
-            </linearGradient>
-            <linearGradient id="colorPending" x1="0" y1="0" x2="0" y2="1">
-              <stop
-                offset="5%"
-                stopColor={CHART_COLORS.pendingRevenue.gradientFrom}
-                stopOpacity={0.6}
-              />
-              <stop
-                offset="95%"
-                stopColor={CHART_COLORS.pendingRevenue.gradientTo}
-                stopOpacity={0.08}
-              />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis
-            dataKey="name"
-            tick={{ fontSize: 13, fill: "#64748b" }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <YAxis
-            tick={{ fontSize: 13, fill: "#64748b" }}
-            tickFormatter={(v) => formatAmount(Number(v), currency)}
-            axisLine={false}
-            tickLine={false}
-          />
-          <Tooltip content={<ModernTooltip currency={currency} />} />
-          <Legend formatter={legendFormatter} iconType="circle" />
-          <Area
-            type="monotone"
-            dataKey="revenue"
-            name="Revenue"
-            stroke={CHART_COLORS.revenue.stroke}
-            fill="url(#colorRevenue)"
-            strokeWidth={3}
-            dot={{ r: 4 }}
-            activeDot={{ r: 6 }}
-          />
-          <Area
-            type="monotone"
-            dataKey="pending"
-            name="Pending Revenue"
-            stroke={CHART_COLORS.pendingRevenue.stroke}
-            fill="url(#colorPending)"
-            strokeWidth={3}
-            dot={{ r: 4 }}
-            activeDot={{ r: 6 }}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
 // --- Registration Combo Chart ---
 export function RegistrationComboChart({
   data,
@@ -204,37 +188,59 @@ export function RegistrationComboChart({
 }) {
   const chartData = data.map((d) => ({
     name: formatMonthLabel(d.date),
-    registered: d.total_registered_members,
-    pendingMembers: d.total_pending_members,
     revenue: d.total_revenue,
     pending: d.total_pending_revenue,
   }));
 
+  const totalRevenue = data.reduce((sum, row) => sum + row.total_revenue, 0);
+  const totalPendingRevenue = data.reduce(
+    (sum, row) => sum + row.total_pending_revenue,
+    0,
+  );
+  const strongestMonth = data.reduce((best, current) =>
+    current.total_revenue > best.total_revenue ? current : best,
+  );
+
   return (
-    <div className="w-full h-80 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 p-4">
+    <ChartShell
+      title="Registration Revenue Trend"
+      subtitle="A simple monthly view of collected and pending registration revenue."
+      insights={[
+        {
+          label: "Revenue",
+          value: formatAmount(totalRevenue, currency),
+          note: "Collected across the selected season",
+        },
+        {
+          label: "Pending revenue",
+          value: formatAmount(totalPendingRevenue, currency),
+          note: "Outstanding registration balance",
+        },
+        {
+          label: "Best month",
+          value: strongestMonth ? strongestMonth.date : "-",
+          note: strongestMonth
+            ? formatAmount(strongestMonth.total_revenue, currency)
+            : "No data",
+        },
+      ]}
+    >
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart
           data={chartData}
-          margin={{ top: 16, right: 48, left: 24, bottom: 32 }}
+          margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis
             dataKey="name"
-            tick={{ fontSize: 13, fill: "#64748b" }}
+            tick={{ fontSize: 11, fill: "#78716c" }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
             yAxisId="left"
-            tick={{ fontSize: 13, fill: "#64748b" }}
+            tick={{ fontSize: 11, fill: "#78716c" }}
             tickFormatter={(v) => formatAmount(Number(v), currency)}
-            axisLine={false}
-            tickLine={false}
-          />
-          <YAxis
-            yAxisId="right"
-            orientation="right"
-            tick={{ fontSize: 13, fill: "#64748b" }}
             axisLine={false}
             tickLine={false}
           />
@@ -260,28 +266,9 @@ export function RegistrationComboChart({
             radius={[8, 8, 0, 0]}
             barSize={24}
           />
-          <Line
-            yAxisId="right"
-            type="monotone"
-            dataKey="registered"
-            name="Completed Registrations"
-            stroke={CHART_COLORS.revenue.stroke}
-            strokeWidth={3}
-            dot={false}
-          />
-          <Line
-            yAxisId="right"
-            type="monotone"
-            dataKey="pendingMembers"
-            name="Pending Members"
-            stroke={CHART_COLORS.pendingRevenue.stroke}
-            strokeWidth={3}
-            dot={false}
-            strokeDasharray="6 4"
-          />
         </ComposedChart>
       </ResponsiveContainer>
-    </div>
+    </ChartShell>
   );
 }
 
@@ -295,26 +282,66 @@ export function OverallComboChart({
 }) {
   const chartData = data.map((d) => ({
     name: formatMonthLabel(d.date),
-    revenue: d.total_revenue,
-    pending: d.total_pending_revenue,
+    revenue: d.total_revenue || 0,
+    pending: d.total_pending_revenue || 0,
   }));
 
+  const totalRevenue = data.reduce(
+    (sum, row) => sum + (row.total_revenue || 0),
+    0,
+  );
+  const totalPendingRevenue = data.reduce(
+    (sum, row) => sum + (row.total_pending_revenue || 0),
+    0,
+  );
+  const strongestMonth = data.reduce<ReportDataRow | null>((best, current) => {
+    if (!best) {
+      return current;
+    }
+
+    return (current.total_revenue || 0) > (best.total_revenue || 0)
+      ? current
+      : best;
+  }, null);
+
   return (
-    <div className="w-full h-80 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 p-4">
+    <ChartShell
+      title="Revenue Trend"
+      subtitle="Compact monthly revenue view with pending income alongside collected totals."
+      insights={[
+        {
+          label: "Total revenue",
+          value: formatAmount(totalRevenue, currency),
+          note: "All months combined",
+        },
+        {
+          label: "Pending",
+          value: formatAmount(totalPendingRevenue, currency),
+          note: "Awaiting settlement",
+        },
+        {
+          label: "Best month",
+          value: strongestMonth ? strongestMonth.date : "-",
+          note: strongestMonth
+            ? formatAmount(strongestMonth.total_revenue, currency)
+            : "No data",
+        },
+      ]}
+    >
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart
           data={chartData}
-          margin={{ top: 16, right: 48, left: 24, bottom: 32 }}
+          margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
           <XAxis
             dataKey="name"
-            tick={{ fontSize: 13, fill: "#64748b" }}
+            tick={{ fontSize: 11, fill: "#78716c" }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
-            tick={{ fontSize: 13, fill: "#64748b" }}
+            tick={{ fontSize: 11, fill: "#78716c" }}
             tickFormatter={(v) => formatAmount(Number(v), currency)}
             axisLine={false}
             tickLine={false}
@@ -328,7 +355,7 @@ export function OverallComboChart({
             stroke={CHART_COLORS.revenue.stroke}
             strokeWidth={1.5}
             radius={[8, 8, 0, 0]}
-            barSize={24}
+            barSize={18}
           />
           <Bar
             dataKey="pending"
@@ -337,11 +364,11 @@ export function OverallComboChart({
             stroke={CHART_COLORS.pendingRevenue.stroke}
             strokeWidth={1.5}
             radius={[8, 8, 0, 0]}
-            barSize={24}
+            barSize={18}
           />
         </ComposedChart>
       </ResponsiveContainer>
-    </div>
+    </ChartShell>
   );
 }
 
@@ -350,42 +377,73 @@ export function OrdersComboChart({
   data,
   currency,
 }: {
-  data: OrderReportDataRow[];
+  data: ReportDataRow[];
   currency: string;
 }) {
   const chartData = data.map((d) => ({
     name: formatMonthLabel(d.date),
-    revenue: d.total_revenue,
-    pending: d.total_pending_revenue,
-    itemsSold: d.total_shop_sold_items,
-    pendingItems: d.total_shop_pending_sold_items,
+    revenue: d.total_revenue || 0,
+    pending: d.total_pending_revenue || 0,
   }));
 
+  const totalRevenue = data.reduce(
+    (sum, row) => sum + (row.total_revenue || 0),
+    0,
+  );
+  const totalPendingRevenue = data.reduce(
+    (sum, row) => sum + (row.total_pending_revenue || 0),
+    0,
+  );
+  const strongestMonth = data.reduce<ReportDataRow | null>((best, current) => {
+    if (!best) {
+      return current;
+    }
+
+    return (current.total_revenue || 0) > (best.total_revenue || 0)
+      ? current
+      : best;
+  }, null);
+
   return (
-    <div className="w-full h-80 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 p-4">
+    <ChartShell
+      title="Sales Revenue Trend"
+      subtitle="A simple monthly view of collected and pending shop revenue."
+      insights={[
+        {
+          label: "Sales revenue",
+          value: formatAmount(totalRevenue, currency),
+          note: "Completed order value",
+        },
+        {
+          label: "Pending revenue",
+          value: formatAmount(totalPendingRevenue, currency),
+          note: "Orders still awaiting payment",
+        },
+        {
+          label: "Best month",
+          value: strongestMonth ? strongestMonth.date : "-",
+          note: strongestMonth
+            ? formatAmount(strongestMonth.total_revenue, currency)
+            : "No data",
+        },
+      ]}
+    >
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart
           data={chartData}
-          margin={{ top: 16, right: 48, left: 24, bottom: 32 }}
+          margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
           <XAxis
             dataKey="name"
-            tick={{ fontSize: 13, fill: "#64748b" }}
+            tick={{ fontSize: 11, fill: "#78716c" }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
             yAxisId="left"
-            tick={{ fontSize: 13, fill: "#64748b" }}
+            tick={{ fontSize: 11, fill: "#78716c" }}
             tickFormatter={(v) => formatAmount(Number(v), currency)}
-            axisLine={false}
-            tickLine={false}
-          />
-          <YAxis
-            yAxisId="right"
-            orientation="right"
-            tick={{ fontSize: 13, fill: "#64748b" }}
             axisLine={false}
             tickLine={false}
           />
@@ -399,7 +457,7 @@ export function OrdersComboChart({
             stroke={CHART_COLORS.registered.stroke}
             strokeWidth={1.5}
             radius={[8, 8, 0, 0]}
-            barSize={24}
+            barSize={18}
           />
           <Bar
             yAxisId="left"
@@ -409,30 +467,95 @@ export function OrdersComboChart({
             stroke={CHART_COLORS.deregistered.stroke}
             strokeWidth={1.5}
             radius={[8, 8, 0, 0]}
-            barSize={24}
-          />
-          <Line
-            yAxisId="right"
-            type="monotone"
-            dataKey="itemsSold"
-            name="Items Sold"
-            stroke={CHART_COLORS.revenue.stroke}
-            strokeWidth={3}
-            dot={false}
-          />
-          <Line
-            yAxisId="right"
-            type="monotone"
-            dataKey="pendingItems"
-            name="Pending Items"
-            stroke={CHART_COLORS.pendingRevenue.stroke}
-            strokeWidth={3}
-            dot={false}
-            strokeDasharray="6 4"
+            barSize={18}
           />
         </ComposedChart>
       </ResponsiveContainer>
-    </div>
+    </ChartShell>
+  );
+}
+
+export function ExpenseComboChart({
+  data,
+  currency,
+  title = "Expense Trend",
+  subtitle = "Monthly settled expense movement across the selected period.",
+}: {
+  data: ReportDataRow[];
+  currency: string;
+  title?: string;
+  subtitle?: string;
+}) {
+  const chartData = data.map((d) => ({
+    name: formatMonthLabel(d.date),
+    expense: d.total_expense || 0,
+  }));
+
+  const totalExpense = data.reduce(
+    (sum, row) => sum + (row.total_expense || 0),
+    0,
+  );
+  const strongestMonth = data.reduce<ReportDataRow | null>((best, current) => {
+    if (!best) {
+      return current;
+    }
+
+    return (current.total_expense || 0) > (best.total_expense || 0)
+      ? current
+      : best;
+  }, null);
+
+  return (
+    <ChartShell
+      title={title}
+      subtitle={subtitle}
+      insights={[
+        {
+          label: "Total expense",
+          value: formatAmount(totalExpense, currency),
+          note: "Settled spend across the selected period",
+        },
+        {
+          label: "Highest month",
+          value: strongestMonth ? strongestMonth.date : "-",
+          note: strongestMonth
+            ? formatAmount(strongestMonth.total_expense || 0, currency)
+            : "No data",
+        },
+      ]}
+    >
+      <ResponsiveContainer width="100%" height="100%">
+        <ComposedChart
+          data={chartData}
+          margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="#fee2e2" />
+          <XAxis
+            dataKey="name"
+            tick={{ fontSize: 11, fill: "#7f1d1d" }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            tick={{ fontSize: 11, fill: "#7f1d1d" }}
+            tickFormatter={(v) => formatAmount(Number(v), currency)}
+            axisLine={false}
+            tickLine={false}
+          />
+          <Tooltip content={<ModernTooltip currency={currency} />} />
+          <Legend formatter={legendFormatter} iconType="circle" />
+          <Bar
+            dataKey="expense"
+            name="Expense"
+            fill={CHART_COLORS.expense.fill}
+            stroke={CHART_COLORS.expense.stroke}
+            strokeWidth={1.5}
+            radius={[8, 8, 0, 0]}
+            barSize={18}
+          />
+        </ComposedChart>
+      </ResponsiveContainer>
+    </ChartShell>
   );
 }
 // --- Registration Billing Chart ---

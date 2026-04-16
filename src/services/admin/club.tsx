@@ -1,10 +1,18 @@
 import { ClubDetailsRequest } from "@/requests/club-request";
 import { api } from "./api";
 
-export const fetchClub = (clubAccountId: string, options?: { includeImages?: boolean }): Promise<any> => {
+export type FetchClubOptions = {
+    includeImages?: boolean;
+    stats?: boolean;
+};
+
+export const fetchClub = (clubAccountId: string, options?: FetchClubOptions): Promise<any> => {
     let url = `/club/getClub?club_account_id=${clubAccountId}`;
     if (options?.includeImages) {
         url += `&includeImages=true`;
+    }
+    if (options?.stats) {
+        url += `&stats=true`;
     }
     return api.get(url)
         .then(res => res.data);
