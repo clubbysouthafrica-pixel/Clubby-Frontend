@@ -1,7 +1,4 @@
-import {
-  listStorageQuery,
-  listStorageRequestQuery,
-} from "@/services/admin-features/storage";
+import { listStorageQuery, listStorageRequestQuery } from "@/services/storage";
 import { useQuery } from "@tanstack/react-query";
 
 export const useFetchClubStorage = (clubAccountId: string) => {

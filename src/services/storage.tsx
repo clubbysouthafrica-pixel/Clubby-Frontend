@@ -1,15 +1,17 @@
 import { api } from "./api";
 
 // List storage units with query parameters
-export const listStorageQuery = (query: any) => {
+export const listStorageQuery = (clubId: string) => {
   return api
-    .get(`/storage/listStorage`, { params: query })
+    .get(`/storage/listStorage?club_account_id=${clubId}`)
     .then((res) => res.data);
 };
 
 // List storage requests
-export const listStorageRequestQuery = () => {
-  return api.get(`/storage/listStorageRequests`).then((res) => res.data);
+export const listStorageRequestQuery = (clubId: string) => {
+  return api
+    .get(`/storage/listStorageRequests?club_account_id=${clubId}`)
+    .then((res) => res.data);
 };
 
 // Create a storage request unit

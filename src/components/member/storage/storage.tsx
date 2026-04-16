@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShoppingCart } from "lucide-react";
-import { useFetchClubStorage } from "@/queries/admin-features/storage";
+import { useFetchClubStorage } from "@/queries/storage";
 
 type StorageUnit = {
   id: string;
