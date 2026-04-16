@@ -16,6 +16,8 @@ export interface Club {
     country_exists?: boolean
     bank_details_exists?: boolean
     deregistration_in_progress?: boolean
+    total_active_members?: number
+    total_pending_members?: number
 }
 
 export interface ClubMember {

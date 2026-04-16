@@ -27,6 +27,21 @@ interface ShopProductReportProps {
   currency: string;
 }
 
+function getProductTabValue(
+  product: ShopReport["report"][number],
+  index: number,
+): string {
+  if (product.product_id !== undefined && product.product_id !== null) {
+    return String(product.product_id);
+  }
+
+  if (product.product_name?.trim()) {
+    return `product-${product.product_name.trim().toLowerCase().replace(/\s+/g, "-")}-${index}`;
+  }
+
+  return `product-${index}`;
+}
+
 function formatMonthLabel(date: string) {
   try {
     const d = new Date(date);
@@ -61,17 +76,17 @@ export function ShopProductReport({
 
   return (
     <Tabs
-      defaultValue={report.report[0]?.product_id.toString()}
+      defaultValue={getProductTabValue(report.report[0], 0)}
       className="w-full"
     >
       {/* Tab Navigation */}
       <div className="sticky top-0 p-4 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur">
         <div className="px-2 md:px-4">
           <TabsList className="flex flex-row gap-2 bg-transparent p-0 h-auto overflow-x-auto">
-            {report.report.map((product) => (
+            {report.report.map((product, index) => (
               <TabsTrigger
-                key={product.product_id}
-                value={product.product_id.toString()}
+                key={getProductTabValue(product, index)}
+                value={getProductTabValue(product, index)}
                 className="px-6 py-3 rounded-lg font-semibold text-base transition-all duration-300 data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=inactive]:text-slate-600 dark:data-[state=inactive]:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 whitespace-nowrap"
               >
                 {product.product_name}
@@ -82,10 +97,10 @@ export function ShopProductReport({
       </div>
 
       {/* Tab Content */}
-      {report.report.map((product) => (
+      {report.report.map((product, index) => (
         <TabsContent
-          key={product.product_id}
-          value={product.product_id.toString()}
+          key={getProductTabValue(product, index)}
+          value={getProductTabValue(product, index)}
           className="space-y-8 p-4 md:p-8"
         >
           {/* Product Header Card Grid */}
@@ -96,7 +111,7 @@ export function ShopProductReport({
                   Price per Item
                 </p>
                 <p className="text-2xl font-extrabold mt-1 text-slate-900 dark:text-white tracking-tight truncate">
-                  {formatAmount(product.price, currency)}
+                  {formatAmount(product.price || 0, currency)}
                 </p>
               </div>
             </Card>
@@ -126,7 +141,7 @@ export function ShopProductReport({
                   Units Sold / Pending
                 </p>
                 <p className="text-2xl font-extrabold mt-1 text-slate-900 dark:text-white tracking-tight">
-                  {product.total_sold_units} / {product.total_pending_units}
+                  {product.total_sold_units || 0} / {product.total_pending_units || 0}
                 </p>
               </div>
             </Card>
@@ -143,10 +158,10 @@ export function ShopProductReport({
                   <ComposedChart
                     data={product.data.map((d) => ({
                       name: formatMonthLabel(d.date),
-                      revenue: d.revenue,
-                      sold_units: d.sold_units,
-                      pending_revenue: d.pending_revenue,
-                      pending_units: d.pending_units,
+                      revenue: d.revenue || 0,
+                      sold_units: d.sold_units || 0,
+                      pending_revenue: d.pending_revenue || 0,
+                      pending_units: d.pending_units || 0,
                     }))}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -282,13 +297,13 @@ export function ShopProductReport({
                         {formatAmount(row.revenue, currency)}
                       </TableCell>
                       <TableCell className="text-center w-1/5">
-                        {formatAmount(row.pending_revenue, currency)}
+                        {formatAmount(row.pending_revenue || 0, currency)}
                       </TableCell>
                       <TableCell className="text-center w-1/5">
-                        {row.sold_units}
+                        {row.sold_units || 0}
                       </TableCell>
                       <TableCell className="text-center w-1/5">
-                        {row.pending_units}
+                        {row.pending_units || 0}
                       </TableCell>
                     </TableRow>
                   ))}

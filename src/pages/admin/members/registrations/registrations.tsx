@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useFetchClubMembers } from "@/queries/admin/club-members";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { Label } from "@/components/ui/label";
@@ -37,8 +38,16 @@ export default function RegistrationsPage() {
   const { club, isLoading: clubLoading } = useContext(
     ClubContext,
   ) as ClubContextType;
+  const [searchParams, setSearchParams] = useSearchParams();
   const [requestedKeys, setRequestedKeys] = useState<string[]>([]);
-  const [selectedTab, setSelectedTab] = useState("registered-members");
+  const initialTab = searchParams.get("tab");
+  const [selectedTab, setSelectedTab] = useState(
+    initialTab === "pending-members" ||
+      initialTab === "previous-members" ||
+      initialTab === "registered-members"
+      ? initialTab
+      : "registered-members",
+  );
   const [memberLimit, setMemberLimit] = useState(100);
   const [pageToken, setPageToken] = useState<string | undefined>(undefined);
   const [allRegisteredMembers, setAllRegisteredMembers] = useState<any[]>([]);
@@ -94,6 +103,18 @@ export default function RegistrationsPage() {
         return "registered";
     }
   };
+
+  useEffect(() => {
+    const requestedTab = searchParams.get("tab");
+
+    if (
+      requestedTab &&
+      ["registered-members", "pending-members", "previous-members"].includes(requestedTab) &&
+      requestedTab !== selectedTab
+    ) {
+      setSelectedTab(requestedTab);
+    }
+  }, [searchParams, selectedTab]);
 
   const {
     data: clubMembers,
@@ -548,11 +569,7 @@ export default function RegistrationsPage() {
               setDeregisterMembers([]);
               setAllMembersSelected(false);
               setSelectedMember({});
-              window.history.pushState(
-                "",
-                document.title,
-                window.location.pathname + window.location.search,
-              );
+              setSearchParams({ tab: value });
 
               // Reset both input filters and applied filters
               setMemberNameFilter("");

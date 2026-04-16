@@ -1,5 +1,5 @@
 import { fetchAdminClubs } from "@/services/admin/admin-clubs"
-import { fetchClub, fetchClubDetails } from "@/services/admin/club";
+import { fetchClub, fetchClubDetails, type FetchClubOptions } from "@/services/admin/club";
 import { useQuery } from "@tanstack/react-query"
 
 export const useFetchAdminClubs = () => {
@@ -9,11 +9,11 @@ export const useFetchAdminClubs = () => {
       })
 }
 
-export const useFetchClub = (clubAccountId: string, options?: { includeImages?: boolean }) => {
+export const useFetchClub = (clubAccountId: string, options?: FetchClubOptions) => {
     return useQuery({
-      queryKey: ['getClub', clubAccountId, options?.includeImages],
+      queryKey: ['getClub', clubAccountId, options?.includeImages, options?.stats],
       queryFn: ({ queryKey }) => {
-        const [_key, clubId] = queryKey;
+        const [, clubId] = queryKey;
         return fetchClub(clubId as string, options);
       },
       enabled: !!clubAccountId,
@@ -24,7 +24,7 @@ export const useFetchClubDetails = (clubAccountId: string) => {
   return useQuery({
     queryKey: ['getClubDetails', clubAccountId],
     queryFn: ({ queryKey }) => {
-      const [_key, clubId] = queryKey;
+      const [, clubId] = queryKey;
       return fetchClubDetails(clubId);
     },
     enabled: !!clubAccountId,

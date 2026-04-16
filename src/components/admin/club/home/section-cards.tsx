@@ -1,64 +1,82 @@
 import {
   Card,
-  CardDescription,
+  CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { GeneralReport } from "@/interfaces/report";
-import { formatAmount } from "@/data/currencies";
-import { TrendingUp, Clock, Users, UserPlus } from "lucide-react";
+import { Users, UserPlus } from "lucide-react";
 
 interface props {
-  report?: GeneralReport;
-  currency: string | undefined;
+  totalActiveMembers?: number;
+  totalPendingMembers?: number;
+  onActiveMembersClick?: () => void;
+  onPendingMembersClick?: () => void;
 }
 
-const cardData = (report: GeneralReport | undefined, currency: string | undefined) => [
-  {
-    label: "Total Revenue",
-    value: formatAmount(report?.total_revenue, currency),
-    icon: <TrendingUp className="h-7 w-7 text-green-600" />,
-  },
-  {
-    label: "Pending Revenue",
-    value: formatAmount(report?.total_pending_revenue, currency),
-    icon: <Clock className="h-7 w-7 text-yellow-600" />,
-  },
+const cardData = (
+  totalActiveMembers: number | undefined,
+  totalPendingMembers: number | undefined,
+) => [
   {
     label: "Active Members",
-    value: report?.total_active_members ?? 0,
+    value: totalActiveMembers ?? 0,
     icon: <Users className="h-7 w-7 text-blue-600" />,
+    iconClassName: "bg-blue-50",
   },
   {
     label: "Pending Members",
-    value: report?.total_pending_members ?? 0,
+    value: totalPendingMembers ?? 0,
     icon: <UserPlus className="h-7 w-7 text-purple-600" />,
+    iconClassName: "bg-purple-50",
   },
 ];
 
-export function HomeSectionCards({ report, currency }: props) {
+export function HomeSectionCards({
+  totalActiveMembers,
+  totalPendingMembers,
+  onActiveMembersClick,
+  onPendingMembersClick,
+}: props) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
-      {cardData(report, currency).map((card) => (
-        <Card
-          key={card.label}
-          className="transition-shadow shadow-sm hover:shadow-lg border"
-        >
-          <CardHeader className="flex flex-row items-center gap-4 py-6">
-            <div className="flex-shrink-0 rounded-full bg-muted p-2">
-              {card.icon}
-            </div>
-            <div>
-              <CardDescription className="uppercase text-xs tracking-wide font-medium text-muted-foreground mb-1">
-                {card.label}
-              </CardDescription>
-              <CardTitle className="text-2xl font-bold tabular-nums">
-                {card.value}
-              </CardTitle>
-            </div>
-          </CardHeader>
-        </Card>
-      ))}
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      {cardData(totalActiveMembers, totalPendingMembers).map((card) => {
+        const handleClick =
+          card.label === "Active Members"
+            ? onActiveMembersClick
+            : onPendingMembersClick;
+
+        return (
+          <button
+            key={card.label}
+            type="button"
+            className="text-left"
+            onClick={handleClick}
+          >
+            <Card className="border border-slate-200 bg-white shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50">
+              <CardHeader className="flex flex-row items-center justify-between gap-4 pb-2">
+                <div>
+                  <p className="text-sm font-medium text-slate-600">{card.label}</p>
+                  <CardTitle className="mt-2 text-3xl font-semibold text-slate-900 tabular-nums">
+                    {card.value}
+                  </CardTitle>
+                </div>
+                <div
+                  className={`flex h-12 w-12 items-center justify-center rounded-xl ${card.iconClassName}`}
+                >
+                  {card.icon}
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <p className="text-sm text-slate-500">
+                  {card.label === "Active Members"
+                    ? "Registered members for the current season."
+                    : "Registrations still waiting to be completed."}
+                </p>
+              </CardContent>
+            </Card>
+          </button>
+        );
+      })}
     </div>
   );
 }

@@ -127,6 +127,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         items: [
           { title: "Home", url: "/" },
           { title: "Manage Club", url: "/manage/club" },
+          { title: "Club financials", url: "/reporting/general" },
         ],
       },
       {
@@ -186,7 +187,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         url: "/reporting",
         icon: BarChart,
         items: [
-          { title: "Club financials", url: "/reporting/general" },
           { title: "Registration fees", url: "/reporting/registration" },
           { title: "Shop reports", url: "/reporting/shop" },
           { title: "Income & Payments", url: "/reporting/transactions" },

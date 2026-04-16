@@ -1,106 +1,143 @@
-import { OrderReportDataRow } from "@/interfaces/report";
+import { ExpenseComboChart, OrdersComboChart } from "./charts";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  ExpenseTypeDataRow,
+  GeneralReport,
+  ReportDataRow,
+} from "@/interfaces/report";
 import { formatAmount } from "@/data/currencies";
-import { OrdersReportingSectionCards } from "./reporting-section-cards";
-import { OrdersComboChart } from "./charts";
-import { GeneralReport } from "@/interfaces/report";
 
 interface props {
   report: GeneralReport;
   currency: string;
 }
 
-export function OrdersReport({ report, currency }: props) {
+interface RevenueBreakdownReportProps {
+  title: string;
+  description: string;
+  data?: ReportDataRow[];
+  currency: string;
+  totalRevenue?: number;
+  totalPendingRevenue?: number;
+  valueLabel?: string;
+  pendingValueLabel?: string;
+  emptyStateLabel?: string;
+  chartMode?: "revenue" | "expense";
+}
+
+export function RevenueBreakdownReport({
+  title,
+  description,
+  data = [],
+  currency,
+  totalRevenue,
+  totalPendingRevenue,
+  valueLabel = "Revenue",
+  pendingValueLabel = "Pending",
+  emptyStateLabel,
+  chartMode = "revenue",
+}: RevenueBreakdownReportProps) {
+  if (!data.length) {
+    return (
+      <div className="space-y-3">
+        <div className="text-center space-y-1">
+          <h1 className="text-lg md:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+            {title}
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {description}
+          </p>
+        </div>
+        <div className="rounded-[20px] border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
+          No data available for this period.
+          {typeof totalRevenue === "number" || typeof totalPendingRevenue === "number"
+            ? chartMode === "expense"
+              ? ` ${emptyStateLabel || valueLabel} ${formatAmount(totalRevenue || 0, currency)}.`
+              : ` ${emptyStateLabel || valueLabel} ${formatAmount(totalRevenue || 0, currency)}. ${pendingValueLabel} ${formatAmount(totalPendingRevenue || 0, currency)}.`
+            : ""}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-          Orders Report
+    <div className="space-y-3">
+      <div className="text-center space-y-1">
+        <h1 className="text-lg md:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+          {title}
         </h1>
-        <p className="text-base text-slate-500 dark:text-slate-400">
-          Shop orders, items sold, and revenue over time.
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          {description}
         </p>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 gap-6">
-        <OrdersReportingSectionCards report={report} currency={currency} />
+      <div>
+        {chartMode === "expense" ? (
+          <ExpenseComboChart data={data} currency={currency} title={title} subtitle={description} />
+        ) : (
+          <OrdersComboChart data={data} currency={currency} />
+        )}
       </div>
+    </div>
+  );
+}
 
-      {/* Chart Section */}
-      {report?.order_data?.length > 0 && (
-        <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 shadow-lg p-6 md:p-10">
-          <h2 className="text-lg font-semibold mb-6 text-center text-slate-800 dark:text-slate-200">
-            Sales & Items Sold Trend
-          </h2>
-          <OrdersComboChart data={report.order_data} currency={currency} />
-        </div>
-      )}
+export function ExpenseReport({ report, currency }: props) {
+  const expenseTypeData = report.expense_type_data ?? [];
 
-      {/* Data Table */}
-      {report?.order_data && report.order_data.length > 0 && (
-        <div className="overflow-x-auto rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-lg">
-          <Table>
-            <TableHeader className="bg-slate-50 dark:bg-slate-800 sticky top-0 z-10 backdrop-blur">
-              <TableRow>
-                <TableHead className="text-center font-semibold text-base text-slate-700 dark:text-slate-200 w-1/5">
-                  Month
-                </TableHead>
-                <TableHead className="text-center font-semibold text-base text-slate-700 dark:text-slate-200 w-1/5">
-                  Order Revenue
-                </TableHead>
-                <TableHead className="text-center font-semibold text-base text-slate-700 dark:text-slate-200 w-1/5">
-                  Pending Order Revenue
-                </TableHead>
-                <TableHead className="text-center font-semibold text-base text-slate-700 dark:text-slate-200 w-1/5">
-                  Items Sold
-                </TableHead>
-                <TableHead className="text-center font-semibold text-base text-slate-700 dark:text-slate-200 w-1/5">
-                  Pending Items
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {report.order_data.map(
-                (month: OrderReportDataRow, idx: number) => (
-                  <TableRow
-                    key={month.date}
-                    className={`transition-colors ${
-                      idx % 2 === 0
-                        ? "bg-slate-50 dark:bg-slate-900"
-                        : "bg-white dark:bg-slate-800"
-                    } hover:bg-primary/10 dark:hover:bg-primary/20`}
-                  >
-                    <TableCell className="text-center font-medium w-1/5">
-                      {month.date}
-                    </TableCell>
-                    <TableCell className="text-center w-1/5">
-                      {formatAmount(month.total_revenue, currency)}
-                    </TableCell>
-                    <TableCell className="text-center w-1/5">
-                      {formatAmount(month.total_pending_revenue, currency)}
-                    </TableCell>
-                    <TableCell className="text-center w-1/5">
-                      {month.total_shop_sold_items}
-                    </TableCell>
-                    <TableCell className="text-center w-1/5">
-                      {month.total_shop_pending_sold_items}
-                    </TableCell>
-                  </TableRow>
-                ),
-              )}
-            </TableBody>
-          </Table>
+  return (
+    <div className="space-y-4">
+      <RevenueBreakdownReport
+        title="Expense Report"
+        description="Club expenses over time."
+        data={report.expense_data ?? []}
+        currency={currency}
+        totalRevenue={report.total_expense}
+        valueLabel="Expense"
+        emptyStateLabel="Expense"
+        chartMode="expense"
+      />
+
+      {expenseTypeData.length > 0 && (
+        <div className="space-y-3">
+          <div className="text-center space-y-1">
+            <h2 className="text-base font-extrabold tracking-tight text-slate-900 dark:text-white md:text-lg">
+              Expense Type Breakdown
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Monthly expense trends grouped by expense type.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {expenseTypeData.map((expenseType: ExpenseTypeDataRow) => (
+              <div
+                key={expenseType.type}
+                className="rounded-[20px] border border-slate-200/70 bg-white p-3 shadow-sm md:p-4"
+              >
+                <ExpenseComboChart
+                  data={expenseType.data ?? []}
+                  currency={currency}
+                  title={`${expenseType.type} Expense Trend`}
+                  subtitle={`${expenseType.type} expense over time.`}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
+  );
+}
+
+export function OrdersReport({ report, currency }: props) {
+  return (
+    <RevenueBreakdownReport
+      title="Shop Report"
+      description="Shop orders and revenue over time."
+      data={report.shop_data ?? report.order_data ?? []}
+      currency={currency}
+      totalRevenue={report.total_shop_revenue}
+      totalPendingRevenue={report.total_shop_pending_revenue}
+    />
   );
 }

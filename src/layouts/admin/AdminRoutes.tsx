@@ -10,7 +10,7 @@ import ManageClubDashboard from "@/pages/admin/club/manage-club";
 import HomeDashboardPage from "@/pages/admin/club/home";
 import RegistrationReportPage from "@/pages/admin/reporting/registration-report-page";
 import BillingPage from "@/pages/admin/billing/billing";
-import GeneralReportingPage from "@/pages/admin/reporting/general-reporting";
+import GeneralReportingPage from "@/pages/admin/club/club-financials";
 import ShopReportingPage from "@/pages/admin/reporting/shop-reporting";
 import FinancialTransactionsPage from "@/pages/admin/reporting/financial-transactions";
 import AddMemberPage from "@/pages/admin/members/add-member/add-member";
