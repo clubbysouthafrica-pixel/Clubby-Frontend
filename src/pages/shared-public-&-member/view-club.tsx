@@ -49,6 +49,7 @@ import { ClubPaymentsTab } from "@/components/member/view-club-tabs/club-payment
 import { ClubShopTab } from "@/components/member/view-club-tabs/club-shop-tab";
 import MemberStorage from "@/components/member/storage/storage";
 import StorageRequestDialog from "@/components/storage-request-dialog/StorageRequestDialog";
+import { isStorageFeatureEnabled } from "@/lib/feature-flags";
 
 function epochToJoinedString(epoch: number): string {
   const date = new Date(epoch); // if epoch is in seconds, use new Date(epoch * 1000)
@@ -484,13 +485,31 @@ export default function ViewClubPage() {
     const eventRegistrationIdParam = queryParams.get("eventRegistrationId");
     const shouldOpenPaymentScreen = queryParams.get("paymentScreen") === "true";
 
+    if (routeSection === "storage" && !isStorageFeatureEnabled && clubId) {
+      navigate(
+        {
+          pathname: getClubSectionPath(clubId, "home"),
+          search: search ? search : "",
+        },
+        { replace: true },
+      );
+      return;
+    }
+
     if (tabParam && clubId) {
+      const requestedSection = normalizeClubSection(tabParam);
+
       queryParams.delete("tab");
       const nextSearch = queryParams.toString();
 
       navigate(
         {
-          pathname: getClubSectionPath(clubId, normalizeClubSection(tabParam)),
+          pathname: getClubSectionPath(
+            clubId,
+            requestedSection === "storage" && !isStorageFeatureEnabled
+              ? "home"
+              : requestedSection,
+          ),
           search: nextSearch ? `?${nextSearch}` : "",
         },
         { replace: true },
@@ -1002,7 +1021,10 @@ export default function ViewClubPage() {
       value: ClubSection,
       options?: { replace?: boolean; searchParams?: URLSearchParams },
     ) => {
-      setActiveTab(value);
+      const nextSection =
+        value === "storage" && !isStorageFeatureEnabled ? "home" : value;
+
+      setActiveTab(nextSection);
       setNewOrderId(null);
       setHighlightedTransactionId(null);
       setHighlightedEventRegistrationId(null);
@@ -1015,7 +1037,7 @@ export default function ViewClubPage() {
 
       navigate(
         {
-          pathname: getClubSectionPath(clubId, value),
+          pathname: getClubSectionPath(clubId, nextSection),
           search: nextSearch ? `?${nextSearch}` : "",
         },
         { replace: options?.replace },
@@ -1251,11 +1273,13 @@ export default function ViewClubPage() {
       });
     }
 
-    items.push({
-      key: "storage",
-      label: "Storage",
-      icon: BoxIcon,
-    });
+    if (isStorageFeatureEnabled) {
+      items.push({
+        key: "storage",
+        label: "Storage",
+        icon: BoxIcon,
+      });
+    }
 
     return items;
   }, [
@@ -1591,13 +1615,15 @@ export default function ViewClubPage() {
                     onOpenBookings={() => handleSectionChange("bookings")}
                     onOpenOutstandingBalance={handleOpenOutstandingBalance}
                   />
-                  <TabsContent value="storage" className="mt-3 sm:mt-6">
-                    <MemberStorage
-                      clubId={data?.club_account_id as string}
-                      currency={data?.currency}
-                      onSelectUnit={setSelectedStorageItem}
-                    />
-                  </TabsContent>
+                  {isStorageFeatureEnabled && (
+                    <TabsContent value="storage" className="mt-3 sm:mt-6">
+                      <MemberStorage
+                        clubId={data?.club_account_id as string}
+                        currency={data?.currency}
+                        onSelectUnit={setSelectedStorageItem}
+                      />
+                    </TabsContent>
+                  )}
                   {data?.club_member_exists && (
                     <ClubPaymentsTab
                       data={data}
@@ -1687,11 +1713,13 @@ export default function ViewClubPage() {
         </DialogContent>
       </Dialog>
 
-      <StorageRequestDialog
-        clubAccountId={data?.club_account_id ?? ""}
-        selectedStorageItem={selectedStorageItem}
-        setSelectedStorageItem={setSelectedStorageItem}
-      />
+      {isStorageFeatureEnabled && (
+        <StorageRequestDialog
+          clubAccountId={data?.club_account_id ?? ""}
+          selectedStorageItem={selectedStorageItem}
+          setSelectedStorageItem={setSelectedStorageItem}
+        />
+      )}
     </Pager>
   );
 }

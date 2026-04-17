@@ -28,6 +28,7 @@ import StorageAdmin from "@/pages/admin/storage-requests/storage";
 import StorageRequestsAdmin from "@/pages/admin/storage-requests/storage-requests";
 import EventsPage from "@/pages/admin/events/events";
 import EventRegistrationsPage from "@/pages/admin/events/registrations";
+import { isStorageFeatureEnabled } from "@/lib/feature-flags";
 
 export default function AdminRoutes() {
   return (
@@ -200,22 +201,26 @@ export default function AdminRoutes() {
           </ProtectedRoute>
         }
       ></Route>
-      <Route
-        path="/storage"
-        element={
-          <ProtectedRoute>
-            <StorageAdmin />
-          </ProtectedRoute>
-        }
-      ></Route>
-      <Route
-        path="/storage/requests"
-        element={
-          <ProtectedRoute>
-            <StorageRequestsAdmin />
-          </ProtectedRoute>
-        }
-      ></Route>
+      {isStorageFeatureEnabled && (
+        <>
+          <Route
+            path="/storage"
+            element={
+              <ProtectedRoute>
+                <StorageAdmin />
+              </ProtectedRoute>
+            }
+          ></Route>
+          <Route
+            path="/storage/requests"
+            element={
+              <ProtectedRoute>
+                <StorageRequestsAdmin />
+              </ProtectedRoute>
+            }
+          ></Route>
+        </>
+      )}
       <Route
         path="/events"
         element={

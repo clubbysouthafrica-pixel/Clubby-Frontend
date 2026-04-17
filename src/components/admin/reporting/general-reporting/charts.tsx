@@ -123,6 +123,23 @@ function formatMonthLabel(date: string) {
   return date;
 }
 
+function getMonthSortValue(date: string) {
+  const normalizedDate = /^\d{4}-\d{2}$/.test(date) ? `${date}-01` : date;
+  const parsedTime = new Date(normalizedDate).getTime();
+
+  if (!Number.isNaN(parsedTime)) {
+    return parsedTime;
+  }
+
+  return Number.MAX_SAFE_INTEGER;
+}
+
+function sortMonthlyRows<T extends { date: string }>(rows: T[]) {
+  return [...rows].sort(
+    (left, right) => getMonthSortValue(left.date) - getMonthSortValue(right.date),
+  );
+}
+
 // --- Modern Tooltip ---
 function ModernTooltip({
   active,
@@ -186,18 +203,20 @@ export function RegistrationComboChart({
   data: RegistrationReportDataRow[];
   currency: string;
 }) {
-  const chartData = data.map((d) => ({
+  const orderedData = sortMonthlyRows(data);
+
+  const chartData = orderedData.map((d) => ({
     name: formatMonthLabel(d.date),
     revenue: d.total_revenue,
     pending: d.total_pending_revenue,
   }));
 
-  const totalRevenue = data.reduce((sum, row) => sum + row.total_revenue, 0);
-  const totalPendingRevenue = data.reduce(
+  const totalRevenue = orderedData.reduce((sum, row) => sum + row.total_revenue, 0);
+  const totalPendingRevenue = orderedData.reduce(
     (sum, row) => sum + row.total_pending_revenue,
     0,
   );
-  const strongestMonth = data.reduce((best, current) =>
+  const strongestMonth = orderedData.reduce((best, current) =>
     current.total_revenue > best.total_revenue ? current : best,
   );
 
@@ -280,21 +299,23 @@ export function OverallComboChart({
   data: ReportDataRow[];
   currency: string;
 }) {
-  const chartData = data.map((d) => ({
+  const orderedData = sortMonthlyRows(data);
+
+  const chartData = orderedData.map((d) => ({
     name: formatMonthLabel(d.date),
     revenue: d.total_revenue || 0,
     pending: d.total_pending_revenue || 0,
   }));
 
-  const totalRevenue = data.reduce(
+  const totalRevenue = orderedData.reduce(
     (sum, row) => sum + (row.total_revenue || 0),
     0,
   );
-  const totalPendingRevenue = data.reduce(
+  const totalPendingRevenue = orderedData.reduce(
     (sum, row) => sum + (row.total_pending_revenue || 0),
     0,
   );
-  const strongestMonth = data.reduce<ReportDataRow | null>((best, current) => {
+  const strongestMonth = orderedData.reduce<ReportDataRow | null>((best, current) => {
     if (!best) {
       return current;
     }
@@ -380,21 +401,23 @@ export function OrdersComboChart({
   data: ReportDataRow[];
   currency: string;
 }) {
-  const chartData = data.map((d) => ({
+  const orderedData = sortMonthlyRows(data);
+
+  const chartData = orderedData.map((d) => ({
     name: formatMonthLabel(d.date),
     revenue: d.total_revenue || 0,
     pending: d.total_pending_revenue || 0,
   }));
 
-  const totalRevenue = data.reduce(
+  const totalRevenue = orderedData.reduce(
     (sum, row) => sum + (row.total_revenue || 0),
     0,
   );
-  const totalPendingRevenue = data.reduce(
+  const totalPendingRevenue = orderedData.reduce(
     (sum, row) => sum + (row.total_pending_revenue || 0),
     0,
   );
-  const strongestMonth = data.reduce<ReportDataRow | null>((best, current) => {
+  const strongestMonth = orderedData.reduce<ReportDataRow | null>((best, current) => {
     if (!best) {
       return current;
     }
@@ -486,16 +509,18 @@ export function ExpenseComboChart({
   title?: string;
   subtitle?: string;
 }) {
-  const chartData = data.map((d) => ({
+  const orderedData = sortMonthlyRows(data);
+
+  const chartData = orderedData.map((d) => ({
     name: formatMonthLabel(d.date),
     expense: d.total_expense || 0,
   }));
 
-  const totalExpense = data.reduce(
+  const totalExpense = orderedData.reduce(
     (sum, row) => sum + (row.total_expense || 0),
     0,
   );
-  const strongestMonth = data.reduce<ReportDataRow | null>((best, current) => {
+  const strongestMonth = orderedData.reduce<ReportDataRow | null>((best, current) => {
     if (!best) {
       return current;
     }
@@ -619,7 +644,9 @@ export function RegistrationBillingChart({
   data,
   currency,
 }: RegistrationBillingChartProps) {
-  const chartData = data.map((d) => ({
+  const orderedData = sortMonthlyRows(data);
+
+  const chartData = orderedData.map((d) => ({
     name: formatMonthLabel(d.date),
     total: d.total,
     paid: d.paid_to_club,
