@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import {
   Loader2,
   ShoppingCart,
-  Folder,
   CheckCircle2,
   XCircle,
   ChevronDown,
@@ -47,15 +46,6 @@ function buildTree(units: StorageUnit[]): StorageUnit[] {
   });
   return roots;
 }
-
-// Example type
-type StorageRequest = {
-  id: string;
-  unitName: string;
-  requestedAt: string;
-  status: "pending" | "approved" | "rejected" | "booked";
-  reason?: string;
-};
 
 function formatAmount(cents?: number, currency: string = "$"): string {
   if (typeof cents !== "number") return "—";
@@ -182,7 +172,7 @@ export default function MemberStorage({
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {myRequests.map((req) => (
+                {myRequests.map((req: any) => (
                   <Card key={req.id} className="flex flex-col">
                     <CardHeader>
                       <CardTitle className="text-base">
