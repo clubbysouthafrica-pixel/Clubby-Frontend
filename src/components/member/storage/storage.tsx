@@ -153,7 +153,6 @@ export default function MemberStorage({
               )}
             >
               <CardHeader className="flex items-center gap-3">
-                <Folder className="h-6 w-6 text-primary" />
                 <div className="flex-1">
                   <CardTitle className="text-lg font-semibold">
                     {parent.name}
