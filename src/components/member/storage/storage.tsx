@@ -13,8 +13,13 @@ import {
   Folder,
   CheckCircle2,
   XCircle,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
-import { useFetchClubStorage } from "@/queries/storage";
+import {
+  useFetchClubStorage,
+  useFetchClubStorageRequests,
+} from "@/queries/storage";
 import clsx from "clsx";
 
 type StorageUnit = {
@@ -43,6 +48,15 @@ function buildTree(units: StorageUnit[]): StorageUnit[] {
   return roots;
 }
 
+// Example type
+type StorageRequest = {
+  id: string;
+  unitName: string;
+  requestedAt: string;
+  status: "pending" | "approved" | "rejected" | "booked";
+  reason?: string;
+};
+
 function formatAmount(cents?: number, currency: string = "$"): string {
   if (typeof cents !== "number") return "—";
   return `${currency} ${(cents / 100).toFixed(2)}`;
@@ -55,6 +69,10 @@ interface StorageProps {
   currency?: string;
 }
 
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString();
+}
+
 export default function MemberStorage({
   onSelectUnit,
   onlyTopLevel,
@@ -62,6 +80,11 @@ export default function MemberStorage({
   currency = "ZAR",
 }: StorageProps) {
   const [expandedParent, setExpandedParent] = useState<string | null>(null);
+  const [showRequests, setShowRequests] = useState(true);
+
+  // Example usage
+  const { data: myRequests = [], isLoading: isRequestsLoading } =
+    useFetchClubStorageRequests(clubId as string);
 
   const {
     data: fetchedUnits,
@@ -132,6 +155,80 @@ export default function MemberStorage({
 
   return (
     <div className="w-full">
+      <div className="mb-10">
+        <button
+          className="flex items-center gap-2 text-xl font-bold mb-4 focus:outline-none"
+          onClick={() => setShowRequests((v) => !v)}
+          aria-expanded={showRequests}
+          aria-controls="my-storage-requests-panel"
+          type="button"
+        >
+          {showRequests ? (
+            <ChevronDown className="h-5 w-5 transition-transform" />
+          ) : (
+            <ChevronRight className="h-5 w-5 transition-transform" />
+          )}
+          My Storage Requests
+        </button>
+        {showRequests && (
+          <div id="my-storage-requests-panel">
+            {isRequestsLoading ? (
+              <div className="py-8 flex justify-center">
+                <Loader2 className="animate-spin h-6 w-6" />
+              </div>
+            ) : myRequests.length === 0 ? (
+              <div className="text-muted-foreground text-sm">
+                You have no storage requests.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {myRequests.map((req) => (
+                  <Card key={req.id} className="flex flex-col">
+                    <CardHeader>
+                      <CardTitle className="text-base">
+                        {req.unitName}
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        Requested on {formatDate(req.requestedAt)}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex-1 flex flex-col justify-between">
+                      <div>
+                        <div className="mb-2 text-sm">
+                          Status:{" "}
+                          <span
+                            className={clsx(
+                              "inline-block px-2 py-0.5 rounded-full text-xs font-semibold",
+                              req.status === "approved" &&
+                                "bg-success/10 text-success",
+                              req.status === "pending" &&
+                                "bg-warning/10 text-warning",
+                              req.status === "rejected" &&
+                                "bg-destructive/10 text-destructive",
+                              req.status === "booked" &&
+                                "bg-primary/10 text-primary",
+                            )}
+                          >
+                            {req.status.charAt(0).toUpperCase() +
+                              req.status.slice(1)}
+                          </span>
+                        </div>
+                        {req.status === "rejected" && req.reason && (
+                          <div className="text-xs text-destructive">
+                            Reason: {req.reason}
+                          </div>
+                        )}
+                      </div>
+                      {/* Optionally, add a cancel or view details button here */}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Storage Units</h2>
