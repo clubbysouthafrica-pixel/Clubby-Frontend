@@ -7,8 +7,15 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, ShoppingCart } from "lucide-react";
+import {
+  Loader2,
+  ShoppingCart,
+  Folder,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 import { useFetchClubStorage } from "@/queries/storage";
+import clsx from "clsx";
 
 type StorageUnit = {
   id: string;
@@ -56,19 +63,14 @@ export default function MemberStorage({
 }: StorageProps) {
   const [expandedParent, setExpandedParent] = useState<string | null>(null);
 
-  // fetch hook - always called (pass possibly undefined clubId)
-  // fetch hook - always called with undefined if no clubId (so react-query 'enabled' works)
   const {
     data: fetchedUnits,
     isLoading,
     isError,
   } = useFetchClubStorage((clubId as string) ?? undefined);
 
-  // Normalize fetchedUnits into the StorageUnit[] shape the component expects
   const unitsFlat: StorageUnit[] = useMemo(() => {
     if (!fetchedUnits) return [];
-
-    // If API returns an array directly
     if (Array.isArray(fetchedUnits)) {
       return (fetchedUnits as any).map((u: any) => ({
         id: u.storage_id ?? u.id,
@@ -84,12 +86,9 @@ export default function MemberStorage({
               : undefined,
       }));
     }
-
-    // If API returns { items: [...] }
     const items = (fetchedUnits as any).items ?? (fetchedUnits as any).units;
     if (!Array.isArray(items)) return [];
-
-    const normalized = items.map((u: any) => ({
+    return items.map((u: any) => ({
       id: u.storage_id ?? u.id,
       name: u.storage_name ?? u.name,
       isBooked: !!u.is_booked || !!u.isBooked,
@@ -102,157 +101,179 @@ export default function MemberStorage({
             ? u.priceCents
             : undefined,
     })) as StorageUnit[];
-
-    return normalized;
   }, [fetchedUnits]);
 
   const tree = useMemo(() => buildTree(unitsFlat), [unitsFlat]);
 
-  // side effects (unrelated to hooks order)
   useEffect(() => {
     if (onlyTopLevel) setExpandedParent(null);
   }, [onlyTopLevel, unitsFlat]);
 
-  // --- early UI returns after hooks are declared ---
   if (isLoading) {
     return (
-      <div className="py-10 flex items-center justify-center">
-        <Loader2 className="animate-spin h-6 w-6 text-muted-foreground" />
+      <div className="py-16 flex items-center justify-center">
+        <Loader2 className="animate-spin h-8 w-8 text-muted-foreground" />
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="py-8 px-4 text-center text-red-600">
-        Error loading storage units.
+      <div className="py-12 px-4 text-center text-destructive">
+        <XCircle className="inline-block mr-2 mb-1" /> Error loading storage
+        units.
       </div>
     );
   }
 
-  // helpers & handlers (not hooks)
   const handleSelect = (unit: StorageUnit) => {
-    if (onSelectUnit) {
-      onSelectUnit(unit);
-      return;
-    }
+    if (onSelectUnit) onSelectUnit(unit);
   };
 
   return (
     <div className="w-full">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div>
-          <h2 className="text-2xl font-semibold">Available Storage Units</h2>
-          <p className="text-sm text-muted-foreground">
-            Browse and select a storage unit to reserve or checkout.
+          <h2 className="text-2xl font-bold tracking-tight">Storage Units</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Reserve or manage your club’s storage units.
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {tree.map((parent) => {
           const hasChildren = parent.children && parent.children.length > 0;
           return (
-            <Card key={parent.id} className="p-4 flex flex-col">
-              <CardHeader className="flex items-start justify-between gap-4 p-0 mb-3">
-                <div className="flex items-center gap-3">
-                  {/* <div className="rounded-full bg-primary/10 p-2">
-                    <Folder className="h-5 w-5 text-primary" />
-                  </div> */}
-                  <div>
-                    <CardTitle className="text-lg font-semibold">
-                      {parent.name}
-                    </CardTitle>
-                    <CardDescription className="text-xs text-muted-foreground">
-                      {hasChildren
-                        ? `${parent.children!.length} units available`
-                        : "Available unit"}
-                    </CardDescription>
+            <Card
+              key={parent.id}
+              className={clsx(
+                "flex flex-col shadow-md rounded-xl border border-muted-foreground/10 transition hover:shadow-lg",
+                parent.isBooked && "opacity-70",
+              )}
+            >
+              <CardHeader className="flex items-center gap-3">
+                <Folder className="h-6 w-6 text-primary" />
+                <div className="flex-1">
+                  <CardTitle className="text-lg font-semibold">
+                    {parent.name}
+                  </CardTitle>
+                  <CardDescription className="text-xs text-muted-foreground">
+                    {hasChildren
+                      ? `${parent.children!.length} units`
+                      : "Single unit"}
+                  </CardDescription>
+                </div>
+                {!hasChildren && (
+                  <div className="flex flex-col items-end">
+                    <span className="text-xs text-muted-foreground">Price</span>
+                    <span className="font-bold text-base">
+                      {formatAmount(parent.priceCents, currency)}
+                    </span>
                   </div>
-                </div>
-                <div className="text-right min-w-[120px]">
-                  {!hasChildren && (
-                    <div className="text-sm">
-                      <div className="text-muted-foreground text-xs">Price</div>
-                      <div className="font-semibold">
-                        {formatAmount(parent.priceCents, currency)}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                )}
               </CardHeader>
 
-              <CardContent className="p-0 flex flex-col flex-1">
+              <CardContent className="flex-1 flex flex-col p-6 pt-2">
                 {hasChildren ? (
                   <>
-                    <div className="mb-3">
-                      <div className="text-sm text-muted-foreground mb-2">
-                        Click to view individual units
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            setExpandedParent(
-                              expandedParent === parent.id ? null : parent.id,
-                            )
-                          }
-                        >
-                          {expandedParent === parent.id
-                            ? "Hide units"
-                            : "View units"}
-                        </Button>
-                      </div>
-                    </div>
-
+                    {/* Expanded children */}
                     {expandedParent === parent.id && (
-                      <div className="mt-3 grid grid-cols-1 gap-2">
+                      <div className="mb-4 grid grid-cols-1 gap-3">
                         {parent.children!.map((child) => (
                           <div
                             key={child.id}
-                            className="flex items-center justify-between p-3 bg-muted/10 rounded"
+                            className={clsx(
+                              "flex items-center justify-between p-3 rounded-lg border bg-muted/50",
+                              child.isBooked
+                                ? "opacity-60 border-destructive/30"
+                                : "border-muted-foreground/10",
+                            )}
                           >
                             <div>
-                              <div className="font-medium">{child.name}</div>
+                              <div className="font-medium flex items-center gap-2">
+                                {child.name}
+                                {child.isBooked ? (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-destructive/10 text-destructive text-xs font-semibold ml-2">
+                                    <XCircle className="h-3 w-3 mr-1" />
+                                    Booked
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-success/10 text-success text-xs font-semibold ml-2">
+                                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                                    Available
+                                  </span>
+                                )}
+                              </div>
                               <div className="text-xs text-muted-foreground">
-                                {formatAmount(child.priceCents)}
+                                {formatAmount(child.priceCents, currency)}
                               </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleSelect(child)}
-                                disabled={child.isBooked}
-                              >
-                                <ShoppingCart className="h-4 w-4 mr-1" />
-                                Select
-                              </Button>
-                            </div>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => handleSelect(child)}
+                              disabled={child.isBooked}
+                            >
+                              <ShoppingCart className="h-4 w-4 mr-1" />
+                              Reserve
+                            </Button>
                           </div>
                         ))}
                       </div>
                     )}
-                  </>
-                ) : (
-                  <div className="mt-2 flex items-center justify-between">
-                    <div>
-                      <div className="text-sm text-muted-foreground">Price</div>
-                      <div className="font-semibold">
-                        {formatAmount(parent.priceCents, currency)}
-                      </div>
-                    </div>
-                    <div>
+
+                    {/* Spacer to push button to bottom */}
+                    <div className="flex-1" />
+
+                    {/* Expand/Collapse button at bottom */}
+                    <div className="flex items-center justify-between mt-auto pt-2 border-t border-muted-foreground/10">
+                      <span className="text-sm text-muted-foreground">
+                        {expandedParent === parent.id
+                          ? "Hide units"
+                          : "View units"}
+                      </span>
                       <Button
                         size="sm"
-                        onClick={() => handleSelect(parent)}
-                        disabled={parent.isBooked}
+                        variant="outline"
+                        onClick={() =>
+                          setExpandedParent(
+                            expandedParent === parent.id ? null : parent.id,
+                          )
+                        }
                       >
-                        <ShoppingCart className="h-4 w-4 mr-1" />
-                        Select
+                        {expandedParent === parent.id ? "Hide" : "Expand"}
                       </Button>
                     </div>
+                  </>
+                ) : (
+                  <div className="mt-4 flex items-center justify-between">
+                    <div>
+                      <span className="text-xs text-muted-foreground">
+                        Status
+                      </span>
+                      <div className="flex items-center gap-2 mt-1">
+                        {parent.isBooked ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-destructive/10 text-destructive text-xs font-semibold">
+                            <XCircle className="h-3 w-3 mr-1" />
+                            Booked
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-success/10 text-success text-xs font-semibold">
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            Available
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => handleSelect(parent)}
+                      disabled={parent.isBooked}
+                    >
+                      <ShoppingCart className="h-4 w-4 mr-1" />
+                      Reserve
+                    </Button>
                   </div>
                 )}
               </CardContent>
