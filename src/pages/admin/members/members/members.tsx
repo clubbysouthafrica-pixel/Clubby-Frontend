@@ -25,6 +25,13 @@ import MembersTable from "@/components/admin/members/members/members_table";
 import { Loader2, X, Download, AlertCircle } from "lucide-react";
 import { exportTableData } from "@/helpers/admin/members/csv-export";
 import { Card } from "@/components/ui/card";
+import AddFiltersDialog from "@/components/admin/members/registrations/features/add-filters-dialog";
+import AddColumnsDialog from "@/components/admin/members/registrations/features/add-columns-dialog";
+import { countryCodes, getDialingCode } from "@/data/country-codes";
+import {
+  MEMBER_PROFILE_COLUMNS,
+  type MemberProfileColumn,
+} from "../../../../helpers/admin/members/member-profile-columns";
 
 export default function MembersPage() {
   const { club, isLoading: clubLoading } = useContext(
@@ -44,6 +51,7 @@ export default function MembersPage() {
   const [memberType, setMemberType] = useState<string>("all");
   const [appliedMemberType, setAppliedMemberType] = useState<string>("");
   const [dynamicFilters, setDynamicFilters] = useState<Record<string, any>>({});
+  const [filterCountryCodes, setFilterCountryCodes] = useState<Record<string, string>>({});
   const [filterConditions, setFilterConditions] = useState<
     Record<string, string>
   >({});
@@ -106,16 +114,19 @@ export default function MembersPage() {
       field_id?: string;
       field_name: string;
       type: string;
-      options: string[];
+      input_type?: string;
+      options?: string[];
     }[]
   >([]);
   const [activeFilterKeys, setActiveFilterKeys] = useState<string[]>([]);
+  const [showFilterSelector, setShowFilterSelector] = useState(false);
 
   const [activeColumnKeysRegistered, setActiveColumnKeysRegistered] = useState<
     string[]
   >([]);
   const [appliedColumnKeysRegistered, setAppliedColumnKeysRegistered] =
     useState<string[]>([]);
+  const [isAddColumnsOpen, setIsAddColumnsOpen] = useState(false);
 
   const sortableId = React.useId();
 
@@ -173,13 +184,17 @@ export default function MembersPage() {
   }, [clubMembers, clubMembersError]);
 
   useEffect(() => {
+    setAvailableDynamicFilters([
+      ...MEMBER_PROFILE_COLUMNS,
+      ...(allFilters || []),
+    ]);
+
     if (allRegisteredMembers.length === 0) return;
 
-    setAvailableDynamicFilters(allFilters);
     setFilterLoading(false);
 
     setRegisteredMembersLength(allRegisteredMembers.length);
-  }, [allRegisteredMembers]);
+  }, [allFilters, allRegisteredMembers]);
 
   useEffect(() => {
     const updateHash = () => {
@@ -229,11 +244,29 @@ export default function MembersPage() {
       let condition: string | undefined = undefined;
 
       // Handle billing:number or other number types with operator
-      if (fieldType === "billing:number" || typeof value === "object") {
+      if (fieldType === "billing:number") {
         inputType = "number";
         const filterObj = value as any;
         actualValue = String(filterObj.value || "");
         condition = filterObj.operator || filterConditions[key];
+      } else if (fieldType === "member_profile") {
+        if (filterDefinition?.input_type === "date") {
+          inputType = "date";
+          actualValue = String(value).replaceAll("-", "/");
+        } else if (filterDefinition?.input_type === "phone") {
+          inputType = "text";
+          const phoneFilter =
+            typeof value === "object" && value !== null
+              ? (value as { countryCode?: string; value?: string })
+              : { countryCode: filterCountryCodes[key] || "ZA", value: String(value || "") };
+          const dialingCode = getDialingCode(phoneFilter.countryCode || filterCountryCodes[key] || "ZA");
+          const phoneWithoutLeadingZero = String(phoneFilter.value || "")
+            .replace(/\D/g, "")
+            .replace(/^0+/, "");
+          actualValue = phoneWithoutLeadingZero ? `${dialingCode}${phoneWithoutLeadingZero}` : "";
+        } else {
+          inputType = "text";
+        }
       } else if (
         options.length === 2 &&
         options.includes("true") &&
@@ -248,7 +281,7 @@ export default function MembersPage() {
       }
 
       const filterObj: any = {
-        field_id: `reg_field_${fieldId}`,
+        field_id: fieldType === "member_profile" ? fieldId : `reg_field_${fieldId}`,
         type: fieldType,
         input_type: inputType,
         value: actualValue,
@@ -263,29 +296,29 @@ export default function MembersPage() {
     });
 
     setComputedCustomFilters(customFiltersArray);
-  }, [dynamicFilters, availableDynamicFilters, filterConditions]);
+  }, [dynamicFilters, availableDynamicFilters, filterConditions, filterCountryCodes]);
 
   useEffect(() => {
     const allKeys = [
-      ...new Set([
-        ...appliedColumnKeysRegistered,
-      ]),
+      ...new Set([...appliedColumnKeysRegistered]),
     ];
 
-    // Check if there are any new keys not in requestedKeys
-    const newKeys = allKeys.filter((key) => !requestedKeys.includes(key));
+    const mergedKeys = [...new Set([...requestedKeys, ...allKeys])];
+    const hasSameKeys =
+      mergedKeys.length === requestedKeys.length &&
+      mergedKeys.every((key, index) => key === requestedKeys[index]);
 
-    if (newKeys.length > 0) {
-      // Merge new keys with previously requested keys
-      const mergedKeys = [...new Set([...requestedKeys, ...newKeys])];
-      setRequestedKeys(mergedKeys);
-    } else if (allKeys.length === 0) {
-      // If all keys removed, clear requested keys
-      setRequestedKeys([]);
+    if (allKeys.length === 0) {
+      if (requestedKeys.length > 0) {
+        setRequestedKeys([]);
+      }
+      return;
     }
-  }, [
-    appliedColumnKeysRegistered,
-  ]);
+
+    if (!hasSameKeys) {
+      setRequestedKeys(mergedKeys);
+    }
+  }, [appliedColumnKeysRegistered, requestedKeys]);
 
   useEffect(() => {
     if (window.location.hash) {
@@ -301,6 +334,7 @@ export default function MembersPage() {
     setMemberNameFilter("");
     setMemberIdFilter("");
     setDynamicFilters({});
+    setFilterCountryCodes({});
     setFilterConditions({});
     setAppliedCustomFilters([]);
     setActiveFilterKeys([]);
@@ -308,6 +342,9 @@ export default function MembersPage() {
   };
 
   const handleDownloadRegisteredMembers = () => {
+    const memberProfileCols = MEMBER_PROFILE_COLUMNS.filter((column: MemberProfileColumn) =>
+      activeColumnKeysRegistered.includes(column.key),
+    );
     const customCols =
       clubMembers?.filters?.filter((f: any) =>
         activeColumnKeysRegistered.includes(f.key),
@@ -317,7 +354,7 @@ export default function MembersPage() {
       members: allRegisteredMembers,
       tableName: "Active_Members",
       defaultColumns: ["Member Name", "Member ID", "Registered On"],
-      customColumns: customCols,
+      customColumns: [...memberProfileCols, ...customCols],
     });
   };
 
@@ -421,7 +458,7 @@ export default function MembersPage() {
                       </span>
                       <div className="flex flex-wrap gap-2">
                         {sortedFilters.map(
-                          ({ key, field_name, options, type }) => {
+                          ({ key, field_name, options, type, input_type }) => {
                             // Handle billing:number type with comparison operators
                             if (type === "billing:number") {
                               const filterValue = dynamicFilters[key] || {};
@@ -525,6 +562,151 @@ export default function MembersPage() {
                                         setAllMembersSelected(false);
                                       }}
                                       className="w-[150px] text-sm"
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            if (type === "member_profile" && input_type === "date") {
+                              return (
+                                <div
+                                  key={key}
+                                  className="border rounded-lg p-3 bg-white"
+                                >
+                                  <div className="flex items-center justify-between gap-2 mb-2">
+                                    <Label className="text-xs font-semibold">
+                                      {field_name}
+                                    </Label>
+                                    <button
+                                      onClick={() => {
+                                        setActiveFilterKeys((prev) =>
+                                          prev.filter((k) => k !== key),
+                                        );
+                                        setDynamicFilters((prev) => {
+                                          const newFilters = { ...prev };
+                                          delete newFilters[key];
+                                          return newFilters;
+                                        });
+                                      }}
+                                      className="p-0.5 hover:bg-gray-200 rounded"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                  <Input
+                                    type="date"
+                                    value={String(dynamicFilters[key] || "").replaceAll("/", "-")}
+                                    onChange={(e) => {
+                                      setDynamicFilters((prev) => ({
+                                        ...prev,
+                                        [key]: e.target.value,
+                                      }));
+                                      setlistActionItems([]);
+                                      setDeregisterMembers([]);
+                                      setAllMembersSelected(false);
+                                    }}
+                                    className="w-[280px] text-sm"
+                                  />
+                                </div>
+                              );
+                            }
+
+                            if (type === "member_profile" && input_type === "phone") {
+                              const phoneFilter =
+                                typeof dynamicFilters[key] === "object" && dynamicFilters[key] !== null
+                                  ? dynamicFilters[key]
+                                  : {
+                                      countryCode: filterCountryCodes[key] || "ZA",
+                                      value: typeof dynamicFilters[key] === "string" ? dynamicFilters[key] : "",
+                                    };
+
+                              return (
+                                <div
+                                  key={key}
+                                  className="border rounded-lg p-3 bg-white"
+                                >
+                                  <div className="flex items-center justify-between gap-2 mb-2">
+                                    <Label className="text-xs font-semibold">
+                                      {field_name}
+                                    </Label>
+                                    <button
+                                      onClick={() => {
+                                        setActiveFilterKeys((prev) =>
+                                          prev.filter((k) => k !== key),
+                                        );
+                                        setDynamicFilters((prev) => {
+                                          const newFilters = { ...prev };
+                                          delete newFilters[key];
+                                          return newFilters;
+                                        });
+                                        setFilterCountryCodes((prev) => {
+                                          const newCodes = { ...prev };
+                                          delete newCodes[key];
+                                          return newCodes;
+                                        });
+                                      }}
+                                      className="p-0.5 hover:bg-gray-200 rounded"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Select
+                                      value={phoneFilter.countryCode || filterCountryCodes[key] || "ZA"}
+                                      onValueChange={(countryCode) => {
+                                        setFilterCountryCodes((prev) => ({
+                                          ...prev,
+                                          [key]: countryCode,
+                                        }));
+                                        setDynamicFilters((prev) => ({
+                                          ...prev,
+                                          [key]: {
+                                            countryCode,
+                                            value: phoneFilter.value || "",
+                                          },
+                                        }));
+                                        setlistActionItems([]);
+                                        setDeregisterMembers([]);
+                                        setAllMembersSelected(false);
+                                      }}
+                                    >
+                                      <SelectTrigger className="w-[130px] text-sm">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {countryCodes.map((country) => (
+                                          <SelectItem key={country.code} value={country.code}>
+                                            {country.dialingCode} {country.code}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <Input
+                                      type="tel"
+                                      placeholder="Phone number"
+                                      value={phoneFilter.value || ""}
+                                      onChange={(e) => {
+                                        let value = e.target.value;
+                                        if (value.startsWith("0") && value.length > 1) {
+                                          value = value.substring(1);
+                                        }
+                                        const digitsOnly = value.replace(/\D/g, "");
+                                        if (digitsOnly.length <= 15) {
+                                          setDynamicFilters((prev) => ({
+                                            ...prev,
+                                            [key]: {
+                                              countryCode: phoneFilter.countryCode || filterCountryCodes[key] || "ZA",
+                                              value,
+                                            },
+                                          }));
+                                          setlistActionItems([]);
+                                          setDeregisterMembers([]);
+                                          setAllMembersSelected(false);
+                                        }
+                                      }}
+                                      className="w-[148px] text-sm"
+                                      maxLength={20}
                                     />
                                   </div>
                                 </div>
@@ -686,12 +868,31 @@ export default function MembersPage() {
                     </div>
                   );
                 })()}
+              <div className="flex flex-row gap-2 items-start">
+                <AddFiltersDialog
+                  open={showFilterSelector}
+                  onOpenChange={setShowFilterSelector}
+                  availableFields={availableDynamicFilters}
+                  activeFilterKeys={activeFilterKeys}
+                  onFilterKeysChange={setActiveFilterKeys}
+                  description="Select which filters you want to display. After selecting, click the Run button below to apply these filters."
+                />
+                <AddColumnsDialog
+                  open={isAddColumnsOpen}
+                  onOpenChange={setIsAddColumnsOpen}
+                  availableFields={MEMBER_PROFILE_COLUMNS}
+                  activeColumnKeys={activeColumnKeysRegistered}
+                  onColumnKeysChange={setActiveColumnKeysRegistered}
+                  title="Add Member Columns"
+                  description="Select which columns you want to display. After selecting, click the Run button below to apply these columns."
+                />
+              </div>
               {activeColumnKeysRegistered.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {activeColumnKeysRegistered.map((key) => {
-                    const field = availableDynamicFilters?.find(
-                      (f) => f.key === key,
-                    );
+                    const field =
+                      MEMBER_PROFILE_COLUMNS.find((column: MemberProfileColumn) => column.key === key) ||
+                      availableDynamicFilters?.find((f) => f.key === key);
                     return (
                       <div
                         key={key}
@@ -815,6 +1016,7 @@ export default function MembersPage() {
                   <div className="w-full">
                     <MembersTable
                       clubId={club?.club_account_id || ""}
+                      activeColumnKeys={appliedColumnKeysRegistered}
                       sensors={sensors}
                       sortableId={sortableId}
                       allMembersSelected={allMembersSelected}

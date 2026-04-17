@@ -31,6 +31,11 @@ import { Button } from "@/components/ui/button";
 import ReusableSendEmailDialog from "./features/reusable-send-email-dialog";
 import RemoveMemberDialog from "./features/remove-member-dialog";
 import { Badge } from "@/components/ui/badge";
+import {
+  getMemberProfileColumnValue,
+  MEMBER_PROFILE_COLUMNS,
+  type MemberProfileColumn,
+} from "../../../../helpers/admin/members/member-profile-columns";
 
 const getMemberStatus = (registered: boolean, resubmissionRequired: boolean) => {
   if (!registered && resubmissionRequired) {
@@ -53,6 +58,7 @@ interface ImageProps {
   currency: string;
   memberLimit: number;
   members: any[];
+  activeColumnKeys?: string[];
   setAllListActionItems: (members: ClubMember[]) => void;
   setSelectedMember: React.Dispatch<React.SetStateAction<object>>;
   setlistActionItems: React.Dispatch<
@@ -74,6 +80,7 @@ export default function MembersTable({
   dereigsterMembers,
   members,
   clubId,
+  activeColumnKeys = [],
   setAllListActionItems,
   setSelectedMember,
   setlistActionItems,
@@ -129,6 +136,11 @@ export default function MembersTable({
   useEffect(() => {
     setRegisteredMembersLength(members.length);
   }, [members, setRegisteredMembersLength]);
+
+  const selectedProfileColumns = useMemo<MemberProfileColumn[]>(
+    () => MEMBER_PROFILE_COLUMNS.filter((column) => activeColumnKeys.includes(column.key)),
+    [activeColumnKeys],
+  );
 
   return (
     <>
@@ -282,6 +294,11 @@ export default function MembersTable({
                 <TableHead className="text-center w-[120px]">
                   Registrations
                 </TableHead>
+                {selectedProfileColumns.map((column) => (
+                  <TableHead key={column.key} className="text-center min-w-[170px]">
+                    {column.field_name}
+                  </TableHead>
+                ))}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -400,10 +417,23 @@ export default function MembersTable({
                           {member.registrations?.length || 0}
                         </Button>
                       </TableCell>
+                      {selectedProfileColumns.map((column) => {
+                        const columnValue = getMemberProfileColumnValue(member, column.key);
+
+                        return (
+                          <TableCell key={column.key} className="text-center min-w-[170px]">
+                            {columnValue === "N/A" ? (
+                              <span className="text-gray-400">n/a</span>
+                            ) : (
+                              columnValue
+                            )}
+                          </TableCell>
+                        );
+                      })}
                     </TableRow>
                     {expandedMemberId === member.user_id && (
                       <TableRow className="">
-                        <TableCell colSpan={6} className="p-4 border-l-4 border-blue-500">
+                        <TableCell colSpan={6 + selectedProfileColumns.length} className="p-4 border-l-4 border-blue-500">
                           <div className="overflow-hidden rounded-lg border border-blue-200">
                             <Table className="w-full">
                               <TableHeader className="bg-blue-100 sticky top-0 z-10">
@@ -492,7 +522,7 @@ export default function MembersTable({
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={6 + selectedProfileColumns.length}
                     className="h-24 text-center"
                   >
                     No results.

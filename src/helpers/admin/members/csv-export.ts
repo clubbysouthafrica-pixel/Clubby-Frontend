@@ -1,4 +1,5 @@
 import { ClubMember } from "@/interfaces/club";
+import { getMemberProfileColumnValue } from "@/helpers/admin/members/member-profile-columns";
 
 interface CSVExportOptions {
   members: ClubMember[];
@@ -102,6 +103,10 @@ export const generateCSVContent = (options: CSVExportOptions): string => {
             f.name === column.field_id
         );
         value = clubVariable?.value || "N/A";
+      }
+
+      if (column.type === "member_profile") {
+        value = getMemberProfileColumnValue(member as ClubMember & Record<string, any>, column.key);
       }
 
       row.push(`"${value.toString().replace(/"/g, '""')}"`);
