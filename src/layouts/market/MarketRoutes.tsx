@@ -24,6 +24,8 @@ import PrivacyPage from "@/pages/public/privacy";
 import RegistrationPolicy from "@/pages/public/privacy-clubs";
 import ResetTemporaryPasswordPage from "@/pages/public/login/reset-temporary-password/page";
 import HomeLayout from "@/pages/member/home-layout";
+import { isStorageFeatureEnabled } from "@/lib/feature-flags";
+
 export default function MarketRoutes() {
   return (
     <Routes>
@@ -117,14 +119,16 @@ export default function MarketRoutes() {
         }
       ></Route>
 
-      <Route
-        path="/myclubs/:clubId/storage"
-        element={
-          <ProtectedRoute>
-            <ViewClubPage />
-          </ProtectedRoute>
-        }
-      ></Route>
+      {isStorageFeatureEnabled && (
+        <Route
+          path="/myclubs/:clubId/storage"
+          element={
+            <ProtectedRoute>
+              <ViewClubPage />
+            </ProtectedRoute>
+          }
+        ></Route>
+      )}
       <Route
         path="/myclubs/:clubId/bookings"
         element={

@@ -12,7 +12,6 @@ import { HomeSectionCards } from "@/components/admin/club/home/section-cards";
 import {
   ArrowRight,
   BarChart3,
-  BoxIcon,
   CalendarDays,
   CheckCircle2,
   Loader2,
@@ -24,6 +23,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useFetchAdminClubs, useFetchClub } from "@/queries/admin/clubs";
+import { isStorageFeatureEnabled } from "@/lib/feature-flags";
 
 export default function HomeDashboardPage() {
   const {
@@ -121,15 +121,6 @@ export default function HomeDashboardPage() {
         ],
       },
       {
-        title: "Storage & Requests",
-        description: "Track storage and manage incoming storage requests.",
-        icon: BoxIcon,
-        items: [
-          { title: "Storage", route: "/storage" },
-          { title: "Storage requests", route: "/storage/requests" },
-        ],
-      },
-      {
         title: "Registration Form",
         description: "Build and maintain the club registration form.",
         icon: UserPlus,
@@ -147,7 +138,9 @@ export default function HomeDashboardPage() {
           { title: "Income & Payments", route: "/reporting/transactions" },
         ],
       },
-    ],
+    ].filter(
+      (section) => isStorageFeatureEnabled || section.title !== "Storage & Requests",
+    ),
     [],
   );
 

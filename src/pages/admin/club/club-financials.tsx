@@ -43,6 +43,7 @@ import { Card } from "@/components/ui/card";
 import { formatAmount } from "@/data/currencies";
 import { api } from "@/services/admin/api";
 import { toast } from "sonner";
+import { isStorageFeatureEnabled } from "@/lib/feature-flags";
 import {
   ExpenseTypeDataRow,
   OrderReportDataRow,
@@ -344,6 +345,12 @@ export default function GeneralReportingPage() {
   ];
 
   useEffect(() => {
+    if (!isStorageFeatureEnabled && selectedIncomeGraph === "storage") {
+      setSelectedIncomeGraph("overall");
+    }
+  }, [selectedIncomeGraph]);
+
+  useEffect(() => {
     if (
       selectedExpenseGraph !== "overall" &&
       !(report?.expense_type_data ?? []).some(
@@ -477,13 +484,17 @@ export default function GeneralReportingPage() {
   };
 
   const handleDownloadIncomeReport = () => {
-    const incomeGraphConfig: Record<
-      IncomeGraphKey,
-      {
-        title: string;
-        fileName: string;
-        data: Array<ReportDataRow | OrderReportDataRow | RegistrationReportDataRow>;
-      }
+    const incomeGraphConfig: Partial<
+      Record<
+        IncomeGraphKey,
+        {
+          title: string;
+          fileName: string;
+          data: Array<
+            ReportDataRow | OrderReportDataRow | RegistrationReportDataRow
+          >;
+        }
+      >
     > = {
       overall: {
         title: "Overall Income",
@@ -505,15 +516,18 @@ export default function GeneralReportingPage() {
         fileName: "Event_Income",
         data: report?.event_registration_data ?? [],
       },
-      storage: {
+    };
+
+    if (isStorageFeatureEnabled) {
+      incomeGraphConfig.storage = {
         title: "Storage Income",
         fileName: "Storage_Income",
         data: report?.storage_data ?? [],
-      },
-    };
+      };
+    }
 
     const selectedIncome = incomeGraphConfig[selectedIncomeGraph];
-    if (!selectedIncome.data.length) return;
+  if (!selectedIncome || !selectedIncome.data.length) return;
 
     const sections = [
       `"${selectedIncome.title}"`,
@@ -711,7 +725,9 @@ export default function GeneralReportingPage() {
                       <SelectItem value="registration">Registration</SelectItem>
                       <SelectItem value="shop">Shop</SelectItem>
                       <SelectItem value="events">Events</SelectItem>
-                      <SelectItem value="storage">Storage</SelectItem>
+                      {isStorageFeatureEnabled && (
+                        <SelectItem value="storage">Storage</SelectItem>
+                      )}
                     </>
                   ) : (
                     expenseGraphOptions.map((option) => (
@@ -756,7 +772,7 @@ export default function GeneralReportingPage() {
                     totalPendingRevenue={report.total_event_registration_pending_revenue}
                   />
                 )}
-                {report && selectedIncomeGraph === "storage" && (
+                {report && isStorageFeatureEnabled && selectedIncomeGraph === "storage" && (
                   <RevenueBreakdownReport
                     title="Storage Report"
                     description="Storage revenue and pending storage income over time."

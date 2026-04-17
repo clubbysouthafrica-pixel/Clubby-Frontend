@@ -444,7 +444,7 @@ export default function OrdersPage() {
       });
 
       if (response.status === 200) {
-        toast.success("Order deleted successfully");
+        toast.success("Order successfully cancelled.");
 
         setAllOrders((prevOrders: any) =>
           prevOrders.filter(

@@ -24,6 +24,7 @@ import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { AuthContext, AuthContextType } from "@/context/AuthContext";
 import { useGetProfileQuery } from "@/queries/profile";
 import { useNavigate, useLocation } from "react-router-dom";
+import { isStorageFeatureEnabled } from "@/lib/feature-flags";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navigate = useNavigate();
@@ -168,15 +169,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ],
       },
       {
-        title: "Storage & Requests",
-        url: "/venues",
-        icon: BoxIcon,
-        items: [
-          { title: "Storage", url: "/storage" },
-          { title: "Storage requests", url: "/storage/requests" },
-        ],
-      },
-      {
         title: "Registration form",
         url: "/manage/registrations",
         icon: UserPlusIcon,
@@ -193,6 +185,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ],
       },
     ];
+
+    if (isStorageFeatureEnabled) {
+      baseItems.splice(5, 0, {
+        title: "Storage & Requests",
+        url: "/storage",
+        icon: BoxIcon,
+        items: [
+          { title: "Storage", url: "/storage" },
+          { title: "Storage requests", url: "/storage/requests" },
+        ],
+      });
+    }
 
     const matchesUrl = (url: string | undefined) => {
       if (!url) return false;

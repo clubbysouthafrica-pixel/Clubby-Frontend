@@ -55,6 +55,17 @@ function formatMonthLabel(date: string) {
   return date;
 }
 
+function getMonthSortValue(date: string) {
+  const normalizedDate = /^\d{4}-\d{2}$/.test(date) ? `${date}-01` : date;
+  const parsedTime = new Date(normalizedDate).getTime();
+
+  if (!Number.isNaN(parsedTime)) {
+    return parsedTime;
+  }
+
+  return Number.MAX_SAFE_INTEGER;
+}
+
 function formatRevenueAxisLabel(value: number, currency: string): string {
   return `${currency} ${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
@@ -98,6 +109,12 @@ export function ShopProductReport({
 
       {/* Tab Content */}
       {report.report.map((product, index) => (
+        (() => {
+          const orderedProductData = [...(product.data ?? [])].sort(
+            (left, right) => getMonthSortValue(left.date) - getMonthSortValue(right.date),
+          );
+
+          return (
         <TabsContent
           key={getProductTabValue(product, index)}
           value={getProductTabValue(product, index)}
@@ -148,7 +165,7 @@ export function ShopProductReport({
           </div>
 
           {/* Chart or No Data */}
-          {product.data && product.data.length > 0 ? (
+          {orderedProductData.length > 0 ? (
             <Card className="rounded-2xl shadow-md border-0 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 p-6">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
                 Sales Trend
@@ -156,7 +173,7 @@ export function ShopProductReport({
               <div className="w-full h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart
-                    data={product.data.map((d) => ({
+                    data={orderedProductData.map((d) => ({
                       name: formatMonthLabel(d.date),
                       revenue: d.revenue || 0,
                       sold_units: d.sold_units || 0,
@@ -258,7 +275,7 @@ export function ShopProductReport({
           )}
 
           {/* Historical Data Table or No Data */}
-          {product.data && product.data.length > 0 ? (
+          {orderedProductData.length > 0 ? (
             <Card className="rounded-2xl shadow-md border-0 bg-white dark:bg-slate-900 overflow-hidden">
               <Table>
                 <TableHeader className="bg-slate-50 dark:bg-slate-800 sticky top-0 z-10 backdrop-blur">
@@ -281,7 +298,7 @@ export function ShopProductReport({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {product.data.map((row, idx) => (
+                  {orderedProductData.map((row, idx) => (
                     <TableRow
                       key={idx}
                       className={`transition-colors ${
@@ -318,6 +335,8 @@ export function ShopProductReport({
             </Card>
           )}
         </TabsContent>
+          );
+        })()
       ))}
     </Tabs>
   );
