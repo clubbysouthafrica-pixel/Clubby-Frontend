@@ -143,6 +143,11 @@ export default function MemberStorage({
     if (onSelectUnit) onSelectUnit(unit);
   };
 
+  const getStorageName = (id: string) => {
+    const unit = unitsFlat.find((u) => u.id === id);
+    return unit ? unit.name : "Unknown Storage";
+  };
+
   return (
     <div className="w-full">
       <div className="mb-10">
@@ -166,20 +171,20 @@ export default function MemberStorage({
               <div className="py-8 flex justify-center">
                 <Loader2 className="animate-spin h-6 w-6" />
               </div>
-            ) : myRequests.length === 0 ? (
+            ) : myRequests?.items?.length === 0 ? (
               <div className="text-muted-foreground text-sm">
                 You have no storage requests.
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {myRequests.map((req: any) => (
-                  <Card key={req.id} className="flex flex-col">
+                {myRequests?.items?.map((req: any) => (
+                  <Card key={req.storage_request_id} className="flex flex-col">
                     <CardHeader>
                       <CardTitle className="text-base">
-                        {req.unitName}
+                        {getStorageName(req.storage_id)}
                       </CardTitle>
                       <CardDescription className="text-xs">
-                        Requested on {formatDate(req.requestedAt)}
+                        Requested on {formatDate(req.createdAt)}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="flex-1 flex flex-col justify-between">
