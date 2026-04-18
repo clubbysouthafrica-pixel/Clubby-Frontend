@@ -35,6 +35,7 @@ interface ImageProps {
   clubId: string;
   currency: string;
   memberLimit: number;
+  showTenRows?: boolean;
   setAllListActionItems: (members: ClubMember[]) => void;
   setSelectedMember: React.Dispatch<React.SetStateAction<object>>;
   setlistActionItems: React.Dispatch<
@@ -56,14 +57,13 @@ export default function RegisteredMembersList({
   dereigsterMembers,
   clubId,
   currency,
+  showTenRows = false,
   setAllListActionItems,
   setSelectedMember,
   setlistActionItems,
   setDeregisterMembers,
   setAllMembersSelected,
 }: ImageProps) {
-  const [showTenRows, setShowTenRows] = useState(false);
-
   const baseRegisteredMembers = clubMembers?.registered || [];
   const [regSortAsc, setRegSortAsc] = useState<boolean | null>(null);
   const [memberNameSortAsc, setMemberNameSortAsc] = useState<boolean | null>(null);
@@ -112,17 +112,6 @@ export default function RegisteredMembersList({
 
   return (
     <>
-      {baseRegisteredMembers.length > 5 && (
-        <div className="mb-3 flex justify-end">
-          <button
-            type="button"
-            onClick={() => setShowTenRows((prev) => !prev)}
-            className="inline-flex h-8 items-center rounded-full border border-slate-200 bg-slate-50 px-3.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
-          >
-            {showTenRows ? "Show 5 rows" : "Show 10 rows"}
-          </button>
-        </div>
-      )}
       <div className="w-full max-w-full min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white [contain:inline-size]">
         <div
           className={`block max-w-full overflow-x-auto ${

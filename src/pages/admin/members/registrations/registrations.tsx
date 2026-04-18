@@ -120,6 +120,9 @@ export default function RegistrationsPage() {
   const [showArchived, setShowArchived] = useState<boolean>(false);
   const isLoadingMoreRef = useRef(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [showTenRegisteredRows, setShowTenRegisteredRows] = useState(false);
+  const [showTenPendingRows, setShowTenPendingRows] = useState(false);
+  const [showTenPreviousRows, setShowTenPreviousRows] = useState(false);
 
   const getMemberType = (tab: string): string => {
     switch (tab) {
@@ -1338,11 +1341,20 @@ export default function RegistrationsPage() {
               className="relative flex flex-col gap-4 overflow-y-auto"
             >
               <Card className="rounded-[24px] border border-slate-200/70 bg-white/95 p-4 shadow-[0_16px_36px_rgba(15,23,42,0.07)] md:p-5">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between gap-3">
                   <h2 className="text-xl font-semibold text-slate-950">
                     Active Registrations - Items returned (
                     {allRegisteredMembers.length})
                   </h2>
+                  {allRegisteredMembers.length > 5 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowTenRegisteredRows((prev) => !prev)}
+                      className="inline-flex h-8 shrink-0 items-center rounded-full border border-slate-200 bg-slate-50 px-3.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+                    >
+                      {showTenRegisteredRows ? "Show 5 rows" : "Show 10 rows"}
+                    </button>
+                  )}
                 </div>
                 {fetchError && (
                   <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md flex items-center justify-between">
@@ -1412,6 +1424,7 @@ export default function RegistrationsPage() {
                       dereigsterMembers={dereigsterMembers}
                       currency={club?.currency || ""}
                       memberLimit={memberLimit}
+                      showTenRows={showTenRegisteredRows}
                       setAllListActionItems={setAllListActionItems}
                       setSelectedMember={setSelectedMember}
                       setlistActionItems={setlistActionItems}
@@ -1440,7 +1453,17 @@ export default function RegistrationsPage() {
                     Pending Registrations - Items returned (
                     {allUnregisteredMembers.length})
                   </h2>
-                  <div className="relative shrink-0">
+                  <div className="flex items-center gap-2">
+                    {allUnregisteredMembers.length > 5 && (
+                      <button
+                        type="button"
+                        onClick={() => setShowTenPendingRows((prev) => !prev)}
+                        className="inline-flex h-8 shrink-0 items-center rounded-full border border-slate-200 bg-slate-50 px-3.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+                      >
+                        {showTenPendingRows ? "Show 5 rows" : "Show 10 rows"}
+                      </button>
+                    )}
+                    <div className="relative shrink-0">
                     <button
                       type="button"
                       onClick={() =>
@@ -1522,6 +1545,7 @@ export default function RegistrationsPage() {
                         )}
                       </div>
                     )}
+                    </div>
                   </div>
                 </div>
                 {fetchError && (
@@ -1601,6 +1625,7 @@ export default function RegistrationsPage() {
                       allMembersSelected={allMembersSelected}
                       activeColumnKeys={displayedColumnKeysPending}
                       memberLimit={memberLimit}
+                      showTenRows={showTenPendingRows}
                       handleFormattedInputChange={handleFormattedInputChange}
                       registerUser={registerUser}
                       setlistActionItems={setlistActionItems}
@@ -1633,18 +1658,29 @@ export default function RegistrationsPage() {
                     De-registrations - Items returned (
                     {deregisteredMembersLength})
                   </h2>
-                  <label className="inline-flex h-8 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 text-xs font-medium text-slate-700 transition hover:bg-slate-100">
-                    <Switch
-                      id="show-archived-registrations"
-                      checked={showArchived}
-                      onCheckedChange={(checked) => {
-                        setShowArchived(checked);
-                        setPageToken(undefined);
-                        isLoadingMoreRef.current = false;
-                      }}
-                    />
-                    <span>Show archived registrations</span>
-                  </label>
+                  <div className="flex items-center gap-2">
+                    {deregisteredMembersLength > 5 && (
+                      <button
+                        type="button"
+                        onClick={() => setShowTenPreviousRows((prev) => !prev)}
+                        className="inline-flex h-8 shrink-0 items-center rounded-full border border-slate-200 bg-slate-50 px-3.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+                      >
+                        {showTenPreviousRows ? "Show 5 rows" : "Show 10 rows"}
+                      </button>
+                    )}
+                    <label className="inline-flex h-8 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 text-xs font-medium text-slate-700 transition hover:bg-slate-100">
+                      <Switch
+                        id="show-archived-registrations"
+                        checked={showArchived}
+                        onCheckedChange={(checked) => {
+                          setShowArchived(checked);
+                          setPageToken(undefined);
+                          isLoadingMoreRef.current = false;
+                        }}
+                      />
+                      <span>Show archived registrations</span>
+                    </label>
+                  </div>
                 </div>
                 {fetchError && (
                   <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md flex items-center justify-between">
@@ -1715,6 +1751,7 @@ export default function RegistrationsPage() {
                       listActionItems={listActionItems}
                       activeColumnKeys={displayedColumnKeysPrevious}
                       memberLimit={memberLimit}
+                      showTenRows={showTenPreviousRows}
                       showArchived={showArchived}
                       setSelectedMember={setSelectedMember}
                       setlistActionItems={setlistActionItems}

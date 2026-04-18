@@ -57,6 +57,7 @@ interface ImageProps {
   clubId: string;
   activeColumnKeys?: string[];
   memberLimit: number;
+  showTenRows?: boolean;
   reset: () => void;
   handleFormattedInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   registerUser: (
@@ -91,6 +92,7 @@ export default function PendingMembersList({
   activeColumnKeys = [],
   reset,
   handleFormattedInputChange,
+  showTenRows = false,
   registerUser,
   setSelectedMember,
   setlistActionItems,
@@ -100,7 +102,6 @@ export default function PendingMembersList({
   setAllListActionItems,
   showPendingSummary = true,
 }: ImageProps) {
-  const [showTenRows, setShowTenRows] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<string>("EFT/Cash");
   const [templateVariables, setTemplateVariables] = useState<
@@ -402,19 +403,6 @@ export default function PendingMembersList({
         </h2>
       </div>
       )}
-
-      {baseUnregisteredMembers.length > 5 && (
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={() => setShowTenRows((prev) => !prev)}
-            className="inline-flex h-8 items-center rounded-full border border-slate-200 bg-slate-50 px-3.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
-          >
-            {showTenRows ? "Show 5 rows" : "Show 10 rows"}
-          </button>
-        </div>
-      )}
-
       <div className="w-full max-w-full min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white [contain:inline-size]">
         <div
             className={`block max-w-full overflow-x-auto ${

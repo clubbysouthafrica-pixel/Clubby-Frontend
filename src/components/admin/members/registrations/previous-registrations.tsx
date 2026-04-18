@@ -41,6 +41,7 @@ interface PreviousMembersListProps {
   dynamicFilters: Record<string, string>;
   activeColumnKeys?: string[];
   memberLimit: number;
+  showTenRows?: boolean;
   showArchived?: boolean;
   setlistActionItems: React.Dispatch<
     React.SetStateAction<{ email: string; name: string }[]>
@@ -90,12 +91,12 @@ export default function PreviousMembersList({
   club,
   activeColumnKeys = [],
   listActionItems,
+  showTenRows = false,
   setSelectedMember,
   setDeregisteredMembersLength,
   setlistActionItems,
   showArchived = false,
 }: PreviousMembersListProps) {
-  const [showTenRows, setShowTenRows] = useState(false);
   // Use raw clubMembers.deregistered - backend already handles pagination and member_name/member_id filtering
   const baseDeregisteredMembers = useMemo<ClubMember[]>(
     () => clubMembers?.deregistered || [],
@@ -194,18 +195,6 @@ export default function PreviousMembersList({
 
   return (
     <>
-      {sortedDeregisteredMembers.length > 5 && (
-        <div className="mb-3 flex justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setShowTenRows((prev) => !prev)}
-            className="h-8 rounded-full border-slate-200 bg-slate-50 px-3.5 text-xs font-medium text-slate-700 hover:bg-slate-100"
-          >
-            {showTenRows ? "Show 5 rows" : "Show 10 rows"}
-          </Button>
-        </div>
-      )}
       <div className="w-full max-w-full min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white [contain:inline-size]">
         <div
           className={`block max-w-full overflow-x-auto ${
