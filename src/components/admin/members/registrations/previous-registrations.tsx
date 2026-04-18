@@ -211,16 +211,17 @@ export default function PreviousMembersList({
           </Button>
         </div>
       )}
-      <div
-        className={`w-full overflow-x-auto rounded-[20px] border border-slate-200 bg-white ${
-          shouldScrollY ? "overflow-y-auto" : "overflow-y-hidden"
-        }`}
-        style={
-          tableViewportMaxHeight
-            ? { maxHeight: `${tableViewportMaxHeight}px` }
-            : undefined
-        }
-      >
+      <div className="w-full max-w-full min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white [contain:inline-size]">
+        <div
+          className={`block max-w-full overflow-x-auto ${
+            shouldScrollY ? "overflow-y-auto" : "overflow-y-hidden"
+          }`}
+          style={
+            tableViewportMaxHeight
+              ? { maxHeight: `${tableViewportMaxHeight}px` }
+              : undefined
+          }
+        >
         <DndContext
           collisionDetection={closestCenter}
           sensors={sensors}
@@ -229,8 +230,9 @@ export default function PreviousMembersList({
           <Table
             className="table-auto"
             style={{
-              // Use smaller per-column width and a softer minimum
-              minWidth: `${Math.max(700, (4 + activeColumnKeys.length) * 150)}px`,
+              width: "max-content",
+              minWidth: "100%",
+              maxWidth: "none",
             }}
           >
             <TableHeader className="sticky top-0 z-10 bg-zinc-700 [&_tr]:border-zinc-600">
@@ -574,6 +576,7 @@ export default function PreviousMembersList({
             </TableBody>
           </Table>
         </DndContext>
+        </div>
 
         <RemoveRegistrationDialog
           open={openRemoveDialog}

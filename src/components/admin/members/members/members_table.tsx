@@ -145,13 +145,14 @@ export default function MembersTable({
   return (
     <>
 
-      <div
-        className={`w-full rounded-lg border overflow-x-auto max-w-[79vw] ${
-          members.length > 10
-            ? "max-h-[600px] overflow-y-auto"
-            : "overflow-y-hidden"
-        }`}
-      >
+      <div className="w-full max-w-full min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white [contain:inline-size]">
+        <div
+          className={`block max-w-full overflow-x-auto ${
+            members.length > 10
+              ? "overflow-y-auto"
+              : "overflow-y-hidden"
+          }`}
+        >
         <DndContext
           collisionDetection={closestCenter}
           sensors={sensors}
@@ -159,11 +160,16 @@ export default function MembersTable({
         >
           <Table
             className="table-auto"
+            style={{
+              width: "max-content",
+              minWidth: "100%",
+              maxWidth: "none",
+            }}
           >
-            <TableHeader className="bg-muted sticky top-0 z-10">
+            <TableHeader className="sticky top-0 z-10 bg-zinc-700 [&_tr]:border-zinc-600">
               <TableRow>
-                <TableHead className="text-center w-[80px] py-2 flex-shrink-0 sticky left-0 z-20 bg-muted">
-                  <div className="flex justify-center items-center rounded-[10px] pl-3 pr-1 border-gray-300 border-1 w-fit mx-auto hover:border-gray-400 transition-colors">
+                <TableHead className="sticky left-0 z-20 w-[80px] flex-shrink-0 bg-zinc-700 py-2 text-center text-slate-200">
+                  <div className="mx-auto flex w-fit items-center justify-center rounded-full border border-slate-200/80 bg-slate-50 pl-3 pr-1 transition-colors hover:bg-white">
                     <Checkbox
                       checked={allMembersSelected}
                       onCheckedChange={(checked: boolean) => {
@@ -179,11 +185,11 @@ export default function MembersTable({
                     />
                     <DropdownMenu modal={false}>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8">
+                        <Button variant="ghost" size="sm" className="h-7 w-7 rounded-full p-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
                           <ChevronDown className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuContent align="end" className="w-48 rounded-[18px] border-slate-200">
                         <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
                           Actions
                         </DropdownMenuLabel>
@@ -233,7 +239,7 @@ export default function MembersTable({
                     </DropdownMenu>
                   </div>
                 </TableHead>
-                <TableHead className="text-center w-[150px]">
+                <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
                   <button
                     type="button"
                     className="inline-flex items-center gap-1 hover:underline w-full justify-center"
@@ -252,10 +258,10 @@ export default function MembersTable({
                     )}
                   </button>
                 </TableHead>
-                <TableHead className="text-center w-[150px]">
+                <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
                   Email
                 </TableHead>
-                <TableHead className="text-center w-[120px]">
+                <TableHead className="h-11 w-[120px] text-center text-xs text-slate-200">
                   <button
                     type="button"
                     className="inline-flex items-center gap-1 hover:underline w-full justify-center"
@@ -274,7 +280,7 @@ export default function MembersTable({
                     )}
                   </button>
                 </TableHead>
-                <TableHead className="text-center w-[150px]">
+                <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
                   <button
                     type="button"
                     className="inline-flex items-center gap-1 hover:underline"
@@ -291,11 +297,11 @@ export default function MembersTable({
                     )}
                   </button>
                 </TableHead>
-                <TableHead className="text-center w-[120px]">
+                <TableHead className="h-11 w-[120px] text-center text-xs text-slate-200">
                   Registrations
                 </TableHead>
                 {selectedProfileColumns.map((column) => (
-                  <TableHead key={column.key} className="text-center min-w-[170px]">
+                  <TableHead key={column.key} className="h-11 min-w-[170px] text-center text-xs text-slate-200">
                     {column.field_name}
                   </TableHead>
                 ))}
@@ -311,9 +317,9 @@ export default function MembersTable({
                         setSelectedMember(member);
                         window.location.hash = member.user_id;
                       }}
-                      className={`h-12 cursor-pointer border-l-4 ${expandedMemberId === member.user_id ? "border-l-blue-500" : "border-l-transparent"}`}
+                      className={`group h-14 cursor-pointer border-slate-200 bg-white text-sm transition-colors hover:bg-slate-50 ${expandedMemberId === member.user_id ? "border-l-4 border-l-blue-500 bg-slate-50" : "border-l-4 border-l-transparent"}`}
                     >
-                      <TableCell className="text-center w-[80px] flex-shrink-0 sticky left-0 z-20 bg-white">
+                      <TableCell className="relative sticky left-0 z-20 w-[80px] flex-shrink-0 bg-white text-center">
                         <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
                           <Checkbox
                             checked={listActionItems.some(
@@ -365,15 +371,19 @@ export default function MembersTable({
                           />
                         </div>
                       </TableCell>
-                      <TableCell className="text-center w-[150px]">
-                        <span className="underline">
+                      <TableCell className="w-[150px] text-center text-sm font-medium text-slate-900">
+                        <span className="underline decoration-slate-400 underline-offset-2">
                           {member.member_first_name + " " + member.member_surname}
                         </span>
                       </TableCell>
-                      <TableCell className="text-center w-[150px]">
-                        {member.member_email}
+                      <TableCell className="w-[150px] text-center text-sm text-slate-800">
+                        {member.member_email === "n/a" ? (
+                          <span className="text-gray-400">n/a</span>
+                        ) : (
+                          member.member_email
+                        )}
                       </TableCell>
-                      <TableCell className="text-center w-[120px]">
+                      <TableCell className="w-[120px] text-center">
                         {(() => {
                           const { status, className } = getMemberStatus(
                             member.registered,
@@ -386,14 +396,14 @@ export default function MembersTable({
                           );
                         })()}
                       </TableCell>
-                      <TableCell className="text-center w-[150px]">
+                      <TableCell className="w-[150px] text-center text-sm text-slate-800">
                         {member.registrations?.[0]?.registration_submitted_on
                           ? new Date(
                               member.registrations[0].registration_submitted_on
                             ).toLocaleString()
                           : "-"}
                       </TableCell>
-                      <TableCell className="text-center w-[120px]">
+                      <TableCell className="w-[120px] text-center">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -405,7 +415,7 @@ export default function MembersTable({
                                 : member.user_id
                             )
                           }}
-                          className="gap-1"
+                          className="gap-1 rounded-full px-2.5 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                         >
                           <ChevronRight
                             className={`h-4 w-4 transition-transform ${
@@ -421,7 +431,7 @@ export default function MembersTable({
                         const columnValue = getMemberProfileColumnValue(member, column.key);
 
                         return (
-                          <TableCell key={column.key} className="text-center min-w-[170px]">
+                          <TableCell key={column.key} className="min-w-[170px] text-center text-sm text-slate-800">
                             {columnValue === "N/A" ? (
                               <span className="text-gray-400">n/a</span>
                             ) : (
@@ -432,24 +442,24 @@ export default function MembersTable({
                       })}
                     </TableRow>
                     {expandedMemberId === member.user_id && (
-                      <TableRow className="">
-                        <TableCell colSpan={6 + selectedProfileColumns.length} className="p-4 border-l-4 border-blue-500">
-                          <div className="overflow-hidden rounded-lg border border-blue-200">
+                      <TableRow>
+                        <TableCell colSpan={6 + selectedProfileColumns.length} className="border-l-4 border-blue-500 p-4">
+                          <div className="overflow-hidden rounded-[18px] border border-slate-200 bg-slate-50">
                             <Table className="w-full">
-                              <TableHeader className="bg-blue-100 sticky top-0 z-10">
+                              <TableHeader className="sticky top-0 z-10 bg-zinc-700 [&_tr]:border-zinc-600">
                                 <TableRow>
-                                  <TableHead className="text-center">
+                                  <TableHead className="text-center text-xs text-slate-200">
                                   </TableHead>
-                                  <TableHead className="text-center">
+                                  <TableHead className="text-center text-xs text-slate-200">
                                     Registration State
                                   </TableHead>
-                                  <TableHead className="text-center">
+                                  <TableHead className="text-center text-xs text-slate-200">
                                     Submitted On
                                   </TableHead>
-                                  <TableHead className="text-center">
+                                  <TableHead className="text-center text-xs text-slate-200">
                                     Registered On
                                   </TableHead>
-                                  <TableHead className="text-center">
+                                  <TableHead className="text-center text-xs text-slate-200">
                                     Deregistered On
                                   </TableHead>
                                 </TableRow>
@@ -467,8 +477,8 @@ export default function MembersTable({
                                       const registrationState = reg.latest_registration ? memberStatus.status : "Deregistered";
                                       const registrationStateClass = reg.latest_registration ? memberStatus.className : "bg-red-100 text-red-800 border-red-300";
                                       return (
-                                        <TableRow key={idx}>
-                                          <TableCell className="text-center text-sm">
+                                        <TableRow key={idx} className="h-12 border-slate-200 bg-white text-sm hover:bg-slate-50">
+                                          <TableCell className="text-center text-sm text-slate-800">
                                             <Badge className="bg-gray-100 text-gray-800 border-gray-300">
                                               {reg.latest_registration ? "Latest registration" : "Old registration"}
                                             </Badge>
@@ -478,19 +488,19 @@ export default function MembersTable({
                                               {registrationState}
                                             </Badge>
                                           </TableCell>
-                                          <TableCell className="text-center text-sm">
+                                          <TableCell className="text-center text-sm text-slate-800">
                                             {new Date(
                                               reg.registration_submitted_on
                                             ).toLocaleString()}
                                           </TableCell>
-                                          <TableCell className="text-center text-sm">
+                                          <TableCell className="text-center text-sm text-slate-800">
                                             {reg.registered_on
                                               ? new Date(
                                                   reg.registered_on
                                                 ).toLocaleString()
                                               : "-"}
                                           </TableCell>
-                                          <TableCell className="text-center text-sm">
+                                          <TableCell className="text-center text-sm text-slate-800">
                                             {reg.deregistered_on
                                               ? new Date(
                                                   reg.deregistered_on
@@ -505,7 +515,7 @@ export default function MembersTable({
                                   <TableRow>
                                     <TableCell
                                       colSpan={5}
-                                      className="text-center text-sm text-muted-foreground"
+                                      className="text-center text-sm text-slate-500"
                                     >
                                       No registrations
                                     </TableCell>
@@ -523,7 +533,7 @@ export default function MembersTable({
                 <TableRow>
                   <TableCell
                     colSpan={6 + selectedProfileColumns.length}
-                    className="h-24 text-center"
+                    className="h-24 text-center text-slate-500"
                   >
                     No results.
                   </TableCell>
@@ -532,6 +542,7 @@ export default function MembersTable({
             </TableBody>
           </Table>
         </DndContext>
+        </div>
       </div>
 
       <ReusableSendEmailDialog

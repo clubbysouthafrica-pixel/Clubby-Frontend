@@ -720,7 +720,7 @@ export default function RegistrationsPage() {
   const CurrentTableIcon = currentTableSummary.icon;
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,_#e7e5e4_0%,_#f5f5f4_22%,_#fafaf9_22%,_#fafaf9_100%)] text-slate-900">
+    <div className="min-h-screen overflow-x-hidden bg-[linear-gradient(180deg,_#e7e5e4_0%,_#f5f5f4_22%,_#fafaf9_22%,_#fafaf9_100%)] text-slate-900">
       {clubLoading ? (
         <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(214,211,209,0.55),_transparent_32%),linear-gradient(180deg,_#e7e5e4_0%,_#f5f5f4_40%,_#fafaf9_100%)] px-6">
           <div className="flex flex-col items-center gap-4 rounded-[24px] border border-stone-300/70 bg-white/90 px-8 py-10 text-zinc-900 shadow-xl backdrop-blur">
@@ -731,7 +731,7 @@ export default function RegistrationsPage() {
           </div>
         </div>
       ) : (
-        <div className="flex w-full max-w-none flex-col gap-3 px-2 py-3 sm:px-3 md:px-4 md:py-4 xl:px-5 2xl:px-6">
+        <div className="flex w-full max-w-full flex-col gap-3 overflow-x-hidden px-2 py-3 sm:px-3 md:px-4 md:py-4 xl:px-5 2xl:px-6">
           <section className="relative overflow-hidden rounded-[24px] border border-stone-300/70 bg-stone-200 px-4 py-4 text-zinc-900 shadow-[0_18px_40px_rgba(120,113,108,0.16)] md:px-5 md:py-4">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.72),_transparent_28%),radial-gradient(circle_at_right,_rgba(214,211,209,0.55),_transparent_24%)]" />
             <div className="relative flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
@@ -1400,7 +1400,7 @@ export default function RegistrationsPage() {
                     <Loader2 className="h-8 w-8 animate-spin" />
                   </div>
                 ) : (
-                  <div className="w-full">
+                  <div className="w-full min-w-0">
                     <RegisteredMembersList
                       clubId={club?.club_account_id || ""}
                       sensors={sensors}
@@ -1577,7 +1577,7 @@ export default function RegistrationsPage() {
                     <Loader2 className="h-8 w-8 animate-spin" />
                   </div>
                 ) : (
-                  <div className="flex flex-col w-full">
+                  <div className="flex w-full min-w-0 flex-col">
                     <PendingMembersList
                       clubId={club?.club_account_id || ""}
                       club={club}
@@ -1698,7 +1698,7 @@ export default function RegistrationsPage() {
                     <Loader2 className="h-8 w-8 animate-spin" />
                   </div>
                 ) : (
-                  <div className="flex flex-col w-full">
+                  <div className="flex w-full min-w-0 flex-col">
                     <PreviousMembersList
                       club={club}
                       sensors={sensors}

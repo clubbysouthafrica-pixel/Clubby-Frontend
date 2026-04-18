@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import ReusableDeregisterDialog from "./features/reusable-deregister-dialog";
+import ReusableSendEmailDialog from "@/components/admin/members/members/features/reusable-send-email-dialog";
 import { formatAmount } from "@/data/currencies";
 
 interface ImageProps {
@@ -70,6 +71,7 @@ export default function RegisteredMembersList({
   const [memberNameSortAsc, setMemberNameSortAsc] = useState<boolean | null>(null);
   const [totalFeeSortAsc, setTotalFeeSortAsc] = useState<boolean | null>(null);
   const [isDeregisterDialogOpen, setIsDeregisterDialogOpen] = useState(false);
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
 
 
   const sortedRegisteredMembers = useMemo(() => {
@@ -127,30 +129,32 @@ export default function RegisteredMembersList({
           </button>
         </div>
       )}
-      <div
-        className={`w-full overflow-x-auto rounded-[20px] border border-slate-200 bg-white ${
-          shouldScrollY ? "overflow-y-auto" : "overflow-y-hidden"
-        }`}
-        style={
-          tableViewportMaxHeight
-            ? { maxHeight: `${tableViewportMaxHeight}px` }
-            : undefined
-        }
-      >
-        <DndContext
-          collisionDetection={closestCenter}
-          sensors={sensors}
-          id={sortableId}
+      <div className="w-full max-w-full min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white [contain:inline-size]">
+        <div
+          className={`block max-w-full overflow-x-auto ${
+            shouldScrollY ? "overflow-y-auto" : "overflow-y-hidden"
+          }`}
+          style={
+            tableViewportMaxHeight
+              ? { maxHeight: `${tableViewportMaxHeight}px` }
+              : undefined
+          }
         >
-          <Table
-            className="table-auto"
-            style={{
-              // Use smaller per-column width and a softer minimum
-              minWidth: `${Math.max(700, (4 + activeColumnKeys.length) * 150)}px`,
-            }}
+          <DndContext
+            collisionDetection={closestCenter}
+            sensors={sensors}
+            id={sortableId}
           >
-            <TableHeader className="sticky top-0 z-10 bg-zinc-700 [&_tr]:border-zinc-600">
-              <TableRow>
+            <Table
+              className="table-auto"
+              style={{
+                width: "max-content",
+                minWidth: "100%",
+                maxWidth: "none",
+              }}
+            >
+              <TableHeader className="sticky top-0 z-10 bg-zinc-700 [&_tr]:border-zinc-600">
+                <TableRow>
                 <TableHead className="sticky left-0 z-20 w-[80px] flex-shrink-0 bg-zinc-700 py-2 text-center text-slate-200">
                   <div className="mx-auto flex w-fit items-center justify-center rounded-full border border-slate-200/80 bg-slate-50 pl-3 pr-1 transition-colors hover:bg-white">
                     <Checkbox
@@ -176,6 +180,12 @@ export default function RegisteredMembersList({
                         <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
                           Actions
                         </DropdownMenuLabel>
+                        <DropdownMenuItem
+                          onClick={() => setIsEmailDialogOpen(true)}
+                          disabled={!listActionItems.length}
+                        >
+                          Send Email
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => setIsDeregisterDialogOpen(true)}
                           disabled={!dereigsterMembers.length}
@@ -428,7 +438,8 @@ export default function RegisteredMembersList({
               )}
             </TableBody>
           </Table>
-        </DndContext>
+          </DndContext>
+        </div>
       </div>
 
       <ReusableDeregisterDialog
@@ -450,6 +461,20 @@ export default function RegisteredMembersList({
         currency={currency}
         confirmationText="I understand that this action will permanently deregister all selected club members."
         submitButtonText="Deregister"
+        onSuccessClose={() => {
+          setlistActionItems([]);
+          setDeregisterMembers([]);
+          setAllMembersSelected(false);
+        }}
+      />
+
+      <ReusableSendEmailDialog
+        isOpen={isEmailDialogOpen}
+        onOpenChange={setIsEmailDialogOpen}
+        title="Send Email"
+        description="Mailing list"
+        contactsList={listActionItems}
+        clubId={clubId}
         onSuccessClose={() => {
           setlistActionItems([]);
           setDeregisterMembers([]);

@@ -36,6 +36,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import ReusableDeregisterDialog from "./features/reusable-deregister-dialog";
+import ReusableSendEmailDialog from "@/components/admin/members/members/features/reusable-send-email-dialog";
 
 interface ImageProps {
   club: Club | null;
@@ -114,6 +115,7 @@ export default function PendingMembersList({
   const [isPaymentMethodsOpen, setIsPaymentMethodsOpen] =
     useState<boolean>(true);
   const [isDeregisterDialogOpen, setIsDeregisterDialogOpen] = useState(false);
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [showPendingRegistrationsDropdown, setShowPendingRegistrationsDropdown] =
     useState(false);
   const [deregisterMembers, setDeregisterMembers] = useState<
@@ -419,11 +421,9 @@ export default function PendingMembersList({
         </div>
       )}
 
-      <div
-        className="w-full overflow-hidden rounded-[20px] border border-slate-200 bg-white"
-      >
+      <div className="w-full max-w-full min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white [contain:inline-size]">
         <div
-          className={`overflow-x-auto ${
+            className={`block max-w-full overflow-x-auto ${
             shouldScrollY ? "overflow-y-auto" : "overflow-y-hidden"
           }`}
           style={
@@ -440,8 +440,9 @@ export default function PendingMembersList({
             <Table
               className="table-auto"
               style={{
-                // Use smaller per-column width and a softer minimum
-                minWidth: `${Math.max(700, (4 + activeColumnKeys.length) * 150)}px`,
+                width: "max-content",
+                minWidth: "100%",
+                maxWidth: "none",
               }}
             >
               <TableHeader className="sticky top-0 z-10 bg-zinc-700 [&_tr]:border-zinc-600">
@@ -471,6 +472,12 @@ export default function PendingMembersList({
                           <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
                             Actions
                           </DropdownMenuLabel>
+                          <DropdownMenuItem
+                            onClick={() => setIsEmailDialogOpen(true)}
+                            disabled={!listActionItems.length}
+                          >
+                            Send Email
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => {
                               setIsDeregisterDialogOpen(true);
@@ -1060,6 +1067,20 @@ export default function PendingMembersList({
         currency={club?.currency}
         confirmationText="I understand that this action will permanently deregister all selected club members."
         submitButtonText="Deregister"
+        onSuccessClose={() => {
+          setlistActionItems([]);
+          setDeregisterMembers([]);
+          setAllMembersSelected(false);
+        }}
+      />
+
+      <ReusableSendEmailDialog
+        isOpen={isEmailDialogOpen}
+        onOpenChange={setIsEmailDialogOpen}
+        title="Send Email"
+        description="Mailing list"
+        contactsList={listActionItems}
+        clubId={clubId}
         onSuccessClose={() => {
           setlistActionItems([]);
           setDeregisterMembers([]);

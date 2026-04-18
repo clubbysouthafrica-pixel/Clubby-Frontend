@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import MembersTable from "@/components/admin/members/members/members_table";
-import { Loader2, X, Download, AlertCircle } from "lucide-react";
+import { Loader2, X, Download, AlertCircle, Users } from "lucide-react";
 import { exportTableData } from "@/helpers/admin/members/csv-export";
 import { Card } from "@/components/ui/card";
 import AddFiltersDialog from "@/components/admin/members/registrations/features/add-filters-dialog";
@@ -359,26 +359,41 @@ export default function MembersPage() {
   };
 
   return (
-    <div className="p-5">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Members</h1>
-          <p className="text-muted-foreground">
-            Manage your club's members.
-          </p>
-        </div>
-      </div>
-      <>
-        {clubLoading ? (
-          <div className="flex justify-center items-center p-8 min-h-96">
-            <Loader2 className="h-8 w-8 animate-spin" />
+    <div className="min-h-screen overflow-x-hidden bg-[linear-gradient(180deg,_#e7e5e4_0%,_#f5f5f4_22%,_#fafaf9_22%,_#fafaf9_100%)] text-slate-900">
+      {clubLoading ? (
+        <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(214,211,209,0.55),_transparent_32%),linear-gradient(180deg,_#e7e5e4_0%,_#f5f5f4_40%,_#fafaf9_100%)] px-6">
+          <div className="flex flex-col items-center gap-4 rounded-[24px] border border-stone-300/70 bg-white/90 px-8 py-10 text-zinc-900 shadow-xl backdrop-blur">
+            <Loader2 className="h-10 w-10 animate-spin text-zinc-500" />
+            <p className="text-lg font-medium text-zinc-700">
+              Loading members workspace...
+            </p>
           </div>
-        ) : (
-          <div className="w-full flex-col justify-start gap-1 mt-2">
-            <Card className="p-4 flex flex-col gap-4">
+        </div>
+      ) : (
+        <div className="flex w-full max-w-full flex-col gap-3 overflow-x-hidden px-2 py-3 sm:px-3 md:px-4 md:py-4 xl:px-5 2xl:px-6">
+          <section className="relative overflow-hidden rounded-[24px] border border-stone-300/70 bg-stone-200 px-4 py-4 text-zinc-900 shadow-[0_18px_40px_rgba(120,113,108,0.16)] md:px-5 md:py-4">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.72),_transparent_28%),radial-gradient(circle_at_right,_rgba(214,211,209,0.55),_transparent_24%)]" />
+            <div className="relative flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-3xl">
+                <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-stone-300 bg-white/70 px-2.5 py-1 text-[11px] text-zinc-600 backdrop-blur">
+                  <Users className="h-3.5 w-3.5 text-zinc-500" />
+                  Member directory
+                </div>
+                <h1 className="text-xl font-semibold tracking-tight md:text-3xl">
+                  Club members
+                </h1>
+                <p className="mt-1.5 max-w-2xl text-xs leading-5 text-zinc-600 md:text-sm">
+                  Manage member records, apply profile filters, and review registration states from one workspace.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <div className="flex w-full max-w-full min-w-0 flex-col justify-start gap-3 overflow-x-hidden">
+            <Card className="max-w-full overflow-hidden rounded-[24px] border border-slate-200/70 bg-white/90 p-4 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur md:p-5">
               <div className="flex items-center">
                 <p
-                  className="text-blue-600 underline p-0 cursor-pointer"
+                  className="cursor-pointer text-xs font-medium uppercase tracking-[0.18em] text-slate-500 underline decoration-slate-300 underline-offset-4"
                   onClick={resetFilters}
                 >
                   Reset filters
@@ -394,7 +409,7 @@ export default function MembersPage() {
                     setDeregisterMembers([]);
                     setAllMembersSelected(false);
                   }}
-                  className="w-[300px]"
+                  className="h-8 w-[300px] rounded-full border-slate-200 bg-white text-xs text-slate-700 placeholder:text-slate-400"
                 />
                 <Input
                   placeholder="Filter by member ID"
@@ -405,7 +420,7 @@ export default function MembersPage() {
                     setDeregisterMembers([]);
                     setAllMembersSelected(false);
                   }}
-                  className="w-[300px]"
+                  className="h-8 w-[300px] rounded-full border-slate-200 bg-white text-xs text-slate-700 placeholder:text-slate-400"
                 />
                 <Select
                   value={memberType}
@@ -416,7 +431,7 @@ export default function MembersPage() {
                     setAllMembersSelected(false);
                   }}
                 >
-                  <SelectTrigger className="w-[300px]">
+                  <SelectTrigger className="h-8 w-[300px] rounded-full bg-white text-xs text-slate-700">
                     <SelectValue placeholder="Select member type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -480,9 +495,9 @@ export default function MembersPage() {
                               return (
                                 <div
                                   key={key}
-                                  className="border rounded-lg p-3 bg-white"
+                                  className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-3"
                                 >
-                                  <div className="flex items-center justify-between gap-2 mb-2">
+                                  <div className="mb-2 flex items-center justify-between gap-2">
                                     <Label className="text-xs font-semibold">
                                       {field_name}
                                     </Label>
@@ -497,7 +512,7 @@ export default function MembersPage() {
                                           return newFilters;
                                         });
                                       }}
-                                      className="p-0.5 hover:bg-gray-200 rounded"
+                                      className="rounded-full p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
                                     >
                                       <X className="h-3 w-3" />
                                     </button>
@@ -518,7 +533,7 @@ export default function MembersPage() {
                                       }}
                                       value={operator}
                                     >
-                                      <SelectTrigger className="w-[200px] text-sm">
+                                      <SelectTrigger className="h-8 w-[200px] rounded-full bg-white text-xs text-slate-700">
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
@@ -561,7 +576,7 @@ export default function MembersPage() {
                                         setDeregisterMembers([]);
                                         setAllMembersSelected(false);
                                       }}
-                                      className="w-[150px] text-sm"
+                                      className="h-8 w-[150px] rounded-full border-slate-200 bg-white text-xs text-slate-700"
                                     />
                                   </div>
                                 </div>
@@ -572,9 +587,9 @@ export default function MembersPage() {
                               return (
                                 <div
                                   key={key}
-                                  className="border rounded-lg p-3 bg-white"
+                                  className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-3"
                                 >
-                                  <div className="flex items-center justify-between gap-2 mb-2">
+                                  <div className="mb-2 flex items-center justify-between gap-2">
                                     <Label className="text-xs font-semibold">
                                       {field_name}
                                     </Label>
@@ -589,7 +604,7 @@ export default function MembersPage() {
                                           return newFilters;
                                         });
                                       }}
-                                      className="p-0.5 hover:bg-gray-200 rounded"
+                                      className="rounded-full p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
                                     >
                                       <X className="h-3 w-3" />
                                     </button>
@@ -606,7 +621,7 @@ export default function MembersPage() {
                                       setDeregisterMembers([]);
                                       setAllMembersSelected(false);
                                     }}
-                                    className="w-[280px] text-sm"
+                                    className="h-8 w-[280px] rounded-full border-slate-200 bg-white text-xs text-slate-700"
                                   />
                                 </div>
                               );
@@ -624,9 +639,9 @@ export default function MembersPage() {
                               return (
                                 <div
                                   key={key}
-                                  className="border rounded-lg p-3 bg-white"
+                                  className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-3"
                                 >
-                                  <div className="flex items-center justify-between gap-2 mb-2">
+                                  <div className="mb-2 flex items-center justify-between gap-2">
                                     <Label className="text-xs font-semibold">
                                       {field_name}
                                     </Label>
@@ -646,7 +661,7 @@ export default function MembersPage() {
                                           return newCodes;
                                         });
                                       }}
-                                      className="p-0.5 hover:bg-gray-200 rounded"
+                                      className="rounded-full p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
                                     >
                                       <X className="h-3 w-3" />
                                     </button>
@@ -671,7 +686,7 @@ export default function MembersPage() {
                                         setAllMembersSelected(false);
                                       }}
                                     >
-                                      <SelectTrigger className="w-[130px] text-sm">
+                                      <SelectTrigger className="h-8 w-[130px] rounded-full bg-white text-xs text-slate-700">
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
@@ -705,7 +720,7 @@ export default function MembersPage() {
                                           setAllMembersSelected(false);
                                         }
                                       }}
-                                      className="w-[148px] text-sm"
+                                      className="h-8 w-[148px] rounded-full border-slate-200 bg-white text-xs text-slate-700"
                                       maxLength={20}
                                     />
                                   </div>
@@ -717,9 +732,9 @@ export default function MembersPage() {
                               return (
                                 <div
                                   key={key}
-                                  className="border rounded-lg p-3 bg-white"
+                                  className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-3"
                                 >
-                                  <div className="flex items-center justify-between gap-2 mb-2">
+                                  <div className="mb-2 flex items-center justify-between gap-2">
                                     <Label className="text-xs font-semibold">
                                       {field_name}
                                     </Label>
@@ -734,7 +749,7 @@ export default function MembersPage() {
                                           return newFilters;
                                         });
                                       }}
-                                      className="p-0.5 hover:bg-gray-200 rounded"
+                                      className="rounded-full p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
                                     >
                                       <X className="h-3 w-3" />
                                     </button>
@@ -751,7 +766,7 @@ export default function MembersPage() {
                                       setDeregisterMembers([]);
                                       setAllMembersSelected(false);
                                     }}
-                                    className="w-[280px] text-sm"
+                                    className="h-8 w-[280px] rounded-full border-slate-200 bg-white text-xs text-slate-700"
                                   />
                                 </div>
                               );
@@ -766,9 +781,9 @@ export default function MembersPage() {
                               return (
                                 <div
                                   key={key}
-                                  className="border rounded-lg p-3 bg-white"
+                                  className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-3"
                                 >
-                                  <div className="flex items-center justify-between gap-2 mb-2">
+                                  <div className="mb-2 flex items-center justify-between gap-2">
                                     <Label className="text-xs font-semibold">
                                       {field_name}
                                     </Label>
@@ -783,7 +798,7 @@ export default function MembersPage() {
                                           return newFilters;
                                         });
                                       }}
-                                      className="p-0.5 hover:bg-gray-200 rounded"
+                                      className="rounded-full p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
                                     >
                                       <X className="h-3 w-3" />
                                     </button>
@@ -801,10 +816,7 @@ export default function MembersPage() {
                                       setAllMembersSelected(false);
                                     }}
                                   />
-                                  <label
-                                    htmlFor={key}
-                                    className="text-sm font-medium cursor-pointer ml-2"
-                                  >
+                                  <label htmlFor={key} className="ml-2 cursor-pointer text-sm font-medium">
                                     Enabled
                                   </label>
                                 </div>
@@ -814,9 +826,9 @@ export default function MembersPage() {
                             return (
                               <div
                                 key={key}
-                                className="border rounded-lg p-3 bg-white"
+                                className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-3"
                               >
-                                <div className="flex items-center justify-between gap-2 mb-2">
+                                <div className="mb-2 flex items-center justify-between gap-2">
                                   <Label className="text-xs font-semibold">
                                     {field_name}
                                   </Label>
@@ -831,7 +843,7 @@ export default function MembersPage() {
                                         return newFilters;
                                       });
                                     }}
-                                    className="p-0.5 hover:bg-gray-200 rounded"
+                                    className="rounded-full p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
                                   >
                                     <X className="h-3 w-3" />
                                   </button>
@@ -848,7 +860,7 @@ export default function MembersPage() {
                                   }}
                                   value={dynamicFilters[key] || ""}
                                 >
-                                  <SelectTrigger className="w-[280px] text-sm">
+                                  <SelectTrigger className="h-8 w-[280px] rounded-full bg-white text-xs text-slate-700">
                                     <SelectValue placeholder="All" />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -895,9 +907,9 @@ export default function MembersPage() {
                       availableDynamicFilters?.find((f) => f.key === key);
                     return (
                       <div
-                        key={key}
-                        className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium"
-                      >
+                          key={key}
+                          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700"
+                        >
                         {field?.field_name || key}
                         <button
                           onClick={() =>
@@ -905,7 +917,7 @@ export default function MembersPage() {
                               prev.filter((k) => k !== key),
                             )
                           }
-                          className="ml-1 hover:text-blue-600 font-bold"
+                          className="ml-1 font-bold text-slate-400 hover:text-slate-700"
                         >
                           ×
                         </button>
@@ -914,58 +926,60 @@ export default function MembersPage() {
                   })}
                 </div>
               )}
-              <p className="text-sm text-gray-600 my-1">
-                Configure your filters and columns above, then click the{" "}
-                <span className="font-semibold">Run</span> button to apply your
-                selections and display the results.
-              </p>
-              <button
-                onClick={async () => {
-                  setPageToken(undefined);
-                  setAppliedMemberNameFilter(memberNameFilter);
-                  setAppliedMemberIdFilter(memberIdFilter);
-                  setAppliedMemberType(memberType === "all" ? "" : memberType);
-                  setAppliedColumnKeysRegistered(activeColumnKeysRegistered);
-                  setAppliedCustomFilters(computedCustomFilters);
-                  await refetchClubMembers();
-                }}
-                title="Run database query to refresh members data"
-                className="px-4 py-1 w-[100px] bg-orange-400 hover:bg-orange-500 rounded-[20px] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center font-bold"
-              >
-                Run
-              </button>
-              <div className="flex items-center gap-3 pt-4 border-t">
-                <Label className="text-sm font-medium">Results per page:</Label>
-                <Select
-                  value={memberLimit.toString()}
-                  onValueChange={(value) => {
-                    setMemberLimit(parseInt(value));
-                    setPageToken(undefined);
-                    setlistActionItems([]);
-                    setDeregisterMembers([]);
-                    setAllMembersSelected(false);
-                  }}
-                >
-                  <SelectTrigger className="w-[100px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="100">100</SelectItem>
-                    <SelectItem value="200">200</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="mt-3 flex flex-col gap-3 border-t border-slate-200 pt-3 md:flex-row md:items-center md:justify-between">
+                <p className="text-xs leading-5 text-slate-500">
+                  Configure your filters and columns above, then click the <span className="font-semibold">Run</span> button to apply your selections and display the results.
+                </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-3">
+                    <Label className="text-xs font-medium text-slate-600">Results per page:</Label>
+                    <Select
+                      value={memberLimit.toString()}
+                      onValueChange={(value) => {
+                        setMemberLimit(parseInt(value));
+                        setPageToken(undefined);
+                        setlistActionItems([]);
+                        setDeregisterMembers([]);
+                        setAllMembersSelected(false);
+                      }}
+                    >
+                      <SelectTrigger className="h-8 w-[100px] rounded-full bg-white text-xs text-slate-700">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="100">100</SelectItem>
+                        <SelectItem value="200">200</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      setPageToken(undefined);
+                      setAppliedMemberNameFilter(memberNameFilter);
+                      setAppliedMemberIdFilter(memberIdFilter);
+                      setAppliedMemberType(memberType === "all" ? "" : memberType);
+                      setAppliedColumnKeysRegistered(activeColumnKeysRegistered);
+                      setAppliedCustomFilters(computedCustomFilters);
+                      await refetchClubMembers();
+                    }}
+                    title="Run database query to refresh members data"
+                    className="inline-flex h-8 w-[100px] items-center justify-center rounded-full bg-zinc-700 px-4 text-xs font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Run
+                  </button>
+                </div>
               </div>
             </Card>
-            <div className="relative flex flex-col gap-4 overflow-y-auto">
-              <Card className="p-4 mt-2 flex flex-col gap-4">
+            <div className="relative flex min-w-0 max-w-full flex-col gap-4 overflow-hidden">
+              <Card className="max-w-full overflow-hidden rounded-[24px] border border-slate-200/70 bg-white/95 p-4 shadow-[0_16px_36px_rgba(15,23,42,0.07)] md:p-5">
                 <div className="flex items-center gap-2">
-                  <h2 className="px-2 text-xl font-semibold">
+                  <h2 className="text-xl font-semibold text-slate-950">
                     Members - Items returned (
                     {registeredMembersLength})
                   </h2>
                 </div>
                 {fetchError && (
-                  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md flex items-center justify-between">
+                  <div className="flex items-center justify-between rounded-md border border-red-400 bg-red-100 px-4 py-3 text-red-700">
                     <p className="font-medium">{fetchError}</p>
                     <button
                       onClick={() => setFetchError(null)}
@@ -978,7 +992,7 @@ export default function MembersPage() {
                 {!fetchError &&
                   clubMembers?.pageToken &&
                   clubMembers.pageToken !== "" && (
-                    <div className="bg-orange-100 max-w-[79vw] border border-orange-600 p-4 rounded-md flex items-center justify-between">
+                    <div className="flex items-center justify-between rounded-md border border-orange-600 bg-orange-100 p-4">
                       <div className="flex items-center gap-2">
                         <AlertCircle className="h-5 w-5 text-orange-600" />
                         <p className="text-black font-medium">
@@ -998,7 +1012,7 @@ export default function MembersPage() {
                           setTimeout(() => refetchClubMembers(), 0);
                         }}
                         disabled={isLoadingMore}
-                        className="px-4 py-2 bg-orange-100 hover:bg-orange-200 cursor-pointer rounded-[20px] border border-black text-black font-semibold rounded-md hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        className="flex items-center gap-2 rounded-[20px] border border-orange-600 bg-orange-100 px-4 py-2 font-semibold text-black transition hover:bg-orange-200 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {isLoadingMore ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -1013,7 +1027,7 @@ export default function MembersPage() {
                     <Loader2 className="h-8 w-8 animate-spin" />
                   </div>
                 ) : (
-                  <div className="w-full">
+                  <div className="w-full max-w-full min-w-0 overflow-hidden">
                     <MembersTable
                       clubId={club?.club_account_id || ""}
                       activeColumnKeys={appliedColumnKeysRegistered}
@@ -1049,8 +1063,8 @@ export default function MembersPage() {
               </Card>
             </div>
           </div>
-        )}
-      </>
+        </div>
+      )}
       {hashUserId && (
         <SelectedMemberDialog
           selectedMember={selectedMember}
