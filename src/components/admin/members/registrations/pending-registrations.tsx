@@ -72,6 +72,7 @@ interface ImageProps {
   setUnregisteredMembersLength: React.Dispatch<React.SetStateAction<number>>;
   setAllListActionItems: (members: ClubMember[]) => void;
   setAllMembersSelected: React.Dispatch<React.SetStateAction<boolean>>;
+  showPendingSummary?: boolean;
 }
 
 export default function PendingMembersList({
@@ -98,7 +99,9 @@ export default function PendingMembersList({
   setMemberRegisterAmount,
   setUnregisteredMembersLength,
   setAllListActionItems,
+  showPendingSummary = true,
 }: ImageProps) {
+  const [showTenRows, setShowTenRows] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<string>("EFT/Cash");
   const [templateVariables, setTemplateVariables] = useState<
@@ -254,6 +257,29 @@ export default function PendingMembersList({
   }, [baseUnregisteredMembers, setUnregisteredMembersLength]);
 
   useEffect(() => {
+    if (!openDialogUserId) {
+      return;
+    }
+
+    const activeMember = baseUnregisteredMembers.find(
+      (member: ClubMember) => member.user_id === openDialogUserId,
+    );
+
+    if (!activeMember) {
+      return;
+    }
+
+    setTemplateVariables({
+      member_name:
+        activeMember.member_first_name + " " + activeMember.member_surname,
+    });
+    setTemplateVariablesError("");
+    setSelectedPaymentMethod("EFT/Cash");
+    setIsTemplateVariablesOpen(true);
+    setIsPaymentMethodsOpen(true);
+  }, [openDialogUserId, baseUnregisteredMembers]);
+
+  useEffect(() => {
     // Sync deregisterMembers with listActionItems
     // This ensures the deregister button enabled state matches the checkbox state
     const updatedDeregisterMembers = baseUnregisteredMembers
@@ -272,9 +298,22 @@ export default function PendingMembersList({
     setDeregisterMembers(updatedDeregisterMembers);
   }, [listActionItems, baseUnregisteredMembers]);
 
+  const headerHeight = 48;
+  const rowHeight = 60;
+  const visibleRowCount = Math.min(
+    baseUnregisteredMembers.length,
+    showTenRows ? 10 : 5,
+  );
+  const tableViewportMaxHeight =
+    visibleRowCount > 0
+      ? headerHeight + visibleRowCount * rowHeight
+      : undefined;
+  const shouldScrollY = baseUnregisteredMembers.length > (showTenRows ? 10 : 5);
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-4">
+      {showPendingSummary && (
+      <div className="flex items-center gap-4 rounded-[20px] border border-slate-200 bg-slate-50/80 px-4 py-3">
         <div className="relative">
           <button
             type="button"
@@ -283,10 +322,10 @@ export default function PendingMembersList({
                 !showPendingRegistrationsDropdown,
               )
             }
-            className="relative rounded-lg p-2 transition-colors hover:bg-gray-100"
+            className="relative rounded-full border border-slate-200 bg-slate-50 p-2.5 transition-colors hover:bg-slate-100"
             title="Pending registrations"
           >
-            <UserPlus className="h-6 w-6 text-gray-600" />
+            <UserPlus className="h-4 w-4 text-slate-700" />
             {baseUnregisteredMembers.length > 0 && (
               <span className="absolute right-0 top-0 inline-flex -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-bold leading-none text-white">
                 {baseUnregisteredMembers.length}
@@ -295,40 +334,40 @@ export default function PendingMembersList({
           </button>
 
           {showPendingRegistrationsDropdown && (
-            <div className="absolute left-0 top-full z-50 mt-2 max-h-96 w-96 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-xl">
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white p-4">
-                <h3 className="font-semibold text-gray-900">
+            <div className="absolute left-0 top-full z-50 mt-2 max-h-96 w-96 overflow-y-auto rounded-[22px] border border-slate-200 bg-white shadow-2xl">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
+                <h3 className="font-semibold text-slate-900">
                   Pending Registrations ({baseUnregisteredMembers.length})
                 </h3>
                 <button
                   type="button"
                   onClick={() => setShowPendingRegistrationsDropdown(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
 
               {baseUnregisteredMembers.length === 0 ? (
-                <div className="p-4 text-center text-sm text-gray-500">
+                <div className="p-5 text-center text-sm text-slate-500">
                   No pending registrations.
                 </div>
               ) : (
-                <div className="divide-y">
+                <div className="max-h-96 divide-y overflow-y-auto">
                   {sortedUnregisteredMembers.map((member: ClubMember) => (
                     <div
                       key={member.user_id}
-                      className="p-4 transition-colors hover:bg-gray-50"
+                      className="p-4 transition-colors hover:bg-slate-50"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1 space-y-1">
-                          <p className="text-sm font-medium text-gray-900">
+                          <p className="text-sm font-medium text-slate-900">
                             {member.member_first_name} {member.member_surname}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-slate-500">
                             Email: {member.member_email || "n/a"}
                           </p>
-                          <p className="text-xs font-medium text-orange-700">
+                          <p className="text-xs font-medium text-amber-700">
                             Outstanding: {formatAmount(member.outstanding_amount || 0, club?.currency)}
                           </p>
                         </div>
@@ -336,7 +375,7 @@ export default function PendingMembersList({
                         <Button
                           size="sm"
                           variant="outline"
-                          className="h-8 gap-1.5"
+                          className="h-8 rounded-full border-slate-200 bg-white px-3 text-xs text-slate-700 hover:bg-slate-100"
                           onClick={() => {
                             setShowPendingRegistrationsDropdown(false);
                             setOpenDialogUserId(member.user_id);
@@ -362,22 +401,36 @@ export default function PendingMembersList({
           )}
         </div>
 
-        <h2 className="text-xl font-medium text-gray-700">
+        <h2 className="text-sm font-medium uppercase tracking-[0.18em] text-slate-500">
           Pending registrations: <span className="font-bold">{baseUnregisteredMembers.length}</span>
         </h2>
       </div>
+      )}
+
+      {baseUnregisteredMembers.length > 5 && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => setShowTenRows((prev) => !prev)}
+            className="inline-flex h-8 items-center rounded-full border border-slate-200 bg-slate-50 px-3.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+          >
+            {showTenRows ? "Show 5 rows" : "Show 10 rows"}
+          </button>
+        </div>
+      )}
 
       <div
-        className={`rounded-lg border w-full overflow-hidden max-w-[79vw] ${
-          baseUnregisteredMembers.length > 10
-            ? "max-h-[600px] flex flex-col"
-            : ""
-        }`}
+        className="w-full overflow-hidden rounded-[20px] border border-slate-200 bg-white"
       >
         <div
-          className={`overflow-y-auto overflow-x-auto flex-1 ${
-            baseUnregisteredMembers.length > 10 ? "" : ""
+          className={`overflow-x-auto ${
+            shouldScrollY ? "overflow-y-auto" : "overflow-y-hidden"
           }`}
+          style={
+            tableViewportMaxHeight
+              ? { maxHeight: `${tableViewportMaxHeight}px` }
+              : undefined
+          }
         >
           <DndContext
             collisionDetection={closestCenter}
@@ -391,10 +444,10 @@ export default function PendingMembersList({
                 minWidth: `${Math.max(700, (4 + activeColumnKeys.length) * 150)}px`,
               }}
             >
-              <TableHeader className="bg-muted sticky top-0 z-10">
+              <TableHeader className="sticky top-0 z-10 bg-zinc-700 [&_tr]:border-zinc-600">
                 <TableRow>
-                  <TableHead className="text-center w-[80px] py-2 flex-shrink-0 sticky left-0 z-20 bg-muted">
-                    <div className="flex justify-center items-center border rounded-[10px] pl-3 pr-1 border-gray-300 border-1 w-fit mx-auto hover:border-gray-400 transition-colors">
+                  <TableHead className="sticky left-0 z-20 w-[80px] flex-shrink-0 bg-zinc-700 py-2 text-center text-slate-200">
+                    <div className="mx-auto flex w-fit items-center justify-center rounded-full border border-slate-200/80 bg-slate-50 pl-3 pr-1 transition-colors hover:bg-white">
                       <Checkbox
                         checked={allMembersSelected}
                         onCheckedChange={(checked: boolean) => {
@@ -410,11 +463,11 @@ export default function PendingMembersList({
                       />
                       <DropdownMenu modal={false}>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8">
+                          <Button variant="ghost" size="sm" className="h-7 w-7 rounded-full p-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
                             <ChevronDown className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuContent align="end" className="w-48 rounded-[18px] border-slate-200">
                           <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
                             Actions
                           </DropdownMenuLabel>
@@ -431,7 +484,7 @@ export default function PendingMembersList({
                       </DropdownMenu>
                     </div>
                   </TableHead>
-                  <TableHead className="text-center w-[190px]">
+                  <TableHead className="h-11 w-[190px] text-center text-xs text-slate-200">
                     <button
                       type="button"
                       className="inline-flex items-center gap-1 hover:underline w-full justify-center"
@@ -454,33 +507,10 @@ export default function PendingMembersList({
                       )}
                     </button>
                   </TableHead>
-                  <TableHead className="text-center w-[150px]">
+                  <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
                     Email
                   </TableHead>
-                  <TableHead className="text-center w-[150px]">
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-1 hover:underline w-full justify-center"
-                      onClick={() => {
-                        setSubmittedSortAsc((prev) =>
-                          prev === null ? true : !prev,
-                        );
-                        setMemberNameSortAsc(null);
-                        setTotalFeeSortAsc(null);
-                      }}
-                      title="Toggle sort by Registration Submitted On"
-                    >
-                      Registration Submitted
-                      {submittedSortAsc === null ? (
-                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
-                      ) : (
-                        <span className="text-xs">
-                          {submittedSortAsc ? "▲" : "▼"}
-                        </span>
-                      )}
-                    </button>
-                  </TableHead>
-                  <TableHead className="text-center w-[150px]">
+                  <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
                     <button
                       type="button"
                       className="inline-flex items-center gap-1 hover:underline w-full justify-center"
@@ -504,12 +534,35 @@ export default function PendingMembersList({
                       )}
                     </button>
                   </TableHead>
+                  <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 hover:underline w-full justify-center"
+                      onClick={() => {
+                        setSubmittedSortAsc((prev) =>
+                          prev === null ? true : !prev,
+                        );
+                        setMemberNameSortAsc(null);
+                        setTotalFeeSortAsc(null);
+                      }}
+                      title="Toggle sort by Registration Submitted On"
+                    >
+                      Registration Submitted
+                      {submittedSortAsc === null ? (
+                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                      ) : (
+                        <span className="text-xs">
+                          {submittedSortAsc ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </button>
+                  </TableHead>
                   {clubMembers?.filters
                     ?.filter((col: any) => activeColumnKeys.includes(col.key))
                     .map((column: any) => (
                       <TableHead
                         key={column.key}
-                        className="text-center w-[150px]"
+                        className="h-11 w-[150px] text-center text-xs text-slate-200"
                       >
                         {column.field_name}
                       </TableHead>
@@ -520,197 +573,206 @@ export default function PendingMembersList({
                 {baseUnregisteredMembers.length ? (
                   sortedUnregisteredMembers.map((member: ClubMember) => (
                     <Fragment key={member.user_id}>
-                    <TableRow
-                      onClick={() => {
-                        setSelectedMember(member);
-                        window.location.hash = member.user_id;
-                      }}
-                      className={`h-12 cursor-pointer hover:drop-shadow-md transition-shadow relative ${
-                        listActionItems.some(
-                          (item) =>
-                            item.email === member.member_email &&
-                            item.name ===
-                              `${member.member_first_name} ${member.member_surname}`,
-                        )
-                          ? "bg-blue-50"
-                          : ""
-                      }`}
-                    >
-                      <TableCell className="text-center w-[80px] flex-shrink-0 sticky left-0 z-20 bg-white relative">
-                      <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
-                          <Checkbox
-                            checked={listActionItems.some(
-                              (item) =>
-                                item.email === member.member_email &&
-                                item.name ===
-                                  `${member.member_first_name} ${member.member_surname}`,
-                            )}
-                            onCheckedChange={(checked: boolean) => {
-                              if (checked) {
-                                const updatedDeregisterMembers = [
-                                  ...deregisterMembers,
-                                  {
-                                    user_id: member.user_id,
-                                    name: `${member.member_first_name} ${member.member_surname}`,
-                                  },
-                                ];
-                                setDeregisterMembers(updatedDeregisterMembers);
+                      <TableRow
+                        onClick={() => {
+                          setSelectedMember(member);
+                          window.location.hash = member.user_id;
+                        }}
+                        className={`group h-14 cursor-pointer border-slate-200 bg-white text-sm transition-colors hover:bg-slate-50 ${
+                          listActionItems.some(
+                            (item) =>
+                              item.email === member.member_email &&
+                              item.name ===
+                                `${member.member_first_name} ${member.member_surname}`,
+                          )
+                            ? "bg-slate-50"
+                            : ""
+                        }`}
+                      >
+                        <TableCell className="relative sticky left-0 z-20 w-[80px] flex-shrink-0 bg-white text-center">
+                          <div
+                            className="flex justify-center"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Checkbox
+                              checked={listActionItems.some(
+                                (item) =>
+                                  item.email === member.member_email &&
+                                  item.name ===
+                                    `${member.member_first_name} ${member.member_surname}`,
+                              )}
+                              onCheckedChange={(checked: boolean) => {
+                                if (checked) {
+                                  const updatedDeregisterMembers = [
+                                    ...deregisterMembers,
+                                    {
+                                      user_id: member.user_id,
+                                      name: `${member.member_first_name} ${member.member_surname}`,
+                                    },
+                                  ];
+                                  setDeregisterMembers(updatedDeregisterMembers);
 
-                                const updatedList = [
-                                  ...listActionItems,
-                                  {
-                                    email: member.member_email,
-                                    name: `${member.member_first_name} ${member.member_surname}`,
-                                  },
-                                ];
-                                setlistActionItems(updatedList);
-                                if (
-                                  updatedList.length ===
-                                  baseUnregisteredMembers.length
-                                ) {
-                                  setAllMembersSelected(true);
-                                }
-                              } else {
-                                const updatedDeregisterMembers =
-                                  deregisterMembers.filter(
-                                    (item) => item.user_id !== member.user_id,
+                                  const updatedList = [
+                                    ...listActionItems,
+                                    {
+                                      email: member.member_email,
+                                      name: `${member.member_first_name} ${member.member_surname}`,
+                                    },
+                                  ];
+                                  setlistActionItems(updatedList);
+                                  if (
+                                    updatedList.length ===
+                                    baseUnregisteredMembers.length
+                                  ) {
+                                    setAllMembersSelected(true);
+                                  }
+                                } else {
+                                  const updatedDeregisterMembers =
+                                    deregisterMembers.filter(
+                                      (item) => item.user_id !== member.user_id,
+                                    );
+                                  setDeregisterMembers(updatedDeregisterMembers);
+
+                                  const updatedList = listActionItems.filter(
+                                    (item) => item.email !== member.member_email,
                                   );
-                                setDeregisterMembers(updatedDeregisterMembers);
+                                  setlistActionItems(updatedList);
+                                  setAllMembersSelected(false);
+                                }
+                              }}
+                            />
+                          </div>
+                        </TableCell>
+                        <TableCell className="w-[150px] text-center text-sm font-medium text-slate-900">
+                          <span className="underline decoration-slate-400 underline-offset-2">
+                            {member.member_first_name + " " + member.member_surname}
+                          </span>
+                        </TableCell>
+                        <TableCell className="w-[150px] text-center text-sm text-slate-800">
+                          {member.member_email === "n/a" ? (
+                            <span className="text-gray-400">n/a</span>
+                          ) : (
+                            member.member_email
+                          )}
+                        </TableCell>
+                        <TableCell className="w-[190px] text-center">
+                          {(() => {
+                            const paymentStatus = getRegistrationPaymentStatus(member);
+                            const totalFee = member.total_fee || 0;
+                            const outstandingAmount = member.outstanding_amount || 0;
+                            const amountPaid = Math.max(totalFee - outstandingAmount, 0);
 
-                                const updatedList = listActionItems.filter(
-                                  (item) => item.email !== member.member_email,
-                                );
-                                setlistActionItems(updatedList);
-                                setAllMembersSelected(false);
-                              }
-                            }}
-                          />
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center w-[150px]">
-                        <span className="underline">
-                          {member.member_first_name +
-                            " " +
-                            member.member_surname}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-center w-[150px]">
-                        {member.member_email}
-                      </TableCell>
-                      <TableCell className="text-center w-[150px]">
-                        {member.registration_submitted_on
-                          ? new Date(
-                              member.registration_submitted_on,
-                            ).toLocaleString()
-                          : "-"}
-                      </TableCell>
-                      <TableCell className="text-center w-[190px]">
-                        {(() => {
-                          const paymentStatus = getRegistrationPaymentStatus(member);
-                          const totalFee = member.total_fee || 0;
-                          const outstandingAmount = member.outstanding_amount || 0;
-                          const amountPaid = Math.max(totalFee - outstandingAmount, 0);
+                            if (!totalFee) {
+                              return <span className="text-gray-400">n/a</span>;
+                            }
 
-                          return (
-                            <div className="space-y-1">
-                              <Badge className={paymentStatus.className}>
-                                {paymentStatus.label}
-                              </Badge>
-                              <div className="space-y-0.5 text-xs text-muted-foreground">
-                                <p>
-                                  Paid: {formatAmount(amountPaid, club?.currency)} of {formatAmount(totalFee, club?.currency)}
+                            return (
+                              <div className="flex flex-col items-center gap-2 text-center">
+                                <Badge className={paymentStatus.className}>
+                                  {paymentStatus.label}
+                                </Badge>
+                                <p className="text-sm font-medium text-slate-900">
+                                  {formatAmount(amountPaid, club?.currency)} of {formatAmount(totalFee, club?.currency)}
                                 </p>
                               </div>
-                            </div>
-                          );
-                        })()}
-                      </TableCell>
-                      {clubMembers?.filters
-                        ?.filter((col: any) =>
-                          activeColumnKeys.includes(col.key),
-                        )
-                        .map((column: any) => {
-                          let columnValue = "N/A";
-
-                          if (column.type === "billing") {
-                            const billingField = member.meta_billing?.find(
-                              (f: any) => f.field_name === column.field_name,
                             );
-                            columnValue = billingField?.label_value || "N/A";
-                          }
+                          })()}
+                        </TableCell>
+                        <TableCell className="w-[150px] text-center text-sm text-slate-800">
+                          {member.registration_submitted_on
+                            ? new Date(
+                                member.registration_submitted_on,
+                              ).toLocaleString()
+                            : "-"}
+                        </TableCell>
+                        {clubMembers?.filters
+                          ?.filter((col: any) => activeColumnKeys.includes(col.key))
+                          .map((column: any) => {
+                            let columnValue = "N/A";
 
-                          if (column.type === "billing:number") {
-                            const customField = member.meta_billing?.find(
-                              (f: any) => f.field_name === column.field_name,
+                            if (column.type === "billing") {
+                              const billingField = member.meta_billing?.find(
+                                (f: any) => f.field_name === column.field_name,
+                              );
+                              columnValue = billingField?.label_value || "N/A";
+                            }
+
+                            if (column.type === "billing:number") {
+                              const customField = member.meta_billing?.find(
+                                (f: any) => f.field_name === column.field_name,
+                              );
+                              columnValue = customField?.value
+                                ? formatAmount(customField?.value, club?.currency)
+                                : "N/A";
+                            }
+
+                            if (column.type === "standard") {
+                              const standardFields = Array.isArray(member.meta_standard)
+                                ? member.meta_standard
+                                : Object.values(member.meta_standard ?? {});
+                              const standardField = standardFields.find(
+                                (f: any) =>
+                                  f.field_name === column.field_name ||
+                                  f.field_id === column.field_id,
+                              );
+                              columnValue = standardField?.value || "N/A";
+                            }
+
+                            if (column.type === "club_variable") {
+                              const clubVariableKey = column.key?.startsWith("club_variable:")
+                                ? column.key.replace("club_variable:", "")
+                                : column.field_id || column.field_name;
+                              const clubVariables = Array.isArray(member.meta_club_variables)
+                                ? member.meta_club_variables
+                                : Object.values(member.meta_club_variables ?? {});
+                              const clubVariable = clubVariables.find(
+                                (f: any) =>
+                                  f.name === clubVariableKey ||
+                                  f.field_name === clubVariableKey ||
+                                  f.field_name === column.field_name ||
+                                  f.name === column.field_id,
+                              );
+                              columnValue = clubVariable?.value || "N/A";
+                            }
+
+                            return (
+                              <TableCell
+                                key={column.key}
+                                className="w-[150px] text-center text-sm text-slate-800"
+                              >
+                                {columnValue === "N/A" ? (
+                                  <span className="text-gray-400">n/a</span>
+                                ) : (
+                                  columnValue
+                                )}
+                              </TableCell>
                             );
-                            columnValue = customField?.value
-                              ? formatAmount(customField?.value, club?.currency)
-                              : "N/A";
+                          })}
+                      </TableRow>
+                      <Dialog
+                        open={openDialogUserId === member.user_id}
+                        onOpenChange={(open) => {
+                          reset();
+                          setOpenDialogUserId(open ? member.user_id : null);
+                          setMemberRegisterAmount(0);
+                          if (open) {
+                            setTemplateVariables({
+                              member_name:
+                                member.member_first_name +
+                                " " +
+                                member.member_surname,
+                            });
+                            setIsTemplateVariablesOpen(true);
+                            setIsPaymentMethodsOpen(true);
+                          } else {
+                            setTemplateVariables({});
+                            setSelectedPaymentMethod("EFT/Cash");
+                            setTemplateVariablesError("");
+                            setIsTemplateVariablesOpen(true);
+                            setIsPaymentMethodsOpen(true);
                           }
-
-                          if (column.type === "standard") {
-                            const standardFields = Array.isArray(member.meta_standard)
-                              ? member.meta_standard
-                              : Object.values(member.meta_standard ?? {});
-                            const standardField = standardFields.find(
-                              (f: any) =>
-                                f.field_name === column.field_name ||
-                                f.field_id === column.field_id,
-                            );
-                            columnValue = standardField?.value || "N/A";
-                          }
-
-                          if (column.type === "club_variable") {
-                            const clubVariableKey = column.key?.startsWith("club_variable:")
-                              ? column.key.replace("club_variable:", "")
-                              : column.field_id || column.field_name;
-                            const clubVariables = Array.isArray(member.meta_club_variables)
-                              ? member.meta_club_variables
-                              : Object.values(member.meta_club_variables ?? {});
-                            const clubVariable = clubVariables.find(
-                              (f: any) =>
-                                f.name === clubVariableKey ||
-                                f.field_name === clubVariableKey ||
-                                f.field_name === column.field_name ||
-                                f.name === column.field_id,
-                            );
-                            columnValue = clubVariable?.value || "N/A";
-                          }
-
-                          return (
-                            <TableCell
-                              key={column.key}
-                              className="text-center w-[150px]"
-                            >
-                              {columnValue}
-                            </TableCell>
-                          );
-                        })}
-                    </TableRow>
-                    <Dialog
-                      open={openDialogUserId === member.user_id}
-                      onOpenChange={(open) => {
-                        reset();
-                        setOpenDialogUserId(open ? member.user_id : null);
-                        setMemberRegisterAmount(0);
-                        if (open) {
-                          setTemplateVariables({
-                            member_name:
-                              member.member_first_name +
-                              " " +
-                              member.member_surname,
-                          });
-                          setIsTemplateVariablesOpen(true);
-                          setIsPaymentMethodsOpen(true);
-                        } else {
-                          setTemplateVariables({});
-                          setSelectedPaymentMethod("EFT/Cash");
-                          setTemplateVariablesError("");
-                          setIsTemplateVariablesOpen(true);
-                          setIsPaymentMethodsOpen(true);
-                        }
-                      }}
-                    >
+                        }}
+                      >
                       <DialogContent onClick={(e) => e.stopPropagation()}>
                               <DialogHeader>
                                 <DialogTitle>

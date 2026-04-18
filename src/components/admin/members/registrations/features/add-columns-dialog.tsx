@@ -71,7 +71,10 @@ export default function AddColumnsDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline">
+        <Button
+          variant="outline"
+          className="h-8 rounded-full border-slate-200 bg-white px-3.5 text-xs text-zinc-700 hover:bg-slate-100"
+        >
           {buttonText}
         </Button>
       </DialogTrigger>
@@ -196,10 +199,17 @@ export default function AddColumnsDialog({
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="h-8 rounded-full border-slate-200 bg-white px-3.5 text-xs text-zinc-700 hover:bg-slate-100"
+          >
             Cancel
           </Button>
-          <Button onClick={handleApply}>
+          <Button
+            onClick={handleApply}
+            className="h-8 rounded-full bg-zinc-700 px-3.5 text-xs text-white hover:bg-zinc-800"
+          >
             Apply
           </Button>
         </DialogFooter>

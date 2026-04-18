@@ -616,9 +616,7 @@ function RegistrationBillingTooltip({
         </div>
         <div className="space-y-1">
           {payload.map((entry, idx) => {
-            const isMoney = ["Paid", "Due", "Total", "Pending"].includes(
-              entry.name,
-            );
+            const isMoney = ["Paid", "Due"].includes(entry.name);
             const displayValue = isMoney
               ? formatAmount(Number(entry.value), currency)
               : entry.value;
@@ -654,23 +652,70 @@ export function RegistrationBillingChart({
     due: d.due_to_club,
   }));
 
+  const totalPaid = orderedData.reduce((sum, row) => sum + row.paid_to_club, 0);
+  const totalDue = orderedData.reduce((sum, row) => sum + row.due_to_club, 0);
+  const totalRegistrations = orderedData.reduce((sum, row) => sum + row.total, 0);
+  const totalPending = orderedData.reduce((sum, row) => sum + row.pending, 0);
+  const strongestMonth = orderedData.reduce<RegistrationBillingItem | null>(
+    (best, current) => {
+      if (!best) {
+        return current;
+      }
+
+      return current.paid_to_club > best.paid_to_club ? current : best;
+    },
+    null,
+  );
+
   return (
-    <div className="w-full h-64 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 p-4">
+    <ChartShell
+      title="Registration Billing Trend"
+      subtitle="Collected amounts, balances due, and monthly registration volume in one compact view."
+      insights={[
+        {
+          label: "Collected",
+          value: formatAmount(totalPaid, currency),
+          note: "Paid to club across the visible period",
+        },
+        {
+          label: "Outstanding",
+          value: formatAmount(totalDue, currency),
+          note: `${totalPending} registrations still pending`,
+        },
+        {
+          label: "Total",
+          value: totalRegistrations,
+          note: "Registrations captured across the visible period",
+        },
+        {
+          label: "Pending",
+          value: totalPending,
+          note: "Registrations still awaiting completion",
+        },
+        {
+          label: "Best month",
+          value: strongestMonth ? strongestMonth.date : "-",
+          note: strongestMonth
+            ? formatAmount(strongestMonth.paid_to_club, currency)
+            : "No data",
+        },
+      ]}
+    >
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart
           data={chartData}
-          margin={{ top: 16, right: 48, left: 24, bottom: 32 }}
+          margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
           <XAxis
             dataKey="name"
-            tick={{ fontSize: 13, fill: "#64748b" }}
+            tick={{ fontSize: 11, fill: "#78716c" }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
             yAxisId="left"
-            tick={{ fontSize: 13, fill: "#64748b" }}
+            tick={{ fontSize: 11, fill: "#78716c" }}
             tickFormatter={(v) => formatAmount(Number(v), currency)}
             axisLine={false}
             tickLine={false}
@@ -678,7 +723,7 @@ export function RegistrationBillingChart({
           <YAxis
             yAxisId="right"
             orientation="right"
-            tick={{ fontSize: 13, fill: "#64748b" }}
+            tick={{ fontSize: 11, fill: "#a8a29e" }}
             axisLine={false}
             tickLine={false}
           />
@@ -690,29 +735,29 @@ export function RegistrationBillingChart({
             yAxisId="left"
             dataKey="paid"
             name="Paid"
-            fill="#10b981"
-            stroke="#059669"
+            fill={CHART_COLORS.registered.fill}
+            stroke={CHART_COLORS.registered.stroke}
             strokeWidth={1.5}
             radius={[8, 8, 0, 0]}
-            barSize={24}
+            barSize={18}
           />
           <Bar
             yAxisId="left"
             dataKey="due"
             name="Due"
-            fill="#f43f5e"
-            stroke="#e11d48"
+            fill={CHART_COLORS.pendingRevenue.fill}
+            stroke={CHART_COLORS.pendingRevenue.stroke}
             strokeWidth={1.5}
             radius={[8, 8, 0, 0]}
-            barSize={24}
+            barSize={18}
           />
           <Line
             yAxisId="right"
             type="monotone"
             dataKey="total"
             name="Total"
-            stroke="#7c3aed"
-            strokeWidth={3}
+            stroke={CHART_COLORS.total.stroke}
+            strokeWidth={2.5}
             dot={false}
           />
           <Line
@@ -720,13 +765,13 @@ export function RegistrationBillingChart({
             type="monotone"
             dataKey="pending"
             name="Pending"
-            stroke="#a78bfa"
-            strokeWidth={3}
+            stroke={CHART_COLORS.pending.stroke}
+            strokeWidth={2.5}
             dot={false}
             strokeDasharray="6 4"
           />
         </ComposedChart>
       </ResponsiveContainer>
-    </div>
+    </ChartShell>
   );
 }

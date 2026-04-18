@@ -6,17 +6,8 @@ import {
 } from "@/interfaces/report";
 import { RegistrationBillingChart } from "@/components/admin/reporting/general-reporting/charts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { Card, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "./ui/table";
+import { Card } from "./ui/card";
 import { formatAmount } from "@/data/currencies";
-import { Label } from "./ui/label";
 import { Badge } from "./ui/badge";
 import {
   Tooltip,
@@ -37,6 +28,11 @@ export function RegistrationReportData({
   currency,
   showOldFields = true,
 }: props) {
+  const sectionTabsListClass =
+    "inline-flex h-auto max-w-full flex-wrap justify-start gap-2 bg-transparent p-0";
+  const sectionTabsTriggerClass =
+    "h-8 max-w-full rounded-full border border-slate-200 bg-white px-3.5 text-left text-xs font-medium text-slate-600 shadow-none transition data-[state=active]:border-zinc-700 data-[state=active]:bg-zinc-700 data-[state=active]:text-white";
+
   const isCustomAmount = (
     total: any,
     fee_amount: number | null | undefined,
@@ -66,24 +62,52 @@ export function RegistrationReportData({
       );
 
   if (!data || !data.report || filteredReport.length === 0) {
-    return <Label>No data to display yet</Label>;
+    return (
+      <div className="flex min-h-40 items-center justify-center rounded-[20px] border border-slate-200 bg-white text-sm text-slate-500">
+        No data to display yet
+      </div>
+    );
   }
+
+  const getFeeSummaryLabel = (
+    total: any,
+    feeAmount: number | null | undefined,
+  ) => {
+    if (isCustomAmount(total, feeAmount)) {
+      return "Custom Amount";
+    }
+
+    if (isFree(total, feeAmount)) {
+      return "Free";
+    }
+
+    return `${formatAmount(feeAmount ?? 0, currency)} each`;
+  };
+
+  const renderTrendSection = (trendData: RegistrationReportRowDataItem[]) => (
+    <div className="space-y-4">
+      <RegistrationBillingChart data={trendData} currency={currency} />
+    </div>
+  );
 
   return (
     <TooltipProvider>
-      <div>
-        <Tabs defaultValue={filteredReport[0]?.field_id}>
-          <TabsList className="flex justify-center flex-wrap gap-2 h-10 mx-auto">
+      <div className="space-y-4">
+        <Tabs defaultValue={filteredReport[0]?.field_id} className="space-y-4">
+          <div className="rounded-[18px] border border-slate-200/70 bg-slate-50/90 p-1.5 backdrop-blur">
+          <TabsList className={sectionTabsListClass}>
             {filteredReport.map((c: RegistrationReportDropDown) => (
               <TabsTrigger
-                className="px-3 h-8 text-sm whitespace-nowrap truncate w-[240px] relative"
+                className={sectionTabsTriggerClass}
                 key={c.field_id}
                 value={c.field_id}
               >
-                <span className="flex items-center gap-2">
+                <span className="flex max-w-full items-center gap-2">
+                  <span className="truncate">
                   {c.table_name.length > 20
                     ? `${c.table_name.slice(0, 20)}...`
                     : c.table_name}
+                  </span>
                   {(c.old_field || c.old_option) && (
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -104,157 +128,52 @@ export function RegistrationReportData({
               </TabsTrigger>
             ))}
           </TabsList>
+          </div>
 
           {filteredReport.map((c: RegistrationReportDropDown) => (
-            <TabsContent key={c.field_id} value={c.field_id}>
-              <Card className="p-4 border-none shadow-none">
-                {!c.rows?.length && !c?.data && <div>No data to report</div>}
+            <TabsContent key={c.field_id} value={c.field_id} className="mt-0">
+              <Card className="rounded-[20px] border border-slate-200/70 bg-white p-4 shadow-sm md:p-5">
+                {!c.rows?.length && !c?.data && (
+                  <div className="flex min-h-32 items-center justify-center text-sm text-slate-500">
+                    No data to report
+                  </div>
+                )}
                 {c?.data && (
-                  <div>
-                    <div className="flex flex-col w-full items-center pb-4">
-                      <div className="flex items-center gap-2 justify-center">
-                        <p className="font-bold">
-                          {c.table_name} -{" "}
-                          {isCustomAmount(c.total, c.fee_amount)
-                            ? "Custom Amount"
-                            : isFree(c.total, c.fee_amount)
-                              ? "Free"
-                              : `${formatAmount(c.fee_amount ?? 0, currency)} each`}
-                        </p>
+                  <div className="space-y-4">
+                    <div className="mb-3 flex flex-col gap-0.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-600">
+                          {c.table_name} - {getFeeSummaryLabel(c.total, c.fee_amount)}
+                        </h3>
+                        {(c.old_field || c.old_option) && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge variant="destructive">Old Field</Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              This field no longer exists in the current registration
+                              form
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
                       </div>
-                    </div>
-                    <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-2">
-                      <div className="flex gap-4 *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs">
-                        <Card className="@container/card py-3 w-[100%]">
-                          <CardHeader className="flex flex-col items-center justify-center text-center">
-                            <CardDescription>Total</CardDescription>
-                            <CardTitle className="text-l font-semibold tabular-nums">
-                              {c.total?.total ?? 0}
-                            </CardTitle>
-                          </CardHeader>
-                        </Card>
-                        <Card className="@container/card py-3 w-[100%]">
-                          <CardHeader className="flex flex-col items-center justify-center text-center">
-                            <CardDescription>
-                              {isCustomAmount(c.total, c.fee_amount)
-                                ? "Total Collected"
-                                : "Paid to Club"}
-                            </CardDescription>
-                            <CardTitle className="text-l font-semibold tabular-nums">
-                              {isCustomAmount(c.total, c.fee_amount)
-                                ? formatAmount(
-                                    c.total?.paid_to_club ?? 0,
-                                    currency,
-                                  )
-                                : isFree(c.total, c.fee_amount)
-                                  ? "Free"
-                                  : formatAmount(
-                                      c.total?.paid_to_club ?? 0,
-                                      currency,
-                                    )}
-                            </CardTitle>
-                          </CardHeader>
-                        </Card>
-                        <Card className="@container/card py-3 w-[100%]">
-                          <CardHeader className="flex flex-col items-center justify-center text-center">
-                            <CardDescription>Pending</CardDescription>
-                            <CardTitle className="text-l font-semibold tabular-nums">
-                              {c.total?.pending ?? 0}
-                            </CardTitle>
-                          </CardHeader>
-                        </Card>
-                        <Card className="@container/card py-3 w-[100%]">
-                          <CardHeader className="flex flex-col items-center justify-center text-center">
-                            <CardDescription>
-                              {isCustomAmount(c.total, c.fee_amount)
-                                ? "Pending Collection"
-                                : "Due to Club"}
-                            </CardDescription>
-                            <CardTitle className="text-l font-semibold tabular-nums">
-                              {isCustomAmount(c.total, c.fee_amount)
-                                ? formatAmount(
-                                    c.total?.due_to_club ?? 0,
-                                    currency,
-                                  )
-                                : isFree(c.total, c.fee_amount)
-                                  ? "Free"
-                                  : formatAmount(
-                                      c.total?.due_to_club ?? 0,
-                                      currency,
-                                    )}
-                            </CardTitle>
-                          </CardHeader>
-                        </Card>
-                      </div>
+                      <p className="text-[11px] text-stone-500">
+                        Monthly registration billing totals, collected revenue, and
+                        outstanding balances for this field.
+                      </p>
                     </div>
                     {c?.data && c.data.length > 0 && (
-                      <div className="space-y-4">
-                        <div className="rounded-xl border bg-card p-4 shadow-sm">
-                          <RegistrationBillingChart
-                            data={c.data as RegistrationReportRowDataItem[]}
-                            currency={currency}
-                          />
-                        </div>
-                        <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
-                          <Table>
-                            <TableHeader className="bg-muted/60">
-                              <TableRow>
-                                <TableHead className="text-center">
-                                  Date
-                                </TableHead>
-                                <TableHead className="text-center">
-                                  Total
-                                </TableHead>
-                                <TableHead className="text-center">
-                                  Paid
-                                </TableHead>
-                                <TableHead className="text-center">
-                                  Pending
-                                </TableHead>
-                                <TableHead className="text-center">
-                                  Due
-                                </TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody className="font-medium">
-                              {(c?.data as RegistrationReportRowDataItem[]).map(
-                                (d) => (
-                                  <TableRow
-                                    key={d.date}
-                                    className="hover:bg-muted/40"
-                                  >
-                                    <TableCell className="text-center">
-                                      {d.date}
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                      {d.total}
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                      {formatAmount(d.paid_to_club, currency)}
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                      {d.pending}
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                      {formatAmount(d.due_to_club, currency)}
-                                    </TableCell>
-                                  </TableRow>
-                                ),
-                              )}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      </div>
+                      renderTrendSection(c.data as RegistrationReportRowDataItem[])
                     )}
                   </div>
                 )}
                 {c?.rows && c.rows.length > 0 && (
-                  <div className="mb-5">
-                    <div className="flex flex-col w-full items-center pb-2">
-                      <div className="flex items-center gap-2 justify-center">
-                        <p className="font-bold w-full text-center">
+                  <div className="space-y-4">
+                    <div className="mb-3 flex flex-col gap-0.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-600">
                           {c.table_name}
-                        </p>
+                        </h3>
                         {(c.old_field || c.old_option) && (
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -267,24 +186,34 @@ export function RegistrationReportData({
                           </Tooltip>
                         )}
                       </div>
+                      <p className="text-[11px] text-stone-500">
+                        Break down each option within this field using the same
+                        registration billing graph and side insights.
+                      </p>
                     </div>
                     {(() => {
                       const filteredRows = showOldFields
                         ? c.rows
                         : c.rows.filter((r) => !r.old_field);
                       return filteredRows.length > 0 ? (
-                        <Tabs defaultValue={filteredRows[0]?.option_order_id}>
-                          <TabsList className="flex justify-center h-10 flex-wrap gap-2 mx-auto py-1">
+                        <Tabs
+                          defaultValue={filteredRows[0]?.option_order_id}
+                          className="space-y-4"
+                        >
+                          <div className="rounded-[18px] border border-slate-200/70 bg-slate-50/90 p-1.5 backdrop-blur">
+                          <TabsList className={sectionTabsListClass}>
                             {filteredRows.map((r: RegistrationRowData) => (
                               <TabsTrigger
                                 key={r.option_order_id}
                                 value={r.option_order_id}
-                                className="px-3 h-8 text-sm whitespace-nowrap truncate w-[240px]"
+                                className={sectionTabsTriggerClass}
                               >
-                                <span className="flex items-center gap-2">
+                                <span className="flex max-w-full items-center gap-2">
+                                  <span className="truncate">
                                   {r.row_name.length > 15
                                     ? `${r.row_name.slice(0, 15)}...`
                                     : r.row_name}
+                                  </span>
                                   {r.old_field && (
                                     <Tooltip>
                                       <TooltipTrigger asChild>
@@ -305,168 +234,36 @@ export function RegistrationReportData({
                               </TabsTrigger>
                             ))}
                           </TabsList>
+                          </div>
                           {filteredRows?.map((r: RegistrationRowData) => (
                             <TabsContent
                               key={r.option_order_id}
                               value={r.option_order_id}
+                              className="mt-0"
                             >
-                              <div className="px-2">
-                                <div className="flex flex-col w-full items-center py-4">
-                                  <div className="flex items-center gap-2 justify-center">
-                                    <p className="font-bold">
-                                      {r.row_name} -{" "}
-                                      {isCustomAmount(r.total, r.fee_amount)
-                                        ? "Custom Amount"
-                                        : isFree(r.total, r.fee_amount)
-                                          ? "Free"
-                                          : `${formatAmount(
-                                              r.fee_amount,
-                                              currency,
-                                            )} each`}
-                                    </p>
+                              <div className="space-y-4 pt-1">
+                                <div className="mb-3 flex flex-col gap-0.5">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-600">
+                                      {r.row_name} - {getFeeSummaryLabel(r.total, r.fee_amount)}
+                                    </h3>
                                   </div>
-                                </div>
-                                <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-2">
-                                  <div className="flex gap-4 *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs">
-                                    <Card className="@container/card py-3 w-[100%]">
-                                      <CardHeader className="flex flex-col items-center justify-center text-center">
-                                        <CardDescription>Total</CardDescription>
-                                        <CardTitle className="text-l font-semibold tabular-nums">
-                                          {r.total.total}
-                                        </CardTitle>
-                                      </CardHeader>
-                                    </Card>
-                                    <Card className="@container/card py-3 w-[100%]">
-                                      <CardHeader className="flex flex-col items-center justify-center text-center">
-                                        <CardDescription>
-                                          {isCustomAmount(r.total, r.fee_amount)
-                                            ? "Total Collected"
-                                            : "Paid to Club"}
-                                        </CardDescription>
-                                        <CardTitle className="text-l font-semibold tabular-nums">
-                                          {isCustomAmount(r.total, r.fee_amount)
-                                            ? formatAmount(
-                                                r.total.paid_to_club,
-                                                currency,
-                                              )
-                                            : isFree(r.total, r.fee_amount)
-                                              ? "Free"
-                                              : formatAmount(
-                                                  r.total.paid_to_club,
-                                                  currency,
-                                                )}
-                                        </CardTitle>
-                                      </CardHeader>
-                                    </Card>
-                                    <Card className="@container/card py-3 w-[100%]">
-                                      <CardHeader className="flex flex-col items-center justify-center text-center">
-                                        <CardDescription>
-                                          Pending
-                                        </CardDescription>
-                                        <CardTitle className="text-l font-semibold tabular-nums">
-                                          {r.total.pending}
-                                        </CardTitle>
-                                      </CardHeader>
-                                    </Card>
-                                    <Card className="@container/card py-3 w-[100%]">
-                                      <CardHeader className="flex flex-col items-center justify-center text-center">
-                                        <CardDescription>
-                                          {isCustomAmount(r.total, r.fee_amount)
-                                            ? "Pending Collection"
-                                            : "Due to Club"}
-                                        </CardDescription>
-                                        <CardTitle className="text-l font-semibold tabular-nums">
-                                          {isCustomAmount(r.total, r.fee_amount)
-                                            ? formatAmount(
-                                                r.total.due_to_club,
-                                                currency,
-                                              )
-                                            : isFree(r.total, r.fee_amount)
-                                              ? "Free"
-                                              : formatAmount(
-                                                  r.total.due_to_club,
-                                                  currency,
-                                                )}
-                                        </CardTitle>
-                                      </CardHeader>
-                                    </Card>
-                                  </div>
+                                  <p className="text-[11px] text-stone-500">
+                                    Monthly billing activity and collections for this
+                                    registration option.
+                                  </p>
                                 </div>
                                 {r.data && r.data.length > 0 && (
-                                  <div className="space-y-4">
-                                    <div className="rounded-xl border bg-card p-4 shadow-sm">
-                                      <RegistrationBillingChart
-                                        data={
-                                          r.data as RegistrationReportRowDataItem[]
-                                        }
-                                        currency={currency}
-                                      />
-                                    </div>
-                                    <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
-                                      <Table>
-                                        <TableHeader className="bg-muted/60">
-                                          <TableRow>
-                                            <TableHead className="text-center w-1/5">
-                                              Date
-                                            </TableHead>
-                                            <TableHead className="text-center w-1/5">
-                                              Total
-                                            </TableHead>
-                                            <TableHead className="text-center w-1/5">
-                                              Paid
-                                            </TableHead>
-                                            <TableHead className="text-center w-1/5">
-                                              Pending
-                                            </TableHead>
-                                            <TableHead className="text-center w-1/5">
-                                              Due
-                                            </TableHead>
-                                          </TableRow>
-                                        </TableHeader>
-                                        <TableBody className="font-medium">
-                                          {r.data.map(
-                                            (
-                                              d: RegistrationReportRowDataItem,
-                                            ) => (
-                                              <TableRow
-                                                key={d.date}
-                                                className="hover:bg-muted/40"
-                                              >
-                                                <TableCell className="text-center w-1/5">
-                                                  {d.date}
-                                                </TableCell>
-                                                <TableCell className="text-center w-1/5">
-                                                  {d.total}
-                                                </TableCell>
-                                                <TableCell className="text-center w-1/5">
-                                                  {formatAmount(
-                                                    d.paid_to_club,
-                                                    currency,
-                                                  )}
-                                                </TableCell>
-                                                <TableCell className="text-center w-1/5">
-                                                  {d.pending}
-                                                </TableCell>
-                                                <TableCell className="text-center w-1/5">
-                                                  {formatAmount(
-                                                    d.due_to_club,
-                                                    currency,
-                                                  )}
-                                                </TableCell>
-                                              </TableRow>
-                                            ),
-                                          )}
-                                        </TableBody>
-                                      </Table>
-                                    </div>
-                                  </div>
+                                  renderTrendSection(
+                                    r.data as RegistrationReportRowDataItem[],
+                                  )
                                 )}
                               </div>
                             </TabsContent>
                           ))}
                         </Tabs>
                       ) : (
-                        <div className="text-center py-4">
+                        <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
                           No active fields to display
                         </div>
                       );

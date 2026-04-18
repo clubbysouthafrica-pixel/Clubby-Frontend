@@ -63,6 +63,7 @@ export default function RegisteredMembersList({
   setAllMembersSelected,
   setRegisteredMembersLength,
 }: ImageProps) {
+  const [showTenRows, setShowTenRows] = useState(false);
 
   const baseRegisteredMembers = clubMembers?.registered || [];
   const [regSortAsc, setRegSortAsc] = useState<boolean | null>(null);
@@ -101,14 +102,40 @@ export default function RegisteredMembersList({
     setRegisteredMembersLength(baseRegisteredMembers.length);
   }, [baseRegisteredMembers, setRegisteredMembersLength]);
 
+  const headerHeight = 48;
+  const rowHeight = 60;
+  const visibleRowCount = Math.min(
+    baseRegisteredMembers.length,
+    showTenRows ? 10 : 5,
+  );
+  const tableViewportMaxHeight =
+    visibleRowCount > 0
+      ? headerHeight + visibleRowCount * rowHeight
+      : undefined;
+  const shouldScrollY = baseRegisteredMembers.length > (showTenRows ? 10 : 5);
+
   return (
     <>
+      {baseRegisteredMembers.length > 5 && (
+        <div className="mb-3 flex justify-end">
+          <button
+            type="button"
+            onClick={() => setShowTenRows((prev) => !prev)}
+            className="inline-flex h-8 items-center rounded-full border border-slate-200 bg-slate-50 px-3.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+          >
+            {showTenRows ? "Show 5 rows" : "Show 10 rows"}
+          </button>
+        </div>
+      )}
       <div
-        className={`w-full rounded-lg border overflow-x-auto max-w-[79vw] ${
-          baseRegisteredMembers.length > 10
-            ? "max-h-[600px] overflow-y-auto"
-            : "overflow-y-hidden"
+        className={`w-full overflow-x-auto rounded-[20px] border border-slate-200 bg-white ${
+          shouldScrollY ? "overflow-y-auto" : "overflow-y-hidden"
         }`}
+        style={
+          tableViewportMaxHeight
+            ? { maxHeight: `${tableViewportMaxHeight}px` }
+            : undefined
+        }
       >
         <DndContext
           collisionDetection={closestCenter}
@@ -122,10 +149,10 @@ export default function RegisteredMembersList({
               minWidth: `${Math.max(700, (4 + activeColumnKeys.length) * 150)}px`,
             }}
           >
-            <TableHeader className="bg-muted sticky top-0 z-10">
+            <TableHeader className="sticky top-0 z-10 bg-zinc-700 [&_tr]:border-zinc-600">
               <TableRow>
-                <TableHead className="text-center w-[80px] py-2 flex-shrink-0 sticky left-0 z-20 bg-muted">
-                  <div className="flex justify-center items-center rounded-[10px] pl-3 pr-1 border-gray-300 border-1 w-fit mx-auto hover:border-gray-400 transition-colors">
+                <TableHead className="sticky left-0 z-20 w-[80px] flex-shrink-0 bg-zinc-700 py-2 text-center text-slate-200">
+                  <div className="mx-auto flex w-fit items-center justify-center rounded-full border border-slate-200/80 bg-slate-50 pl-3 pr-1 transition-colors hover:bg-white">
                     <Checkbox
                       checked={allMembersSelected}
                       onCheckedChange={(checked: boolean) => {
@@ -141,11 +168,11 @@ export default function RegisteredMembersList({
                     />
                     <DropdownMenu modal={false}>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8">
+                        <Button variant="ghost" size="sm" className="h-7 w-7 rounded-full p-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
                           <ChevronDown className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuContent align="end" className="w-48 rounded-[18px] border-slate-200">
                         <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
                           Actions
                         </DropdownMenuLabel>
@@ -160,7 +187,7 @@ export default function RegisteredMembersList({
                     </DropdownMenu>
                   </div>
                 </TableHead>
-                <TableHead className="text-center w-[150px]">
+                <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
                   <button
                     type="button"
                     className="inline-flex items-center gap-1 hover:underline w-full justify-center"
@@ -179,10 +206,10 @@ export default function RegisteredMembersList({
                     )}
                   </button>
                 </TableHead>
-                <TableHead className="text-center w-[150px]">
+                <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
                   Email
                 </TableHead>
-                <TableHead className="text-center w-[150px]">
+                <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
                   <button
                     type="button"
                     className="inline-flex items-center gap-1 hover:underline w-full justify-center"
@@ -201,7 +228,7 @@ export default function RegisteredMembersList({
                     )}
                   </button>
                 </TableHead>
-                <TableHead className="text-center w-[150px]">
+                <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
                   <button
                     type="button"
                     className="inline-flex items-center gap-1 hover:underline"
@@ -223,7 +250,7 @@ export default function RegisteredMembersList({
                   .map((column: any) => (
                     <TableHead
                       key={column.key}
-                      className="text-center w-[150px]"
+                      className="h-11 w-[150px] text-center text-xs text-slate-200"
                     >
                       {column.field_name}
                     </TableHead>
@@ -239,18 +266,18 @@ export default function RegisteredMembersList({
                       setSelectedMember(member);
                       window.location.hash = member.user_id;
                     }}
-                    className={`h-12 cursor-pointer hover:drop-shadow-md transition-shadow relative ${
+                    className={`group h-14 cursor-pointer border-slate-200 bg-white text-sm transition-colors hover:bg-slate-50 ${
                       listActionItems.some(
                         (item) =>
                           item.email === member.member_email &&
                           item.name ===
                             `${member.member_first_name} ${member.member_surname}`,
                       )
-                        ? "bg-blue-50"
+                        ? "bg-slate-50"
                         : ""
                     }`}
                   >
-                    <TableCell className="text-center w-[80px] flex-shrink-0 sticky left-0 z-20 bg-white relative">
+                    <TableCell className="relative sticky left-0 z-20 w-[80px] flex-shrink-0 bg-white text-center">
                       <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           checked={listActionItems.some(
@@ -302,22 +329,26 @@ export default function RegisteredMembersList({
                         />
                       </div>
                     </TableCell>
-                    <TableCell className="text-center w-[150px]">
-                      <span className="underline">
+                    <TableCell className="w-[150px] text-center text-sm font-medium text-slate-900">
+                      <span className="underline decoration-slate-400 underline-offset-2">
                         {member.member_first_name + " " + member.member_surname}
                       </span>
                     </TableCell>
-                    <TableCell className="text-center w-[150px]">
-                      {member.member_email}
+                    <TableCell className="w-[150px] text-center text-sm text-slate-800">
+                      {member.member_email === "n/a" ? (
+                        <span className="text-gray-400">n/a</span>
+                      ) : (
+                        member.member_email
+                      )}
                     </TableCell>
-                    <TableCell className="text-center w-[150px]">
+                    <TableCell className="w-[150px] text-center text-sm font-medium text-slate-900">
                       {member.total_fee ? (
                         formatAmount(member.total_fee, currency)
                       ) : (
                         <span className="text-gray-400">n/a</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-center w-[150px]">
+                    <TableCell className="w-[150px] text-center text-sm text-slate-800">
                       {member.registered_on
                         ? new Date(member.registered_on).toLocaleString()
                         : "-"}
@@ -373,7 +404,7 @@ export default function RegisteredMembersList({
                         return (
                           <TableCell
                             key={column.key}
-                            className="text-center w-[150px]"
+                            className="w-[150px] text-center text-sm text-slate-800"
                           >
                             {columnValue === "N/A" ? (
                               <span className="text-gray-400">n/a</span>
@@ -389,7 +420,7 @@ export default function RegisteredMembersList({
                 <TableRow>
                   <TableCell
                     colSpan={4 + (activeColumnKeys?.length ?? 0)}
-                    className="h-24 text-center"
+                    className="h-24 text-center text-slate-500"
                   >
                     No results.
                   </TableCell>

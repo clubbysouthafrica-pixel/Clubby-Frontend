@@ -18,13 +18,12 @@ import {
 } from "lucide-react";
 import { Club } from "@/context/ClubContext";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import RemoveRegistrationDialog from "./features/remove-registration-dialog";
 import { formatAmount } from "@/data/currencies";
 import { useArchiveRegistrationMutation } from "@/mutations/admin/useRegistrationMutation";
@@ -43,7 +42,6 @@ interface PreviousMembersListProps {
   activeColumnKeys?: string[];
   memberLimit: number;
   showArchived?: boolean;
-  onShowArchivedChange?: (value: boolean) => void;
   setlistActionItems: React.Dispatch<
     React.SetStateAction<{ email: string; name: string }[]>
   >;
@@ -96,8 +94,8 @@ export default function PreviousMembersList({
   setDeregisteredMembersLength,
   setlistActionItems,
   showArchived = false,
-  onShowArchivedChange,
 }: PreviousMembersListProps) {
+  const [showTenRows, setShowTenRows] = useState(false);
   // Use raw clubMembers.deregistered - backend already handles pagination and member_name/member_id filtering
   const baseDeregisteredMembers = useMemo<ClubMember[]>(
     () => clubMembers?.deregistered || [],
@@ -186,20 +184,42 @@ export default function PreviousMembersList({
     );
   }, [baseDeregisteredMembers, removedRegistrationKeys, setDeregisteredMembersLength]);
 
+  const headerHeight = 48;
+  const rowHeight = 60;
+  const visibleRowCount = Math.min(
+    sortedDeregisteredMembers.length,
+    showTenRows ? 10 : 5,
+  );
+  const tableViewportMaxHeight =
+    visibleRowCount > 0
+      ? headerHeight + visibleRowCount * rowHeight
+      : undefined;
+  const shouldScrollY =
+    sortedDeregisteredMembers.length > (showTenRows ? 10 : 5);
+
   return (
     <>
-      <div className="mb-4 flex items-center gap-2">
-        <Switch
-          id="show-archived"
-          checked={showArchived}
-          onCheckedChange={onShowArchivedChange}
-        />
-        <Label htmlFor="show-archived" className="cursor-pointer">
-          Show archived registrations
-        </Label>
-      </div>
+      {sortedDeregisteredMembers.length > 5 && (
+        <div className="mb-3 flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowTenRows((prev) => !prev)}
+            className="h-8 rounded-full border-slate-200 bg-slate-50 px-3.5 text-xs font-medium text-slate-700 hover:bg-slate-100"
+          >
+            {showTenRows ? "Show 5 rows" : "Show 10 rows"}
+          </Button>
+        </div>
+      )}
       <div
-        className={`overflow-x-auto rounded-lg border max-w-[79vw] ${baseDeregisteredMembers.length > 10 ? "max-h-[600px] overflow-y-auto" : "overflow-y-hidden"}`}
+        className={`w-full overflow-x-auto rounded-[20px] border border-slate-200 bg-white ${
+          shouldScrollY ? "overflow-y-auto" : "overflow-y-hidden"
+        }`}
+        style={
+          tableViewportMaxHeight
+            ? { maxHeight: `${tableViewportMaxHeight}px` }
+            : undefined
+        }
       >
         <DndContext
           collisionDetection={closestCenter}
@@ -213,12 +233,12 @@ export default function PreviousMembersList({
               minWidth: `${Math.max(700, (4 + activeColumnKeys.length) * 150)}px`,
             }}
           >
-            <TableHeader className="bg-muted sticky top-0 z-10">
+            <TableHeader className="sticky top-0 z-10 bg-zinc-700 [&_tr]:border-zinc-600">
               <TableRow>
-                <TableHead className="text-center w-[120px] py-2 flex-shrink-0 sticky left-0 z-20 bg-muted">
+                <TableHead className="sticky left-0 z-20 h-11 w-[120px] flex-shrink-0 bg-zinc-700 py-2 text-center text-xs text-slate-200">
                   Actions
                 </TableHead>
-                <TableHead className="text-center w-[220px]">
+                <TableHead className="h-11 w-[220px] text-center text-xs text-slate-200">
                   <button
                     type="button"
                     className="inline-flex items-center gap-1 hover:underline w-full justify-center"
@@ -241,8 +261,8 @@ export default function PreviousMembersList({
                     )}
                   </button>
                 </TableHead>
-                <TableHead className="text-center w-[150px]">Email</TableHead>
-                <TableHead className="text-center w-[150px]">
+                <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">Email</TableHead>
+                <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
                   <button
                     type="button"
                     className="inline-flex items-center gap-1 hover:underline w-full justify-center"
@@ -265,7 +285,7 @@ export default function PreviousMembersList({
                     )}
                   </button>
                 </TableHead>
-                <TableHead className="text-center w-[150px]">
+                <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
                   <button
                     type="button"
                     className="inline-flex items-center gap-1 hover:underline"
@@ -289,7 +309,7 @@ export default function PreviousMembersList({
                   .map((column: any) => (
                     <TableHead
                       key={column.key}
-                      className="text-center w-[150px]"
+                      className="h-11 w-[150px] text-center text-xs text-slate-200"
                     >
                       {column.field_name}
                     </TableHead>
@@ -305,18 +325,18 @@ export default function PreviousMembersList({
                       setSelectedMember(member);
                       window.location.hash = member.user_id;
                     }}
-                    className={`h-12 cursor-pointer hover:drop-shadow-md transition-shadow relative ${
+                    className={`group h-14 cursor-pointer border-slate-200 bg-white text-sm transition-colors hover:bg-slate-50 ${
                       listActionItems.some(
                         (item) =>
                           item.email === member.member_email &&
                           item.name ===
                             `${member.member_first_name} ${member.member_surname}`,
                       )
-                        ? "bg-blue-50"
+                        ? "bg-slate-50"
                         : ""
                     }`}
                   >
-                    <TableCell className="text-center w-[120px] flex-shrink-0 sticky left-0 z-20 bg-white relative">
+                    <TableCell className="relative sticky left-0 z-20 w-[120px] flex-shrink-0 bg-white text-center">
                       <div
                         className="flex justify-center gap-2"
                         onClick={(e) => e.stopPropagation()}
@@ -328,7 +348,7 @@ export default function PreviousMembersList({
                                 setSelectedMembersToRemove([member]);
                                 setOpenRemoveDialog(true);
                               }}
-                              className="p-1 rounded-md transition-colors text-red-600 hover:text-red-700 cursor-pointer"
+                              className="cursor-pointer rounded-full border border-slate-200 bg-slate-50 p-1.5 text-red-600 transition-colors hover:bg-slate-100 hover:text-red-700"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -386,7 +406,7 @@ export default function PreviousMembersList({
                                 );
                               }}
                               disabled={isArchiving}
-                              className="p-1 rounded-md transition-colors text-gray-600 hover:text-gray-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="cursor-pointer rounded-full border border-slate-200 bg-slate-50 p-1.5 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {(() => {
                                 const isArchived =
@@ -445,14 +465,11 @@ export default function PreviousMembersList({
                             <Badge className={paymentStatus.className}>
                               {paymentStatus.label}
                             </Badge>
-                            <div className="space-y-1 text-xs text-muted-foreground">
-                              <p className="font-medium text-foreground">
-                                Paid: {formatAmount(amountPaid, club?.currency)}
-                              </p>
-                              <p>
-                                Total: {formatAmount(totalFee, club?.currency)}
-                              </p>
-                            </div>
+                            <p className="text-xs font-medium text-foreground">
+                              {outstandingAmount > 0
+                                ? `${formatAmount(amountPaid, club?.currency)} of ${formatAmount(totalFee, club?.currency)}`
+                                : formatAmount(totalFee, club?.currency)}
+                            </p>
                           </div>
                         );
                       })()}
