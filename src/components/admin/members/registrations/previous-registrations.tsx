@@ -176,13 +176,8 @@ export default function PreviousMembersList({
   ]);
 
   useEffect(() => {
-    setDeregisteredMembersLength(
-      baseDeregisteredMembers.filter(
-        (member: ClubMember) =>
-          !removedRegistrationKeys.includes(getRegistrationKey(member)),
-      ).length,
-    );
-  }, [baseDeregisteredMembers, removedRegistrationKeys, setDeregisteredMembersLength]);
+    setDeregisteredMembersLength(sortedDeregisteredMembers.length);
+  }, [setDeregisteredMembersLength, sortedDeregisteredMembers]);
 
   const headerHeight = 48;
   const rowHeight = 60;

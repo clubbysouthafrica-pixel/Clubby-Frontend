@@ -119,9 +119,7 @@ export default function RegistrationsPage() {
   >([]);
   const [showArchived, setShowArchived] = useState<boolean>(false);
   const isLoadingMoreRef = useRef(false);
-  const [isLoadingMoreRegistered, setIsLoadingMoreRegistered] = useState(false);
-  const [isLoadingMorePending, setIsLoadingMorePending] = useState(false);
-  const [isLoadingMorePrevious, setIsLoadingMorePrevious] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const getMemberType = (tab: string): string => {
     switch (tab) {
@@ -206,10 +204,6 @@ export default function RegistrationsPage() {
     useState(false);
   const [filterLoading, setFilterLoading] = useState(true);
 
-  const [registeredMembersLength, setRegisteredMembersLength] =
-    useState<number>(0);
-  const [unregisteredMembersLength, setUnregisteredMembersLength] =
-    useState<number>(0);
   const [deregisteredMembersLength, setDeregisteredMembersLength] =
     useState<number>(0);
   const [showPendingRegistrationsDropdown, setShowPendingRegistrationsDropdown] =
@@ -302,10 +296,8 @@ export default function RegistrationsPage() {
           : "Failed to load members. Please try again.";
       setFetchError(errorMessage);
       isLoadingMoreRef.current = false;
+      setIsLoadingMore(false);
       setFilterLoading(false);
-      setIsLoadingMoreRegistered(false);
-      setIsLoadingMorePending(false);
-      setIsLoadingMorePrevious(false);
     } else if (clubMembers) {
       setFetchError(null);
       const memberType = getMemberType(selectedTab);
@@ -321,9 +313,7 @@ export default function RegistrationsPage() {
           setAllDeregisteredMembers((prev) => [...prev, ...members]);
         }
         isLoadingMoreRef.current = false;
-        setIsLoadingMoreRegistered(false);
-        setIsLoadingMorePending(false);
-        setIsLoadingMorePrevious(false);
+        setIsLoadingMore(false);
       } else {
         // Replace data when starting fresh (filters changed, tab changed, etc)
         if (memberType === "registered") {
@@ -344,6 +334,7 @@ export default function RegistrationsPage() {
         setAllFilters(clubMembers.filters || null);
         setTemplateVariables(clubMembers.template_variables || []);
         setPaymentMethods(clubMembers.payment_methods || []);
+        setIsLoadingMore(false);
       }
       setFilterLoading(false);
     }
@@ -366,9 +357,6 @@ export default function RegistrationsPage() {
 
     setAvailableDynamicFilters(allFilters ?? []);
     setFilterLoading(false);
-
-    setRegisteredMembersLength(allRegisteredMembers.length);
-    setUnregisteredMembersLength(allUnregisteredMembers.length);
     setDeregisteredMembersLength(allDeregisteredMembers.length);
   }, [
     allDeregisteredMembers,
@@ -700,14 +688,14 @@ export default function RegistrationsPage() {
       ? {
           badge: "Active registrations",
           title: "Current member registrations",
-          count: registeredMembersLength,
+          count: allRegisteredMembers.length,
           icon: Users,
         }
       : selectedTab === "pending-members"
         ? {
             badge: "Pending registrations",
             title: "Awaiting payment or approval",
-            count: unregisteredMembersLength,
+            count: allUnregisteredMembers.length,
             icon: UserPlus,
           }
         : {
@@ -781,6 +769,7 @@ export default function RegistrationsPage() {
               setPageToken(undefined);
               setFilterLoading(true);
               isLoadingMoreRef.current = false;
+              setIsLoadingMore(false);
               setRequestedKeys([]);
               setSelectedTab(value);
               setHashUserId(null);
@@ -1302,6 +1291,8 @@ export default function RegistrationsPage() {
                         onValueChange={(value) => {
                           setMemberLimit(parseInt(value));
                           setPageToken(undefined);
+                          isLoadingMoreRef.current = false;
+                          setIsLoadingMore(false);
                           setlistActionItems([]);
                           setDeregisterMembers([]);
                           setAllMembersSelected(false);
@@ -1320,6 +1311,8 @@ export default function RegistrationsPage() {
                     <button
                       onClick={async () => {
                         setPageToken(undefined);
+                        isLoadingMoreRef.current = false;
+                        setIsLoadingMore(false);
                         setAppliedMemberNameFilter(memberNameFilter);
                         setAppliedMemberIdFilter(memberIdFilter);
                         if (selectedTab === "registered-members") {
@@ -1348,7 +1341,7 @@ export default function RegistrationsPage() {
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-semibold text-slate-950">
                     Active Registrations - Items returned (
-                    {registeredMembersLength})
+                    {allRegisteredMembers.length})
                   </h2>
                 </div>
                 {fetchError && (
@@ -1365,10 +1358,10 @@ export default function RegistrationsPage() {
                 {!fetchError &&
                   clubMembers?.pageToken &&
                   clubMembers.pageToken !== "" && (
-                    <div className="bg-orange-100 max-w-[79vw] border border-orange-600 p-4 rounded-md flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <AlertCircle className="h-5 w-5 text-orange-600" />
-                        <p className="text-black font-medium">
+                    <div className="mt-4 flex items-center justify-between rounded-[20px] border border-amber-300 bg-amber-50 px-4 py-3">
+                      <div className="flex items-center gap-2 text-amber-900">
+                        <AlertCircle className="h-4 w-4" />
+                        <p className="text-sm font-medium">
                           More results available
                         </p>
                       </div>
@@ -1379,15 +1372,14 @@ export default function RegistrationsPage() {
                           setAppliedColumnKeysRegistered(
                             activeColumnKeysRegistered,
                           );
-                          setIsLoadingMoreRegistered(true);
                           isLoadingMoreRef.current = true;
+                          setIsLoadingMore(true);
                           setPageToken(clubMembers.pageToken);
-                          setTimeout(() => refetchClubMembers(), 0);
                         }}
-                        disabled={isLoadingMoreRegistered}
-                        className="px-4 py-2 bg-orange-100 hover:bg-orange-200 cursor-pointer rounded-[20px] border border-black text-black font-semibold rounded-md hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        disabled={isLoadingMore}
+                        className="h-8 rounded-full border border-amber-400 bg-amber-100 px-3 text-xs text-amber-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50 flex items-center gap-2"
                       >
-                        {isLoadingMoreRegistered ? (
+                        {isLoadingMore ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           "Load More"
@@ -1395,7 +1387,10 @@ export default function RegistrationsPage() {
                       </button>
                     </div>
                   )}
-                {!fetchError && (clubMembersLoading || filterLoading) ? (
+                {!fetchError &&
+                (allRegisteredMembers.length === 0 &&
+                  ((clubMembersLoading && !isLoadingMore) ||
+                    filterLoading)) ? (
                   <div className="flex justify-center items-center p-8 min-h-96">
                     <Loader2 className="h-8 w-8 animate-spin" />
                   </div>
@@ -1422,7 +1417,6 @@ export default function RegistrationsPage() {
                       setlistActionItems={setlistActionItems}
                       setDeregisterMembers={setDeregisterMembers}
                       setAllMembersSelected={setAllMembersSelected}
-                      setRegisteredMembersLength={setRegisteredMembersLength}
                     />
                     <button
                       onClick={handleDownloadRegisteredMembers}
@@ -1444,7 +1438,7 @@ export default function RegistrationsPage() {
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="text-xl font-semibold text-slate-950">
                     Pending Registrations - Items returned (
-                    {unregisteredMembersLength})
+                    {allUnregisteredMembers.length})
                   </h2>
                   <div className="relative shrink-0">
                     <button
@@ -1544,10 +1538,10 @@ export default function RegistrationsPage() {
                 {!fetchError &&
                   clubMembers?.pageToken &&
                   clubMembers.pageToken !== "" && (
-                    <div className="bg-orange-100 max-w-[79vw] border border-orange-600 p-4 rounded-md flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <AlertCircle className="h-5 w-5 text-orange-600" />
-                        <p className="text-black font-medium">
+                    <div className="mt-4 flex items-center justify-between rounded-[20px] border border-amber-300 bg-amber-50 px-4 py-3">
+                      <div className="flex items-center gap-2 text-amber-900">
+                        <AlertCircle className="h-4 w-4" />
+                        <p className="text-sm font-medium">
                           More results available
                         </p>
                       </div>
@@ -1556,15 +1550,14 @@ export default function RegistrationsPage() {
                           setAppliedMemberNameFilter(memberNameFilter);
                           setAppliedMemberIdFilter(memberIdFilter);
                           setAppliedColumnKeysPending(activeColumnKeysPending);
-                          setIsLoadingMorePending(true);
                           isLoadingMoreRef.current = true;
+                          setIsLoadingMore(true);
                           setPageToken(clubMembers.pageToken);
-                          setTimeout(() => refetchClubMembers(), 0);
                         }}
-                        disabled={isLoadingMorePending}
-                        className="px-4 py-2 bg-orange-100 rounded-[20px] hover:bg-orange-200 cursor-pointer border border-orange-600 text-black font-semibold rounded-md hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        disabled={isLoadingMore}
+                        className="h-8 rounded-full border border-amber-400 bg-amber-100 px-3 text-xs text-amber-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50 flex items-center gap-2"
                       >
-                        {isLoadingMorePending ? (
+                        {isLoadingMore ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           "Load More"
@@ -1572,7 +1565,10 @@ export default function RegistrationsPage() {
                       </button>
                     </div>
                   )}
-                {!fetchError && (clubMembersLoading || filterLoading) ? (
+                {!fetchError &&
+                (allUnregisteredMembers.length === 0 &&
+                  ((clubMembersLoading && !isLoadingMore) ||
+                    filterLoading)) ? (
                   <div className="flex justify-center items-center p-8 min-h-96">
                     <Loader2 className="h-8 w-8 animate-spin" />
                   </div>
@@ -1611,9 +1607,6 @@ export default function RegistrationsPage() {
                       setSelectedMember={setSelectedMember}
                       setOpenDialogUserId={setOpenDialogUserId}
                       setMemberRegisterAmount={setMemberRegisterAmount}
-                      setUnregisteredMembersLength={
-                        setUnregisteredMembersLength
-                      }
                       setAllListActionItems={setAllListActionItems}
                       setAllMembersSelected={setAllMembersSelected}
                       showPendingSummary={false}
@@ -1644,7 +1637,11 @@ export default function RegistrationsPage() {
                     <Switch
                       id="show-archived-registrations"
                       checked={showArchived}
-                      onCheckedChange={setShowArchived}
+                      onCheckedChange={(checked) => {
+                        setShowArchived(checked);
+                        setPageToken(undefined);
+                        isLoadingMoreRef.current = false;
+                      }}
                     />
                     <span>Show archived registrations</span>
                   </label>
@@ -1663,10 +1660,10 @@ export default function RegistrationsPage() {
                 {!fetchError &&
                   clubMembers?.pageToken &&
                   clubMembers.pageToken !== "" && (
-                    <div className="bg-orange-100 max-w-[79vw] border border-orange-600 p-4 rounded-md flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <AlertCircle className="h-5 w-5 text-orange-600" />
-                        <p className="text-black font-medium">
+                    <div className="mt-4 flex items-center justify-between rounded-[20px] border border-amber-300 bg-amber-50 px-4 py-3">
+                      <div className="flex items-center gap-2 text-amber-900">
+                        <AlertCircle className="h-4 w-4" />
+                        <p className="text-sm font-medium">
                           More results available
                         </p>
                       </div>
@@ -1677,15 +1674,14 @@ export default function RegistrationsPage() {
                           setAppliedColumnKeysPrevious(
                             activeColumnKeysPrevious,
                           );
-                          setIsLoadingMorePrevious(true);
                           isLoadingMoreRef.current = true;
+                          setIsLoadingMore(true);
                           setPageToken(clubMembers.pageToken);
-                          setTimeout(() => refetchClubMembers(), 0);
                         }}
-                        disabled={isLoadingMorePrevious}
-                        className="px-4 py-2 bg-orange-100 border hover:bg-orange-200 cursor-pointer rounded-[20px] border-orange-600 text-black font-semibold rounded-md hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        disabled={isLoadingMore}
+                        className="h-8 rounded-full border border-amber-400 bg-amber-100 px-3 text-xs text-amber-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50 flex items-center gap-2"
                       >
-                        {isLoadingMorePrevious ? (
+                        {isLoadingMore ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           "Load More"
@@ -1693,7 +1689,10 @@ export default function RegistrationsPage() {
                       </button>
                     </div>
                   )}
-                {!fetchError && (clubMembersLoading || filterLoading) ? (
+                {!fetchError &&
+                (allDeregisteredMembers.length === 0 &&
+                  ((clubMembersLoading && !isLoadingMore) ||
+                    filterLoading)) ? (
                   <div className="flex justify-center items-center p-8 min-h-96">
                     <Loader2 className="h-8 w-8 animate-spin" />
                   </div>

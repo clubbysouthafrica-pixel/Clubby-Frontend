@@ -70,7 +70,6 @@ interface ImageProps {
     React.SetStateAction<{ email: string; name: string }[]>
   >;
   setMemberRegisterAmount: React.Dispatch<React.SetStateAction<number>>;
-  setUnregisteredMembersLength: React.Dispatch<React.SetStateAction<number>>;
   setAllListActionItems: (members: ClubMember[]) => void;
   setAllMembersSelected: React.Dispatch<React.SetStateAction<boolean>>;
   showPendingSummary?: boolean;
@@ -98,7 +97,6 @@ export default function PendingMembersList({
   setOpenDialogUserId,
   setAllMembersSelected,
   setMemberRegisterAmount,
-  setUnregisteredMembersLength,
   setAllListActionItems,
   showPendingSummary = true,
 }: ImageProps) {
@@ -253,10 +251,6 @@ export default function PendingMembersList({
     
     return sortedCopy;
   }, [baseUnregisteredMembers, submittedSortAsc, memberNameSortAsc, totalFeeSortAsc, outstandingAmountSortAsc]);
-
-  useEffect(() => {
-    setUnregisteredMembersLength(baseUnregisteredMembers.length);
-  }, [baseUnregisteredMembers, setUnregisteredMembersLength]);
 
   useEffect(() => {
     if (!openDialogUserId) {

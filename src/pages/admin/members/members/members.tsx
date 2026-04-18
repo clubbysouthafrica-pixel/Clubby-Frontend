@@ -39,7 +39,7 @@ export default function MembersPage() {
   ) as ClubContextType;
   const [requestedKeys, setRequestedKeys] = useState<string[]>([]);
 
-  const [memberLimit, setMemberLimit] = useState(100);
+  const [memberLimit, setMemberLimit] = useState(1);
   const [pageToken, setPageToken] = useState<string | undefined>(undefined);
   const [allRegisteredMembers, setAllRegisteredMembers] = useState<any[]>([]);
   const [allFilters, setAllFilters] = useState<any>(null);
@@ -163,8 +163,8 @@ export default function MembersPage() {
           : "Failed to load members. Please try again.";
       setFetchError(errorMessage);
       isLoadingMoreRef.current = false;
-      setFilterLoading(false);
       setIsLoadingMore(false);
+      setFilterLoading(false);
     } else if (clubMembers) {
       setFetchError(null);
       const members = clubMembers.members || [];
@@ -178,6 +178,7 @@ export default function MembersPage() {
         // Replace data when starting fresh (filters changed, etc)
         setAllRegisteredMembers(members);
         setAllFilters(clubMembers.filters || null);
+        setIsLoadingMore(false);
       }
       setFilterLoading(false);
     }
@@ -938,6 +939,8 @@ export default function MembersPage() {
                       onValueChange={(value) => {
                         setMemberLimit(parseInt(value));
                         setPageToken(undefined);
+                        isLoadingMoreRef.current = false;
+                        setIsLoadingMore(false);
                         setlistActionItems([]);
                         setDeregisterMembers([]);
                         setAllMembersSelected(false);
@@ -947,14 +950,16 @@ export default function MembersPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="100">100</SelectItem>
-                        <SelectItem value="200">200</SelectItem>
+                        <SelectItem value="1">1</SelectItem>
+                        <SelectItem value="2">2</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <button
                     onClick={async () => {
                       setPageToken(undefined);
+                      isLoadingMoreRef.current = false;
+                      setIsLoadingMore(false);
                       setAppliedMemberNameFilter(memberNameFilter);
                       setAppliedMemberIdFilter(memberIdFilter);
                       setAppliedMemberType(memberType === "all" ? "" : memberType);
@@ -992,10 +997,10 @@ export default function MembersPage() {
                 {!fetchError &&
                   clubMembers?.pageToken &&
                   clubMembers.pageToken !== "" && (
-                    <div className="flex items-center justify-between rounded-md border border-orange-600 bg-orange-100 p-4">
-                      <div className="flex items-center gap-2">
-                        <AlertCircle className="h-5 w-5 text-orange-600" />
-                        <p className="text-black font-medium">
+                    <div className="mt-4 flex items-center justify-between rounded-[20px] border border-amber-300 bg-amber-50 px-4 py-3">
+                      <div className="flex items-center gap-2 text-amber-900">
+                        <AlertCircle className="h-4 w-4" />
+                        <p className="text-sm font-medium">
                           More results available
                         </p>
                       </div>
@@ -1006,13 +1011,12 @@ export default function MembersPage() {
                           setAppliedColumnKeysRegistered(
                             activeColumnKeysRegistered,
                           );
-                          setIsLoadingMore(true);
                           isLoadingMoreRef.current = true;
+                          setIsLoadingMore(true);
                           setPageToken(clubMembers.pageToken);
-                          setTimeout(() => refetchClubMembers(), 0);
                         }}
                         disabled={isLoadingMore}
-                        className="flex items-center gap-2 rounded-[20px] border border-orange-600 bg-orange-100 px-4 py-2 font-semibold text-black transition hover:bg-orange-200 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="h-8 rounded-full border border-amber-400 bg-amber-100 px-3 text-xs text-amber-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50 flex items-center gap-2"
                       >
                         {isLoadingMore ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -1022,7 +1026,10 @@ export default function MembersPage() {
                       </button>
                     </div>
                   )}
-                {!fetchError && (clubMembersLoading || filterLoading) ? (
+                {!fetchError &&
+                (allRegisteredMembers.length === 0 &&
+                  ((clubMembersLoading && !isLoadingMore) ||
+                    filterLoading)) ? (
                   <div className="flex justify-center items-center p-8 min-h-96">
                     <Loader2 className="h-8 w-8 animate-spin" />
                   </div>

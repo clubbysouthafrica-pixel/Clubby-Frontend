@@ -1,5 +1,5 @@
 import { DndContext, closestCenter } from "@dnd-kit/core";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronsUpDown, ChevronDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -44,7 +44,6 @@ interface ImageProps {
     React.SetStateAction<{ user_id: string; name: string }[]>
   >;
   setAllMembersSelected: React.Dispatch<React.SetStateAction<boolean>>;
-  setRegisteredMembersLength: React.Dispatch<React.SetStateAction<number>>;
 }
 
 export default function RegisteredMembersList({
@@ -62,7 +61,6 @@ export default function RegisteredMembersList({
   setlistActionItems,
   setDeregisterMembers,
   setAllMembersSelected,
-  setRegisteredMembersLength,
 }: ImageProps) {
   const [showTenRows, setShowTenRows] = useState(false);
 
@@ -99,10 +97,6 @@ export default function RegisteredMembersList({
     
     return sortedCopy;
   }, [baseRegisteredMembers, regSortAsc, memberNameSortAsc, totalFeeSortAsc]);
-
-  useEffect(() => {
-    setRegisteredMembersLength(baseRegisteredMembers.length);
-  }, [baseRegisteredMembers, setRegisteredMembersLength]);
 
   const headerHeight = 48;
   const rowHeight = 60;
