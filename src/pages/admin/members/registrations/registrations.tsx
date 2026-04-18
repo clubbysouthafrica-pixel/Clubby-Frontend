@@ -1717,7 +1717,6 @@ export default function RegistrationsPage() {
                       activeColumnKeys={displayedColumnKeysPrevious}
                       memberLimit={memberLimit}
                       showArchived={showArchived}
-                      onShowArchivedChange={setShowArchived}
                       setSelectedMember={setSelectedMember}
                       setlistActionItems={setlistActionItems}
                       setDeregisteredMembersLength={
