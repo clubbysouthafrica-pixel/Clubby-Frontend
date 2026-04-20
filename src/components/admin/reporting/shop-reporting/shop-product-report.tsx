@@ -6,21 +6,11 @@ import {
   ResponsiveContainer,
   ComposedChart,
   Bar,
-  Line,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   Legend,
 } from "recharts";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 interface ShopProductReportProps {
   report: ShopReport;
@@ -70,6 +60,19 @@ function formatRevenueAxisLabel(value: number, currency: string): string {
   return `${currency} ${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
 
+function getPeakRevenueMonth(productData: ShopReport["report"][number]["data"]) {
+  return [...productData].reduce<ShopReport["report"][number]["data"][number] | null>(
+    (best, current) => {
+      if (!best) {
+        return current;
+      }
+
+      return (current.revenue || 0) > (best.revenue || 0) ? current : best;
+    },
+    null,
+  );
+}
+
 export function ShopProductReport({
   report,
   currency,
@@ -77,8 +80,8 @@ export function ShopProductReport({
   // If there is no report or the report array is empty, show a message
   if (!report?.report || report.report.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16">
-        <span className="text-lg font-semibold text-slate-500 dark:text-slate-400">
+      <div className="flex min-h-48 items-center justify-center rounded-[18px] border border-slate-200 bg-slate-50 px-6 py-12 text-center">
+        <span className="text-sm font-medium text-slate-500">
           No shop product data available.
         </span>
       </div>
@@ -90,15 +93,23 @@ export function ShopProductReport({
       defaultValue={getProductTabValue(report.report[0], 0)}
       className="w-full"
     >
-      {/* Tab Navigation */}
-      <div className="sticky top-0 p-4 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur">
-        <div className="px-2 md:px-4">
-          <TabsList className="flex flex-row gap-2 bg-transparent p-0 h-auto overflow-x-auto">
+      <div className="space-y-3">
+        <div className="text-center space-y-1">
+          <h3 className="text-lg font-extrabold tracking-tight text-slate-900">
+            Shop Report
+          </h3>
+          <p className="text-xs text-slate-500">
+            Revenue and unit trends across your shop catalog.
+          </p>
+        </div>
+
+        <div className="overflow-x-auto pb-1">
+          <TabsList className="flex h-auto w-full min-w-max flex-row justify-start gap-2 rounded-[18px] border border-slate-200/70 bg-slate-50/90 p-1.5">
             {report.report.map((product, index) => (
               <TabsTrigger
                 key={getProductTabValue(product, index)}
                 value={getProductTabValue(product, index)}
-                className="px-6 py-3 rounded-lg font-semibold text-base transition-all duration-300 data-[state=active]:bg-primary/10 dark:data-[state=active]:bg-primary/20 data-[state=active]:text-primary data-[state=inactive]:text-slate-600 dark:data-[state=inactive]:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 whitespace-nowrap"
+                className="h-8 rounded-full px-3.5 text-xs font-medium data-[state=active]:bg-zinc-700 data-[state=active]:text-white data-[state=inactive]:border data-[state=inactive]:border-slate-200 data-[state=inactive]:bg-white data-[state=inactive]:text-zinc-700 whitespace-nowrap"
               >
                 {product.product_name}
               </TabsTrigger>
@@ -107,230 +118,198 @@ export function ShopProductReport({
         </div>
       </div>
 
-      {/* Tab Content */}
       {report.report.map((product, index) => (
         (() => {
           const orderedProductData = [...(product.data ?? [])].sort(
             (left, right) => getMonthSortValue(left.date) - getMonthSortValue(right.date),
           );
+          const strongestMonth = getPeakRevenueMonth(orderedProductData);
 
           return (
         <TabsContent
           key={getProductTabValue(product, index)}
           value={getProductTabValue(product, index)}
-          className="space-y-8 p-4 md:p-8"
+          className="space-y-3 pt-3"
         >
-          {/* Product Header Card Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Card className="rounded-2xl shadow-md border-0 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-950/30 dark:to-rose-950/10">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
+            <Card className="rounded-[18px] border border-stone-300/70 bg-white/85 p-0 shadow-sm">
               <div className="p-4">
-                <p className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-400">
                   Price per Item
                 </p>
-                <p className="text-2xl font-extrabold mt-1 text-slate-900 dark:text-white tracking-tight truncate">
+                <p className="mt-1 text-lg font-semibold text-zinc-900 truncate">
                   {formatAmount(product.price || 0, currency)}
                 </p>
               </div>
             </Card>
-            <Card className="rounded-2xl shadow-md border-0 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/30 dark:to-emerald-950/10">
+            <Card className="rounded-[18px] border border-stone-300/70 bg-white/85 p-0 shadow-sm">
               <div className="p-4">
-                <p className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-400">
                   Total Revenue
                 </p>
-                <p className="text-2xl font-extrabold mt-1 text-slate-900 dark:text-white tracking-tight truncate">
+                <p className="mt-1 text-lg font-semibold text-zinc-900 truncate">
                   {formatAmount(product.total_revenue, currency)}
                 </p>
               </div>
             </Card>
-            <Card className="rounded-2xl shadow-md border-0 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/30 dark:to-amber-950/10">
+            <Card className="rounded-[18px] border border-stone-300/70 bg-white/85 p-0 shadow-sm">
               <div className="p-4">
-                <p className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-400">
                   Pending Revenue
                 </p>
-                <p className="text-2xl font-extrabold mt-1 text-slate-900 dark:text-white tracking-tight truncate">
+                <p className="mt-1 text-lg font-semibold text-zinc-900 truncate">
                   {formatAmount(product.total_pending_revenue, currency)}
                 </p>
               </div>
             </Card>
-            <Card className="rounded-2xl shadow-md border-0 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-950/10">
+            <Card className="rounded-[18px] border border-stone-300/70 bg-white/85 p-0 shadow-sm">
               <div className="p-4">
-                <p className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-400">
                   Units Sold / Pending
                 </p>
-                <p className="text-2xl font-extrabold mt-1 text-slate-900 dark:text-white tracking-tight">
+                <p className="mt-1 text-lg font-semibold text-zinc-900">
                   {product.total_sold_units || 0} / {product.total_pending_units || 0}
                 </p>
               </div>
             </Card>
           </div>
 
-          {/* Chart or No Data */}
           {orderedProductData.length > 0 ? (
-            <Card className="rounded-2xl shadow-md border-0 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 p-6">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                Sales Trend
-              </h3>
-              <div className="w-full h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart
-                    data={orderedProductData.map((d) => ({
-                      name: formatMonthLabel(d.date),
-                      revenue: d.revenue || 0,
-                      sold_units: d.sold_units || 0,
-                      pending_revenue: d.pending_revenue || 0,
-                      pending_units: d.pending_units || 0,
-                    }))}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis
-                      dataKey="name"
-                      tick={{ fontSize: 13, fill: "#64748b" }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      yAxisId="left"
-                      tick={{ fontSize: 13, fill: "#64748b" }}
-                      tickFormatter={(value) =>
-                        formatRevenueAxisLabel(value, currency)
-                      }
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      yAxisId="right"
-                      orientation="right"
-                      tick={{ fontSize: 13, fill: "#64748b" }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        background: "rgba(30,41,59,0.95)",
-                        border: "1px solid #6366f1",
-                        borderRadius: "10px",
-                        color: "#fff",
-                        fontWeight: 500,
-                        fontSize: 14,
-                      }}
-                      labelStyle={{ color: "#fff" }}
-                      formatter={(value: any, name: string) => {
-                        if (name === "Revenue" || name === "Pending Revenue") {
-                          return [
-                            `${currency} ${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
-                            name,
-                          ];
-                        }
-                        return [value, name];
-                      }}
-                    />
-                    <Legend />
-                    <Bar
-                      yAxisId="left"
-                      dataKey="revenue"
-                      name="Revenue"
-                      fill="#10b981"
-                      radius={[8, 8, 0, 0]}
-                      barSize={24}
-                      opacity={0.85}
-                    />
-                    <Bar
-                      yAxisId="left"
-                      dataKey="pending_revenue"
-                      name="Pending Revenue"
-                      fill="#fbbf24"
-                      radius={[8, 8, 0, 0]}
-                      barSize={24}
-                      opacity={0.7}
-                    />
-                    <Line
-                      yAxisId="right"
-                      type="monotone"
-                      dataKey="sold_units"
-                      name="Units Sold"
-                      stroke="#3b82f6"
-                      strokeWidth={3}
-                      dot={false}
-                    />
-                    <Line
-                      yAxisId="right"
-                      type="monotone"
-                      dataKey="pending_units"
-                      name="Pending Units"
-                      stroke="#a78bfa"
-                      strokeWidth={3}
-                      dot={false}
-                      strokeDasharray="6 4"
-                    />
-                  </ComposedChart>
-                </ResponsiveContainer>
+            <Card className="rounded-[20px] border border-stone-200 bg-gradient-to-br from-white via-stone-50 to-white p-3.5 shadow-sm md:p-4">
+              <div className="mb-3 flex flex-col gap-0.5">
+                <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-600">
+                  Sales Revenue Trend
+                </h3>
+                <p className="text-[11px] text-stone-500">
+                  A monthly view of collected and pending revenue for {product.product_name}.
+                </p>
+              </div>
+
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_200px] lg:items-stretch">
+                <div className="rounded-[18px] border border-stone-200 bg-white p-2.5 md:p-3 lg:h-full">
+                  <div className="h-full min-h-[208px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart
+                        data={orderedProductData.map((d) => ({
+                          name: formatMonthLabel(d.date),
+                          revenue: d.revenue || 0,
+                          pending_revenue: d.pending_revenue || 0,
+                        }))}
+                        margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
+                      >
+                        <XAxis
+                          dataKey="name"
+                          tick={{ fontSize: 11, fill: "#78716c" }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          yAxisId="left"
+                          tick={{ fontSize: 11, fill: "#78716c" }}
+                          tickFormatter={(value) =>
+                            formatRevenueAxisLabel(value, currency)
+                          }
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            background: "rgba(255,255,255,0.96)",
+                            border: "1px solid #e7e5e4",
+                            borderRadius: "12px",
+                            color: "#1f2937",
+                            boxShadow: "0 10px 30px rgba(15, 23, 42, 0.12)",
+                            fontWeight: 500,
+                            fontSize: 12,
+                          }}
+                          labelStyle={{ color: "#44403c", fontWeight: 600 }}
+                          formatter={(value: number, name: string) => {
+                            if (name === "Revenue" || name === "Pending Revenue") {
+                              return [formatAmount(Number(value), currency), name];
+                            }
+                            return [value, name];
+                          }}
+                        />
+                        <Legend iconType="circle" />
+                        <Bar
+                          yAxisId="left"
+                          dataKey="revenue"
+                          name="Revenue"
+                          fill="#78716c"
+                          stroke="#57534e"
+                          strokeWidth={1.5}
+                          radius={[8, 8, 0, 0]}
+                          barSize={18}
+                        />
+                        <Bar
+                          yAxisId="left"
+                          dataKey="pending_revenue"
+                          name="Pending Revenue"
+                          fill="#d6d3d1"
+                          stroke="#a8a29e"
+                          strokeWidth={1.5}
+                          radius={[8, 8, 0, 0]}
+                          barSize={18}
+                        />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+                  <div className="rounded-[16px] border border-stone-200 bg-stone-50/90 p-2.5">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-stone-500">
+                      Sales revenue
+                    </p>
+                    <p className="mt-1.5 text-base font-semibold text-stone-900">
+                      {formatAmount(product.total_revenue || 0, currency)}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-stone-500">
+                      Completed order value
+                    </p>
+                  </div>
+                  <div className="rounded-[16px] border border-stone-200 bg-stone-50/90 p-2.5">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-stone-500">
+                      Pending revenue
+                    </p>
+                    <p className="mt-1.5 text-base font-semibold text-stone-900">
+                      {formatAmount(product.total_pending_revenue || 0, currency)}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-stone-500">
+                      Orders still awaiting payment
+                    </p>
+                  </div>
+                  <div className="rounded-[16px] border border-stone-200 bg-stone-50/90 p-2.5">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-stone-500">
+                      Best month
+                    </p>
+                    <p className="mt-1.5 text-base font-semibold text-stone-900">
+                      {strongestMonth ? formatMonthLabel(strongestMonth.date) : "-"}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-stone-500">
+                      {strongestMonth
+                        ? formatAmount(strongestMonth.revenue || 0, currency)
+                        : "No data"}
+                    </p>
+                  </div>
+                  <div className="rounded-[16px] border border-stone-200 bg-stone-50/90 p-2.5">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-stone-500">
+                      Units sold / pending
+                    </p>
+                    <p className="mt-1.5 text-base font-semibold text-stone-900">
+                      {product.total_sold_units || 0} / {product.total_pending_units || 0}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-stone-500">
+                      Fulfilled versus outstanding items
+                    </p>
+                  </div>
+                </div>
               </div>
             </Card>
           ) : (
-            <Card className="rounded-2xl shadow-md border-0 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 p-8 flex items-center justify-center">
-              <span className="text-base font-medium text-slate-500 dark:text-slate-400">
+            <Card className="flex min-h-48 items-center justify-center rounded-[20px] border border-slate-200/70 bg-slate-50 p-8 shadow-sm">
+              <span className="text-sm font-medium text-slate-500">
                 No data available for this product.
-              </span>
-            </Card>
-          )}
-
-          {/* Historical Data Table or No Data */}
-          {orderedProductData.length > 0 ? (
-            <Card className="rounded-2xl shadow-md border-0 bg-white dark:bg-slate-900 overflow-hidden">
-              <Table>
-                <TableHeader className="bg-slate-50 dark:bg-slate-800 sticky top-0 z-10 backdrop-blur">
-                  <TableRow>
-                    <TableHead className="text-center font-semibold text-base text-slate-700 dark:text-slate-200 w-1/5">
-                      Date
-                    </TableHead>
-                    <TableHead className="text-center font-semibold text-base text-slate-700 dark:text-slate-200 w-1/5">
-                      Revenue
-                    </TableHead>
-                    <TableHead className="text-center font-semibold text-base text-slate-700 dark:text-slate-200 w-1/5">
-                      Pending
-                    </TableHead>
-                    <TableHead className="text-center font-semibold text-base text-slate-700 dark:text-slate-200 w-1/5">
-                      Units Sold
-                    </TableHead>
-                    <TableHead className="text-center font-semibold text-base text-slate-700 dark:text-slate-200 w-1/5">
-                      Pending Units
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {orderedProductData.map((row, idx) => (
-                    <TableRow
-                      key={idx}
-                      className={`transition-colors ${
-                        idx % 2 === 0
-                          ? "bg-slate-50 dark:bg-slate-900"
-                          : "bg-white dark:bg-slate-800"
-                      } hover:bg-primary/10 dark:hover:bg-primary/20`}
-                    >
-                      <TableCell className="text-center font-medium w-1/5">
-                        {row.date}
-                      </TableCell>
-                      <TableCell className="text-center w-1/5">
-                        {formatAmount(row.revenue, currency)}
-                      </TableCell>
-                      <TableCell className="text-center w-1/5">
-                        {formatAmount(row.pending_revenue || 0, currency)}
-                      </TableCell>
-                      <TableCell className="text-center w-1/5">
-                        {row.sold_units || 0}
-                      </TableCell>
-                      <TableCell className="text-center w-1/5">
-                        {row.pending_units || 0}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          ) : (
-            <Card className="rounded-2xl shadow-md border-0 bg-white dark:bg-slate-900 p-8 flex items-center justify-center">
-              <span className="text-base font-medium text-slate-500 dark:text-slate-400">
-                No historical data for this product.
               </span>
             </Card>
           )}

@@ -442,7 +442,7 @@ export default function PendingMembersList({
                             setAllMembersSelected(false);
                           }
                         }}
-                        className="w-4 h-4 border-gray-300 border-1 hover:border-gray-400 transition-colors"
+                        className="h-5 w-5 rounded-[6px] border-2 border-slate-400 bg-white shadow-sm transition-colors hover:border-slate-500 data-[state=checked]:border-slate-600 data-[state=checked]:bg-slate-600 data-[state=checked]:text-white"
                       />
                       <DropdownMenu modal={false}>
                         <DropdownMenuTrigger asChild>
@@ -629,6 +629,7 @@ export default function PendingMembersList({
                                   setAllMembersSelected(false);
                                 }
                               }}
+                              className="h-5 w-5 rounded-[6px] border-2 border-slate-300 bg-white shadow-sm transition-colors hover:border-slate-500 data-[state=checked]:border-slate-600 data-[state=checked]:bg-slate-600 data-[state=checked]:text-white"
                             />
                           </div>
                         </TableCell>

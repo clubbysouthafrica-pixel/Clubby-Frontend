@@ -39,10 +39,64 @@ import { toast } from "sonner";
 import { useFetchClubProducts } from "@/queries/admin-features/shop";
 import { useQueryClient } from "@tanstack/react-query";
 
+type AdminClubSummary = {
+  club_account_id: string;
+  enable_shop?: boolean;
+} & Record<string, unknown>;
+
+type AdminClubsQueryData = {
+  data?: {
+    items?: AdminClubSummary[];
+  };
+} & Record<string, unknown>;
+
+type ClubQueryData = {
+  enable_shop?: boolean;
+} & Record<string, unknown>;
+
 export default function ProductsPage() {
   const { club, setClub } = useContext(ClubContext) as ClubContextType;
   const queryClient = useQueryClient();
   const { data: productsData, isLoading: productsLoading, error: productsError } = useFetchClubProducts(club?.club_account_id || "");
+
+  const syncShopEnabledState = (enabled: boolean) => {
+    if (!club) return;
+
+    setClub({ ...club, enable_shop: enabled });
+
+    queryClient.setQueryData(["adminClubs"], (previous: AdminClubsQueryData | undefined) => {
+      const items = previous?.data?.items;
+      if (!Array.isArray(items)) return previous;
+
+      return {
+        ...previous,
+        data: {
+          ...(previous?.data ?? {}),
+          items: items.map((item) =>
+            item.club_account_id === club.club_account_id
+              ? { ...item, enable_shop: enabled }
+              : item,
+          ),
+        },
+      };
+    });
+
+    queryClient.setQueryData(
+      ["getClub", club.club_account_id, true, undefined],
+      (previous: ClubQueryData | undefined) =>
+        previous ? { ...previous, enable_shop: enabled } : previous,
+    );
+
+    queryClient.setQueryData(
+      ["getClub", club.club_account_id, undefined, undefined],
+      (previous: ClubQueryData | undefined) =>
+        previous ? { ...previous, enable_shop: enabled } : previous,
+    );
+
+    queryClient.invalidateQueries({ queryKey: ["adminClubs"] });
+    queryClient.invalidateQueries({ queryKey: ["getClub", club.club_account_id] });
+    queryClient.invalidateQueries({ queryKey: ["clubProducts", club.club_account_id] });
+  };
   
   const [products, setProducts] = useState<any[]>([]);
   const [originalProducts, setOriginalProducts] = useState<any[]>([]);
@@ -173,7 +227,7 @@ export default function ProductsPage() {
   };
 
   const sortedProducts = React.useMemo(() => {
-    let sortedCopy = [...products];
+    const sortedCopy = [...products];
 
     if (nameSortAsc !== null) {
       sortedCopy.sort((a, b) => {
@@ -362,7 +416,7 @@ export default function ProductsPage() {
 
       if (response?.message) {
         toast.success("Shop enabled successfully");
-        setClub({ ...club, enable_shop: true });
+        syncShopEnabledState(true);
       } else {
         toast.error("Failed to enable shop");
       }
@@ -388,7 +442,7 @@ export default function ProductsPage() {
         toast.success(
           enabled ? "Shop enabled successfully" : "Shop disabled successfully"
         );
-        setClub({ ...club, enable_shop: enabled });
+        syncShopEnabledState(enabled);
       } else {
         toast.error("Failed to update shop settings");
       }

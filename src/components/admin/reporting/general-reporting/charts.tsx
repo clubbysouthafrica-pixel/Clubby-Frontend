@@ -12,7 +12,6 @@ import {
   CartesianGrid,
   ComposedChart,
   Bar,
-  Line,
 } from "recharts";
 
 // Neutral chart palette with restrained highlights.
@@ -646,9 +645,7 @@ export function RegistrationBillingChart({
 
   const chartData = orderedData.map((d) => ({
     name: formatMonthLabel(d.date),
-    total: d.total,
     paid: d.paid_to_club,
-    pending: d.pending,
     due: d.due_to_club,
   }));
 
@@ -706,7 +703,6 @@ export function RegistrationBillingChart({
           data={chartData}
           margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
           <XAxis
             dataKey="name"
             tick={{ fontSize: 11, fill: "#78716c" }}
@@ -717,13 +713,6 @@ export function RegistrationBillingChart({
             yAxisId="left"
             tick={{ fontSize: 11, fill: "#78716c" }}
             tickFormatter={(v) => formatAmount(Number(v), currency)}
-            axisLine={false}
-            tickLine={false}
-          />
-          <YAxis
-            yAxisId="right"
-            orientation="right"
-            tick={{ fontSize: 11, fill: "#a8a29e" }}
             axisLine={false}
             tickLine={false}
           />
@@ -750,25 +739,6 @@ export function RegistrationBillingChart({
             strokeWidth={1.5}
             radius={[8, 8, 0, 0]}
             barSize={18}
-          />
-          <Line
-            yAxisId="right"
-            type="monotone"
-            dataKey="total"
-            name="Total"
-            stroke={CHART_COLORS.total.stroke}
-            strokeWidth={2.5}
-            dot={false}
-          />
-          <Line
-            yAxisId="right"
-            type="monotone"
-            dataKey="pending"
-            name="Pending"
-            stroke={CHART_COLORS.pending.stroke}
-            strokeWidth={2.5}
-            dot={false}
-            strokeDasharray="6 4"
           />
         </ComposedChart>
       </ResponsiveContainer>

@@ -74,6 +74,13 @@ type TransactionRecord = {
   lifecycle: Record<string, LifecycleEntry>;
 };
 
+type TransactionDisplayPaymentStatus =
+  | "AWAITING_PAYMENT"
+  | "PARTIALLY_PAID"
+  | "PAID"
+  | "CANCELLED"
+  | "REFUNDED";
+
 type RefundRow = LifecycleEntry & {
   timestamp: number;
   transaction_id: string;
@@ -88,33 +95,92 @@ type RefundConfirmationResponse = {
 
 type IncomeGraphKey = "overall" | "registration" | "shop" | "events" | "storage";
 
-function getTransactionPaymentLabel(status: string) {
-  const normalizedStatus = status.trim().toUpperCase().replace(/\s+/g, "_");
-
-  switch (normalizedStatus) {
-    case "PENDING":
-      return "Awaiting payment";
-    case "PARTIALLY_PAID":
-      return "Partially paid";
-    case "PAID":
-      return "Paid";
-    case "REFUND":
-      return "Refund";
-    case "CANCELLED":
-      return "Cancelled";
-    default:
-      if (
-        normalizedStatus === "PAID_PARTIAL_REFUND" ||
-        normalizedStatus === "PAID (PARTIAL REFUND)"
-      ) {
-        return "Paid (partial refund)";
+function getTransactionRefundedAmount(tx: TransactionRecord) {
+  const lifecycleRefundAmount = Object.values(tx.lifecycle || {}).reduce(
+    (sum, entry) => {
+      if (entry.type !== "REFUND") {
+        return sum;
       }
 
-      return status
-        .toLowerCase()
-        .split("_")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ");
+      return sum + Math.max(entry.amount || 0, 0);
+    },
+    0,
+  );
+
+  if (lifecycleRefundAmount > 0) {
+    return lifecycleRefundAmount;
+  }
+
+  const normalizedStatus = tx.status?.trim().toUpperCase().replace(/\s+/g, "_") || "";
+
+  if (normalizedStatus === "REFUND" || normalizedStatus === "REFUNDED") {
+    return tx.amount || 0;
+  }
+
+  if (
+    normalizedStatus === "PAID_PARTIAL_REFUND" ||
+    (normalizedStatus.includes("PARTIAL") &&
+      normalizedStatus.includes("REFUND"))
+  ) {
+    return Math.max((tx.amount || 0) - (tx.amount_paid || 0), 0);
+  }
+
+  return 0;
+}
+
+function getTransactionEffectiveAmount(tx: TransactionRecord) {
+  return Math.max((tx.amount || 0) - getTransactionRefundedAmount(tx), 0);
+}
+
+function getTransactionOutstandingAmount(tx: TransactionRecord) {
+  return Math.max(getTransactionEffectiveAmount(tx) - (tx.amount_paid || 0), 0);
+}
+
+function getTransactionDisplayPaymentStatus(
+  tx: TransactionRecord,
+): TransactionDisplayPaymentStatus {
+  const normalizedStatus = tx.status?.trim().toUpperCase().replace(/\s+/g, "_") || "";
+  const refundedAmount = getTransactionRefundedAmount(tx);
+  const totalAmount = tx.amount || 0;
+  const amountPaid = tx.amount_paid || 0;
+  const effectiveAmount = getTransactionEffectiveAmount(tx);
+  const outstandingAmount = getTransactionOutstandingAmount(tx);
+
+  if (normalizedStatus === "CANCELLED") {
+    return "CANCELLED";
+  }
+
+  if (
+    normalizedStatus === "REFUND" ||
+    normalizedStatus === "REFUNDED" ||
+    (totalAmount > 0 && refundedAmount >= totalAmount)
+  ) {
+    return "REFUNDED";
+  }
+
+  if (amountPaid <= 0) {
+    return "AWAITING_PAYMENT";
+  }
+
+  if (effectiveAmount > 0 && outstandingAmount <= 0) {
+    return "PAID";
+  }
+
+  return "PARTIALLY_PAID";
+}
+
+function getTransactionPaymentLabel(tx: TransactionRecord) {
+  switch (getTransactionDisplayPaymentStatus(tx)) {
+    case "PAID":
+      return "Paid";
+    case "PARTIALLY_PAID":
+      return "Partially paid";
+    case "CANCELLED":
+      return "Cancelled";
+    case "REFUNDED":
+      return "Refunded";
+    default:
+      return "Awaiting payment";
   }
 }
 
@@ -209,51 +275,41 @@ function getLifecycleAmountPrefix(
   return "+";
 }
 
-function getTransactionPaymentClassName(status: string) {
-  const normalizedStatus = status.trim().toUpperCase().replace(/\s+/g, "_");
+function getTransactionPaymentClassName(tx: TransactionRecord) {
+  const displayStatus = getTransactionDisplayPaymentStatus(tx);
 
-  if (normalizedStatus === "PENDING") {
+  if (displayStatus === "AWAITING_PAYMENT") {
     return "text-blue-700";
   }
 
-  if (normalizedStatus === "PARTIALLY_PAID") {
+  if (displayStatus === "PARTIALLY_PAID") {
     return "text-orange-600";
   }
 
-  if (normalizedStatus === "REFUND" || normalizedStatus === "CANCELLED") {
+  if (displayStatus === "REFUNDED" || displayStatus === "CANCELLED") {
     return "text-red-700";
   }
 
   return "text-emerald-700";
 }
 
-function shouldShowTransactionPaymentProgress(tx: {
-  status?: string;
-  amount?: number | null;
-}) {
-  const normalizedStatus = tx.status?.trim().toUpperCase().replace(/\s+/g, "_");
+function shouldShowTransactionPaymentProgress(tx: TransactionRecord) {
+  const displayStatus = getTransactionDisplayPaymentStatus(tx);
 
   return (
-    normalizedStatus !== "PAID" &&
-    normalizedStatus !== "CANCELLED" &&
-    normalizedStatus !== "REFUND" &&
-    typeof tx.amount === "number" &&
-    tx.amount > 0
+    (displayStatus === "AWAITING_PAYMENT" ||
+      displayStatus === "PARTIALLY_PAID") &&
+    getTransactionEffectiveAmount(tx) > 0
   );
 }
 
-function shouldShowSingleTransactionAmount(tx: {
-  status?: string;
-  amount?: number | null;
-}) {
-  const normalizedStatus = tx.status?.trim().toUpperCase().replace(/\s+/g, "_");
+function shouldShowSingleTransactionAmount(tx: TransactionRecord) {
+  const displayStatus = getTransactionDisplayPaymentStatus(tx);
 
   return (
-    (normalizedStatus === "PAID" ||
-      normalizedStatus === "CANCELLED" ||
-      normalizedStatus === "REFUND") &&
-    typeof tx.amount === "number" &&
-    tx.amount > 0
+    displayStatus !== "AWAITING_PAYMENT" &&
+    displayStatus !== "PARTIALLY_PAID" &&
+    getTransactionEffectiveAmount(tx) > 0
   );
 }
 
@@ -1368,11 +1424,9 @@ export default function GeneralReportingPage() {
                         <TableCell className="text-center">
                           <div className="space-y-0.5">
                             <p
-                              className={`font-bold ${getTransactionPaymentClassName(
-                                tx.status || "",
-                              )}`}
+                              className={`font-bold ${getTransactionPaymentClassName(tx)}`}
                             >
-                              {getTransactionPaymentLabel(tx.status || "")}
+                              {getTransactionPaymentLabel(tx)}
                             </p>
                             {shouldShowTransactionPaymentProgress(tx) && (
                               <p className="text-[11px] text-slate-500">
@@ -1381,13 +1435,45 @@ export default function GeneralReportingPage() {
                                   club?.currency || "ZAR",
                                 )}{" "}
                                 of{" "}
-                                {formatAmount(tx.amount || 0, club?.currency || "ZAR")}
+                                {formatAmount(
+                                  getTransactionEffectiveAmount(tx),
+                                  club?.currency || "ZAR",
+                                )}
                               </p>
                             )}
-                            {shouldShowSingleTransactionAmount(tx) && (
-                              <p className="text-[11px] text-slate-500">
-                                {formatAmount(tx.amount || 0, club?.currency || "ZAR")}
+                            {getTransactionRefundedAmount(tx) > 0 &&
+                            getTransactionDisplayPaymentStatus(tx) !== "REFUNDED" ? (
+                              <div className="space-y-0.5 text-[11px]">
+                                <p className="text-slate-500">
+                                  {formatAmount(
+                                    getTransactionEffectiveAmount(tx),
+                                    club?.currency || "ZAR",
+                                  )}
+                                </p>
+                                <p className="text-red-800">
+                                  Refund: {formatAmount(
+                                    getTransactionRefundedAmount(tx),
+                                    club?.currency || "ZAR",
+                                  )}
+                                </p>
+                              </div>
+                            ) : getTransactionDisplayPaymentStatus(tx) ===
+                              "REFUNDED" ? (
+                              <p className="text-[11px] text-red-800">
+                                Refund: {formatAmount(
+                                  getTransactionRefundedAmount(tx),
+                                  club?.currency || "ZAR",
+                                )}
                               </p>
+                            ) : (
+                              shouldShowSingleTransactionAmount(tx) && (
+                              <p className="text-[11px] text-slate-500">
+                                {formatAmount(
+                                  getTransactionEffectiveAmount(tx),
+                                  club?.currency || "ZAR",
+                                )}
+                              </p>
+                              )
                             )}
                           </div>
                         </TableCell>
