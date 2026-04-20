@@ -187,7 +187,18 @@ function getTransactionPaymentLabel(tx: TransactionRecord) {
 function getTransactionFlowLabel(tx: {
   club_income?: boolean | string | null;
   type?: string | null;
+  status?: string | null;
 }) {
+  const normalizedStatus = tx.status?.trim().toUpperCase().replace(/\s+/g, "_");
+
+  if (
+    normalizedStatus === "REFUND" ||
+    normalizedStatus === "REFUNDED" ||
+    normalizedStatus === "CANCELLED"
+  ) {
+    return "N/A";
+  }
+
   if (tx.club_income === true || tx.club_income === "true") {
     return "Club Income";
   }
@@ -205,7 +216,18 @@ function getTransactionTypeBadgeClassName() {
 
 function getTransactionFlowBadgeClassName(tx: {
   club_income?: boolean | string | null;
+  status?: string | null;
 }) {
+  const normalizedStatus = tx.status?.trim().toUpperCase().replace(/\s+/g, "_");
+
+  if (
+    normalizedStatus === "REFUND" ||
+    normalizedStatus === "REFUNDED" ||
+    normalizedStatus === "CANCELLED"
+  ) {
+    return "border-slate-200 bg-slate-100 text-slate-700";
+  }
+
   if (tx.club_income === true || tx.club_income === "true") {
     return "border-emerald-200 bg-emerald-50 text-emerald-700";
   }
@@ -219,7 +241,18 @@ function getTransactionFlowBadgeClassName(tx: {
 
 function getTransactionTypeIcon(tx: {
   club_income?: boolean | string | null;
+  status?: string | null;
 }) {
+  const normalizedStatus = tx.status?.trim().toUpperCase().replace(/\s+/g, "_");
+
+  if (
+    normalizedStatus === "REFUND" ||
+    normalizedStatus === "REFUNDED" ||
+    normalizedStatus === "CANCELLED"
+  ) {
+    return null;
+  }
+
   if (tx.club_income === true || tx.club_income === "true") {
     return ArrowUpRight;
   }

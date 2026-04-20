@@ -3,7 +3,6 @@ import {
   HomeIcon,
   UserPlusIcon,
   UsersIcon,
-  BarChart,
   ShoppingBag,
   MapPin,
   CalendarDays,
@@ -155,8 +154,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         url: "/venues",
         icon: MapPin,
         items: [
-          { title: "Venues", url: "/venues" },
-          { title: "Bookings", url: "/venues/bookings" },
+          { title: "Venues & Bookings", url: "/venues" },
         ],
       },
       {
@@ -173,16 +171,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         url: "/manage/registrations",
         icon: UserPlusIcon,
         items: [{ title: "Create Form", url: "/manage/registrations/forms" }],
-      },
-      {
-        title: "Reporting",
-        url: "/reporting",
-        icon: BarChart,
-        items: [
-          { title: "Registration fees", url: "/reporting/registration" },
-          { title: "Shop reports", url: "/reporting/shop" },
-          { title: "Income & Payments", url: "/reporting/transactions" },
-        ],
       },
     ];
 

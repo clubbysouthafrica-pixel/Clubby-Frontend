@@ -1,6 +1,7 @@
 import { api } from "@/services/admin-features/api.tsx";
 
 export interface CreateVenueRequest {
+    club_account_id: string;
     venue_name: string;
     smallest_booking_unit: number;
     max_daily_booking_time: number | null;

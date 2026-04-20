@@ -1118,7 +1118,7 @@ export default function MemberBookings({
                             title={isBooked && bookingName ? bookingName : undefined}
                             className={`group relative flex items-center justify-center border-r border-slate-200 p-1 transition-colors select-none sm:p-2 ${
                               isBooked
-                                ? "pointer-events-none cursor-default border-rose-700 bg-[repeating-linear-gradient(135deg,#be123c_0px,#be123c_6px,#e11d48_6px,#e11d48_12px)] shadow-inner"
+                                ? "pointer-events-none cursor-default border-slate-300 bg-slate-200 shadow-inner"
                                 : isDisabled
                                   ? "pointer-events-none cursor-default bg-slate-200 opacity-50"
                                   : "cursor-pointer"
@@ -1132,7 +1132,7 @@ export default function MemberBookings({
                           >
                             {isBooked && bookingName && (
                               <div className="pointer-events-none flex h-full w-full items-center justify-center overflow-hidden px-1">
-                                <div className="max-w-full truncate rounded-full border border-white/35 bg-black/15 px-1 py-0.5 text-center text-[8px] font-semibold uppercase tracking-[0.06em] text-white sm:px-1.5 sm:text-[9px] sm:tracking-[0.08em]">
+                                <div className="max-w-full truncate rounded-full border border-slate-400/60 bg-slate-100 px-1 py-0.5 text-center text-[8px] font-semibold uppercase tracking-[0.06em] text-slate-700 sm:px-1.5 sm:text-[9px] sm:tracking-[0.08em]">
                                   {abbreviateBookingName(bookingName)}
                                 </div>
                               </div>
@@ -1221,7 +1221,7 @@ export default function MemberBookings({
                                     isSelected
                                       ? "border-slate-900 bg-slate-900 text-white"
                                       : isBooked
-                                        ? "cursor-not-allowed border-rose-700 bg-[repeating-linear-gradient(135deg,#be123c_0px,#be123c_6px,#e11d48_6px,#e11d48_12px)] text-white shadow-inner"
+                                        ? "cursor-not-allowed border-slate-300 bg-slate-200 text-slate-700 shadow-inner"
                                         : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
                                   }`}
                                 >
@@ -1232,7 +1232,7 @@ export default function MemberBookings({
                                         : formatSlotRange(timeSlots, timeIdx)}
                                     </span>
                                     {isBooked && bookingName && (
-                                      <span className="max-w-full truncate rounded-full border border-white/30 bg-black/10 px-0.5 py-0.5 text-[7px] font-semibold uppercase tracking-[0.04em] text-white sm:px-1 sm:text-[9px] sm:tracking-[0.08em]">
+                                      <span className="max-w-full truncate rounded-full border border-slate-400/60 bg-slate-100 px-0.5 py-0.5 text-[7px] font-semibold uppercase tracking-[0.04em] text-slate-700 sm:px-1 sm:text-[9px] sm:tracking-[0.08em]">
                                         {abbreviateBookingName(bookingName)}
                                       </span>
                                     )}
