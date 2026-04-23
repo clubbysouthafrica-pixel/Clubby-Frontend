@@ -96,9 +96,7 @@ export default function BillingText({
         return (
         <p key={field.field_id} className="text-base font-medium text-gray-900">
           {field.field_name}
-          {field.required && (
-            <span className="ml-1 text-red-600" aria-hidden="true">*</span>
-          )}
+          {field.required && <span className="sr-only"> required</span>}
           :{" "}
                 <span className="font-semibold">
                     {formatAmount(field.amount ?? 0, clubCurrency)}
@@ -113,11 +111,12 @@ export default function BillingText({
   className="flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-2 py-2 sm:py-1"
 >
   {/* Field name and amount */}
-  <RequiredLabel required={field.required} className="text-base font-medium text-gray-900 whitespace-nowrap">
+  <RequiredLabel className="text-base font-medium text-gray-900 whitespace-nowrap">
     {field.field_name}{" "}
     <span className="text-gray-600 font-normal">
       ({formatAmount(field.amount ?? 0, clubCurrency)} each)
     </span>
+    {field.required && <span className="sr-only"> required</span>}
   </RequiredLabel>
 
   {/* Multiplier and input */}
