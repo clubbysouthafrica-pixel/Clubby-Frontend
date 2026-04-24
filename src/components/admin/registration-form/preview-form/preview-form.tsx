@@ -55,6 +55,7 @@ export function PreviewForm({
       <ReusableRegistrationForm
         clubName={clubName}
         clubCurrency={currency}
+        textFieldClassName="!bg-transparent !rounded-none !border-0 !p-0 text-slate-900 shadow-none prose-base leading-7 [&_p]:text-slate-900 [&_p]:leading-7 [&_strong]:text-slate-950 [&_strong]:font-semibold [&_em]:text-slate-800 [&_li]:text-slate-900 [&_li]:leading-7"
         pages={pages}
         currentPageIndex={currentPageIndex}
         setCurrentPageIndex={setCurrentPageIndex}

@@ -907,7 +907,7 @@ export function CurrentMemberRegistration({
                             renderInput()
                           ) : (
                             <>
-                              {metadata?.input_type === "CHECKBOX" ? (
+                              {field.input_type === "CHECKBOX" || metadata?.input_type === "CHECKBOX" ? (
                                 <div className="flex items-center gap-2">
                                   {displayValue === "true" ? (
                                     <div className="flex items-center gap-2">
@@ -941,7 +941,7 @@ export function CurrentMemberRegistration({
                             </>
                           )}
                         </div>
-                        {!data?.deregistered_on && field.field_id && !(metadata?.input_type === "CHECKBOX" && metadata?.required) && field.visible !== false && (
+                        {!data?.deregistered_on && field.field_id && !((field.input_type === "CHECKBOX" || metadata?.input_type === "CHECKBOX") && metadata?.required) && field.visible !== false && (
                           <div className="flex gap-1 ml-2 opacity-30 group-hover:opacity-100 transition-opacity">
                             {isEditing ? (
                               <>

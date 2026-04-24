@@ -69,6 +69,7 @@ type RegistrationField = {
   type: string;
   label: string;
   value: string;
+  input_type?: string;
   field_id?: string;
   signature_type?: string;
   quantity?: number;
@@ -130,6 +131,28 @@ function formatTagValue(value: unknown) {
   }
 
   return "";
+}
+
+function parseBooleanLikeValue(value: unknown): boolean | null {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalizedValue = value.trim().toLowerCase();
+
+  if (normalizedValue === "true" || normalizedValue === "yes") {
+    return true;
+  }
+
+  if (normalizedValue === "false" || normalizedValue === "no") {
+    return false;
+  }
+
+  return null;
 }
 
 function extractMemberTags(source: unknown): MemberTag[] {
@@ -427,7 +450,7 @@ export function MemberRegistration({
       return (
         <div className="flex min-h-11 items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
           <Checkbox
-            checked={editValue === "true"}
+            checked={parseBooleanLikeValue(editValue) === true}
             onCheckedChange={(checked) => setEditValue(checked ? "true" : "false")}
           />
           <span className="text-sm text-slate-700">{metadata?.placeholder || field.label}</span>
@@ -521,6 +544,7 @@ export function MemberRegistration({
   const renderFieldValue = (field: RegistrationField) => {
     const metadata = fieldMetadata[field.label];
     const displayValue = updatedFieldValues[field.label] ?? field.value;
+    const booleanValue = parseBooleanLikeValue(displayValue);
 
     if (field.type === "STANDARD_SIGNATURE") {
       if (field.signature_type === "signature") {
@@ -545,8 +569,11 @@ export function MemberRegistration({
         return renderEditableInput(field);
       }
 
-      if (metadata?.input_type === "CHECKBOX") {
-        const checked = displayValue === "true";
+      const isCheckboxField =
+        field.input_type === "CHECKBOX" || metadata?.input_type === "CHECKBOX";
+
+      if (isCheckboxField || booleanValue !== null) {
+        const checked = booleanValue === true;
 
         return (
           <div

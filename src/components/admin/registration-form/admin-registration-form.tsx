@@ -88,7 +88,7 @@ function SortableFieldWrapper({
           isDragging ? "shadow-lg" : ""
         } ${
           isRecentlyAdded
-            ? "border-blue-400 bg-blue-50/70 shadow-lg shadow-blue-100"
+            ? "border-slate-300 bg-transparent shadow-lg shadow-slate-200/60"
             : "border-transparent"
         }`}
       >
@@ -306,7 +306,7 @@ function renderPreviewField(
 
     const element = (
       <div
-        className="prose prose-sm max-w-none bg-blue-50 rounded-md p-4 break-words overflow-hidden w-full text-gray-700 [&_*]:break-words [&_*]:max-w-full [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-semibold [&_h4]:text-base [&_h4]:font-semibold [&_h5]:text-sm [&_h5]:font-semibold [&_h6]:text-xs [&_h6]:font-semibold"
+        className="prose prose-base max-w-none border-0 bg-transparent p-0 break-words overflow-hidden w-full text-slate-900 shadow-none [&_*]:break-words [&_*]:max-w-full [&_p]:text-slate-900 [&_p]:leading-7 [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5 [&_li]:text-slate-900 [&_li]:leading-7 [&_strong]:text-slate-950 [&_strong]:font-semibold [&_em]:text-slate-800 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-semibold [&_h4]:text-base [&_h4]:font-semibold [&_h5]:text-sm [&_h5]:font-semibold [&_h6]:text-xs [&_h6]:font-semibold"
         dangerouslySetInnerHTML={{ __html: cleaned }}
       />
     );
