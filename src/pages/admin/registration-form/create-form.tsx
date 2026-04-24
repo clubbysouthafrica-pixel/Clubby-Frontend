@@ -968,7 +968,7 @@ export default function AdminRegistrationFormPage() {
           </Button>
         </div>
       </div>
-      <div ref={contentRef} className="flex-1 overflow-auto space-y-8">
+      <div ref={contentRef} className="flex-1 overflow-hidden space-y-8">
         <Sheet open={isMemberPreviewOpen} onOpenChange={setIsMemberPreviewOpen}>
           <SheetContent side="right" className="w-full max-w-none overflow-y-auto sm:max-w-4xl">
             <SheetHeader className="border-b border-gray-200">
@@ -1010,7 +1010,7 @@ export default function AdminRegistrationFormPage() {
         )}
 
         {!isLoading && !saving && (
-          <div className="border-t pt-4">
+          <div className="flex h-full min-h-0 flex-col border-t pt-4">
             <div className="flex items-center justify-between gap-4">
               <h2 className="text-2xl font-bold"></h2>
             </div>
@@ -1033,7 +1033,7 @@ export default function AdminRegistrationFormPage() {
                 </p>
               </div>
             )}
-            <div className="mb-6">
+            <div className="mb-6 shrink-0">
               <Tabs
                 value={currentPreviewPageIndex.toString()}
                 onValueChange={(v) => setCurrentPreviewPageIndex(Number(v))}
@@ -1089,10 +1089,10 @@ export default function AdminRegistrationFormPage() {
               }}
               onDragEnd={handlePreviewDragEnd}
             >
-              <div className="flex gap-6">
+              <div className="flex h-[calc(100vh-19rem)] min-h-[40rem] gap-6 overflow-hidden">
                 {/* Field Palette Sidebar */}
-                <div className="w-56 flex-shrink-0">
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 sticky top-24">
+                <div className="w-56 flex-shrink-0 self-start">
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                     <h3 className="text-sm font-semibold text-gray-900 mb-2">
                       Available Fields
                     </h3>
@@ -1156,7 +1156,7 @@ export default function AdminRegistrationFormPage() {
                   </div>
                 </div>
 
-                <div className="flex-1">
+                <div className="min-h-0 flex-1 overflow-y-auto pr-2">
                   <AdminRegistrationForm
                     clubName={club?.club_name ?? ""}
                     clubCurrency={club?.currency ?? "ZAR"}
