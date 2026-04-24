@@ -227,7 +227,7 @@ export function ReusableRegistrationForm({
                             return (
                               <div
                                 key={field.field_order_id}
-                                className={`px-0 py-2 mb-5 prose prose-sm max-w-none bg-blue-50 rounded-md p-4 break-words overflow-hidden w-full text-gray-700 [&_*]:break-words [&_*]:max-w-full [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-semibold [&_h4]:text-base [&_h4]:font-semibold [&_h5]:text-sm [&_h5]:font-semibold [&_h6]:text-xs [&_h6]:font-semibold ${textFieldClassName ?? ""}`}
+                                className={`px-0 prose prose-sm max-w-none bg-blue-50 rounded-md p-4 break-words overflow-hidden w-full text-gray-700 [&_*]:break-words [&_*]:max-w-full [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-semibold [&_h4]:text-base [&_h4]:font-semibold [&_h5]:text-sm [&_h5]:font-semibold [&_h6]:text-xs [&_h6]:font-semibold ${textFieldClassName ?? ""}`}
                                 dangerouslySetInnerHTML={{ __html: cleaned }}
                               />
                             );
