@@ -551,6 +551,7 @@ export function CurrentMemberRegistration({
                   type: string;
                   label: string;
                   value: string;
+                  input_type?: string;
                   field_id?: string;
                   signature_type?: string;
                   quantity?: number;
