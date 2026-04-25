@@ -49,5 +49,5 @@ export interface RegisterClubMember {
     userId: string
     payment_amount: number
     payment_method?: string
-    template_variables?: Array<{ name: string; value: string }>
+    template_variables?: Array<{ name: string; value: string; auto_generated?: boolean }>
 }

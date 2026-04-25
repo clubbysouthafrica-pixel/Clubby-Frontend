@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import EditableEmailTemplate from "@/components/admin/manage/emailing/editable_email_template";
-import { type ClubVariable } from "@/components/admin/club/manage-club/club-variables-form";
+import { type ClubVariable } from "@/interfaces/club-variable";
 
 interface EmailSettingsFormProps {
   supportEmail: string;

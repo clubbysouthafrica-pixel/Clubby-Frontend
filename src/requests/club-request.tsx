@@ -1,3 +1,6 @@
+import { ClubVariable } from "@/interfaces/club-variable";
+import { getRulesEngineFieldMappings } from "@/lib/club-variable-rules";
+
 export interface ClubBankDetailsRequest {
   bank: string;
   account_number: string;
@@ -23,10 +26,49 @@ export interface ClubOpeningTimesRequest {
   closed: boolean;
 }
 
+export interface ClubVariableRulesFieldMappingRequest {
+  field_id: string;
+  field_label?: string;
+  token: string;
+  mappings?: Record<string, string>;
+}
+
+export interface ClubVariableRulesEngineRequest {
+  pattern: string;
+  initial_sequence?: number;
+  field_mappings?: ClubVariableRulesFieldMappingRequest[];
+}
+
 export interface ClubVariableRequest {
   name: string;
   key: string;
   visible: boolean;
+  rules_engine?: ClubVariableRulesEngineRequest;
+}
+
+export function toClubVariableRequest(variable: ClubVariable): ClubVariableRequest {
+  const rulesEngine = variable.rules_engine;
+
+  return {
+    name: variable.name,
+    key: variable.key,
+    visible: variable.visible,
+    rules_engine: rulesEngine
+      ? {
+          pattern: rulesEngine.pattern,
+          initial_sequence: Math.max(
+            1,
+            Number(rulesEngine.initialSequence ?? rulesEngine.initial_sequence ?? 1),
+          ),
+          field_mappings: getRulesEngineFieldMappings(rulesEngine).map((fieldMapping) => ({
+            field_id: fieldMapping.fieldId,
+            field_label: fieldMapping.fieldLabel,
+            token: fieldMapping.token,
+            mappings: fieldMapping.mappings,
+          })),
+        }
+      : undefined,
+  };
 }
 
 export interface ClubDetailsRequest {

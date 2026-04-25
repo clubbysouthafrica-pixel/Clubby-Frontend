@@ -508,7 +508,7 @@ export default function RegistrationsPage() {
   const registerUser = (
     member: ClubMember,
     paymentMethod?: string,
-    templateVariables?: Array<{ name: string; value: string }>,
+    templateVariables?: Array<{ name: string; value: string; auto_generated?: boolean }>,
   ) => {
     if (
       memberRegisterAmount > member.outstanding_amount ||
@@ -1605,6 +1605,7 @@ export default function RegistrationsPage() {
                       sortableId={sortableId}
                       openDialogUserId={openDialogUserId}
                       displayAmount={displayAmount}
+                      memberRegisterAmount={memberRegisterAmount}
                       isPending={isPending}
                       invalidRegistrationAmount={invalidRegistrationAmount}
                       isError={isError}

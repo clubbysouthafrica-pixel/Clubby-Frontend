@@ -35,6 +35,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import { ClubVariable } from "@/interfaces/club-variable";
+import { generateClubVariableValue } from "@/lib/club-variable-rules";
 import ReusableDeregisterDialog from "./features/reusable-deregister-dialog";
 import ReusableSendEmailDialog from "@/components/admin/members/members/features/reusable-send-email-dialog";
 
@@ -44,6 +46,7 @@ interface ImageProps {
   sortableId: any;
   openDialogUserId: string | null;
   displayAmount: string;
+  memberRegisterAmount: number;
   isPending: boolean;
   invalidRegistrationAmount: boolean;
   isError: any;
@@ -63,7 +66,7 @@ interface ImageProps {
   registerUser: (
     member: ClubMember,
     paymentMethod?: string,
-    templateVariables?: Array<{ name: string; value: string }>,
+    templateVariables?: Array<{ name: string; value: string; auto_generated?: boolean }>,
   ) => void;
   setSelectedMember: React.Dispatch<React.SetStateAction<object>>;
   setOpenDialogUserId: React.Dispatch<React.SetStateAction<string | null>>;
@@ -82,6 +85,7 @@ export default function PendingMembersList({
   sortableId,
   openDialogUserId,
   displayAmount,
+  memberRegisterAmount,
   isPending,
   invalidRegistrationAmount,
   isError,
@@ -115,11 +119,90 @@ export default function PendingMembersList({
     useState<boolean>(true);
   const [isDeregisterDialogOpen, setIsDeregisterDialogOpen] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
-  const [showPendingRegistrationsDropdown, setShowPendingRegistrationsDropdown] =
-    useState(false);
+  const [
+    showPendingRegistrationsDropdown,
+    setShowPendingRegistrationsDropdown,
+  ] = useState(false);
   const [deregisterMembers, setDeregisterMembers] = useState<
     { user_id: string; name: string }[]
   >([]);
+
+  const allMembersForRules = useMemo(
+    () => [
+      ...(clubMembers?.registered ?? []),
+      ...(clubMembers?.unregistered ?? []),
+      ...(clubMembers?.deregistered ?? []),
+    ],
+    [
+      clubMembers?.deregistered,
+      clubMembers?.registered,
+      clubMembers?.unregistered,
+    ],
+  );
+
+  const isRulesEngineTemplateVariable = (rulesEngine: unknown) => {
+    if (typeof rulesEngine === "boolean") {
+      return rulesEngine;
+    }
+
+    if (rulesEngine && typeof rulesEngine === "object") {
+      return Boolean((rulesEngine as { enabled?: boolean }).enabled);
+    }
+
+    return false;
+  };
+
+  const isTemplateVariableEntryUnlocked = (member: ClubMember) => {
+    const outstandingAmount = Number(member.outstanding_amount || 0);
+
+    if (outstandingAmount <= 0) {
+      return true;
+    }
+
+    return !invalidRegistrationAmount && memberRegisterAmount === outstandingAmount;
+  };
+
+  const buildGeneratedTemplateVariables = (member: ClubMember) => {
+    const generatedValues: Record<string, string> = {
+      member_name: `${member.member_first_name} ${member.member_surname}`,
+    };
+
+    const configuredVariables = Array.isArray(clubMembers?.template_variables)
+      ? clubMembers.template_variables
+      : [];
+
+    configuredVariables.forEach((rawVariable: any) => {
+      const variable: ClubVariable = {
+        name: String(rawVariable?.title || rawVariable?.name || ""),
+        key: String(rawVariable?.name || rawVariable?.key || ""),
+        visible: rawVariable?.visible ?? true,
+        rules_engine: rawVariable?.rules_engine,
+      };
+
+      if (
+        !variable.key ||
+        !variable.rules_engine ||
+        typeof variable.rules_engine === "boolean" ||
+        !variable.rules_engine.enabled
+      ) {
+        return;
+      }
+
+      const generatedValue = generateClubVariableValue({
+        variable,
+        member,
+        members: allMembersForRules,
+      });
+
+      if (!generatedValue?.value || generatedValue.missingTokens.length > 0) {
+        return;
+      }
+
+      generatedValues[variable.key] = generatedValue.value;
+    });
+
+    return generatedValues;
+  };
 
   const getRegistrationPaymentStatus = (member: ClubMember) => {
     const totalFee = member.total_fee || 0;
@@ -152,11 +235,16 @@ export default function PendingMembersList({
     };
   };
 
-  const validateTemplateVariables = (): boolean => {
+  const validateTemplateVariables = (member?: ClubMember): boolean => {
     if (
       !clubMembers?.template_variables ||
       !Array.isArray(clubMembers.template_variables)
     ) {
+      return true;
+    }
+
+    if (member && !isTemplateVariableEntryUnlocked(member)) {
+      setTemplateVariablesError("");
       return true;
     }
 
@@ -165,9 +253,12 @@ export default function PendingMembersList({
         const varName = variable?.name || variable;
         const varTitle = variable?.title || variable;
         const value = templateVariables[varName];
+        const hasRulesEngine = isRulesEngineTemplateVariable(
+          variable?.rules_engine,
+        );
 
         // "Member Name" has a default value so it's never empty
-        if (varTitle === "Member Name") {
+        if (varTitle === "Member Name" || hasRulesEngine) {
           return false;
         }
 
@@ -195,6 +286,7 @@ export default function PendingMembersList({
     return clubMembers.template_variables.map((variable: any) => {
       const varName = variable?.name || variable;
       const varTitle = variable?.title || variable;
+      const autoGenerated = isRulesEngineTemplateVariable(variable?.rules_engine);
       const value =
         varTitle === "Member Name"
           ? templateVariables[varName] ||
@@ -204,6 +296,7 @@ export default function PendingMembersList({
       return {
         name: varName,
         value: value,
+        auto_generated: autoGenerated,
       };
     });
   };
@@ -213,18 +306,26 @@ export default function PendingMembersList({
   const [submittedSortAsc, setSubmittedSortAsc] = useState<boolean | null>(
     null,
   );
-  const [memberNameSortAsc, setMemberNameSortAsc] = useState<boolean | null>(null);
+  const [memberNameSortAsc, setMemberNameSortAsc] = useState<boolean | null>(
+    null,
+  );
   const [totalFeeSortAsc, setTotalFeeSortAsc] = useState<boolean | null>(null);
-  const [outstandingAmountSortAsc, setOutstandingAmountSortAsc] = useState<boolean | null>(null);
+  const [outstandingAmountSortAsc, setOutstandingAmountSortAsc] = useState<
+    boolean | null
+  >(null);
 
   const sortedUnregisteredMembers = useMemo(() => {
     let sortedCopy = [...baseUnregisteredMembers];
-    
+
     if (memberNameSortAsc !== null) {
       sortedCopy.sort((a: ClubMember, b: ClubMember) => {
-        const aName = `${a.member_first_name} ${a.member_surname}`.toLowerCase();
-        const bName = `${b.member_first_name} ${b.member_surname}`.toLowerCase();
-        return memberNameSortAsc ? aName.localeCompare(bName) : bName.localeCompare(aName);
+        const aName =
+          `${a.member_first_name} ${a.member_surname}`.toLowerCase();
+        const bName =
+          `${b.member_first_name} ${b.member_surname}`.toLowerCase();
+        return memberNameSortAsc
+          ? aName.localeCompare(bName)
+          : bName.localeCompare(aName);
       });
     } else if (totalFeeSortAsc !== null) {
       sortedCopy.sort((a: ClubMember, b: ClubMember) => {
@@ -249,9 +350,15 @@ export default function PendingMembersList({
         return submittedSortAsc ? at - bt : bt - at;
       });
     }
-    
+
     return sortedCopy;
-  }, [baseUnregisteredMembers, submittedSortAsc, memberNameSortAsc, totalFeeSortAsc, outstandingAmountSortAsc]);
+  }, [
+    baseUnregisteredMembers,
+    submittedSortAsc,
+    memberNameSortAsc,
+    totalFeeSortAsc,
+    outstandingAmountSortAsc,
+  ]);
 
   useEffect(() => {
     if (!openDialogUserId) {
@@ -266,15 +373,12 @@ export default function PendingMembersList({
       return;
     }
 
-    setTemplateVariables({
-      member_name:
-        activeMember.member_first_name + " " + activeMember.member_surname,
-    });
+    setTemplateVariables(buildGeneratedTemplateVariables(activeMember));
     setTemplateVariablesError("");
     setSelectedPaymentMethod("EFT/Cash");
     setIsTemplateVariablesOpen(true);
     setIsPaymentMethodsOpen(true);
-  }, [openDialogUserId, baseUnregisteredMembers]);
+  }, [openDialogUserId, baseUnregisteredMembers, allMembersForRules]);
 
   useEffect(() => {
     // Sync deregisterMembers with listActionItems
@@ -310,102 +414,104 @@ export default function PendingMembersList({
   return (
     <div className="flex flex-col gap-4">
       {showPendingSummary && (
-      <div className="flex items-center gap-4 rounded-[20px] border border-slate-200 bg-slate-50/80 px-4 py-3">
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() =>
-              setShowPendingRegistrationsDropdown(
-                !showPendingRegistrationsDropdown,
-              )
-            }
-            className="relative rounded-full border border-slate-200 bg-slate-50 p-2.5 transition-colors hover:bg-slate-100"
-            title="Pending registrations"
-          >
-            <UserPlus className="h-4 w-4 text-slate-700" />
-            {baseUnregisteredMembers.length > 0 && (
-              <span className="absolute right-0 top-0 inline-flex -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-bold leading-none text-white">
-                {baseUnregisteredMembers.length}
-              </span>
-            )}
-          </button>
-
-          {showPendingRegistrationsDropdown && (
-            <div className="absolute left-0 top-full z-50 mt-2 max-h-96 w-96 overflow-y-auto rounded-[22px] border border-slate-200 bg-white shadow-2xl">
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
-                <h3 className="font-semibold text-slate-900">
-                  Pending Registrations ({baseUnregisteredMembers.length})
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setShowPendingRegistrationsDropdown(false)}
-                  className="rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              {baseUnregisteredMembers.length === 0 ? (
-                <div className="p-5 text-center text-sm text-slate-500">
-                  No pending registrations.
-                </div>
-              ) : (
-                <div className="max-h-96 divide-y overflow-y-auto">
-                  {sortedUnregisteredMembers.map((member: ClubMember) => (
-                    <div
-                      key={member.user_id}
-                      className="p-4 transition-colors hover:bg-slate-50"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1 space-y-1">
-                          <p className="text-sm font-medium text-slate-900">
-                            {member.member_first_name} {member.member_surname}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            Email: {member.member_email || "n/a"}
-                          </p>
-                          <p className="text-xs font-medium text-amber-700">
-                            Outstanding: {formatAmount(member.outstanding_amount || 0, club?.currency)}
-                          </p>
-                        </div>
-
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-8 rounded-full border-slate-200 bg-white px-3 text-xs text-slate-700 hover:bg-slate-100"
-                          onClick={() => {
-                            setShowPendingRegistrationsDropdown(false);
-                            setOpenDialogUserId(member.user_id);
-                            setTemplateVariables({
-                              member_name:
-                                member.member_first_name +
-                                " " +
-                                member.member_surname,
-                            });
-                            setIsTemplateVariablesOpen(true);
-                            setIsPaymentMethodsOpen(true);
-                          }}
-                        >
-                          <UserPlus className="h-3.5 w-3.5" />
-                          Review
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+        <div className="flex items-center gap-4 rounded-[20px] border border-slate-200 bg-slate-50/80 px-4 py-3">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() =>
+                setShowPendingRegistrationsDropdown(
+                  !showPendingRegistrationsDropdown,
+                )
+              }
+              className="relative rounded-full border border-slate-200 bg-slate-50 p-2.5 transition-colors hover:bg-slate-100"
+              title="Pending registrations"
+            >
+              <UserPlus className="h-4 w-4 text-slate-700" />
+              {baseUnregisteredMembers.length > 0 && (
+                <span className="absolute right-0 top-0 inline-flex -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-bold leading-none text-white">
+                  {baseUnregisteredMembers.length}
+                </span>
               )}
-            </div>
-          )}
-        </div>
+            </button>
 
-        <h2 className="text-sm font-medium uppercase tracking-[0.18em] text-slate-500">
-          Pending registrations: <span className="font-bold">{baseUnregisteredMembers.length}</span>
-        </h2>
-      </div>
+            {showPendingRegistrationsDropdown && (
+              <div className="absolute left-0 top-full z-50 mt-2 max-h-96 w-96 overflow-y-auto rounded-[22px] border border-slate-200 bg-white shadow-2xl">
+                <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
+                  <h3 className="font-semibold text-slate-900">
+                    Pending Registrations ({baseUnregisteredMembers.length})
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowPendingRegistrationsDropdown(false)}
+                    className="rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {baseUnregisteredMembers.length === 0 ? (
+                  <div className="p-5 text-center text-sm text-slate-500">
+                    No pending registrations.
+                  </div>
+                ) : (
+                  <div className="max-h-96 divide-y overflow-y-auto">
+                    {sortedUnregisteredMembers.map((member: ClubMember) => (
+                      <div
+                        key={member.user_id}
+                        className="p-4 transition-colors hover:bg-slate-50"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <p className="text-sm font-medium text-slate-900">
+                              {member.member_first_name} {member.member_surname}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              Email: {member.member_email || "n/a"}
+                            </p>
+                            <p className="text-xs font-medium text-amber-700">
+                              Outstanding:{" "}
+                              {formatAmount(
+                                member.outstanding_amount || 0,
+                                club?.currency,
+                              )}
+                            </p>
+                          </div>
+
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 rounded-full border-slate-200 bg-white px-3 text-xs text-slate-700 hover:bg-slate-100"
+                            onClick={() => {
+                              setShowPendingRegistrationsDropdown(false);
+                              setOpenDialogUserId(member.user_id);
+                              setTemplateVariables(
+                                buildGeneratedTemplateVariables(member),
+                              );
+                              setIsTemplateVariablesOpen(true);
+                              setIsPaymentMethodsOpen(true);
+                            }}
+                          >
+                            <UserPlus className="h-3.5 w-3.5" />
+                            Review
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <h2 className="text-sm font-medium uppercase tracking-[0.18em] text-slate-500">
+            Pending registrations:{" "}
+            <span className="font-bold">{baseUnregisteredMembers.length}</span>
+          </h2>
+        </div>
       )}
       <div className="w-full max-w-full min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white [contain:inline-size]">
         <div
-            className={`block max-w-full overflow-x-auto ${
+          className={`block max-w-full overflow-x-auto ${
             shouldScrollY ? "overflow-y-auto" : "overflow-y-hidden"
           }`}
           style={
@@ -446,11 +552,18 @@ export default function PendingMembersList({
                       />
                       <DropdownMenu modal={false}>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-7 w-7 rounded-full p-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 rounded-full p-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                          >
                             <ChevronDown className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48 rounded-[18px] border-slate-200">
+                        <DropdownMenuContent
+                          align="end"
+                          className="w-48 rounded-[18px] border-slate-200"
+                        >
                           <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
                             Actions
                           </DropdownMenuLabel>
@@ -599,7 +712,9 @@ export default function PendingMembersList({
                                       name: `${member.member_first_name} ${member.member_surname}`,
                                     },
                                   ];
-                                  setDeregisterMembers(updatedDeregisterMembers);
+                                  setDeregisterMembers(
+                                    updatedDeregisterMembers,
+                                  );
 
                                   const updatedList = [
                                     ...listActionItems,
@@ -620,10 +735,13 @@ export default function PendingMembersList({
                                     deregisterMembers.filter(
                                       (item) => item.user_id !== member.user_id,
                                     );
-                                  setDeregisterMembers(updatedDeregisterMembers);
+                                  setDeregisterMembers(
+                                    updatedDeregisterMembers,
+                                  );
 
                                   const updatedList = listActionItems.filter(
-                                    (item) => item.email !== member.member_email,
+                                    (item) =>
+                                      item.email !== member.member_email,
                                   );
                                   setlistActionItems(updatedList);
                                   setAllMembersSelected(false);
@@ -635,7 +753,9 @@ export default function PendingMembersList({
                         </TableCell>
                         <TableCell className="w-[150px] text-center text-sm font-medium text-slate-900">
                           <span className="underline decoration-slate-400 underline-offset-2">
-                            {member.member_first_name + " " + member.member_surname}
+                            {member.member_first_name +
+                              " " +
+                              member.member_surname}
                           </span>
                         </TableCell>
                         <TableCell className="w-[150px] text-center text-sm text-slate-800">
@@ -647,10 +767,15 @@ export default function PendingMembersList({
                         </TableCell>
                         <TableCell className="w-[190px] text-center">
                           {(() => {
-                            const paymentStatus = getRegistrationPaymentStatus(member);
+                            const paymentStatus =
+                              getRegistrationPaymentStatus(member);
                             const totalFee = member.total_fee || 0;
-                            const outstandingAmount = member.outstanding_amount || 0;
-                            const amountPaid = Math.max(totalFee - outstandingAmount, 0);
+                            const outstandingAmount =
+                              member.outstanding_amount || 0;
+                            const amountPaid = Math.max(
+                              totalFee - outstandingAmount,
+                              0,
+                            );
 
                             if (!totalFee) {
                               return <span className="text-gray-400">n/a</span>;
@@ -662,7 +787,8 @@ export default function PendingMembersList({
                                   {paymentStatus.label}
                                 </Badge>
                                 <p className="text-sm font-medium text-slate-900">
-                                  {formatAmount(amountPaid, club?.currency)} of {formatAmount(totalFee, club?.currency)}
+                                  {formatAmount(amountPaid, club?.currency)} of{" "}
+                                  {formatAmount(totalFee, club?.currency)}
                                 </p>
                               </div>
                             );
@@ -676,7 +802,9 @@ export default function PendingMembersList({
                             : "-"}
                         </TableCell>
                         {clubMembers?.filters
-                          ?.filter((col: any) => activeColumnKeys.includes(col.key))
+                          ?.filter((col: any) =>
+                            activeColumnKeys.includes(col.key),
+                          )
                           .map((column: any) => {
                             let columnValue = "N/A";
 
@@ -692,12 +820,17 @@ export default function PendingMembersList({
                                 (f: any) => f.field_name === column.field_name,
                               );
                               columnValue = customField?.value
-                                ? formatAmount(customField?.value, club?.currency)
+                                ? formatAmount(
+                                    customField?.value,
+                                    club?.currency,
+                                  )
                                 : "N/A";
                             }
 
                             if (column.type === "standard") {
-                              const standardFields = Array.isArray(member.meta_standard)
+                              const standardFields = Array.isArray(
+                                member.meta_standard,
+                              )
                                 ? member.meta_standard
                                 : Object.values(member.meta_standard ?? {});
                               const standardField = standardFields.find(
@@ -709,12 +842,18 @@ export default function PendingMembersList({
                             }
 
                             if (column.type === "club_variable") {
-                              const clubVariableKey = column.key?.startsWith("club_variable:")
+                              const clubVariableKey = column.key?.startsWith(
+                                "club_variable:",
+                              )
                                 ? column.key.replace("club_variable:", "")
                                 : column.field_id || column.field_name;
-                              const clubVariables = Array.isArray(member.meta_club_variables)
+                              const clubVariables = Array.isArray(
+                                member.meta_club_variables,
+                              )
                                 ? member.meta_club_variables
-                                : Object.values(member.meta_club_variables ?? {});
+                                : Object.values(
+                                    member.meta_club_variables ?? {},
+                                  );
                               const clubVariable = clubVariables.find(
                                 (f: any) =>
                                   f.name === clubVariableKey ||
@@ -763,115 +902,114 @@ export default function PendingMembersList({
                           }
                         }}
                       >
-                      <DialogContent onClick={(e) => e.stopPropagation()}>
-                              <DialogHeader>
-                                <DialogTitle>
-                                  Register Member:{" "}
-                                  <strong>
-                                    {member.member_first_name +
-                                      " " +
-                                      member.member_surname}
-                                  </strong>
-                                </DialogTitle>
-                                <DialogDescription>
-                                  Confirm payment details and provide required
-                                  information
-                                </DialogDescription>
-                                <div className="flex flex-col gap-1 my-4">
-                                  <Label className="text-l">
-                                    Outstanding amount:{" "}
-                                    {member.outstanding_amount ? (
-                                      formatAmount(
-                                        member.outstanding_amount,
-                                        club?.currency,
-                                      )
-                                    ) : (
-                                      <span className="text-gray-400">n/a</span>
-                                    )}
-                                  </Label>
-                                  <Label className="text-l">
-                                    Member payment reference:{" "}
-                                    {member.registration_payment_reference}
-                                  </Label>
-                                </div>
-                                {member.outstanding_amount > 0 && (
-                                  <div className="grid gap-3 my-4">
-                                    <Label htmlFor="pay">Payment Amount</Label>
-                                    <Input
-                                      id="pay"
-                                      type="text"
-                                      placeholder="Enter amount"
-                                      value={displayAmount}
-                                      onChange={handleFormattedInputChange}
-                                    />
-                                  </div>
+                        <DialogContent onClick={(e) => e.stopPropagation()}>
+                          <DialogHeader>
+                            <DialogTitle>
+                              Register Member:{" "}
+                              <strong>
+                                {member.member_first_name +
+                                  " " +
+                                  member.member_surname}
+                              </strong>
+                            </DialogTitle>
+                            <DialogDescription>
+                              Confirm payment details and provide required
+                              information
+                            </DialogDescription>
+                            <div className="flex flex-col gap-1 my-4">
+                              <Label className="text-l">
+                                Outstanding amount:{" "}
+                                {member.outstanding_amount ? (
+                                  formatAmount(
+                                    member.outstanding_amount,
+                                    club?.currency,
+                                  )
+                                ) : (
+                                  <span className="text-gray-400">n/a</span>
                                 )}
-                                {clubMembers?.payment_methods && member.outstanding_amount > 0 &&
-                                  clubMembers.payment_methods.length > 0 && (
-                                    <div className="grid gap-4 pt-2">
-                                      <div>
-                                        <button
-                                          onClick={() =>
-                                            setIsPaymentMethodsOpen(
-                                              !isPaymentMethodsOpen,
-                                            )
-                                          }
-                                          className="flex items-center justify-between w-full p-3 bg-muted/40 rounded-lg hover:bg-muted/50 transition-colors"
-                                        >
-                                          <Label className="text-sm font-semibold mb-0 cursor-pointer">
-                                            Payment Method
-                                          </Label>
-                                          <ChevronDown
-                                            className={`h-4 w-4 transition-transform ${
-                                              isPaymentMethodsOpen
-                                                ? "rotate-180"
-                                                : ""
-                                            }`}
-                                          />
-                                        </button>
-                                        {isPaymentMethodsOpen && (
-                                          <div className="space-y-3 bg-muted/40 p-4 rounded-lg mt-2">
-                                            {clubMembers.payment_methods.map(
-                                              (method: string) => (
-                                                <div
-                                                  key={method}
-                                                  className="flex items-center gap-3"
-                                                >
-                                                  <Checkbox
-                                                    id={`payment-${method}`}
-                                                    checked={
-                                                      selectedPaymentMethod ===
-                                                      method
-                                                    }
-                                                    onCheckedChange={(
-                                                      checked,
-                                                    ) => {
-                                                      setSelectedPaymentMethod(
-                                                        checked ? method : "",
-                                                      );
-                                                    }}
-                                                  />
-                                                  <Label
-                                                    htmlFor={`payment-${method}`}
-                                                    className="cursor-pointer font-normal text-sm"
-                                                  >
-                                                    {method}
-                                                  </Label>
-                                                </div>
-                                              ),
-                                            )}
-                                          </div>
+                              </Label>
+                              <Label className="text-l">
+                                Member payment reference:{" "}
+                                {member.registration_payment_reference}
+                              </Label>
+                            </div>
+                            {member.outstanding_amount > 0 && (
+                              <div className="grid gap-3 my-4">
+                                <Label htmlFor="pay">Payment Amount</Label>
+                                <Input
+                                  id="pay"
+                                  type="text"
+                                  placeholder="Enter amount"
+                                  value={displayAmount}
+                                  onChange={handleFormattedInputChange}
+                                />
+                              </div>
+                            )}
+                            {clubMembers?.payment_methods &&
+                              member.outstanding_amount > 0 &&
+                              clubMembers.payment_methods.length > 0 && (
+                                <div className="grid gap-4 pt-2">
+                                  <div>
+                                    <button
+                                      onClick={() =>
+                                        setIsPaymentMethodsOpen(
+                                          !isPaymentMethodsOpen,
+                                        )
+                                      }
+                                      className="flex items-center justify-between w-full p-3 bg-muted/40 rounded-lg hover:bg-muted/50 transition-colors"
+                                    >
+                                      <Label className="text-sm font-semibold mb-0 cursor-pointer">
+                                        Payment Method
+                                      </Label>
+                                      <ChevronDown
+                                        className={`h-4 w-4 transition-transform ${
+                                          isPaymentMethodsOpen
+                                            ? "rotate-180"
+                                            : ""
+                                        }`}
+                                      />
+                                    </button>
+                                    {isPaymentMethodsOpen && (
+                                      <div className="space-y-3 bg-muted/40 p-4 rounded-lg mt-2">
+                                        {clubMembers.payment_methods.map(
+                                          (method: string) => (
+                                            <div
+                                              key={method}
+                                              className="flex items-center gap-3"
+                                            >
+                                              <Checkbox
+                                                id={`payment-${method}`}
+                                                checked={
+                                                  selectedPaymentMethod ===
+                                                  method
+                                                }
+                                                onCheckedChange={(checked) => {
+                                                  setSelectedPaymentMethod(
+                                                    checked ? method : "",
+                                                  );
+                                                }}
+                                              />
+                                              <Label
+                                                htmlFor={`payment-${method}`}
+                                                className="cursor-pointer font-normal text-sm"
+                                              >
+                                                {method}
+                                              </Label>
+                                            </div>
+                                          ),
                                         )}
                                       </div>
-                                    </div>
-                                  )}
-                                {clubMembers?.template_variables &&
-                                  Array.isArray(
-                                    clubMembers.template_variables,
-                                  ) &&
-                                  clubMembers.template_variables.length > 0 && (
-                                    <div className="grid gap-4 pt-2">
-                                      <div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            {clubMembers?.template_variables &&
+                              Array.isArray(clubMembers.template_variables) &&
+                              clubMembers.template_variables.length > 0 && (
+                                <div className="grid gap-4 pt-2">
+                                  <div>
+                                    {isTemplateVariableEntryUnlocked(member) ? (
+                                      <>
                                         <button
                                           onClick={() =>
                                             setIsTemplateVariablesOpen(
@@ -893,7 +1031,22 @@ export default function PendingMembersList({
                                         </button>
                                         {isTemplateVariablesOpen && (
                                           <div className="space-y-3 bg-muted/40 p-4 rounded-lg mt-2">
-                                            {clubMembers.template_variables.map(
+                                            {[...clubMembers.template_variables]
+                                              .sort((left: any, right: any) => {
+                                                const leftAutoGenerated = isRulesEngineTemplateVariable(
+                                                  left?.rules_engine,
+                                                );
+                                                const rightAutoGenerated = isRulesEngineTemplateVariable(
+                                                  right?.rules_engine,
+                                                );
+
+                                                if (leftAutoGenerated === rightAutoGenerated) {
+                                                  return 0;
+                                                }
+
+                                                return leftAutoGenerated ? 1 : -1;
+                                              })
+                                              .map(
                                               (variable: any) => {
                                                 const varName =
                                                   variable?.name || variable;
@@ -901,116 +1054,125 @@ export default function PendingMembersList({
                                                   variable?.title || variable;
                                                 const isMemberNameField =
                                                   varTitle === "Member Name";
+                                                const hasRulesEngine =
+                                                  isRulesEngineTemplateVariable(
+                                                    variable?.rules_engine,
+                                                  );
 
                                                 return (
-                                                  <div
-                                                    key={varName}
-                                                    className="grid gap-2"
-                                                  >
-                                                    <Label
-                                                      htmlFor={`template-${varName}`}
-                                                      className="text-sm font-normal"
-                                                    >
-                                                      {varTitle}
-                                                    </Label>
-                                                    <Input
-                                                      id={`template-${varName}`}
-                                                      type="text"
-                                                      placeholder={`Enter ${
-                                                        varTitle?.toLowerCase?.() ||
-                                                        ""
-                                                      }`}
-                                                      value={
-                                                        isMemberNameField
-                                                          ? templateVariables[
-                                                              varName
-                                                            ] ||
-                                                            member.member_first_name +
-                                                              " " +
-                                                              member.member_surname
-                                                          : templateVariables[
-                                                              varName
-                                                            ] || ""
-                                                      }
-                                                      onChange={(e) => {
-                                                        setTemplateVariables(
-                                                          (prev) => ({
+                                                  <div key={varName} className="grid gap-2">
+                                                    <div className="flex items-center gap-2">
+                                                      <Label
+                                                        htmlFor={`template-${varName}`}
+                                                        className="text-sm font-normal"
+                                                      >
+                                                        {varTitle}
+                                                      </Label>
+                                                      {hasRulesEngine ? (
+                                                        <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-sky-700">
+                                                          Auto generated tag
+                                                        </span>
+                                                      ) : null}
+                                                    </div>
+                                                    {hasRulesEngine ? <></> : (
+                                                      <Input
+                                                        id={`template-${varName}`}
+                                                        type="text"
+                                                        placeholder={`Enter ${
+                                                          varTitle?.toLowerCase?.() || ""
+                                                        }`}
+                                                        value={
+                                                          isMemberNameField
+                                                            ? templateVariables[varName] ||
+                                                              member.member_first_name +
+                                                                " " +
+                                                                member.member_surname
+                                                            : templateVariables[varName] || ""
+                                                        }
+                                                        onChange={(e) => {
+                                                          setTemplateVariables((prev) => ({
                                                             ...prev,
-                                                            [varName]:
-                                                              e.target.value,
-                                                          }),
-                                                        );
-                                                        setTemplateVariablesError(
-                                                          "",
-                                                        );
-                                                      }}
-                                                      className=""
-                                                    />
+                                                            [varName]: e.target.value,
+                                                          }));
+                                                          setTemplateVariablesError("");
+                                                        }}
+                                                        className=""
+                                                      />
+                                                    )}
                                                   </div>
                                                 );
                                               },
                                             )}
                                           </div>
                                         )}
+                                      </>
+                                    ) : (
+                                      <div className="rounded-lg border border-amber-200 bg-amber-50/80 p-3 text-amber-950">
+                                        <p className="text-sm font-medium">
+                                          Club tags unlock once the full outstanding amount is entered.
+                                        </p>
+                                        <p className="mt-1 text-xs text-amber-800">
+                                          Enter {formatAmount(member.outstanding_amount || 0, club?.currency)} as the payment amount to unlock and require these fields.
+                                        </p>
                                       </div>
-                                    </div>
-                                  )}
-                                {isError && (
-                                  <Alert variant="destructive">
-                                    <AlertCircle className="h-4 w-4" />
-                                    <AlertDescription className="text-xs">
-                                      Something went wrong registering user
-                                    </AlertDescription>
-                                  </Alert>
-                                )}
-                              </DialogHeader>
-                              <DialogFooter>
-                                <DialogClose asChild>
-                                  <Button variant="outline">Cancel</Button>
-                                </DialogClose>
-                                <Button
-                                  onClick={() => {
-                                    if (!validateTemplateVariables()) {
-                                      setIsTemplateVariablesOpen(true);
-                                    } else {
-                                      const structuredTemplateVariables =
-                                        buildTemplateVariablesWithValues(
-                                          member,
-                                        );
-                                      registerUser(
-                                        member,
-                                        selectedPaymentMethod,
-                                        structuredTemplateVariables,
-                                      );
-                                    }
-                                  }}
-                                  disabled={isPending}
-                                >
-                                  {isPending
-                                    ? "Registering..."
-                                    : "Register Member"}
-                                </Button>
-                              </DialogFooter>
-                              {templateVariablesError && (
-                                <Alert className="border border-red-600 text-red-600">
-                                  <AlertCircle className="h-4 w-4 text-red-600" />
-                                  <AlertDescription className="text-xs text-red-600">
-                                    {templateVariablesError}
-                                  </AlertDescription>
-                                </Alert>
+                                    )}
+                                  </div>
+                                </div>
                               )}
-                              {invalidRegistrationAmount && (
-                                <Alert className="border border-red-600 text-red-600">
-                                  <AlertCircle className="h-4 w-4 text-red-600" />
-                                  <AlertDescription className="text-xs text-red-600">
-                                    The amount entered cannot be less than{" "}
-                                    {formatAmount(1, club?.currency)} and more
-                                    than the outstanding amount.
-                                  </AlertDescription>
-                                </Alert>
-                              )}
-                      </DialogContent>
-                    </Dialog>
+                            {isError && (
+                              <Alert variant="destructive">
+                                <AlertCircle className="h-4 w-4" />
+                                <AlertDescription className="text-xs">
+                                  Something went wrong registering user
+                                </AlertDescription>
+                              </Alert>
+                            )}
+                          </DialogHeader>
+                          <DialogFooter>
+                            <DialogClose asChild>
+                              <Button variant="outline">Cancel</Button>
+                            </DialogClose>
+                            <Button
+                              onClick={() => {
+                                if (!validateTemplateVariables(member)) {
+                                  setIsTemplateVariablesOpen(true);
+                                } else {
+                                  const structuredTemplateVariables =
+                                    isTemplateVariableEntryUnlocked(member)
+                                      ? buildTemplateVariablesWithValues(member)
+                                      : undefined;
+                                  registerUser(
+                                    member,
+                                    selectedPaymentMethod,
+                                    structuredTemplateVariables,
+                                  );
+                                }
+                              }}
+                              disabled={isPending}
+                            >
+                              {isPending ? "Registering..." : "Register Member"}
+                            </Button>
+                          </DialogFooter>
+                          {templateVariablesError && (
+                            <Alert className="border border-red-600 text-red-600">
+                              <AlertCircle className="h-4 w-4 text-red-600" />
+                              <AlertDescription className="text-xs text-red-600">
+                                {templateVariablesError}
+                              </AlertDescription>
+                            </Alert>
+                          )}
+                          {invalidRegistrationAmount && (
+                            <Alert className="border border-red-600 text-red-600">
+                              <AlertCircle className="h-4 w-4 text-red-600" />
+                              <AlertDescription className="text-xs text-red-600">
+                                The amount entered cannot be less than{" "}
+                                {formatAmount(1, club?.currency)} and more than
+                                the outstanding amount.
+                              </AlertDescription>
+                            </Alert>
+                          )}
+                        </DialogContent>
+                      </Dialog>
                     </Fragment>
                   ))
                 ) : (
@@ -1070,8 +1232,6 @@ export default function PendingMembersList({
           setAllMembersSelected(false);
         }}
       />
-
-
     </div>
   );
 }

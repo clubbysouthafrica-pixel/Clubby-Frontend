@@ -22,6 +22,7 @@ import { countries } from "@/data/countries";
 import { currencies } from "@/data/currencies";
 import { useUpdateClubDetailsMutation } from "@/mutations/admin/club";
 import { useFetchClubDetails } from "@/queries/admin/clubs";
+import { useFetchRegistrationForm } from "@/queries/admin/registration-form";
 import { Loader2 } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -32,8 +33,13 @@ import {
 import { BankingDetailsForm } from "@/components/admin/club/manage-club/banking-details-form";
 import ClubGalleryEdit from "./gallery";
 import { Textarea } from "@/components/ui/textarea";
-import { ClubVariablesForm, type ClubVariable } from "@/components/admin/club/manage-club/club-variables-form";
+import { ClubVariablesForm } from "@/components/admin/club/manage-club/club-variables-form";
 import { EmailSettingsForm } from "@/components/admin/club/manage-club/email-settings-form";
+import {
+  ClubVariable,
+  RegistrationDropdownField,
+} from "@/interfaces/club-variable";
+import { toClubVariableRequest } from "@/requests/club-request";
 
 export default function EditClubDetails({
   initialTab,
@@ -42,6 +48,9 @@ export default function EditClubDetails({
 }) {
   const { club, setClub } = useContext(ClubContext) as ClubContextType;
   const { data, isLoading } = useFetchClubDetails(
+    club?.club_account_id as string,
+  );
+  const { data: registrationFormData } = useFetchRegistrationForm(
     club?.club_account_id as string,
   );
   const { mutate, isPending } = useUpdateClubDetailsMutation();
@@ -99,6 +108,28 @@ export default function EditClubDetails({
     useState<boolean>(false);
   const [clubVariables, setClubVariables] = useState<ClubVariable[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
+
+  const registrationDropdownFields: RegistrationDropdownField[] =
+    Array.isArray(registrationFormData?.pages)
+      ? registrationFormData.pages.flatMap(
+          (page: { fields?: Array<Record<string, any>> }) =>
+            (page.fields ?? [])
+              .filter(
+                (field: Record<string, any>) =>
+                  field.field_type === "STANDARD" &&
+                  field.input_type === "DROPDOWN",
+              )
+              .map((field: Record<string, any>) => ({
+                fieldId: String(field.field_id ?? field.field_name ?? ""),
+                label: String(
+                  field.field_name ?? field.label ?? field.field_id ?? "Dropdown field",
+                ),
+                options: Array.isArray(field.options)
+                  ? field.options.map((option: unknown) => String(option))
+                  : [],
+              })),
+        )
+      : [];
 
   useEffect(() => {
     if (data && !isInitialized) {
@@ -183,7 +214,7 @@ export default function EditClubDetails({
         use_success_email_template: useSuccessEmailTemplate,
         use_submission_email_template: useSubmissionEmailTemplate,
         notify_on_member_registration: notifyOnMemberRegistration,
-        club_variables: clubVariables,
+        club_variables: clubVariables.map(toClubVariableRequest),
       },
       {
         onSuccess: () => {
@@ -251,7 +282,7 @@ export default function EditClubDetails({
         use_success_email_template: useSuccessEmailTemplate,
         use_submission_email_template: useSubmissionEmailTemplate,
         notify_on_member_registration: notifyOnMemberRegistration,
-        club_variables: clubVariables,
+        club_variables: clubVariables.map(toClubVariableRequest),
       },
       {
         onSuccess: () => {
@@ -686,7 +717,7 @@ export default function EditClubDetails({
                           club_account_id: club?.club_account_id as string,
                           country_of_operation: country,
                           currency,
-                          club_variables: filteredVariables,
+                          club_variables: filteredVariables.map(toClubVariableRequest),
                         },
                         {
                           onSuccess: () => {
@@ -780,6 +811,7 @@ export default function EditClubDetails({
                       variables={clubVariables}
                       onSave={setClubVariables}
                       onChange={setClubVariables}
+                      registrationDropdownFields={registrationDropdownFields}
                       showSaveButton={false}
                       isPending={isPending}
                     />
