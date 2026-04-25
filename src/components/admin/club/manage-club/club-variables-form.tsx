@@ -142,14 +142,13 @@ export function ClubVariablesForm({
         return false;
       }
 
-      const rulesEngine = variable.rules_engine;
+      const rulesEngine = normalizeRulesEngine(variable);
       if (!rulesEngine.pattern.trim()) {
         return true;
       }
 
-      const normalizedRulesEngine = normalizeRulesEngine(variable);
       const mappedTokens = new Set(
-        normalizedRulesEngine.fieldMappings.flatMap((fieldMapping) => {
+        rulesEngine.fieldMappings.flatMap((fieldMapping) => {
           const codeToken = fieldMapping.token;
           const valueToken = codeToken.endsWith("_CODE")
             ? codeToken.slice(0, -5)
@@ -157,7 +156,7 @@ export function ClubVariablesForm({
           return [codeToken, valueToken];
         }),
       );
-      const patternTokens = extractPatternTokens(normalizedRulesEngine.pattern);
+      const patternTokens = extractPatternTokens(rulesEngine.pattern);
       const hasUnknownFieldToken = patternTokens.some((token) => {
         if (BUILT_IN_TOKENS.has(token)) {
           return false;
@@ -174,7 +173,7 @@ export function ClubVariablesForm({
         return true;
       }
 
-      return normalizedRulesEngine.reset === "field_year" && !normalizedRulesEngine.resetFieldId;
+      return rulesEngine.reset === "field_year" && !rulesEngine.resetFieldId;
     });
 
     if (invalidRulesEngine) {
