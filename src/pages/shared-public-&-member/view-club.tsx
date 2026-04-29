@@ -215,6 +215,16 @@ function getClubSectionFromPath(pathname: string, clubId: string) {
     : "home";
 }
 
+function isMemberOnlyClubSection(section: ClubSection) {
+  return (
+    section === "member-registration" ||
+    section === "bookings" ||
+    section === "events" ||
+    section === "shop" ||
+    section === "storage"
+  );
+}
+
 function scrollClubPageToTop() {
   if (typeof window === "undefined") {
     return;
@@ -573,6 +583,23 @@ export default function ViewClubPage() {
     () => getClubSectionFromPath(pathname, clubId as string),
     [clubId, pathname],
   );
+  const getSectionPath = useCallback(
+    (section: ClubSection) => {
+      if (!clubId) {
+        return "";
+      }
+
+      const shouldUseMemberPath =
+        isLoggedIn && isMemberOnlyClubSection(section);
+
+      return getClubSectionPath(
+        clubId,
+        section,
+        shouldUseMemberPath ? `/myclubs/${clubId}` : pathname,
+      );
+    },
+    [clubId, isLoggedIn, pathname],
+  );
 
   const todayKey = useMemo(() => formatDateKey(new Date()), []);
   const [visibleCalendarMonth, setVisibleCalendarMonth] = useState(() =>
@@ -593,7 +620,7 @@ export default function ViewClubPage() {
     if (routeSection === "storage" && !isStorageFeatureEnabled && clubId) {
       navigate(
         {
-          pathname: getClubSectionPath(clubId, "home"),
+          pathname: getSectionPath("home"),
           search: search ? search : "",
         },
         { replace: true },
@@ -609,8 +636,7 @@ export default function ViewClubPage() {
 
       navigate(
         {
-          pathname: getClubSectionPath(
-            clubId,
+          pathname: getSectionPath(
             requestedSection === "storage" && !isStorageFeatureEnabled
               ? "home"
               : requestedSection,
@@ -641,7 +667,7 @@ export default function ViewClubPage() {
         if (clubId && routeSection !== "bank") {
           navigate(
             {
-              pathname: getClubSectionPath(clubId, "bank"),
+              pathname: getSectionPath("bank"),
               search: search ? search : "",
             },
             { replace: true },
@@ -671,7 +697,7 @@ export default function ViewClubPage() {
         if (clubId && routeSection !== "bank") {
           navigate(
             {
-              pathname: getClubSectionPath(clubId, "bank"),
+              pathname: getSectionPath("bank"),
               search: search ? search : "",
             },
             { replace: true },
@@ -701,7 +727,7 @@ export default function ViewClubPage() {
         if (clubId && routeSection !== "bank") {
           navigate(
             {
-              pathname: getClubSectionPath(clubId, "bank"),
+              pathname: getSectionPath("bank"),
               search: search ? search : "",
             },
             { replace: true },
@@ -727,7 +753,7 @@ export default function ViewClubPage() {
       if (clubId && routeSection !== "bank") {
         navigate(
           {
-            pathname: getClubSectionPath(clubId, "bank"),
+            pathname: getSectionPath("bank"),
             search: search ? search : "",
           },
           { replace: true },
@@ -743,6 +769,7 @@ export default function ViewClubPage() {
     activeBankDetailsLoading,
     clubId,
     navigate,
+    getSectionPath,
     routeSection,
   ]);
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -1134,7 +1161,7 @@ export default function ViewClubPage() {
         activeBankDetails.transaction_options.length > 0
       ) {
         if (clubId) {
-          navigate(getClubSectionPath(clubId, "bank"));
+          navigate(getSectionPath("bank"));
         }
         return;
       }
@@ -1168,7 +1195,7 @@ export default function ViewClubPage() {
 
       navigate(
         {
-          pathname: getClubSectionPath(clubId, nextSection),
+          pathname: getSectionPath(nextSection),
           search: nextSearch ? `?${nextSearch}` : "",
         },
         { replace: options?.replace },
@@ -1178,7 +1205,7 @@ export default function ViewClubPage() {
         scrollClubPageToTop();
       });
     },
-    [clubId, navigate],
+    [clubId, getSectionPath, navigate],
   );
 
   const handleOrderPayNowClick = (orderId?: string) => {
