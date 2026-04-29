@@ -600,6 +600,22 @@ export default function ViewClubPage() {
     },
     [clubId, isLoggedIn, pathname],
   );
+  const canViewBookings =
+    isLoggedIn &&
+    !!data?.club_member_exists &&
+    !!data?.registered &&
+    !!data?.venues_enabled;
+
+  const canViewEvents =
+    isLoggedIn &&
+    !!data?.club_member_exists &&
+    !!data?.registered &&
+    !!data?.enable_events;
+  const canViewStorage =
+    isLoggedIn &&
+    !!data?.club_member_exists &&
+    !!data?.registered &&
+    isStorageFeatureEnabled;
 
   const todayKey = useMemo(() => formatDateKey(new Date()), []);
   const [visibleCalendarMonth, setVisibleCalendarMonth] = useState(() =>
@@ -617,7 +633,7 @@ export default function ViewClubPage() {
     const shouldOpenPaymentScreen = queryParams.get("paymentScreen") === "true";
     let matchedPaymentOption: PaymentTransactionOption | null = null;
 
-    if (routeSection === "storage" && !isStorageFeatureEnabled && clubId) {
+    if (routeSection === "storage" && !canViewStorage && clubId) {
       navigate(
         {
           pathname: getSectionPath("home"),
@@ -637,7 +653,7 @@ export default function ViewClubPage() {
       navigate(
         {
           pathname: getSectionPath(
-            requestedSection === "storage" && !isStorageFeatureEnabled
+            requestedSection === "storage" && !canViewStorage
               ? "home"
               : requestedSection,
           ),
@@ -767,6 +783,7 @@ export default function ViewClubPage() {
     activeBankDetails?.transaction_options,
     activeBankDetails,
     activeBankDetailsLoading,
+    canViewStorage,
     clubId,
     navigate,
     getSectionPath,
@@ -807,18 +824,6 @@ export default function ViewClubPage() {
   const [selectedGalleryImageIndex, setSelectedGalleryImageIndex] = useState<
     number | null
   >(null);
-
-  const canViewBookings =
-    isLoggedIn &&
-    !!data?.club_member_exists &&
-    !!data?.registered &&
-    !!data?.venues_enabled;
-
-  const canViewEvents =
-    isLoggedIn &&
-    !!data?.club_member_exists &&
-    !!data?.registered &&
-    !!data?.enable_events;
 
   const {
     data: memberOrders,
@@ -1180,7 +1185,7 @@ export default function ViewClubPage() {
       options?: { replace?: boolean; searchParams?: URLSearchParams },
     ) => {
       const nextSection =
-        value === "storage" && !isStorageFeatureEnabled ? "home" : value;
+        value === "storage" && !canViewStorage ? "home" : value;
 
       setActiveTab(nextSection);
       setNewOrderId(null);
@@ -1205,7 +1210,7 @@ export default function ViewClubPage() {
         scrollClubPageToTop();
       });
     },
-    [clubId, getSectionPath, navigate],
+    [canViewStorage, clubId, getSectionPath, navigate],
   );
 
   const handleOrderPayNowClick = (orderId?: string) => {
@@ -1437,7 +1442,7 @@ export default function ViewClubPage() {
       });
     }
 
-    if (isStorageFeatureEnabled) {
+    if (canViewStorage) {
       items.push({
         key: "storage",
         label: "Storage",
@@ -1449,6 +1454,7 @@ export default function ViewClubPage() {
   }, [
     canViewBookings,
     canViewEvents,
+    canViewStorage,
     data?.club_member_exists,
     data?.enable_shop,
     data?.registered,
@@ -1782,7 +1788,7 @@ export default function ViewClubPage() {
                     onOpenBookings={() => handleSectionChange("bookings")}
                     onOpenOutstandingBalance={handleOpenOutstandingBalance}
                   />
-                  {isStorageFeatureEnabled && (
+                  {canViewStorage && (
                     <TabsContent value="storage" className="mt-3 sm:mt-6">
                       <MemberStorage
                         clubId={data?.club_account_id as string}
@@ -1881,7 +1887,7 @@ export default function ViewClubPage() {
         </DialogContent>
       </Dialog>
 
-      {isStorageFeatureEnabled && (
+      {canViewStorage && (
         <StorageRequestDialog
           clubAccountId={data?.club_account_id ?? ""}
           selectedStorageItem={selectedStorageItem}
