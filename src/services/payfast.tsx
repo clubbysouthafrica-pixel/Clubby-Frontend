@@ -1,6 +1,7 @@
 import { api } from "./api";
 
 interface PayFastCheckoutParams {
+    userId?: string;
     transactionId?: string;
     orderId?: string;
     eventId?: string;
@@ -12,6 +13,9 @@ export const fetchPayFastCheckoutURL = (
     checkoutParams?: PayFastCheckoutParams,
 ): Promise<any> => {
     const queryParams = new URLSearchParams({ club_account_id: clubAccountId });
+    if (checkoutParams?.userId) {
+        queryParams.append('user_id', checkoutParams.userId);
+    }
     if (checkoutParams?.transactionId) {
         queryParams.append('transaction_id', checkoutParams.transactionId);
     }

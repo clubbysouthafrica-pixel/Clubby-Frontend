@@ -8,14 +8,14 @@ export const useFetchClubsQuery = () => {
   });
 };
 
-export const useFetchClub = (clubAccountId: string) => {
+export const useFetchClub = (clubAccountId: string, enabled = true) => {
     return useQuery({
       queryKey: ['getClub', clubAccountId],
       queryFn: ({ queryKey }) => {
         const [_key, clubId] = queryKey;
         return fetchClub(clubId);
       },
-      enabled: !!clubAccountId,
+      enabled: enabled && !!clubAccountId,
     });
 }
 

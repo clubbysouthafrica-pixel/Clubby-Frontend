@@ -14,6 +14,7 @@ export interface ResetPayFastDetailsRequest {
 
 export interface ClubbyCheckoutUrlRequest {
   club_account_id: string;
+  userId?: string;
   year_month?: string;
   pay_all?: boolean;
 }
@@ -40,6 +41,10 @@ export const getClubbyCheckoutUrl = (
   const params = new URLSearchParams({
     club_account_id: request.club_account_id,
   });
+
+  if (request.userId) {
+    params.set("user_id", request.userId);
+  }
 
   if (request.year_month) {
     params.set("year_month", request.year_month);

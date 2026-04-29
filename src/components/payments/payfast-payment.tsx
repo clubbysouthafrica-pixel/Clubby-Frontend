@@ -12,6 +12,7 @@ type PayfastResponse = {
 interface PayFastPaymentProps {
   clubAccountId: string;
   outstandingAmount: number;
+  userId?: string;
   transactionId?: string;
   orderId?: string;
   eventId?: string;
@@ -25,6 +26,7 @@ interface PayFastPaymentProps {
 export function PayFastPayment({
   clubAccountId,
   outstandingAmount,
+  userId,
   transactionId,
   orderId,
   eventId,
@@ -39,6 +41,7 @@ export function PayFastPayment({
 
   const { data: payfastData, refetch: refetchPayfast } =
     useFetchPayFastCheckoutUrlQuery(clubAccountId, {
+      userId,
       transactionId,
       orderId,
       eventId,

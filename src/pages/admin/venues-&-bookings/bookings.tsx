@@ -62,7 +62,6 @@ type Booking = {
 
 type BookingViewMode = "calendar" | "availability";
 
-const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 function getWeekStart(date = new Date()) {
@@ -74,12 +73,31 @@ function getWeekStart(date = new Date()) {
   return next;
 }
 
+function getDayStart(date = new Date()) {
+  const next = new Date(date);
+  next.setHours(0, 0, 0, 0);
+  return next;
+}
+
 function getDaysInWeek(start: Date) {
   return Array.from({ length: 7 }, (_, index) => {
     const day = new Date(start);
     day.setDate(day.getDate() + index);
     return day;
   });
+}
+
+function getDaysFrom(start: Date, count: number) {
+  return Array.from({ length: count }, (_, index) => {
+    const day = new Date(start);
+    day.setDate(day.getDate() + index);
+    return day;
+  });
+}
+
+function getVenueDayIndex(date: Date) {
+  const day = date.getDay();
+  return day === 0 ? 6 : day - 1;
 }
 
 function formatWeekRange(days: Date[]) {
@@ -316,7 +334,7 @@ export default function BookingsPage() {
   const [venuesEnabled, setVenuesEnabled] = useState<boolean>(Boolean(club?.venues_enabled));
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [currentWeekStart, setCurrentWeekStart] = useState(() => getWeekStart());
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => getDayStart());
   const [viewMode, setViewMode] = useState<BookingViewMode>("availability");
   const [showSettings, setShowSettings] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
@@ -338,9 +356,16 @@ export default function BookingsPage() {
   const [isDeletingBooking, setIsDeletingBooking] = useState(false);
   const timeSlotsRef = useRef<HTMLDivElement>(null);
 
-  const daysInWeek = useMemo(() => getDaysInWeek(currentWeekStart), [currentWeekStart]);
+  const daysInWeek = useMemo(() => getDaysInWeek(getWeekStart(currentWeekStart)), [currentWeekStart]);
   const visibleDayCount = viewMode === "availability" ? 5 : 7;
-  const visibleDays = useMemo(() => daysInWeek.slice(0, visibleDayCount), [daysInWeek, visibleDayCount]);
+  const visibleRangeStart = useMemo(
+    () => (viewMode === "availability" ? currentWeekStart : getWeekStart(currentWeekStart)),
+    [currentWeekStart, viewMode],
+  );
+  const visibleDays = useMemo(
+    () => (viewMode === "availability" ? getDaysFrom(visibleRangeStart, visibleDayCount) : daysInWeek),
+    [daysInWeek, visibleDayCount, viewMode, visibleRangeStart],
+  );
   const selectedVenue = useMemo(
     () => venues.find((venue) => venue.venue_id === selectedVenueId) ?? null,
     [selectedVenueId, venues],
@@ -388,8 +413,8 @@ export default function BookingsPage() {
     }
     try {
       setLoadingBookings(true);
-      const start = Math.floor(currentWeekStart.getTime() / 1000);
-      const endDate = new Date(currentWeekStart);
+      const start = Math.floor(visibleRangeStart.getTime() / 1000);
+      const endDate = new Date(visibleRangeStart);
       endDate.setDate(endDate.getDate() + visibleDayCount);
       const end = Math.floor(endDate.getTime() / 1000);
       const response = await getBookings(selectedVenueId, String(start), String(end));
@@ -399,7 +424,7 @@ export default function BookingsPage() {
     } finally {
       setLoadingBookings(false);
     }
-  }, [currentWeekStart, selectedVenueId, visibleDayCount]);
+  }, [selectedVenueId, visibleDayCount, visibleRangeStart]);
 
   useEffect(() => {
     fetchVenues();
@@ -417,20 +442,16 @@ export default function BookingsPage() {
   }, [bookingUnit, selectedVenueId, viewMode]);
 
   const getSchedule = useCallback(
-    (dayIdx: number) => selectedVenue?.times.find((time) => time.day_of_week === dayIdx) ?? null,
+    (date: Date) => selectedVenue?.times.find((time) => time.day_of_week === getVenueDayIndex(date)) ?? null,
     [selectedVenue],
   );
-  const isDayClosed = useCallback((dayIdx: number) => !!getSchedule(dayIdx)?.is_closed, [getSchedule]);
+  const isDayClosed = useCallback((date: Date) => !!getSchedule(date)?.is_closed, [getSchedule]);
   const isPastDay = (date: Date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const next = new Date(date);
-    next.setHours(0, 0, 0, 0);
-    return next < today;
+    return getDayStart(date) < getDayStart();
   };
   const isWithinHours = useCallback(
-    (dayIdx: number, time: string) => {
-      const schedule = getSchedule(dayIdx);
+    (date: Date, time: string) => {
+      const schedule = getSchedule(date);
       if (!schedule || schedule.is_closed) return false;
       const [hour, minute] = time.split(":").map(Number);
       const [startHour, startMinute] = schedule.start_time.split(":").map(Number);
@@ -443,7 +464,7 @@ export default function BookingsPage() {
     [getSchedule],
   );
   const getBookingForSlot = (dayIdx: number, timeIdx: number) => {
-    const slotDate = new Date(daysInWeek[dayIdx]);
+    const slotDate = new Date(visibleDays[dayIdx]);
     const [hour, minute] = timeSlots[timeIdx].split(":").map(Number);
     slotDate.setHours(hour, minute, 0, 0);
     const slotTime = Math.floor(slotDate.getTime() / 1000);
@@ -453,7 +474,7 @@ export default function BookingsPage() {
   const isSlotBooked = (dayIdx: number, timeIdx: number) => !!getBookingForSlot(dayIdx, timeIdx);
 
   const isSlotDisabled = (dayIdx: number, timeIdx: number, date: Date) => {
-    return isPastDay(date) || isDayClosed(dayIdx) || !isWithinHours(dayIdx, timeSlots[timeIdx]) || isSlotBooked(dayIdx, timeIdx);
+    return isPastDay(date) || isDayClosed(date) || !isWithinHours(date, timeSlots[timeIdx]) || isSlotBooked(dayIdx, timeIdx);
   };
 
   const isSlotSelected = (dayIdx: number, timeIdx: number) => {
@@ -470,16 +491,16 @@ export default function BookingsPage() {
   }, []);
 
   const selectedSlotSummary = selectedSlot
-    ? `${formatWeekday(daysInWeek[selectedSlot.dayIdx], "long")} ${daysInWeek[selectedSlot.dayIdx].getDate()} • ${timeSlots[selectedSlot.startIdx]} - ${
+    ? `${formatWeekday(visibleDays[selectedSlot.dayIdx], "long")} ${visibleDays[selectedSlot.dayIdx].getDate()} • ${timeSlots[selectedSlot.startIdx]} - ${
         selectedSlot.endIdx + 1 < timeSlots.length ? timeSlots[selectedSlot.endIdx + 1] : "23:59"
       }`
     : null;
 
   const visibleSlotIndicesByDay = useMemo(
     () =>
-      visibleDays.map((date, dayIdx) =>
+      visibleDays.map((date) =>
         timeSlots.reduce<number[]>((indices, _slot, timeIdx) => {
-          if (!isPastDay(date) && !isDayClosed(dayIdx) && isWithinHours(dayIdx, timeSlots[timeIdx])) {
+          if (!isPastDay(date) && !isDayClosed(date) && isWithinHours(date, timeSlots[timeIdx])) {
             indices.push(timeIdx);
           }
           return indices;
@@ -737,14 +758,14 @@ export default function BookingsPage() {
                               <Button variant="ghost" size="sm" className={cn("rounded-[0.8rem] text-slate-600 hover:bg-slate-100", viewMode === "calendar" && "border border-slate-900 bg-slate-50 font-medium text-slate-950")} onClick={() => setViewMode("calendar")}><Grid3X3 className="mr-2 h-4 w-4" />Calendar View</Button>
                             </div>
                             <div className="grid grid-cols-3 gap-2">
-                              <Button variant="outline" size="sm" onClick={() => { const next = new Date(currentWeekStart); next.setDate(next.getDate() - visibleDayCount); setCurrentWeekStart(next); }} disabled={currentWeekStart.getTime() <= getWeekStart().getTime()}><ChevronLeft className="mr-1 h-4 w-4" />Previous</Button>
-                              <Button variant="outline" size="sm" onClick={() => setCurrentWeekStart(getWeekStart())}>Today</Button>
+                              <Button variant="outline" size="sm" onClick={() => { const next = new Date(currentWeekStart); next.setDate(next.getDate() - visibleDayCount); setCurrentWeekStart(next); }} disabled={viewMode === "availability" ? currentWeekStart.getTime() <= getDayStart().getTime() : getWeekStart(currentWeekStart).getTime() <= getWeekStart().getTime()}><ChevronLeft className="mr-1 h-4 w-4" />Previous</Button>
+                              <Button variant="outline" size="sm" onClick={() => setCurrentWeekStart(getDayStart())}>Today</Button>
                               <Button variant="outline" size="sm" onClick={() => { const next = new Date(currentWeekStart); next.setDate(next.getDate() + visibleDayCount); setCurrentWeekStart(next); }}>Next<ChevronRight className="ml-1 h-4 w-4" /></Button>
                             </div>
                           </div>
                   </CardHeader>
                   <CardContent className="p-4 md:p-5">
-                    {!selectedVenue ? <div className="rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50 p-10 text-center text-sm text-slate-500">Choose a venue from the left-hand panel to inspect its availability and bookings.</div> : loadingBookings ? <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" />Loading bookings...</div> : viewMode === "availability" ? <div className="space-y-4"><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{visibleDays.map((date, dayIdx) => { const visibleSlotIndices = visibleSlotIndicesByDay[dayIdx] || []; const isClosed = isDayClosed(dayIdx); return <div key={date.toISOString()} className="rounded-[1.25rem] border border-slate-200 bg-white p-3 shadow-[0_16px_40px_-30px_rgba(15,23,42,0.18)]"><div className="mb-3 border-b border-slate-200 pb-3 text-center"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{formatWeekday(date)}</p><p className="mt-1 text-base font-semibold text-slate-950">{date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p></div>{isClosed ? <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-5 text-center text-sm text-slate-500">Closed</div> : visibleSlotIndices.length === 0 ? <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-5 text-center text-sm text-slate-500">No booking blocks available</div> : <div className="grid grid-cols-2 gap-2">{visibleSlotIndices.map((timeIdx) => { const booking = getBookingForSlot(dayIdx, timeIdx); const isBooked = !!booking; const isSelected = isSlotSelected(dayIdx, timeIdx); return <button key={`${dayIdx}-${timeIdx}`} type="button" onClick={() => { if (isBooked && booking) { setDeleteSlotTime(booking.slot_time); setDeleteBookingName(booking.name || "Booked"); return; } handleAvailabilitySlotClick(dayIdx, timeIdx); }} className={cn("h-14 rounded-xl border px-2 py-1 text-[11px] transition-colors", isSelected ? "border-slate-900 bg-slate-900 text-white" : isBooked ? "cursor-pointer border-slate-300 bg-slate-200 text-slate-700 shadow-inner" : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100")}><div className="flex h-full flex-col items-center justify-center gap-1 overflow-hidden leading-none"><span className="truncate font-semibold">{formatSlotRange(timeSlots, timeIdx)}</span>{isBooked && booking?.name ? <span className="max-w-full truncate rounded-full border border-slate-400/60 bg-slate-100 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-slate-700">{abbreviateBookingName(booking.name)}</span> : null}</div></button>; })}</div>}</div>; })}</div><div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">Click available blocks one by one to build your booking range. Click a booked block to inspect and delete that booking slot.</div></div> : <div className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white"><div className="grid grid-cols-8 border-b border-slate-200 bg-slate-50"><div className="border-r border-slate-200 p-3 text-center text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Time</div>{daysInWeek.map((date, dayIdx) => <div key={date.toISOString()} className={cn("border-r border-slate-200 p-3 text-center last:border-r-0", (isDayClosed(dayIdx) || isPastDay(date)) && "bg-slate-100 opacity-60")}><p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{DAY_NAMES[dayIdx]}</p><p className="mt-1 text-lg font-semibold text-slate-900">{date.getDate()}</p></div>)}</div><div ref={timeSlotsRef} className="max-h-[620px] overflow-y-auto" onMouseLeave={() => setDragEnd(dragStart || dragEnd)}>{timeSlots.map((time, timeIdx) => <div key={time} className={cn("grid grid-cols-8 border-b border-slate-200", bookingUnit === 15 ? "min-h-3" : bookingUnit === 30 ? "min-h-6" : bookingUnit === 45 ? "min-h-9" : "min-h-12")}><div className="border-r border-slate-200 bg-slate-50 px-2 py-0 text-xs font-semibold text-slate-500">{time.endsWith(":00") ? <span className="relative -top-2 inline-block bg-white px-1">{time}</span> : null}</div>{daysInWeek.map((date, dayIdx) => { const booking = getBookingForSlot(dayIdx, timeIdx); const booked = !!booking; const disabled = isPastDay(date) || isDayClosed(dayIdx) || !isWithinHours(dayIdx, time) || booked; const selected = dragStart && dragEnd && dragStart.dayIdx === dayIdx && dragEnd.dayIdx === dayIdx && timeIdx >= Math.min(dragStart.timeIdx, dragEnd.timeIdx) && timeIdx <= Math.max(dragStart.timeIdx, dragEnd.timeIdx); return <div key={`${date.toISOString()}-${time}`} className={cn("relative border-r border-slate-200 last:border-r-0", booked && "bg-rose-500 hover:bg-rose-600", !booked && !disabled && "cursor-pointer hover:bg-sky-50", disabled && !booked && "bg-slate-100/80", selected && "bg-sky-600 hover:bg-sky-600")} onMouseDown={() => { if (!disabled) { setDragStart({ dayIdx, timeIdx }); setDragEnd({ dayIdx, timeIdx }); } }} onMouseEnter={() => { if (dragStart && dragStart.dayIdx === dayIdx && !booked) setDragEnd({ dayIdx, timeIdx }); }} onClick={() => { if (booking) { setDeleteSlotTime(booking.slot_time); setDeleteBookingName(booking.name || "Booked"); } }}>{booking ? <div className="flex h-full min-h-full flex-col items-center justify-center px-1 py-2 text-center text-[11px] font-semibold text-white"><span>{time} - {timeSlots[timeIdx + 1] || "23:59"}</span><span className="truncate">{booking.name || "Booked"}</span></div> : null}</div>; })}</div>)}</div><div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500"><span>Drag across open slots to create a booking.</span><span>Click an existing booking to delete that slot.</span></div></div>}
+                    {!selectedVenue ? <div className="rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50 p-10 text-center text-sm text-slate-500">Choose a venue from the left-hand panel to inspect its availability and bookings.</div> : loadingBookings ? <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" />Loading bookings...</div> : viewMode === "availability" ? <div className="space-y-4"><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{visibleDays.map((date, dayIdx) => { const visibleSlotIndices = visibleSlotIndicesByDay[dayIdx] || []; const isClosed = isDayClosed(date); return <div key={date.toISOString()} className="rounded-[1.25rem] border border-slate-200 bg-white p-3 shadow-[0_16px_40px_-30px_rgba(15,23,42,0.18)]"><div className="mb-3 border-b border-slate-200 pb-3 text-center"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{formatWeekday(date)}</p><p className="mt-1 text-base font-semibold text-slate-950">{date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p></div>{isClosed ? <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-5 text-center text-sm text-slate-500">Closed</div> : visibleSlotIndices.length === 0 ? <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-5 text-center text-sm text-slate-500">No booking blocks available</div> : <div className="grid grid-cols-2 gap-2">{visibleSlotIndices.map((timeIdx) => { const booking = getBookingForSlot(dayIdx, timeIdx); const isBooked = !!booking; const isSelected = isSlotSelected(dayIdx, timeIdx); return <button key={`${dayIdx}-${timeIdx}`} type="button" onClick={() => { if (isBooked && booking) { setDeleteSlotTime(booking.slot_time); setDeleteBookingName(booking.name || "Booked"); return; } handleAvailabilitySlotClick(dayIdx, timeIdx); }} className={cn("h-14 rounded-xl border px-2 py-1 text-[11px] transition-colors", isSelected ? "border-slate-900 bg-slate-900 text-white" : isBooked ? "cursor-pointer border-slate-300 bg-slate-200 text-slate-700 shadow-inner" : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100")}><div className="flex h-full flex-col items-center justify-center gap-1 overflow-hidden leading-none"><span className="truncate font-semibold">{formatSlotRange(timeSlots, timeIdx)}</span>{isBooked && booking?.name ? <span className="max-w-full truncate rounded-full border border-slate-400/60 bg-slate-100 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-slate-700">{abbreviateBookingName(booking.name)}</span> : null}</div></button>; })}</div>}</div>; })}</div><div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">Click available blocks one by one to build your booking range. Click a booked block to inspect and delete that booking slot.</div></div> : <div className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white"><div className="grid grid-cols-8 border-b border-slate-200 bg-slate-50"><div className="border-r border-slate-200 p-3 text-center text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Time</div>{visibleDays.map((date) => <div key={date.toISOString()} className={cn("border-r border-slate-200 p-3 text-center last:border-r-0", (isDayClosed(date) || isPastDay(date)) && "bg-slate-100 opacity-60")}><p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{formatWeekday(date, "long")}</p><p className="mt-1 text-lg font-semibold text-slate-900">{date.getDate()}</p></div>)}</div><div ref={timeSlotsRef} className="max-h-[620px] overflow-y-auto" onMouseLeave={() => setDragEnd(dragStart || dragEnd)}>{timeSlots.map((time, timeIdx) => <div key={time} className={cn("grid grid-cols-8 border-b border-slate-200", bookingUnit === 15 ? "min-h-3" : bookingUnit === 30 ? "min-h-6" : bookingUnit === 45 ? "min-h-9" : "min-h-12")}><div className="border-r border-slate-200 bg-slate-50 px-2 py-0 text-xs font-semibold text-slate-500">{time.endsWith(":00") ? <span className="relative -top-2 inline-block bg-white px-1">{time}</span> : null}</div>{visibleDays.map((date, dayIdx) => { const booking = getBookingForSlot(dayIdx, timeIdx); const booked = !!booking; const disabled = isPastDay(date) || isDayClosed(date) || !isWithinHours(date, time) || booked; const selected = dragStart && dragEnd && dragStart.dayIdx === dayIdx && dragEnd.dayIdx === dayIdx && timeIdx >= Math.min(dragStart.timeIdx, dragEnd.timeIdx) && timeIdx <= Math.max(dragStart.timeIdx, dragEnd.timeIdx); return <div key={`${date.toISOString()}-${time}`} className={cn("relative border-r border-slate-200 last:border-r-0", booked && "bg-rose-500 hover:bg-rose-600", !booked && !disabled && "cursor-pointer hover:bg-sky-50", disabled && !booked && "bg-slate-100/80", selected && "bg-sky-600 hover:bg-sky-600")} onMouseDown={() => { if (!disabled) { setDragStart({ dayIdx, timeIdx }); setDragEnd({ dayIdx, timeIdx }); } }} onMouseEnter={() => { if (dragStart && dragStart.dayIdx === dayIdx && !booked) setDragEnd({ dayIdx, timeIdx }); }} onClick={() => { if (booking) { setDeleteSlotTime(booking.slot_time); setDeleteBookingName(booking.name || "Booked"); } }}>{booking ? <div className="flex h-full min-h-full flex-col items-center justify-center px-1 py-2 text-center text-[11px] font-semibold text-white"><span>{time} - {timeSlots[timeIdx + 1] || "23:59"}</span><span className="truncate">{booking.name || "Booked"}</span></div> : null}</div>; })}</div>)}</div><div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500"><span>Drag across open slots to create a booking.</span><span>Click an existing booking to delete that slot.</span></div></div>}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -753,7 +774,7 @@ export default function BookingsPage() {
         </div>
       )}
 
-      {selectedSlot && <Dialog open={isBookingDialogOpen} onOpenChange={(open) => { setIsBookingDialogOpen(open); if (!open) { setSelectedSlot(null); setBookingError(null); setBookingName(""); } }}><DialogContent><DialogHeader><DialogTitle>Create Booking</DialogTitle><DialogDescription>{DAY_NAMES[selectedSlot.dayIdx]}, {daysInWeek[selectedSlot.dayIdx].getDate()}</DialogDescription></DialogHeader><div className="space-y-4"><div><Label htmlFor="booking-name">Booking Name</Label><Input id="booking-name" className="mt-1" value={bookingName} onChange={(event) => setBookingName(event.target.value)} /></div><div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-slate-700"><p><span className="font-semibold">Time:</span> {timeSlots[selectedSlot.startIdx]} - {timeSlots[selectedSlot.endIdx + 1] || "23:59"}</p><p className="mt-2 text-xs text-slate-500"><span className="font-semibold">Duration:</span> {(selectedSlot.endIdx - selectedSlot.startIdx + 1) * bookingUnit} minutes</p></div>{bookingError && <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{bookingError}</div>}</div><DialogFooter><Button variant="outline" onClick={() => { setIsBookingDialogOpen(false); setSelectedSlot(null); setBookingError(null); setBookingName(""); }}>Cancel</Button><Button disabled={isCreatingBooking} onClick={async () => { if (!selectedVenueId || !selectedVenue) { setBookingError("Please select a venue first."); return; } if (!bookingName.trim()) { setBookingError("Please enter a booking name."); return; } const duration = (selectedSlot.endIdx - selectedSlot.startIdx + 1) * bookingUnit; if (selectedVenue.max_daily_booking_time && duration > selectedVenue.max_daily_booking_time) { setBookingError(`Booking duration exceeds the venue's maximum daily booking time of ${formatDuration(selectedVenue.max_daily_booking_time)}.`); return; } const bookingDate = new Date(daysInWeek[selectedSlot.dayIdx]); const [startHour, startMinute] = timeSlots[selectedSlot.startIdx].split(":").map(Number); bookingDate.setHours(startHour, startMinute, 0, 0); try { setIsCreatingBooking(true); setBookingError(null); await createBooking({ venue_id: selectedVenueId, smallest_booking_unit: bookingUnit, start_time: Math.floor(bookingDate.getTime() / 1000), name: bookingName.trim(), duration }); toast.success("Booking created successfully"); await fetchBookings(); setIsBookingDialogOpen(false); setSelectedSlot(null); setBookingName(""); } catch (createError) { setBookingError(getErrorMessage(createError, "Failed to create booking.")); } finally { setIsCreatingBooking(false); } }}>{isCreatingBooking ? "Creating..." : "Create Booking"}</Button></DialogFooter></DialogContent></Dialog>}
+      {selectedSlot && <Dialog open={isBookingDialogOpen} onOpenChange={(open) => { setIsBookingDialogOpen(open); if (!open) { setSelectedSlot(null); setBookingError(null); setBookingName(""); } }}><DialogContent><DialogHeader><DialogTitle>Create Booking</DialogTitle><DialogDescription>{formatWeekday(visibleDays[selectedSlot.dayIdx], "long")}, {visibleDays[selectedSlot.dayIdx].getDate()}</DialogDescription></DialogHeader><div className="space-y-4"><div><Label htmlFor="booking-name">Booking Name</Label><Input id="booking-name" className="mt-1" value={bookingName} onChange={(event) => setBookingName(event.target.value)} /></div><div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-slate-700"><p><span className="font-semibold">Time:</span> {timeSlots[selectedSlot.startIdx]} - {timeSlots[selectedSlot.endIdx + 1] || "23:59"}</p><p className="mt-2 text-xs text-slate-500"><span className="font-semibold">Duration:</span> {(selectedSlot.endIdx - selectedSlot.startIdx + 1) * bookingUnit} minutes</p></div>{bookingError && <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{bookingError}</div>}</div><DialogFooter><Button variant="outline" onClick={() => { setIsBookingDialogOpen(false); setSelectedSlot(null); setBookingError(null); setBookingName(""); }}>Cancel</Button><Button disabled={isCreatingBooking} onClick={async () => { if (!selectedVenueId || !selectedVenue) { setBookingError("Please select a venue first."); return; } if (!bookingName.trim()) { setBookingError("Please enter a booking name."); return; } const duration = (selectedSlot.endIdx - selectedSlot.startIdx + 1) * bookingUnit; if (selectedVenue.max_daily_booking_time && duration > selectedVenue.max_daily_booking_time) { setBookingError(`Booking duration exceeds the venue's maximum daily booking time of ${formatDuration(selectedVenue.max_daily_booking_time)}.`); return; } const bookingDate = new Date(visibleDays[selectedSlot.dayIdx]); const [startHour, startMinute] = timeSlots[selectedSlot.startIdx].split(":").map(Number); bookingDate.setHours(startHour, startMinute, 0, 0); try { setIsCreatingBooking(true); setBookingError(null); await createBooking({ venue_id: selectedVenueId, smallest_booking_unit: bookingUnit, start_time: Math.floor(bookingDate.getTime() / 1000), name: bookingName.trim(), duration }); toast.success("Booking created successfully"); await fetchBookings(); setIsBookingDialogOpen(false); setSelectedSlot(null); setBookingName(""); } catch (createError) { setBookingError(getErrorMessage(createError, "Failed to create booking.")); } finally { setIsCreatingBooking(false); } }}>{isCreatingBooking ? "Creating..." : "Create Booking"}</Button></DialogFooter></DialogContent></Dialog>}
 
       <Dialog open={deleteSlotTime !== null} onOpenChange={(open) => { if (!open) { setDeleteSlotTime(null); setDeleteBookingName(null); } }}><DialogContent><DialogHeader><DialogTitle>Booking Details</DialogTitle><DialogDescription>Review the selected slot before deleting it.</DialogDescription></DialogHeader>{deleteSlotTime && <div className="space-y-4 text-sm text-slate-700"><div><p className="font-semibold text-slate-900">Booking name</p><p className="mt-1">{deleteBookingName}</p></div><div><p className="font-semibold text-slate-900">Slot time</p><p className="mt-1">{new Date(deleteSlotTime * 1000).toLocaleString()}</p></div></div>}<DialogFooter><Button variant="outline" onClick={() => { setDeleteSlotTime(null); setDeleteBookingName(null); }}>Close</Button><Button variant="destructive" disabled={isDeletingBooking || !deleteSlotTime || !selectedVenueId} onClick={async () => { if (!deleteSlotTime || !selectedVenueId) return; try { setIsDeletingBooking(true); await removeBooking({ venue_id: selectedVenueId, slot_time: deleteSlotTime }); toast.success("Booking deleted successfully"); await fetchBookings(); setDeleteSlotTime(null); setDeleteBookingName(null); } catch (deleteError) { toast.error(getErrorMessage(deleteError, "Failed to delete booking")); } finally { setIsDeletingBooking(false); } }}>{isDeletingBooking ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Deleting...</> : <><Trash2 className="mr-2 h-4 w-4" />Delete Slot</>}</Button></DialogFooter></DialogContent></Dialog>
 

@@ -48,12 +48,16 @@ export interface ClubVariableRequest {
 
 export function toClubVariableRequest(variable: ClubVariable): ClubVariableRequest {
   const rulesEngine = variable.rules_engine;
+  const isRulesEngineEnabled =
+    !!rulesEngine &&
+    typeof rulesEngine === "object" &&
+    (rulesEngine.enabled ?? true) === true;
 
   return {
     name: variable.name,
     key: variable.key,
     visible: variable.visible,
-    rules_engine: rulesEngine
+    rules_engine: isRulesEngineEnabled
       ? {
           pattern: rulesEngine.pattern,
           initial_sequence: Math.max(
@@ -79,6 +83,7 @@ export interface ClubDetailsRequest {
   payfast_details?: ClubPayFastDetailsRequest;
   country_of_operation?: string;
   currency?: string;
+  time_zone?: string;
   support_email?: string;
   club_url?: string;
   about_club?: string;

@@ -19,6 +19,29 @@ import { activateAdminUser } from "@/services/admin/auth_service.tsx";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 
+const PASSWORD_REQUIREMENTS = [
+    {
+        label: "At least 8 characters",
+        test: (value: string) => value.length >= 8,
+    },
+    {
+        label: "One uppercase letter",
+        test: (value: string) => /[A-Z]/.test(value),
+    },
+    {
+        label: "One lowercase letter",
+        test: (value: string) => /[a-z]/.test(value),
+    },
+    {
+        label: "One number",
+        test: (value: string) => /\d/.test(value),
+    },
+    {
+        label: "One special character",
+        test: (value: string) => /[^A-Za-z0-9]/.test(value),
+    },
+];
+
 export function ActivateAccountForm({
     className,
     ...props
@@ -34,12 +57,17 @@ export function ActivateAccountForm({
 
     const [searchParams] = useSearchParams();
     const email = searchParams.get('email');
+    const passwordChecks = PASSWORD_REQUIREMENTS.map((requirement) => ({
+        ...requirement,
+        met: requirement.test(password),
+    }));
+    const isPasswordValid = passwordChecks.every((requirement) => requirement.met);
 
     const activateAccount = async (event: FormEvent) => {
         event.preventDefault();
 
-        if (password.length < 8) {
-            setError("Password length is too short.")
+        if (!isPasswordValid) {
+            setError("Password must meet all the listed requirements.")
             return
         }
 
@@ -75,7 +103,7 @@ export function ActivateAccountForm({
                 } else {
                     navigate(onboarded ? "/" : "/onboardMember");
                 }
-            } catch (loginError) {
+            } catch {
                 // If login fails, redirect to login page
                 navigate("/login");
             }
@@ -97,26 +125,36 @@ export function ActivateAccountForm({
 
     return (
         <div className={cn("flex flex-col gap-6", className)} {...props}>
-            <Card>
-                <CardHeader className="text-center">
-                    <CardTitle className="text-xl">Activate Account</CardTitle>
+            <Card className="border-slate-200 shadow-sm">
+                <CardHeader className="space-y-3 text-center">
+                    <div className="space-y-1">
+                        <p className="text-sm font-medium uppercase tracking-[0.18em] text-slate-500">
+                            Set Your Password
+                        </p>
+                        <CardTitle className="text-2xl text-slate-950">Activate Account</CardTitle>
+                        <p className="text-sm leading-6 text-slate-600">
+                            Your account is ready. Choose a secure password to finish setting it up and sign in.
+                        </p>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={activateAccount}>
                         <div className="grid gap-6">
-                            <div className="grid gap-3">
-                                <div className="flex items-center">
-                                    <Label htmlFor="password">User: <strong>{email}</strong></Label>
-                                </div>
+                            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left">
+                                <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
+                                    Account Email
+                                </p>
+                                <p className="mt-1 text-sm font-semibold text-slate-950">{email}</p>
                             </div>
+
                             <div className="grid gap-3 relative">
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor="password">New Password</Label>
+                                    <Label htmlFor="password">Create Password</Label>
                                 </div>
                                 <Input
                                     id="password"
                                     type={showPassword ? "text" : "password"}
-                                    placeholder="**********"
+                                    placeholder="Enter your new password"
                                     value={password}
                                     onChange={(event) => {
                                         setPassword(event.target.value);
@@ -126,19 +164,22 @@ export function ActivateAccountForm({
                                 />
                                 <div
                                     className="absolute right-5 bottom-10 top-[55%] transform -translate-y-1/2 cursor-pointer text-muted-foreground"
-                                    onClick={() => { setShowPassword(!showPassword), setError("") }}
+                                    onClick={() => {
+                                        setShowPassword(!showPassword);
+                                        setError("");
+                                    }}
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </div>
                             </div>
                             <div className="grid gap-3 relative">
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor="secondpassword">Re-enter password</Label>
+                                    <Label htmlFor="secondpassword">Confirm Password</Label>
                                 </div>
                                 <Input
                                     id="secondpassword"
                                     type={showPassword ? "text" : "password"}
-                                    placeholder="**********"
+                                    placeholder="Re-enter your password"
                                     value={secondPassword}
                                     onChange={(event) => {
                                         setSecondPassword(event.target.value);
@@ -148,7 +189,10 @@ export function ActivateAccountForm({
                                 />
                                 <div
                                     className="absolute right-5 bottom-10 top-[55%] transform -translate-y-1/2 cursor-pointer text-muted-foreground"
-                                    onClick={() => { setShowPassword(!showPassword), setError("") }}
+                                    onClick={() => {
+                                        setShowPassword(!showPassword);
+                                        setError("");
+                                    }}
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </div>
@@ -157,7 +201,7 @@ export function ActivateAccountForm({
 
                             {
                                 error &&
-                                <Alert variant="destructive">
+                                <Alert variant="destructive" className="border-red-200 bg-red-50">
                                     <AlertCircle className="h-4 w-4" />
                                     <AlertDescription className="text-xs">
                                         {error}
@@ -167,14 +211,13 @@ export function ActivateAccountForm({
                         </div>
 
                         <Button type="submit" className="w-full mt-6" disabled={loading}>
-                            {loading ? "Submitting..." : "Submit"}
+                            {loading ? "Setting password..." : "Set password and continue"}
                         </Button>
                     </form>
                 </CardContent>
             </Card>
-            <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
-                By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-                and <a href="#">Privacy Policy</a>.
+            <div className="text-center text-xs leading-5 text-slate-500">
+                Once your password is set, you will be signed in automatically.
             </div>
         </div>
     )

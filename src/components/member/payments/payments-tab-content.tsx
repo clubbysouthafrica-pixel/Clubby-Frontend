@@ -9,7 +9,6 @@ import {
   CheckCircle, 
   CreditCard, 
   FileText, 
-  Copy,
   Loader2,
   ArrowUp,
   ArrowDown,
@@ -69,6 +68,7 @@ interface PaymentsTabContentProps {
   handleCancelEdit: () => void;
   handlePayHereClick: (paymentOption?: PaymentTransactionOption) => void;
   onViewPaymentTarget: (paymentOption: PaymentTransactionOption) => void;
+  onViewRegistrationTarget: () => void;
 }
 
 export default function PaymentsTabContent({
@@ -92,11 +92,11 @@ export default function PaymentsTabContent({
   handleCancelEdit,
   handlePayHereClick,
   onViewPaymentTarget,
+  onViewRegistrationTarget,
 }: PaymentsTabContentProps) {
   const [sortColumn, setSortColumn] = useState<'type' | 'status' | 'amount' | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [transactionSearch, setTransactionSearch] = useState("");
-  const [copiedPaymentId, setCopiedPaymentId] = useState<string | null>(null);
   const outstandingBalanceRef = useRef<HTMLDivElement | null>(null);
   const highlightedPaymentRef = useRef<HTMLDivElement | null>(null);
   const outstandingAmount = bankDetails?.outstanding_amount ?? 0;
@@ -110,6 +110,12 @@ export default function PaymentsTabContent({
       ? bankDetails.transaction_options
       : [];
   }, [bankDetails?.transaction_options]);
+
+  const hasFallbackOutstandingPayment = useMemo(() => {
+    return outstandingAmount > 0 && transactionOptions.length === 0;
+  }, [outstandingAmount, transactionOptions.length]);
+
+  const visiblePaymentItemCount = transactionOptions.length + (hasFallbackOutstandingPayment ? 1 : 0);
 
   useEffect(() => {
     if (!isActive || scrollToOutstandingTrigger === 0) {
@@ -170,7 +176,6 @@ export default function PaymentsTabContent({
         .toLowerCase();
 
       return [
-        transaction.transaction_id,
         transaction.type,
         transaction.status,
         String(transaction.amount),
@@ -186,12 +191,6 @@ export default function PaymentsTabContent({
       setSortColumn(column);
       setSortDirection('asc');
     }
-  };
-
-  const handleCopyPaymentValue = (value: string, fieldKey: string) => {
-    navigator.clipboard.writeText(value);
-    setCopiedPaymentId(fieldKey);
-    setTimeout(() => setCopiedPaymentId((current) => (current === fieldKey ? null : current)), 2000);
   };
 
   const sortedTransactions = useMemo(() => {
@@ -420,17 +419,17 @@ export default function PaymentsTabContent({
                     <div>
                       <CardTitle className="text-xl text-slate-950 sm:text-2xl">Ready to pay</CardTitle>
                       <CardDescription className="mt-1 max-w-2xl text-sm leading-5 text-slate-500 sm:leading-6">
-                        Choose a charge below to open payment options. Each card keeps the related identifiers visible so you can reconcile orders and event registrations quickly.
+                        Choose a charge below to open payment options for orders, fees, and event registrations.
                       </CardDescription>
                     </div>
                   </div>
-                  <Badge className="w-fit border-slate-200 bg-white text-slate-700">
-                    {transactionOptions.length} pending {transactionOptions.length === 1 ? "payment" : "payments"}
+                    <Badge className="w-fit border-slate-200 bg-white text-slate-700">
+                    {visiblePaymentItemCount} pending {visiblePaymentItemCount === 1 ? "payment" : "payments"}
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent className="p-3 sm:p-6">
-                {transactionOptions.length === 0 ? (
+                {visiblePaymentItemCount === 0 ? (
                   <div className="rounded-3xl border border-dashed border-slate-200 bg-white/70 px-5 py-8 text-center sm:px-6 sm:py-10">
                     <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 sm:h-14 sm:w-14">
                       <Receipt className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -442,6 +441,56 @@ export default function PaymentsTabContent({
                   </div>
                 ) : (
                   <div className={cn("grid gap-3 sm:gap-4", transactionOptions.length > 3 && "xl:max-h-[44rem] xl:overflow-y-auto xl:pr-1")}>
+                    {hasFallbackOutstandingPayment ? (
+                      <div className="rounded-[1.75rem] border border-slate-200 bg-white p-3.5 shadow-[0_16px_40px_-30px_rgba(15,23,42,0.35)] transition-all sm:p-5">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-5">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Badge className="border-slate-200 bg-slate-50 text-slate-700">
+                                Registration fee
+                              </Badge>
+                              <Badge className="border-amber-200 bg-amber-50 text-amber-700">Awaiting payment</Badge>
+                            </div>
+                            <div className="mt-3 flex flex-col gap-2.5 md:mt-4 md:flex-row md:items-end md:justify-between md:gap-3">
+                              <div>
+                                <h3 className="text-lg font-semibold text-slate-950 sm:text-xl">
+                                  Registration payment
+                                </h3>
+                                <p className="mt-1 text-sm leading-5 text-slate-500 sm:leading-6">
+                                  Your registration fee is still outstanding and ready to be paid here.
+                                </p>
+                              </div>
+                              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 sm:px-4 sm:py-3">
+                                <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Amount due</p>
+                                <p className="mt-1 text-xl font-semibold sm:text-2xl">
+                                  {formatAmount(outstandingAmount, data.currency)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-2 lg:w-[180px]">
+                            <Button
+                              variant="outline"
+                              onClick={onViewRegistrationTarget}
+                              className="h-9 justify-between border-slate-200 bg-white text-sm text-slate-700 hover:bg-slate-50"
+                            >
+                              View target
+                              <ChevronRight className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              onClick={() => handlePayHereClick()}
+                              disabled={outstandingAmount <= 0}
+                              className="h-9 justify-between bg-slate-800 text-sm text-white hover:bg-slate-700"
+                            >
+                              {outstandingAmount > 0 ? "Pay now" : "Paid"}
+                              <ChevronRight className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+
                     {transactionOptions.map((paymentOption: PaymentTransactionOption, index: number) => {
                       const totalAmount = paymentOption.total_amount ?? 0;
                       const paymentOutstandingAmount = paymentOption.outstanding_amount ?? totalAmount;
@@ -491,58 +540,6 @@ export default function PaymentsTabContent({
                                 </div>
                               </div>
 
-                              <div className="mt-3 grid gap-2.5 md:mt-5 md:gap-3 md:grid-cols-2">
-                                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 sm:px-4 sm:py-3">
-                                  <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Transaction ID</p>
-                                  <div className="mt-2 flex items-center gap-2">
-                                    <span className="min-w-0 break-all font-mono text-sm font-medium text-slate-900">
-                                      {paymentOption.transaction_id}
-                                    </span>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleCopyPaymentValue(paymentOption.transaction_id, `transaction-${paymentOption.transaction_id}`)}
-                                      className="h-7 w-7 shrink-0 p-0"
-                                      title="Copy Transaction ID"
-                                    >
-                                      <Copy className="h-3.5 w-3.5" />
-                                    </Button>
-                                  </div>
-                                  {copiedPaymentId === `transaction-${paymentOption.transaction_id}` ? (
-                                    <p className="mt-1 text-[11px] font-medium text-slate-500">Copied</p>
-                                  ) : null}
-                                </div>
-
-                                {orderId || eventRegistrationId ? (
-                                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 sm:px-4 sm:py-3">
-                                    <p className="text-xs uppercase tracking-[0.16em] text-slate-500">
-                                      {orderId ? "Order ID" : "Event Registration ID"}
-                                    </p>
-                                    <div className="mt-2 flex items-center gap-2">
-                                      <span className="min-w-0 break-all font-mono text-sm font-medium text-slate-900">
-                                        {orderId || eventRegistrationId}
-                                      </span>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() =>
-                                          handleCopyPaymentValue(
-                                            orderId || eventRegistrationId || "",
-                                            orderId ? `order-${paymentOption.transaction_id}` : `event-${paymentOption.transaction_id}`,
-                                          )
-                                        }
-                                        className="h-7 w-7 shrink-0 p-0"
-                                        title={orderId ? "Copy Order ID" : "Copy Event Registration ID"}
-                                      >
-                                        <Copy className="h-3.5 w-3.5" />
-                                      </Button>
-                                    </div>
-                                    {copiedPaymentId === (orderId ? `order-${paymentOption.transaction_id}` : `event-${paymentOption.transaction_id}`) ? (
-                                      <p className="mt-1 text-[11px] font-medium text-slate-500">Copied</p>
-                                    ) : null}
-                                  </div>
-                                ) : null}
-                              </div>
                             </div>
 
                             <div className="flex flex-col gap-2 lg:w-[180px]">
@@ -626,7 +623,7 @@ export default function PaymentsTabContent({
                       <Input
                         value={transactionSearch}
                         onChange={(event) => setTransactionSearch(event.target.value)}
-                        placeholder="Search transaction ID, type, status, amount, or lifecycle details"
+                        placeholder="Search type, status, amount, or lifecycle details"
                         className="h-10 rounded-2xl border-slate-200 bg-slate-50 pl-10 text-sm shadow-none sm:h-12 sm:pl-11"
                       />
                     </div>
@@ -683,23 +680,9 @@ export default function PaymentsTabContent({
                                 </div>
                                 <div className="mt-3 flex flex-col gap-2.5 md:mt-4 md:flex-row md:items-end md:justify-between md:gap-3">
                                   <div>
-                                    <div className="flex items-center gap-2">
-                                      <span className="font-mono text-sm font-medium text-slate-900">
-                                        {tx.transaction_id}
-                                      </span>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={(event) => {
-                                          event.stopPropagation();
-                                          navigator.clipboard.writeText(tx.transaction_id);
-                                        }}
-                                        className="h-7 w-7 p-0 text-slate-500 hover:bg-slate-100"
-                                        title="Copy full Transaction ID"
-                                      >
-                                        <Copy className="h-3.5 w-3.5" />
-                                      </Button>
-                                    </div>
+                                    <p className="text-sm font-medium text-slate-900">
+                                      {tx.type} payment activity
+                                    </p>
                                     <p className="mt-1.5 text-sm leading-5 text-slate-500 sm:mt-2 sm:leading-6">
                                       {lifecycleEntries.length} lifecycle {lifecycleEntries.length === 1 ? "entry" : "entries"} recorded for this transaction.
                                     </p>

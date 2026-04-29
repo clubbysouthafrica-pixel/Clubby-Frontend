@@ -26,7 +26,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
 
 import PaymentOptionsScreen from "@/components/member/payments/payment-options-screen";
-import type { PaymentTransactionOption } from "@/components/member/payments/payment-types.ts";
+import type {
+  BankDetails,
+  PaymentTransactionOption,
+} from "@/components/member/payments/payment-types.ts";
 import {
   formatDateKey,
   formatLongDate,
@@ -175,12 +178,22 @@ function normalizeClubSection(value: string | null) {
   return "home" as ClubSection;
 }
 
-function getClubSectionPath(clubId: string, section: ClubSection) {
+function getClubSectionPath(
+  clubId: string,
+  section: ClubSection,
+  currentPathname?: string,
+) {
   const routeSegment = CLUB_SECTION_ROUTE_SEGMENTS[section];
+  const pathname =
+    currentPathname ??
+    (typeof window !== "undefined" ? window.location.pathname : "");
+  const basePath = pathname.startsWith(`/clubs/${clubId}`)
+    ? "/clubs"
+    : "/myclubs";
 
   return routeSegment
-    ? `/myclubs/${clubId}/${routeSegment}`
-    : `/myclubs/${clubId}`;
+    ? `${basePath}/${clubId}/${routeSegment}`
+    : `${basePath}/${clubId}`;
 }
 
 function getClubSectionFromPath(pathname: string, clubId: string) {
@@ -454,16 +467,107 @@ export default function ViewClubPage() {
 
   const navigate = useNavigate();
   const { clubId } = useParams();
+  const { pathname, search } = useLocation();
+  const paymentQueryParams = useMemo(() => new URLSearchParams(search), [search]);
+  const shouldForcePaymentAccess =
+    paymentQueryParams.get("paymentScreen") === "true";
+  const paymentReference = paymentQueryParams.get("paymentReference") ?? undefined;
+  const paymentUserId = paymentQueryParams.get("userId") ?? undefined;
+  const paymentAmount = paymentQueryParams.get("amount");
+  const paymentBank = paymentQueryParams.get("bank") ?? undefined;
+  const paymentAccountNumber =
+    paymentQueryParams.get("accountNumber") ?? undefined;
+  const paymentAccountType = paymentQueryParams.get("accountType") ?? undefined;
+  const paymentBranchCode = paymentQueryParams.get("branchCode") ?? undefined;
+  const paymentPayfastEnabled = paymentQueryParams.get("payfastEnabled");
+  const isPublicPaymentRoute = pathname === `/clubs/${clubId}/payments`;
+  const shouldUsePublicPaymentData =
+    shouldForcePaymentAccess && isPublicPaymentRoute && !isLoggedIn;
   const [countryName, setCountryName] = useState("");
-  const { data, isLoading, isError } = useFetchClub(clubId as string);
+  const { data, isLoading, isError } = useFetchClub(
+    clubId as string,
+    !shouldUsePublicPaymentData,
+  );
 
   const { data: bankDetails, isLoading: bankDetailsLoading } =
-    useFetchClubBankDetails(clubId as string, !!data?.club_member_exists);
+    useFetchClubBankDetails(
+      clubId as string,
+      !!data?.club_member_exists && !shouldUsePublicPaymentData,
+    );
+
+  const activeBankDetails = useMemo<BankDetails | null | undefined>(() => {
+    if (!shouldUsePublicPaymentData) {
+      return bankDetails;
+    }
+
+    const rawClubData = (data ?? {}) as Record<string, unknown>;
+    const rawBankDetails =
+      rawClubData.bank_details && typeof rawClubData.bank_details === "object"
+        ? (rawClubData.bank_details as Record<string, unknown>)
+        : {};
+
+    const parsedPaymentAmount =
+      paymentAmount !== null && Number.isFinite(Number(paymentAmount))
+        ? Number(paymentAmount)
+        : undefined;
+
+    return {
+      bank:
+        paymentBank ||
+        (typeof rawBankDetails.bank === "string" ? rawBankDetails.bank : undefined),
+      account_number:
+        paymentAccountNumber ||
+        (typeof rawBankDetails.account_number === "string"
+          ? rawBankDetails.account_number
+          : undefined),
+      branch_code:
+        paymentBranchCode ||
+        (typeof rawBankDetails.branch_code === "string"
+          ? rawBankDetails.branch_code
+          : undefined),
+      account_type:
+        paymentAccountType ||
+        (typeof rawBankDetails.account_type === "string"
+          ? rawBankDetails.account_type
+          : undefined),
+      registration_payment_reference:
+        paymentReference ||
+        (typeof data?.registration_payment_reference === "string"
+          ? data.registration_payment_reference
+          : undefined),
+      outstanding_amount:
+        parsedPaymentAmount ??
+        (typeof data?.outstanding_amount === "number" ? data.outstanding_amount : 0),
+      transaction_options: Array.isArray(rawBankDetails.transaction_options)
+        ? (rawBankDetails.transaction_options as PaymentTransactionOption[])
+        : [],
+    };
+  }, [
+    bankDetails,
+    data,
+    paymentAccountNumber,
+    paymentAccountType,
+    paymentAmount,
+    paymentBank,
+    paymentBranchCode,
+    paymentReference,
+    shouldUsePublicPaymentData,
+  ]);
+
+  const activePayfastEnabled =
+    shouldUsePublicPaymentData && paymentPayfastEnabled !== null
+      ? paymentPayfastEnabled === "true"
+      : data?.payfast_enabled;
+
+  const activeBankDetailsLoading = shouldUsePublicPaymentData
+    ? false
+    : bankDetailsLoading;
 
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
-  const [activeTab, setActiveTab] = useState("home");
+  const [activeTab, setActiveTab] = useState<ClubSection>(() =>
+    getClubSectionFromPath(pathname, clubId as string),
+  );
   const [selectedStorageItem, setSelectedStorageItem] = useState<any>(null);
-  const { pathname, search } = useLocation();
 
   const routeSection = useMemo(
     () => getClubSectionFromPath(pathname, clubId as string),
@@ -484,6 +588,7 @@ export default function ViewClubPage() {
     const transactionIdParam = queryParams.get("transactionId");
     const eventRegistrationIdParam = queryParams.get("eventRegistrationId");
     const shouldOpenPaymentScreen = queryParams.get("paymentScreen") === "true";
+    let matchedPaymentOption: PaymentTransactionOption | null = null;
 
     if (routeSection === "storage" && !isStorageFeatureEnabled && clubId) {
       navigate(
@@ -522,15 +627,16 @@ export default function ViewClubPage() {
     // Auto-select payment if orderId is in query params and bankDetails are loaded
     if (
       orderIdParam &&
-      bankDetails?.transaction_options &&
-      !bankDetailsLoading
+      activeBankDetails?.transaction_options &&
+      !activeBankDetailsLoading
     ) {
-      const matchedPayment = bankDetails.transaction_options.find(
+      const matchedPayment = activeBankDetails.transaction_options.find(
         (payment: PaymentTransactionOption) =>
           payment.order_id === orderIdParam,
       );
 
       if (matchedPayment) {
+        matchedPaymentOption = matchedPayment;
         setPaymentReturnTab("bank");
         if (clubId && routeSection !== "bank") {
           navigate(
@@ -551,15 +657,16 @@ export default function ViewClubPage() {
 
     if (
       transactionIdParam &&
-      bankDetails?.transaction_options &&
-      !bankDetailsLoading
+      activeBankDetails?.transaction_options &&
+      !activeBankDetailsLoading
     ) {
-      const matchedPayment = bankDetails.transaction_options.find(
+      const matchedPayment = activeBankDetails.transaction_options.find(
         (payment: PaymentTransactionOption) =>
           payment.transaction_id === transactionIdParam,
       );
 
       if (matchedPayment) {
+        matchedPaymentOption = matchedPayment;
         setPaymentReturnTab("bank");
         if (clubId && routeSection !== "bank") {
           navigate(
@@ -580,15 +687,16 @@ export default function ViewClubPage() {
 
     if (
       eventRegistrationIdParam &&
-      bankDetails?.transaction_options &&
-      !bankDetailsLoading
+      activeBankDetails?.transaction_options &&
+      !activeBankDetailsLoading
     ) {
-      const matchedPayment = bankDetails.transaction_options.find(
+      const matchedPayment = activeBankDetails.transaction_options.find(
         (payment: PaymentTransactionOption) =>
           payment.event_registration_id === eventRegistrationIdParam,
       );
 
       if (matchedPayment) {
+        matchedPaymentOption = matchedPayment;
         setPaymentReturnTab("bank");
         if (clubId && routeSection !== "bank") {
           navigate(
@@ -606,10 +714,33 @@ export default function ViewClubPage() {
         }
       }
     }
+
+    if (
+      shouldOpenPaymentScreen &&
+      !activeBankDetailsLoading &&
+      activeBankDetails &&
+      !matchedPaymentOption
+    ) {
+      setPaymentReturnTab("bank");
+      setSelectedPaymentOption(null);
+
+      if (clubId && routeSection !== "bank") {
+        navigate(
+          {
+            pathname: getClubSectionPath(clubId, "bank"),
+            search: search ? search : "",
+          },
+          { replace: true },
+        );
+      }
+
+      setIsPaymentScreenOpen(true);
+    }
   }, [
     search,
-    bankDetails?.transaction_options,
-    bankDetailsLoading,
+    activeBankDetails?.transaction_options,
+    activeBankDetails,
+    activeBankDetailsLoading,
     clubId,
     navigate,
     routeSection,
@@ -619,7 +750,7 @@ export default function ViewClubPage() {
   const [scrollToOutstandingTrigger, setScrollToOutstandingTrigger] =
     useState(0);
   const [newReference, setNewReference] = useState(
-    bankDetails?.registration_payment_reference || "",
+    activeBankDetails?.registration_payment_reference || "",
   );
   const [savingReference, setSavingReference] = useState(false);
   const [isPaymentScreenOpen, setIsPaymentScreenOpen] = useState(false);
@@ -991,7 +1122,7 @@ export default function ViewClubPage() {
     if (paymentOption) {
       setSelectedPaymentOption(paymentOption);
       setPaymentReturnTab(activeTab);
-      if (!bankDetailsLoading && bankDetails) {
+      if (!activeBankDetailsLoading && activeBankDetails) {
         setIsPaymentScreenOpen(true);
       } else {
         toast.error("Payment details are still loading. Please wait...");
@@ -999,8 +1130,8 @@ export default function ViewClubPage() {
     } else {
       setPaymentReturnTab(activeTab);
       if (
-        bankDetails?.transaction_options &&
-        bankDetails.transaction_options.length > 0
+        activeBankDetails?.transaction_options &&
+        activeBankDetails.transaction_options.length > 0
       ) {
         if (clubId) {
           navigate(getClubSectionPath(clubId, "bank"));
@@ -1008,7 +1139,7 @@ export default function ViewClubPage() {
         return;
       }
 
-      if (!bankDetailsLoading && bankDetails) {
+      if (!activeBankDetailsLoading && activeBankDetails) {
         setIsPaymentScreenOpen(true);
       } else {
         toast.error("Payment details are still loading. Please wait...");
@@ -1056,12 +1187,12 @@ export default function ViewClubPage() {
       return;
     }
 
-    if (bankDetailsLoading) {
+    if (activeBankDetailsLoading) {
       toast.error("Payment details are still loading. Please wait...");
       return;
     }
 
-    const matchedPayment = bankDetails?.transaction_options?.find(
+    const matchedPayment = activeBankDetails?.transaction_options?.find(
       (payment: PaymentTransactionOption) => payment.order_id === orderId,
     );
 
@@ -1079,12 +1210,12 @@ export default function ViewClubPage() {
       return;
     }
 
-    if (bankDetailsLoading) {
+    if (activeBankDetailsLoading) {
       toast.error("Payment details are still loading. Please wait...");
       return;
     }
 
-    const matchedPayment = bankDetails?.transaction_options?.find(
+    const matchedPayment = activeBankDetails?.transaction_options?.find(
       (payment: PaymentTransactionOption) =>
         payment.event_registration_id === eventRegistrationId,
     );
@@ -1112,6 +1243,12 @@ export default function ViewClubPage() {
     }
   };
 
+  const handleViewRegistrationPaymentTarget = () => {
+    setOrderSearch("");
+    setEventRegistrationSearch("");
+    handleSectionChange("member-registration");
+  };
+
   const handleOpenOutstandingBalance = () => {
     handleSectionChange("bank");
     setScrollToOutstandingTrigger((current) => current + 1);
@@ -1131,8 +1268,8 @@ export default function ViewClubPage() {
         newReference,
       );
       // Update the local bankDetails state
-      if (bankDetails) {
-        bankDetails.registration_payment_reference = newReference;
+      if (activeBankDetails) {
+        activeBankDetails.registration_payment_reference = newReference;
       }
       setEditingReference(false);
       toast.success("Payment reference updated successfully");
@@ -1140,14 +1277,14 @@ export default function ViewClubPage() {
       console.error("Failed to update payment reference:", error);
       toast.error("Failed to update payment reference");
       // Reset to original value on error
-      setNewReference(bankDetails?.registration_payment_reference || "");
+      setNewReference(activeBankDetails?.registration_payment_reference || "");
     } finally {
       setSavingReference(false);
     }
   };
 
   const handleCancelEdit = () => {
-    setNewReference(bankDetails?.registration_payment_reference || "");
+    setNewReference(activeBankDetails?.registration_payment_reference || "");
     setEditingReference(false);
   };
 
@@ -1175,8 +1312,8 @@ export default function ViewClubPage() {
   }, [data]);
 
   useEffect(() => {
-    setNewReference(bankDetails?.registration_payment_reference || "");
-  }, [bankDetails?.registration_payment_reference]);
+    setNewReference(activeBankDetails?.registration_payment_reference || "");
+  }, [activeBankDetails?.registration_payment_reference]);
 
   useEffect(() => {
     if (!isPaymentScreenOpen) {
@@ -1304,18 +1441,21 @@ export default function ViewClubPage() {
   if (
     isPaymentScreenOpen &&
     !isError &&
-    data?.onboarded &&
-    data?.deregistration_in_progress !== true
+    (shouldUsePublicPaymentData ||
+      (data?.onboarded && data?.deregistration_in_progress !== true))
   ) {
     return (
       <Pager>
         <PaymentOptionsScreen
-          bankDetails={bankDetails}
-          bankDetailsLoading={bankDetailsLoading}
-          clubAccountId={data?.club_account_id ?? ""}
+          bankDetails={activeBankDetails}
+          bankDetailsLoading={activeBankDetailsLoading}
+          clubAccountId={data?.club_account_id ?? clubId ?? ""}
           currency={data?.currency}
           supportEmail={data?.support_email}
-          payfastEnabled={data?.payfast_enabled}
+          payfastEnabled={activePayfastEnabled}
+          userId={paymentUserId}
+          paymentReference={paymentReference}
+          backLabel={shouldUsePublicPaymentData ? "Go Back" : undefined}
           selectedPaymentOption={selectedPaymentOption}
           selectedPaymentMethod={selectedPaymentMethod}
           onSelectedPaymentMethodChange={setSelectedPaymentMethod}
@@ -1563,7 +1703,7 @@ export default function ViewClubPage() {
                               )
                           : undefined
                     }
-                    outstandingBalanceAmount={bankDetails?.outstanding_amount}
+                    outstandingBalanceAmount={activeBankDetails?.outstanding_amount}
                     coverImage={coverImage}
                     profileImage={profileImage}
                     clubUrl={data?.club_url}
@@ -1627,7 +1767,7 @@ export default function ViewClubPage() {
                   {data?.club_member_exists && (
                     <ClubPaymentsTab
                       data={data}
-                      bankDetails={bankDetails}
+                      bankDetails={activeBankDetails}
                       clubAccountId={data?.club_account_id ?? ""}
                       userId={data?.user_id ?? ""}
                       isActive={activeTab === "bank"}
@@ -1648,6 +1788,7 @@ export default function ViewClubPage() {
                       handleCancelEdit={handleCancelEdit}
                       handlePayHereClick={handlePayHereClick}
                       onViewPaymentTarget={handleViewPaymentTarget}
+                      onViewRegistrationTarget={handleViewRegistrationPaymentTarget}
                     />
                   )}
                 </Tabs>

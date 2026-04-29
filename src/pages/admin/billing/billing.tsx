@@ -143,6 +143,7 @@ export default function BillingPage() {
   );
   const { refetch: refetchClubbyCheckoutUrl } = useGetClubbyCheckoutUrlQuery(
     club?.club_account_id,
+    undefined,
     selectedPaymentChoice?.isAllOutstanding
       ? undefined
       : selectedPaymentChoice?.month,

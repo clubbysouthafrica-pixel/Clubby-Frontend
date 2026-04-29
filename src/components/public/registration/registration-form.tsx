@@ -16,6 +16,22 @@ import {
 } from "../../shared/registration/reusable-registration-form";
 import { ReusableSubmitRegistration } from "../../shared/registration/reusable-submit-registration";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+
+type SuccessfulRegistrationPayload = {
+  message?: string;
+  transaction_id?: string;
+  registration_id?: string;
+  id?: string;
+  user_id?: string;
+  amount?: number;
+  payment_reference?: string;
+  account_number?: string;
+  account_type?: string;
+  bank?: string;
+  branch_code?: string;
+  payfast_enabled?: boolean;
+};
 interface RegistrationFormProps {
   clubName: string;
   clubProfileUrl?: string;
@@ -38,6 +54,7 @@ export function PublicRegistrationForm({
   clubCurrency = "ZAR",
   onEditDetails,
 }: RegistrationFormProps) {
+  const navigate = useNavigate();
   const { data, isLoading } = useFetchRegistrationForm(clubAccountId);
   const { mutate, isSuccess } = useMemberRegistrationMutation();
 
@@ -52,6 +69,9 @@ export function PublicRegistrationForm({
   >(undefined);
   const [totalRegistrationFee, setTotalRegistrationFee] = useState(0);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [successfulRegistration, setSuccessfulRegistration] = useState<
+    SuccessfulRegistrationPayload | null
+  >(null);
 
   const hasEmptyStandardValue = (value?: string | number) =>
     typeof value !== "string" || value.trim() === "";
@@ -196,7 +216,12 @@ export function PublicRegistrationForm({
     setIsRegistering(true);
     if (registrationRequest) {
       mutate(registrationRequest, {
-        onSuccess: () => {
+        onSuccess: (response) => {
+          setSuccessfulRegistration(
+            response && typeof response === "object"
+              ? (response as SuccessfulRegistrationPayload)
+              : {},
+          );
           setIsRegistering(false);
         },
         onError: (error) => {
@@ -229,14 +254,84 @@ export function PublicRegistrationForm({
   }
 
   if (isSuccess) {
+    const transactionId = successfulRegistration?.transaction_id;
+    const registrationId =
+      successfulRegistration?.registration_id || successfulRegistration?.id;
+    const userId = successfulRegistration?.user_id;
+    const amount = successfulRegistration?.amount;
+    const requiresPayment = typeof amount !== "number" || amount > 0;
+    const paymentReference = successfulRegistration?.payment_reference;
+    const accountNumber = successfulRegistration?.account_number;
+    const accountType = successfulRegistration?.account_type;
+    const bank = successfulRegistration?.bank;
+    const branchCode = successfulRegistration?.branch_code;
+    const payfastEnabled = successfulRegistration?.payfast_enabled;
+
     return (
       <div className="space-y-2">
         <RegistrationSuccessful
           title={`Registration successful!`}
-          message={`Your registration has been submitted. Please check your email for further instructions.`}
+          message={
+            requiresPayment
+              ? `Your registration has been submitted. Please check your email for further instructions.`
+              : successfulRegistration?.message ||
+                `Your registration has been submitted successfully. No payment is required.`
+          }
           clubName={clubName}
           clubProfileUrl={clubProfileUrl}
           onClose={onEditDetails}
+          actionLabel={requiresPayment ? "Continue to payments" : undefined}
+          onAction={
+            requiresPayment
+              ? () => {
+                  const queryParams = new URLSearchParams();
+
+                  queryParams.set("paymentScreen", "true");
+
+                  if (transactionId) {
+                    queryParams.set("transactionId", transactionId);
+                  }
+
+                  if (registrationId) {
+                    queryParams.set("registrationId", registrationId);
+                  }
+
+                  if (userId) {
+                    queryParams.set("userId", userId);
+                  }
+
+                  if (typeof amount === "number") {
+                    queryParams.set("amount", String(amount));
+                  }
+
+                  if (paymentReference) {
+                    queryParams.set("paymentReference", paymentReference);
+                  }
+
+                  if (bank) {
+                    queryParams.set("bank", bank);
+                  }
+
+                  if (accountNumber) {
+                    queryParams.set("accountNumber", accountNumber);
+                  }
+
+                  if (accountType) {
+                    queryParams.set("accountType", accountType);
+                  }
+
+                  if (branchCode) {
+                    queryParams.set("branchCode", branchCode);
+                  }
+
+                  if (typeof payfastEnabled === "boolean") {
+                    queryParams.set("payfastEnabled", String(payfastEnabled));
+                  }
+
+                  navigate(`/clubs/${clubAccountId}/payments?${queryParams.toString()}`);
+                }
+              : undefined
+          }
         />
       </div>
     );

@@ -38,8 +38,8 @@ export const getClubOrders = async (
   filters?: {
     transaction_id?: string;
     member_name?: string;
-    payment_status?: string;
-    fulfillment_status?: string;
+        payment_status?: string[];
+        fulfillment_status?: string[];
   }
 ): Promise<FetchClubOrdersResponse> => {
   try {
@@ -49,8 +49,16 @@ export const getClubOrders = async (
     if (pageToken) url += `&pageToken=${pageToken}`;
     if (filters?.transaction_id) url += `&transaction_id=${encodeURIComponent(filters.transaction_id)}`;
     if (filters?.member_name) url += `&member_name=${encodeURIComponent(filters.member_name)}`;
-    if (filters?.payment_status && filters.payment_status !== "all") url += `&payment_status=${encodeURIComponent(filters.payment_status)}`;
-    if (filters?.fulfillment_status && filters.fulfillment_status !== "all") url += `&fulfillment_status=${encodeURIComponent(filters.fulfillment_status)}`;
+        if (filters?.payment_status?.length) {
+            filters.payment_status.forEach((status) => {
+                url += `&payment_status=${encodeURIComponent(status)}`;
+            });
+        }
+        if (filters?.fulfillment_status?.length) {
+            filters.fulfillment_status.forEach((status) => {
+                url += `&fulfillment_status=${encodeURIComponent(status)}`;
+            });
+        }
     
     
     const res = await api.get(url);

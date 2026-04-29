@@ -7,6 +7,8 @@ interface RegistrationSuccessfulProps {
   clubName?: string;
   clubProfileUrl?: string;
   onClose?: () => void;
+  actionLabel?: string;
+  onAction?: () => void;
   alignLeft?: boolean;
 }
 
@@ -16,6 +18,8 @@ export default function RegistrationSuccessful({
   clubName,
   clubProfileUrl,
   onClose,
+  actionLabel,
+  onAction,
   alignLeft = false,
 }: RegistrationSuccessfulProps) {
   const containerAlignment = alignLeft
@@ -52,6 +56,11 @@ export default function RegistrationSuccessful({
         <Button variant="outline" onClick={onClose} className="px-4">
           Close
         </Button>
+        {actionLabel && onAction ? (
+          <Button onClick={onAction} className="px-4">
+            {actionLabel}
+          </Button>
+        ) : null}
       </div>
 
       <div className="mt-6 w-full">

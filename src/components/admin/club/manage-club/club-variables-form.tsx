@@ -7,6 +7,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Collapsible,
+  CollapsibleContent,
+} from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -16,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   buildRulesCodeTokenName,
   buildRulesTokenName,
@@ -278,16 +283,18 @@ export function ClubVariablesForm({
                       </div>
                     </div>
 
-                    <div className="space-y-4 rounded-lg border border-dashed border-slate-300 bg-slate-50/60 p-4">
+                    <Collapsible
+                      open={isRulesEngineEnabled(variable)}
+                      className="space-y-4 rounded-lg border border-dashed border-slate-300 bg-slate-50/60 p-4"
+                    >
                       <div className="flex items-start gap-3">
-                        <Checkbox
+                        <Switch
                           id={`rules-engine-${index}`}
                           checked={isRulesEngineEnabled(variable)}
                           onCheckedChange={(checked) => {
-                            const isChecked = checked === true;
                             updateVariableAtIndex(index, (currentVariable) => ({
                               ...currentVariable,
-                              rules_engine: isChecked
+                              rules_engine: checked
                                 ? {
                                     ...normalizeRulesEngine(currentVariable),
                                     enabled: true,
@@ -314,8 +321,7 @@ export function ClubVariablesForm({
                         </div>
                       </div>
 
-                      {isRulesEngineEnabled(variable) ? (
-                        <>
+                        <CollapsibleContent className="space-y-4 border-t border-slate-200 pt-4">
                           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div className="space-y-2 md:col-span-2">
                               <Label htmlFor={`pattern-${index}`}>Pattern</Label>
@@ -532,9 +538,8 @@ export function ClubVariablesForm({
                               No dropdown fields are currently available on the registration form.
                             </p>
                           )}
-                        </>
-                      ) : null}
-                    </div>
+                      </CollapsibleContent>
+                    </Collapsible>
 
                     <div className="flex justify-end">
                       <Button

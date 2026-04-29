@@ -31,6 +31,9 @@ interface PaymentOptionsScreenProps {
   currency?: string;
   supportEmail?: string;
   payfastEnabled?: boolean;
+  userId?: string;
+  paymentReference?: string;
+  backLabel?: string;
   selectedPaymentOption: PaymentTransactionOption | null;
   selectedPaymentMethod: PaymentMethod;
   onSelectedPaymentMethodChange: (method: PaymentMethod) => void;
@@ -47,6 +50,9 @@ export default function PaymentOptionsScreen({
   currency,
   supportEmail,
   payfastEnabled = false,
+  userId,
+  paymentReference,
+  backLabel = "Go Back to Club",
   selectedPaymentOption,
   selectedPaymentMethod,
   onSelectedPaymentMethodChange,
@@ -73,7 +79,7 @@ export default function PaymentOptionsScreen({
         <div className="mx-auto max-w-5xl">
           <Button variant="ghost" onClick={onBack} className="-ml-2 w-fit text-sm sm:text-base">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Go Back to Club
+            {backLabel}
           </Button>
         </div>
       </div>
@@ -250,13 +256,13 @@ export default function PaymentOptionsScreen({
                           </div>
                         </div>
 
-                        {bankDetails?.registration_payment_reference && (
+                        {(paymentReference || bankDetails?.registration_payment_reference) && (
                           <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 sm:px-4">
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                               <div className="min-w-0">
                                 <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Payment Reference</p>
                                 <p className="mt-1 break-all font-mono text-base font-semibold text-slate-950 sm:text-lg">
-                                  {bankDetails.registration_payment_reference}
+                                  {paymentReference || bankDetails?.registration_payment_reference}
                                 </p>
                                 <p className="mt-1 text-sm text-muted-foreground">
                                   Include this reference with your EFT payment.
@@ -267,7 +273,7 @@ export default function PaymentOptionsScreen({
                                 size="sm"
                                 onClick={() =>
                                   onCopyToClipboard(
-                                    bankDetails.registration_payment_reference || "",
+                                    paymentReference || bankDetails?.registration_payment_reference || "",
                                     "reference",
                                   )
                                 }
@@ -319,6 +325,7 @@ export default function PaymentOptionsScreen({
                 <PayFastPayment
                   clubAccountId={clubAccountId}
                   outstandingAmount={outstandingAmount}
+                  userId={userId}
                   transactionId={selectedPaymentOption?.transaction_id}
                   orderId={selectedPaymentOption?.order_id}
                   eventId={selectedPaymentOption?.event_id}

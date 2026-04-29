@@ -4,6 +4,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   ChevronDown,
   Copy,
   CheckCircle2,
@@ -204,6 +212,18 @@ export default function OrdersPage() {
   // Parse URL query params first
   const memberParam = searchParams.get("member");
   const paymentStatusParam = searchParams.get("paymentStatus");
+  const fulfillmentStatusParam = searchParams.get("fulfillmentStatus");
+
+  const parseMultiValueParam = (value: string | null) =>
+    value
+      ? value
+          .split(",")
+          .map((item) => item.trim().toUpperCase())
+          .filter(Boolean)
+      : [];
+
+  const paymentStatusValues = parseMultiValueParam(paymentStatusParam);
+  const fulfillmentStatusValues = parseMultiValueParam(fulfillmentStatusParam);
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -212,25 +232,23 @@ export default function OrdersPage() {
   // Filtering and pagination - initialize with URL params if present
   const [transactionIdSearch, setTransactionIdSearch] = useState("");
   const [memberNameSearch, setMemberNameSearch] = useState(memberParam || "");
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState(
-    paymentStatusParam ? paymentStatusParam.toUpperCase() : "all",
-  );
-  const [fulfillmentStatusFilter, setFulfillmentStatusFilter] = useState("all");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string[]>(paymentStatusValues);
+  const [fulfillmentStatusFilter, setFulfillmentStatusFilter] = useState<string[]>(fulfillmentStatusValues);
   const [appliedFilters, setAppliedFilters] = useState<{
     transaction_id?: string;
     member_name?: string;
-    payment_status?: string;
-    fulfillment_status?: string;
+    payment_status?: string[];
+    fulfillment_status?: string[];
   }>(() => {
     const filters: {
       transaction_id?: string;
       member_name?: string;
-      payment_status?: string;
-      fulfillment_status?: string;
+      payment_status?: string[];
+      fulfillment_status?: string[];
     } = {};
     if (memberParam) filters.member_name = memberParam;
-    if (paymentStatusParam)
-      filters.payment_status = paymentStatusParam.toUpperCase();
+    if (paymentStatusValues.length) filters.payment_status = paymentStatusValues;
+    if (fulfillmentStatusValues.length) filters.fulfillment_status = fulfillmentStatusValues;
     return filters;
   });
   const [ordersLimit, setOrdersLimit] = useState(100);
@@ -382,6 +400,29 @@ export default function OrdersPage() {
 
     fetchOrders();
   }, [club?.club_account_id, ordersLimit, pageToken, appliedFilters]);
+
+  const toggleSelection = (
+    value: string,
+    setter: React.Dispatch<React.SetStateAction<string[]>>,
+  ) => {
+    setter((previousValues) =>
+      previousValues.includes(value)
+        ? previousValues.filter((item) => item !== value)
+        : [...previousValues, value],
+    );
+  };
+
+  const formatFilterLabel = (label: string, values: string[]) => {
+    if (values.length === 0) {
+      return `${label}: All`;
+    }
+
+    if (values.length === 1) {
+      return `${label}: ${values[0].replaceAll("_", " ")}`;
+    }
+
+    return `${label}: ${values.length} selected`;
+  };
 
   const handlePayNowClick = (order: Record<string, unknown>) => {
     setSelectedOrderForPayment(order);
@@ -769,61 +810,93 @@ export default function OrdersPage() {
       <Card className="mb-6 rounded-[20px] border-slate-200/70 bg-slate-50/80 p-3 shadow-none">
         <div className="flex flex-wrap gap-3">
           <Input
-            className="h-8 min-w-[200px] flex-1 bg-white text-xs"
+            className="h-8 w-full bg-white text-xs sm:w-[220px]"
             placeholder="Search by Transaction ID"
             value={transactionIdSearch}
             onChange={(e) => setTransactionIdSearch(e.target.value)}
           />
 
           <Input
-            className="h-8 min-w-[200px] flex-1 bg-white text-xs"
+            className="h-8 w-full bg-white text-xs sm:w-[220px]"
             placeholder="Search by Member Name"
             value={memberNameSearch}
             onChange={(e) => setMemberNameSearch(e.target.value)}
           />
 
-          <Select
-            onValueChange={setPaymentStatusFilter}
-            value={paymentStatusFilter}
-          >
-            <SelectTrigger className="h-8 min-w-[190px] rounded-full bg-white text-xs">
-              <span className="text-muted-foreground whitespace-nowrap">
-                Payment Status:
-              </span>
-              <SelectValue placeholder="All" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="PENDING">Pending</SelectItem>
-              <SelectItem value="PAID">Paid</SelectItem>
-              <SelectItem value="PAID (Partial Refund)">
-                Paid (Partial Refund)
-              </SelectItem>
-              <SelectItem value="REFUND">Refund</SelectItem>
-              <SelectItem value="CANCELLED">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="h-8 w-full justify-between rounded-full bg-white px-3 text-xs font-normal text-slate-700 hover:bg-slate-50 sm:w-[220px]">
+                {formatFilterLabel("Payment Status", paymentStatusFilter)}
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              <DropdownMenuLabel>Payment Status</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {[
+                { value: "PENDING", label: "Pending" },
+                { value: "PAID", label: "Paid" },
+                { value: "PAID (Partial Refund)", label: "Paid (Partial Refund)" },
+                { value: "REFUND", label: "Refund" },
+                { value: "CANCELLED", label: "Cancelled" },
+              ].map((option) => (
+                <DropdownMenuCheckboxItem
+                  key={option.value}
+                  checked={paymentStatusFilter.includes(option.value)}
+                  onCheckedChange={() => toggleSelection(option.value, setPaymentStatusFilter)}
+                >
+                  {option.label}
+                </DropdownMenuCheckboxItem>
+              ))}
+              <DropdownMenuSeparator />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start text-xs"
+                onClick={() => setPaymentStatusFilter([])}
+              >
+                Clear selection
+              </Button>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-          <Select
-            onValueChange={setFulfillmentStatusFilter}
-            value={fulfillmentStatusFilter}
-          >
-            <SelectTrigger className="h-8 min-w-[190px] rounded-full bg-white text-xs">
-              <span className="text-muted-foreground whitespace-nowrap">
-                Fulfillment Status:
-              </span>
-              <SelectValue placeholder="All" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="PROCESSING">Processing</SelectItem>
-              <SelectItem value="PARTIALLY_DELIVERED">
-                Partially Delivered
-              </SelectItem>
-              <SelectItem value="DELIVERED">Delivered</SelectItem>
-              <SelectItem value="NOT_PROCESSED">Not Processed</SelectItem>
-            </SelectContent>
-          </Select>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="h-8 w-full justify-between rounded-full bg-white px-3 text-xs font-normal text-slate-700 hover:bg-slate-50 sm:w-[220px]">
+                {formatFilterLabel("Fulfillment Status", fulfillmentStatusFilter)}
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              <DropdownMenuLabel>Fulfillment Status</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {[
+                { value: "PROCESSING", label: "Processing" },
+                { value: "PARTIALLY_DELIVERED", label: "Partially Delivered" },
+                { value: "DELIVERED", label: "Delivered" },
+                { value: "NOT_PROCESSED", label: "Not Processed" },
+              ].map((option) => (
+                <DropdownMenuCheckboxItem
+                  key={option.value}
+                  checked={fulfillmentStatusFilter.includes(option.value)}
+                  onCheckedChange={() => toggleSelection(option.value, setFulfillmentStatusFilter)}
+                >
+                  {option.label}
+                </DropdownMenuCheckboxItem>
+              ))}
+              <DropdownMenuSeparator />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start text-xs"
+                onClick={() => setFulfillmentStatusFilter([])}
+              >
+                Clear selection
+              </Button>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className="mt-3 flex flex-col gap-3 border-t border-slate-200 pt-3 md:flex-row md:items-center md:justify-between">
@@ -859,14 +932,8 @@ export default function OrdersPage() {
                 setAppliedFilters({
                   transaction_id: transactionIdSearch,
                   member_name: memberNameSearch,
-                  payment_status:
-                    paymentStatusFilter !== "all"
-                      ? paymentStatusFilter
-                      : undefined,
-                  fulfillment_status:
-                    fulfillmentStatusFilter !== "all"
-                      ? fulfillmentStatusFilter
-                      : undefined,
+                  payment_status: paymentStatusFilter.length ? paymentStatusFilter : undefined,
+                  fulfillment_status: fulfillmentStatusFilter.length ? fulfillmentStatusFilter : undefined,
                 });
                 setPageToken(undefined);
                 setAllOrders([]);

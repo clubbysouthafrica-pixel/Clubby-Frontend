@@ -54,7 +54,7 @@ import {
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { formatAmount } from "@/data/currencies";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   confirmEventRegistration,
@@ -68,6 +68,14 @@ import { toast } from "sonner";
 
 type RegistrationStatus = "Pending Confirmation" | "Confirmed" | "Waitlisted";
 type PaymentStatus = "Paid" | "Awaiting payment" | "Partially paid";
+
+function normalizePaymentStatusParam(value: string | null): PaymentStatus | "all" {
+  if (value === "Paid" || value === "Awaiting payment" || value === "Partially paid") {
+    return value;
+  }
+
+  return "all";
+}
 
 type RegistrationAnswer = {
   fieldId: string;
@@ -877,8 +885,16 @@ function areFieldFiltersEqual(
 export default function EventRegistrationsPage() {
   const { club } = useContext(ClubContext) as ClubContextType;
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
-  const [selectedEvent, setSelectedEvent] = useState<string>("");
+  const requestedEventId = searchParams.get("eventId")?.trim() || "";
+  const requestedPaymentStatus = normalizePaymentStatusParam(
+    searchParams.get("paymentStatus"),
+  );
+  const hasInitialSearchFilters =
+    requestedEventId.length > 0 || requestedPaymentStatus !== "all";
+  const hasAppliedInitialSearchFiltersRef = useRef(false);
+  const [selectedEvent, setSelectedEvent] = useState<string>(requestedEventId);
   const [eventSearchQuery, setEventSearchQuery] = useState("");
   const [registrationsLimit, setRegistrationsLimit] = useState(
     DEFAULT_REGISTRATIONS_LIMIT,
@@ -894,9 +910,9 @@ export default function EventRegistrationsPage() {
     [],
   );
   const [selectedPaymentStatus, setSelectedPaymentStatus] =
-    useState<string>("all");
+    useState<string>(requestedPaymentStatus);
   const [appliedPaymentStatus, setAppliedPaymentStatus] = useState<string>(
-    "all",
+    requestedPaymentStatus,
   );
   const [fieldFilters, setFieldFilters] = useState<Record<string, string>>({});
   const [appliedFieldFilters, setAppliedFieldFilters] = useState<
@@ -1291,10 +1307,15 @@ export default function EventRegistrationsPage() {
       return;
     }
 
+    const hasRequestedEventId =
+      requestedEventId.length > 0 &&
+      eventOptions.some((eventOption) => eventOption.value === requestedEventId);
     const nextEventId =
       selectedEvent &&
       eventOptions.some((eventOption) => eventOption.value === selectedEvent)
         ? selectedEvent
+        : hasRequestedEventId
+          ? requestedEventId
         : eventOptions[0]?.value || "";
 
     if (!nextEventId || nextEventId === selectedEvent) {
@@ -1305,8 +1326,8 @@ export default function EventRegistrationsPage() {
     setSelectedEvent(nextEventId);
     setRegistrationsLimit(DEFAULT_REGISTRATIONS_LIMIT);
     setPendingRegistrationsLimit(DEFAULT_REGISTRATIONS_LIMIT);
-    setSelectedPaymentStatus("all");
-    setAppliedPaymentStatus("all");
+    setSelectedPaymentStatus(hasRequestedEventId ? requestedPaymentStatus : "all");
+    setAppliedPaymentStatus(hasRequestedEventId ? requestedPaymentStatus : "all");
     setFieldFilters({});
     setAppliedFieldFilters({});
     setSelectedPricingFilters([]);
@@ -1314,7 +1335,7 @@ export default function EventRegistrationsPage() {
     setPricingFilterDropdownOpen(false);
     setRegistrationsPageToken(undefined);
     setAllRegistrations([]);
-  }, [eventOptions, selectedEvent]);
+  }, [eventOptions, requestedEventId, requestedPaymentStatus, selectedEvent]);
 
   useEffect(() => {
     if (!registrationsResponse) {
@@ -1338,6 +1359,15 @@ export default function EventRegistrationsPage() {
   }, [selectedEvent]);
 
   useEffect(() => {
+    if (!selectedEvent) {
+      return;
+    }
+
+    if (!hasAppliedInitialSearchFiltersRef.current && hasInitialSearchFilters) {
+      hasAppliedInitialSearchFiltersRef.current = true;
+      return;
+    }
+
     setFieldFilters({});
     setAppliedFieldFilters({});
     setSelectedPaymentStatus("all");
@@ -1345,7 +1375,7 @@ export default function EventRegistrationsPage() {
     setSelectedPricingFilters([]);
     setAppliedPricingFilters([]);
     setPricingFilterDropdownOpen(false);
-  }, [selectedEvent]);
+  }, [hasInitialSearchFilters, selectedEvent]);
 
   useEffect(() => {
     if (!highlightedRegistrationId) {

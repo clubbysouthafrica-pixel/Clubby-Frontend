@@ -41,6 +41,33 @@ import {
 } from "@/interfaces/club-variable";
 import { toClubVariableRequest } from "@/requests/club-request";
 
+const getSupportedTimeZones = () => {
+  const intlWithSupportedValuesOf = Intl as typeof Intl & {
+    supportedValuesOf?: (key: string) => string[];
+  };
+
+  return intlWithSupportedValuesOf.supportedValuesOf?.("timeZone") ?? ["UTC"];
+};
+
+const getTimeZoneOptionLabel = (timeZone: string) => {
+  try {
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      timeZoneName: "shortOffset",
+    });
+    const timeZoneName =
+      formatter
+        .formatToParts(new Date())
+        .find((part) => part.type === "timeZoneName")?.value ?? "GMT";
+
+    return `${timeZone} (${timeZoneName})`;
+  } catch {
+    return timeZone;
+  }
+};
+
+const TIME_ZONE_OPTIONS = getSupportedTimeZones();
+
 export default function EditClubDetails({
   initialTab,
 }: {
@@ -77,6 +104,7 @@ export default function EditClubDetails({
   const [activeTab, setActiveTab] = useState("club-view");
   const [country, setCountry] = useState("");
   const [currency, setCurrency] = useState("");
+  const [timeZone, setTimeZone] = useState("");
   const [supportEmail, setSupportEmail] = useState("");
   const [clubUrl, setClubUrl] = useState("");
   const [instagramUrl, setInstagramUrl] = useState("");
@@ -135,6 +163,7 @@ export default function EditClubDetails({
     if (data && !isInitialized) {
       setCurrency(data?.currency);
       setCountry(data?.country_of_operation);
+      setTimeZone(data?.time_zone || "");
       setSupportEmail(data.support_email);
       setClubUrl(data?.club_url || "");
       setInstagramUrl(data?.instagram_url || "");
@@ -198,6 +227,7 @@ export default function EditClubDetails({
         bank_details: bankingData.bank_details,
         country_of_operation: country,
         currency,
+        time_zone: timeZone,
         support_email: supportEmail,
         club_url: clubUrl,
         about_club: clubDetails,
@@ -268,6 +298,7 @@ export default function EditClubDetails({
         facebook_url: facebookUrl,
         country_of_operation: country,
         currency,
+        time_zone: timeZone,
         support_email: supportEmail,
         club_url: clubUrl,
         about_club: clubDetails,
@@ -717,6 +748,7 @@ export default function EditClubDetails({
                           club_account_id: club?.club_account_id as string,
                           country_of_operation: country,
                           currency,
+                          time_zone: timeZone,
                           club_variables: filteredVariables.map(toClubVariableRequest),
                         },
                         {
@@ -778,6 +810,25 @@ export default function EditClubDetails({
                           </SelectContent>
                         </Select>
                       </div>
+
+                      <div className="grid gap-2">
+                        <Label>Time Zone</Label>
+                        <Select value={timeZone} onValueChange={setTimeZone}>
+                          <SelectTrigger className="w-[280px]">
+                            <SelectValue placeholder="Select time zone" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              {TIME_ZONE_OPTIONS.map((zone) => (
+                                <SelectItem key={zone} value={zone}>
+                                  {getTimeZoneOptionLabel(zone)}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
                       <div className="grid gap-2">
                         <Label>
                           Currency
