@@ -223,7 +223,7 @@ export default function StorageRequestsAdmin() {
                     <TableCell>
                       <span className="font-medium text-primary">
                         {typeof req.costCents === "number"
-                          ? `$${(req.costCents / 100).toFixed(2)}`
+                          ? `${club?.currency} ${(req.costCents / 100).toFixed(2)}`
                           : "—"}
                       </span>
                     </TableCell>
