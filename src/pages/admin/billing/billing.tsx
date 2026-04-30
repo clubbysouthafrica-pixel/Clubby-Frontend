@@ -4,7 +4,13 @@ import { useMcsBillingReportingQuery } from "@/queries/admin/useReporting";
 import { useGetClubbyCheckoutUrlQuery } from "@/queries/admin/payfast";
 import ClubUsageAndCharges from "@/components/admin/billing-and-usage/club-usage-and-charges-report";
 import { formatAmount } from "@/data/currencies";
-import { ChevronRight, Loader2 } from "lucide-react";
+import {
+  BarChart3,
+  ChevronRight,
+  CreditCard,
+  Loader2,
+  Wallet,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   Select,
@@ -13,12 +19,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 interface MonthlyPaymentOption {
   month: string;
   amount: number;
   isPaid: boolean;
-  isPayable: boolean;
+}
+
+interface PaymentStatusRecord {
+  month: string;
+  month_paid: boolean;
+  outstanding_amount?: number;
 }
 
 interface BillingPaymentChoice {
@@ -27,25 +39,15 @@ interface BillingPaymentChoice {
   amount: number;
   month?: string;
   isPaid: boolean;
-  isPayable: boolean;
   isAllOutstanding?: boolean;
 }
 
 const ALL_OUTSTANDING_VALUE = "__all_outstanding__";
 
-function getCurrentYearMonth() {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-
-  return `${year}-${month}`;
-}
-
 export default function BillingPage() {
   const { club } = useContext(ClubContext) as ClubContextType;
   const [selectedSeason, setSelectedSeason] = useState<string>("current");
   const [selectedMonth, setSelectedMonth] = useState<string>("");
-  const currentYearMonth = getCurrentYearMonth();
 
   const seasonToFetch =
     selectedSeason === "current" ? undefined : parseInt(selectedSeason);
@@ -66,10 +68,10 @@ export default function BillingPage() {
   const hasPreviousSeasons = availableSeasons.length > 0;
   const monthlyPaymentOptions = useMemo<MonthlyPaymentOption[]>(() => {
     const overallMonthData = data?.report?.overall_month_data ?? {};
-    const paymentStatuses: Array<{ month: string; month_paid: boolean }> =
+    const paymentStatuses: PaymentStatusRecord[] =
       data?.report?.Payments ?? [];
-    const paymentStatusByMonth = new Map<string, boolean>(
-      paymentStatuses.map((payment) => [payment.month, Boolean(payment.month_paid)]),
+    const paymentStatusByMonth = new Map<string, PaymentStatusRecord>(
+      paymentStatuses.map((payment) => [payment.month, payment]),
     );
     const monthKeys = Array.from(
       new Set([
@@ -79,33 +81,29 @@ export default function BillingPage() {
     ).sort((left, right) => right.localeCompare(left));
 
     return monthKeys.map<MonthlyPaymentOption>((month) => {
-      const monthTotals = overallMonthData[month] as { total_amount?: number } | undefined;
+      const monthTotals = overallMonthData[month] as
+        | { total_amount?: number; outstanding_amount?: number }
+        | undefined;
+      const paymentStatus = paymentStatusByMonth.get(month);
 
       return {
         month,
-        amount: monthTotals?.total_amount ?? 0,
-        isPaid: paymentStatusByMonth.get(month) ?? false,
-        isPayable: month < currentYearMonth,
+        amount:
+          paymentStatus?.outstanding_amount ??
+          monthTotals?.outstanding_amount ??
+          monthTotals?.total_amount ??
+          0,
+        isPaid: Boolean(paymentStatus?.month_paid),
       };
     });
-  }, [currentYearMonth, data]);
+  }, [data]);
   const payableMonthlyPaymentOptions = useMemo(
-    () => monthlyPaymentOptions.filter(({ isPaid, isPayable }) => !isPaid && isPayable),
+    () => monthlyPaymentOptions.filter(({ isPaid }) => !isPaid),
     [monthlyPaymentOptions],
   );
-  const payableOutstandingAmount = useMemo(
-    () => payableMonthlyPaymentOptions.reduce((sum, option) => sum + option.amount, 0),
-    [payableMonthlyPaymentOptions],
-  );
-  const hasCurrentMonthOutstanding = useMemo(
-    () =>
-      monthlyPaymentOptions.some(
-        ({ month, isPaid }) => month === currentYearMonth && !isPaid,
-      ),
-    [currentYearMonth, monthlyPaymentOptions],
-  );
+  const totalOutstandingAmount = data?.report?.total_outstanding_amount ?? 0;
   const hasAllOutstandingOption =
-    payableOutstandingAmount > 0 &&
+    totalOutstandingAmount > 0 &&
     payableMonthlyPaymentOptions.length > 1;
   const paymentChoices = useMemo<BillingPaymentChoice[]>(() => {
     const monthChoices = payableMonthlyPaymentOptions.map((option) => ({
@@ -114,7 +112,6 @@ export default function BillingPage() {
       amount: option.amount,
       month: option.month,
       isPaid: option.isPaid,
-      isPayable: option.isPayable,
       isAllOutstanding: false,
     }));
 
@@ -125,20 +122,19 @@ export default function BillingPage() {
     return [
       {
         value: ALL_OUTSTANDING_VALUE,
-        label: `All outstanding previous months - ${formatAmount(payableOutstandingAmount, club?.currency)}`,
-        amount: payableOutstandingAmount,
+        label: `All outstanding months - ${formatAmount(totalOutstandingAmount, club?.currency)}`,
+        amount: totalOutstandingAmount,
         isPaid: false,
-        isPayable: true,
         isAllOutstanding: true,
       },
       ...monthChoices,
     ];
-  }, [club?.currency, hasAllOutstandingOption, payableMonthlyPaymentOptions, payableOutstandingAmount]);
+  }, [club?.currency, hasAllOutstandingOption, payableMonthlyPaymentOptions, totalOutstandingAmount]);
   const selectedPaymentChoice = useMemo(
     () =>
       paymentChoices.find(({ value }) => value === selectedMonth) ??
       paymentChoices.find(({ isAllOutstanding }) => isAllOutstanding) ??
-      paymentChoices.find(({ isPaid, isPayable }) => !isPaid && isPayable),
+      paymentChoices.find(({ isPaid }) => !isPaid),
     [paymentChoices, selectedMonth],
   );
   const { refetch: refetchClubbyCheckoutUrl } = useGetClubbyCheckoutUrlQuery(
@@ -150,6 +146,30 @@ export default function BillingPage() {
     selectedPaymentChoice?.isAllOutstanding,
   );
   const showPayNow = payableMonthlyPaymentOptions.length > 0;
+  const summaryCards = [
+    {
+      label: "Total owed to Clubby",
+      value: formatAmount(totalOutstandingAmount, club?.currency),
+      icon: Wallet,
+      tone: "from-amber-400/20 via-amber-300/10 to-transparent",
+    },
+    {
+      label: "Unpaid months",
+      value: String(payableMonthlyPaymentOptions.length),
+      icon: CreditCard,
+      tone: "from-sky-400/20 via-sky-300/10 to-transparent",
+    },
+    {
+      label: "Selected payment",
+      value: selectedPaymentChoice
+        ? selectedPaymentChoice.isAllOutstanding
+          ? "All outstanding"
+          : selectedPaymentChoice.month ?? "None"
+        : "None",
+      icon: BarChart3,
+      tone: "from-stone-400/20 via-stone-300/10 to-transparent",
+    },
+  ];
 
   useEffect(() => {
     if (!paymentChoices.length) {
@@ -176,11 +196,6 @@ export default function BillingPage() {
       return;
     }
 
-    if (!selectedPaymentChoice.isPayable) {
-      toast.info("Only previous months can be paid. The current month becomes payable next month.");
-      return;
-    }
-
     setIsPayfastLoading(true);
 
     try {
@@ -203,143 +218,174 @@ export default function BillingPage() {
 
   if (isLoading || !data) {
     return (
-      <div className="p-5 min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(214,211,209,0.55),_transparent_32%),linear-gradient(180deg,_#e7e5e4_0%,_#f5f5f4_40%,_#fafaf9_100%)] px-6">
+        <div className="flex flex-col items-center gap-4 rounded-[24px] border border-stone-300/70 bg-white/90 px-8 py-10 text-zinc-900 shadow-xl backdrop-blur">
+          <Loader2 className="h-10 w-10 animate-spin text-zinc-500" />
+          <p className="text-lg font-medium text-zinc-700">
+            Loading billing dashboard...
+          </p>
+        </div>
       </div>
     );
   }
   return (
-    <div className="p-5">
-      <div className="mb-4">
-        {selectedSeason === "current" ? (
-          <h1 className="text-3xl font-bold tracking-tight">
-            You Owe Clubby:{" "}
-            {formatAmount(payableOutstandingAmount, club?.currency)}
-          </h1>
-        ) : (
-          <h1 className="text-3xl font-bold tracking-tight">
-            Season: {selectedSeason}
-          </h1>
-        )}
-        <p className="text-muted-foreground">
-          Manage your club's billing and usage
-        </p>
-      </div>
-      {showPayNow && (
-        <div className="mb-5 space-y-3">
-          {paymentChoices.length > 0 && (
-            <div className="max-w-xs">
-              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger className="w-full bg-white">
-                  <SelectValue placeholder="Select payment option" />
-                </SelectTrigger>
-                <SelectContent>
-                  {paymentChoices.map(({ value, label, isPaid, isAllOutstanding }) => (
-                    <SelectItem
-                      key={value}
-                      value={value}
-                      disabled={isPaid && !isAllOutstanding}
-                    >
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-          {selectedSeason === "current" && hasCurrentMonthOutstanding && (
-            <p className="text-sm text-muted-foreground">
-              The current month is visible in the usage report but can only be paid from next month onward.
-            </p>
-          )}
-          <button
-            type="button"
-            onClick={handlePayNowClick}
-            disabled={!selectedPaymentChoice || isPayfastLoading}
-            className="flex w-full items-center justify-between rounded-2xl border border-gray-200 bg-white px-5 py-4 text-left shadow-md transition-all duration-200 hover:border-[#59b9e6] hover:shadow-lg cursor-pointer"
-          >
-            <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-slate-300 bg-white transition-colors">
-                <div className="h-6 w-6 rounded-full bg-black" />
+    <div className="min-h-screen bg-[linear-gradient(180deg,_#e7e5e4_0%,_#f5f5f4_22%,_#fafaf9_22%,_#fafaf9_100%)] text-slate-900">
+      <div className="flex w-full max-w-none flex-col gap-3 px-2 py-3 sm:px-3 md:px-4 md:py-4 xl:px-5 2xl:px-6">
+        <section className="relative overflow-hidden rounded-[24px] border border-stone-300/70 bg-stone-200 px-4 py-4 text-zinc-900 shadow-[0_18px_40px_rgba(120,113,108,0.16)] md:px-5 md:py-4">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.72),_transparent_28%),radial-gradient(circle_at_right,_rgba(214,211,209,0.55),_transparent_24%)]" />
+          <div className="relative flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-stone-300 bg-white/70 px-2.5 py-1 text-[11px] text-zinc-600 backdrop-blur">
+                <BarChart3 className="h-3.5 w-3.5 text-zinc-500" />
+                Billing overview
               </div>
-
-              <div>
-                <p className="text-xl font-semibold text-gray-950 sm:text-2xl">
-                  {isPayfastLoading
-                    ? "Redirecting..."
-                    : `Pay Now (${formatAmount(selectedPaymentChoice?.amount ?? 0, club?.currency)})`}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {selectedPaymentChoice
-                    ? selectedPaymentChoice.isAllOutstanding
-                      ? `Pay all outstanding months with PayFast for ${formatAmount(selectedPaymentChoice.amount, club?.currency)}.`
-                      : `Pay ${selectedPaymentChoice.month} with PayFast for ${formatAmount(selectedPaymentChoice.amount, club?.currency)}.`
-                    : "Pay your outstanding Clubby balance with PayFast."}
-                </p>
-              </div>
+              <h1 className="text-xl font-semibold tracking-tight md:text-3xl">
+                {selectedSeason === "current"
+                  ? "Clubby billing and monthly charges"
+                  : `Billing history for Season ${selectedSeason}`}
+              </h1>
+              <p className="mt-2 max-w-2xl text-[11px] leading-4 text-zinc-600 md:text-xs">
+                Review monthly charges, track outstanding balances, and launch Clubby payments without leaving the reporting workflow.
+              </p>
             </div>
 
-            <div className="flex items-center gap-3 pl-4">
-              <div className="flex flex-col items-start leading-none">
-                <span className="text-[2rem] font-light tracking-[-0.08em] text-[#0072bc] sm:text-[2.6rem]">
-                  payfast
-                </span>
-                <span className="pl-1 text-[0.85rem] font-normal tracking-[-0.04em] text-[#0072bc] sm:text-[1.1rem]">
-                  by network
-                </span>
-              </div>
-              <ChevronRight
-                className="h-9 w-9 text-[#ef476f] sm:h-12 sm:w-12"
-                strokeWidth={2.5}
-              />
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+              {hasPreviousSeasons && (
+                <Select value={selectedSeason} onValueChange={setSelectedSeason}>
+                  <SelectTrigger className="h-8 w-full rounded-full border-stone-300 bg-white text-zinc-700 shadow-none sm:w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="current">Current Season</SelectItem>
+                    {availableSeasons.map((season) => (
+                      <SelectItem key={season.value} value={season.value}>
+                        {season.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Button
+                type="button"
+                onClick={handlePayNowClick}
+                disabled={!showPayNow || !selectedPaymentChoice || isPayfastLoading}
+                className="h-8 rounded-full border border-stone-300 bg-white px-3.5 text-xs text-zinc-800 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isPayfastLoading ? "Redirecting..." : "Open PayFast"}
+              </Button>
             </div>
-          </button>
-        </div>
-      )}
-      {!showPayNow && selectedSeason === "current" && hasCurrentMonthOutstanding && (
-        <p className="mb-5 text-sm text-muted-foreground">
-          Only previous unpaid months can be paid. The current month will become payable next month.
-        </p>
-      )}
-      {!showPayNow && monthlyPaymentOptions.length > 0 && !hasCurrentMonthOutstanding && (
-        <p className="mb-5 text-sm text-muted-foreground">
-          All listed months are already marked as paid. PayFast is only available for unpaid months.
-        </p>
-      )}
-      {hasPreviousSeasons && (
-        <div className="flex justify-center mb-2 pb-2">
-          <div className="w-full max-w-xs">
-            <Select value={selectedSeason} onValueChange={setSelectedSeason}>
-              <SelectTrigger className="w-full">
-                <div className="flex-1 text-center">
-                  <SelectValue />
-                </div>
-              </SelectTrigger>
-              <SelectContent className="text-center">
-                <SelectItem value="current" className="text-center">
-                  Current Season
-                </SelectItem>
-                {availableSeasons.map((season) => (
-                  <SelectItem
-                    key={season.value}
-                    value={season.value}
-                    className="text-center"
-                  >
-                    {season.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
-        </div>
-      )}
-      {isLoading || !data ? (
-        <div className="flex justify-center">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-      ) : (
-        <div className="@container/main flex flex-1 flex-col gap-1">
-          <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-2">
+
+          <div className="relative mt-3 grid gap-2 md:grid-cols-3">
+            {summaryCards.map(({ label, value, icon: Icon, tone }) => (
+              <div
+                key={label}
+                className="rounded-[18px] border border-stone-300/70 bg-white/75 p-3 backdrop-blur"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-400">
+                      {label}
+                    </p>
+                    <p className="mt-1 text-lg font-semibold text-zinc-900">{value}</p>
+                  </div>
+                  <div className={`inline-flex shrink-0 rounded-2xl bg-gradient-to-br p-2 ${tone}`}>
+                    <Icon className="h-3.5 w-3.5 text-zinc-700" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="order-2 rounded-[24px] border border-slate-200/70 bg-white/90 p-2.5 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur md:p-3">
+          <div className="rounded-[18px] border border-slate-200/70 bg-slate-50/90 p-1.5 backdrop-blur">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div className="flex flex-wrap gap-2">
+                {paymentChoices.length > 0 && (
+                  <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                    <SelectTrigger className="h-8 min-w-[260px] rounded-full bg-white text-xs">
+                      <SelectValue placeholder="Select payment option" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {paymentChoices.map(({ value, label, isPaid, isAllOutstanding }) => (
+                        <SelectItem
+                          key={value}
+                          value={value}
+                          disabled={isPaid && !isAllOutstanding}
+                        >
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                {selectedPaymentChoice ? (
+                  <span>
+                    {selectedPaymentChoice.isAllOutstanding
+                      ? `Pay all outstanding months for ${formatAmount(selectedPaymentChoice.amount, club?.currency)}`
+                      : `Pay ${selectedPaymentChoice.month} for ${formatAmount(selectedPaymentChoice.amount, club?.currency)}`}
+                  </span>
+                ) : (
+                  <span>No unpaid months available</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3 px-1 pb-1 pt-2.5 md:px-2 md:pb-2">
+            {showPayNow ? (
+              <button
+                type="button"
+                onClick={handlePayNowClick}
+                disabled={!selectedPaymentChoice || isPayfastLoading}
+                className="flex w-full items-center justify-between rounded-[20px] border border-slate-200/70 bg-white px-5 py-4 text-left shadow-sm transition-all duration-200 hover:border-[#59b9e6] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-slate-300 bg-white transition-colors">
+                    <div className="h-6 w-6 rounded-full bg-black" />
+                  </div>
+
+                  <div>
+                    <p className="text-xl font-semibold text-gray-950 sm:text-2xl">
+                      {isPayfastLoading
+                        ? "Redirecting..."
+                        : `Pay Now (${formatAmount(selectedPaymentChoice?.amount ?? 0, club?.currency)})`}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedPaymentChoice
+                        ? selectedPaymentChoice.isAllOutstanding
+                          ? `Pay all outstanding months with PayFast for ${formatAmount(selectedPaymentChoice.amount, club?.currency)}.`
+                          : `Pay ${selectedPaymentChoice.month} with PayFast for ${formatAmount(selectedPaymentChoice.amount, club?.currency)}.`
+                        : "Pay your outstanding Clubby balance with PayFast."}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 pl-4">
+                  <div className="flex flex-col items-start leading-none">
+                    <span className="text-[2rem] font-light tracking-[-0.08em] text-[#0072bc] sm:text-[2.6rem]">
+                      payfast
+                    </span>
+                    <span className="pl-1 text-[0.85rem] font-normal tracking-[-0.04em] text-[#0072bc] sm:text-[1.1rem]">
+                      by network
+                    </span>
+                  </div>
+                  <ChevronRight
+                    className="h-9 w-9 text-[#ef476f] sm:h-12 sm:w-12"
+                    strokeWidth={2.5}
+                  />
+                </div>
+              </button>
+            ) : monthlyPaymentOptions.length > 0 ? (
+              <div className="rounded-[20px] border border-slate-200/70 bg-white p-4 text-sm text-slate-500 shadow-sm">
+                All listed months are already marked as paid. PayFast is only available for unpaid months.
+              </div>
+            ) : null}
+
             <ClubUsageAndCharges
               data={data.report ?? {}}
               currency={club?.currency ?? "ZAR"}
@@ -348,8 +394,8 @@ export default function BillingPage() {
               clubName={club?.club_name}
             />
           </div>
-        </div>
-      )}
+        </section>
+      </div>
     </div>
   );
 }
