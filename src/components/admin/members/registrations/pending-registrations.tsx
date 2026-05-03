@@ -777,7 +777,15 @@ export default function PendingMembersList({
                               0,
                             );
 
-                            if (!totalFee) {
+                            if (member.total_fee === 0) {
+                              return (
+                                <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                                  Free
+                                </span>
+                              );
+                            }
+
+                            if (member.total_fee == null) {
                               return <span className="text-gray-400">n/a</span>;
                             }
 
@@ -919,7 +927,11 @@ export default function PendingMembersList({
                             <div className="flex flex-col gap-1 my-4">
                               <Label className="text-l">
                                 Outstanding amount:{" "}
-                                {member.outstanding_amount ? (
+                                {member.outstanding_amount === 0 ? (
+                                  <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                                    Free
+                                  </span>
+                                ) : member.outstanding_amount != null ? (
                                   formatAmount(
                                     member.outstanding_amount,
                                     club?.currency,

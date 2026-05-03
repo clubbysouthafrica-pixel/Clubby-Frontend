@@ -336,7 +336,11 @@ export default function RegisteredMembersList({
                       )}
                     </TableCell>
                     <TableCell className="w-[150px] text-center text-sm font-medium text-slate-900">
-                      {member.total_fee ? (
+                      {member.total_fee === 0 ? (
+                        <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                          Free
+                        </span>
+                      ) : member.total_fee != null ? (
                         formatAmount(member.total_fee, currency)
                       ) : (
                         <span className="text-gray-400">n/a</span>

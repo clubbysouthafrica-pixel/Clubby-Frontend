@@ -20,6 +20,7 @@ import {
   checkDeregistrationEvents,
   checkDeregistrationRegistration,
   checkDeregistrationShop,
+  checkDeregistrationStorage,
 } from "@/services/admin/deregistration";
 
 interface ImageProps {
@@ -28,6 +29,7 @@ interface ImageProps {
 
 const PENDING_ORDERS_MESSAGE = "There are still orders that have pending payments. Please consolidate them before de-registering.";
 const PENDING_FULFILLMENTS_MESSAGE = "There are still items that have pending fulfillments or refunds. Please resolve them before de-registering.";
+const PENDING_STORAGE_MESSAGE = "There are still storage requests with unpaid balances. Please resolve them before de-registering.";
 const PENDING_EVENT_PAYMENTS_MESSAGE = "There are still pending event registrations with outstanding payments. Please resolve them before de-registering.";
 const PENDING_EVENT_CONFIRMATIONS_MESSAGE = "There are still pending event registrations that are not confirmed. Please resolve them before de-registering.";
 
@@ -68,6 +70,7 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
   const [isCheckingSystem, setIsCheckingSystem] = useState(false);
   const [systemCheckResults, setSystemCheckResults] = useState<{
     shop_status?: SystemCheckStatus;
+    storage_status?: SystemCheckStatus;
     registration_status?: SystemCheckStatus;
     event_status?: SystemCheckStatus;
   }>({});
@@ -91,6 +94,7 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
 
   const hasPassedSystemCheck =
     systemCheckResults.shop_status?.status === "success" &&
+    systemCheckResults.storage_status?.status === "success" &&
     systemCheckResults.registration_status?.status === "success" &&
     systemCheckResults.event_status?.status === "success";
   const shouldShowOrdersLink =
@@ -98,6 +102,10 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
     [PENDING_ORDERS_MESSAGE, PENDING_FULFILLMENTS_MESSAGE].includes(
       systemCheckResults.shop_status.message,
     );
+  const shouldShowStorageLink =
+    systemCheckResults.storage_status?.status === "error" &&
+    (systemCheckResults.storage_status?.statusCode === 211 ||
+      systemCheckResults.storage_status?.message === PENDING_STORAGE_MESSAGE);
   const shouldShowPendingMembersLink =
     systemCheckResults.registration_status?.statusCode === 211;
   const shouldShowEventRegistrationsLink =
@@ -110,6 +118,8 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
     systemCheckResults.registration_status?.status === "error" ||
     systemCheckResults.shop_status?.status === "error" ||
     systemCheckResults.shop_status?.status === "blocked" ||
+    systemCheckResults.storage_status?.status === "error" ||
+    systemCheckResults.storage_status?.status === "blocked" ||
     systemCheckResults.event_status?.status === "error" ||
     systemCheckResults.event_status?.status === "blocked";
 
@@ -148,6 +158,10 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
           status: "loading",
           message: "Waiting for registration check...",
         },
+        storage_status: {
+          status: "loading",
+          message: "Waiting for shop check...",
+        },
         event_status: {
           status: "loading",
           message: "Waiting for shop check...",
@@ -171,6 +185,10 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
             status: "blocked",
             message: "Could not run because the registration check failed.",
           },
+          storage_status: {
+            status: "blocked",
+            message: "Could not run because the registration check failed.",
+          },
           event_status: {
             status: "blocked",
             message: "Could not run because the registration check failed.",
@@ -189,6 +207,10 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
         shop_status: {
           status: "loading",
           message: "Checking shop...",
+        },
+        storage_status: {
+          status: "loading",
+          message: "Waiting for shop check...",
         },
         event_status: {
           status: "loading",
@@ -215,6 +237,10 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
             message: shopResponseData?.message || "System check failed",
             type: shopResponseData?.type,
           },
+          storage_status: {
+            status: "blocked",
+            message: "Could not run because the shop check failed.",
+          },
           event_status: {
             status: "blocked",
             message: "Could not run because the shop check failed.",
@@ -235,6 +261,68 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
           statusCode: shopResponse.status,
           message: "System check for shop passed.",
           type: shopResponseData?.type,
+        },
+        storage_status: {
+          status: "loading",
+          message: "Checking storage...",
+        },
+        event_status: {
+          status: "loading",
+          message: "Waiting for storage check...",
+        },
+      });
+
+      const storageResponse = await checkDeregistrationStorage(clubId);
+      const storageResponseData = storageResponse.data as
+        | { message?: string; type?: string }
+        | undefined;
+
+      if (storageResponse.status !== 200) {
+        setSystemCheckResults({
+          registration_status: {
+            status: "success",
+            statusCode: registrationResponse.status,
+            message: "System check for registrations passed.",
+            type: registrationResponseData?.type,
+          },
+          shop_status: {
+            status: "success",
+            statusCode: shopResponse.status,
+            message: "System check for shop passed.",
+            type: shopResponseData?.type,
+          },
+          storage_status: {
+            status: "error",
+            statusCode: storageResponse.status,
+            message: storageResponseData?.message || "System check failed",
+            type: storageResponseData?.type,
+          },
+          event_status: {
+            status: "blocked",
+            message: "Could not run because the storage check failed.",
+          },
+        });
+        return;
+      }
+
+      setSystemCheckResults({
+        registration_status: {
+          status: "success",
+          statusCode: registrationResponse.status,
+          message: "System check for registrations passed.",
+          type: registrationResponseData?.type,
+        },
+        shop_status: {
+          status: "success",
+          statusCode: shopResponse.status,
+          message: "System check for shop passed.",
+          type: shopResponseData?.type,
+        },
+        storage_status: {
+          status: "success",
+          statusCode: storageResponse.status,
+          message: "System check for storage passed.",
+          type: storageResponseData?.type,
         },
         event_status: {
           status: "loading",
@@ -260,6 +348,12 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
           message: "System check for shop passed.",
           type: shopResponseData?.type,
         },
+        storage_status: {
+          status: "success",
+          statusCode: storageResponse.status,
+          message: "System check for storage passed.",
+          type: storageResponseData?.type,
+        },
         event_status: {
           status: eventsResponse.status === 200 ? "success" : "error",
           statusCode: eventsResponse.status,
@@ -274,6 +368,10 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
     } catch {
       setSystemCheckResults({
         shop_status: {
+          status: "error",
+          message: "System check failed",
+        },
+        storage_status: {
           status: "error",
           message: "System check failed",
         },
@@ -361,7 +459,7 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
               <div>
                 <p className="text-sm font-semibold text-slate-900">Perform system check</p>
                 <p className="mt-1 text-sm text-slate-600">
-                  Before starting a new season, all registration, shop, orders, and event registration data needs to be consolidated.
+                  Before starting a new season, all registration, shop, storage, orders, and event registration data needs to be consolidated.
                 </p>
               </div>
               <Button
@@ -374,7 +472,7 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
                 {isCheckingSystem ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 {isCheckingSystem ? "Performing system check..." : "Perform system check"}
               </Button>
-              {systemCheckResults.shop_status || systemCheckResults.registration_status ? (
+              {systemCheckResults.shop_status || systemCheckResults.storage_status || systemCheckResults.registration_status ? (
                 <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
                   <ul className="divide-y divide-slate-200">
                     {systemCheckResults.registration_status ? (
@@ -442,6 +540,37 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
                                 }
 
                                 navigate(`/shop/orders?${query.toString()}`);
+                              }}
+                              className="mt-2 text-sm font-semibold text-blue-600 underline hover:text-blue-800"
+                            >
+                              Click here
+                            </button>
+                          ) : null}
+                        </div>
+                      </li>
+                    ) : null}
+                    {systemCheckResults.storage_status ? (
+                      <li className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+                        {systemCheckResults.storage_status.status === "success" ? (
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                        ) : systemCheckResults.storage_status.status === "loading" ? (
+                          <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-slate-500" />
+                        ) : systemCheckResults.storage_status.status === "blocked" ? (
+                          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                        ) : (
+                          <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
+                        )}
+                        <div className="min-w-0 flex-1 border-l-2 border-slate-200 pl-3">
+                          <p className="text-sm font-medium text-slate-900">Storage status</p>
+                          <p className={systemCheckResults.storage_status.status === "success" ? "text-sm text-emerald-700" : systemCheckResults.storage_status.status === "loading" ? "text-sm text-slate-600" : systemCheckResults.storage_status.status === "blocked" ? "text-sm text-amber-700" : "text-sm text-rose-700"}>
+                            {systemCheckResults.storage_status.message}
+                          </p>
+                          {shouldShowStorageLink ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleOpenChange(false);
+                                navigate("/storage/requests?paymentStatus=unpaid");
                               }}
                               className="mt-2 text-sm font-semibold text-blue-600 underline hover:text-blue-800"
                             >

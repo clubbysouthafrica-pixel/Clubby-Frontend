@@ -29,3 +29,13 @@ export const checkDeregistrationEvents = (clubAccountId: string) => {
     validateStatus: (status) => status >= 200 && status < 300,
   });
 };
+
+export const checkDeregistrationStorage = (clubAccountId: string) => {
+  if (!clubAccountId) {
+    throw new Error("clubAccountId is required");
+  }
+
+  return api.get(`/deregistration/storage?club_account_id=${clubAccountId}`, {
+    validateStatus: (status) => status >= 200 && status < 300,
+  });
+};

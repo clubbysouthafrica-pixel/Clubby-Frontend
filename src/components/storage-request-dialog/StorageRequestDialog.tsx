@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import { createStorageRequest } from "@/services/storage";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
     Dialog,
     DialogContent,
@@ -40,6 +42,7 @@ interface Props {
 
 export default function StorageRequestDialog({clubAccountId, selectedStorageItem, setSelectedStorageItem}: Props) {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const queryClient = useQueryClient();
 
     const storageDetails = useMemo(() => {
         if (!selectedStorageItem) return null;
@@ -54,7 +57,7 @@ export default function StorageRequestDialog({clubAccountId, selectedStorageItem
         return { name, id, priceCents };
     }, [selectedStorageItem]);
 
-    const createStorageRequst = async() => {
+    const createStorageRequestEntry = async() => {
         try {
             if (!selectedStorageItem) return;
             setIsSubmitting(true);
@@ -73,11 +76,17 @@ export default function StorageRequestDialog({clubAccountId, selectedStorageItem
                     selectedStorageItem.priceCents ??
                     selectedStorageItem.price_cents,
             });
+            await queryClient.invalidateQueries({
+                queryKey: ["club/storage/requests", clubAccountId],
+            });
+            await queryClient.invalidateQueries({
+                queryKey: ["club/storage", clubAccountId],
+            });
             setSelectedStorageItem(null);
-            // Optionally, you can add success handling here (e.g., show a success message)
+            toast.success("Storage request submitted successfully.");
         } catch (error) {
             console.error("Error creating storage request:", error);
-            // Optionally, you can add error handling here (e.g., show an error message)
+            toast.error("Failed to submit storage request. Please try again.");
         } finally {
             setIsSubmitting(false);
         }
@@ -127,7 +136,7 @@ export default function StorageRequestDialog({clubAccountId, selectedStorageItem
                             Cancel
                         </Button>
                         <Button
-                            onClick={createStorageRequst}
+                            onClick={createStorageRequestEntry}
                             disabled={!selectedStorageItem || isSubmitting}
                         >
                             {isSubmitting ? "Creating..." : "Create request"}
