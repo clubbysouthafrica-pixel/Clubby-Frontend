@@ -77,6 +77,7 @@ export function toClubVariableRequest(variable: ClubVariable): ClubVariableReque
 
 export interface ClubDetailsRequest {
   club_account_id: string;
+  club_name?: string;
   auto_register_members_if_paid?: boolean;
   opening_times?: ClubOpeningTimesRequest[];
   bank_details?: ClubBankDetailsRequest;
