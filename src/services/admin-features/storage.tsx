@@ -25,7 +25,9 @@ export const listStorageQuery = (clubId: string) => {
 // List storage requests
 export const listStorageRequestQuery = (clubId: string) => {
   return api
-    .get(`/storage/listStorageRequests?club_account_id=${clubId}`)
+    .get(`/storage/listStorageRequests`, {
+      params: { club_account_id: clubId },
+    })
     .then((res) => res.data);
 };
 

@@ -1,10 +1,12 @@
 import { useContext, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Check,
   X,
   Folder,
   User,
+  AlertCircle,
 } from "lucide-react";
 import {
   Table,
@@ -20,7 +22,7 @@ import { useFetchClubStorageRequests } from "@/queries/admin-features/storage";
 import { updateStorageRequestUnit } from "@/services/admin-features/storage";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 type StorageRequestStatus = "pending" | "approved" | "rejected";
 type PaymentStatusFilter = "all" | "paid" | "unpaid";
@@ -41,6 +43,7 @@ type StorageRequest = {
 
 type StorageRequestsResponse = {
   items?: StorageRequest[];
+  enable_storage?: boolean;
 };
 
 const statusColors: Record<StorageRequestStatus, string> = {
@@ -51,6 +54,7 @@ const statusColors: Record<StorageRequestStatus, string> = {
 
 export default function StorageRequestsAdmin() {
   const { club } = useContext(ClubContext) as ClubContextType;
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const clubAccountId = (club?.club_account_id as string) ?? undefined;
@@ -209,18 +213,43 @@ export default function StorageRequestsAdmin() {
   };
 
   return (
-    <div className="bg-gray-50 h-full">
-      <div className="flex bg-white items-center justify-between border-b">
-        <div className="max-w-7xl mx-auto w-full p-6">
+    <div className="space-y-6 p-6">
+      <div>
           <h1 className="text-3xl font-bold tracking-tight">
             Storage Requests
           </h1>
           <p className="text-muted-foreground">
             Manage storage requests from users.
           </p>
-        </div>
       </div>
-      <div className="p-6 max-w-7xl mx-auto w-full">
+
+      <div>
+        {(data as StorageRequestsResponse | undefined)?.enable_storage === false && (
+          <Card className="mb-6 overflow-hidden border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 p-0 shadow-sm">
+            <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-300 bg-amber-100">
+                  <AlertCircle className="h-4 w-4 text-amber-700" />
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-sm font-semibold text-amber-950 sm:text-base">
+                    Storage is currently disabled
+                  </p>
+                  <p className="max-w-2xl text-sm leading-snug text-amber-800">
+                    Go to the storage page to enable storage before managing requests.
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={() => navigate("/storage")}
+                className="w-full bg-amber-700 text-white hover:bg-amber-800 sm:w-auto"
+              >
+                Go to Storage
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="rounded-xl border bg-white overflow-x-auto">
           <div className="px-4 py-3 border-b flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="flex items-center gap-3 w-full md:w-auto">

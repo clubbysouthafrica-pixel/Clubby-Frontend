@@ -17,6 +17,7 @@ export interface Club {
     deregistration_in_progress: boolean
     enable_shop?: boolean
     enable_events?: boolean
+    enable_storage?: boolean
     venues_enabled?: boolean
     registration_form_exists?: boolean
     currency_exists?: boolean

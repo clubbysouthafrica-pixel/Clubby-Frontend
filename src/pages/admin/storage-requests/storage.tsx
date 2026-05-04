@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Pencil, Trash, ArrowUpRight } from "lucide-react";
+import { Plus, Pencil, Trash, ArrowUpRight, AlertCircle, Loader2, Settings } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import {
   createStorageUnit,
   removeStorage,
@@ -25,6 +26,7 @@ import {
 import { toast } from "sonner";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { useFetchClubStorage } from "@/queries/admin-features/storage";
+import { updateClubDetails } from "@/services/admin/club";
 
 type StorageUnit = {
   storage_id: string;
@@ -81,12 +83,14 @@ function buildTree(units: StorageUnit[]): StorageUnit[] {
 // }
 
 const StorageAdmin: React.FC = () => {
-  const { club } = useContext(ClubContext) as ClubContextType;
+  const { club, setClub } = useContext(ClubContext) as ClubContextType;
   const [filter, setFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [unitToDelete, setUnitToDelete] = useState<string | null>(null);
+  const [showStorageSettings, setShowStorageSettings] = useState(false);
+  const [isTogglingStorage, setIsTogglingStorage] = useState(false);
 
   const [units, setUnits] = useState<StorageUnit[]>(initialUnits);
   const [name, setName] = useState("");
@@ -104,11 +108,26 @@ const StorageAdmin: React.FC = () => {
     club?.club_account_id as string,
   );
 
+  const storageEnabled =
+    typeof club?.enable_storage === "boolean"
+      ? club.enable_storage
+      : Boolean(data?.enable_storage);
+
   useEffect(() => {
     if (data) {
       setUnits(data.items);
+      if (
+        club &&
+        typeof club.enable_storage !== "boolean" &&
+        typeof data.enable_storage === "boolean"
+      ) {
+          setClub({
+            ...club,
+            enable_storage: data.enable_storage,
+          });
+      }
     }
-  }, [data]);
+  }, [club, data, setClub]);
 
   const allUnitsFlat = units; // Flat list of all units
 
@@ -144,7 +163,7 @@ const StorageAdmin: React.FC = () => {
               : [],
           })),
       );
-    } catch (_e) {
+    } catch {
       toast.error("Failed to remove unit");
     }
   };
@@ -229,7 +248,7 @@ const StorageAdmin: React.FC = () => {
           },
         ]);
       }
-    } catch (e) {
+    } catch {
       toast.error("Something went wrong");
     } finally {
       setIsSaving(false);
@@ -243,6 +262,42 @@ const StorageAdmin: React.FC = () => {
     }
   };
 
+  const handleToggleStorage = async (enabled: boolean) => {
+    if (!club?.club_account_id) {
+      return;
+    }
+
+    try {
+      setIsTogglingStorage(true);
+      const response = await updateClubDetails({
+        club_account_id: club.club_account_id,
+        enable_storage: enabled,
+      });
+
+      if (response?.message) {
+        setClub({
+          ...club,
+          enable_storage: enabled,
+        });
+        toast.success(
+          enabled
+            ? "Storage enabled successfully"
+            : "Storage disabled successfully",
+        );
+      } else {
+        toast.error("Failed to update storage settings");
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update storage settings",
+      );
+    } finally {
+      setIsTogglingStorage(false);
+    }
+  };
+
   if (!club?.club_account_id) {
     return (
       <div className="p-6">
@@ -252,9 +307,8 @@ const StorageAdmin: React.FC = () => {
   }
 
   return (
-    <div className="bg-gray-50 h-full">
-      <div className="bg-white  border-b">
-        <div className="p-6 max-w-7xl w-full mx-auto flex items-center justify-between">
+    <div className="space-y-6 p-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">
               Storage Management
@@ -265,6 +319,16 @@ const StorageAdmin: React.FC = () => {
           </div>
 
           <div className="flex gap-2">
+            {storageEnabled && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setShowStorageSettings(true)}
+                title="Storage settings"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               onClick={() => {
                 setName("");
@@ -281,9 +345,47 @@ const StorageAdmin: React.FC = () => {
             </Button>
           </div>
         </div>
-      </div>
 
-      <div className="p-6 max-w-7xl mx-auto space-y-8 w-full">
+      <div className="space-y-8">
+        {!storageEnabled && (
+          <Card className="overflow-hidden border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 shadow-sm p-0">
+            <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-300 bg-amber-100">
+                  <AlertCircle className="h-4 w-4 text-amber-700" />
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-sm font-semibold text-amber-950 sm:text-base">
+                    Storage is currently disabled
+                  </p>
+                  <p className="max-w-2xl text-sm leading-snug text-amber-800">
+                    Enable storage to make your units visible to members and start receiving storage requests.
+                  </p>
+                  <p className="pt-1 text-xs leading-snug text-amber-700/90">
+                    Enabling storage and accepting paid storage requests incurs a
+                    2% Clubby fee on each paid storage request. Free storage
+                    requests do not incur any Clubby fees.
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={() => handleToggleStorage(true)}
+                disabled={isTogglingStorage}
+                className="w-full bg-amber-700 text-white hover:bg-amber-800 sm:w-auto"
+              >
+                {isTogglingStorage ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Enabling...
+                  </>
+                ) : (
+                  "Enable Storage"
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle>Storage Units</CardTitle>
@@ -613,6 +715,40 @@ const StorageAdmin: React.FC = () => {
                 Delete
               </Button>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showStorageSettings} onOpenChange={setShowStorageSettings}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Storage Settings</DialogTitle>
+              <DialogDescription>
+                Control whether storage units and requests are available for your club.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-6 py-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <Label className="text-base font-semibold">Enable Storage</Label>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Toggle to enable or disable storage for your club.
+                  </p>
+                </div>
+                <Switch
+                  checked={storageEnabled}
+                  onCheckedChange={handleToggleStorage}
+                  disabled={isTogglingStorage}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowStorageSettings(false)}
+              >
+                Close
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>

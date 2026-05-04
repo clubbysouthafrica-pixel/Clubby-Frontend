@@ -700,7 +700,7 @@ export default function BookingsPage() {
         </Card>
       )}
 
-      {(loadingVenues || error || venues.length > 0) && (
+      {(loadingVenues || error || venues.length > 0 || isVenueEditorOpen) && (
         <div className="grid gap-5 xl:grid-cols-[300px_minmax(0,1fr)]">
           <Card className="xl:sticky xl:top-24 xl:self-start">
             <CardContent className="space-y-4 p-5">

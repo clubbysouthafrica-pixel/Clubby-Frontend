@@ -615,6 +615,7 @@ export default function ViewClubPage() {
     isLoggedIn &&
     !!data?.club_member_exists &&
     !!data?.registered &&
+    !!data?.enable_storage &&
     isStorageFeatureEnabled;
 
   const todayKey = useMemo(() => formatDateKey(new Date()), []);

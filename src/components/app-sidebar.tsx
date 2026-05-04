@@ -86,6 +86,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       latestClub.deregistration_in_progress,
       latestClub.enable_shop,
       latestClub.enable_events,
+      latestClub.enable_storage,
       latestClub.venues_enabled,
       latestClub.access,
     ].join("|");
@@ -100,6 +101,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         latestClub.deregistration_in_progress ||
       club.enable_shop !== latestClub.enable_shop ||
       club.enable_events !== latestClub.enable_events ||
+      club.enable_storage !== latestClub.enable_storage ||
       club.venues_enabled !== latestClub.venues_enabled ||
       club.access !== latestClub.access;
 
