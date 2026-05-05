@@ -4,6 +4,18 @@ export interface InputBillingOption {
     option_order_id: string
 }
 
+export interface InputBillingProrataRule {
+    id: string
+    prorata_start_date: string
+    prorata_end_date: string
+    prorata_percentage: number
+}
+
+export interface InputBillingProrataObject {
+    enabled?: boolean
+    rules?: InputBillingProrataRule[]
+}
+
 export interface InputFormRegistration {
     field_name: string
     field_text: string
@@ -23,6 +35,7 @@ export interface InputFormRegistration {
     editable_by_member?: boolean
     phone_number_input?: boolean
     sensitive_information?: boolean
+    prorata?: InputBillingProrataObject
 }
 
 export interface PageFormRegistration {

@@ -8,6 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatAmount } from "@/data/currencies";
+import { formatProrataPercentage, getActiveProrataRule, getProratedAmount, isProrataActive } from "@/lib/billing-prorata";
 import { useState, useEffect } from "react";
 import RequiredLabel from "./required-label";
 
@@ -27,6 +28,16 @@ interface Field {
   value?: string | number;
   billingOptions?: BillingOption[];
   multiplier_value?: number;
+  selectedAmountCents?: number;
+  prorata?: {
+    enabled?: boolean;
+    rules?: Array<{
+      id?: string;
+      prorata_start_date: string;
+      prorata_end_date: string;
+      prorata_percentage: number;
+    }>;
+  };
 }
 
 interface BillingSelectFieldProps {
@@ -56,6 +67,12 @@ export default function BillingDropdown({
   const selectedOption = field.billingOptions?.find(
     (o) => o.label === field.value,
   );
+  const adjustedSelectedAmount = getProratedAmount(
+    selectedOption?.amount ?? 0,
+    field,
+  );
+  const hasActiveProrata = isProrataActive(field);
+  const activeProrataRule = getActiveProrataRule(field);
 
   useEffect(() => {
     if (field?.multiplier_value) {
@@ -63,14 +80,32 @@ export default function BillingDropdown({
     }
   }, [field?.multiplier_value, field?.value]);
 
+  useEffect(() => {
+    if (!selectedOption || !field.value) {
+      return;
+    }
+
+    const expectedAmount = adjustedSelectedAmount * (field.multiplier_value ?? 1);
+
+    if (field.selectedAmountCents === expectedAmount) {
+      return;
+    }
+
+    setFieldValue(pages[currentPageIndex].page_index, field.field_id, (f) => ({
+      ...f,
+      selectedAmountCents: expectedAmount,
+    }));
+  }, [adjustedSelectedAmount, currentPageIndex, field.field_id, field.multiplier_value, field.selectedAmountCents, field.value, pages, selectedOption, setFieldValue]);
+
   const onBillingSelect = (label: string) => {
     const valueToSet = label === "undefined" ? "" : label;
     const option = field.billingOptions?.find((o) => o.label === valueToSet);
+    const adjustedAmount = getProratedAmount(option?.amount ?? 0, field);
     setMultiplier(1);
     setFieldValue(pages[currentPageIndex].page_index, field.field_id, (f) => ({
       ...f,
       value: valueToSet,
-      selectedAmountCents: option?.amount,
+      selectedAmountCents: adjustedAmount,
       label: option?.label,
       option_order_id: option?.option_order_id,
       multiplier_value: undefined,
@@ -93,7 +128,7 @@ export default function BillingDropdown({
         field.field_id,
         (f) => ({
           ...f,
-          selectedAmountCents: (selectedOption?.amount ?? 0) * multiplier_value,
+          selectedAmountCents: adjustedSelectedAmount * multiplier_value,
           multiplier_value,
         }),
       );
@@ -146,7 +181,7 @@ export default function BillingDropdown({
                           (
                           {opt.amount == 0
                             ? "FREE"
-                            : formatAmount(opt.amount, clubCurrency)}
+                            : formatAmount(getProratedAmount(opt.amount, field), clubCurrency)}
                           )
                         </strong>
                       </span>
@@ -190,11 +225,16 @@ export default function BillingDropdown({
             <span className="text-gray-600 font-medium">=</span>
             <span className="font-semibold text-sm text-gray-900">
               {formatAmount(
-                (selectedOption?.amount ?? 0) * multiplier,
+                adjustedSelectedAmount * multiplier,
                 clubCurrency,
               )}
             </span>
           </div>
+        )}
+        {hasActiveProrata && selectedOption && adjustedSelectedAmount !== selectedOption.amount && (
+          <p className="mt-2 text-sm text-emerald-700">
+            {activeProrataRule ? formatProrataPercentage(activeProrataRule.prorata_percentage) : "0.00"}% prorata discount active from {activeProrataRule?.prorata_start_date} to {activeProrataRule?.prorata_end_date}. Reduced from {formatAmount(selectedOption.amount, clubCurrency)}
+          </p>
         )}
       </div>
     </div>

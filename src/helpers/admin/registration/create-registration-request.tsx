@@ -1,3 +1,5 @@
+import { getProratedAmount } from "@/lib/billing-prorata";
+
 export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER" | "SIGNATURE" | "DISCOUNT";
 export type FieldType = "TEXT" | "STANDARD" | "BILLING";
 
@@ -29,6 +31,15 @@ export interface PageFieldBase {
     applicable_billing_fields?: string[];
     option_order_id?: string;
     label?: string;
+    prorata?: {
+        enabled?: boolean;
+        rules?: Array<{
+            id?: string;
+            prorata_start_date: string;
+            prorata_end_date: string;
+            prorata_percentage: number;
+        }>;
+    };
 }
 
 export interface FieldRequest {
@@ -63,11 +74,13 @@ export function createValidRegistrationRequest(fields: PageFieldBase[], clubId: 
 
     const billing_fields = fields.filter((field: PageFieldBase) => field.field_type === "BILLING");
     billing_fields.forEach(f => {
+        const baseAmount = getProratedAmount(f.amount ?? 0, f);
+
         if (f.input_type === "TEXT" && !f.multiplier) {
-            f.value = f.amount
+            f.value = baseAmount
             f.multiplier_value = 1
         } else if (f.input_type === "TEXT" && f.multiplier && !f.multiplier_value && f.required) {
-            f.value = f.amount
+            f.value = baseAmount
             f.multiplier_value = 1
         }
 

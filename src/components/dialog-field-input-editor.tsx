@@ -3,7 +3,8 @@ import { Dialog, DialogTrigger, DialogContent, DialogFooter, DialogClose } from 
 import { Button } from "@/components/ui/button"
 import { PencilIcon, XIcon } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { InputBillingOption, InputFormRegistration, PageFormRegistration } from "@/interfaces/formRegistration"
+import { InputBillingOption, InputBillingProrataRule, InputFormRegistration, PageFormRegistration } from "@/interfaces/formRegistration"
+import { formatProrataPercentage, hasOverlappingProrataRules, prorataRulesOverlap } from "@/lib/billing-prorata"
 import { Label } from "./ui/label"
 import { Input } from "./ui/input"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
@@ -20,6 +21,15 @@ import DisplayStandardCheckbox from "./admin/registration-form/display-fields/st
 import DisplayStandardText from "./admin/registration-form/display-fields/standard-text"
 import StandardSignature from "./admin/registration-form/display-fields/standard-signature"
 import EditStandardSignature from "./admin/registration-form/edit-fields/standard-signature"
+
+function createEmptyProrataRule(): InputBillingProrataRule {
+    return {
+        id: crypto.randomUUID(),
+        prorata_start_date: "",
+        prorata_end_date: "",
+        prorata_percentage: 0,
+    }
+}
 
 interface Props {
     currency: string;
@@ -46,6 +56,10 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
     const [multiplier, setMultiplier] = useState(false)
     const [phone_number_input, setPhoneNumberInput] = useState(false)
     const [sensitive_information, setSensitiveInformation] = useState(false)
+    const [prorataEnabled, setProrataEnabled] = useState(false)
+    const [prorataRules, setProrataRules] = useState<InputBillingProrataRule[]>([])
+    const [pendingProrataRule, setPendingProrataRule] = useState<InputBillingProrataRule>(createEmptyProrataRule())
+    const [prorataValidationError, setProrataValidationError] = useState("")
     
     // Check if this field exists in allPages (the original pages from the initial server response)
     // If it exists in allPages, it's an existing field from the database that should be locked
@@ -70,6 +84,14 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
         setMultiplier(field?.multiplier ?? false)
         setPhoneNumberInput(field?.phone_number_input ?? false)
         setSensitiveInformation(field?.sensitive_information ?? false)
+        setProrataEnabled(field?.prorata?.enabled ?? false)
+        setProrataRules(
+            field?.prorata?.rules?.length
+                ? field.prorata.rules
+                : [],
+        )
+        setPendingProrataRule(createEmptyProrataRule())
+        setProrataValidationError("")
 
         if (field?.billingOptions?.length) {
             setDropdownBillingOptions(field.billingOptions)
@@ -90,6 +112,14 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
         field.input_type?.toUpperCase() === "NUMBER"
 
     const updateRequest = () => {
+        if (field.field_type === "BILLING" && prorataEnabled && hasOverlappingProrataRules(prorataRules)) {
+            setProrataValidationError("Prorata date ranges cannot overlap.")
+            return
+        }
+
+        const validProrataRules = prorataRules.filter(
+            (rule) => rule.prorata_start_date && rule.prorata_end_date,
+        )
 
         const inputRequest: InputFormRegistration = {
             ...field,
@@ -103,6 +133,12 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
             editable_by_member: editable_by_member,
             phone_number_input: field.field_type === "STANDARD" && field.input_type?.toUpperCase() === "TEXT" ? phone_number_input : undefined,
             sensitive_information: (field.field_type === "STANDARD" && (field.input_type?.toUpperCase() === "TEXT" || field.input_type?.toUpperCase() === "NUMBER")) ? sensitive_information : undefined,
+            prorata: field.field_type === "BILLING" && prorataEnabled && validProrataRules.length > 0
+                ? {
+                    enabled: true,
+                    rules: validProrataRules,
+                }
+                : undefined,
         }
 
         if (field.input_type === "TEXT" && field.field_type === "BILLING") {
@@ -138,6 +174,28 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
 
     const removeOption = (val: string) => {
         setDropdownOptions(v => v.filter(v => v !== val))
+    }
+
+    const addProrataRule = () => {
+        if (!pendingProrataRule.prorata_start_date || !pendingProrataRule.prorata_end_date) return
+        if (pendingProrataRule.prorata_percentage <= 0) return
+        if (pendingProrataRule.prorata_end_date < pendingProrataRule.prorata_start_date) {
+            setProrataValidationError("The prorata end date must be on or after the start date.")
+            return
+        }
+        if (prorataRules.some(rule => prorataRulesOverlap(rule, pendingProrataRule))) {
+            setProrataValidationError("Prorata date ranges cannot overlap.")
+            return
+        }
+
+        setProrataRules(prev => [...prev, pendingProrataRule])
+        setPendingProrataRule(createEmptyProrataRule())
+        setProrataValidationError("")
+    }
+
+    const removeProrataRule = (id: string) => {
+        setProrataRules(prev => prev.filter(rule => rule.id !== id))
+        setProrataValidationError("")
     }
 
     return (
@@ -399,6 +457,98 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
                                             </div>
                 }
                 </div>
+                {field.field_type === "BILLING" && (
+                    <div className="mt-4 space-y-4 border-t pt-4">
+                        <Label className="text-sm font-semibold block">Prorata</Label>
+                        <div className="flex items-center gap-3">
+                            <Checkbox
+                                checked={prorataEnabled}
+                                onCheckedChange={(checked: boolean) => {
+                                    setProrataEnabled(checked)
+                                    setProrataValidationError("")
+                                    if (!checked) {
+                                        setProrataRules([])
+                                        setPendingProrataRule(createEmptyProrataRule())
+                                    }
+                                }}
+                            />
+                            <Label>Enable prorata deduction for this billing field</Label>
+                        </div>
+
+                        {prorataEnabled && (
+                            <>
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <div>
+                                        <Label className="block text-sm font-medium mb-2">Start date</Label>
+                                        <Input
+                                            type="date"
+                                            value={pendingProrataRule.prorata_start_date}
+                                            onChange={(e) => setPendingProrataRule(prev => ({ ...prev, prorata_start_date: e.target.value }))}
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label className="block text-sm font-medium mb-2">End date</Label>
+                                        <Input
+                                            type="date"
+                                            value={pendingProrataRule.prorata_end_date}
+                                            onChange={(e) => setPendingProrataRule(prev => ({ ...prev, prorata_end_date: e.target.value }))}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-end gap-2">
+                                    <div className="flex-1">
+                                        <Label className="block text-sm font-medium mb-2">Deduction percentage</Label>
+                                        <Input
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            step="0.01"
+                                            placeholder="e.g. 25"
+                                            value={pendingProrataRule.prorata_percentage || ""}
+                                            onChange={(e) => setPendingProrataRule(prev => ({
+                                                ...prev,
+                                                prorata_percentage: Number(e.target.value || 0),
+                                            }))}
+                                        />
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={addProrataRule}
+                                        disabled={!pendingProrataRule.prorata_start_date || !pendingProrataRule.prorata_end_date || pendingProrataRule.prorata_percentage <= 0}
+                                    >
+                                        Add
+                                    </Button>
+                                </div>
+
+                                {prorataRules.length > 0 && (
+                                    <div className="space-y-2">
+                                        {prorataRules.map((rule) => (
+                                            <div key={rule.id} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm">
+                                                <span>
+                                                    {formatProrataPercentage(rule.prorata_percentage)}% deduction from {rule.prorata_start_date} to {rule.prorata_end_date}
+                                                </span>
+                                                <Button
+                                                    type="button"
+                                                    variant="destructive"
+                                                    size="sm"
+                                                    onClick={() => removeProrataRule(rule.id)}
+                                                >
+                                                    <XIcon />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {prorataValidationError && (
+                                    <p className="text-sm text-red-600">{prorataValidationError}</p>
+                                )}
+                            </>
+                        )}
+                    </div>
+                )}
                 <DialogFooter className="flex-shrink-0 pt-4 border-t">
                     <DialogClose asChild>
                         <Button variant="outline">Cancel</Button>

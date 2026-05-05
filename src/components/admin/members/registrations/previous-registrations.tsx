@@ -46,13 +46,34 @@ interface PreviousMembersListProps {
   setlistActionItems: React.Dispatch<
     React.SetStateAction<{ email: string; name: string }[]>
   >;
+  setDeregisteredMembers: React.Dispatch<React.SetStateAction<ClubMember[]>>;
   setSelectedMember: React.Dispatch<React.SetStateAction<object>>;
   setDeregisteredMembersLength: React.Dispatch<React.SetStateAction<number>>;
 }
 
-const getRegistrationKey = (
-  member: Pick<ClubMember, "registration_id" | "user_id" | "registered_on">,
-) => member.registration_id || `${member.user_id}-${member.registered_on || "registration"}`;
+const getRegistrationRowKey = (
+  member: Pick<ClubMember, "registration_id" | "user_id" | "registered_on" | "deregistered_on">,
+) =>
+  member.registration_id ||
+  `${member.user_id}-${member.registered_on || "registration"}-${member.deregistered_on || "deregistered"}`;
+
+const getRemovalRowIdentity = (
+  member: Pick<
+    ClubMember,
+    | "registration_id"
+    | "user_id"
+    | "registered_on"
+    | "deregistered_on"
+    | "member_email"
+  >,
+) =>
+  [
+    member.registration_id || "",
+    member.user_id || "",
+    member.registered_on || "",
+    member.deregistered_on || "",
+    member.member_email || "",
+  ].join("::");
 
 const getRegistrationPaymentStatus = (member: ClubMember) => {
   const totalFee = member.total_fee || 0;
@@ -94,6 +115,7 @@ export default function PreviousMembersList({
   listActionItems,
   showTenRows = false,
   setSelectedMember,
+  setDeregisteredMembers,
   setDeregisteredMembersLength,
   setlistActionItems,
   showArchived = false,
@@ -112,9 +134,6 @@ export default function PreviousMembersList({
   const [selectedMembersToRemove, setSelectedMembersToRemove] = useState<
     ClubMember[]
   >([]);
-  const [removedRegistrationKeys, setRemovedRegistrationKeys] = useState<string[]>(
-    [],
-  );
   const [localArchivedToggle, setLocalArchivedToggle] = useState<
     Record<string, boolean | undefined>
   >({});
@@ -122,10 +141,7 @@ export default function PreviousMembersList({
     useArchiveRegistrationMutation();
 
   const sortedDeregisteredMembers = useMemo(() => {
-    let sortedCopy = baseDeregisteredMembers.filter(
-      (member: ClubMember) =>
-        !removedRegistrationKeys.includes(getRegistrationKey(member)),
-    );
+    let sortedCopy = [...baseDeregisteredMembers];
 
     // Filter out locally archived entries (only when not showing archived)
     if (!showArchived) {
@@ -172,7 +188,6 @@ export default function PreviousMembersList({
     deregSortAsc,
     memberNameSortAsc,
     totalFeeSortAsc,
-    removedRegistrationKeys,
     localArchivedToggle,
     showArchived,
   ]);
@@ -307,7 +322,7 @@ export default function PreviousMembersList({
               {sortedDeregisteredMembers.length ? (
                 sortedDeregisteredMembers.map((member: ClubMember) => (
                   <TableRow
-                    key={getRegistrationKey(member)}
+                    key={getRegistrationRowKey(member)}
                     onClick={() => {
                       setSelectedMember(member);
                       window.location.hash = member.user_id;
@@ -563,14 +578,18 @@ export default function PreviousMembersList({
           onOpenChange={setOpenRemoveDialog}
           members={selectedMembersToRemove}
           onRemoveSuccess={(removedMembers) => {
-            const removedKeys = removedMembers.map((member) =>
-              getRegistrationKey(member),
+            const removedRowIdentities = new Set(
+              removedMembers.map((member) => getRemovalRowIdentity(member)),
             );
 
-            setRemovedRegistrationKeys((prev) => [
-              ...prev,
-              ...removedKeys.filter((key) => !prev.includes(key)),
-            ]);
+            setDeregisteredMembers((prev) =>
+              prev.filter(
+                (existingMember) =>
+                  !removedRowIdentities.has(
+                    getRemovalRowIdentity(existingMember),
+                  ),
+              ),
+            );
             setlistActionItems((prev) =>
               prev.filter(
                 (item) =>

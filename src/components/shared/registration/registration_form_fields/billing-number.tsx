@@ -1,6 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { formatAmount } from "@/data/currencies";
-import { useState } from "react";
+import { formatProrataPercentage, getActiveProrataRule, getProratedAmount, isProrataActive } from "@/lib/billing-prorata";
+import { useMemo, useState } from "react";
 import RequiredLabel from "./required-label";
 
 interface Field {
@@ -10,6 +11,15 @@ interface Field {
     placeholder?: string
     required?: boolean
     value?: string | number;
+    prorata?: {
+        enabled?: boolean;
+        rules?: Array<{
+            id?: string;
+            prorata_start_date: string;
+            prorata_end_date: string;
+            prorata_percentage: number;
+        }>;
+    };
 }
 
 interface BillingNumberFieldProps {
@@ -31,14 +41,25 @@ export default function BillingNumber({
     pages,
     setFieldValue,
 }: BillingNumberFieldProps) {
+    const initialRawAmount = typeof field.value === "string"
+        ? parseFloat(field.value)
+        : field.value ?? 0;
+    const [rawAmount, setRawAmount] = useState(initialRawAmount);
     const [displayAmount, setDisplayAmount] = useState(
-        field?.value ? formatAmount(typeof field.value === 'string' ? parseFloat(field.value) : field.value, clubCurrency) : formatAmount(0, clubCurrency)
+        formatAmount(initialRawAmount, clubCurrency),
     );
+    const adjustedAmount = useMemo(
+        () => getProratedAmount(rawAmount, field),
+        [field, rawAmount],
+    );
+    const hasActiveProrata = isProrataActive(field);
+    const activeProrataRule = getActiveProrataRule(field);
 
     const handleFormattedInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const inputValue = e.target.value.replace(/[^\d]/g, "");
         const value = parseInt(inputValue || "0", 10);
 
+        setRawAmount(value);
         setDisplayAmount(formatAmount(value, clubCurrency));
 
         if (!value || value <= 0) {
@@ -56,7 +77,7 @@ export default function BillingNumber({
                 field.field_id,
                 (f) => ({
                     ...f,
-                    value: value,
+                    value: getProratedAmount(value, f),
                 })
             );
         }
@@ -78,6 +99,11 @@ export default function BillingNumber({
                     className="flex-1 border border-gray-300 rounded-md px-3 py-2.5 text-base font-normal focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                 />
             </div>
+            {hasActiveProrata && rawAmount > 0 && adjustedAmount !== rawAmount && (
+                <p className="text-sm text-emerald-700">
+                    {activeProrataRule ? formatProrataPercentage(activeProrataRule.prorata_percentage) : "0.00"}% prorata discount active. {formatAmount(adjustedAmount, clubCurrency)} payable from {formatAmount(rawAmount, clubCurrency)}
+                </p>
+            )}
         </div>
     );
 }

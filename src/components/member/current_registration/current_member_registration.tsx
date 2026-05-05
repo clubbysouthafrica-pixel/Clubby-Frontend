@@ -845,7 +845,7 @@ export function MemberRegistration({
                       className={cn(
                         "rounded-2xl border px-3 py-3 shadow-sm sm:px-5 sm:py-4",
                         field.type === "TEXT"
-                          ? ""
+                          ? "border-none shadow-none"
                           : field.type === "BILLING"
                             ? "border-emerald-200 bg-emerald-50/40"
                             : field.type === "DNE"

@@ -56,6 +56,15 @@ export interface PageFieldBase {
   editable_by_member?: boolean;
   phone_number_input?: boolean;
   sensitive_information?: boolean;
+  prorata?: {
+    enabled?: boolean;
+    rules?: Array<{
+      id?: string;
+      prorata_start_date: string;
+      prorata_end_date: string;
+      prorata_percentage: number;
+    }>;
+  };
 }
 
 // Helper type for components that require signature_type

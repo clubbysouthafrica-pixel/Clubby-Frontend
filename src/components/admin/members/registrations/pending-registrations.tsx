@@ -402,15 +402,11 @@ export default function PendingMembersList({
 
   const headerHeight = 48;
   const rowHeight = 60;
-  const visibleRowCount = Math.min(
-    baseUnregisteredMembers.length,
-    showTenRows ? 10 : 5,
-  );
-  const tableViewportMaxHeight =
-    visibleRowCount > 0
-      ? headerHeight + visibleRowCount * rowHeight
-      : undefined;
-  const shouldScrollY = baseUnregisteredMembers.length > (showTenRows ? 10 : 5);
+  const maxVisibleRows = showTenRows ? 10 : 5;
+  const shouldScrollY = baseUnregisteredMembers.length > maxVisibleRows;
+  const tableViewportMaxHeight = shouldScrollY
+    ? headerHeight + maxVisibleRows * rowHeight
+    : undefined;
 
   return (
     <div className="flex flex-col gap-4">
@@ -513,7 +509,7 @@ export default function PendingMembersList({
       <div className="w-full max-w-full min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white [contain:inline-size]">
         <div
           className={`block max-w-full overflow-x-auto ${
-            shouldScrollY ? "overflow-y-auto" : "overflow-y-hidden"
+            shouldScrollY ? "overflow-y-auto" : "overflow-y-visible"
           }`}
           style={
             tableViewportMaxHeight

@@ -1757,6 +1757,7 @@ export default function RegistrationsPage() {
                       showTenRows={showTenPreviousRows}
                       showArchived={showArchived}
                       setSelectedMember={setSelectedMember}
+                      setDeregisteredMembers={setAllDeregisteredMembers}
                       setlistActionItems={setlistActionItems}
                       setDeregisteredMembersLength={
                         setDeregisteredMembersLength
