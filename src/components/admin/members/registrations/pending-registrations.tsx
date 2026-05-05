@@ -38,6 +38,7 @@ import {
 import { ClubVariable } from "@/interfaces/club-variable";
 import { generateClubVariableValue } from "@/lib/club-variable-rules";
 import ReusableDeregisterDialog from "./features/reusable-deregister-dialog";
+import EmptyRegistrationsRow from "@/components/admin/members/registrations/features/empty-registrations-row";
 import ReusableSendEmailDialog from "@/components/admin/members/members/features/reusable-send-email-dialog";
 
 interface ImageProps {
@@ -1188,14 +1189,9 @@ export default function PendingMembersList({
                     </Fragment>
                   ))
                 ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={6 + activeColumnKeys.length}
-                      className="py-8 text-center text-muted-foreground"
-                    >
-                      No pending registrations found.
-                    </TableCell>
-                  </TableRow>
+                  <EmptyRegistrationsRow
+                    colSpan={6 + activeColumnKeys.length}
+                  />
                 )}
               </TableBody>
             </Table>

@@ -18,7 +18,6 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   StandardCheckbox,
   BillingDropdown,
-  BillingDiscountDropdown,
   StandardDropdown,
   StandardText,
   StandardSignature,
@@ -31,8 +30,7 @@ export type InputType =
   | "DROPDOWN"
   | "CHECKBOX"
   | "NUMBER"
-  | "SIGNATURE"
-  | "DISCOUNT";
+  | "SIGNATURE";
 export type FieldType = "TEXT" | "STANDARD" | "BILLING";
 
 interface SortableFieldWrapperProps {
@@ -168,21 +166,12 @@ export interface PageFieldBase {
   multiplier_value?: number;
   options?: string[];
   billingOptions?: BillingOption[];
-  discountOptions?: Array<{
-    option_order_id: string;
-    percentage: number;
-    label: string;
-    applicable_billing_fields: string[];
-  }>;
   currency?: string;
   amount?: number;
   value?: string | number;
   signature_type?: string;
   selectedAmountCents?: number;
-  selectedDiscountPercentage?: number;
-  applicable_billing_fields?: string[];
   option_order_id?: string;
-  percentage?: number;
   label?: string;
   editable_by_member?: boolean;
   phone_number_input?: boolean;
@@ -454,30 +443,6 @@ function renderPreviewField(
       <BillingText
         field={field}
         clubCurrency={clubCurrency}
-        currentPageIndex={currentPageIndex}
-        pages={pages}
-        setFieldValue={setFieldValue}
-      />
-    );
-
-    return isEditing ? (
-      <SortableFieldWrapper
-        field={field}
-        element={element}
-        currentPageIndex={currentPageIndex}
-        isRecentlyAdded={isRecentlyAdded}
-        onFieldEdit={onFieldEdit}
-        onFieldDelete={onFieldDelete}
-      />
-    ) : (
-      element
-    );
-  }
-
-  if (field.field_type === "BILLING" && field.input_type === "DISCOUNT") {
-    const element = (
-      <BillingDiscountDropdown
-        field={field}
         currentPageIndex={currentPageIndex}
         pages={pages}
         setFieldValue={setFieldValue}

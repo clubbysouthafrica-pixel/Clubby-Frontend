@@ -145,12 +145,12 @@ export function ForgotPasswordForm({
           <CardTitle className="text-xl">
             {temporaryCredentialsMessage
               ? "Temporary Credentials Required"
-              : "Forgot your password?"}
+              : "Need help signing in?"}
           </CardTitle>
           <CardDescription>
             {temporaryCredentialsMessage
               ? temporaryCredentialsMessage
-              : "Reset your password by entering your email address. We'll send you a one-time pin to reset your password. If your Clubby user still has temporary credentials, you can reset them here."}
+              : "Enter your email address and we will help you reset your password or resend temporary credentials if your account still needs activation."}
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import ReusableDeregisterDialog from "./features/reusable-deregister-dialog";
 import ReusableSendEmailDialog from "@/components/admin/members/members/features/reusable-send-email-dialog";
 import { formatAmount } from "@/data/currencies";
+import EmptyRegistrationsRow from "@/components/admin/members/registrations/features/empty-registrations-row";
 
 interface ImageProps {
   sensors: any;
@@ -415,14 +416,9 @@ export default function RegisteredMembersList({
                   </TableRow>
                 ))
               ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={4 + (activeColumnKeys?.length ?? 0)}
-                    className="h-24 text-center text-slate-500"
-                  >
-                    No results.
-                  </TableCell>
-                </TableRow>
+                <EmptyRegistrationsRow
+                  colSpan={5 + (activeColumnKeys?.length ?? 0)}
+                />
               )}
             </TableBody>
           </Table>

@@ -34,9 +34,8 @@ function SortableItem({ id, children }: { id: string; children: React.ReactNode 
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="rounded-lg p-2 bg-white">
-      <div className="flex items-center space-x-2">
-        {/* Drag handle */}
+    <div ref={setNodeRef} style={style}>
+      <div className="flex items-center gap-2">
         <div {...attributes} {...listeners} className="cursor-move select-none text-lg px-2">
           <MenuIcon />
         </div>

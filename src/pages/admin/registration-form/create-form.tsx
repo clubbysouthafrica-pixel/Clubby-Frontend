@@ -556,7 +556,7 @@ export default function AdminRegistrationFormPage() {
       finalInputType = actualInputType;
     } else if (
       isBillingType &&
-      ["TEXT", "NUMBER", "DROPDOWN", "DISCOUNT"].includes(actualInputType)
+      ["TEXT", "NUMBER", "DROPDOWN"].includes(actualInputType)
     ) {
       fieldType = "BILLING";
       finalInputType = actualInputType;
@@ -657,10 +657,6 @@ export default function AdminRegistrationFormPage() {
         label: "Billing Dropdown",
         description: "Select from billing options",
       },
-      DISCOUNT: {
-        label: "Discount",
-        description: "Calculate discounts on billing",
-      },
     };
     return fieldMap[inputType] || { label: inputType, description: "" };
   };
@@ -727,15 +723,6 @@ export default function AdminRegistrationFormPage() {
           label: "Billing Dropdown",
           description: "Select billing option",
         },
-        ...(import.meta.env.VITE_ENVIRONMENT === "Dev"
-          ? [
-              {
-                id: "palette-DISCOUNT",
-                label: "Discount",
-                description: "Discount on billing",
-              },
-            ]
-          : []),
       ],
     },
   ];

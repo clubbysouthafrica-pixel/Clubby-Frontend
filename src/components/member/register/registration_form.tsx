@@ -152,8 +152,6 @@ export function ClubRegisterForm() {
         if (f.field_type === "STANDARD") return hasEmptyStandardValue(f.value);
         if (f.field_type === "BILLING" && f.input_type === "DROPDOWN")
           return f.value == null || f.selectedAmountCents == null;
-        if (f.field_type === "BILLING" && f.input_type === "DISCOUNT")
-          return f.value == null || f.percentage == null;
         if (f.field_type === "BILLING" && f.input_type === "NUMBER") return f.value == null || (typeof f.value === "number" && f.value <= 0);
       }
       return false;

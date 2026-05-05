@@ -3,7 +3,7 @@ import { Dialog, DialogTrigger, DialogContent, DialogFooter, DialogClose } from 
 import { Button } from "@/components/ui/button"
 import { PencilIcon, XIcon } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { InputBillingOption, InputDiscountOption, InputFormRegistration, PageFormRegistration } from "@/interfaces/formRegistration"
+import { InputBillingOption, InputFormRegistration, PageFormRegistration } from "@/interfaces/formRegistration"
 import { Label } from "./ui/label"
 import { Input } from "./ui/input"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
@@ -12,10 +12,8 @@ import EditTextDisplay from "./admin/registration-form/edit-fields/text-display"
 import EditBillingText from "./admin/registration-form/edit-fields/billing-text"
 import DisplayBillingText from "./admin/registration-form/display-fields/billing-text";
 import EditBillingDropdown from './admin/registration-form/edit-fields/billing-dropdown';
-import EditBillingDiscountDropdown from './admin/registration-form/edit-fields/billing-discount-dropdown';
 import EditBillingNumber from './admin/registration-form/edit-fields/billing-number';
 import DisplayBillingDropdown from "./admin/registration-form/display-fields/billing-dropdown"
-import DisplayBillingDiscountDropdown from "./admin/registration-form/display-fields/billing-discount-dropdown"
 import DisplayBillingNumber from "./admin/registration-form/display-fields/billing-number"
 import EditStandardCheckbox from "./admin/registration-form/edit-fields/standard-checkbox"
 import DisplayStandardCheckbox from "./admin/registration-form/display-fields/standard-checkbox"
@@ -59,7 +57,6 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
     const [amount, setAmount] = useState(0)
 
     const [dropdownBillingOptions, setDropdownBillingOptions] = useState<InputBillingOption[]>([])
-    const [dropdownDiscountOptions, setDropdownDiscountOptions] = useState<InputDiscountOption[]>([])
     const [dropdownOptions, setDropdownOptions] = useState<string[]>([])
 
     useEffect(() => {
@@ -76,9 +73,6 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
 
         if (field?.billingOptions?.length) {
             setDropdownBillingOptions(field.billingOptions)
-        }
-        if (field?.discountOptions?.length) {
-            setDropdownDiscountOptions(field.discountOptions)
         }
         if (field?.options?.length) {
             setDropdownOptions(field.options)
@@ -119,10 +113,6 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
             inputRequest.billingOptions = dropdownBillingOptions
         }
 
-        if (dropdownDiscountOptions.length > 0) {
-            inputRequest.discountOptions = dropdownDiscountOptions
-        }
-
         if (dropdownOptions.length > 0) {
             inputRequest.options = dropdownOptions
         }
@@ -137,14 +127,6 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
 
     const handleRemoveBillingOption = (id: string) => {
         setDropdownBillingOptions(prev => prev.filter(o => o.option_order_id !== id))
-    }
-
-    const handleAddDiscountOption = (option: InputDiscountOption) => {
-        setDropdownDiscountOptions(prev => [...prev, option])
-    }
-
-    const handleRemoveDiscountOption = (id: string) => {
-        setDropdownDiscountOptions(prev => prev.filter(o => o.option_order_id !== id))
     }
 
     const addOption = () => {
@@ -173,8 +155,6 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
                                     <DisplayBillingDropdown currency={currency} field={field} />
                                     : field.input_type === "NUMBER" && field.field_type === "BILLING" ?
                                         <DisplayBillingNumber field={field} />
-                                    : field.input_type === "DISCOUNT" && field.field_type === "BILLING" ?
-                                        <DisplayBillingDiscountDropdown field={field} />
                                     : field.input_type === "CHECKBOX" && field.field_type === "STANDARD" ?
                                         <DisplayStandardCheckbox field={field} />
                                         : field.input_type === "TEXT" && field.field_type === "STANDARD" ?
@@ -282,19 +262,6 @@ export default function FieldInputEditorDialog({ currency, field, allPages, upda
                                             onRequiredChange={setRequired}
                                             onAddBillingOption={handleAddBillingOption}
                                             onRemoveBillingOption={handleRemoveBillingOption}
-                                        />
-                                        : field.input_type === "DISCOUNT" && field.field_type === "BILLING" ?
-                                        <EditBillingDiscountDropdown
-                                            fieldName={fieldName}
-                                            placeholder={placeholder}
-                                            required={required}
-                                            discountOptions={dropdownDiscountOptions}
-                                            allBillingFields={allPages.flatMap(p => p.fields.filter(f => f.field_type === "BILLING" && f.input_type !== "DISCOUNT"))}
-                                            onFieldNameChange={setFieldName}
-                                            onPlaceholderChange={setPlaceholder}
-                                            onRequiredChange={setRequired}
-                                            onAddDiscountOption={handleAddDiscountOption}
-                                            onRemoveDiscountOption={handleRemoveDiscountOption}
                                         />
                                         : field.input_type === "NUMBER" && field.field_type === "BILLING" ?
                                         <EditBillingNumber

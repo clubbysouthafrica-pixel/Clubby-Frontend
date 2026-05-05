@@ -27,6 +27,7 @@ import RemoveRegistrationDialog from "./features/remove-registration-dialog";
 import { formatAmount } from "@/data/currencies";
 import { useArchiveRegistrationMutation } from "@/mutations/admin/useRegistrationMutation";
 import { toast } from "sonner";
+import EmptyRegistrationsRow from "@/components/admin/members/registrations/features/empty-registrations-row";
 
 interface PreviousMembersListProps {
   club: Club | null;
@@ -49,8 +50,9 @@ interface PreviousMembersListProps {
   setDeregisteredMembersLength: React.Dispatch<React.SetStateAction<number>>;
 }
 
-const getRegistrationKey = (member: Pick<ClubMember, "registration_id" | "user_id">) =>
-  member.registration_id || member.user_id;
+const getRegistrationKey = (
+  member: Pick<ClubMember, "registration_id" | "user_id" | "registered_on">,
+) => member.registration_id || `${member.user_id}-${member.registered_on || "registration"}`;
 
 const getRegistrationPaymentStatus = (member: ClubMember) => {
   const totalFee = member.total_fee || 0;
@@ -305,7 +307,7 @@ export default function PreviousMembersList({
               {sortedDeregisteredMembers.length ? (
                 sortedDeregisteredMembers.map((member: ClubMember) => (
                   <TableRow
-                    key={member.user_id}
+                    key={getRegistrationKey(member)}
                     onClick={() => {
                       setSelectedMember(member);
                       window.location.hash = member.user_id;
@@ -547,14 +549,9 @@ export default function PreviousMembersList({
                   </TableRow>
                 ))
               ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={5 + (activeColumnKeys?.length ?? 0)}
-                    className="h-24 text-center"
-                  >
-                    No results.
-                  </TableCell>
-                </TableRow>
+                <EmptyRegistrationsRow
+                  colSpan={5 + (activeColumnKeys?.length ?? 0)}
+                />
               )}
             </TableBody>
           </Table>

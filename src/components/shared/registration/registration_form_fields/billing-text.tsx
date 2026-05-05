@@ -8,7 +8,7 @@ interface Field {
   field_order_id: string
     field_name: string
   field_type: "TEXT" | "STANDARD" | "BILLING"
-  input_type: "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER" | "SIGNATURE" | "DISCOUNT"
+  input_type: "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER" | "SIGNATURE"
     placeholder?: string
     required?: boolean
     multiplier?: boolean

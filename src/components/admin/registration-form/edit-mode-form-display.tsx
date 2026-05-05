@@ -275,16 +275,6 @@ export function EditModeFormDisplay({
             {renderMetadata()}
           </div>
         );
-      } else if (field.input_type === 'DISCOUNT') {
-        return (
-          <div className="space-y-2 relative min-w-0">
-            <Label className="block text-base font-medium text-gray-900">
-              {label}
-            </Label>
-            <div className="text-sm text-gray-600 italic">Discount field</div>
-            {renderMetadata()}
-          </div>
-        );
       } else {
         // TEXT or NUMBER
         return (

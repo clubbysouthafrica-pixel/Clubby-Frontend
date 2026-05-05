@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useContext, useState, useEffect, useRef } from "react";
+import { useCallback, useContext, useState, useEffect, useRef } from "react";
 import { AuthContext, AuthContextType } from "@/context/AuthContext";
 import { Alert, AlertDescription } from "@/components/ui/alert.tsx";
 import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
@@ -58,7 +58,7 @@ export function LoginForm({
     navigate(nextQuery ? `/login?${nextQuery}` : "/login", { replace: true });
   }, [isAdminLogin, navigate, redirectTarget, searchParams]);
 
-  const signIn = async (emailParam?: string, passwordParam?: string) => {
+  const signIn = useCallback(async (emailParam?: string, passwordParam?: string) => {
     const emailToUse = emailParam || email;
     const passwordToUse = passwordParam || password;
     
@@ -113,7 +113,7 @@ export function LoginForm({
     } finally {
       setLoading(false);
     }
-  };
+  }, [email, password, login, isAdminLogin, navigate, redirectTarget]);
 
   // Auto-submit login if email and tempPassword query parameters are provided
   useEffect(() => {
@@ -122,7 +122,7 @@ export function LoginForm({
       // Call signIn directly with query parameters
       signIn(queryEmail, queryTempPassword);
     }
-  }, [queryEmail, queryTempPassword]);
+  }, [queryEmail, queryTempPassword, signIn]);
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -210,7 +210,7 @@ export function LoginForm({
                               }
                               className="ml-auto text-xs underline-offset-4 hover:underline"
                             >
-                              Forgot your password?
+                              Need help signing in?
                             </Link>
                           </div>
 

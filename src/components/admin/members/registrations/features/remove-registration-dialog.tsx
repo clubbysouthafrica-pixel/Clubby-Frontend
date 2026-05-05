@@ -35,6 +35,10 @@ export default function RemoveRegistrationDialog({
 
     const handleRemove = () => {
         if (members.length > 0) {
+            const successfullyRemovedMembers: ClubMember[] = [];
+            let completedCount = 0;
+            let encounteredError = false;
+
             // Remove each registration one by one
             members.forEach((member) => {
                 removeRegistrationMutate(
@@ -44,10 +48,10 @@ export default function RemoveRegistrationDialog({
                     },
                     {
                         onSuccess: () => {
-                            // Check if this is the last member in the batch
-                            const isLastMember = member.user_id === members[members.length - 1].user_id;
-                            
-                            if (isLastMember) {
+                            successfullyRemovedMembers.push(member);
+                            completedCount += 1;
+
+                            if (completedCount === members.length && !encounteredError) {
                                 if (members.length === 1) {
                                     toast.success("Registration removed successfully");
                                 } else {
@@ -56,11 +60,12 @@ export default function RemoveRegistrationDialog({
                                 setDisplaySuccess(true);
                                 setTimeout(() => {
                                     onOpenChange(false);
-                                    onRemoveSuccess?.(members);
+                                    onRemoveSuccess?.(successfullyRemovedMembers);
                                 }, 500);
                             }
                         },
                         onError: (error: unknown) => {
+                            encounteredError = true;
                             const errObj = error as Record<string, unknown> | undefined;
                             const resp = errObj?.response as Record<string, unknown> | undefined;
                             const msg = (resp?.data as Record<string, unknown> | undefined)?.message as string | undefined ?? String(error ?? "An error occurred");

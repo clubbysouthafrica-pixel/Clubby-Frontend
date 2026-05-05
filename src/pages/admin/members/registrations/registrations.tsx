@@ -1341,20 +1341,22 @@ export default function RegistrationsPage() {
               className="relative flex flex-col gap-4 overflow-y-auto"
             >
               <Card className="rounded-[24px] border border-slate-200/70 bg-white/95 p-4 shadow-[0_16px_36px_rgba(15,23,42,0.07)] md:p-5">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex min-h-12 items-center justify-between gap-3">
                   <h2 className="text-xl font-semibold text-slate-950">
                     Active Registrations - Items returned (
                     {allRegisteredMembers.length})
                   </h2>
-                  {allRegisteredMembers.length > 5 && (
-                    <button
-                      type="button"
-                      onClick={() => setShowTenRegisteredRows((prev) => !prev)}
-                      className="inline-flex h-8 shrink-0 items-center rounded-full border border-slate-200 bg-slate-50 px-3.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
-                    >
-                      {showTenRegisteredRows ? "Show 5 rows" : "Show 10 rows"}
-                    </button>
-                  )}
+                  <div className="flex min-h-8 items-center gap-2">
+                    {allRegisteredMembers.length > 5 && (
+                      <button
+                        type="button"
+                        onClick={() => setShowTenRegisteredRows((prev) => !prev)}
+                        className="inline-flex h-8 shrink-0 items-center rounded-full border border-slate-200 bg-slate-50 px-3.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+                      >
+                        {showTenRegisteredRows ? "Show 5 rows" : "Show 10 rows"}
+                      </button>
+                    )}
+                  </div>
                 </div>
                 {fetchError && (
                   <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md flex items-center justify-between">
@@ -1448,12 +1450,12 @@ export default function RegistrationsPage() {
               className="relative flex flex-col gap-4 overflow-auto"
             >
               <Card className="rounded-[24px] border border-slate-200/70 bg-white/95 p-4 shadow-[0_16px_36px_rgba(15,23,42,0.07)] md:p-5">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex min-h-12 items-center justify-between gap-3">
                   <h2 className="text-xl font-semibold text-slate-950">
                     Pending Registrations - Items returned (
                     {allUnregisteredMembers.length})
                   </h2>
-                  <div className="flex items-center gap-2">
+                  <div className="flex min-h-8 items-center gap-2">
                     {allUnregisteredMembers.length > 5 && (
                       <button
                         type="button"
@@ -1654,12 +1656,12 @@ export default function RegistrationsPage() {
               className="relative flex flex-col gap-4 overflow-auto"
             >
               <Card className="rounded-[24px] border border-slate-200/70 bg-white/95 p-4 shadow-[0_16px_36px_rgba(15,23,42,0.07)] md:p-5">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex min-h-12 items-center justify-between gap-3">
                   <h2 className="text-xl font-semibold text-slate-950">
                     De-registrations - Items returned (
                     {deregisteredMembersLength})
                   </h2>
-                  <div className="flex items-center gap-2">
+                  <div className="flex min-h-8 items-center gap-2">
                     {deregisteredMembersLength > 5 && (
                       <button
                         type="button"
