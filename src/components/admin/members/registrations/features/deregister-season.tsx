@@ -114,14 +114,6 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
       systemCheckResults.event_status?.message || "",
     ) &&
     Boolean(systemCheckResults.event_status?.eventId);
-  const hasFailedSystemCheck =
-    systemCheckResults.registration_status?.status === "error" ||
-    systemCheckResults.shop_status?.status === "error" ||
-    systemCheckResults.shop_status?.status === "blocked" ||
-    systemCheckResults.storage_status?.status === "error" ||
-    systemCheckResults.storage_status?.status === "blocked" ||
-    systemCheckResults.event_status?.status === "error" ||
-    systemCheckResults.event_status?.status === "blocked";
 
   const send = () => {
     mutate(
@@ -625,9 +617,6 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
                       </li>
                     ) : null}
                   </ul>
-                  {hasFailedSystemCheck ? (
-                    <p className="mt-3 text-sm font-semibold text-rose-700">System check failed.</p>
-                  ) : null}
                 </div>
               ) : null}
             </div>

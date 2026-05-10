@@ -12,6 +12,7 @@ import { HomeSectionCards } from "@/components/admin/club/home/section-cards";
 import {
   ArrowRight,
   BarChart3,
+  BoxIcon,
   CalendarDays,
   CheckCircle2,
   Loader2,
@@ -61,6 +62,11 @@ export default function HomeDashboardPage() {
         label: "Events",
         enabled: Boolean(currentClub?.enable_events),
         route: "/events",
+      },
+      {
+        label: "Storage",
+        enabled: Boolean(currentClub?.enable_storage),
+        route: "/storage",
       },
       {
         label: "Venues & bookings",
@@ -121,6 +127,15 @@ export default function HomeDashboardPage() {
         ],
       },
       {
+        title: "Storage & Requests",
+        description: "Manage storage units and review storage requests.",
+        icon: BoxIcon,
+        items: [
+          { title: "Storage", route: "/storage" },
+          { title: "Storage requests", route: "/storage/requests" },
+        ],
+      },
+      {
         title: "Registration Form",
         description: "Build and maintain the club registration form.",
         icon: UserPlus,
@@ -139,9 +154,11 @@ export default function HomeDashboardPage() {
         ],
       },
     ].filter(
-      (section) => isStorageFeatureEnabled || section.title !== "Storage & Requests",
+      (section) =>
+        section.title !== "Storage & Requests" ||
+        (isStorageFeatureEnabled && Boolean(currentClub?.enable_storage)),
     ),
-    [],
+    [currentClub],
   );
 
   const enabledFeatures = featureStatus.filter((item) => item.enabled);

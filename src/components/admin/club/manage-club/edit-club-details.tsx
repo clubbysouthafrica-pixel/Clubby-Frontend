@@ -293,6 +293,10 @@ export default function EditClubDetails({
           merchant_key: "",
           passphrase: "",
         },
+        snapscan_details: data?.snapscan_details || {
+          merchant_id: "",
+          api_key: "",
+        },
         opening_times: openingTimes,
         instagram_url: instagramUrl,
         facebook_url: facebookUrl,
@@ -696,10 +700,15 @@ export default function EditClubDetails({
                 club_account_id={club?.club_account_id as string}
                 bankDetails={data?.bank_details}
                 payfastDetails={data?.payfast_details}
+                snapscanDetails={data?.snapscan_details}
                 autoRegisterMembersIfPaid={
                   data?.auto_register_members_if_paid ?? false
                 }
+                autoRegisterMembersIfPaidSnapScan={
+                  data?.auto_register_members_if_paid_snapscan ?? false
+                }
                 payfastEnabled={data?.payfast_enabled}
+                snapscanEnabled={data?.snapscan_enabled}
                 customPaymentMethods={data?.custom_payment_methods}
                 onSave={handleBankingDetailsSave}
                 isPending={isPending}

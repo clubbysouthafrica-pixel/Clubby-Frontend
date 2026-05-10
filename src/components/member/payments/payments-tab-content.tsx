@@ -32,6 +32,13 @@ interface Transaction {
   type: string;
   status: string;
   amount: number;
+  amount_paid?: number;
+  outstanding_amount?: number;
+  registration_id?: string;
+  order_id?: string;
+  event_id?: string;
+  event_registration_id?: string;
+  storage_id?: string;
   lifecycle: Record<string, TransactionEntry>;
 }
 
@@ -105,11 +112,45 @@ export default function PaymentsTabContent({
     isLoading: isUserTransactionsLoading,
   } = useFetchUserTransactions(clubAccountId, userId, isActive);
 
+  const transactionItems = useMemo(() => {
+    return Array.isArray(transactions?.transactions) ? transactions.transactions : [];
+  }, [transactions?.transactions]);
+
   const transactionOptions = useMemo(() => {
-    return Array.isArray(bankDetails?.transaction_options)
-      ? bankDetails.transaction_options
-      : [];
-  }, [bankDetails?.transaction_options]);
+    if (Array.isArray(bankDetails?.transaction_options) && bankDetails.transaction_options.length > 0) {
+      return bankDetails.transaction_options;
+    }
+
+    return transactionItems
+      .map((transaction: Transaction): PaymentTransactionOption | null => {
+        const totalAmount = Number(transaction.amount) || 0;
+        const outstandingAmount =
+          typeof transaction.outstanding_amount === "number"
+            ? transaction.outstanding_amount
+            : Math.max(totalAmount - (Number(transaction.amount_paid) || 0), 0);
+
+        if (!transaction.transaction_id || outstandingAmount <= 0) {
+          return null;
+        }
+
+        return {
+          transaction_id: transaction.transaction_id,
+          type: transaction.type,
+          outstanding_amount: outstandingAmount,
+          total_amount: totalAmount,
+          order_id: transaction.order_id,
+          event_id: transaction.event_id,
+          event_registration_id: transaction.event_registration_id,
+          registration_id: transaction.registration_id,
+          storage_id: transaction.storage_id,
+        };
+      })
+      .filter(
+        (
+          paymentOption: PaymentTransactionOption | null
+        ): paymentOption is PaymentTransactionOption => paymentOption !== null
+      );
+  }, [bankDetails?.transaction_options, transactionItems]);
 
   const hasFallbackOutstandingPayment = useMemo(() => {
     return outstandingAmount > 0 && transactionOptions.length === 0;
@@ -157,10 +198,6 @@ export default function PaymentsTabContent({
     isActive,
     transactionOptions.length,
   ]);
-
-  const transactionItems = useMemo(() => {
-    return Array.isArray(transactions?.transactions) ? transactions.transactions : [];
-  }, [transactions?.transactions]);
 
   const filteredTransactionItems = useMemo(() => {
     const query = transactionSearch.trim().toLowerCase();

@@ -128,7 +128,7 @@ export default function RemoveRegistrationDialog({
                     <p className="text-sm font-semibold text-red-900">What happens next:</p>
                     <ul className="text-sm text-red-800 space-y-1 list-disc list-inside">
                         <li>{members.length > 1 ? "These registrations will" : "This registration will"} be permanently removed</li>
-                        <li>All registration data associated with {members.length > 1 ? "these registrations" : "this registration"} will be archived</li>
+                        <li>All registration data associated with {members.length > 1 ? "these registrations" : "this registration"} will be removed</li>
                         <li>All reporting associated with {members.length > 1 ? "these registrations" : "this registration"} will also be removed</li>
                     </ul>
                 </div>

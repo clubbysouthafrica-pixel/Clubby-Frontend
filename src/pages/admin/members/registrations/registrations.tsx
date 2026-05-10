@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState, useRef } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
 import { useFetchClubMembers } from "@/queries/admin/club-members";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
@@ -76,9 +77,9 @@ export default function RegistrationsPage() {
   );
   const [memberLimit, setMemberLimit] = useState(100);
   const [pageToken, setPageToken] = useState<string | undefined>(undefined);
-  const [allRegisteredMembers, setAllRegisteredMembers] = useState<ClubMember[]>(
-    [],
-  );
+  const [allRegisteredMembers, setAllRegisteredMembers] = useState<
+    ClubMember[]
+  >([]);
   const [allUnregisteredMembers, setAllUnregisteredMembers] = useState<
     ClubMember[]
   >([]);
@@ -162,7 +163,9 @@ export default function RegistrationsPage() {
 
     if (
       requestedTab &&
-      ["registered-members", "pending-members", "previous-members"].includes(requestedTab) &&
+      ["registered-members", "pending-members", "previous-members"].includes(
+        requestedTab,
+      ) &&
       requestedTab !== selectedTab
     ) {
       setSelectedTab(requestedTab);
@@ -209,8 +212,10 @@ export default function RegistrationsPage() {
 
   const [deregisteredMembersLength, setDeregisteredMembersLength] =
     useState<number>(0);
-  const [showPendingRegistrationsDropdown, setShowPendingRegistrationsDropdown] =
-    useState(false);
+  const [
+    showPendingRegistrationsDropdown,
+    setShowPendingRegistrationsDropdown,
+  ] = useState(false);
 
   const [availableDynamicFilters, setAvailableDynamicFilters] = useState<
     AvailableDynamicFilter[]
@@ -433,7 +438,8 @@ export default function RegistrationsPage() {
         value: string;
         condition?: string;
       } = {
-        field_id: fieldType === "club_variable" ? fieldId : `reg_field_${fieldId}`,
+        field_id:
+          fieldType === "club_variable" ? fieldId : `reg_field_${fieldId}`,
         type: fieldType,
         input_type: inputType,
         value: actualValue,
@@ -508,7 +514,11 @@ export default function RegistrationsPage() {
   const registerUser = (
     member: ClubMember,
     paymentMethod?: string,
-    templateVariables?: Array<{ name: string; value: string; auto_generated?: boolean }>,
+    templateVariables?: Array<{
+      name: string;
+      value: string;
+      auto_generated?: boolean;
+    }>,
   ) => {
     if (
       memberRegisterAmount > member.outstanding_amount ||
@@ -539,6 +549,7 @@ export default function RegistrationsPage() {
             window.location.reload();
           }
           setMemberRegisterAmount(0);
+          setDisplayAmount(formatAmount(0, club?.currency));
         },
       },
     );
@@ -549,6 +560,30 @@ export default function RegistrationsPage() {
       setOpenDialogUserId(null);
     }
   }, [isSuccess]);
+
+  const selectedRegistrationMember =
+    hashUserId &&
+    selectedMember &&
+    typeof selectedMember === "object" &&
+    "user_id" in selectedMember &&
+    typeof (selectedMember as ClubMember).user_id === "string"
+      ? (selectedMember as ClubMember)
+      : null;
+
+  const handleBackToRegistrations = () => {
+    setSelectedMember({});
+    setHashUserId(null);
+    window.history.pushState(
+      "",
+      document.title,
+      window.location.pathname + window.location.search,
+    );
+  };
+
+  const handleReviewPendingRegistration = (member: ClubMember) => {
+    handleBackToRegistrations();
+    setOpenDialogUserId(member.user_id);
+  };
 
   const resetFilters = () => {
     setMemberNameFilter("");
@@ -723,6 +758,34 @@ export default function RegistrationsPage() {
         </div>
       ) : (
         <div className="flex w-full max-w-full flex-col gap-3 overflow-x-hidden px-2 py-3 sm:px-3 md:px-4 md:py-4 xl:px-5 2xl:px-6">
+          <AnimatePresence mode="wait" initial={false}>
+            {selectedRegistrationMember ? (
+              <motion.div
+                key="registration-detail"
+                initial={{ opacity: 0, rotateY: 18, x: 20 }}
+                animate={{ opacity: 1, rotateY: 0, x: 0 }}
+                exit={{ opacity: 0, rotateY: -18, x: -20 }}
+                transition={{ duration: 0.28, ease: "easeInOut" }}
+                style={{ transformStyle: "preserve-3d" }}
+              >
+                <RegistrationDialog
+                  clubName={club?.club_name ?? ""}
+                  selectedMember={selectedRegistrationMember}
+                  currency={club?.currency ?? "ZAR"}
+                  clubAccountId={club?.club_account_id ?? ""}
+                  onReviewPendingRegistration={handleReviewPendingRegistration}
+                  onBack={handleBackToRegistrations}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="registration-overview"
+                initial={{ opacity: 0, rotateY: -18, x: -20 }}
+                animate={{ opacity: 1, rotateY: 0, x: 0 }}
+                exit={{ opacity: 0, rotateY: 18, x: 20 }}
+                transition={{ duration: 0.28, ease: "easeInOut" }}
+                style={{ transformStyle: "preserve-3d" }}
+              >
           <section className="relative overflow-hidden rounded-[24px] border border-stone-300/70 bg-stone-200 px-4 py-4 text-zinc-900 shadow-[0_18px_40px_rgba(120,113,108,0.16)] md:px-5 md:py-4">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.72),_transparent_28%),radial-gradient(circle_at_right,_rgba(214,211,209,0.55),_transparent_24%)]" />
             <div className="relative flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
@@ -738,7 +801,10 @@ export default function RegistrationsPage() {
 
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
                 {availableSeasons.length > 0 && (
-                  <Select value={selectedSeason} onValueChange={setSelectedSeason}>
+                  <Select
+                    value={selectedSeason}
+                    onValueChange={setSelectedSeason}
+                  >
                     <SelectTrigger className="h-8 w-full rounded-full border-stone-300 bg-white text-zinc-700 shadow-none sm:w-[180px]">
                       <SelectValue />
                     </SelectTrigger>
@@ -763,7 +829,6 @@ export default function RegistrationsPage() {
                 </button>
               </div>
             </div>
-
           </section>
 
           <Tabs
@@ -823,285 +888,94 @@ export default function RegistrationsPage() {
                     </TabsTrigger>
                   </TabsList>
                   <div className="flex shrink-0 items-center gap-2">
-                    <DeregisterSeasonDialog clubId={club?.club_account_id ?? ""} />
+                    <DeregisterSeasonDialog
+                      clubId={club?.club_account_id ?? ""}
+                    />
                   </div>
                 </div>
               </div>
             </section>
             <Card className="rounded-[24px] border border-slate-200/70 bg-white/90 p-4 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur md:p-5">
-                <div className="flex items-center">
-                  <p
-                    className="cursor-pointer text-xs font-medium uppercase tracking-[0.18em] text-slate-500 underline decoration-slate-300 underline-offset-4"
-                    onClick={resetFilters}
-                  >
-                    Reset filters
-                  </p>
-                </div>
-                <div className="flex flex-row flex-wrap gap-2">
-                  <Input
-                    placeholder="Filter by member name"
-                    value={memberNameFilter}
-                    onChange={(e) => {
-                      setMemberNameFilter(e.target.value);
-                      setlistActionItems([]);
-                      setDeregisterMembers([]);
-                      setAllMembersSelected(false);
-                    }}
-                    className="h-8 w-[300px] rounded-full border-slate-200 bg-white text-xs text-slate-700 placeholder:text-slate-400"
-                  />
-                  <Input
-                    placeholder="Filter by member ID"
-                    value={memberIdFilter}
-                    onChange={(e) => {
-                      setMemberIdFilter(e.target.value);
-                      setlistActionItems([]);
-                      setDeregisterMembers([]);
-                      setAllMembersSelected(false);
-                    }}
-                    className="h-8 w-[300px] rounded-full border-slate-200 bg-white text-xs text-slate-700 placeholder:text-slate-400"
-                  />
-                </div>
+              <div className="flex items-center">
+                <p
+                  className="cursor-pointer text-xs font-medium uppercase tracking-[0.18em] text-slate-500 underline decoration-slate-300 underline-offset-4"
+                  onClick={resetFilters}
+                >
+                  Reset filters
+                </p>
+              </div>
+              <div className="flex flex-row flex-wrap gap-2">
+                <Input
+                  placeholder="Filter by member name"
+                  value={memberNameFilter}
+                  onChange={(e) => {
+                    setMemberNameFilter(e.target.value);
+                    setlistActionItems([]);
+                    setDeregisterMembers([]);
+                    setAllMembersSelected(false);
+                  }}
+                  className="h-8 w-[300px] rounded-full border-slate-200 bg-white text-xs text-slate-700 placeholder:text-slate-400"
+                />
+                <Input
+                  placeholder="Filter by member ID"
+                  value={memberIdFilter}
+                  onChange={(e) => {
+                    setMemberIdFilter(e.target.value);
+                    setlistActionItems([]);
+                    setDeregisterMembers([]);
+                    setAllMembersSelected(false);
+                  }}
+                  className="h-8 w-[300px] rounded-full border-slate-200 bg-white text-xs text-slate-700 placeholder:text-slate-400"
+                />
+              </div>
 
-                {availableDynamicFilters &&
-                  activeFilterKeys.length > 0 &&
-                  (() => {
-                    const activeFilters = availableDynamicFilters.filter(
-                      ({ key }) => activeFilterKeys.includes(key),
-                    );
+              {availableDynamicFilters &&
+                activeFilterKeys.length > 0 &&
+                (() => {
+                  const activeFilters = availableDynamicFilters.filter(
+                    ({ key }) => activeFilterKeys.includes(key),
+                  );
 
-                    const sortedFilters = activeFilters.sort((a, b) => {
-                      const getType = (
-                        filter: (typeof availableDynamicFilters)[0],
-                      ) => {
-                        if (!filter.options) return 0;
-                        if (
-                          filter.options.length === 2 &&
-                          filter.options.includes("true") &&
-                          filter.options.includes("false")
-                        )
-                          return 2;
-                        return 1;
-                      };
-                      return getType(a) - getType(b);
-                    });
+                  const sortedFilters = activeFilters.sort((a, b) => {
+                    const getType = (
+                      filter: (typeof availableDynamicFilters)[0],
+                    ) => {
+                      if (!filter.options) return 0;
+                      if (
+                        filter.options.length === 2 &&
+                        filter.options.includes("true") &&
+                        filter.options.includes("false")
+                      )
+                        return 2;
+                      return 1;
+                    };
+                    return getType(a) - getType(b);
+                  });
 
-                    return (
-                      <div className="flex flex-col gap-2 p-2">
-                        <span className="text-xs font-semibold text-muted-foreground">
-                          Custom Filters
-                        </span>
-                        <div className="flex flex-wrap gap-2">
-                          {sortedFilters.map(
-                            ({ key, field_name, options, type }) => {
-                              if (type === "billing:number") {
-                                const filterValue = dynamicFilters[key] || {};
-                                const operator =
-                                  typeof filterValue === "object"
-                                    ? filterValue.operator || "gte"
-                                    : "gte";
-                                const rawValue =
-                                  typeof filterValue === "object"
-                                    ? filterValue.value || ""
-                                    : "";
-                                const displayValue = rawValue
-                                  ? formatAmount(
-                                      parseInt(rawValue) || 0,
-                                      club?.currency,
-                                    )
+                  return (
+                    <div className="flex flex-col gap-2 p-2">
+                      <span className="text-xs font-semibold text-muted-foreground">
+                        Custom Filters
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {sortedFilters.map(
+                          ({ key, field_name, options, type }) => {
+                            if (type === "billing:number") {
+                              const filterValue = dynamicFilters[key] || {};
+                              const operator =
+                                typeof filterValue === "object"
+                                  ? filterValue.operator || "gte"
+                                  : "gte";
+                              const rawValue =
+                                typeof filterValue === "object"
+                                  ? filterValue.value || ""
                                   : "";
-
-                                return (
-                                  <div
-                                    key={key}
-                                    className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-3"
-                                  >
-                                    <div className="flex items-center justify-between gap-2 mb-2">
-                                      <Label className="text-xs font-semibold">
-                                        {field_name}
-                                      </Label>
-                                      <button
-                                        onClick={() => {
-                                          setActiveFilterKeys((prev) =>
-                                            prev.filter((k) => k !== key),
-                                          );
-                                          setDynamicFilters((prev) => {
-                                            const newFilters = { ...prev };
-                                            delete newFilters[key];
-                                            return newFilters;
-                                          });
-                                        }}
-                                        className="rounded-full p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
-                                      >
-                                        <X className="h-3 w-3" />
-                                      </button>
-                                    </div>
-                                    <div className="flex gap-2 items-center">
-                                      <Select
-                                        onValueChange={(newOperator) => {
-                                          setDynamicFilters((prev) => ({
-                                            ...prev,
-                                            [key]: {
-                                              operator: newOperator,
-                                              value: rawValue,
-                                            },
-                                          }));
-                                          setlistActionItems([]);
-                                          setDeregisterMembers([]);
-                                          setAllMembersSelected(false);
-                                        }}
-                                        value={operator}
-                                      >
-                                        <SelectTrigger className="h-8 w-[200px] rounded-full bg-white text-xs text-slate-700">
-                                          <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="eq">
-                                            Equal to
-                                          </SelectItem>
-                                          <SelectItem value="neq">
-                                            Not equal to
-                                          </SelectItem>
-                                          <SelectItem value="gt">
-                                            Greater than
-                                          </SelectItem>
-                                          <SelectItem value="gte">
-                                            Greater or equal
-                                          </SelectItem>
-                                          <SelectItem value="lt">
-                                            Less than
-                                          </SelectItem>
-                                          <SelectItem value="lte">
-                                            Less or equal
-                                          </SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                      <Input
-                                        type="text"
-                                        placeholder="Enter amount"
-                                        value={displayValue}
-                                        onChange={(e) => {
-                                          const inputValue =
-                                            e.target.value.replace(/[^\d]/g, "");
-                                          const numericValue = inputValue || "";
-                                          setDynamicFilters((prev) => ({
-                                            ...prev,
-                                            [key]: {
-                                              operator,
-                                              value: numericValue,
-                                            },
-                                          }));
-                                          setlistActionItems([]);
-                                          setDeregisterMembers([]);
-                                          setAllMembersSelected(false);
-                                        }}
-                                        className="w-[150px] text-sm"
-                                      />
-                                    </div>
-                                  </div>
-                                );
-                              }
-
-                              if (
-                                type === "club_variable" ||
-                                !options ||
-                                options.length === 0
-                              ) {
-                                return (
-                                  <div
-                                    key={key}
-                                    className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-3"
-                                  >
-                                    <div className="flex items-center justify-between gap-2 mb-2">
-                                      <Label className="text-xs font-semibold">
-                                        {field_name}
-                                      </Label>
-                                      <button
-                                        onClick={() => {
-                                          setActiveFilterKeys((prev) =>
-                                            prev.filter((k) => k !== key),
-                                          );
-                                          setDynamicFilters((prev) => {
-                                            const newFilters = { ...prev };
-                                            delete newFilters[key];
-                                            return newFilters;
-                                          });
-                                        }}
-                                        className="rounded-full p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
-                                      >
-                                        <X className="h-3 w-3" />
-                                      </button>
-                                    </div>
-                                    <Input
-                                      placeholder={`Filter by ${field_name}`}
-                                      value={dynamicFilterTextValues[key] || ""}
-                                      onChange={(e) => {
-                                        setDynamicFilters((prev) => ({
-                                          ...prev,
-                                          [key]: e.target.value,
-                                        }));
-                                        setlistActionItems([]);
-                                        setDeregisterMembers([]);
-                                        setAllMembersSelected(false);
-                                      }}
-                                      className="h-8 w-[280px] rounded-full border-slate-200 bg-white text-xs text-slate-700"
-                                    />
-                                  </div>
-                                );
-                              }
-
-                              if (
-                                options &&
-                                options.length === 2 &&
-                                options.includes("true") &&
-                                options.includes("false")
-                              ) {
-                                return (
-                                  <div
-                                    key={key}
-                                    className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-3"
-                                  >
-                                    <div className="flex items-center justify-between gap-2 mb-2">
-                                      <Label className="text-xs font-semibold">
-                                        {field_name}
-                                      </Label>
-                                      <button
-                                        onClick={() => {
-                                          setActiveFilterKeys((prev) =>
-                                            prev.filter((k) => k !== key),
-                                          );
-                                          setDynamicFilters((prev) => {
-                                            const newFilters = { ...prev };
-                                            delete newFilters[key];
-                                            return newFilters;
-                                          });
-                                        }}
-                                        className="rounded-full p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
-                                      >
-                                        <X className="h-3 w-3" />
-                                      </button>
-                                    </div>
-                                    <Checkbox
-                                      id={key}
-                                      checked={dynamicFilters[key] === "true"}
-                                      onCheckedChange={(checked) => {
-                                        setDynamicFilters((prev) => ({
-                                          ...prev,
-                                          [key]: checked ? "true" : "",
-                                        }));
-                                        setlistActionItems([]);
-                                        setDeregisterMembers([]);
-                                        setAllMembersSelected(false);
-                                      }}
-                                    />
-                                    <label
-                                      htmlFor={key}
-                                      className="text-sm font-medium cursor-pointer ml-2"
-                                    >
-                                      Enabled
-                                    </label>
-                                  </div>
-                                );
-                              }
+                              const displayValue = rawValue
+                                ? formatAmount(
+                                    parseInt(rawValue) || 0,
+                                    club?.currency,
+                                  )
+                                : "";
 
                               return (
                                 <div
@@ -1128,213 +1002,408 @@ export default function RegistrationsPage() {
                                       <X className="h-3 w-3" />
                                     </button>
                                   </div>
-                                  <Select
-                                    onValueChange={(value) => {
+                                  <div className="flex gap-2 items-center">
+                                    <Select
+                                      onValueChange={(newOperator) => {
+                                        setDynamicFilters((prev) => ({
+                                          ...prev,
+                                          [key]: {
+                                            operator: newOperator,
+                                            value: rawValue,
+                                          },
+                                        }));
+                                        setlistActionItems([]);
+                                        setDeregisterMembers([]);
+                                        setAllMembersSelected(false);
+                                      }}
+                                      value={operator}
+                                    >
+                                      <SelectTrigger className="h-8 w-[200px] rounded-full bg-white text-xs text-slate-700">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="eq">
+                                          Equal to
+                                        </SelectItem>
+                                        <SelectItem value="neq">
+                                          Not equal to
+                                        </SelectItem>
+                                        <SelectItem value="gt">
+                                          Greater than
+                                        </SelectItem>
+                                        <SelectItem value="gte">
+                                          Greater or equal
+                                        </SelectItem>
+                                        <SelectItem value="lt">
+                                          Less than
+                                        </SelectItem>
+                                        <SelectItem value="lte">
+                                          Less or equal
+                                        </SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                    <Input
+                                      type="text"
+                                      placeholder="Enter amount"
+                                      value={displayValue}
+                                      onChange={(e) => {
+                                        const inputValue =
+                                          e.target.value.replace(/[^\d]/g, "");
+                                        const numericValue = inputValue || "";
+                                        setDynamicFilters((prev) => ({
+                                          ...prev,
+                                          [key]: {
+                                            operator,
+                                            value: numericValue,
+                                          },
+                                        }));
+                                        setlistActionItems([]);
+                                        setDeregisterMembers([]);
+                                        setAllMembersSelected(false);
+                                      }}
+                                      className="w-[150px] text-sm"
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            if (
+                              type === "club_variable" ||
+                              !options ||
+                              options.length === 0
+                            ) {
+                              return (
+                                <div
+                                  key={key}
+                                  className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-3"
+                                >
+                                  <div className="flex items-center justify-between gap-2 mb-2">
+                                    <Label className="text-xs font-semibold">
+                                      {field_name}
+                                    </Label>
+                                    <button
+                                      onClick={() => {
+                                        setActiveFilterKeys((prev) =>
+                                          prev.filter((k) => k !== key),
+                                        );
+                                        setDynamicFilters((prev) => {
+                                          const newFilters = { ...prev };
+                                          delete newFilters[key];
+                                          return newFilters;
+                                        });
+                                      }}
+                                      className="rounded-full p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                  <Input
+                                    placeholder={`Filter by ${field_name}`}
+                                    value={dynamicFilterTextValues[key] || ""}
+                                    onChange={(e) => {
                                       setDynamicFilters((prev) => ({
                                         ...prev,
-                                        [key]: value,
+                                        [key]: e.target.value,
                                       }));
                                       setlistActionItems([]);
                                       setDeregisterMembers([]);
                                       setAllMembersSelected(false);
                                     }}
-                                    value={dynamicFilterTextValues[key] || ""}
-                                  >
-                                    <SelectTrigger className="h-8 w-[280px] rounded-full bg-white text-xs text-slate-700">
-                                      <SelectValue placeholder="All" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="all">All</SelectItem>
-                                      {options.map((opt) => (
-                                        <SelectItem key={opt} value={opt}>
-                                          {opt}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                                    className="h-8 w-[280px] rounded-full border-slate-200 bg-white text-xs text-slate-700"
+                                  />
                                 </div>
                               );
-                            },
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })()}
-                <div className="flex flex-row gap-2 items-start">
-                  <AddFiltersDialog
-                    open={showFilterSelector}
-                    onOpenChange={setShowFilterSelector}
-                    availableFields={availableDynamicFilters}
-                    activeFilterKeys={activeFilterKeys}
-                    onFilterKeysChange={setActiveFilterKeys}
-                    description="Select which filters you want to display. After selecting, click the Run button below to apply these filters."
-                  />
-                  {selectedTab === "registered-members" && (
-                    <AddColumnsDialog
-                      open={showColumnSelectorRegistered}
-                      onOpenChange={setShowColumnSelectorRegistered}
-                      availableFields={availableDynamicFilters}
-                      activeColumnKeys={activeColumnKeysRegistered}
-                      onColumnKeysChange={setActiveColumnKeysRegistered}
-                      description="Select which columns you want to display. After selecting, click the Run button below to apply these columns."
-                    />
-                  )}
-                  {selectedTab === "pending-members" && (
-                    <AddColumnsDialog
-                      open={showColumnSelectorPending}
-                      onOpenChange={setShowColumnSelectorPending}
-                      availableFields={availableDynamicFilters}
-                      activeColumnKeys={activeColumnKeysPending}
-                      onColumnKeysChange={setActiveColumnKeysPending}
-                      description="Select which columns you want to display. After selecting, click the Run button below to apply these columns."
-                    />
-                  )}
-                  {selectedTab === "previous-members" && (
-                    <AddColumnsDialog
-                      open={showColumnSelectorPrevious}
-                      onOpenChange={setShowColumnSelectorPrevious}
-                      availableFields={availableDynamicFilters}
-                      activeColumnKeys={activeColumnKeysPrevious}
-                      onColumnKeysChange={setActiveColumnKeysPrevious}
-                      description="Select which columns you want to display. After selecting, click the Run button below to apply these columns."
-                    />
-                  )}
-                </div>
-                {(activeColumnKeysRegistered.length > 0 ||
-                  activeColumnKeysPending.length > 0 ||
-                  activeColumnKeysPrevious.length > 0) && (
-                  <div className="flex flex-wrap gap-2">
-                    {selectedTab === "registered-members" &&
-                      activeColumnKeysRegistered.map((key) => {
-                        const field = availableDynamicFilters?.find(
-                          (f) => f.key === key,
-                        );
-                        return (
-                          <div
-                            key={key}
-                            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700"
-                          >
-                            {field?.field_name || key}
-                            <button
-                              onClick={() =>
-                                setActiveColumnKeysRegistered((prev) =>
-                                  prev.filter((k) => k !== key),
-                                )
-                              }
-                              className="ml-1 font-bold text-slate-400 hover:text-slate-700"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        );
-                      })}
-                    {selectedTab === "pending-members" &&
-                      activeColumnKeysPending.map((key) => {
-                        const field = availableDynamicFilters?.find(
-                          (f) => f.key === key,
-                        );
-                        return (
-                          <div
-                            key={key}
-                            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700"
-                          >
-                            {field?.field_name || key}
-                            <button
-                              onClick={() =>
-                                setActiveColumnKeysPending((prev) =>
-                                  prev.filter((k) => k !== key),
-                                )
-                              }
-                              className="ml-1 font-bold text-slate-400 hover:text-slate-700"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        );
-                      })}
-                    {selectedTab === "previous-members" &&
-                      activeColumnKeysPrevious.map((key) => {
-                        const field = availableDynamicFilters?.find(
-                          (f) => f.key === key,
-                        );
-                        return (
-                          <div
-                            key={key}
-                            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700"
-                          >
-                            {field?.field_name || key}
-                            <button
-                              onClick={() =>
-                                setActiveColumnKeysPrevious((prev) =>
-                                  prev.filter((k) => k !== key),
-                                )
-                              }
-                              className="ml-1 font-bold text-slate-400 hover:text-slate-700"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        );
-                      })}
-                  </div>
-                )}
-                <div className="mt-3 flex flex-col gap-3 border-t border-slate-200 pt-3 md:flex-row md:items-center md:justify-between">
-                  <p className="text-xs leading-5 text-slate-500">
-                    Configure your filters and columns above, then click the{" "}
-                    <span className="font-semibold">Run</span> button to apply
-                    your selections and display the results.
-                  </p>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="flex items-center gap-3">
-                      <Label className="text-xs font-medium text-slate-600">
-                        Results per page:
-                      </Label>
-                      <Select
-                        value={memberLimit.toString()}
-                        onValueChange={(value) => {
-                          setMemberLimit(parseInt(value));
-                          setPageToken(undefined);
-                          isLoadingMoreRef.current = false;
-                          setIsLoadingMore(false);
-                          setlistActionItems([]);
-                          setDeregisterMembers([]);
-                          setAllMembersSelected(false);
-                        }}
-                      >
-                        <SelectTrigger className="h-8 w-[100px] rounded-full bg-white text-xs text-slate-700">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="100">100</SelectItem>
-                          <SelectItem value="200">200</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                            }
 
-                    <button
-                      onClick={async () => {
+                            if (
+                              options &&
+                              options.length === 2 &&
+                              options.includes("true") &&
+                              options.includes("false")
+                            ) {
+                              return (
+                                <div
+                                  key={key}
+                                  className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-3"
+                                >
+                                  <div className="flex items-center justify-between gap-2 mb-2">
+                                    <Label className="text-xs font-semibold">
+                                      {field_name}
+                                    </Label>
+                                    <button
+                                      onClick={() => {
+                                        setActiveFilterKeys((prev) =>
+                                          prev.filter((k) => k !== key),
+                                        );
+                                        setDynamicFilters((prev) => {
+                                          const newFilters = { ...prev };
+                                          delete newFilters[key];
+                                          return newFilters;
+                                        });
+                                      }}
+                                      className="rounded-full p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                  <Checkbox
+                                    id={key}
+                                    checked={dynamicFilters[key] === "true"}
+                                    onCheckedChange={(checked) => {
+                                      setDynamicFilters((prev) => ({
+                                        ...prev,
+                                        [key]: checked ? "true" : "",
+                                      }));
+                                      setlistActionItems([]);
+                                      setDeregisterMembers([]);
+                                      setAllMembersSelected(false);
+                                    }}
+                                  />
+                                  <label
+                                    htmlFor={key}
+                                    className="text-sm font-medium cursor-pointer ml-2"
+                                  >
+                                    Enabled
+                                  </label>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <div
+                                key={key}
+                                className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-3"
+                              >
+                                <div className="flex items-center justify-between gap-2 mb-2">
+                                  <Label className="text-xs font-semibold">
+                                    {field_name}
+                                  </Label>
+                                  <button
+                                    onClick={() => {
+                                      setActiveFilterKeys((prev) =>
+                                        prev.filter((k) => k !== key),
+                                      );
+                                      setDynamicFilters((prev) => {
+                                        const newFilters = { ...prev };
+                                        delete newFilters[key];
+                                        return newFilters;
+                                      });
+                                    }}
+                                    className="rounded-full p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </div>
+                                <Select
+                                  onValueChange={(value) => {
+                                    setDynamicFilters((prev) => ({
+                                      ...prev,
+                                      [key]: value,
+                                    }));
+                                    setlistActionItems([]);
+                                    setDeregisterMembers([]);
+                                    setAllMembersSelected(false);
+                                  }}
+                                  value={dynamicFilterTextValues[key] || ""}
+                                >
+                                  <SelectTrigger className="h-8 w-[280px] rounded-full bg-white text-xs text-slate-700">
+                                    <SelectValue placeholder="All" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="all">All</SelectItem>
+                                    {options.map((opt) => (
+                                      <SelectItem key={opt} value={opt}>
+                                        {opt}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            );
+                          },
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+              <div className="flex flex-row gap-2 items-start">
+                <AddFiltersDialog
+                  open={showFilterSelector}
+                  onOpenChange={setShowFilterSelector}
+                  availableFields={availableDynamicFilters}
+                  activeFilterKeys={activeFilterKeys}
+                  onFilterKeysChange={setActiveFilterKeys}
+                  description="Select which filters you want to display. After selecting, click the Run button below to apply these filters."
+                />
+                {selectedTab === "registered-members" && (
+                  <AddColumnsDialog
+                    open={showColumnSelectorRegistered}
+                    onOpenChange={setShowColumnSelectorRegistered}
+                    availableFields={availableDynamicFilters}
+                    activeColumnKeys={activeColumnKeysRegistered}
+                    onColumnKeysChange={setActiveColumnKeysRegistered}
+                    description="Select which columns you want to display. After selecting, click the Run button below to apply these columns."
+                  />
+                )}
+                {selectedTab === "pending-members" && (
+                  <AddColumnsDialog
+                    open={showColumnSelectorPending}
+                    onOpenChange={setShowColumnSelectorPending}
+                    availableFields={availableDynamicFilters}
+                    activeColumnKeys={activeColumnKeysPending}
+                    onColumnKeysChange={setActiveColumnKeysPending}
+                    description="Select which columns you want to display. After selecting, click the Run button below to apply these columns."
+                  />
+                )}
+                {selectedTab === "previous-members" && (
+                  <AddColumnsDialog
+                    open={showColumnSelectorPrevious}
+                    onOpenChange={setShowColumnSelectorPrevious}
+                    availableFields={availableDynamicFilters}
+                    activeColumnKeys={activeColumnKeysPrevious}
+                    onColumnKeysChange={setActiveColumnKeysPrevious}
+                    description="Select which columns you want to display. After selecting, click the Run button below to apply these columns."
+                  />
+                )}
+              </div>
+              {(activeColumnKeysRegistered.length > 0 ||
+                activeColumnKeysPending.length > 0 ||
+                activeColumnKeysPrevious.length > 0) && (
+                <div className="flex flex-wrap gap-2">
+                  {selectedTab === "registered-members" &&
+                    activeColumnKeysRegistered.map((key) => {
+                      const field = availableDynamicFilters?.find(
+                        (f) => f.key === key,
+                      );
+                      return (
+                        <div
+                          key={key}
+                          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700"
+                        >
+                          {field?.field_name || key}
+                          <button
+                            onClick={() =>
+                              setActiveColumnKeysRegistered((prev) =>
+                                prev.filter((k) => k !== key),
+                              )
+                            }
+                            className="ml-1 font-bold text-slate-400 hover:text-slate-700"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      );
+                    })}
+                  {selectedTab === "pending-members" &&
+                    activeColumnKeysPending.map((key) => {
+                      const field = availableDynamicFilters?.find(
+                        (f) => f.key === key,
+                      );
+                      return (
+                        <div
+                          key={key}
+                          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700"
+                        >
+                          {field?.field_name || key}
+                          <button
+                            onClick={() =>
+                              setActiveColumnKeysPending((prev) =>
+                                prev.filter((k) => k !== key),
+                              )
+                            }
+                            className="ml-1 font-bold text-slate-400 hover:text-slate-700"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      );
+                    })}
+                  {selectedTab === "previous-members" &&
+                    activeColumnKeysPrevious.map((key) => {
+                      const field = availableDynamicFilters?.find(
+                        (f) => f.key === key,
+                      );
+                      return (
+                        <div
+                          key={key}
+                          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700"
+                        >
+                          {field?.field_name || key}
+                          <button
+                            onClick={() =>
+                              setActiveColumnKeysPrevious((prev) =>
+                                prev.filter((k) => k !== key),
+                              )
+                            }
+                            className="ml-1 font-bold text-slate-400 hover:text-slate-700"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
+              <div className="mt-3 flex flex-col gap-3 border-t border-slate-200 pt-3 md:flex-row md:items-center md:justify-between">
+                <p className="text-xs leading-5 text-slate-500">
+                  Configure your filters and columns above, then click the{" "}
+                  <span className="font-semibold">Run</span> button to apply
+                  your selections and display the results.
+                </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-3">
+                    <Label className="text-xs font-medium text-slate-600">
+                      Results per page:
+                    </Label>
+                    <Select
+                      value={memberLimit.toString()}
+                      onValueChange={(value) => {
+                        setMemberLimit(parseInt(value));
                         setPageToken(undefined);
                         isLoadingMoreRef.current = false;
                         setIsLoadingMore(false);
-                        setAppliedMemberNameFilter(memberNameFilter);
-                        setAppliedMemberIdFilter(memberIdFilter);
-                        if (selectedTab === "registered-members") {
-                          setAppliedColumnKeysRegistered(activeColumnKeysRegistered);
-                        } else if (selectedTab === "pending-members") {
-                          setAppliedColumnKeysPending(activeColumnKeysPending);
-                        } else if (selectedTab === "previous-members") {
-                          setAppliedColumnKeysPrevious(activeColumnKeysPrevious);
-                        }
-                        setAppliedCustomFilters(computedCustomFilters);
-                        await refetchClubMembers();
+                        setlistActionItems([]);
+                        setDeregisterMembers([]);
+                        setAllMembersSelected(false);
                       }}
-                      title="Run database query to refresh members data"
-                      className="inline-flex h-8 w-[100px] items-center justify-center rounded-full bg-zinc-700 px-4 text-xs font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      Run
-                    </button>
+                      <SelectTrigger className="h-8 w-[100px] rounded-full bg-white text-xs text-slate-700">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="100">100</SelectItem>
+                        <SelectItem value="200">200</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
+
+                  <button
+                    onClick={async () => {
+                      setPageToken(undefined);
+                      isLoadingMoreRef.current = false;
+                      setIsLoadingMore(false);
+                      setAppliedMemberNameFilter(memberNameFilter);
+                      setAppliedMemberIdFilter(memberIdFilter);
+                      if (selectedTab === "registered-members") {
+                        setAppliedColumnKeysRegistered(
+                          activeColumnKeysRegistered,
+                        );
+                      } else if (selectedTab === "pending-members") {
+                        setAppliedColumnKeysPending(activeColumnKeysPending);
+                      } else if (selectedTab === "previous-members") {
+                        setAppliedColumnKeysPrevious(activeColumnKeysPrevious);
+                      }
+                      setAppliedCustomFilters(computedCustomFilters);
+                      await refetchClubMembers();
+                    }}
+                    title="Run database query to refresh members data"
+                    className="inline-flex h-8 w-[100px] items-center justify-center rounded-full bg-zinc-700 px-4 text-xs font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Run
+                  </button>
                 </div>
+              </div>
             </Card>
             <TabsContent
               value="registered-members"
@@ -1350,7 +1419,9 @@ export default function RegistrationsPage() {
                     {allRegisteredMembers.length > 5 && (
                       <button
                         type="button"
-                        onClick={() => setShowTenRegisteredRows((prev) => !prev)}
+                        onClick={() =>
+                          setShowTenRegisteredRows((prev) => !prev)
+                        }
                         className="inline-flex h-8 shrink-0 items-center rounded-full border border-slate-200 bg-slate-50 px-3.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
                       >
                         {showTenRegisteredRows ? "Show 5 rows" : "Show 10 rows"}
@@ -1402,9 +1473,8 @@ export default function RegistrationsPage() {
                     </div>
                   )}
                 {!fetchError &&
-                (allRegisteredMembers.length === 0 &&
-                  ((clubMembersLoading && !isLoadingMore) ||
-                    filterLoading)) ? (
+                allRegisteredMembers.length === 0 &&
+                ((clubMembersLoading && !isLoadingMore) || filterLoading) ? (
                   <div className="flex justify-center items-center p-8 min-h-96">
                     <Loader2 className="h-8 w-8 animate-spin" />
                   </div>
@@ -1466,87 +1536,96 @@ export default function RegistrationsPage() {
                       </button>
                     )}
                     <div className="relative shrink-0">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShowPendingRegistrationsDropdown(
-                          !showPendingRegistrationsDropdown,
-                        )
-                      }
-                      className="relative rounded-full border border-slate-200 bg-slate-50 p-2.5 transition-colors hover:bg-slate-100"
-                      title="Pending registrations"
-                    >
-                      <UserPlus className="h-4 w-4 text-slate-700" />
-                      {allUnregisteredMembers.length > 0 && (
-                        <span className="absolute right-0 top-0 inline-flex -translate-y-1/3 translate-x-1/3 items-center justify-center rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-bold text-white">
-                          {allUnregisteredMembers.length}
-                        </span>
-                      )}
-                    </button>
-
-                    {showPendingRegistrationsDropdown && (
-                      <div className="absolute right-0 top-full z-50 mt-2 w-[22rem] overflow-y-auto rounded-[22px] border border-slate-200 bg-white shadow-2xl">
-                        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
-                          <h3 className="font-semibold text-slate-900">
-                            Pending Registrations ({allUnregisteredMembers.length})
-                          </h3>
-                          <button
-                            type="button"
-                            onClick={() => setShowPendingRegistrationsDropdown(false)}
-                            className="rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-
-                        {allUnregisteredMembers.length === 0 ? (
-                          <div className="p-5 text-center text-sm text-slate-500">
-                            No pending registrations.
-                          </div>
-                        ) : (
-                          <div className="max-h-96 divide-y overflow-y-auto">
-                            {allUnregisteredMembers.map((member) => (
-                              <div
-                                key={member.user_id}
-                                className="p-4 transition-colors hover:bg-slate-50"
-                              >
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="min-w-0 flex-1 space-y-1">
-                                    <p className="text-sm font-medium text-slate-900">
-                                      {member.member_first_name} {member.member_surname}
-                                    </p>
-                                    <p className="text-xs text-slate-500">
-                                      Email: {member.member_email || "n/a"}
-                                    </p>
-                                    <p className="text-xs font-medium text-amber-700">
-                                      Outstanding:{" "}
-                                      {formatAmount(
-                                        member.outstanding_amount || 0,
-                                        club?.currency,
-                                      )}
-                                    </p>
-                                  </div>
-
-                                  <button
-                                    type="button"
-                                    className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
-                                    onClick={() => {
-                                      reset();
-                                      setShowPendingRegistrationsDropdown(false);
-                                      setMemberRegisterAmount(0);
-                                      setOpenDialogUserId(member.user_id);
-                                    }}
-                                  >
-                                    <UserPlus className="h-3.5 w-3.5" />
-                                    Review
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowPendingRegistrationsDropdown(
+                            !showPendingRegistrationsDropdown,
+                          )
+                        }
+                        className="relative rounded-full border border-slate-200 bg-slate-50 p-2.5 transition-colors hover:bg-slate-100"
+                        title="Pending registrations"
+                      >
+                        <UserPlus className="h-4 w-4 text-slate-700" />
+                        {allUnregisteredMembers.length > 0 && (
+                          <span className="absolute right-0 top-0 inline-flex -translate-y-1/3 translate-x-1/3 items-center justify-center rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-bold text-white">
+                            {allUnregisteredMembers.length}
+                          </span>
                         )}
-                      </div>
-                    )}
+                      </button>
+
+                      {showPendingRegistrationsDropdown && (
+                        <div className="absolute right-0 top-full z-50 mt-2 w-[22rem] overflow-y-auto rounded-[22px] border border-slate-200 bg-white shadow-2xl">
+                          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
+                            <h3 className="font-semibold text-slate-900">
+                              Pending Registrations (
+                              {allUnregisteredMembers.length})
+                            </h3>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setShowPendingRegistrationsDropdown(false)
+                              }
+                              className="rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+
+                          {allUnregisteredMembers.length === 0 ? (
+                            <div className="p-5 text-center text-sm text-slate-500">
+                              No pending registrations.
+                            </div>
+                          ) : (
+                            <div className="max-h-96 divide-y overflow-y-auto">
+                              {allUnregisteredMembers.map((member) => (
+                                <div
+                                  key={member.user_id}
+                                  className="p-4 transition-colors hover:bg-slate-50"
+                                >
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0 flex-1 space-y-1">
+                                      <p className="text-sm font-medium text-slate-900">
+                                        {member.member_first_name}{" "}
+                                        {member.member_surname}
+                                      </p>
+                                      <p className="text-xs text-slate-500">
+                                        Email: {member.member_email || "n/a"}
+                                      </p>
+                                      <p className="text-xs font-medium text-amber-700">
+                                        Outstanding:{" "}
+                                        {formatAmount(
+                                          member.outstanding_amount || 0,
+                                          club?.currency,
+                                        )}
+                                      </p>
+                                    </div>
+
+                                    <button
+                                      type="button"
+                                      className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+                                      onClick={() => {
+                                        reset();
+                                        setShowPendingRegistrationsDropdown(
+                                          false,
+                                        );
+                                        setMemberRegisterAmount(0);
+                                        setDisplayAmount(
+                                          formatAmount(0, club?.currency),
+                                        );
+                                        setOpenDialogUserId(member.user_id);
+                                      }}
+                                    >
+                                      <UserPlus className="h-3.5 w-3.5" />
+                                      Register
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1592,9 +1671,8 @@ export default function RegistrationsPage() {
                     </div>
                   )}
                 {!fetchError &&
-                (allUnregisteredMembers.length === 0 &&
-                  ((clubMembersLoading && !isLoadingMore) ||
-                    filterLoading)) ? (
+                allUnregisteredMembers.length === 0 &&
+                ((clubMembersLoading && !isLoadingMore) || filterLoading) ? (
                   <div className="flex justify-center items-center p-8 min-h-96">
                     <Loader2 className="h-8 w-8 animate-spin" />
                   </div>
@@ -1635,6 +1713,7 @@ export default function RegistrationsPage() {
                       setSelectedMember={setSelectedMember}
                       setOpenDialogUserId={setOpenDialogUserId}
                       setMemberRegisterAmount={setMemberRegisterAmount}
+                      setDisplayAmount={setDisplayAmount}
                       setAllListActionItems={setAllListActionItems}
                       setAllMembersSelected={setAllMembersSelected}
                       showPendingSummary={false}
@@ -1729,9 +1808,8 @@ export default function RegistrationsPage() {
                     </div>
                   )}
                 {!fetchError &&
-                (allDeregisteredMembers.length === 0 &&
-                  ((clubMembersLoading && !isLoadingMore) ||
-                    filterLoading)) ? (
+                allDeregisteredMembers.length === 0 &&
+                ((clubMembersLoading && !isLoadingMore) || filterLoading) ? (
                   <div className="flex justify-center items-center p-8 min-h-96">
                     <Loader2 className="h-8 w-8 animate-spin" />
                   </div>
@@ -1789,8 +1867,8 @@ export default function RegistrationsPage() {
                         </h2>
                         <p className="mt-1.5 max-w-2xl text-xs leading-5 text-slate-500">
                           Review registration revenue trends, pending balances,
-                          and field-level billing performance without leaving the
-                          registrations workspace.
+                          and field-level billing performance without leaving
+                          the registrations workspace.
                         </p>
                       </div>
 
@@ -1804,9 +1882,14 @@ export default function RegistrationsPage() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="current">Current Season</SelectItem>
+                              <SelectItem value="current">
+                                Current Season
+                              </SelectItem>
                               {availableSeasons.map((season) => (
-                                <SelectItem key={season.value} value={season.value}>
+                                <SelectItem
+                                  key={season.value}
+                                  value={season.value}
+                                >
                                   {season.label}
                                 </SelectItem>
                               ))}
@@ -1857,16 +1940,10 @@ export default function RegistrationsPage() {
               </div>
             </section>
           </Tabs>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      )}
-      {hashUserId && (
-        <RegistrationDialog
-          clubName={club?.club_name ?? ""}
-          selectedMember={selectedMember}
-          setSelectedMember={setSelectedMember}
-          currency={club?.currency ?? "ZAR"}
-          clubAccountId={club?.club_account_id ?? ""}
-        />
       )}
     </div>
   );

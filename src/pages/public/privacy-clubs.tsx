@@ -92,9 +92,6 @@ export default function RegistrationPolicy() {
               support.
             </li>
           </ul>
-          <p className="mt-4 font-medium">
-            We do not sell or rent your personal data.
-          </p>
         </PolicySection>
 
         <PolicySection title="User Responsibilities">

@@ -1,9 +1,14 @@
-import { useEffect } from "react";
+import axios from "axios";
+import { useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PayFastPayment } from "@/components/payments/payfast-payment";
 import { cn } from "@/lib/utils";
 import { formatAmount } from "@/data/currencies";
+import { useFetchSnapScanQRCodeQuery } from "@/queries/snapscan";
+import type {
+  FetchSnapScanQRCodeRequest,
+} from "@/services/snapscan/details";
 import type {
   BankDetails,
   PaymentTransactionOption,
@@ -17,7 +22,7 @@ import {
   Loader2,
 } from "lucide-react";
 
-type PaymentMethod = "eft" | "payfast" | null;
+type PaymentMethod = "eft" | "payfast" | "snapscan" | null;
 
 interface CustomPaymentMethod {
   name?: string;
@@ -31,7 +36,10 @@ interface PaymentOptionsScreenProps {
   currency?: string;
   supportEmail?: string;
   payfastEnabled?: boolean;
+  snapscanEnabled?: boolean;
   userId?: string;
+  snapscanUserId?: string;
+  snapscanTransactionId?: string;
   paymentReference?: string;
   backLabel?: string;
   selectedPaymentOption: PaymentTransactionOption | null;
@@ -50,7 +58,10 @@ export default function PaymentOptionsScreen({
   currency,
   supportEmail,
   payfastEnabled = false,
+  snapscanEnabled = false,
   userId,
+  snapscanUserId,
+  snapscanTransactionId,
   paymentReference,
   backLabel = "Go Back to Club",
   selectedPaymentOption,
@@ -61,7 +72,150 @@ export default function PaymentOptionsScreen({
   onCopyToClipboard,
   onBack,
 }: PaymentOptionsScreenProps) {
+  const getSnapScanApiMessage = (error: unknown) => {
+    if (!axios.isAxiosError(error)) {
+      return null;
+    }
+
+    const responseData = error.response?.data;
+
+    if (typeof responseData === "string" && responseData.trim()) {
+      return responseData;
+    }
+
+    if (typeof responseData === "object" && responseData !== null) {
+      const message = "message" in responseData ? responseData.message : null;
+      const errorMessage = "error" in responseData ? responseData.error : null;
+
+      if (typeof message === "string" && message.trim()) {
+        return message;
+      }
+
+      if (typeof errorMessage === "string" && errorMessage.trim()) {
+        return errorMessage;
+      }
+    }
+
+    return null;
+  };
+
   const outstandingAmount = selectedPaymentOption?.outstanding_amount ?? bankDetails?.outstanding_amount ?? 0;
+  const snapscanRequest = useMemo<FetchSnapScanQRCodeRequest | null>(() => {
+    const transactionId = selectedPaymentOption?.transaction_id ?? snapscanTransactionId;
+
+    if (!snapscanEnabled || !clubAccountId || !snapscanUserId || !transactionId) {
+      return null;
+    }
+
+    return {
+      club_account_id: clubAccountId,
+      user_id: snapscanUserId,
+      transaction_id: transactionId,
+    };
+  }, [
+    clubAccountId,
+    selectedPaymentOption?.transaction_id,
+    snapscanEnabled,
+    snapscanTransactionId,
+    snapscanUserId,
+  ]);
+  const {
+    data: snapScanData,
+    error: snapScanError,
+    isFetching: isSnapScanFetching,
+    refetch: refetchSnapScanQrCode,
+  } = useFetchSnapScanQRCodeQuery(
+    snapscanRequest,
+    selectedPaymentMethod === "snapscan",
+  );
+  const snapScanUrls = useMemo(() => {
+    if (snapScanError) {
+      return {
+        qrCodeUrl: null,
+        checkoutUrl: null,
+        merchantReference: null,
+      };
+    }
+
+    const merchantKey = snapScanData?.merchant_key?.trim();
+    const merchantReference = snapScanData?.merchant_reference?.trim();
+
+    if (!merchantKey || !merchantReference) {
+      return {
+        qrCodeUrl: null,
+        checkoutUrl: null,
+        merchantReference: null,
+      };
+    }
+
+    const checkoutParams = new URLSearchParams({
+      id: merchantReference,
+      amount: String(Math.max(Math.round(outstandingAmount), 0)),
+      strict: "true",
+    });
+    const qrParams = new URLSearchParams(checkoutParams);
+    qrParams.set("snap_code_size", "220");
+
+    const encodedMerchantKey = encodeURIComponent(merchantKey);
+
+    return {
+      qrCodeUrl: `https://pos.snapscan.io/qr/${encodedMerchantKey}.svg?${qrParams.toString()}`,
+      checkoutUrl: `https://pos.snapscan.io/qr/${encodedMerchantKey}?${checkoutParams.toString()}`,
+      merchantReference,
+    };
+  }, [outstandingAmount, snapScanData, snapScanError]);
+  const snapScanErrorMessage = useMemo(() => {
+    if (!snapscanEnabled || selectedPaymentMethod !== "snapscan") {
+      return null;
+    }
+
+    if (!snapscanRequest) {
+      return "SnapScan is unavailable for this payment.";
+    }
+
+    if (!snapScanError) {
+      return null;
+    }
+
+    if (axios.isAxiosError(snapScanError) && snapScanError.response?.status === 400) {
+      return getSnapScanApiMessage(snapScanError) ?? "SnapScan payment details could not be returned at this time.";
+    }
+
+    return axios.isAxiosError(snapScanError)
+      ? getSnapScanApiMessage(snapScanError) ?? "SnapScan payment details could not be returned at this time."
+      : snapScanError instanceof Error
+        ? snapScanError.message
+        : "SnapScan payment details could not be returned at this time.";
+  }, [selectedPaymentMethod, snapScanError, snapscanEnabled, snapscanRequest]);
+
+  useEffect(() => {
+    if (selectedPaymentMethod !== "snapscan") {
+      return;
+    }
+  }, [
+    clubAccountId,
+    outstandingAmount,
+    selectedPaymentMethod,
+    selectedPaymentOption,
+    snapscanEnabled,
+    snapscanRequest,
+    snapscanTransactionId,
+    snapscanUserId,
+    userId,
+  ]);
+
+  useEffect(() => {
+    if (selectedPaymentMethod !== "snapscan") {
+      return;
+    }
+  }, [
+    isSnapScanFetching,
+    selectedPaymentMethod,
+    snapScanData,
+    snapScanError,
+    snapScanErrorMessage,
+    snapScanUrls,
+  ]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
@@ -71,7 +225,15 @@ export default function PaymentOptionsScreen({
     if (!payfastEnabled && selectedPaymentMethod === "payfast") {
       onSelectedPaymentMethodChange(null);
     }
-  }, [onSelectedPaymentMethodChange, payfastEnabled, selectedPaymentMethod]);
+    if (!snapscanEnabled && selectedPaymentMethod === "snapscan") {
+      onSelectedPaymentMethodChange(null);
+    }
+  }, [
+    onSelectedPaymentMethodChange,
+    payfastEnabled,
+    selectedPaymentMethod,
+    snapscanEnabled,
+  ]);
 
   return (
     <div className="min-h-screen bg-background px-3 py-4 sm:px-4 sm:py-6 md:px-8 md:py-10">
@@ -337,6 +499,139 @@ export default function PaymentOptionsScreen({
                     onSelectedPaymentMethodChange(isSelected ? "payfast" : null)
                   }
                 />
+              </div>
+            )}
+
+            {snapscanEnabled && (
+              <div className="space-y-4">
+                <button
+                  type="button"
+                  onClick={() =>
+                    onSelectedPaymentMethodChange(
+                      selectedPaymentMethod === "snapscan" ? null : "snapscan",
+                    )
+                  }
+                  className={cn(
+                    "flex w-full items-center justify-between rounded-2xl border bg-white px-5 py-4 text-left shadow-md transition-all duration-200",
+                    selectedPaymentMethod === "snapscan"
+                      ? "border-emerald-400 ring-2 ring-emerald-100"
+                      : "border-gray-200 hover:border-emerald-300 hover:shadow-lg",
+                  )}
+                >
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={cn(
+                        "flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors",
+                        selectedPaymentMethod === "snapscan"
+                          ? "border-emerald-300 bg-emerald-100"
+                          : "border-emerald-300 bg-white",
+                      )}
+                    >
+                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white">
+                        {selectedPaymentMethod === "snapscan" ? <CheckCircle2 className="h-4 w-4" /> : null}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-xl font-semibold text-gray-950 sm:text-2xl">
+                        Pay with SnapScan
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Use SnapScan to complete payment through a mobile-friendly checkout.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="w-full max-w-[160px] rounded-2xl bg-emerald-50 px-4 py-3 text-left sm:w-auto sm:text-right">
+                    <p className="text-sm font-semibold text-emerald-800">SnapScan</p>
+                    <p className="text-xs text-emerald-700">Scan to pay</p>
+                  </div>
+                </button>
+
+                {selectedPaymentMethod === "snapscan" && (
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 px-3 py-3 sm:px-5 sm:py-4">
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium text-emerald-900">
+                        SnapScan is selected.
+                      </p>
+                      <p className="text-sm text-emerald-800">
+                        {isSnapScanFetching
+                          ? `Preparing your SnapScan payment for ${formatAmount(outstandingAmount, currency)}.`
+                          : snapScanErrorMessage
+                            ? snapScanErrorMessage
+                            : `Scan the SnapScan QR code for ${formatAmount(outstandingAmount, currency)} or open the payment link below.`}
+                      </p>
+
+                      {isSnapScanFetching && (
+                        <div className="flex items-center gap-2 text-sm text-emerald-900">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Loading SnapScan payment option...
+                        </div>
+                      )}
+
+                      {snapScanUrls.qrCodeUrl && (
+                        <div className="rounded-2xl border border-emerald-200 bg-white p-4">
+                          {snapScanUrls.checkoutUrl ? (
+                            <a
+                              href={snapScanUrls.checkoutUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block cursor-pointer"
+                            >
+                              <img
+                                src={snapScanUrls.qrCodeUrl}
+                                alt="SnapScan QR code"
+                                className="mx-auto max-h-72 w-full max-w-72 rounded-xl object-contain transition-opacity hover:opacity-90"
+                              />
+                            </a>
+                          ) : (
+                            <img
+                              src={snapScanUrls.qrCodeUrl}
+                              alt="SnapScan QR code"
+                              className="mx-auto max-h-72 w-full max-w-72 rounded-xl object-contain"
+                            />
+                          )}
+                        </div>
+                      )}
+
+                      {snapScanUrls.merchantReference && (
+                        <div className="rounded-xl border border-emerald-200 bg-white/80 px-4 py-3 text-sm text-emerald-900">
+                          Reference: <span className="font-semibold">{snapScanUrls.merchantReference}</span>
+                        </div>
+                      )}
+
+                      {snapScanUrls.checkoutUrl && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="rounded-full border-emerald-300 text-emerald-900 hover:bg-emerald-100"
+                          onClick={() => {
+                            window.open(
+                              snapScanUrls.checkoutUrl ?? undefined,
+                              "_blank",
+                              "noopener,noreferrer",
+                            );
+                          }}
+                        >
+                          Open SnapScan Payment Link
+                        </Button>
+                      )}
+
+                      {snapScanErrorMessage && snapscanRequest && (
+                        <Button
+                          type="button"
+                          className="rounded-full bg-emerald-600 hover:bg-emerald-700"
+                          onClick={() => {
+                            void refetchSnapScanQrCode();
+                          }}
+                          disabled={isSnapScanFetching}
+                        >
+                          Retry SnapScan
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

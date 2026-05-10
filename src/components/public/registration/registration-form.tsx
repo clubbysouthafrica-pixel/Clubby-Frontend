@@ -31,6 +31,7 @@ type SuccessfulRegistrationPayload = {
   bank?: string;
   branch_code?: string;
   payfast_enabled?: boolean;
+  snapscan_enabled?: boolean;
 };
 interface RegistrationFormProps {
   clubName: string;
@@ -266,6 +267,7 @@ export function PublicRegistrationForm({
     const bank = successfulRegistration?.bank;
     const branchCode = successfulRegistration?.branch_code;
     const payfastEnabled = successfulRegistration?.payfast_enabled;
+    const snapscanEnabled = successfulRegistration?.snapscan_enabled;
 
     return (
       <div className="space-y-2">
@@ -326,6 +328,10 @@ export function PublicRegistrationForm({
 
                   if (typeof payfastEnabled === "boolean") {
                     queryParams.set("payfastEnabled", String(payfastEnabled));
+                  }
+
+                  if (typeof snapscanEnabled === "boolean") {
+                    queryParams.set("snapscanEnabled", String(snapscanEnabled));
                   }
 
                   navigate(`/clubs/${clubAccountId}/payments?${queryParams.toString()}`);

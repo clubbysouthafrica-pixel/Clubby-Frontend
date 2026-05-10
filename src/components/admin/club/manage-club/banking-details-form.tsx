@@ -27,6 +27,10 @@ import {
   useUpdatePayFastDetailsMutation,
 } from "@/mutations/admin/payfast";
 import {
+  useResetSnapScanDetailsMutation,
+  useUpdateSnapScanDetailsMutation,
+} from "@/mutations/admin/snapscan";
+import {
   useUpdateClubDetailsMutation,
   useUpdateCustomPaymentMethodsMutation,
 } from "@/mutations/admin/club";
@@ -53,12 +57,20 @@ interface PayFastDetails {
   auto_register_members_if_paid?: boolean;
 }
 
+interface SnapScanDetails {
+  merchant_id?: string;
+  api_key?: string;
+}
+
 interface BankingDetailsFormProps {
   club_account_id?: string;
   bankDetails?: BankDetails;
   payfastDetails?: PayFastDetails;
+  snapscanDetails?: SnapScanDetails;
   payfastEnabled?: boolean;
+  snapscanEnabled?: boolean;
   autoRegisterMembersIfPaid?: boolean;
+  autoRegisterMembersIfPaidSnapScan?: boolean;
   customPaymentMethods?: Array<{ name: string; url: string }>;
   onSave: (data: { bank_details: Required<BankDetails> }) => void;
   isPending?: boolean;
@@ -69,10 +81,13 @@ export function BankingDetailsForm({
   club_account_id,
   bankDetails,
   payfastDetails,
+  snapscanDetails,
   payfastEnabled = false,
+  snapscanEnabled = false,
   customPaymentMethods = [],
   onSave,
   autoRegisterMembersIfPaid: initialAutoRegisterMembersIfPaid = false,
+  autoRegisterMembersIfPaidSnapScan: initialAutoRegisterMembersIfPaidSnapScan = false,
   isPending = false,
   onCompletionChange,
 }: BankingDetailsFormProps) {
@@ -84,6 +99,10 @@ export function BankingDetailsForm({
     useUpdatePayFastDetailsMutation();
   const { mutate: mutateResetPayFast, isPending: resetPayFastLoading } =
     useResetPayFastDetailsMutation();
+  const { mutate: mutateUpdateSnapScan, isPending: updateSnapScanLoading } =
+    useUpdateSnapScanDetailsMutation();
+  const { mutate: mutateResetSnapScan, isPending: resetSnapScanLoading } =
+    useResetSnapScanDetailsMutation();
   const {
     mutate: mutateUpdateClubDetails,
     isPending: updateClubDetailsLoading,
@@ -101,11 +120,17 @@ export function BankingDetailsForm({
   const [payfastMerchantId, setPayfastMerchantId] = useState("");
   const [payfastMerchantKey, setPayfastMerchantKey] = useState("");
   const [payfastPassphrase, setPayfastPassphrase] = useState("");
+  const [snapscanMerchantId, setSnapscanMerchantId] = useState("");
+  const [snapscanApiKey, setSnapscanApiKey] = useState("");
   const [autoRegisterMembersIfPaid, setAutoRegisterMembersIfPaid] =
     useState(false);
   const [savedAutoRegisterMembersIfPaid, setSavedAutoRegisterMembersIfPaid] =
     useState(false);
-  const [activeTab, setActiveTab] = useState<"eft" | "payfast" | "custom">(
+  const [autoRegisterMembersIfPaidSnapScan, setAutoRegisterMembersIfPaidSnapScan] =
+    useState(false);
+  const [savedAutoRegisterMembersIfPaidSnapScan, setSavedAutoRegisterMembersIfPaidSnapScan] =
+    useState(false);
+  const [activeTab, setActiveTab] = useState<"eft" | "payfast" | "snapscan" | "custom">(
     "eft",
   );
   const [customPaymentName, setCustomPaymentName] = useState("");
@@ -114,6 +139,7 @@ export function BankingDetailsForm({
     CustomPaymentIntegration[]
   >([]);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [resetSnapScanDialogOpen, setResetSnapScanDialogOpen] = useState(false);
 
   useEffect(() => {
     if (bankDetails) {
@@ -146,14 +172,22 @@ export function BankingDetailsForm({
       setPayfastMerchantKey(payfastDetails.merchant_key || "");
       setPayfastPassphrase(payfastDetails.passphrase || "");
     }
+    if (snapscanDetails) {
+      setSnapscanMerchantId(snapscanDetails.merchant_id || "");
+      setSnapscanApiKey(snapscanDetails.api_key || "");
+    }
     setAutoRegisterMembersIfPaid(initialAutoRegisterMembersIfPaid);
     setSavedAutoRegisterMembersIfPaid(initialAutoRegisterMembersIfPaid);
+    setAutoRegisterMembersIfPaidSnapScan(initialAutoRegisterMembersIfPaidSnapScan);
+    setSavedAutoRegisterMembersIfPaidSnapScan(initialAutoRegisterMembersIfPaidSnapScan);
   }, [
     bankDetails,
     customPaymentMethods,
     onCompletionChange,
     payfastDetails,
+    snapscanDetails,
     initialAutoRegisterMembersIfPaid,
+    initialAutoRegisterMembersIfPaidSnapScan,
   ]);
 
   useEffect(() => {
@@ -186,6 +220,15 @@ export function BankingDetailsForm({
 
   const payfastToggleValueChanged =
     autoRegisterMembersIfPaid !== savedAutoRegisterMembersIfPaid;
+  const snapscanToggleValueChanged =
+    autoRegisterMembersIfPaidSnapScan !== savedAutoRegisterMembersIfPaidSnapScan;
+
+  const isSaveSnapScanDisabled =
+    updateSnapScanLoading ||
+    updateClubDetailsLoading ||
+    (snapscanEnabled
+      ? !snapscanToggleValueChanged
+      : !snapscanMerchantId.trim() || !snapscanApiKey.trim());
 
   const isSavePayFastDisabled =
     updatePayFastLoading ||
@@ -280,6 +323,97 @@ export function BankingDetailsForm({
             queryKey: ["getClubDetails", clubAccountId],
           });
           setResetDialogOpen(false);
+        },
+        onError: (error) => toast.error(getApiErrorMessage(error)),
+      },
+    );
+  };
+
+  const handleSaveSnapScan = () => {
+    const saveSnapScanAutoRegisterSetting = () => {
+      if (!snapscanToggleValueChanged) {
+        return queryClient.invalidateQueries({
+          queryKey: ["getClubDetails", clubAccountId],
+        });
+      }
+
+      return new Promise<void>((resolve, reject) => {
+        mutateUpdateClubDetails(
+          {
+            club_account_id: clubAccountId,
+            auto_register_members_if_paid_snapscan:
+              autoRegisterMembersIfPaidSnapScan,
+          },
+          {
+            onSuccess: async () => {
+              setSavedAutoRegisterMembersIfPaidSnapScan(
+                autoRegisterMembersIfPaidSnapScan,
+              );
+              resolve();
+            },
+            onError: (error) => {
+              reject(error);
+            },
+          },
+        );
+      });
+    };
+
+    if (!snapscanEnabled && (!snapscanMerchantId.trim() || !snapscanApiKey.trim())) {
+      toast.error("Please enter your SnapScan merchant ID and API key.");
+      return;
+    }
+
+    if (snapscanEnabled && !snapscanToggleValueChanged) {
+      toast.success("No SnapScan setting changes to save.");
+      return;
+    }
+
+    if (snapscanEnabled) {
+      saveSnapScanAutoRegisterSetting()
+        .then(() => {
+          toast.success("SnapScan settings saved.");
+        })
+        .catch((error) => {
+          toast.error(getApiErrorMessage(error));
+        });
+      return;
+    }
+
+    mutateUpdateSnapScan(
+      {
+        club_account_id: clubAccountId,
+        merchant_id: snapscanMerchantId.trim(),
+        api_key: snapscanApiKey.trim(),
+      },
+      {
+        onSuccess: async () => {
+          try {
+            await saveSnapScanAutoRegisterSetting();
+            toast.success("SnapScan settings saved.");
+          } catch (error) {
+            toast.error(getApiErrorMessage(error));
+          }
+        },
+        onError: (error) => toast.error(getApiErrorMessage(error)),
+      },
+    );
+  };
+
+  const handleResetSnapScan = async () => {
+    mutateResetSnapScan(
+      {
+        club_account_id: clubAccountId,
+      },
+      {
+        onSuccess: async () => {
+          setSnapscanMerchantId("");
+          setSnapscanApiKey("");
+          toast.success("SnapScan details reset.");
+          await queryClient.invalidateQueries({
+            queryKey: ["getClubDetails", clubAccountId],
+          });
+          setResetSnapScanDialogOpen(false);
         },
         onError: (error) => toast.error(getApiErrorMessage(error)),
       },
@@ -479,16 +613,86 @@ export function BankingDetailsForm({
             )}
           </div>
         )}
+        {activeTab === "snapscan" && (
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleSaveSnapScan}
+              disabled={isSaveSnapScanDisabled}
+            >
+              {updateSnapScanLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save SnapScan settings"
+              )}
+            </Button>
+            {snapscanEnabled && (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setResetSnapScanDialogOpen(true)}
+                  disabled={resetSnapScanLoading}
+                >
+                  <RefreshCw className="h-4 w-4" /> Remove SnapScan
+                </Button>
+                <Dialog
+                  open={resetSnapScanDialogOpen}
+                  onOpenChange={setResetSnapScanDialogOpen}
+                >
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Reset SnapScan details?</DialogTitle>
+                      <DialogDescription>
+                        This will remove your saved SnapScan credentials and disconnect SnapScan from your club. You can reconfigure at any time.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <UIDialogFooter>
+                      <Button
+                        variant="outline"
+                        type="button"
+                        onClick={() => setResetSnapScanDialogOpen(false)}
+                        disabled={resetSnapScanLoading}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        type="button"
+                        onClick={handleResetSnapScan}
+                        disabled={resetSnapScanLoading}
+                      >
+                        {resetSnapScanLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Resetting...
+                          </>
+                        ) : (
+                          "Confirm reset"
+                        )}
+                      </Button>
+                    </UIDialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </>
+            )}
+          </div>
+        )}
       </CardHeader>
       <CardContent className="grid gap-6">
         <Tabs
           value={activeTab}
-          onValueChange={(v) => setActiveTab(v as "eft" | "payfast")}
+          onValueChange={(v) => setActiveTab(v as "eft" | "payfast" | "snapscan" | "custom")}
           className="w-full"
         >
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="eft">EFT</TabsTrigger>
             <TabsTrigger value="payfast">PayFast</TabsTrigger>
+            <TabsTrigger value="snapscan">SnapScan</TabsTrigger>
             <TabsTrigger value="custom">Custom</TabsTrigger>
           </TabsList>
           {activeTab === "eft" && (
@@ -512,6 +716,11 @@ export function BankingDetailsForm({
                 Create a merchant account
               </a>
               .
+            </p>
+          )}
+          {activeTab === "snapscan" && (
+            <p className="mt-2 text-sm text-muted-foreground">
+              SnapScan lets you collect payments using your SnapScan merchant credentials. Enter your merchant ID and API key to enable this payment method for your club.
             </p>
           )}
           {activeTab === "custom" && (
@@ -653,6 +862,78 @@ export function BankingDetailsForm({
                     />
                   </div>
                 </div>
+              )}
+            </div>
+          </TabsContent>
+          <TabsContent value="snapscan" className="space-y-4 mt-4">
+            <div className="space-y-4">
+              {snapscanEnabled && (
+                <Alert>
+                  <CheckCircle2 className="h-4 w-4" />
+                  <AlertTitle>SnapScan setup complete</AlertTitle>
+                  <AlertDescription>
+                    Your SnapScan merchant is connected. You can reconfigure it once support for resetting SnapScan credentials is added.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {snapscanEnabled && (
+                <div className="rounded-lg border p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <Label
+                        htmlFor="snapscan-auto-register-members"
+                        className="text-sm font-medium"
+                      >
+                        Automatically register members after successful SnapScan payment
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        If enabled, members who pay successfully through SnapScan will be registered automatically.
+                      </p>
+                    </div>
+                    <Switch
+                      id="snapscan-auto-register-members"
+                      checked={autoRegisterMembersIfPaidSnapScan}
+                      onCheckedChange={setAutoRegisterMembersIfPaidSnapScan}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {!snapscanEnabled && (
+                <>
+                  <div className="grid gap-3">
+                    <Label htmlFor="snapscan-merchant-id">
+                      Merchant ID
+                      {!snapscanMerchantId.trim() && (
+                        <span className="ml-2 text-lg font-bold text-red-500">*</span>
+                      )}
+                    </Label>
+                    <Input
+                      id="snapscan-merchant-id"
+                      type="text"
+                      value={snapscanMerchantId}
+                      onChange={(e) => setSnapscanMerchantId(e.target.value)}
+                      placeholder="Enter SnapScan merchant ID"
+                    />
+                  </div>
+
+                  <div className="grid gap-3">
+                    <Label htmlFor="snapscan-api-key">
+                      API Key
+                      {!snapscanApiKey.trim() && (
+                        <span className="ml-2 text-lg font-bold text-red-500">*</span>
+                      )}
+                    </Label>
+                    <Input
+                      id="snapscan-api-key"
+                      type="text"
+                      value={snapscanApiKey}
+                      onChange={(e) => setSnapscanApiKey(e.target.value)}
+                      placeholder="Enter SnapScan API key"
+                    />
+                  </div>
+                </>
               )}
             </div>
           </TabsContent>

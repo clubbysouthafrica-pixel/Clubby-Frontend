@@ -128,7 +128,7 @@ export default function RemoveMemberDialog({
                     <ul className="text-sm text-red-800 space-y-1 list-disc list-inside">
                         <li>{members.length > 1 ? "These members will" : "This member will"} be permanently removed from the club</li>
                         <li>{members.length > 1 ? "They will" : "They will"} need to submit a brand new registration to re-join the club</li>
-                        <li>All registration data associated with {members.length > 1 ? "these members" : "this member"} will be archived</li>
+                        <li>All registration data associated with {members.length > 1 ? "these members" : "this member"} will be removed</li>
                     </ul>
                 </div>
 

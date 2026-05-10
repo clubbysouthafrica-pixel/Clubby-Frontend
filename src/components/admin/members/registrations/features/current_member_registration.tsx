@@ -8,7 +8,20 @@ import {
 } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { useFetchMemberRegisteration } from "@/queries/admin/registration-form";
-import { Loader2, Edit, Trash2, Copy, PencilIcon } from "lucide-react";
+import {
+  Loader2,
+  Edit,
+  Trash2,
+  Copy,
+  PencilIcon,
+  CalendarClock,
+  FileText,
+  ShieldCheck,
+  AlertCircle,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -50,6 +63,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 function formatEpoch(epoch: number) {
   const date = new Date(epoch);
@@ -69,6 +84,38 @@ function formatVariableName(name: string): string {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(" ");
 }
+
+function parseBooleanLikeValue(value: unknown): boolean | null {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalizedValue = value.trim().toLowerCase();
+
+  if (normalizedValue === "true" || normalizedValue === "yes") {
+    return true;
+  }
+
+  if (normalizedValue === "false" || normalizedValue === "no") {
+    return false;
+  }
+
+  return null;
+}
+
+type RegistrationPageField = {
+  visible?: boolean;
+  value?: string | null;
+};
+
+type RegistrationPage = {
+  fields: RegistrationPageField[];
+  page_header?: string;
+};
 
 export function CurrentMemberRegistration({
   userId,
@@ -90,7 +137,7 @@ export function CurrentMemberRegistration({
   const [adminNotes, setAdminNotes] = useState<
     Array<{ id: string; title: string; content: string; visibleToMember: boolean }>
   >([]);
-  const [isNotesOpen, setIsNotesOpen] = useState(false);
+  const [isAdminNotesOpen, setIsAdminNotesOpen] = useState(false);
   const [isVariablesOpen, setIsVariablesOpen] = useState(false);
   const [editingVariableIndex, setEditingVariableIndex] = useState<number | null>(null);
   const [editVariableValue, setEditVariableValue] = useState<string>("");
@@ -160,393 +207,550 @@ export function CurrentMemberRegistration({
   }, [data?.admin_notes]);
 
   // Filter pages to only show pages with at least one visible field
-  const visiblePages = data?.pages?.filter((page: any) =>
+  const visiblePages = data?.pages?.filter((page: RegistrationPage) =>
     page.fields.some(
-      (field: any) =>
+      (field: RegistrationPageField) =>
         !(field.visible === false && !field.value)
     )
   ) || [];
 
+  const registrationStatus = data?.deregistered_on
+    ? {
+        label: "De-registered",
+        className: "border-rose-200 bg-rose-50 text-rose-700",
+        helper: "This registration is no longer active.",
+      }
+    : data?.registered_on
+      ? {
+          label: "Registered",
+          className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+          helper: "This registration has been approved and activated.",
+        }
+      : {
+          label: "Pending review",
+          className: "border-amber-200 bg-amber-50 text-amber-700",
+          helper: "Review the submitted details and update any admin-only values before approval.",
+        };
+  const registrationTone = data?.deregistered_on
+    ? {
+        badgeClassName: "border-rose-200 bg-rose-50 text-rose-700",
+        panelClassName: "border-rose-200 bg-rose-50/80 text-rose-900",
+      }
+    : data?.registered_on
+      ? {
+          badgeClassName: "border-emerald-200 bg-emerald-50 text-emerald-800",
+          panelClassName: "border-emerald-200 bg-emerald-50/80 text-emerald-900",
+        }
+      : {
+          badgeClassName: "border-amber-200 bg-amber-50 text-amber-800",
+          panelClassName: "border-amber-200 bg-amber-50/80 text-amber-900",
+        };
+  const showRegistrationTags = Boolean(data?.registered_on && !data?.deregistered_on);
+  const currentPage = visiblePages[currentPageIndex];
+
   if (isLoading || !data) {
     return (
-      <div className="flex justify-center items-center p-5 min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex min-h-[420px] items-center justify-center rounded-[28px] border border-slate-200 bg-white/80 p-8 shadow-sm">
+        <div className="flex flex-col items-center gap-3 text-slate-500">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <p className="text-sm font-medium">Loading registration details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (visiblePages.length === 0) {
+    return (
+      <div className="rounded-[28px] border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <p className="text-sm text-slate-500">
+          No registration fields are available for this member.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="w-full space-y-2 flex-1 min-h-0 flex flex-col">
-      {/* Transaction ID and Previous Season Tag */}
-      {(data?.transaction_id || data?.last_season_registration) && (
-        <div className="flex flex-col items-start justify-start text-sm bg-transparent p-1">
-          {userId ? (
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground text-xs">Member ID:</span>
-              <strong className="text-xs font-mono">{userId}</strong>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(userId);
-                }}
-                className="p-1 hover:bg-muted rounded transition-colors"
-                title="Copy member ID"
-              >
-                <Copy className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-pointer" />
-              </button>
-            </div>
-          ) : null}
-          {data?.transaction_id ? (
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground text-xs">Transaction ID:</span>
-              <strong className="text-xs font-mono">{data.transaction_id}</strong>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(data.transaction_id);
-                }}
-                className="p-1 hover:bg-muted rounded transition-colors"
-                title="Copy transaction ID"
-              >
-                <Copy className="h-3 w-3 text-muted-foreground hover:text-foreground cursor-pointer" />
-              </button>
-            </div>
-          ) : null}
-          {data?.last_season_registration && (
-            <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-1 rounded">
-              Previous Season Registration
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Additional Variables Dropdown */}
-      {data?.variables && data.variables.length > 0 && (
-        <div className="border rounded-lg bg-transparent">
-          <button
-            onClick={() => setIsVariablesOpen(!isVariablesOpen)}
-            className="w-full flex items-center justify-between p-2 hover:bg-muted/50 transition-colors"
-          >
-            <span className="px-2 font-semibold text-sm text-foreground">
-              Additional Information
-            </span>
-            <span className="text-lg pr-2">{isVariablesOpen ? "▼" : "▶"}</span>
-          </button>
-          {isVariablesOpen && (
-            <div className="bg-muted/20 border-t p-3 space-y-2">
-              {data.variables.map(
-                (variable: { name: string; value: string | number | boolean | null | undefined }, index: number) => {
-                  const isEditing = editingVariableIndex === index;
-                  
-                  const handleEdit = () => {
-                    setEditingVariableIndex(index);
-                    setEditVariableValue(variable.value?.toString() || "");
-                  };
-                  
-                  const handleSave = async () => {
-                    setIsSavingVariable(true);
-                    try {
-                      await updateMemberVariable(
-                        clubAccountId,
-                        userId,
-                        variable.name,
-                        editVariableValue
-                      );
-                      
-                      toast.success(`${formatVariableName(variable.name)} updated successfully`, {
-                        duration: 3000,
-                      });
-                      
-                      // Update local data
-                      variable.value = editVariableValue;
-                      setEditingVariableIndex(null);
-                    } catch (error) {
-                      console.error("Error updating variable:", error);
-                      toast.error("Failed to update variable", {
-                        duration: 3000,
-                      });
-                    } finally {
-                      setIsSavingVariable(false);
-                    }
-                  };
-                  
-                  const handleCancel = () => {
-                    setEditingVariableIndex(null);
-                    setEditVariableValue("");
-                  };
-                  
-                  return (
-                    <div key={index} className="flex items-center justify-between group py-2 border-b last:border-b-0">
-                      <div className="flex-1 flex flex-row gap-2 py-1 px-2 bg-transparent rounded-lg">
-                        <Label className="text-xs font-semibold text-muted-foreground w-fit whitespace-nowrap">
-                          {formatVariableName(variable.name)}:
-                        </Label>
-                        {isEditing ? (
-                          <Input
-                            autoFocus
-                            value={editVariableValue}
-                            onChange={(e) => setEditVariableValue(e.target.value)}
-                            className="text-sm"
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                handleSave();
-                              } else if (e.key === "Escape") {
-                                handleCancel();
-                              }
-                            }}
-                          />
-                        ) : (
-                          <span className="text-xs text-foreground">
-                            {variable.value ? variable.value : <span className="italic text-gray-500">Does not exist for this member</span>}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex gap-1 ml-2 opacity-30 group-hover:opacity-100 transition-opacity">
-                        {isEditing ? (
-                          <>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={handleSave}
-                              disabled={isSavingVariable}
-                              className="h-8 w-8 p-0"
-                              title="Save"
-                            >
-                              <Check className="h-4 w-4 text-green-600" />
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={handleCancel}
-                              disabled={isSavingVariable}
-                              className="h-8 w-8 p-0"
-                              title="Cancel"
-                            >
-                              <X className="h-4 w-4 text-red-600" />
-                            </Button>
-                          </>
-                        ) : (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={handleEdit}
-                            className="h-8 w-8 p-0"
-                            title="Update this variable"
-                          >
-                            <PencilIcon className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                }
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="flex flex-wrap justify-center items-center gap-4 text-sm bg-muted/30 p-2 rounded-lg border">
-        {data?.registration_submitted_on && (
-          <div className="flex items-center gap-1">
-            <span className="text-muted-foreground text-xs">Submitted:</span>
-            <strong className="text-xs">
-              {formatEpoch(data.registration_submitted_on)}
-            </strong>
-          </div>
-        )}
-
-        {data?.registration_submitted_on && data?.registered_on && (
-          <span className="text-gray-300">|</span>
-        )}
-
-        {data?.registered_on && (
-          <div className="flex items-center gap-1">
-            <span className="text-muted-foreground text-xs">Registered:</span>
-            <strong className="text-green-600 text-xs">
-              {formatEpoch(data.registered_on)}
-            </strong>
-          </div>
-        )}
-
-        {(data?.registered_on && data?.deregistered_on) ||
-        (data?.registration_submitted_on && data?.deregistered_on) ? (
-          <span className="text-gray-300">|</span>
-        ) : null}
-
-        {data?.deregistered_on && (
-          <div className="flex items-center gap-1">
-            <span className="text-muted-foreground text-xs">Deregistered:</span>
-            <strong className="text-red-600 text-xs">
-              {formatEpoch(data.deregistered_on)}
-            </strong>
-          </div>
-        )}
-      </div>
-
-      <Card className="w-full border shadow-sm pt-0 flex-1 min-h-0 flex flex-col gap-1">
-        <CardHeader className="border-b bg-muted/30 py-1 pb-1 flex flex-row items-center justify-center relative">
-          <div className="text-center">
-            <CardTitle className="text-l pt-2">{clubName}</CardTitle>
-            <CardDescription className="text-xs pt-2">
-              Member Registration Form
-            </CardDescription>
-          </div>
-          <div className="absolute right-4">
-            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Edit className="h-4 w-4" />
-                  Admin Notes
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Add Admin Notes</DialogTitle>
-                  <DialogDescription>
-                    Add additional information or notes to this member's
-                    registration
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="note-title">Note Title</Label>
-                    <Input
-                      id="note-title"
-                      placeholder="e.g., Special Request, Health Information"
-                      value={noteTitle}
-                      onChange={(e) => setNoteTitle(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="note-content">Note Content</Label>
-                    <Textarea
-                      id="note-content"
-                      placeholder="Enter your additional information here..."
-                      className="min-h-[200px]"
-                      value={noteContent}
-                      onChange={(e) => setNoteContent(e.target.value)}
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="visible-to-member"
-                      checked={noteVisibleToMember}
-                      onCheckedChange={(checked) =>
-                        setNoteVisibleToMember(checked as boolean)
-                      }
-                    />
-                    <Label htmlFor="visible-to-member" className="font-normal cursor-pointer">
-                      Visible to Member
-                    </Label>
-                  </div>
-                  <Button
-                    onClick={() => {
-                      if (noteTitle.trim() && noteContent.trim()) {
-                        const id = `note-${Date.now()}-${Math.random()
-                          .toString(36)
-                          .substr(2, 9)}`;
-                        const newNotes = [
-                          ...adminNotes,
-                          {
-                            id,
-                            title: noteTitle,
-                            content: noteContent,
-                            visibleToMember: noteVisibleToMember,
-                          },
-                        ];
-                        updateNotesMutation.mutate(newNotes);
-                        setNoteTitle("");
-                        setNoteContent("");
-                        setNoteVisibleToMember(false);
-                      }
-                    }}
-                    disabled={updateNotesMutation.isPending}
-                    className="w-full"
-                  >
-                    {updateNotesMutation.isPending ? "Saving..." : "Add Note"}
-                  </Button>
-                  <Button
-                    onClick={() => setIsEditDialogOpen(false)}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    Done
-                  </Button>
+    <div className="flex flex-col gap-6">
+      <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)] xl:items-start">
+        <aside className="space-y-4 xl:sticky xl:top-24">
+          <Card className="overflow-hidden rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] shadow-[0_20px_50px_-32px_rgba(15,23,42,0.35)]">
+            <CardHeader className="space-y-4 border-b border-slate-200 bg-slate-50/80 pb-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
+                  <FileText className="h-6 w-6" />
                 </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent className="py-2 px-4 flex-1 min-h-0 flex flex-col">
-          {adminNotes.length > 0 && (
-            <div className="mb-3 border rounded-lg">
-              <button
-                onClick={() => setIsNotesOpen(!isNotesOpen)}
-                className="w-full flex items-center justify-between p-3 hover:bg-blue-50 transition-colors"
-              >
-                <span className="font-semibold text-sm text-blue-900">
-                  Admin Notes ({adminNotes.length})
-                </span>
-                <span className="text-lg">{isNotesOpen ? "▼" : "▶"}</span>
-              </button>
-              {isNotesOpen && (
-                <div className="bg-blue-50 border-t border-blue-200 p-3 space-y-3">
-                  {adminNotes.map((note) => (
+                <div>
+                  <CardTitle className="text-lg text-slate-950">Registration summary</CardTitle>
+                  <CardDescription className="mt-1 text-sm text-slate-500">
+                    This admin view mirrors the submitted member registration while keeping field editing available.
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4 p-5">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  Club
+                </p>
+                <p className="mt-2 text-lg font-semibold text-slate-950">{clubName}</p>
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  {registrationStatus.helper}
+                </p>
+              </div>
+
+              <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
+                <div className="flex items-center gap-2 text-slate-900">
+                  <CalendarClock className="h-4 w-4 text-slate-500" />
+                  <p className="text-sm font-semibold">Registration timeline</p>
+                </div>
+                <div className="space-y-2 text-sm">
+                  {data?.registration_submitted_on ? (
+                    <div className="flex items-start justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
+                      <span className="text-slate-500">Submitted</span>
+                      <strong className="text-right text-slate-900">
+                        {formatEpoch(data.registration_submitted_on)}
+                      </strong>
+                    </div>
+                  ) : null}
+                  {data?.registered_on ? (
+                    <div className="flex items-start justify-between gap-3 rounded-xl bg-emerald-50 px-3 py-2.5">
+                      <span className="text-emerald-700">Registered</span>
+                      <strong className="text-right text-emerald-800">
+                        {formatEpoch(data.registered_on)}
+                      </strong>
+                    </div>
+                  ) : null}
+                  {data?.deregistered_on ? (
+                    <div className="flex items-start justify-between gap-3 rounded-xl bg-rose-50 px-3 py-2.5">
+                      <span className="text-rose-700">De-registered</span>
+                      <strong className="text-right text-rose-800">
+                        {formatEpoch(data.deregistered_on)}
+                      </strong>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              {(userId || data?.transaction_id) && (
+                <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
+                  <div className="flex items-center gap-2 text-slate-900">
+                    <ShieldCheck className="h-4 w-4 text-slate-500" />
+                    <p className="text-sm font-semibold">Identifiers</p>
+                  </div>
+                  {userId ? (
+                    <div className="flex items-start justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Member ID</p>
+                        <p className="mt-1 break-all font-mono text-xs font-semibold text-slate-950">{userId}</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(userId);
+                        }}
+                        className="rounded-full p-2 text-slate-500 transition hover:bg-white hover:text-slate-900"
+                        title="Copy member ID"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : null}
+                  {data?.transaction_id ? (
+                    <div className="flex items-start justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Transaction ID</p>
+                        <p className="mt-1 break-all font-mono text-xs font-semibold text-slate-950">{data.transaction_id}</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(data.transaction_id);
+                        }}
+                        className="rounded-full p-2 text-slate-500 transition hover:bg-white hover:text-slate-900"
+                        title="Copy transaction ID"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+
+            </CardContent>
+          </Card>
+        </aside>
+
+        <div className="flex min-w-0 flex-col gap-4">
+          <Card className="overflow-hidden border-none bg-white/90 shadow-none">
+            <CardContent className="px-0 py-0">
+              <div className="flex flex-col gap-10 justify-center items-center px-3 lg:px-4 w-full overflow-x-hidden bg-gradient-to-b from-gray-50 to-white py-4 lg:py-6 rounded-[28px] border border-slate-200 shadow-[0_20px_50px_-32px_rgba(15,23,42,0.35)]">
+                <div className="w-full max-w-3xl mb-5 overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-md">
+                  <div className="px-6 py-6 lg:px-10 lg:py-8 overflow-x-hidden">
                     <div
-                      key={note.id}
-                      className="pb-3 border-b last:border-b-0 last:pb-0"
+                      className={cn(
+                        "mb-6 rounded-2xl border px-4 py-4 sm:px-5 sm:py-4",
+                        registrationTone.panelClassName
+                      )}
                     >
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-blue-900 mb-1">
-                            {note.title}
-                          </p>
-                          {note.visibleToMember && (
-                            <span className="inline-block px-2 py-1 text-xs bg-green-100 text-green-800 rounded mb-2">
-                              Visible to Member
-                            </span>
-                          )}
-                          <p className="text-xs text-blue-800 whitespace-pre-wrap">
-                            {note.content}
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-sm font-semibold">Current registration status</p>
+                          <p className="mt-1 text-sm leading-6 opacity-90">
+                            {registrationStatus.helper}
                           </p>
                         </div>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                onClick={() =>
-                                  removeNotesMutation.mutate([note.id])
-                                }
-                                disabled={removeNotesMutation.isPending}
-                                className="flex-shrink-0 p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="left">
-                              Delete this note
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        <div className="grid grid-cols-2 gap-2 text-left sm:min-w-[220px]">
+                          <div className="rounded-xl border border-white/70 bg-white/70 px-3 py-2">
+                            <p className="text-[11px] uppercase tracking-[0.18em] opacity-70">Pages</p>
+                            <p className="mt-1 text-lg font-semibold">{visiblePages.length}</p>
+                          </div>
+                          <div className="rounded-xl border border-white/70 bg-white/70 px-3 py-2">
+                            <p className="text-[11px] uppercase tracking-[0.18em] opacity-70">Notes</p>
+                            <p className="mt-1 text-lg font-semibold">{adminNotes.length}</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-          <div
-            key={visiblePages[currentPageIndex].page_index}
-            className="flex-1 min-h-0 flex flex-col"
-          >
-            <h3 className="text-base font-semibold text-center border-b pb-2">
-              {visiblePages[currentPageIndex].page_header}
-            </h3>
 
-            <div className="flex-1 min-h-0 overflow-y-auto space-y-1 px-2 py-2">
-              {visiblePages[currentPageIndex].fields.map(
+                    {showRegistrationTags ? (
+                      <div className="mb-6 flex flex-wrap items-center gap-2 border-b border-slate-200 pb-4">
+                        <Badge
+                          variant="outline"
+                          className={cn("rounded-full border px-3 py-1 text-xs font-semibold", registrationTone.badgeClassName)}
+                        >
+                          {registrationStatus.label}
+                        </Badge>
+                        {data?.last_season_registration ? (
+                          <Badge
+                            variant="outline"
+                            className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700"
+                          >
+                            Previous season
+                          </Badge>
+                        ) : null}
+                      </div>
+                    ) : null}
+
+                    <div className="mb-6 space-y-4">
+                      <section className="rounded-2xl border border-amber-200 bg-amber-50/60">
+                        <button
+                          type="button"
+                          onClick={() => setIsAdminNotesOpen((currentValue) => !currentValue)}
+                          className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left sm:px-5"
+                        >
+                          <div className="flex items-center gap-2 text-amber-950">
+                            <AlertCircle className="h-4 w-4 text-amber-700" />
+                            <div>
+                              <p className="text-sm font-semibold">Admin notes</p>
+                              <p className="mt-1 text-xs text-amber-900/70">
+                                Internal notes saved against this registration.
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                              <DialogTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="gap-2 rounded-full border-amber-200 bg-white text-amber-800 hover:bg-amber-100"
+                                  onClick={(event) => event.stopPropagation()}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                  Add note
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-2xl">
+                                <DialogHeader>
+                                  <DialogTitle>Add admin note</DialogTitle>
+                                  <DialogDescription>
+                                    Save internal notes for this registration and optionally mark them as visible to the member.
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4 py-4">
+                                  <div className="space-y-2">
+                                    <Label htmlFor="note-title">Note title</Label>
+                                    <Input
+                                      id="note-title"
+                                      placeholder="Payment follow-up, medical note, document check..."
+                                      value={noteTitle}
+                                      onChange={(e) => setNoteTitle(e.target.value)}
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label htmlFor="note-content">Note content</Label>
+                                    <Textarea
+                                      id="note-content"
+                                      placeholder="Enter the note details here..."
+                                      className="min-h-[200px]"
+                                      value={noteContent}
+                                      onChange={(e) => setNoteContent(e.target.value)}
+                                    />
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                      id="visible-to-member"
+                                      checked={noteVisibleToMember}
+                                      onCheckedChange={(checked) =>
+                                        setNoteVisibleToMember(checked as boolean)
+                                      }
+                                    />
+                                    <Label htmlFor="visible-to-member" className="cursor-pointer font-normal">
+                                      Visible to member
+                                    </Label>
+                                  </div>
+                                  <Button
+                                    onClick={() => {
+                                      if (noteTitle.trim() && noteContent.trim()) {
+                                        const id = `note-${Date.now()}-${Math.random()
+                                          .toString(36)
+                                          .substr(2, 9)}`;
+                                        const newNotes = [
+                                          ...adminNotes,
+                                          {
+                                            id,
+                                            title: noteTitle,
+                                            content: noteContent,
+                                            visibleToMember: noteVisibleToMember,
+                                          },
+                                        ];
+                                        updateNotesMutation.mutate(newNotes);
+                                        setNoteTitle("");
+                                        setNoteContent("");
+                                        setNoteVisibleToMember(false);
+                                      }
+                                    }}
+                                    disabled={updateNotesMutation.isPending}
+                                    className="w-full"
+                                  >
+                                    {updateNotesMutation.isPending ? "Saving..." : "Save note"}
+                                  </Button>
+                                  <Button
+                                    onClick={() => setIsEditDialogOpen(false)}
+                                    variant="outline"
+                                    className="w-full"
+                                  >
+                                    Done
+                                  </Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                            <ChevronDown
+                              className={cn(
+                                "h-4 w-4 shrink-0 text-amber-700 transition-transform",
+                                isAdminNotesOpen ? "rotate-180" : "rotate-0"
+                              )}
+                            />
+                          </div>
+                        </button>
+
+                        {isAdminNotesOpen ? (
+                          adminNotes.length > 0 ? (
+                            <div className="space-y-3 border-t border-amber-200 px-4 py-4 sm:px-5">
+                              {adminNotes.map((note) => (
+                                <div
+                                  key={note.id}
+                                  className="rounded-xl border border-amber-200 bg-white/80 px-4 py-3 shadow-sm"
+                                >
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="space-y-1">
+                                      <p className="text-sm font-semibold text-amber-950">{note.title}</p>
+                                      {note.visibleToMember ? (
+                                        <Badge className="border-emerald-200 bg-emerald-50 text-emerald-800">
+                                          Visible to member
+                                        </Badge>
+                                      ) : null}
+                                      <p className="text-sm leading-6 text-amber-900/85 whitespace-pre-wrap">
+                                        {note.content}
+                                      </p>
+                                    </div>
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <button
+                                            onClick={() => removeNotesMutation.mutate([note.id])}
+                                            disabled={removeNotesMutation.isPending}
+                                            className="rounded-full p-2 text-red-600 transition hover:bg-amber-100"
+                                          >
+                                            <Trash2 className="h-4 w-4" />
+                                          </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="left">Delete this note</TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="border-t border-amber-200 px-4 py-4 sm:px-5">
+                              <div className="rounded-2xl border border-dashed border-amber-200 bg-white px-4 py-5 text-center text-sm text-amber-900/70">
+                                No admin notes have been added yet.
+                              </div>
+                            </div>
+                          )
+                        ) : null}
+                      </section>
+
+                      {showRegistrationTags && data?.variables && data.variables.length > 0 && (
+                        <section className="rounded-2xl border border-slate-200 bg-slate-50/70">
+                          <button
+                            onClick={() => setIsVariablesOpen(!isVariablesOpen)}
+                            className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left sm:px-5"
+                          >
+                            <div>
+                              <p className="text-sm font-semibold text-slate-900">Club tags</p>
+                              <p className="mt-1 text-sm text-slate-500">
+                                Club tags captured alongside the registration.
+                              </p>
+                            </div>
+                            <ChevronDown
+                              className={cn(
+                                "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+                                isVariablesOpen ? "rotate-180" : "rotate-0"
+                              )}
+                            />
+                          </button>
+                          {isVariablesOpen && (
+                            <div className="grid gap-2.5 border-t border-slate-200 px-4 py-4 sm:grid-cols-2 sm:px-5">
+                              {data.variables.map(
+                                (variable: { name: string; value: string | number | boolean | null | undefined }, index: number) => {
+                                  const isEditing = editingVariableIndex === index;
+
+                                  const handleEdit = () => {
+                                    setEditingVariableIndex(index);
+                                    setEditVariableValue(variable.value?.toString() || "");
+                                  };
+
+                                  const handleSave = async () => {
+                                    setIsSavingVariable(true);
+                                    try {
+                                      await updateMemberVariable(
+                                        clubAccountId,
+                                        userId,
+                                        variable.name,
+                                        editVariableValue
+                                      );
+
+                                      toast.success(`${formatVariableName(variable.name)} updated successfully`, {
+                                        duration: 3000,
+                                      });
+
+                                      variable.value = editVariableValue;
+                                      setEditingVariableIndex(null);
+                                    } catch (error) {
+                                      console.error("Error updating variable:", error);
+                                      toast.error("Failed to update variable", {
+                                        duration: 3000,
+                                      });
+                                    } finally {
+                                      setIsSavingVariable(false);
+                                    }
+                                  };
+
+                                  const handleCancel = () => {
+                                    setEditingVariableIndex(null);
+                                    setEditVariableValue("");
+                                  };
+
+                                  return (
+                                    <div key={index} className="group flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                                      <div className="flex flex-1 flex-row gap-2 rounded-lg bg-transparent">
+                                        <Label className="w-fit whitespace-nowrap text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                          {formatVariableName(variable.name)}:
+                                        </Label>
+                                        {isEditing ? (
+                                          <Input
+                                            autoFocus
+                                            value={editVariableValue}
+                                            onChange={(e) => setEditVariableValue(e.target.value)}
+                                            className="text-sm"
+                                            onKeyDown={(e) => {
+                                              if (e.key === "Enter") {
+                                                handleSave();
+                                              } else if (e.key === "Escape") {
+                                                handleCancel();
+                                              }
+                                            }}
+                                          />
+                                        ) : (
+                                          <p className="text-sm leading-6 text-slate-700">
+                                            {String(variable.value ?? "").trim() || "Does not exist for this member"}
+                                          </p>
+                                        )}
+                                      </div>
+                                      <div className="ml-2 flex gap-1 opacity-30 transition-opacity group-hover:opacity-100">
+                                        {isEditing ? (
+                                          <>
+                                            <Button
+                                              type="button"
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={handleSave}
+                                              disabled={isSavingVariable}
+                                              className="h-8 w-8 p-0"
+                                              title="Save"
+                                            >
+                                              <Check className="h-4 w-4 text-green-600" />
+                                            </Button>
+                                            <Button
+                                              type="button"
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={handleCancel}
+                                              disabled={isSavingVariable}
+                                              className="h-8 w-8 p-0"
+                                              title="Cancel"
+                                            >
+                                              <X className="h-4 w-4 text-red-600" />
+                                            </Button>
+                                          </>
+                                        ) : (
+                                          <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleEdit}
+                                            className="h-8 w-8 p-0"
+                                            title="Update this variable"
+                                          >
+                                            <PencilIcon className="h-4 w-4" />
+                                          </Button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                }
+                              )}
+                            </div>
+                          )}
+                        </section>
+                      )}
+                    </div>
+
+                    <div
+                      key={currentPage?.page_header ?? currentPageIndex}
+                      className="flex min-h-0 flex-col"
+                    >
+                      <div className="mb-8 border-b border-slate-200 pb-6">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-4">
+                          <div>
+                            <CardDescription className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                              Submitted registration form
+                            </CardDescription>
+                            <CardTitle className="mt-1.5 text-xl font-bold text-slate-950 sm:mt-2 sm:text-2xl">
+                              {currentPage?.page_header}
+                            </CardTitle>
+                          </div>
+                          {visiblePages.length > 1 ? (
+                            <div className="text-sm text-slate-500">
+                              Page {currentPageIndex + 1} of {visiblePages.length}
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="flex-1 min-h-0 space-y-6 overflow-y-auto">
+              {currentPage?.fields.map(
                 (field: {
                   type: string;
                   label: string;
@@ -568,22 +772,22 @@ export function CurrentMemberRegistration({
                       return (
                         <div
                           key={field.label}
-                          className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg"
+                            className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-4 shadow-sm"
                         >
-                          <div className="flex items-center gap-2">
-                            <Label className="text-xs font-semibold text-muted-foreground">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Label className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                               {field.label}
                             </Label>
                             {field.visible === false && (
-                              <span className="text-[10px] px-1.5 py-0.5 bg-orange-100 text-orange-700 border border-orange-300 rounded">
+                              <Badge className="border-orange-200 bg-orange-50 text-orange-700">
                                 Removed from registration form
-                              </span>
+                              </Badge>
                             )}
                           </div>
                           <img
                             src={field.value}
                             alt="User Signature"
-                            className="border-b-2 border-gray-400 max-w-xs"
+                            className="max-w-xs border-b-2 border-slate-400 pb-2"
                           />
                         </div>
                       );
@@ -591,19 +795,19 @@ export function CurrentMemberRegistration({
                       return (
                         <div
                           key={field.label}
-                          className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg"
+                          className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-4 shadow-sm"
                         >
-                          <div className="flex items-center gap-2">
-                            <Label className="text-xs font-semibold text-muted-foreground">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Label className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                               {field.label}
                             </Label>
                             {field.visible === false && (
-                              <span className="text-[10px] px-1.5 py-0.5 bg-orange-100 text-orange-700 border border-orange-300 rounded">
+                              <Badge className="border-orange-200 bg-orange-50 text-orange-700">
                                 Removed from registration form
-                              </span>
+                              </Badge>
                             )}
                           </div>
-                          <Label className="text-xs font-[cursive] border-b-2 border-gray-400 pb-1">
+                          <Label className="border-b-2 border-slate-400 pb-2 text-lg font-[cursive] text-slate-700">
                             {field.value}
                           </Label>
                         </div>
@@ -891,16 +1095,17 @@ export function CurrentMemberRegistration({
                     return (
                       <div
                         key={field.label}
-                        className="flex items-center justify-between group"
+                        className="group rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-4 shadow-sm"
                       >
-                        <div className="flex-1 flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg relative">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-4">
+                          <div className="relative min-w-0 flex-1 space-y-2.5">
                           {field.visible === false && (
-                            <span className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 bg-orange-100 text-orange-700 border border-orange-300 rounded">
+                            <Badge className="absolute right-0 top-0 border-orange-200 bg-orange-50 text-orange-700">
                               Removed from registration form
-                            </span>
+                            </Badge>
                           )}
-                          <div className="flex items-center gap-2">
-                            <Label className="text-xs font-semibold text-muted-foreground">
+                          <div className="flex flex-wrap items-center gap-2 pr-28 lg:pr-0">
+                            <Label className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                               {field.label}
                             </Label>
                           </div>
@@ -908,68 +1113,67 @@ export function CurrentMemberRegistration({
                             renderInput()
                           ) : (
                             <>
-                              {field.input_type === "CHECKBOX" || metadata?.input_type === "CHECKBOX" ? (
-                                <div className="flex items-center gap-2">
-                                  {displayValue === "true" ? (
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-5 h-5 rounded border-2 border-green-600 bg-green-100 flex items-center justify-center">
-                                        <span className="text-green-700 font-bold text-xs">
-                                          ✓
-                                        </span>
-                                      </div>
-                                      <span className="text-sm text-green-700 font-medium">
-                                        Yes
+                              {(field.input_type === "CHECKBOX" || metadata?.input_type === "CHECKBOX" || parseBooleanLikeValue(displayValue) !== null) ? (
+                                (() => {
+                                  const checked = parseBooleanLikeValue(displayValue) === true;
+
+                                  return (
+                                    <div
+                                      className={cn(
+                                        "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium",
+                                        checked
+                                          ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                                          : "border-rose-200 bg-rose-50 text-rose-700"
+                                      )}
+                                    >
+                                      <span
+                                        className={cn(
+                                          "flex h-5 w-5 items-center justify-center rounded-full border text-xs",
+                                          checked
+                                            ? "border-emerald-500 bg-emerald-100 text-emerald-700"
+                                            : "border-rose-500 bg-rose-100 text-rose-700"
+                                        )}
+                                      >
+                                        {checked ? "✓" : "✗"}
                                       </span>
+                                      {checked ? "Yes" : "No"}
                                     </div>
-                                  ) : (
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-5 h-5 rounded border-2 border-red-600 bg-red-100 flex items-center justify-center">
-                                        <span className="text-red-700 font-bold text-xs">
-                                          ✗
-                                        </span>
-                                      </div>
-                                      <span className="text-sm text-red-500 font-medium">
-                                        No
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
+                                  );
+                                })()
                               ) : (
-                                <Label className="text-xs border-b-2 border-gray-300 pb-1">
-                                  {displayValue}
-                                </Label>
+                                <p className="text-sm leading-6 text-slate-700">{displayValue || "-"}</p>
                               )}
                             </>
                           )}
-                        </div>
+                          </div>
                         {!data?.deregistered_on && field.field_id && !((field.input_type === "CHECKBOX" || metadata?.input_type === "CHECKBOX") && metadata?.required) && field.visible !== false && (
-                          <div className="flex gap-1 ml-2 opacity-30 group-hover:opacity-100 transition-opacity">
+                          <div className="flex shrink-0 items-center gap-2 lg:ml-4">
                             {isEditing ? (
                               <>
                                 <Button
                                   type="button"
-                                  variant="ghost"
+                                  variant="outline"
                                   size="sm"
                                   onClick={handleSave}
                                   disabled={isSaving}
-                                  className="h-8 w-8 p-0"
-                                  title="Save"
+                                  className="border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
                                 >
-                                  <Check className="h-4 w-4 text-green-600" />
+                                  <Check className="mr-1 h-4 w-4" />
+                                  Save
                                 </Button>
                                 <Button
                                   type="button"
-                                  variant="ghost"
+                                  variant="outline"
                                   size="sm"
                                   onClick={() => {
                                     setEditingFieldId(null);
                                     setEditValue("");
                                   }}
                                   disabled={isSaving}
-                                  className="h-8 w-8 p-0"
-                                  title="Cancel"
+                                  className="border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
                                 >
-                                  <X className="h-4 w-4 text-red-600" />
+                                  <X className="mr-1 h-4 w-4" />
+                                  Cancel
                                 </Button>
                               </>
                             ) : (
@@ -979,18 +1183,19 @@ export function CurrentMemberRegistration({
                                 size="sm"
                                 onClick={handleEdit}
                                 disabled={loadingFieldId === field.label}
-                                className="h-8 w-8 p-0"
-                                title="Update this field"
+                                className="border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
                               >
                                 {loadingFieldId === field.label ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
                                 ) : (
-                                  <PencilIcon className="h-4 w-4" />
+                                  <PencilIcon className="mr-1 h-4 w-4" />
                                 )}
+                                Update
                               </Button>
                             )}
                           </div>
                         )}
+                        </div>
                       </div>
                     );
                   }
@@ -999,29 +1204,29 @@ export function CurrentMemberRegistration({
                     return (
                       <div
                         key={field.label}
-                        className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg border"
+                        className="rounded-2xl border border-emerald-200 bg-emerald-50/40 px-4 py-4 shadow-sm"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <Label className="text-xs font-semibold text-muted-foreground">
+                            <Label className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                               {field.label}{" "}
                               {field.quantity ? `(x${field.quantity})` : null}
                             </Label>
                             {field.visible === false && (
-                              <span className="text-[10px] px-1.5 py-0.5 bg-orange-100 text-orange-700 border border-orange-300 rounded">
+                              <Badge className="border-orange-200 bg-orange-50 text-orange-700">
                                 Removed from registration form
-                              </span>
+                              </Badge>
                             )}
                           </div>
                           {field.discount && (
-                            <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-1 rounded">
+                            <Badge className="border-emerald-200 bg-emerald-50 text-emerald-800">
                               {field.discount}% off
-                            </span>
+                            </Badge>
                           )}
                         </div>
-                        <Label className="text-sm font-medium border-b-2 border-gray-300 pb-1">
+                        <p className="text-sm font-medium leading-6 text-slate-800">
                           {field.value}
-                        </Label>
+                        </p>
                       </div>
                     );
                   }
@@ -1037,7 +1242,7 @@ export function CurrentMemberRegistration({
                     return (
                       <div
                         key={field.label}
-                        className="prose prose-sm max-w-none text-gray-700 p-3 bg-muted/10 rounded-lg text-xs [&_ul]:list-disc [&_ul]:list-inside [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:ml-5"
+                        className="prose prose-sm max-w-none border-none p-0 text-sm text-slate-700 [&_ul]:ml-5 [&_ul]:list-disc [&_ul]:list-inside [&_ol]:ml-5 [&_ol]:list-decimal [&_ol]:list-inside"
                         dangerouslySetInnerHTML={{ __html: cleaned }}
                       />
                     );
@@ -1047,21 +1252,21 @@ export function CurrentMemberRegistration({
                     return (
                       <div
                         key={field.label}
-                        className="flex flex-col gap-1.5 p-3 bg-gray-50 rounded-lg border border-dashed"
+                        className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-4 shadow-sm"
                       >
-                        <div className="flex items-center gap-2">
-                          <Label className="text-xs font-semibold text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Label className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                             {field.label}
                           </Label>
                           {field.visible === false && (
-                            <span className="text-[10px] px-1.5 py-0.5 bg-orange-100 text-orange-700 border border-orange-300 rounded">
+                            <Badge className="border-orange-200 bg-orange-50 text-orange-700">
                               Removed from registration form
-                            </span>
+                            </Badge>
                           )}
                         </div>
-                        <Label className="text-xs italic text-gray-500">
+                        <p className="text-sm italic text-slate-500">
                           Not filled in by member.
-                        </Label>
+                        </p>
                       </div>
                     );
                   }
@@ -1070,43 +1275,48 @@ export function CurrentMemberRegistration({
             </div>
 
             
-            {visiblePages.length > 1 && (
-              <div className="flex justify-between items-center pt-3 border-t mt-2">
-                {currentPageIndex > 0 ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="w-[90px]"
-                    onClick={() => setCurrentPageIndex((i) => i - 1)}
-                  >
-                    Previous
-                  </Button>
-                ) : (
-                  <div />
-                )}
+                      {visiblePages.length > 1 && (
+                        <div className="mt-5 flex flex-col gap-2.5 border-t border-slate-200 pt-4 sm:mt-8 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:pt-6">
+                          {currentPageIndex > 0 ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="h-9 border-slate-200 bg-white px-3 text-sm text-slate-700 hover:bg-slate-50"
+                              onClick={() => setCurrentPageIndex((i) => i - 1)}
+                            >
+                              <ChevronLeft className="mr-1 h-4 w-4" />
+                              Previous
+                            </Button>
+                          ) : (
+                            <div className="hidden sm:block" />
+                          )}
 
-                <div className="text-xs text-muted-foreground">
-                  Page {currentPageIndex + 1} of {visiblePages.length}
+                          <div className="text-center text-sm text-slate-500">
+                            Page {currentPageIndex + 1} of {visiblePages.length}
+                          </div>
+
+                          {currentPageIndex < visiblePages.length - 1 ? (
+                            <Button
+                              type="button"
+                              className="h-9 bg-black px-3 text-sm text-white hover:bg-slate-900"
+                              onClick={() => setCurrentPageIndex((i) => i + 1)}
+                            >
+                              Next
+                              <ChevronRight className="ml-1 h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <div className="hidden sm:block" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-
-                {currentPageIndex < visiblePages.length - 1 ? (
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="w-[90px]"
-                    onClick={() => setCurrentPageIndex((i) => i + 1)}
-                  >
-                    Next
-                  </Button>
-                ) : (
-                  <div />
-                )}
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

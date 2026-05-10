@@ -15,6 +15,11 @@ export interface ClubPayFastDetailsRequest {
   auto_register_members_if_paid?: boolean;
 }
 
+export interface ClubSnapScanDetailsRequest {
+  merchant_id: string;
+  api_key: string;
+}
+
 export interface ClubLocationDetailsRequest {
   country: string;
 }
@@ -79,9 +84,11 @@ export interface ClubDetailsRequest {
   club_account_id: string;
   club_name?: string;
   auto_register_members_if_paid?: boolean;
+  auto_register_members_if_paid_snapscan?: boolean;
   opening_times?: ClubOpeningTimesRequest[];
   bank_details?: ClubBankDetailsRequest;
   payfast_details?: ClubPayFastDetailsRequest;
+  snapscan_details?: ClubSnapScanDetailsRequest;
   country_of_operation?: string;
   currency?: string;
   time_zone?: string;

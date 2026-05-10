@@ -6,6 +6,8 @@ export interface PaymentTransactionOption {
   order_id?: string;
   event_id?: string;
   event_registration_id?: string;
+  registration_id?: string;
+  storage_id?: string;
 }
 
 export interface BankDetails {

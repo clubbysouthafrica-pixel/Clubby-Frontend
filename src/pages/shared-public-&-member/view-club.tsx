@@ -489,7 +489,9 @@ export default function ViewClubPage() {
     paymentQueryParams.get("accountNumber") ?? undefined;
   const paymentAccountType = paymentQueryParams.get("accountType") ?? undefined;
   const paymentBranchCode = paymentQueryParams.get("branchCode") ?? undefined;
+  const paymentTransactionId = paymentQueryParams.get("transactionId") ?? undefined;
   const paymentPayfastEnabled = paymentQueryParams.get("payfastEnabled");
+  const paymentSnapscanEnabled = paymentQueryParams.get("snapscanEnabled");
   const isPublicPaymentRoute = pathname === `/clubs/${clubId}/payments`;
   const shouldUsePublicPaymentData =
     shouldForcePaymentAccess && isPublicPaymentRoute && !isLoggedIn;
@@ -568,6 +570,11 @@ export default function ViewClubPage() {
     shouldUsePublicPaymentData && paymentPayfastEnabled !== null
       ? paymentPayfastEnabled === "true"
       : data?.payfast_enabled;
+
+  const activeSnapscanEnabled =
+    shouldUsePublicPaymentData && paymentSnapscanEnabled !== null
+      ? paymentSnapscanEnabled === "true"
+      : data?.snapscan_enabled;
 
   const activeBankDetailsLoading = shouldUsePublicPaymentData
     ? false
@@ -681,6 +688,7 @@ export default function ViewClubPage() {
       if (matchedPayment) {
         matchedPaymentOption = matchedPayment;
         setPaymentReturnTab("bank");
+        setSelectedPaymentTransactionId(matchedPayment.transaction_id);
         if (clubId && routeSection !== "bank") {
           navigate(
             {
@@ -711,6 +719,7 @@ export default function ViewClubPage() {
       if (matchedPayment) {
         matchedPaymentOption = matchedPayment;
         setPaymentReturnTab("bank");
+        setSelectedPaymentTransactionId(matchedPayment.transaction_id);
         if (clubId && routeSection !== "bank") {
           navigate(
             {
@@ -741,6 +750,7 @@ export default function ViewClubPage() {
       if (matchedPayment) {
         matchedPaymentOption = matchedPayment;
         setPaymentReturnTab("bank");
+        setSelectedPaymentTransactionId(matchedPayment.transaction_id);
         if (clubId && routeSection !== "bank") {
           navigate(
             {
@@ -766,6 +776,7 @@ export default function ViewClubPage() {
     ) {
       setPaymentReturnTab("bank");
       setSelectedPaymentOption(null);
+      setSelectedPaymentTransactionId(paymentTransactionId ?? null);
 
       if (clubId && routeSection !== "bank") {
         navigate(
@@ -801,9 +812,11 @@ export default function ViewClubPage() {
   const [isPaymentScreenOpen, setIsPaymentScreenOpen] = useState(false);
   const [selectedPaymentOption, setSelectedPaymentOption] =
     useState<PaymentTransactionOption | null>(null);
+  const [selectedPaymentTransactionId, setSelectedPaymentTransactionId] =
+    useState<string | null>(null);
   const [paymentReturnTab, setPaymentReturnTab] = useState("bank");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
-    "eft" | "payfast" | null
+    "eft" | "payfast" | "snapscan" | null
   >(null);
   const [newOrderId, setNewOrderId] = useState<string | null>(null);
   const [highlightedTransactionId, setHighlightedTransactionId] = useState<
@@ -825,6 +838,26 @@ export default function ViewClubPage() {
   const [selectedGalleryImageIndex, setSelectedGalleryImageIndex] = useState<
     number | null
   >(null);
+  const activeSelectedPaymentOption = useMemo(() => {
+    if (selectedPaymentOption) {
+      return selectedPaymentOption;
+    }
+
+    if (!selectedPaymentTransactionId) {
+      return null;
+    }
+
+    return (
+      activeBankDetails?.transaction_options?.find(
+        (payment: PaymentTransactionOption) =>
+          payment.transaction_id === selectedPaymentTransactionId,
+      ) ?? null
+    );
+  }, [
+    activeBankDetails?.transaction_options,
+    selectedPaymentOption,
+    selectedPaymentTransactionId,
+  ]);
 
   const {
     data: memberOrders,
@@ -1153,7 +1186,9 @@ export default function ViewClubPage() {
 
   const handlePayHereClick = (paymentOption?: PaymentTransactionOption) => {
     if (paymentOption) {
+
       setSelectedPaymentOption(paymentOption);
+      setSelectedPaymentTransactionId(paymentOption.transaction_id);
       setPaymentReturnTab(activeTab);
       if (!activeBankDetailsLoading && activeBankDetails) {
         setIsPaymentScreenOpen(true);
@@ -1161,6 +1196,7 @@ export default function ViewClubPage() {
         toast.error("Payment details are still loading. Please wait...");
       }
     } else {
+      setSelectedPaymentTransactionId(null);
       setPaymentReturnTab(activeTab);
       if (
         activeBankDetails?.transaction_options &&
@@ -1478,6 +1514,7 @@ export default function ViewClubPage() {
     (shouldUsePublicPaymentData ||
       (data?.onboarded && data?.deregistration_in_progress !== true))
   ) {
+
     return (
       <Pager>
         <PaymentOptionsScreen
@@ -1487,10 +1524,17 @@ export default function ViewClubPage() {
           currency={data?.currency}
           supportEmail={data?.support_email}
           payfastEnabled={activePayfastEnabled}
+          snapscanEnabled={activeSnapscanEnabled}
           userId={paymentUserId}
+          snapscanUserId={shouldUsePublicPaymentData ? paymentUserId : "LOGGED_IN"}
+          snapscanTransactionId={
+            activeSelectedPaymentOption?.transaction_id ??
+            selectedPaymentTransactionId ??
+            paymentTransactionId
+          }
           paymentReference={paymentReference}
           backLabel={shouldUsePublicPaymentData ? "Go Back" : undefined}
-          selectedPaymentOption={selectedPaymentOption}
+          selectedPaymentOption={activeSelectedPaymentOption}
           selectedPaymentMethod={selectedPaymentMethod}
           onSelectedPaymentMethodChange={setSelectedPaymentMethod}
           customPaymentMethods={data?.custom_payment_methods}

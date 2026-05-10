@@ -16,7 +16,6 @@ export const removeStorage = (storageId: string) => {
 
 // List storage units with query parameters
 export const listStorageQuery = (clubId: string) => {
-  console.log("Attempt to retrieve storage for query ", clubId.trim());
   return api
     .get(`/storage/listStorage?club_account_id=${clubId}`)
     .then((res) => res.data);

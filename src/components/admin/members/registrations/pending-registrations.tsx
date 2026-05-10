@@ -1,5 +1,5 @@
 import { DndContext, closestCenter } from "@dnd-kit/core";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronsUpDown, ChevronDown, UserPlus, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -19,7 +19,6 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -75,6 +74,7 @@ interface ImageProps {
     React.SetStateAction<{ email: string; name: string }[]>
   >;
   setMemberRegisterAmount: React.Dispatch<React.SetStateAction<number>>;
+  setDisplayAmount: React.Dispatch<React.SetStateAction<string>>;
   setAllListActionItems: (members: ClubMember[]) => void;
   setAllMembersSelected: React.Dispatch<React.SetStateAction<boolean>>;
   showPendingSummary?: boolean;
@@ -104,6 +104,7 @@ export default function PendingMembersList({
   setOpenDialogUserId,
   setAllMembersSelected,
   setMemberRegisterAmount,
+  setDisplayAmount,
   setAllListActionItems,
   showPendingSummary = true,
 }: ImageProps) {
@@ -163,7 +164,33 @@ export default function PendingMembersList({
     return !invalidRegistrationAmount && memberRegisterAmount === outstandingAmount;
   };
 
-  const buildGeneratedTemplateVariables = (member: ClubMember) => {
+  const getRegistrationActionState = (member: ClubMember) => {
+    const outstandingAmount = Number(member.outstanding_amount || 0);
+
+    if (outstandingAmount <= 0) {
+      return {
+        label: "Register Member",
+        disabled: false,
+      };
+    }
+
+    if (invalidRegistrationAmount || memberRegisterAmount <= 0) {
+      return {
+        label: "Submit Payment Amount",
+        disabled: true,
+      };
+    }
+
+    return {
+      label:
+        memberRegisterAmount === outstandingAmount
+          ? "Register Member"
+          : "Submit Payment Amount",
+      disabled: false,
+    };
+  };
+
+  const buildGeneratedTemplateVariables = useCallback((member: ClubMember) => {
     const generatedValues: Record<string, string> = {
       member_name: `${member.member_first_name} ${member.member_surname}`,
     };
@@ -203,7 +230,7 @@ export default function PendingMembersList({
     });
 
     return generatedValues;
-  };
+  }, [allMembersForRules, clubMembers?.template_variables]);
 
   const getRegistrationPaymentStatus = (member: ClubMember) => {
     const totalFee = member.total_fee || 0;
@@ -268,7 +295,7 @@ export default function PendingMembersList({
     );
 
     if (emptyFields.length > 0) {
-      setTemplateVariablesError("All email template fields are required.");
+      setTemplateVariablesError("All club tag and required details fields are required.");
       return false;
     }
 
@@ -302,7 +329,14 @@ export default function PendingMembersList({
     });
   };
 
-  const baseUnregisteredMembers = clubMembers?.unregistered || [];
+  const baseUnregisteredMembers = useMemo(() => {
+    return clubMembers?.unregistered || [];
+  }, [clubMembers?.unregistered]);
+  const dropdownUnregisteredMembers = useMemo(() => {
+    return baseUnregisteredMembers.filter(
+      (member: ClubMember) => Number(member.outstanding_amount || 0) > 0,
+    );
+  }, [baseUnregisteredMembers]);
 
   const [submittedSortAsc, setSubmittedSortAsc] = useState<boolean | null>(
     null,
@@ -316,7 +350,7 @@ export default function PendingMembersList({
   >(null);
 
   const sortedUnregisteredMembers = useMemo(() => {
-    let sortedCopy = [...baseUnregisteredMembers];
+    const sortedCopy = [...baseUnregisteredMembers];
 
     if (memberNameSortAsc !== null) {
       sortedCopy.sort((a: ClubMember, b: ClubMember) => {
@@ -360,6 +394,11 @@ export default function PendingMembersList({
     totalFeeSortAsc,
     outstandingAmountSortAsc,
   ]);
+  const sortedDropdownUnregisteredMembers = useMemo(() => {
+    return sortedUnregisteredMembers.filter(
+      (member: ClubMember) => Number(member.outstanding_amount || 0) > 0,
+    );
+  }, [sortedUnregisteredMembers]);
 
   useEffect(() => {
     if (!openDialogUserId) {
@@ -379,7 +418,11 @@ export default function PendingMembersList({
     setSelectedPaymentMethod("EFT/Cash");
     setIsTemplateVariablesOpen(true);
     setIsPaymentMethodsOpen(true);
-  }, [openDialogUserId, baseUnregisteredMembers, allMembersForRules]);
+  }, [
+    buildGeneratedTemplateVariables,
+    openDialogUserId,
+    baseUnregisteredMembers,
+  ]);
 
   useEffect(() => {
     // Sync deregisterMembers with listActionItems
@@ -424,9 +467,9 @@ export default function PendingMembersList({
               title="Pending registrations"
             >
               <UserPlus className="h-4 w-4 text-slate-700" />
-              {baseUnregisteredMembers.length > 0 && (
+              {dropdownUnregisteredMembers.length > 0 && (
                 <span className="absolute right-0 top-0 inline-flex -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-bold leading-none text-white">
-                  {baseUnregisteredMembers.length}
+                  {dropdownUnregisteredMembers.length}
                 </span>
               )}
             </button>
@@ -435,7 +478,7 @@ export default function PendingMembersList({
               <div className="absolute left-0 top-full z-50 mt-2 max-h-96 w-96 overflow-y-auto rounded-[22px] border border-slate-200 bg-white shadow-2xl">
                 <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
                   <h3 className="font-semibold text-slate-900">
-                    Pending Registrations ({baseUnregisteredMembers.length})
+                    Pending Registrations ({dropdownUnregisteredMembers.length})
                   </h3>
                   <button
                     type="button"
@@ -446,13 +489,13 @@ export default function PendingMembersList({
                   </button>
                 </div>
 
-                {baseUnregisteredMembers.length === 0 ? (
+                {dropdownUnregisteredMembers.length === 0 ? (
                   <div className="p-5 text-center text-sm text-slate-500">
                     No pending registrations.
                   </div>
                 ) : (
                   <div className="max-h-96 divide-y overflow-y-auto">
-                    {sortedUnregisteredMembers.map((member: ClubMember) => (
+                    {sortedDropdownUnregisteredMembers.map((member: ClubMember) => (
                       <div
                         key={member.user_id}
                         className="p-4 transition-colors hover:bg-slate-50"
@@ -465,13 +508,15 @@ export default function PendingMembersList({
                             <p className="text-xs text-slate-500">
                               Email: {member.member_email || "n/a"}
                             </p>
-                            <p className="text-xs font-medium text-amber-700">
-                              Outstanding:{" "}
-                              {formatAmount(
-                                member.outstanding_amount || 0,
-                                club?.currency,
-                              )}
-                            </p>
+                            {Number(member.outstanding_amount || 0) > 0 && (
+                              <p className="text-xs font-medium text-amber-700">
+                                Outstanding:{" "}
+                                {formatAmount(
+                                  member.outstanding_amount || 0,
+                                  club?.currency,
+                                )}
+                              </p>
+                            )}
                           </div>
 
                           <Button
@@ -489,7 +534,7 @@ export default function PendingMembersList({
                             }}
                           >
                             <UserPlus className="h-3.5 w-3.5" />
-                            Review
+                            Register
                           </Button>
                         </div>
                       </div>
@@ -621,9 +666,9 @@ export default function PendingMembersList({
                         setMemberNameSortAsc(null);
                         setTotalFeeSortAsc(null);
                       }}
-                      title="Toggle sort by registration payment summary"
+                      title="Toggle sort by registration fee summary"
                     >
-                      Registration Payment
+                      Registration Fee
                       {outstandingAmountSortAsc === null ? (
                         <ChevronsUpDown className="h-3 w-3 opacity-60" />
                       ) : (
@@ -792,8 +837,14 @@ export default function PendingMembersList({
                                   {paymentStatus.label}
                                 </Badge>
                                 <p className="text-sm font-medium text-slate-900">
-                                  {formatAmount(amountPaid, club?.currency)} of{" "}
-                                  {formatAmount(totalFee, club?.currency)}
+                                  {outstandingAmount <= 0
+                                    ? formatAmount(totalFee, club?.currency)
+                                    : (
+                                      <>
+                                        {formatAmount(amountPaid, club?.currency)} of{" "}
+                                        {formatAmount(totalFee, club?.currency)}
+                                      </>
+                                    )}
                                 </p>
                               </div>
                             );
@@ -889,6 +940,7 @@ export default function PendingMembersList({
                           reset();
                           setOpenDialogUserId(open ? member.user_id : null);
                           setMemberRegisterAmount(0);
+                          setDisplayAmount(formatAmount(0, club?.currency));
                           if (open) {
                             setTemplateVariables({
                               member_name:
@@ -907,8 +959,11 @@ export default function PendingMembersList({
                           }
                         }}
                       >
-                        <DialogContent onClick={(e) => e.stopPropagation()}>
-                          <DialogHeader>
+                        <DialogContent
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex max-h-[85vh] w-[min(96vw,900px)] max-w-[900px] flex-col overflow-hidden"
+                        >
+                          <DialogHeader className="min-h-0 flex-1 overflow-y-auto pr-2">
                             <DialogTitle>
                               Register Member:{" "}
                               <strong>
@@ -917,59 +972,113 @@ export default function PendingMembersList({
                                   member.member_surname}
                               </strong>
                             </DialogTitle>
-                            <DialogDescription>
-                              Confirm payment details and provide required
-                              information
-                            </DialogDescription>
-                            <div className="flex flex-col gap-1 my-4">
-                              <Label className="text-l">
-                                Outstanding amount:{" "}
-                                {member.outstanding_amount === 0 ? (
-                                  <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-                                    Free
-                                  </span>
-                                ) : member.outstanding_amount != null ? (
-                                  formatAmount(
-                                    member.outstanding_amount,
-                                    club?.currency,
-                                  )
-                                ) : (
-                                  <span className="text-gray-400">n/a</span>
-                                )}
-                              </Label>
-                              <Label className="text-l">
-                                Member payment reference:{" "}
-                                {member.registration_payment_reference}
-                              </Label>
-                            </div>
+                            {(member.total_fee || 0) > 0 ? (
+                              <div className="my-4 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+                                <div className="mb-3 flex items-center justify-between gap-3">
+                                  <div>
+                                    <p className="text-sm font-semibold text-slate-900">
+                                      Payment summary
+                                    </p>
+                                    <p className="text-xs text-slate-500">
+                                      Review the registration balance before completing this member registration.
+                                    </p>
+                                  </div>
+                                  <Badge className={getRegistrationPaymentStatus(member).className}>
+                                    {getRegistrationPaymentStatus(member).label}
+                                  </Badge>
+                                </div>
+                                <div className="grid gap-3 sm:grid-cols-3">
+                                  <div className="rounded-lg border border-slate-200 bg-white p-3">
+                                    <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+                                      Registration fee
+                                    </p>
+                                    <p className="mt-1 text-sm font-semibold text-slate-900">
+                                      {member.total_fee != null ? (
+                                        formatAmount(member.total_fee, club?.currency)
+                                      ) : (
+                                        <span className="text-gray-400">n/a</span>
+                                      )}
+                                    </p>
+                                  </div>
+                                  <div className="rounded-lg border border-slate-200 bg-white p-3">
+                                    <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+                                      Amount paid
+                                    </p>
+                                    <p className="mt-1 text-sm font-semibold text-slate-900">
+                                      {member.total_fee != null && member.outstanding_amount != null ? (
+                                        formatAmount(
+                                          Math.max(member.total_fee - member.outstanding_amount, 0),
+                                          club?.currency,
+                                        )
+                                      ) : (
+                                        <span className="text-gray-400">n/a</span>
+                                      )}
+                                    </p>
+                                  </div>
+                                  <div className="rounded-lg border border-slate-200 bg-white p-3">
+                                    <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+                                      Amount outstanding
+                                    </p>
+                                    <p className="mt-1 text-sm font-semibold text-slate-900">
+                                      {member.outstanding_amount != null ? (
+                                        formatAmount(
+                                          member.outstanding_amount,
+                                          club?.currency,
+                                        )
+                                      ) : (
+                                        <span className="text-gray-400">n/a</span>
+                                      )}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : null}
                             {member.outstanding_amount > 0 && (
-                              <div className="grid gap-3 my-4">
-                                <Label htmlFor="pay">Payment Amount</Label>
-                                <Input
-                                  id="pay"
-                                  type="text"
-                                  placeholder="Enter amount"
-                                  value={displayAmount}
-                                  onChange={handleFormattedInputChange}
-                                />
+                              <div className="my-4 rounded-xl border border-amber-300 bg-amber-50/80 p-4 shadow-sm">
+                                <div className="flex flex-col gap-3">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <Label htmlFor="pay" className="text-sm font-semibold text-amber-950">
+                                      Payment received
+                                    </Label>
+                                    <Badge className="border-amber-300 bg-amber-100 text-amber-900">
+                                      Required
+                                    </Badge>
+                                    <span className="text-xs text-amber-900/80">
+                                      Enter {formatAmount(member.outstanding_amount || 0, club?.currency)} to fully register this member.
+                                    </span>
+                                  </div>
+                                  <Input
+                                    id="pay"
+                                    type="text"
+                                    placeholder="Enter payment amount"
+                                    value={displayAmount}
+                                    onChange={handleFormattedInputChange}
+                                    className="h-11 border-amber-300 bg-white text-base font-semibold shadow-sm placeholder:font-normal placeholder:text-slate-400 focus-visible:ring-amber-200"
+                                  />
+                                </div>
                               </div>
                             )}
                             {clubMembers?.payment_methods &&
                               member.outstanding_amount > 0 &&
                               clubMembers.payment_methods.length > 0 && (
                                 <div className="grid gap-4 pt-2">
-                                  <div>
+                                  <div className="rounded-xl border bg-slate-50/70 p-3">
                                     <button
                                       onClick={() =>
                                         setIsPaymentMethodsOpen(
                                           !isPaymentMethodsOpen,
                                         )
                                       }
-                                      className="flex items-center justify-between w-full p-3 bg-muted/40 rounded-lg hover:bg-muted/50 transition-colors"
+                                      className="flex w-full items-center justify-between hover:bg-slate-50 rounded-lg border bg-white px-3 py-3 text-left transition-colors"
                                     >
-                                      <Label className="text-sm font-semibold mb-0 cursor-pointer">
-                                        Payment Method
-                                      </Label>
+                                      <div>
+                                        <Label className="mb-0 cursor-pointer text-sm font-semibold">
+                                          Payment method
+                                        </Label>
+                                        <p className="mt-1 text-xs">
+                                          Choose how this payment was collected.
+                                        </p>
+                                      </div>
                                       <ChevronDown
                                         className={`h-4 w-4 transition-transform ${
                                           isPaymentMethodsOpen
@@ -979,13 +1088,32 @@ export default function PendingMembersList({
                                       />
                                     </button>
                                     {isPaymentMethodsOpen && (
-                                      <div className="space-y-3 bg-muted/40 p-4 rounded-lg mt-2">
+                                      <div className="mt-3 space-y-3 rounded-lg border border-slate-200 bg-white p-4">
+                                        <div className="flex items-center justify-between gap-3">
+                                          <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+                                            Select one payment method
+                                          </p>
+                                          {selectedPaymentMethod ? (
+                                            <Badge className="border-slate-200 bg-slate-100 text-slate-800">
+                                              {selectedPaymentMethod}
+                                            </Badge>
+                                          ) : null}
+                                        </div>
                                         {clubMembers.payment_methods.map(
-                                          (method: string) => (
-                                            <div
+                                          (method: string) => {
+                                            const isSelected = selectedPaymentMethod === method;
+
+                                            return (
+                                            <label
                                               key={method}
-                                              className="flex items-center gap-3"
+                                              htmlFor={`payment-${method}`}
+                                              className={`flex cursor-pointer items-center justify-between gap-3 rounded-xl border px-3 py-3 transition-colors ${
+                                                isSelected
+                                                  ? "border-slate-300 hover:border-slate-300 hover:bg-slate-100/7"
+                                                  : "border-slate-200 hover:border-slate-300 hover:bg-slate-100/70"
+                                              }`}
                                             >
+                                              <div className="flex items-center gap-3">
                                               <Checkbox
                                                 id={`payment-${method}`}
                                                 checked={
@@ -998,14 +1126,25 @@ export default function PendingMembersList({
                                                   );
                                                 }}
                                               />
-                                              <Label
-                                                htmlFor={`payment-${method}`}
-                                                className="cursor-pointer font-normal text-sm"
-                                              >
-                                                {method}
-                                              </Label>
+                                              <div>
+                                                <p className="text-sm font-medium text-slate-900">
+                                                  {method}
+                                                </p>
+                                                <p className="text-xs text-slate-500">
+                                                  {isSelected
+                                                    ? "Currently selected"
+                                                    : "Click to use this method"}
+                                                </p>
+                                              </div>
                                             </div>
-                                          ),
+                                            {isSelected ? (
+                                              <Badge className="border-slate-200 bg-slate-100 text-slate-800">
+                                                Selected
+                                              </Badge>
+                                            ) : null}
+                                            </label>
+                                            );
+                                          },
                                         )}
                                       </div>
                                     )}
@@ -1016,7 +1155,7 @@ export default function PendingMembersList({
                               Array.isArray(clubMembers.template_variables) &&
                               clubMembers.template_variables.length > 0 && (
                                 <div className="grid gap-4 pt-2">
-                                  <div>
+                                  <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
                                     {isTemplateVariableEntryUnlocked(member) ? (
                                       <>
                                         <button
@@ -1025,11 +1164,16 @@ export default function PendingMembersList({
                                               !isTemplateVariablesOpen,
                                             )
                                           }
-                                          className="flex items-center justify-between w-full p-3 bg-muted/40 rounded-lg hover:bg-muted/50 transition-colors"
+                                          className="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-3 text-left transition-colors hover:bg-slate-50"
                                         >
-                                          <Label className="text-sm font-semibold mb-0 cursor-pointer">
-                                            Club tags
-                                          </Label>
+                                          <div>
+                                            <Label className="mb-0 cursor-pointer text-sm font-semibold text-slate-900">
+                                              Club tags and required details
+                                            </Label>
+                                            <p className="mt-1 text-xs text-slate-500">
+                                              Complete club-specific fields before finalising this registration.
+                                            </p>
+                                          </div>
                                           <ChevronDown
                                             className={`h-4 w-4 transition-transform ${
                                               isTemplateVariablesOpen
@@ -1039,7 +1183,10 @@ export default function PendingMembersList({
                                           />
                                         </button>
                                         {isTemplateVariablesOpen && (
-                                          <div className="space-y-3 bg-muted/40 p-4 rounded-lg mt-2">
+                                          <div className="mt-3 space-y-3 rounded-lg border border-slate-200 bg-white p-4">
+                                            <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+                                              Complete any club-specific details needed before finalising this registration.
+                                            </p>
                                             {[...clubMembers.template_variables]
                                               .sort((left: any, right: any) => {
                                                 const leftAutoGenerated = isRulesEngineTemplateVariable(
@@ -1079,7 +1226,7 @@ export default function PendingMembersList({
                                                       </Label>
                                                       {hasRulesEngine ? (
                                                         <span className="inline-flex items-center rounded-full border border-sky-200 bg-sky-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-sky-700">
-                                                          Auto generated tag
+                                                          Auto-filled
                                                         </span>
                                                       ) : null}
                                                     </div>
@@ -1118,10 +1265,10 @@ export default function PendingMembersList({
                                     ) : (
                                       <div className="rounded-lg border border-amber-200 bg-amber-50/80 p-3 text-amber-950">
                                         <p className="text-sm font-medium">
-                                          Club tags unlock once the full outstanding amount is entered.
+                                          Club tags unlock once the full outstanding amount has been entered.
                                         </p>
                                         <p className="mt-1 text-xs text-amber-800">
-                                          Enter {formatAmount(member.outstanding_amount || 0, club?.currency)} as the payment amount to unlock and require these fields.
+                                          Enter {formatAmount(member.outstanding_amount || 0, club?.currency)} as the payment received amount to unlock these required fields.
                                         </p>
                                       </div>
                                     )}
@@ -1157,9 +1304,11 @@ export default function PendingMembersList({
                                   );
                                 }
                               }}
-                              disabled={isPending}
+                              disabled={isPending || getRegistrationActionState(member).disabled}
                             >
-                              {isPending ? "Registering..." : "Register Member"}
+                              {isPending
+                                ? "Registering..."
+                                : getRegistrationActionState(member).label}
                             </Button>
                           </DialogFooter>
                           {templateVariablesError && (
