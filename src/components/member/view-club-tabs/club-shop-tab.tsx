@@ -34,6 +34,7 @@ type MemberOrderItem = {
 
 type MemberOrder = {
   order_id?: string;
+  transaction_id?: string;
   created_date?: number;
   payment_status?: string;
   fulfillment_status?: string;
@@ -58,6 +59,8 @@ type ClubShopTabProps = {
   onToggleRow: (orderId: string) => void;
   onOpenStore: () => void;
   onOrderPayNow: (orderId?: string) => void;
+  onOrderCancel: (order: MemberOrder) => void;
+  cancellingOrderId?: string | null;
   getOrderPaymentBadgeClassName: (status?: string) => string;
   getOrderFulfillmentBadgeClassName: (status?: string) => string;
   getRefundedAmount: (order: MemberOrder) => number;
@@ -79,6 +82,8 @@ export function ClubShopTab({
   onToggleRow,
   onOpenStore,
   onOrderPayNow,
+  onOrderCancel,
+  cancellingOrderId,
   getOrderPaymentBadgeClassName,
   getOrderFulfillmentBadgeClassName,
   getRefundedAmount,
@@ -155,12 +160,13 @@ export function ClubShopTab({
                         {orderSortColumn === "fulfillment_status" && (orderSortDirection === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />)}
                       </div>
                     </TableHead>
+                    <TableHead className="text-center flex-1 font-semibold">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isOrdersLoading && (
                     <TableRow>
-                      <TableCell colSpan={8} className="py-8 text-center">
+                      <TableCell colSpan={9} className="py-8 text-center">
                         <Loader2 className="mx-auto h-6 w-6 animate-spin" />
                         <p className="mt-2 text-muted-foreground">Loading orders...</p>
                       </TableCell>
@@ -168,21 +174,21 @@ export function ClubShopTab({
                   )}
                   {hasOrdersError && (
                     <TableRow>
-                      <TableCell colSpan={8} className="py-8 text-center text-red-600">
+                      <TableCell colSpan={9} className="py-8 text-center text-red-600">
                         Failed to load orders. Please try again later.
                       </TableCell>
                     </TableRow>
                   )}
                   {!isOrdersLoading && !hasOrdersError && memberOrderList.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
+                      <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
                         No orders yet. Start shopping to see your orders here!
                       </TableCell>
                     </TableRow>
                   )}
                   {!isOrdersLoading && !hasOrdersError && memberOrderList.length > 0 && sortedOrders.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
+                      <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
                         No orders match your search.
                       </TableCell>
                     </TableRow>
@@ -239,10 +245,36 @@ export function ClubShopTab({
                               </Badge>
                             </div>
                           </TableCell>
+                          <TableCell className="text-center flex-1 py-4">
+                            {order.payment_status === "PENDING" ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
+                                onClick={() => onOrderCancel(order)}
+                                disabled={
+                                  cancellingOrderId === order.order_id ||
+                                  !order.order_id ||
+                                  !order.transaction_id
+                                }
+                              >
+                                {cancellingOrderId === order.order_id ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Cancelling...
+                                  </>
+                                ) : (
+                                  "Cancel"
+                                )}
+                              </Button>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
                         </TableRow>
                         {expandedRows[order.order_id || ""] && (
                           <TableRow className="border-primary/10 bg-muted/30 hover:bg-muted/30">
-                            <TableCell colSpan={8} className="p-4">
+                            <TableCell colSpan={9} className="p-4">
                               <div className="space-y-4">
                                 <div className="space-y-3">
                                   <h4 className="text-sm font-semibold">Order Items</h4>
