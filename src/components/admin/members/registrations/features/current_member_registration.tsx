@@ -122,14 +122,12 @@ export function CurrentMemberRegistration({
   clubAccountId,
   currency,
   clubName,
-  missingMember,
   registrationId,
 }: {
   userId: string;
   clubAccountId: string;
   currency: string;
   clubName: string;
-  missingMember: boolean;
   registrationId?: string;
 }) {
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
@@ -161,7 +159,7 @@ export function CurrentMemberRegistration({
     clubAccountId,
     userId,
     currency,
-    missingMember ? registrationId : undefined
+    registrationId
   );
 
   const updateNotesMutation = useMutation({
@@ -245,7 +243,9 @@ export function CurrentMemberRegistration({
           badgeClassName: "border-amber-200 bg-amber-50 text-amber-800",
           panelClassName: "border-amber-200 bg-amber-50/80 text-amber-900",
         };
+  const registrationStatusText = `Status: ${registrationStatus.label}`;
   const showRegistrationTags = Boolean(data?.registered_on && !data?.deregistered_on);
+  const registrationTagCount = showRegistrationTags ? data?.variables?.length ?? 0 : 0;
   const currentPage = visiblePages[currentPageIndex];
 
   if (isLoading || !data) {
@@ -272,7 +272,7 @@ export function CurrentMemberRegistration({
   return (
     <div className="flex flex-col gap-6">
       <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)] xl:items-start">
-        <aside className="space-y-4 xl:sticky xl:top-24">
+        <aside className="space-y-4">
           <Card className="overflow-hidden rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] shadow-[0_20px_50px_-32px_rgba(15,23,42,0.35)]">
             <CardHeader className="space-y-4 border-b border-slate-200 bg-slate-50/80 pb-5">
               <div className="flex items-center gap-3">
@@ -293,8 +293,8 @@ export function CurrentMemberRegistration({
                   Club
                 </p>
                 <p className="mt-2 text-lg font-semibold text-slate-950">{clubName}</p>
-                <p className="mt-1 text-sm leading-6 text-slate-500">
-                  {registrationStatus.helper}
+                <p className="mt-1 text-sm font-medium leading-6 text-slate-500">
+                  {registrationStatusText}
                 </p>
               </div>
 
@@ -379,7 +379,7 @@ export function CurrentMemberRegistration({
         </aside>
 
         <div className="flex min-w-0 flex-col gap-4">
-          <Card className="overflow-hidden border-none bg-white/90 shadow-none">
+          <Card className="overflow-hidden border-none bg-white/90 pt-0 shadow-none">
             <CardContent className="px-0 py-0">
               <div className="flex flex-col gap-10 justify-center items-center px-3 lg:px-4 w-full overflow-x-hidden bg-gradient-to-b from-gray-50 to-white py-4 lg:py-6 rounded-[28px] border border-slate-200 shadow-[0_20px_50px_-32px_rgba(15,23,42,0.35)]">
                 <div className="w-full max-w-3xl mb-5 overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-md">
@@ -392,12 +392,12 @@ export function CurrentMemberRegistration({
                     >
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                          <p className="text-sm font-semibold">Current registration status</p>
-                          <p className="mt-1 text-sm leading-6 opacity-90">
-                            {registrationStatus.helper}
+                          <p className="text-sm font-semibold">Registration status</p>
+                          <p className="mt-1 text-base font-semibold opacity-90">
+                            {registrationStatus.label}
                           </p>
                         </div>
-                        <div className="grid grid-cols-2 gap-2 text-left sm:min-w-[220px]">
+                        <div className="grid grid-cols-3 gap-2 text-left sm:min-w-[320px]">
                           <div className="rounded-xl border border-white/70 bg-white/70 px-3 py-2">
                             <p className="text-[11px] uppercase tracking-[0.18em] opacity-70">Pages</p>
                             <p className="mt-1 text-lg font-semibold">{visiblePages.length}</p>
@@ -406,26 +406,22 @@ export function CurrentMemberRegistration({
                             <p className="text-[11px] uppercase tracking-[0.18em] opacity-70">Notes</p>
                             <p className="mt-1 text-lg font-semibold">{adminNotes.length}</p>
                           </div>
+                          <div className="rounded-xl border border-white/70 bg-white/70 px-3 py-2">
+                            <p className="text-[11px] uppercase tracking-[0.18em] opacity-70">Tags</p>
+                            <p className="mt-1 text-lg font-semibold">{registrationTagCount}</p>
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    {showRegistrationTags ? (
+                    {data?.last_season_registration ? (
                       <div className="mb-6 flex flex-wrap items-center gap-2 border-b border-slate-200 pb-4">
                         <Badge
                           variant="outline"
-                          className={cn("rounded-full border px-3 py-1 text-xs font-semibold", registrationTone.badgeClassName)}
+                          className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700"
                         >
-                          {registrationStatus.label}
+                          Previous season
                         </Badge>
-                        {data?.last_season_registration ? (
-                          <Badge
-                            variant="outline"
-                            className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700"
-                          >
-                            Previous season
-                          </Badge>
-                        ) : null}
                       </div>
                     ) : null}
 

@@ -104,11 +104,12 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         <SidebarProvider className={`${isClubIncomplete && !isBannerClosed ? "" : ""}`}>
           <AppSidebar />
           <SidebarInset
-            className={
+            className={[
+              "flex h-screen flex-col overflow-hidden",
               club?.deregistration_in_progress
                 ? "pointer-events-none opacity-50"
-                : ""
-            }
+                : "",
+            ].join(" ")}
           >
             {club?.deregistration_in_progress && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 pointer-events-auto">
@@ -125,7 +126,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                 </Alert>
               </div>
             )}
-            <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+            <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-2 border-b border-slate-200 bg-white/95 backdrop-blur transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
               <div className="flex items-center gap-2 px-4">
                 <SidebarTrigger className="-ml-1" />
                 <Separator orientation="vertical" className="mr-2 h-4" />
@@ -170,7 +171,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                 </Breadcrumb>
               </div>
             </header>
-            <div className="flex flex-1 flex-col gap-4 pt-0">{children}</div>
+            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pt-0">{children}</div>
           </SidebarInset>
         </SidebarProvider>
         </div>

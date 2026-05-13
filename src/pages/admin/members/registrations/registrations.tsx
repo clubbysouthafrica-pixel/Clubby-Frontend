@@ -18,6 +18,7 @@ import RegistrationDialog from "@/components/admin/members/registrations/feature
 import DeregisterSeasonDialog from "@/components/admin/members/registrations/features/deregister-season";
 import { formatAmount } from "@/data/currencies";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -33,13 +34,12 @@ import PreviousMembersList from "@/components/admin/members/registrations/previo
 import AddColumnsDialog from "@/components/admin/members/registrations/features/add-columns-dialog";
 import AddFiltersDialog from "@/components/admin/members/registrations/features/add-filters-dialog";
 import {
+  ArrowLeft,
   Loader2,
   X,
   Download,
   AlertCircle,
-  Users,
   UserPlus,
-  Archive,
 } from "lucide-react";
 import { exportTableData } from "@/helpers/admin/members/csv-export";
 import { Card } from "@/components/ui/card";
@@ -585,6 +585,12 @@ export default function RegistrationsPage() {
     setOpenDialogUserId(member.user_id);
   };
 
+  const isPendingSelectedRegistration = Boolean(
+    selectedRegistrationMember?.registration_submitted_on &&
+      !selectedRegistrationMember?.registered_on &&
+      !selectedRegistrationMember?.deregistered_on,
+  );
+
   const resetFilters = () => {
     setMemberNameFilter("");
     setMemberIdFilter("");
@@ -720,33 +726,10 @@ export default function RegistrationsPage() {
       typeof value === "string" ? value : value?.value || "",
     ]),
   ) as Record<string, string>;
-
-  const currentTableSummary =
-    selectedTab === "registered-members"
-      ? {
-          badge: "Active registrations",
-          title: "Current member registrations",
-          count: allRegisteredMembers.length,
-          icon: Users,
-        }
-      : selectedTab === "pending-members"
-        ? {
-            badge: "Pending registrations",
-            title: "Awaiting payment or approval",
-            count: allUnregisteredMembers.length,
-            icon: UserPlus,
-          }
-        : {
-            badge: "De-registrations",
-            title: "Historical member removals",
-            count: deregisteredMembersLength,
-            icon: Archive,
-          };
-
-  const CurrentTableIcon = currentTableSummary.icon;
-
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[linear-gradient(180deg,_#e7e5e4_0%,_#f5f5f4_22%,_#fafaf9_22%,_#fafaf9_100%)] text-slate-900">
+    <div
+      className={`min-h-screen ${selectedRegistrationMember ? "overflow-visible" : "overflow-x-hidden"} bg-[linear-gradient(180deg,_#e7e5e4_0%,_#f5f5f4_22%,_#fafaf9_22%,_#fafaf9_100%)] text-slate-900`}
+    >
       {clubLoading ? (
         <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(214,211,209,0.55),_transparent_32%),linear-gradient(180deg,_#e7e5e4_0%,_#f5f5f4_40%,_#fafaf9_100%)] px-6">
           <div className="flex flex-col items-center gap-4 rounded-[24px] border border-stone-300/70 bg-white/90 px-8 py-10 text-zinc-900 shadow-xl backdrop-blur">
@@ -757,26 +740,48 @@ export default function RegistrationsPage() {
           </div>
         </div>
       ) : (
-        <div className="flex w-full max-w-full flex-col gap-3 overflow-x-hidden px-2 py-3 sm:px-3 md:px-4 md:py-4 xl:px-5 2xl:px-6">
+        <div
+          className={`flex w-full max-w-full flex-col gap-3 ${selectedRegistrationMember ? "overflow-visible" : "overflow-x-hidden"} px-2 py-3 sm:px-3 md:px-4 md:py-4 xl:px-5 2xl:px-6`}
+        >
           <AnimatePresence mode="wait" initial={false}>
             {selectedRegistrationMember ? (
-              <motion.div
-                key="registration-detail"
-                initial={{ opacity: 0, rotateY: 18, x: 20 }}
-                animate={{ opacity: 1, rotateY: 0, x: 0 }}
-                exit={{ opacity: 0, rotateY: -18, x: -20 }}
-                transition={{ duration: 0.28, ease: "easeInOut" }}
-                style={{ transformStyle: "preserve-3d" }}
-              >
-                <RegistrationDialog
-                  clubName={club?.club_name ?? ""}
-                  selectedMember={selectedRegistrationMember}
-                  currency={club?.currency ?? "ZAR"}
-                  clubAccountId={club?.club_account_id ?? ""}
-                  onReviewPendingRegistration={handleReviewPendingRegistration}
-                  onBack={handleBackToRegistrations}
-                />
-              </motion.div>
+              <div className="flex flex-col gap-4">
+                <div className="sticky top-1 z-10 flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-slate-200/70 bg-white/95 p-3 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleBackToRegistrations}
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Go back to registrations
+                  </Button>
+                  {isPendingSelectedRegistration ? (
+                    <Button
+                      type="button"
+                      onClick={() =>
+                        handleReviewPendingRegistration(selectedRegistrationMember)
+                      }
+                    >
+                      Register Member
+                    </Button>
+                  ) : null}
+                </div>
+
+                <motion.div
+                  key="registration-detail"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.28, ease: "easeInOut" }}
+                >
+                  <RegistrationDialog
+                    clubName={club?.club_name ?? ""}
+                    selectedMember={selectedRegistrationMember}
+                    currency={club?.currency ?? "ZAR"}
+                    clubAccountId={club?.club_account_id ?? ""}
+                  />
+                </motion.div>
+              </div>
             ) : (
               <motion.div
                 key="registration-overview"
@@ -786,7 +791,7 @@ export default function RegistrationsPage() {
                 transition={{ duration: 0.28, ease: "easeInOut" }}
                 style={{ transformStyle: "preserve-3d" }}
               >
-          <section className="relative overflow-hidden rounded-[24px] border border-stone-300/70 bg-stone-200 px-4 py-4 text-zinc-900 shadow-[0_18px_40px_rgba(120,113,108,0.16)] md:px-5 md:py-4">
+          {/* <section className="relative overflow-hidden rounded-[24px] border border-stone-300/70 bg-stone-200 px-4 py-4 text-zinc-900 shadow-[0_18px_40px_rgba(120,113,108,0.16)] md:px-5 md:py-4">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.72),_transparent_28%),radial-gradient(circle_at_right,_rgba(214,211,209,0.55),_transparent_24%)]" />
             <div className="relative flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-3xl">
@@ -829,7 +834,7 @@ export default function RegistrationsPage() {
                 </button>
               </div>
             </div>
-          </section>
+          </section> */}
 
           <Tabs
             value={selectedTab}
