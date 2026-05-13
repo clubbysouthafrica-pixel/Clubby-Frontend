@@ -1,6 +1,6 @@
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronsUpDown, ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronsUpDown, ChevronDown, ChevronRight, ArrowUpRight } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
@@ -36,6 +36,7 @@ import {
   MEMBER_PROFILE_COLUMNS,
   type MemberProfileColumn,
 } from "../../../../helpers/admin/members/member-profile-columns";
+import { useNavigate } from "react-router-dom";
 
 const getMemberStatus = (registered: boolean, resubmissionRequired: boolean) => {
   if (!registered && resubmissionRequired) {
@@ -89,6 +90,7 @@ export default function MembersTable({
   setRegisteredMembersLength,
   onRemoveMembers,
 }: ImageProps) {
+  const navigate = useNavigate();
 
   const [regSortAsc, setRegSortAsc] = useState<boolean | null>(null);
   const [memberNameSortAsc, setMemberNameSortAsc] = useState<boolean | null>(null);
@@ -99,6 +101,36 @@ export default function MembersTable({
   const [selectedMembersToDelete, setSelectedMembersToDelete] = useState<ClubMember[]>([]);
   const [membersRequiringDeregistration, setMembersRequiringDeregistration] = useState<ClubMember[]>([]);
   const [expandedMemberId, setExpandedMemberId] = useState<string | null>(null);
+
+  const getRegistrationsTab = (
+    member: ClubMember & { registered?: boolean },
+  ) => {
+    if (member.registered === true) {
+      return "registered-members";
+    }
+
+    if (member.registered === false && !member.resubmission_required) {
+      return "pending-members";
+    }
+
+    return "previous-members";
+  };
+
+  const handleGoToRegistration = (
+    member: ClubMember & { registered?: boolean },
+    registrationId?: string,
+  ) => {
+    const params = new URLSearchParams({
+      tab: getRegistrationsTab(member),
+      memberId: member.user_id,
+    });
+
+    if (registrationId?.trim()) {
+      params.set("registrationId", registrationId);
+    }
+
+    navigate(`/manage/member/registrations?${params.toString()}`);
+  };
 
 
   const getStatusNumber = (member: any) => {
@@ -280,23 +312,6 @@ export default function MembersTable({
                     )}
                   </button>
                 </TableHead>
-                <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1 hover:underline"
-                    onClick={() =>
-                      setRegSortAsc((prev) => (prev === null ? true : !prev))
-                    }
-                    title="Toggle sort by Submission Date"
-                  >
-                    Submitted On
-                    {regSortAsc === null ? (
-                      <ChevronsUpDown className="h-3 w-3 opacity-60" />
-                    ) : (
-                      <span className="text-xs">{regSortAsc ? "▲" : "▼"}</span>
-                    )}
-                  </button>
-                </TableHead>
                 <TableHead className="h-11 w-[120px] text-center text-xs text-slate-200">
                   Registrations
                 </TableHead>
@@ -396,13 +411,6 @@ export default function MembersTable({
                           );
                         })()}
                       </TableCell>
-                      <TableCell className="w-[150px] text-center text-sm text-slate-800">
-                        {member.registrations?.[0]?.registration_submitted_on
-                          ? new Date(
-                              member.registrations[0].registration_submitted_on
-                            ).toLocaleString()
-                          : "-"}
-                      </TableCell>
                       <TableCell className="w-[120px] text-center">
                         <Button
                           variant="ghost"
@@ -479,9 +487,19 @@ export default function MembersTable({
                                       return (
                                         <TableRow key={idx} className="h-12 border-slate-200 bg-white text-sm hover:bg-slate-50">
                                           <TableCell className="text-center text-sm text-slate-800">
-                                            <Badge className="bg-gray-100 text-gray-800 border-gray-300">
-                                              {reg.latest_registration ? "Latest registration" : "Old registration"}
-                                            </Badge>
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              size="sm"
+                                              className="h-8 rounded-full border-slate-300 bg-white px-3 text-xs text-slate-700 hover:border-slate-400 hover:bg-slate-50"
+                                              onClick={(event) => {
+                                                event.stopPropagation();
+                                                handleGoToRegistration(member, reg.registration_id);
+                                              }}
+                                            >
+                                              Go to registration
+                                              <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
+                                            </Button>
                                           </TableCell>
                                           <TableCell className="text-center text-sm">
                                             <Badge className={registrationStateClass}>

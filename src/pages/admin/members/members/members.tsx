@@ -32,11 +32,13 @@ import {
   MEMBER_PROFILE_COLUMNS,
   type MemberProfileColumn,
 } from "../../../../helpers/admin/members/member-profile-columns";
+import { useSearchParams } from "react-router-dom";
 
 export default function MembersPage() {
   const { club, isLoading: clubLoading } = useContext(
     ClubContext,
   ) as ClubContextType;
+  const [searchParams] = useSearchParams();
   const [requestedKeys, setRequestedKeys] = useState<string[]>([]);
 
   const [memberLimit, setMemberLimit] = useState(100);
@@ -330,6 +332,29 @@ export default function MembersPage() {
       );
     }
   }, []);
+
+  useEffect(() => {
+    const memberIdFromQuery = searchParams.get("memberId")?.trim() ?? "";
+    const memberNameFromQuery = searchParams.get("memberName")?.trim() ?? "";
+    const memberTypeFromQuery = searchParams.get("memberType")?.trim() ?? "";
+
+    if (!memberIdFromQuery && !memberNameFromQuery && !memberTypeFromQuery) {
+      return;
+    }
+
+    setMemberIdFilter(memberIdFromQuery);
+    setAppliedMemberIdFilter(memberIdFromQuery);
+    setMemberNameFilter(memberNameFromQuery);
+    setAppliedMemberNameFilter(memberNameFromQuery);
+    setMemberType(memberTypeFromQuery || "all");
+    setAppliedMemberType(memberTypeFromQuery === "all" ? "" : memberTypeFromQuery);
+    setPageToken(undefined);
+    isLoadingMoreRef.current = false;
+    setIsLoadingMore(false);
+    setlistActionItems([]);
+    setDeregisterMembers([]);
+    setAllMembersSelected(false);
+  }, [searchParams]);
 
   const resetFilters = () => {
     setMemberNameFilter("");

@@ -12,7 +12,6 @@ import {
   Loader2,
   Edit,
   Trash2,
-  Copy,
   PencilIcon,
   CalendarClock,
   FileText,
@@ -21,6 +20,9 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  UserRound,
+  ReceiptText,
+  ArrowUpRight,
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
@@ -65,6 +67,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { formatAmount } from "@/data/currencies";
+import { useNavigate } from "react-router-dom";
 
 function formatEpoch(epoch: number) {
   const date = new Date(epoch);
@@ -107,6 +111,47 @@ function parseBooleanLikeValue(value: unknown): boolean | null {
   return null;
 }
 
+function parseAmount(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const normalizedValue = Number(value);
+
+    if (Number.isFinite(normalizedValue)) {
+      return normalizedValue;
+    }
+  }
+
+  return null;
+}
+
+function getRegistrationPriceAmount(data: Record<string, unknown> | null | undefined) {
+  if (!data) {
+    return null;
+  }
+
+  const candidateKeys = [
+    "total_fee",
+    "registration_fee",
+    "total_amount",
+    "amount_due",
+    "amount",
+    "price",
+  ];
+
+  for (const key of candidateKeys) {
+    const amount = parseAmount(data[key]);
+
+    if (amount !== null) {
+      return amount;
+    }
+  }
+
+  return null;
+}
+
 type RegistrationPageField = {
   visible?: boolean;
   value?: string | null;
@@ -130,6 +175,7 @@ export function CurrentMemberRegistration({
   clubName: string;
   registrationId?: string;
 }) {
+  const navigate = useNavigate();
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [adminNotes, setAdminNotes] = useState<
@@ -246,6 +292,15 @@ export function CurrentMemberRegistration({
   const registrationStatusText = `Status: ${registrationStatus.label}`;
   const showRegistrationTags = Boolean(data?.registered_on && !data?.deregistered_on);
   const registrationTagCount = showRegistrationTags ? data?.variables?.length ?? 0 : 0;
+  const registrationPriceAmount = getRegistrationPriceAmount(data as Record<string, unknown> | undefined);
+  const registrationOutstandingAmount = parseAmount(
+    (data as Record<string, unknown> | undefined)?.total_outstanding_amount,
+  );
+  const registrationAmountPaid =
+    registrationPriceAmount !== null && registrationOutstandingAmount !== null
+      ? Math.max(registrationPriceAmount - registrationOutstandingAmount, 0)
+      : null;
+  const showOutstandingAmount = !data?.registered_on && !data?.deregistered_on;
   const currentPage = visiblePages[currentPageIndex];
 
   if (isLoading || !data) {
@@ -296,6 +351,32 @@ export function CurrentMemberRegistration({
                 <p className="mt-1 text-sm font-medium leading-6 text-slate-500">
                   {registrationStatusText}
                 </p>
+                <div className="mt-4 flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
+                  <span className="text-sm text-slate-500">Registration price</span>
+                  <strong className="text-right text-sm text-slate-900">
+                    {registrationPriceAmount !== null
+                      ? formatAmount(registrationPriceAmount, currency)
+                      : "n/a"}
+                  </strong>
+                </div>
+                <div className="mt-2 flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
+                  <span className="text-sm text-slate-500">Amount paid</span>
+                  <strong className="text-right text-sm text-slate-900">
+                    {registrationAmountPaid !== null
+                      ? formatAmount(registrationAmountPaid, currency)
+                      : "n/a"}
+                  </strong>
+                </div>
+                {showOutstandingAmount ? (
+                  <div className="mt-2 flex items-center justify-between gap-3 rounded-xl bg-amber-50 px-3 py-2.5">
+                    <span className="text-sm text-amber-700">Outstanding amount</span>
+                    <strong className="text-right text-sm text-amber-800">
+                      {registrationOutstandingAmount !== null
+                        ? formatAmount(registrationOutstandingAmount, currency)
+                        : "n/a"}
+                    </strong>
+                  </div>
+                ) : null}
               </div>
 
               <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
@@ -331,46 +412,56 @@ export function CurrentMemberRegistration({
                 </div>
               </div>
 
-              {(userId || data?.transaction_id) && (
+              {userId && (
                 <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
                   <div className="flex items-center gap-2 text-slate-900">
                     <ShieldCheck className="h-4 w-4 text-slate-500" />
                     <p className="text-sm font-semibold">Identifiers</p>
                   </div>
-                  {userId ? (
-                    <div className="flex items-start justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Member ID</p>
-                        <p className="mt-1 break-all font-mono text-xs font-semibold text-slate-950">{userId}</p>
-                      </div>
-                      <button
+                  <div className="flex flex-col gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-auto w-full justify-between rounded-2xl border-slate-200 bg-slate-50 px-4 py-3 text-left shadow-sm transition hover:border-slate-300 hover:bg-slate-100"
+                      onClick={() => {
+                        navigate(`/manage/members?memberId=${encodeURIComponent(userId)}`);
+                      }}
+                    >
+                      <span className="flex min-w-0 flex-1 items-center gap-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-slate-700 shadow-sm">
+                          <UserRound className="h-4 w-4" />
+                        </span>
+                        <span className="flex min-w-0 flex-1 flex-col items-start">
+                          <span className="text-sm font-semibold text-slate-900">Go to member</span>
+                          <span className="whitespace-normal break-words text-xs text-slate-500">Open this member in the members workspace</span>
+                        </span>
+                      </span>
+                      <ArrowUpRight className="ml-3 h-4 w-4 shrink-0 text-slate-400" />
+                    </Button>
+                    {typeof data?.transaction_id === "string" && data.transaction_id.trim() ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-auto w-full justify-between rounded-2xl border-slate-200 bg-slate-50 px-4 py-3 text-left shadow-sm transition hover:border-slate-300 hover:bg-slate-100"
                         onClick={() => {
-                          navigator.clipboard.writeText(userId);
+                          navigate(
+                            `/reporting/general?transactionId=${encodeURIComponent(data.transaction_id)}&openTransactionId=${encodeURIComponent(data.transaction_id)}`,
+                          );
                         }}
-                        className="rounded-full p-2 text-slate-500 transition hover:bg-white hover:text-slate-900"
-                        title="Copy member ID"
                       >
-                        <Copy className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ) : null}
-                  {data?.transaction_id ? (
-                    <div className="flex items-start justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Transaction ID</p>
-                        <p className="mt-1 break-all font-mono text-xs font-semibold text-slate-950">{data.transaction_id}</p>
-                      </div>
-                      <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(data.transaction_id);
-                        }}
-                        className="rounded-full p-2 text-slate-500 transition hover:bg-white hover:text-slate-900"
-                        title="Copy transaction ID"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ) : null}
+                        <span className="flex min-w-0 flex-1 items-center gap-3">
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-slate-700 shadow-sm">
+                            <ReceiptText className="h-4 w-4" />
+                          </span>
+                          <span className="flex min-w-0 flex-1 flex-col items-start">
+                            <span className="text-sm font-semibold text-slate-900">Go to transaction</span>
+                            <span className="whitespace-normal break-words text-xs text-slate-500">Open the full entry in general reporting</span>
+                          </span>
+                        </span>
+                        <ArrowUpRight className="ml-3 h-4 w-4 shrink-0 text-slate-400" />
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
               )}
 

@@ -44,6 +44,7 @@ import { formatAmount } from "@/data/currencies";
 import { api } from "@/services/admin/api";
 import { toast } from "sonner";
 import { isStorageFeatureEnabled } from "@/lib/feature-flags";
+import { useSearchParams } from "react-router-dom";
 import {
   ExpenseTypeDataRow,
   OrderReportDataRow,
@@ -56,6 +57,7 @@ type LifecycleEntry = {
   description: string;
   amount: number;
   payment_type?: string;
+  payment_reference?: string;
   refund_completed?: boolean;
 };
 
@@ -350,6 +352,7 @@ export default function GeneralReportingPage() {
   const { club, isLoading: clubLoading } = useContext(
     ClubContext,
   ) as ClubContextType;
+  const [searchParams] = useSearchParams();
   const [selectedSeason, setSelectedSeason] = useState<string>("current");
   const [graphView, setGraphView] = useState<"income" | "expense">("income");
   const [selectedIncomeGraph, setSelectedIncomeGraph] =
@@ -416,6 +419,65 @@ export default function GeneralReportingPage() {
       }
     }
   }, [transactions]);
+
+  useEffect(() => {
+    const memberIdFromQuery = searchParams.get("memberId")?.trim() ?? "";
+    const transactionIdFromQuery = searchParams.get("transactionId")?.trim() ?? "";
+    const openTransactionIdFromQuery =
+      searchParams.get("openTransactionId")?.trim() ?? transactionIdFromQuery;
+    const statusFromQuery = searchParams.get("status")?.trim() ?? "";
+    const transactionTypeFromQuery = searchParams.get("transactionType")?.trim() ?? "";
+
+    if (
+      !memberIdFromQuery &&
+      !transactionIdFromQuery &&
+      !openTransactionIdFromQuery &&
+      !statusFromQuery &&
+      !transactionTypeFromQuery
+    ) {
+      return;
+    }
+
+    const nextStatus = statusFromQuery || "all";
+    const nextTransactionType = transactionTypeFromQuery || "all";
+
+    setMemberIdSearch(memberIdFromQuery);
+    setTxIdSearch(transactionIdFromQuery);
+    setStatusFilter(nextStatus);
+    setTransactionType(nextTransactionType);
+    setAppliedFilters({
+      transaction_id: transactionIdFromQuery,
+      member_id: memberIdFromQuery,
+      transaction_type: nextTransactionType,
+      status: nextStatus,
+    });
+    setExpandedRows(
+      openTransactionIdFromQuery
+        ? { [openTransactionIdFromQuery]: true }
+        : {},
+    );
+    setPageToken(undefined);
+    isLoadingMoreRef.current = false;
+    setTimeout(() => refetchTransactions(), 0);
+  }, [refetchTransactions, searchParams]);
+
+  useEffect(() => {
+    const openTransactionId = searchParams.get("openTransactionId")?.trim();
+
+    if (!openTransactionId) {
+      return;
+    }
+
+    const hasMatchingTransaction = allTransactions.some(
+      (transaction) => transaction.transaction_id === openTransactionId,
+    );
+
+    if (!hasMatchingTransaction) {
+      return;
+    }
+
+    setExpandedRows({ [openTransactionId]: true });
+  }, [allTransactions, searchParams]);
 
   const availableSeasons = club?.season_cycle
     ? Array.from({ length: club.season_cycle - 1 }, (_, i) => ({
@@ -1567,7 +1629,15 @@ export default function GeneralReportingPage() {
                                           </div>
                                         </TableCell>
                                         <TableCell className="text-center">
-                                          {entry.description}
+                                          <div className="space-y-1">
+                                            <p>{entry.description}</p>
+                                            {typeof entry.payment_reference === "string" &&
+                                            entry.payment_reference.trim() ? (
+                                              <p className="text-xs text-slate-500">
+                                                Ref: {entry.payment_reference}
+                                              </p>
+                                            ) : null}
+                                          </div>
                                         </TableCell>
                                         <TableCell
                                           className={`text-center ${getLifecycleAmountClassName(

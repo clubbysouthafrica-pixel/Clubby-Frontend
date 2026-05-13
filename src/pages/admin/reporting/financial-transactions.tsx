@@ -35,6 +35,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { api } from "@/services/admin/api";
 import { toast } from "sonner";
+import { useSearchParams } from "react-router-dom";
 
 function getTransactionPaymentLabel(status: string) {
   const normalizedStatus = status.trim().toUpperCase();
@@ -207,6 +208,7 @@ export default function FinancialTransactionsPage() {
   const { club, isLoading: clubLoading } = useContext(
     ClubContext,
   ) as ClubContextType;
+  const [searchParams] = useSearchParams();
 
   const [transactionLimit, setTransactionLimit] = useState(100);
   const [pageToken, setPageToken] = useState<string | undefined>(undefined);
@@ -338,6 +340,39 @@ export default function FinancialTransactionsPage() {
       }
     }
   }, [transactions]);
+
+  React.useEffect(() => {
+    const memberIdFromQuery = searchParams.get("memberId")?.trim() ?? "";
+    const transactionIdFromQuery = searchParams.get("transactionId")?.trim() ?? "";
+    const statusFromQuery = searchParams.get("status")?.trim() ?? "";
+    const transactionTypeFromQuery = searchParams.get("transactionType")?.trim() ?? "";
+
+    if (
+      !memberIdFromQuery &&
+      !transactionIdFromQuery &&
+      !statusFromQuery &&
+      !transactionTypeFromQuery
+    ) {
+      return;
+    }
+
+    const nextStatus = statusFromQuery || "all";
+    const nextTransactionType = transactionTypeFromQuery || "all";
+
+    setMemberIdSearch(memberIdFromQuery);
+    setTxIdSearch(transactionIdFromQuery);
+    setStatusFilter(nextStatus);
+    setTransactionType(nextTransactionType);
+    setAppliedFilters({
+      transaction_id: transactionIdFromQuery,
+      member_id: memberIdFromQuery,
+      transaction_type: nextTransactionType,
+      status: nextStatus,
+    });
+    setPageToken(undefined);
+    isLoadingMoreRef.current = false;
+    setAllTransactions([]);
+  }, [searchParams]);
 
   if (clubLoading) {
     return (

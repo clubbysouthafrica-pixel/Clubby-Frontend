@@ -15,7 +15,6 @@ import {
 import { ClubMember } from "@/interfaces/club";
 import { useRegisterUserToClubMutation } from "@/mutations/admin/member";
 import RegistrationDialog from "@/components/admin/members/registrations/features/registration-dialog";
-import DeregisterSeasonDialog from "@/components/admin/members/registrations/features/deregister-season";
 import { formatAmount } from "@/data/currencies";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -226,6 +225,73 @@ export default function RegistrationsPage() {
     Array<{ name: string; value: string }>
   >([]);
   const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
+
+  useEffect(() => {
+    const memberIdFromQuery = searchParams.get("memberId")?.trim() ?? "";
+    const registrationIdFromQuery =
+      searchParams.get("registrationId")?.trim() ?? "";
+
+    if (!memberIdFromQuery) {
+      return;
+    }
+
+    const membersForSelectedTab =
+      selectedTab === "registered-members"
+        ? allRegisteredMembers
+        : selectedTab === "pending-members"
+          ? allUnregisteredMembers
+          : allDeregisteredMembers;
+
+    if (!membersForSelectedTab.length) {
+      return;
+    }
+
+    const matchedMember = membersForSelectedTab.find(
+      (member) => member.user_id === memberIdFromQuery,
+    );
+
+    if (!matchedMember) {
+      return;
+    }
+
+    const nextSelectedMember = registrationIdFromQuery
+      ? { ...matchedMember, registration_id: registrationIdFromQuery }
+      : matchedMember;
+
+    const selectedMemberUserId =
+      selectedMember &&
+      typeof selectedMember === "object" &&
+      "user_id" in selectedMember &&
+      typeof (selectedMember as ClubMember).user_id === "string"
+        ? (selectedMember as ClubMember).user_id
+        : null;
+    const selectedMemberRegistrationId =
+      selectedMember &&
+      typeof selectedMember === "object" &&
+      "registration_id" in selectedMember &&
+      typeof (selectedMember as ClubMember).registration_id === "string"
+        ? (selectedMember as ClubMember).registration_id
+        : undefined;
+
+    if (
+      selectedMemberUserId === memberIdFromQuery &&
+      selectedMemberRegistrationId === (registrationIdFromQuery || undefined) &&
+      hashUserId === memberIdFromQuery
+    ) {
+      return;
+    }
+
+    setSelectedMember(nextSelectedMember);
+    setHashUserId(memberIdFromQuery);
+  }, [
+    allDeregisteredMembers,
+    allRegisteredMembers,
+    allUnregisteredMembers,
+    hashUserId,
+    searchParams,
+    selectedMember,
+    selectedTab,
+  ]);
 
   const [activeColumnKeysRegistered, setActiveColumnKeysRegistered] = useState<
     string[]
@@ -573,11 +639,11 @@ export default function RegistrationsPage() {
   const handleBackToRegistrations = () => {
     setSelectedMember({});
     setHashUserId(null);
-    window.history.pushState(
-      "",
-      document.title,
-      window.location.pathname + window.location.search,
-    );
+    const nextSearchParams = new URLSearchParams(searchParams);
+    nextSearchParams.delete("memberId");
+    nextSearchParams.delete("registrationId");
+    setSearchParams(nextSearchParams);
+    window.history.pushState("", document.title, window.location.pathname);
   };
 
   const handleReviewPendingRegistration = (member: ClubMember) => {
@@ -892,11 +958,6 @@ export default function RegistrationsPage() {
                       De-registrations
                     </TabsTrigger>
                   </TabsList>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <DeregisterSeasonDialog
-                      clubId={club?.club_account_id ?? ""}
-                    />
-                  </div>
                 </div>
               </div>
             </section>

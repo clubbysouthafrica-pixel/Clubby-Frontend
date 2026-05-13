@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useFetchAdminClubs, useFetchClub } from "@/queries/admin/clubs";
 import { isStorageFeatureEnabled } from "@/lib/feature-flags";
+import DeregisterSeasonDialog from "@/components/admin/members/registrations/features/deregister-season";
 
 export default function HomeDashboardPage() {
   const {
@@ -197,15 +198,21 @@ export default function HomeDashboardPage() {
     <div className="min-h-screen bg-slate-50">
       <div className="border-b border-slate-200 bg-white">
         <div className="w-full px-6 py-6">
-          <div className="space-y-2">
-              <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
-                {currentClub?.club_name}
-              </h1>
-              <div className="flex flex-wrap gap-4 text-sm text-slate-500">
-                <span>Type: <span className="font-medium text-slate-900">{currentClub?.club_type}</span></span>
-                <span>Currency: <span className="font-medium text-slate-900">{currentClub?.currency}</span></span>
-                <span>Access: <span className="font-medium text-slate-900">{currentClub?.access}</span></span>
-              </div>
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="space-y-2">
+                <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+                  {currentClub?.club_name}
+                </h1>
+                <div className="flex flex-wrap gap-4 text-sm text-slate-500">
+                  <span>Season: <span className="font-medium text-slate-900">{currentClub?.season_cycle ?? "-"}</span></span>
+                  <span>Type: <span className="font-medium text-slate-900">{currentClub?.club_type}</span></span>
+                  <span>Currency: <span className="font-medium text-slate-900">{currentClub?.currency}</span></span>
+                  <span>Access: <span className="font-medium text-slate-900">{currentClub?.access}</span></span>
+                </div>
+            </div>
+            <div className="flex shrink-0 items-center">
+              <DeregisterSeasonDialog clubId={currentClub?.club_account_id ?? ""} />
+            </div>
           </div>
         </div>
       </div>
