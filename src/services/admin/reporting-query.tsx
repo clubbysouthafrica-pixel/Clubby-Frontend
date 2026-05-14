@@ -1,7 +1,7 @@
 import { api } from "./api";
 
 const appendSeasonCycle = (params: URLSearchParams, seasonCycle?: number) => {
-    if (seasonCycle !== undefined && seasonCycle !== 1) {
+    if (seasonCycle !== undefined) {
         params.append('season_cycle', seasonCycle.toString());
     }
 };

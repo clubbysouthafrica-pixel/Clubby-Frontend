@@ -827,7 +827,7 @@ export default function GeneralReportingPage() {
             ))}
           </div>
         </section>
-        <section className="order-2 rounded-[24px] border border-slate-200/70 bg-white/90 p-2.5 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur md:p-3">
+        <section className="order-1 rounded-[24px] border border-slate-200/70 bg-white/90 p-2.5 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur md:p-3">
           <div className="rounded-[18px] border border-slate-200/70 bg-slate-50/90 p-1.5 backdrop-blur">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div className="flex flex-wrap gap-2">
@@ -855,40 +855,42 @@ export default function GeneralReportingPage() {
                 </Button>
               </div>
 
-              <Select
-                value={graphView === "income" ? selectedIncomeGraph : selectedExpenseGraph}
-                onValueChange={(value) => {
-                  if (graphView === "income") {
-                    setSelectedIncomeGraph(value as IncomeGraphKey);
-                    return;
-                  }
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <Select
+                  value={graphView === "income" ? selectedIncomeGraph : selectedExpenseGraph}
+                  onValueChange={(value) => {
+                    if (graphView === "income") {
+                      setSelectedIncomeGraph(value as IncomeGraphKey);
+                      return;
+                    }
 
-                  setSelectedExpenseGraph(value);
-                }}
-              >
-                <SelectTrigger className="h-8 min-w-[220px] rounded-full bg-white text-xs">
-                  <SelectValue placeholder="Select graph" />
-                </SelectTrigger>
-                <SelectContent>
-                  {graphView === "income" ? (
-                    <>
-                      <SelectItem value="overall">Overall Income</SelectItem>
-                      <SelectItem value="registration">Registration</SelectItem>
-                      <SelectItem value="shop">Shop</SelectItem>
-                      <SelectItem value="events">Events</SelectItem>
-                      {isStorageFeatureEnabled && (
-                        <SelectItem value="storage">Storage</SelectItem>
-                      )}
-                    </>
-                  ) : (
-                    expenseGraphOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+                    setSelectedExpenseGraph(value);
+                  }}
+                >
+                  <SelectTrigger className="h-8 min-w-[220px] rounded-full bg-white text-xs">
+                    <SelectValue placeholder="Select graph" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {graphView === "income" ? (
+                      <>
+                        <SelectItem value="overall">Overall Income</SelectItem>
+                        <SelectItem value="registration">Registration</SelectItem>
+                        <SelectItem value="shop">Shop</SelectItem>
+                        <SelectItem value="events">Events</SelectItem>
+                        {isStorageFeatureEnabled && (
+                          <SelectItem value="storage">Storage</SelectItem>
+                        )}
+                      </>
+                    ) : (
+                      expenseGraphOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
@@ -977,7 +979,8 @@ export default function GeneralReportingPage() {
             )}
           </div>
         </section>
-        <section className="order-1 rounded-[24px] border border-slate-200/70 bg-white/95 p-4 shadow-[0_16px_36px_rgba(15,23,42,0.07)] md:p-5">
+        {selectedSeason === "current" && (
+        <section className="order-2 rounded-[24px] border border-slate-200/70 bg-white/95 p-4 shadow-[0_16px_36px_rgba(15,23,42,0.07)] md:p-5">
           <div className="flex flex-col gap-4 border-b border-slate-200 pb-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-400">
@@ -1677,6 +1680,7 @@ export default function GeneralReportingPage() {
             </Table>
           </div>
         </section>
+        )}
       </div>
     </div>
   );

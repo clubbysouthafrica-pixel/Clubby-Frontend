@@ -18,14 +18,12 @@ export function RegistrationReport({ report, currency }: props) {
         </p>
       </div>
 
-      {report?.registration_data?.length > 0 && (
-        <div>
-          <RegistrationComboChart
-            data={report.registration_data}
-            currency={currency}
-          />
-        </div>
-      )}
+      <div>
+        <RegistrationComboChart
+          data={report?.registration_data ?? []}
+          currency={currency}
+        />
+      </div>
     </div>
   );
 }

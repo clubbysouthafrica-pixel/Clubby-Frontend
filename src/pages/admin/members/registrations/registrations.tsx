@@ -119,6 +119,7 @@ export default function RegistrationsPage() {
   >([]);
   const [showArchived, setShowArchived] = useState<boolean>(false);
   const isLoadingMoreRef = useRef(false);
+  const reportingSectionRef = useRef<HTMLElement | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showTenRegisteredRows, setShowTenRegisteredRows] = useState(false);
   const [showTenPendingRows, setShowTenPendingRows] = useState(false);
@@ -138,7 +139,7 @@ export default function RegistrationsPage() {
   };
 
   const [selectedSeason, setSelectedSeason] = useState<string>("current");
-  const [showOldFields, setShowOldFields] = useState<boolean>(false);
+  const [showOldFields, setShowOldFields] = useState<boolean>(true);
   const seasonCycle = (club as { season_cycle?: number } | null)?.season_cycle;
   const seasonToFetch =
     selectedSeason === "current" ? undefined : parseInt(selectedSeason, 10);
@@ -792,6 +793,16 @@ export default function RegistrationsPage() {
       typeof value === "string" ? value : value?.value || "",
     ]),
   ) as Record<string, string>;
+
+  const scrollReportingSectionIntoView = () => {
+    window.setTimeout(() => {
+      reportingSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 0);
+  };
+
   return (
     <div
       className={`min-h-screen ${selectedRegistrationMember ? "overflow-visible" : "overflow-x-hidden"} bg-[linear-gradient(180deg,_#e7e5e4_0%,_#f5f5f4_22%,_#fafaf9_22%,_#fafaf9_100%)] text-slate-900`}
@@ -1919,30 +1930,36 @@ export default function RegistrationsPage() {
               </Card>
             </TabsContent>
 
-            <section className="rounded-[24px] border border-slate-200/70 bg-white/90 p-2.5 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur md:p-3">
+            <section
+              ref={reportingSectionRef}
+              className="rounded-[24px] border border-slate-200/70 bg-white/90 p-2 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur md:p-2.5"
+            >
               <div className="rounded-[18px] border border-slate-200/70 bg-slate-50/90 p-1.5 backdrop-blur">
-                <div className="space-y-3 px-1 pb-1 pt-2.5 md:px-2 md:pb-2">
-                  <section className="rounded-[20px] border border-slate-200/70 bg-white/95 p-4 shadow-sm md:p-5">
-                    <div className="flex flex-col gap-4 border-b border-slate-200 pb-4 lg:flex-row lg:items-end lg:justify-between">
+                <div className="space-y-2.5 px-1 pb-1 pt-2 md:px-1.5 md:pb-1.5">
+                  <section className="rounded-[20px] border border-slate-200/70 bg-white/95 p-3 shadow-sm md:p-4">
+                    <div className="flex flex-col gap-3 border-b border-slate-200 pb-3 lg:flex-row lg:items-end lg:justify-between">
                       <div>
                         <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-400">
                           Registration billing
                         </p>
-                        <h2 className="mt-1 text-xl font-semibold text-slate-950">
+                        <h2 className="mt-1 text-lg font-semibold text-slate-950 md:text-xl">
                           Registration fee reporting
                         </h2>
-                        <p className="mt-1.5 max-w-2xl text-xs leading-5 text-slate-500">
+                        <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-500">
                           Review registration revenue trends, pending balances,
                           and field-level billing performance without leaving
                           the registrations workspace.
                         </p>
                       </div>
 
-                      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                      <div className="flex w-full flex-col gap-1.5 sm:w-auto sm:flex-row sm:items-center">
                         {availableSeasons.length > 0 && (
                           <Select
                             value={selectedSeason}
-                            onValueChange={setSelectedSeason}
+                            onValueChange={(value) => {
+                              setSelectedSeason(value);
+                              scrollReportingSectionIntoView();
+                            }}
                           >
                             <SelectTrigger className="h-8 w-full rounded-full border-stone-300 bg-white text-zinc-700 shadow-none sm:w-[180px]">
                               <SelectValue />
@@ -1966,9 +1983,10 @@ export default function RegistrationsPage() {
                           <Checkbox
                             id="show-old-registration-fields"
                             checked={showOldFields}
-                            onCheckedChange={(checked) =>
-                              setShowOldFields(Boolean(checked))
-                            }
+                            onCheckedChange={(checked) => {
+                              setShowOldFields(Boolean(checked));
+                              scrollReportingSectionIntoView();
+                            }}
                           />
                           <span>Show old fields</span>
                         </label>
@@ -1984,7 +2002,7 @@ export default function RegistrationsPage() {
                       </div>
                     </div>
 
-                    <div className="pt-4">
+                    <div className="pt-3">
                       {registrationBillingLoading ? (
                         <div className="flex min-h-96 items-center justify-center">
                           <Loader2 className="h-8 w-8 animate-spin" />
@@ -1994,6 +2012,7 @@ export default function RegistrationsPage() {
                           data={registrationBillingData}
                           currency={club?.currency as string}
                           showOldFields={showOldFields}
+                          onInteract={scrollReportingSectionIntoView}
                         />
                       ) : (
                         <div className="flex min-h-48 items-center justify-center rounded-[18px] border border-slate-200 bg-slate-50 text-sm text-muted-foreground">

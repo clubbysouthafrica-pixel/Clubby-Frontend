@@ -36,29 +36,6 @@ export function RevenueBreakdownReport({
   emptyStateLabel,
   chartMode = "revenue",
 }: RevenueBreakdownReportProps) {
-  if (!data.length) {
-    return (
-      <div className="space-y-3">
-        <div className="text-center space-y-1">
-          <h1 className="text-lg md:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            {title}
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            {description}
-          </p>
-        </div>
-        <div className="rounded-[20px] border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
-          No data available for this period.
-          {typeof totalRevenue === "number" || typeof totalPendingRevenue === "number"
-            ? chartMode === "expense"
-              ? ` ${emptyStateLabel || valueLabel} ${formatAmount(totalRevenue || 0, currency)}.`
-              : ` ${emptyStateLabel || valueLabel} ${formatAmount(totalRevenue || 0, currency)}. ${pendingValueLabel} ${formatAmount(totalPendingRevenue || 0, currency)}.`
-            : ""}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-3">
       <div className="text-center space-y-1">
@@ -77,6 +54,15 @@ export function RevenueBreakdownReport({
           <OrdersComboChart data={data} currency={currency} />
         )}
       </div>
+      {!data.length &&
+        (typeof totalRevenue === "number" ||
+          typeof totalPendingRevenue === "number") && (
+          <p className="text-center text-xs text-slate-500">
+            {chartMode === "expense"
+              ? `${emptyStateLabel || valueLabel} ${formatAmount(totalRevenue || 0, currency)}.`
+              : `${emptyStateLabel || valueLabel} ${formatAmount(totalRevenue || 0, currency)}. ${pendingValueLabel} ${formatAmount(totalPendingRevenue || 0, currency)}.`}
+          </p>
+        )}
     </div>
   );
 }

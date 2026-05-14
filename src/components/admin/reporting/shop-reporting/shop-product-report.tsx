@@ -15,6 +15,40 @@ import {
 interface ShopProductReportProps {
   report: ShopReport;
   currency: string;
+  onInteract?: () => void;
+}
+
+function EmptyGraphState() {
+  return (
+    <div className="flex h-full min-h-[208px] items-center justify-center rounded-[16px] border border-dashed border-stone-200 bg-stone-50/60 text-center text-sm text-stone-500">
+      No data for now
+    </div>
+  );
+}
+
+function ShopGraphShell({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card className="rounded-[20px] border border-stone-200 bg-gradient-to-br from-white via-stone-50 to-white p-3.5 shadow-sm md:p-4">
+      <div className="mb-3 flex flex-col gap-0.5">
+        <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-600">
+          {title}
+        </h3>
+        <p className="text-[11px] text-stone-500">{subtitle}</p>
+      </div>
+
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_200px] lg:items-stretch">
+        {children}
+      </div>
+    </Card>
+  );
 }
 
 function getProductTabValue(
@@ -76,20 +110,74 @@ function getPeakRevenueMonth(productData: ShopReport["report"][number]["data"]) 
 export function ShopProductReport({
   report,
   currency,
+  onInteract,
 }: ShopProductReportProps) {
-  // If there is no report or the report array is empty, show a message
+  const reportTabsKey = (report?.report ?? [])
+    .map((product, index) => getProductTabValue(product, index))
+    .join("|");
+
   if (!report?.report || report.report.length === 0) {
     return (
-      <div className="flex min-h-48 items-center justify-center rounded-[18px] border border-slate-200 bg-slate-50 px-6 py-12 text-center">
-        <span className="text-sm font-medium text-slate-500">
-          No shop product data available.
-        </span>
+      <div className="space-y-3">
+        <div className="text-center space-y-1">
+          <h3 className="text-lg font-extrabold tracking-tight text-slate-900">
+            Shop Report
+          </h3>
+          <p className="text-xs text-slate-500">
+            Revenue and unit trends across your shop catalog.
+          </p>
+        </div>
+
+        <ShopGraphShell
+          title="Sales Revenue Trend"
+          subtitle="A monthly view of collected and pending revenue for your shop products."
+        >
+          <div className="rounded-[18px] border border-stone-200 bg-white p-2.5 md:p-3 lg:h-full">
+            <EmptyGraphState />
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+            <div className="rounded-[16px] border border-stone-200 bg-stone-50/90 p-2.5">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-stone-500">
+                Sales revenue
+              </p>
+              <p className="mt-1.5 text-base font-semibold text-stone-900">
+                {formatAmount(0, currency)}
+              </p>
+              <p className="mt-0.5 text-[11px] text-stone-500">No data for now</p>
+            </div>
+            <div className="rounded-[16px] border border-stone-200 bg-stone-50/90 p-2.5">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-stone-500">
+                Pending revenue
+              </p>
+              <p className="mt-1.5 text-base font-semibold text-stone-900">
+                {formatAmount(0, currency)}
+              </p>
+              <p className="mt-0.5 text-[11px] text-stone-500">No data for now</p>
+            </div>
+            <div className="rounded-[16px] border border-stone-200 bg-stone-50/90 p-2.5">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-stone-500">
+                Best month
+              </p>
+              <p className="mt-1.5 text-base font-semibold text-stone-900">-</p>
+              <p className="mt-0.5 text-[11px] text-stone-500">No data for now</p>
+            </div>
+            <div className="rounded-[16px] border border-stone-200 bg-stone-50/90 p-2.5">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-stone-500">
+                Units sold / pending
+              </p>
+              <p className="mt-1.5 text-base font-semibold text-stone-900">0 / 0</p>
+              <p className="mt-0.5 text-[11px] text-stone-500">No data for now</p>
+            </div>
+          </div>
+        </ShopGraphShell>
       </div>
     );
   }
 
   return (
     <Tabs
+      key={reportTabsKey}
       defaultValue={getProductTabValue(report.report[0], 0)}
       className="w-full"
     >
@@ -109,6 +197,7 @@ export function ShopProductReport({
               <TabsTrigger
                 key={getProductTabValue(product, index)}
                 value={getProductTabValue(product, index)}
+                onClick={onInteract}
                 className="h-8 rounded-full px-3.5 text-xs font-medium data-[state=active]:bg-zinc-700 data-[state=active]:text-white data-[state=inactive]:border data-[state=inactive]:border-slate-200 data-[state=inactive]:bg-white data-[state=inactive]:text-zinc-700 whitespace-nowrap"
               >
                 {product.product_name}
@@ -174,89 +263,85 @@ export function ShopProductReport({
             </Card>
           </div>
 
-          {orderedProductData.length > 0 ? (
-            <Card className="rounded-[20px] border border-stone-200 bg-gradient-to-br from-white via-stone-50 to-white p-3.5 shadow-sm md:p-4">
-              <div className="mb-3 flex flex-col gap-0.5">
-                <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-600">
-                  Sales Revenue Trend
-                </h3>
-                <p className="text-[11px] text-stone-500">
-                  A monthly view of collected and pending revenue for {product.product_name}.
-                </p>
-              </div>
-
-              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_200px] lg:items-stretch">
-                <div className="rounded-[18px] border border-stone-200 bg-white p-2.5 md:p-3 lg:h-full">
-                  <div className="h-full min-h-[208px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <ComposedChart
-                        data={orderedProductData.map((d) => ({
-                          name: formatMonthLabel(d.date),
-                          revenue: d.revenue || 0,
-                          pending_revenue: d.pending_revenue || 0,
-                        }))}
-                        margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
-                      >
-                        <XAxis
-                          dataKey="name"
-                          tick={{ fontSize: 11, fill: "#78716c" }}
-                          axisLine={false}
-                          tickLine={false}
-                        />
-                        <YAxis
-                          yAxisId="left"
-                          tick={{ fontSize: 11, fill: "#78716c" }}
-                          tickFormatter={(value) =>
-                            formatRevenueAxisLabel(value, currency)
+          <ShopGraphShell
+            title="Sales Revenue Trend"
+            subtitle={`A monthly view of collected and pending revenue for ${product.product_name}.`}
+          >
+            <div className="rounded-[18px] border border-stone-200 bg-white p-2.5 md:p-3 lg:h-full">
+              <div className="h-full min-h-[208px] w-full">
+                {orderedProductData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart
+                      data={orderedProductData.map((d) => ({
+                        name: formatMonthLabel(d.date),
+                        revenue: d.revenue || 0,
+                        pending_revenue: d.pending_revenue || 0,
+                      }))}
+                      margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
+                    >
+                      <XAxis
+                        dataKey="name"
+                        tick={{ fontSize: 11, fill: "#78716c" }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        yAxisId="left"
+                        tick={{ fontSize: 11, fill: "#78716c" }}
+                        tickFormatter={(value) =>
+                          formatRevenueAxisLabel(value, currency)
+                        }
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          background: "rgba(255,255,255,0.96)",
+                          border: "1px solid #e7e5e4",
+                          borderRadius: "12px",
+                          color: "#1f2937",
+                          boxShadow: "0 10px 30px rgba(15, 23, 42, 0.12)",
+                          fontWeight: 500,
+                          fontSize: 12,
+                        }}
+                        labelStyle={{ color: "#44403c", fontWeight: 600 }}
+                        formatter={(value: number, name: string) => {
+                          if (name === "Revenue" || name === "Pending Revenue") {
+                            return [formatAmount(Number(value), currency), name];
                           }
-                          axisLine={false}
-                          tickLine={false}
-                        />
-                        <Tooltip
-                          contentStyle={{
-                            background: "rgba(255,255,255,0.96)",
-                            border: "1px solid #e7e5e4",
-                            borderRadius: "12px",
-                            color: "#1f2937",
-                            boxShadow: "0 10px 30px rgba(15, 23, 42, 0.12)",
-                            fontWeight: 500,
-                            fontSize: 12,
-                          }}
-                          labelStyle={{ color: "#44403c", fontWeight: 600 }}
-                          formatter={(value: number, name: string) => {
-                            if (name === "Revenue" || name === "Pending Revenue") {
-                              return [formatAmount(Number(value), currency), name];
-                            }
-                            return [value, name];
-                          }}
-                        />
-                        <Legend iconType="circle" />
-                        <Bar
-                          yAxisId="left"
-                          dataKey="revenue"
-                          name="Revenue"
-                          fill="#78716c"
-                          stroke="#57534e"
-                          strokeWidth={1.5}
-                          radius={[8, 8, 0, 0]}
-                          barSize={18}
-                        />
-                        <Bar
-                          yAxisId="left"
-                          dataKey="pending_revenue"
-                          name="Pending Revenue"
-                          fill="#d6d3d1"
-                          stroke="#a8a29e"
-                          strokeWidth={1.5}
-                          radius={[8, 8, 0, 0]}
-                          barSize={18}
-                        />
-                      </ComposedChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
+                          return [value, name];
+                        }}
+                      />
+                      <Legend iconType="circle" />
+                      <Bar
+                        yAxisId="left"
+                        dataKey="revenue"
+                        name="Revenue"
+                        fill="#78716c"
+                        stroke="#57534e"
+                        strokeWidth={1.5}
+                        radius={[8, 8, 0, 0]}
+                        barSize={18}
+                      />
+                      <Bar
+                        yAxisId="left"
+                        dataKey="pending_revenue"
+                        name="Pending Revenue"
+                        fill="#d6d3d1"
+                        stroke="#a8a29e"
+                        strokeWidth={1.5}
+                        radius={[8, 8, 0, 0]}
+                        barSize={18}
+                      />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <EmptyGraphState />
+                )}
+              </div>
+            </div>
 
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
                   <div className="rounded-[16px] border border-stone-200 bg-stone-50/90 p-2.5">
                     <p className="text-[10px] uppercase tracking-[0.18em] text-stone-500">
                       Sales revenue
@@ -289,7 +374,7 @@ export function ShopProductReport({
                     <p className="mt-0.5 text-[11px] text-stone-500">
                       {strongestMonth
                         ? formatAmount(strongestMonth.revenue || 0, currency)
-                        : "No data"}
+                        : "No data for now"}
                     </p>
                   </div>
                   <div className="rounded-[16px] border border-stone-200 bg-stone-50/90 p-2.5">
@@ -303,16 +388,8 @@ export function ShopProductReport({
                       Fulfilled versus outstanding items
                     </p>
                   </div>
-                </div>
-              </div>
-            </Card>
-          ) : (
-            <Card className="flex min-h-48 items-center justify-center rounded-[20px] border border-slate-200/70 bg-slate-50 p-8 shadow-sm">
-              <span className="text-sm font-medium text-slate-500">
-                No data available for this product.
-              </span>
-            </Card>
-          )}
+            </div>
+          </ShopGraphShell>
         </TabsContent>
           );
         })()

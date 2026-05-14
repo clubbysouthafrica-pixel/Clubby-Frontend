@@ -48,16 +48,16 @@ function InsightRail({
   items: Array<{ label: string; value: string | number; note?: string }>;
 }) {
   return (
-    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+    <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-1">
       {items.map((item) => (
         <div
           key={item.label}
-          className="rounded-[16px] border border-stone-200 bg-stone-50/90 p-2.5"
+          className="rounded-[14px] border border-stone-200 bg-stone-50/90 p-2"
         >
           <p className="text-[10px] uppercase tracking-[0.18em] text-stone-500">
             {item.label}
           </p>
-          <p className="mt-1.5 text-base font-semibold text-stone-900">
+          <p className="mt-1 text-sm font-semibold text-stone-900 md:text-[15px]">
             {item.value}
           </p>
           {item.note && (
@@ -69,8 +69,8 @@ function InsightRail({
   );
 }
 
-function getChartMinHeight(insightCount: number) {
-  return Math.max(168, insightCount * 52);
+function getChartMinHeight() {
+  return 196;
 }
 
 function ChartShell({
@@ -84,18 +84,18 @@ function ChartShell({
   insights: Array<{ label: string; value: string | number; note?: string }>;
   children: React.ReactNode;
 }) {
-  const chartMinHeight = getChartMinHeight(insights.length);
+  const chartMinHeight = getChartMinHeight();
 
   return (
-    <div className="rounded-[20px] border border-stone-200 bg-gradient-to-br from-white via-stone-50 to-white p-3.5 shadow-sm md:p-4">
-      <div className="mb-3 flex flex-col gap-0.5">
+    <div className="rounded-[18px] border border-stone-200 bg-gradient-to-br from-white via-stone-50 to-white p-3 shadow-sm md:p-3.5">
+      <div className="mb-2.5 flex flex-col gap-0.5">
         <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-600">
           {title}
         </h3>
         <p className="text-[11px] text-stone-500">{subtitle}</p>
       </div>
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_200px] lg:items-stretch">
-        <div className="rounded-[18px] border border-stone-200 bg-white p-2.5 md:p-3 lg:h-full">
+      <div className="grid gap-2.5 lg:grid-cols-[minmax(0,1fr)_176px] lg:items-stretch">
+        <div className="rounded-[16px] border border-stone-200 bg-white p-2 md:p-2.5 lg:h-full">
           <div
             className="h-full w-full"
             style={{ minHeight: `${chartMinHeight}px` }}
@@ -105,6 +105,14 @@ function ChartShell({
         </div>
         <InsightRail items={insights} />
       </div>
+    </div>
+  );
+}
+
+function EmptyChartState() {
+  return (
+    <div className="flex h-full min-h-[168px] items-center justify-center rounded-[14px] border border-dashed border-stone-200 bg-stone-50/60 text-center text-sm text-stone-500">
+      No data for now
     </div>
   );
 }
@@ -203,6 +211,7 @@ export function RegistrationComboChart({
   currency: string;
 }) {
   const orderedData = sortMonthlyRows(data);
+  const hasData = orderedData.length > 0;
 
   const chartData = orderedData.map((d) => ({
     name: formatMonthLabel(d.date),
@@ -215,8 +224,15 @@ export function RegistrationComboChart({
     (sum, row) => sum + row.total_pending_revenue,
     0,
   );
-  const strongestMonth = orderedData.reduce((best, current) =>
-    current.total_revenue > best.total_revenue ? current : best,
+  const strongestMonth = orderedData.reduce<RegistrationReportDataRow | null>(
+    (best, current) => {
+      if (!best) {
+        return current;
+      }
+
+      return current.total_revenue > best.total_revenue ? current : best;
+    },
+    null,
   );
 
   return (
@@ -243,49 +259,53 @@ export function RegistrationComboChart({
         },
       ]}
     >
-      <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart
-          data={chartData}
-          margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis
-            dataKey="name"
-            tick={{ fontSize: 11, fill: "#78716c" }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <YAxis
-            yAxisId="left"
-            tick={{ fontSize: 11, fill: "#78716c" }}
-            tickFormatter={(v) => formatAmount(Number(v), currency)}
-            axisLine={false}
-            tickLine={false}
-          />
-          <Tooltip content={<ModernTooltip currency={currency} />} />
-          <Legend formatter={legendFormatter} iconType="circle" />
-          <Bar
-            yAxisId="left"
-            dataKey="revenue"
-            name="Revenue"
-            fill={CHART_COLORS.registered.fill}
-            stroke={CHART_COLORS.registered.stroke}
-            strokeWidth={1.5}
-            radius={[8, 8, 0, 0]}
-            barSize={24}
-          />
-          <Bar
-            yAxisId="left"
-            dataKey="pending"
-            name="Pending Revenue"
-            fill={CHART_COLORS.deregistered.fill}
-            stroke={CHART_COLORS.deregistered.stroke}
-            strokeWidth={1.5}
-            radius={[8, 8, 0, 0]}
-            barSize={24}
-          />
-        </ComposedChart>
-      </ResponsiveContainer>
+      {hasData ? (
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart
+            data={chartData}
+            margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <XAxis
+              dataKey="name"
+              tick={{ fontSize: 11, fill: "#78716c" }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              yAxisId="left"
+              tick={{ fontSize: 11, fill: "#78716c" }}
+              tickFormatter={(v) => formatAmount(Number(v), currency)}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip content={<ModernTooltip currency={currency} />} />
+            <Legend formatter={legendFormatter} iconType="circle" />
+            <Bar
+              yAxisId="left"
+              dataKey="revenue"
+              name="Revenue"
+              fill={CHART_COLORS.registered.fill}
+              stroke={CHART_COLORS.registered.stroke}
+              strokeWidth={1.5}
+              radius={[8, 8, 0, 0]}
+              barSize={24}
+            />
+            <Bar
+              yAxisId="left"
+              dataKey="pending"
+              name="Pending Revenue"
+              fill={CHART_COLORS.deregistered.fill}
+              stroke={CHART_COLORS.deregistered.stroke}
+              strokeWidth={1.5}
+              radius={[8, 8, 0, 0]}
+              barSize={24}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      ) : (
+        <EmptyChartState />
+      )}
     </ChartShell>
   );
 }
@@ -299,6 +319,7 @@ export function OverallComboChart({
   currency: string;
 }) {
   const orderedData = sortMonthlyRows(data);
+  const hasData = orderedData.length > 0;
 
   const chartData = orderedData.map((d) => ({
     name: formatMonthLabel(d.date),
@@ -348,46 +369,50 @@ export function OverallComboChart({
         },
       ]}
     >
-      <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart
-          data={chartData}
-          margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
-          <XAxis
-            dataKey="name"
-            tick={{ fontSize: 11, fill: "#78716c" }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <YAxis
-            tick={{ fontSize: 11, fill: "#78716c" }}
-            tickFormatter={(v) => formatAmount(Number(v), currency)}
-            axisLine={false}
-            tickLine={false}
-          />
-          <Tooltip content={<ModernTooltip currency={currency} />} />
-          <Legend formatter={legendFormatter} iconType="circle" />
-          <Bar
-            dataKey="revenue"
-            name="Revenue"
-            fill={CHART_COLORS.revenue.fill}
-            stroke={CHART_COLORS.revenue.stroke}
-            strokeWidth={1.5}
-            radius={[8, 8, 0, 0]}
-            barSize={18}
-          />
-          <Bar
-            dataKey="pending"
-            name="Pending Revenue"
-            fill={CHART_COLORS.pendingRevenue.fill}
-            stroke={CHART_COLORS.pendingRevenue.stroke}
-            strokeWidth={1.5}
-            radius={[8, 8, 0, 0]}
-            barSize={18}
-          />
-        </ComposedChart>
-      </ResponsiveContainer>
+      {hasData ? (
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart
+            data={chartData}
+            margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
+            <XAxis
+              dataKey="name"
+              tick={{ fontSize: 11, fill: "#78716c" }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              tick={{ fontSize: 11, fill: "#78716c" }}
+              tickFormatter={(v) => formatAmount(Number(v), currency)}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip content={<ModernTooltip currency={currency} />} />
+            <Legend formatter={legendFormatter} iconType="circle" />
+            <Bar
+              dataKey="revenue"
+              name="Revenue"
+              fill={CHART_COLORS.revenue.fill}
+              stroke={CHART_COLORS.revenue.stroke}
+              strokeWidth={1.5}
+              radius={[8, 8, 0, 0]}
+              barSize={18}
+            />
+            <Bar
+              dataKey="pending"
+              name="Pending Revenue"
+              fill={CHART_COLORS.pendingRevenue.fill}
+              stroke={CHART_COLORS.pendingRevenue.stroke}
+              strokeWidth={1.5}
+              radius={[8, 8, 0, 0]}
+              barSize={18}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      ) : (
+        <EmptyChartState />
+      )}
     </ChartShell>
   );
 }
@@ -401,6 +426,7 @@ export function OrdersComboChart({
   currency: string;
 }) {
   const orderedData = sortMonthlyRows(data);
+  const hasData = orderedData.length > 0;
 
   const chartData = orderedData.map((d) => ({
     name: formatMonthLabel(d.date),
@@ -450,49 +476,53 @@ export function OrdersComboChart({
         },
       ]}
     >
-      <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart
-          data={chartData}
-          margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
-          <XAxis
-            dataKey="name"
-            tick={{ fontSize: 11, fill: "#78716c" }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <YAxis
-            yAxisId="left"
-            tick={{ fontSize: 11, fill: "#78716c" }}
-            tickFormatter={(v) => formatAmount(Number(v), currency)}
-            axisLine={false}
-            tickLine={false}
-          />
-          <Tooltip content={<ModernTooltip currency={currency} />} />
-          <Legend formatter={legendFormatter} iconType="circle" />
-          <Bar
-            yAxisId="left"
-            dataKey="revenue"
-            name="Revenue"
-            fill={CHART_COLORS.registered.fill}
-            stroke={CHART_COLORS.registered.stroke}
-            strokeWidth={1.5}
-            radius={[8, 8, 0, 0]}
-            barSize={18}
-          />
-          <Bar
-            yAxisId="left"
-            dataKey="pending"
-            name="Pending Revenue"
-            fill={CHART_COLORS.deregistered.fill}
-            stroke={CHART_COLORS.deregistered.stroke}
-            strokeWidth={1.5}
-            radius={[8, 8, 0, 0]}
-            barSize={18}
-          />
-        </ComposedChart>
-      </ResponsiveContainer>
+      {hasData ? (
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart
+            data={chartData}
+            margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
+            <XAxis
+              dataKey="name"
+              tick={{ fontSize: 11, fill: "#78716c" }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              yAxisId="left"
+              tick={{ fontSize: 11, fill: "#78716c" }}
+              tickFormatter={(v) => formatAmount(Number(v), currency)}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip content={<ModernTooltip currency={currency} />} />
+            <Legend formatter={legendFormatter} iconType="circle" />
+            <Bar
+              yAxisId="left"
+              dataKey="revenue"
+              name="Revenue"
+              fill={CHART_COLORS.registered.fill}
+              stroke={CHART_COLORS.registered.stroke}
+              strokeWidth={1.5}
+              radius={[8, 8, 0, 0]}
+              barSize={18}
+            />
+            <Bar
+              yAxisId="left"
+              dataKey="pending"
+              name="Pending Revenue"
+              fill={CHART_COLORS.deregistered.fill}
+              stroke={CHART_COLORS.deregistered.stroke}
+              strokeWidth={1.5}
+              radius={[8, 8, 0, 0]}
+              barSize={18}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      ) : (
+        <EmptyChartState />
+      )}
     </ChartShell>
   );
 }
@@ -509,6 +539,7 @@ export function ExpenseComboChart({
   subtitle?: string;
 }) {
   const orderedData = sortMonthlyRows(data);
+  const hasData = orderedData.length > 0;
 
   const chartData = orderedData.map((d) => ({
     name: formatMonthLabel(d.date),
@@ -548,37 +579,41 @@ export function ExpenseComboChart({
         },
       ]}
     >
-      <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart
-          data={chartData}
-          margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="#fee2e2" />
-          <XAxis
-            dataKey="name"
-            tick={{ fontSize: 11, fill: "#7f1d1d" }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <YAxis
-            tick={{ fontSize: 11, fill: "#7f1d1d" }}
-            tickFormatter={(v) => formatAmount(Number(v), currency)}
-            axisLine={false}
-            tickLine={false}
-          />
-          <Tooltip content={<ModernTooltip currency={currency} />} />
-          <Legend formatter={legendFormatter} iconType="circle" />
-          <Bar
-            dataKey="expense"
-            name="Expense"
-            fill={CHART_COLORS.expense.fill}
-            stroke={CHART_COLORS.expense.stroke}
-            strokeWidth={1.5}
-            radius={[8, 8, 0, 0]}
-            barSize={18}
-          />
-        </ComposedChart>
-      </ResponsiveContainer>
+      {hasData ? (
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart
+            data={chartData}
+            margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#fee2e2" />
+            <XAxis
+              dataKey="name"
+              tick={{ fontSize: 11, fill: "#7f1d1d" }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              tick={{ fontSize: 11, fill: "#7f1d1d" }}
+              tickFormatter={(v) => formatAmount(Number(v), currency)}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip content={<ModernTooltip currency={currency} />} />
+            <Legend formatter={legendFormatter} iconType="circle" />
+            <Bar
+              dataKey="expense"
+              name="Expense"
+              fill={CHART_COLORS.expense.fill}
+              stroke={CHART_COLORS.expense.stroke}
+              strokeWidth={1.5}
+              radius={[8, 8, 0, 0]}
+              barSize={18}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      ) : (
+        <EmptyChartState />
+      )}
     </ChartShell>
   );
 }
@@ -642,6 +677,7 @@ export function RegistrationBillingChart({
   currency,
 }: RegistrationBillingChartProps) {
   const orderedData = sortMonthlyRows(data);
+  const hasData = orderedData.length > 0;
 
   const chartData = orderedData.map((d) => ({
     name: formatMonthLabel(d.date),
@@ -698,50 +734,54 @@ export function RegistrationBillingChart({
         },
       ]}
     >
-      <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart
-          data={chartData}
-          margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
-        >
-          <XAxis
-            dataKey="name"
-            tick={{ fontSize: 11, fill: "#78716c" }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <YAxis
-            yAxisId="left"
-            tick={{ fontSize: 11, fill: "#78716c" }}
-            tickFormatter={(v) => formatAmount(Number(v), currency)}
-            axisLine={false}
-            tickLine={false}
-          />
-          <Tooltip
-            content={<RegistrationBillingTooltip currency={currency} />}
-          />
-          <Legend formatter={legendFormatter} iconType="circle" />
-          <Bar
-            yAxisId="left"
-            dataKey="paid"
-            name="Paid"
-            fill={CHART_COLORS.registered.fill}
-            stroke={CHART_COLORS.registered.stroke}
-            strokeWidth={1.5}
-            radius={[8, 8, 0, 0]}
-            barSize={18}
-          />
-          <Bar
-            yAxisId="left"
-            dataKey="due"
-            name="Due"
-            fill={CHART_COLORS.pendingRevenue.fill}
-            stroke={CHART_COLORS.pendingRevenue.stroke}
-            strokeWidth={1.5}
-            radius={[8, 8, 0, 0]}
-            barSize={18}
-          />
-        </ComposedChart>
-      </ResponsiveContainer>
+      {hasData ? (
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart
+            data={chartData}
+            margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
+          >
+            <XAxis
+              dataKey="name"
+              tick={{ fontSize: 11, fill: "#78716c" }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              yAxisId="left"
+              tick={{ fontSize: 11, fill: "#78716c" }}
+              tickFormatter={(v) => formatAmount(Number(v), currency)}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip
+              content={<RegistrationBillingTooltip currency={currency} />}
+            />
+            <Legend formatter={legendFormatter} iconType="circle" />
+            <Bar
+              yAxisId="left"
+              dataKey="paid"
+              name="Paid"
+              fill={CHART_COLORS.registered.fill}
+              stroke={CHART_COLORS.registered.stroke}
+              strokeWidth={1.5}
+              radius={[8, 8, 0, 0]}
+              barSize={18}
+            />
+            <Bar
+              yAxisId="left"
+              dataKey="due"
+              name="Due"
+              fill={CHART_COLORS.pendingRevenue.fill}
+              stroke={CHART_COLORS.pendingRevenue.stroke}
+              strokeWidth={1.5}
+              radius={[8, 8, 0, 0]}
+              barSize={18}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      ) : (
+        <EmptyChartState />
+      )}
     </ChartShell>
   );
 }

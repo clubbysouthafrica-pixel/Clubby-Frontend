@@ -18,11 +18,9 @@ export function OverallReport({ report, currency }: props) {
         </p>
       </div>
 
-      {report?.data?.length > 0 && (
-        <div>
-          <OverallComboChart data={report.data} currency={currency} />
-        </div>
-      )}
+      <div>
+        <OverallComboChart data={report?.data ?? []} currency={currency} />
+      </div>
     </div>
   );
 }

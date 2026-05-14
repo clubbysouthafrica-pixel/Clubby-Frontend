@@ -259,7 +259,9 @@ export default function OrdersPage() {
     undefined,
   );
   const [selectedSeason, setSelectedSeason] = useState<string>("current");
+  const [pendingSeasonScroll, setPendingSeasonScroll] = useState(false);
   const isLoadingMoreRef = useRef(false);
+  const reportingSectionRef = useRef<HTMLElement | null>(null);
 
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [selectedOrderForPayment, setSelectedOrderForPayment] =
@@ -331,6 +333,22 @@ export default function OrdersPage() {
       0,
     ),
   };
+
+  const scrollShopReportingIntoView = () => {
+    reportingSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  };
+
+  useEffect(() => {
+    if (!pendingSeasonScroll || shopReportingLoading) {
+      return;
+    }
+
+    scrollShopReportingIntoView();
+    setPendingSeasonScroll(false);
+  }, [pendingSeasonScroll, shopReportingLoading]);
 
   const pendingPaymentOrders = allOrders.filter(
     (order) =>
@@ -1588,7 +1606,13 @@ export default function OrdersPage() {
 
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
               {availableSeasons.length > 0 && (
-                <Select value={selectedSeason} onValueChange={setSelectedSeason}>
+                <Select
+                  value={selectedSeason}
+                  onValueChange={(value) => {
+                    setSelectedSeason(value);
+                    setPendingSeasonScroll(true);
+                  }}
+                >
                   <SelectTrigger className="h-8 w-full rounded-full border-stone-300 bg-white text-zinc-700 shadow-none sm:w-[180px]">
                     <SelectValue />
                   </SelectTrigger>
@@ -1684,7 +1708,10 @@ export default function OrdersPage() {
           </div>
         </section>
 
-        <section className="rounded-[24px] border border-slate-200/70 bg-white/90 p-2.5 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur md:p-3">
+        <section
+          ref={reportingSectionRef}
+          className="rounded-[24px] border border-slate-200/70 bg-white/90 p-2.5 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur md:p-3"
+        >
           <div className="rounded-[18px] border border-slate-200/70 bg-slate-50/90 p-1.5 backdrop-blur">
             <div className="space-y-3 px-1 pb-1 pt-2.5 md:px-2 md:pb-2">
               <section className="rounded-[20px] border border-slate-200/70 bg-white p-3 shadow-sm md:p-4">
@@ -1696,6 +1723,7 @@ export default function OrdersPage() {
                   <ShopProductReport
                     report={shopReportingData}
                     currency={club?.currency ?? "ZAR"}
+                    onInteract={scrollShopReportingIntoView}
                   />
                 ) : (
                   <div className="flex min-h-48 items-center justify-center rounded-[18px] border border-slate-200 bg-slate-50 text-sm text-muted-foreground">
