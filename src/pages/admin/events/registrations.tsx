@@ -2335,7 +2335,7 @@ export default function EventRegistrationsPage() {
                 <TableRow className="bg-muted/40 hover:bg-muted/40">
                   <TableHead className="w-12 text-center"></TableHead>
                   <TableHead className="w-[20%] text-center">
-                    Member
+                    Name
                   </TableHead>
                   <TableHead className="w-[20%] text-center">
                     Registration ID
@@ -2417,7 +2417,7 @@ export default function EventRegistrationsPage() {
                             <p className="font-medium">{`${registration.memberFirstName} ${registration.memberSurname}`}</p>
                             <div className="mt-1 flex items-center justify-center gap-2 text-xs text-muted-foreground">
                               <span className="font-mono">
-                                {getShortUserId(registration.userId)}
+                                Member ID: {getShortUserId(registration.userId)}
                               </span>
                               <Button
                                 variant="ghost"

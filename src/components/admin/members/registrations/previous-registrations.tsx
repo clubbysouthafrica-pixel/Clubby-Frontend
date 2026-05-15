@@ -11,7 +11,6 @@ import { ClubMember } from "@/interfaces/club";
 import { useEffect, useMemo, useState } from "react";
 import {
   ChevronsUpDown,
-  Trash2,
   Archive,
   ArchiveRestore,
   AlertTriangle,
@@ -23,7 +22,6 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
-import RemoveRegistrationDialog from "./features/remove-registration-dialog";
 import { formatAmount } from "@/data/currencies";
 import { useArchiveRegistrationMutation } from "@/mutations/admin/useRegistrationMutation";
 import { toast } from "sonner";
@@ -56,24 +54,6 @@ const getRegistrationRowKey = (
 ) =>
   member.registration_id ||
   `${member.user_id}-${member.registered_on || "registration"}-${member.deregistered_on || "deregistered"}`;
-
-const getRemovalRowIdentity = (
-  member: Pick<
-    ClubMember,
-    | "registration_id"
-    | "user_id"
-    | "registered_on"
-    | "deregistered_on"
-    | "member_email"
-  >,
-) =>
-  [
-    member.registration_id || "",
-    member.user_id || "",
-    member.registered_on || "",
-    member.deregistered_on || "",
-    member.member_email || "",
-  ].join("::");
 
 const getRegistrationPaymentStatus = (member: ClubMember) => {
   const totalFee = member.total_fee || 0;
@@ -130,10 +110,6 @@ export default function PreviousMembersList({
     null,
   );
   const [totalFeeSortAsc, setTotalFeeSortAsc] = useState<boolean | null>(null);
-  const [openRemoveDialog, setOpenRemoveDialog] = useState<boolean>(false);
-  const [selectedMembersToRemove, setSelectedMembersToRemove] = useState<
-    ClubMember[]
-  >([]);
   const [localArchivedToggle, setLocalArchivedToggle] = useState<
     Record<string, boolean | undefined>
   >({});
@@ -343,20 +319,6 @@ export default function PreviousMembersList({
                         className="flex justify-center gap-2"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={() => {
-                                setSelectedMembersToRemove([member]);
-                                setOpenRemoveDialog(true);
-                              }}
-                              className="cursor-pointer rounded-full border border-slate-200 bg-slate-50 p-1.5 text-red-600 transition-colors hover:bg-slate-100 hover:text-red-700"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent>Delete registration</TooltipContent>
-                        </Tooltip>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button
@@ -572,35 +534,6 @@ export default function PreviousMembersList({
           </Table>
         </DndContext>
         </div>
-
-        <RemoveRegistrationDialog
-          open={openRemoveDialog}
-          onOpenChange={setOpenRemoveDialog}
-          members={selectedMembersToRemove}
-          onRemoveSuccess={(removedMembers) => {
-            const removedRowIdentities = new Set(
-              removedMembers.map((member) => getRemovalRowIdentity(member)),
-            );
-
-            setDeregisteredMembers((prev) =>
-              prev.filter(
-                (existingMember) =>
-                  !removedRowIdentities.has(
-                    getRemovalRowIdentity(existingMember),
-                  ),
-              ),
-            );
-            setlistActionItems((prev) =>
-              prev.filter(
-                (item) =>
-                  !removedMembers.some(
-                    (member) => member.member_email === item.email,
-                  ),
-              ),
-            );
-            setSelectedMembersToRemove([]);
-          }}
-        />
       </div>
     </>
   );

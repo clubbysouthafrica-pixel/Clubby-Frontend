@@ -136,24 +136,6 @@ export const updateRegistrationField = (
     });
 };
 
-export const removeRegistration = (
-  user_id: string,
-  registration_id: string,
-): Promise<any> => {
-  if (!user_id || !registration_id) {
-    throw new Error("user_id and registration_id are required");
-  }
-
-  return api
-    .post("/registration/removeRegistration", {
-      user_id: user_id,
-      registration_id: registration_id,
-    })
-    .then((res) => {
-      return res.data;
-    });
-};
-
 export const archiveRegistration = (
   user_id: string,
   registration_id: string,
