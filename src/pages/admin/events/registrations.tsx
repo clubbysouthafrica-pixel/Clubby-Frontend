@@ -1,5 +1,6 @@
-import { Fragment, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ArrowLeft,
   AlertCircle,
   CheckCircle2,
   ChevronDown,
@@ -65,6 +66,11 @@ import {
   type GetEventRegistrationsFilters,
 } from "@/services/admin-features/events";
 import { toast } from "sonner";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  getClubMember,
+  type GetClubMemberResponse,
+} from "@/services/admin/club-members";
 
 type RegistrationStatus = "Pending Confirmation" | "Confirmed" | "Waitlisted";
 type PaymentStatus = "Paid" | "Awaiting payment" | "Partially paid";
@@ -318,6 +324,56 @@ function getRegistrationBadgeClassName(status: RegistrationStatus) {
   }
 
   return "bg-slate-100 text-slate-700 border-slate-200";
+}
+
+function formatClubRegistrationStatus(status: string | null | undefined) {
+  if (status === "REGISTERED") {
+    return "Registered";
+  }
+
+  if (status === "DEREGISTERED") {
+    return "Deregistered";
+  }
+
+  if (status === "PENDING") {
+    return "Pending";
+  }
+
+  return "No registration record";
+}
+
+function formatClubMemberCombinedStatus(
+  isClubMember: boolean,
+  registrationStatus: string | null | undefined,
+) {
+  if (!isClubMember) {
+    return "External person";
+  }
+
+  return `Club member • ${formatClubRegistrationStatus(registrationStatus)}`;
+}
+
+function getClubMemberCombinedBadgeClassName(
+  isClubMember: boolean,
+  status: string | null | undefined,
+) {
+  if (!isClubMember) {
+    return "border-slate-200 bg-slate-100 text-slate-700";
+  }
+
+  if (status === "REGISTERED") {
+    return "border-green-200 bg-green-100 text-green-800";
+  }
+
+  if (status === "DEREGISTERED") {
+    return "border-red-200 bg-red-100 text-red-800";
+  }
+
+  if (status === "PENDING") {
+    return "border-amber-200 bg-amber-100 text-amber-800";
+  }
+
+  return "border-slate-200 bg-slate-100 text-slate-700";
 }
 
 function formatFieldValue(value: unknown) {
@@ -1057,9 +1113,32 @@ export default function EventRegistrationsPage() {
       !!expandedRegistration?.eventId,
   });
 
+  const {
+    data: clubMemberResponse,
+    isLoading: isClubMemberLoading,
+    isError: isClubMemberError,
+  } = useQuery({
+    queryKey: [
+      "admin-club-member",
+      club?.club_account_id,
+      expandedRegistration?.userId,
+    ],
+    queryFn: () =>
+      getClubMember(
+        club?.club_account_id || "",
+        expandedRegistration?.userId || "",
+      ),
+    enabled: !!club?.club_account_id && !!expandedRegistration?.userId,
+  });
+
   const registrationDetail = useMemo(
     () => getDetailPayload(registrationDetailResponse),
     [registrationDetailResponse],
+  );
+
+  const selectedClubMember = useMemo(
+    () => (clubMemberResponse as GetClubMemberResponse | undefined) ?? undefined,
+    [clubMemberResponse],
   );
 
   const expandedPricingSelections = useMemo(() => {
@@ -1420,6 +1499,19 @@ export default function EventRegistrationsPage() {
     (sum, registration) => sum + registration.amountPaid,
     0,
   );
+  const isExpandedRegistrationLoading =
+    isRegistrationDetailLoading || isClubMemberLoading;
+  const isExpandedRegistrationError =
+    isRegistrationDetailError || isClubMemberError;
+  const selectedClubMemberName =
+    [selectedClubMember?.user?.first_name, selectedClubMember?.user?.surname]
+      .filter(Boolean)
+      .join(" ") || expandedRegistration?.memberName || "Unknown member";
+  const isSelectedClubMember = selectedClubMember?.is_club_member === true;
+  const selectedClubCombinedStatus = formatClubMemberCombinedStatus(
+    isSelectedClubMember,
+    selectedClubMember?.registration,
+  );
 
   const handleCopy = async (value: string, copyKey: string) => {
     await navigator.clipboard.writeText(value);
@@ -1440,12 +1532,10 @@ export default function EventRegistrationsPage() {
   const handleFocusRegistration = (registration: EventRegistration) => {
     setHighlightedRegistrationId(registration.id);
     setExpandedRegistrationId(registration.id);
+  };
 
-    window.setTimeout(() => {
-      document
-        .getElementById(`registration-row-${registration.id}`)
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 0);
+  const handleCloseExpandedRegistration = () => {
+    setExpandedRegistrationId(null);
   };
 
   const handleOpenPaymentDialog = (registration: EventRegistration) => {
@@ -1702,1020 +1792,1144 @@ export default function EventRegistrationsPage() {
   const isTableLoading = (isLoading || isFetching) && allRegistrations.length === 0;
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Event Registrations
-          </h1>
-          <p className="text-muted-foreground">
-            Review all registrations submitted across your club events.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 rounded-xl border bg-background px-4 py-3 shadow-sm">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
-            Use the filters below to focus on one event or payment state.
-          </p>
-        </div>
-      </div>
-
-      {!club?.enable_events && (
-        <Card className="mb-6 overflow-hidden border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 p-0 shadow-sm">
-          <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
-            <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-300 bg-amber-100">
-                <AlertCircle className="h-4 w-4 text-amber-700" />
-              </div>
-              <div className="space-y-0.5">
-                <p className="text-sm font-semibold text-amber-950 sm:text-base">
-                  Events are currently disabled
-                </p>
-                <p className="max-w-2xl text-sm leading-snug text-amber-800">
-                  Go to the events page to enable events before managing registrations.
-                </p>
-              </div>
-            </div>
-            <Button
-              onClick={() => navigate("/events")}
-              className="w-full bg-amber-700 text-white hover:bg-amber-800 sm:w-auto"
+    <div className="p-6">
+      <div className="perspective-[1600px] min-h-[820px]">
+        <AnimatePresence mode="wait" initial={false}>
+          {expandedRegistrationId ? (
+            <motion.div
+              key="registration-detail"
+              className="space-y-6"
+              initial={{ opacity: 0, rotateY: 18, x: 20 }}
+              animate={{ opacity: 1, rotateY: 0, x: 0 }}
+              exit={{ opacity: 0, rotateY: -18, x: -20 }}
+              transition={{ duration: 0.28, ease: "easeInOut" }}
+              style={{ transformStyle: "preserve-3d" }}
             >
-              Go to Events
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card className="border-sky-200 bg-gradient-to-r from-sky-50 via-background to-cyan-50 shadow-sm">
-        <CardContent className="flex flex-col gap-4 p-5">
-          <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">
-                Selected Event
-              </p>
-              <h2 className="mt-1 text-2xl font-semibold text-slate-900">
-                {selectedEventTitle}
-              </h2>
-            </div>
-            <Badge className="w-fit border-sky-200 bg-white text-sky-700">
-              {eventOptions.length} available event
-              {eventOptions.length === 1 ? "" : "s"}
-            </Badge>
-          </div>
-
-          {showEventSearch && (
-            <div className="grid gap-2">
-              <Input
-                value={eventSearchQuery}
-                onChange={(event) => setEventSearchQuery(event.target.value)}
-                placeholder="Search events"
-                className="max-w-md bg-white"
-              />
-              {hasHiddenEventOptions && (
-                <p className="text-xs text-muted-foreground">
-                  Showing {MAX_VISIBLE_EVENT_OPTIONS} of {filteredEventOptions.length} matching events.
-                </p>
-              )}
-            </div>
-          )}
-
-          <div className="flex flex-wrap gap-2">
-            {visibleEventOptions.map((eventOption) => (
-              <Button
-                key={eventOption.value}
-                variant={
-                  selectedEvent === eventOption.value ? "default" : "outline"
-                }
-                className={cn(
-                  "rounded-full",
-                  selectedEvent === eventOption.value &&
-                    "bg-sky-600 text-white hover:bg-sky-700",
-                )}
-                onClick={() => handleSelectEvent(eventOption.value)}
-              >
-                {eventOption.label}
-              </Button>
-            ))}
-          </div>
-
-          {showEventSearch && filteredEventOptions.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              No events match that search.
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Total registrations</CardDescription>
-            <CardTitle className="text-3xl">{totalRegistrations}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Users className="h-4 w-4" />
-              Across all active club events.
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Awaiting payment</CardDescription>
-            <CardTitle className="text-3xl">{awaitingPaymentCount}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <CreditCard className="h-4 w-4" />
-              Registrations still needing payment.
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Confirmed entries</CardDescription>
-            <CardTitle className="text-3xl">{confirmedCount}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <CheckCircle2 className="h-4 w-4" />
-              Fully accepted registrations.
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Revenue collected</CardDescription>
-            <CardTitle className="text-3xl">
-              {formatAmount(totalRevenue, club?.currency || "ZAR")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Ticket className="h-4 w-4" />
-              Paid amounts from current registrations.
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <CardTitle>Registration Queue</CardTitle>
-              <CardDescription>
-                Review and expand registrations to inspect event details and
-                submitted answers.
-              </CardDescription>
-            </div>
-
-            <div className="flex items-center gap-1 self-start">
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowPendingRegistrationsDropdown(
-                      (currentValue) => !currentValue,
-                    );
-                    setShowPendingPaymentsDropdown(false);
-                  }}
-                  className="relative rounded-lg p-2 transition-colors hover:bg-muted"
-                  title="Pending registrations"
-                >
-                  <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
-                  {pendingConfirmationRegistrations.length > 0 && (
-                    <span className="absolute right-0 top-0 inline-flex -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-amber-600 px-2 py-0.5 text-xs font-bold leading-none text-white">
-                      {pendingConfirmationRegistrations.length}
-                    </span>
-                  )}
-                </button>
-
-                {showPendingRegistrationsDropdown && (
-                  <div className="absolute right-0 top-full z-50 mt-2 max-h-96 w-[min(24rem,calc(100vw-3rem))] overflow-y-auto rounded-lg border bg-background shadow-xl">
-                    <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b bg-background p-4">
-                      <h3 className="font-semibold text-foreground">
-                        Pending Registrations ({pendingConfirmationRegistrations.length})
-                      </h3>
-                      <button
+              <Card>
+                <CardHeader>
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="space-y-3">
+                      <Button
                         type="button"
-                        onClick={() => setShowPendingRegistrationsDropdown(false)}
-                        className="text-muted-foreground transition-colors hover:text-foreground"
+                        variant="outline"
+                        className="w-fit"
+                        onClick={handleCloseExpandedRegistration}
                       >
-                        <X className="h-4 w-4" />
-                      </button>
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Event Registrations
+                      </Button>
+                      <div>
+                        <CardTitle>
+                          {expandedRegistration?.memberName || "Registration details"}
+                        </CardTitle>
+                        <CardDescription>
+                          Review registration information and submitted form answers.
+                        </CardDescription>
+                      </div>
                     </div>
 
-                    {pendingConfirmationRegistrations.length === 0 ? (
-                      <div className="p-4 text-sm text-muted-foreground">
-                        No pending registrations.
+                    {expandedRegistration ? (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge
+                          className={getRegistrationBadgeClassName(
+                            expandedRegistration.registrationStatus,
+                          )}
+                        >
+                          {expandedRegistration.registrationStatus}
+                        </Badge>
+                        <Badge
+                          className={getPaymentBadgeClassName(
+                            isFreeRegistration(expandedRegistration)
+                              ? "FREE"
+                              : expandedRegistration.paymentStatus,
+                          )}
+                        >
+                          {isFreeRegistration(expandedRegistration)
+                            ? "FREE"
+                            : expandedRegistration.paymentStatus}
+                        </Badge>
+                        <Badge variant="outline">
+                          Submitted {formatSubmittedDate(expandedRegistration.submittedAt)}
+                        </Badge>
                       </div>
-                    ) : (
-                      <div className="divide-y">
-                        {pendingConfirmationRegistrations.map((registration) => (
-                          <div
-                            key={registration.id}
-                            role="button"
-                            tabIndex={0}
-                            onClick={() =>
-                              handleSelectPendingRegistration(registration)
-                            }
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter" || event.key === " ") {
-                                event.preventDefault();
-                                handleSelectPendingRegistration(registration);
-                              }
-                            }}
-                            className="cursor-pointer space-y-3 p-4 transition-colors hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-orange-400"
-                          >
-                            <div className="space-y-1">
-                              <p className="text-sm font-medium text-foreground">
-                                {registration.memberName}
+                    ) : null}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {!expandedRegistration ? (
+                    <div className="flex min-h-60 items-center justify-center rounded-xl border bg-background text-muted-foreground">
+                      This registration is no longer available in the current result set.
+                    </div>
+                  ) : isExpandedRegistrationLoading ? (
+                    <div className="flex min-h-60 items-center justify-center rounded-xl border bg-background">
+                      <div className="flex items-center gap-3 text-muted-foreground">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        Loading registration details...
+                      </div>
+                    </div>
+                  ) : isExpandedRegistrationError ? (
+                    <div className="flex min-h-60 items-center justify-center rounded-xl border bg-background text-destructive">
+                      Unable to load registration details right now.
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="rounded-xl border bg-background p-4">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                              Registration Details
+                            </p>
+                            <h3 className="mt-2 text-lg font-semibold">
+                              {expandedRegistration.memberName}
+                            </h3>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {expandedRegistration.eventDateLabel}
+                            </p>
+                          </div>
+                        </div>
+
+                        {expandedRegistration.registrationStatus === "Confirmed" &&
+                          expandedRegistration.registrationTags.length > 0 && (
+                            <div className="mt-4 rounded-lg border bg-muted/20 p-3">
+                              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                Registration Tags
                               </p>
-                              <p className="text-sm text-muted-foreground">
-                                {registration.eventTitle}
-                              </p>
-                              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                                <span>{registration.eventDateLabel}</span>
-                                <span>&bull;</span>
-                                <span>{formatSubmittedDate(registration.submittedAt)}</span>
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {expandedRegistration.registrationTags.map((tag) => (
+                                  <Badge
+                                    key={`${expandedRegistration.id}-${tag.id}`}
+                                    variant="secondary"
+                                    className="px-3 py-1"
+                                  >
+                                    {tag.label}: {tag.value}
+                                  </Badge>
+                                ))}
                               </div>
                             </div>
+                          )}
 
-                            <div className="flex items-center justify-between gap-3">
+                        <div className="mt-4 grid gap-3 md:grid-cols-2">
+                          <div className="rounded-lg border bg-muted/20 p-3">
+                            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                              Event
+                            </p>
+                            <p className="mt-2 font-medium">
+                              {expandedRegistration.eventTitle}
+                            </p>
+                            <p className="mt-2 text-sm text-muted-foreground">
+                              Registration ID: {getShortId(expandedRegistration.id)}
+                            </p>
+                          </div>
+                          <div className="rounded-lg border bg-muted/20 p-3">
+                            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                              Registration amount
+                            </p>
+                            <p className="mt-2 font-medium">
+                              {formatRegistrationAmount(
+                                expandedRegistration,
+                                club?.currency || "ZAR",
+                              )}
+                            </p>
+                            {!isFreeRegistration(expandedRegistration) && (
+                              <>
+                                <p className="mt-2 text-sm text-muted-foreground">
+                                  Paid:{" "}
+                                  {formatAmount(
+                                    expandedRegistration.amountPaid,
+                                    club?.currency || "ZAR",
+                                  )}
+                                </p>
+                                {Math.max(
+                                  expandedRegistration.amountDue -
+                                    expandedRegistration.amountPaid,
+                                  0,
+                                ) > 0 && (
+                                  <p className="text-sm text-muted-foreground">
+                                    Outstanding:{" "}
+                                    {formatAmount(
+                                      Math.max(
+                                        expandedRegistration.amountDue -
+                                          expandedRegistration.amountPaid,
+                                        0,
+                                      ),
+                                      club?.currency || "ZAR",
+                                    )}
+                                  </p>
+                                )}
+                                {expandedRegistration.paymentStatus !== "Paid" &&
+                                  Math.max(
+                                    expandedRegistration.amountDue -
+                                      expandedRegistration.amountPaid,
+                                    0,
+                                  ) > 0 && (
+                                    <Button
+                                      type="button"
+                                      className="mt-3"
+                                      onClick={() =>
+                                        handleOpenPaymentDialog(
+                                          expandedRegistration,
+                                        )
+                                      }
+                                    >
+                                      Confirm Payment
+                                    </Button>
+                                  )}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl border bg-background p-4">
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <h4 className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                            Club Member Information
+                          </h4>
+                        </div>
+                        <div className="mt-4 grid gap-3 md:grid-cols-2">
+                          <div className="rounded-lg border bg-muted/20 p-3">
+                            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                              Member Name
+                            </p>
+                            <p className="mt-2 font-medium">
+                              {selectedClubMemberName}
+                            </p>
+                            {selectedClubMember?.message ? (
+                              <p className="mt-2 text-sm text-muted-foreground">
+                                {selectedClubMember.message}
+                              </p>
+                            ) : null}
+                          </div>
+                          <div className="rounded-lg border bg-muted/20 p-3">
+                            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                              Club Membership
+                            </p>
+                            <div className="mt-2 flex flex-wrap gap-2">
                               <Badge
                                 variant="outline"
-                                className={cn(
-                                  "border",
-                                  getRegistrationBadgeClassName(
-                                    registration.registrationStatus,
-                                  ),
+                                className={getClubMemberCombinedBadgeClassName(
+                                  isSelectedClubMember,
+                                  selectedClubMember?.registration,
                                 )}
                               >
-                                {registration.registrationStatus}
+                                {selectedClubCombinedStatus}
                               </Badge>
-                              <Button
-                                type="button"
-                                size="sm"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  handleOpenConfirmationDialog(registration);
-                                }}
-                              >
-                                Confirm Registration
-                              </Button>
                             </div>
                           </div>
-                        ))}
+                          <div className="rounded-lg border bg-muted/20 p-3">
+                            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                              Email Address
+                            </p>
+                            <p className="mt-2 text-sm font-medium break-all">
+                              {selectedClubMember?.user?.email || "No email available"}
+                            </p>
+                          </div>
+                          <div className="rounded-lg border bg-muted/20 p-3">
+                            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                              Phone Number
+                            </p>
+                            <p className="mt-2 text-sm font-medium">
+                              {selectedClubMember?.user?.phone_number || "No phone number available"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {(expandedPricingSelections.length > 0 ||
+                        (registrationDetail.registration_fields || []).length > 0) && (
+                        <div className="rounded-xl border bg-background p-4">
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                            <h4 className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                              Registration Form
+                            </h4>
+                          </div>
+                          <div className="mt-4 grid gap-3 md:grid-cols-2">
+                            {expandedPricingSelections.length > 0 && (
+                              <div className="h-full rounded-lg border bg-muted/20 p-3">
+                                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                  {expandedRegistration.pricingFieldName}
+                                </p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                  {expandedPricingSelections.map((option) => (
+                                    <Badge
+                                      key={`${expandedRegistration.id}-${option.id}`}
+                                      variant="secondary"
+                                      className="px-3 py-1"
+                                    >
+                                      {option.label}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {(registrationDetail.registration_fields || []).map(
+                              (field, index) => (
+                                <div
+                                  key={`${expandedRegistration.id}-${field.field_id || field.field_label || index}`}
+                                  className="h-full rounded-lg border bg-muted/20 p-3"
+                                >
+                                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                    {field.field_label || `Field ${index + 1}`}
+                                  </p>
+                                  <p className="mt-2 whitespace-pre-wrap text-sm font-medium">
+                                    {formatFieldValue(field.value)}
+                                  </p>
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {expandedRegistration.notes && (
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-base">
+                              Internal Notes
+                            </CardTitle>
+                            <CardDescription>
+                              Mock operational context for this registration.
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-sm text-muted-foreground">
+                              {expandedRegistration.notes}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="registration-overview"
+              className="space-y-6"
+              initial={{ opacity: 0, rotateY: -18, x: -20 }}
+              animate={{ opacity: 1, rotateY: 0, x: 0 }}
+              exit={{ opacity: 0, rotateY: 18, x: 20 }}
+              transition={{ duration: 0.28, ease: "easeInOut" }}
+              style={{ transformStyle: "preserve-3d" }}
+            >
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold tracking-tight">
+                    Event Registrations
+                  </h1>
+                  <p className="text-muted-foreground">
+                    Review all registrations submitted across your club events.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 rounded-xl border bg-background px-4 py-3 shadow-sm">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    Use the filters below to focus on one event or payment state.
+                  </p>
+                </div>
+              </div>
+
+              {!club?.enable_events && (
+                <Card className="mb-6 overflow-hidden border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 p-0 shadow-sm">
+                  <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-300 bg-amber-100">
+                        <AlertCircle className="h-4 w-4 text-amber-700" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-semibold text-amber-950 sm:text-base">
+                          Events are currently disabled
+                        </p>
+                        <p className="max-w-2xl text-sm leading-snug text-amber-800">
+                          Go to the events page to enable events before managing registrations.
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => navigate("/events")}
+                      className="w-full bg-amber-700 text-white hover:bg-amber-800 sm:w-auto"
+                    >
+                      Go to Events
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
+              <Card className="border-sky-200 bg-gradient-to-r from-sky-50 via-background to-cyan-50 shadow-sm">
+                <CardContent className="flex flex-col gap-4 p-5">
+                  <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">
+                        Selected Event
+                      </p>
+                      <h2 className="mt-1 text-2xl font-semibold text-slate-900">
+                        {selectedEventTitle}
+                      </h2>
+                    </div>
+                    <Badge className="w-fit border-sky-200 bg-white text-sky-700">
+                      {eventOptions.length} available event
+                      {eventOptions.length === 1 ? "" : "s"}
+                    </Badge>
+                  </div>
+
+                  {showEventSearch && (
+                    <div className="grid gap-2">
+                      <Input
+                        value={eventSearchQuery}
+                        onChange={(event) => setEventSearchQuery(event.target.value)}
+                        placeholder="Search events"
+                        className="max-w-md bg-white"
+                      />
+                      {hasHiddenEventOptions && (
+                        <p className="text-xs text-muted-foreground">
+                          Showing {MAX_VISIBLE_EVENT_OPTIONS} of {filteredEventOptions.length} matching events.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-2">
+                    {visibleEventOptions.map((eventOption) => (
+                      <Button
+                        key={eventOption.value}
+                        variant={
+                          selectedEvent === eventOption.value ? "default" : "outline"
+                        }
+                        className={cn(
+                          "rounded-full",
+                          selectedEvent === eventOption.value &&
+                            "bg-sky-600 text-white hover:bg-sky-700",
+                        )}
+                        onClick={() => handleSelectEvent(eventOption.value)}
+                      >
+                        {eventOption.label}
+                      </Button>
+                    ))}
+                  </div>
+
+                  {showEventSearch && filteredEventOptions.length === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      No events match that search.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <div className="grid gap-4 md:grid-cols-4">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardDescription>Total registrations</CardDescription>
+                    <CardTitle className="text-3xl">{totalRegistrations}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Users className="h-4 w-4" />
+                      Across all active club events.
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardDescription>Awaiting payment</CardDescription>
+                    <CardTitle className="text-3xl">{awaitingPaymentCount}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CreditCard className="h-4 w-4" />
+                      Registrations still needing payment.
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardDescription>Confirmed entries</CardDescription>
+                    <CardTitle className="text-3xl">{confirmedCount}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Fully accepted registrations.
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardDescription>Revenue collected</CardDescription>
+                    <CardTitle className="text-3xl">
+                      {formatAmount(totalRevenue, club?.currency || "ZAR")}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Ticket className="h-4 w-4" />
+                      Paid amounts from current registrations.
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card>
+                <CardHeader>
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <CardTitle>Registration Queue</CardTitle>
+                      <CardDescription>
+                        Select a registration to inspect its event details and submitted answers.
+                      </CardDescription>
+                    </div>
+
+                    <div className="flex items-center gap-1 self-start">
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowPendingRegistrationsDropdown(
+                              (currentValue) => !currentValue,
+                            );
+                            setShowPendingPaymentsDropdown(false);
+                          }}
+                          className="relative rounded-lg p-2 transition-colors hover:bg-muted"
+                          title="Pending registrations"
+                        >
+                          <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
+                          {pendingConfirmationRegistrations.length > 0 && (
+                            <span className="absolute right-0 top-0 inline-flex -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-amber-600 px-2 py-0.5 text-xs font-bold leading-none text-white">
+                              {pendingConfirmationRegistrations.length}
+                            </span>
+                          )}
+                        </button>
+
+                        {showPendingRegistrationsDropdown && (
+                          <div className="absolute right-0 top-full z-50 mt-2 max-h-96 w-[min(24rem,calc(100vw-3rem))] overflow-y-auto rounded-lg border bg-background shadow-xl">
+                            <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b bg-background p-4">
+                              <h3 className="font-semibold text-foreground">
+                                Pending Registrations ({pendingConfirmationRegistrations.length})
+                              </h3>
+                              <button
+                                type="button"
+                                onClick={() => setShowPendingRegistrationsDropdown(false)}
+                                className="text-muted-foreground transition-colors hover:text-foreground"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+
+                            {pendingConfirmationRegistrations.length === 0 ? (
+                              <div className="p-4 text-sm text-muted-foreground">
+                                No pending registrations.
+                              </div>
+                            ) : (
+                              <div className="divide-y">
+                                {pendingConfirmationRegistrations.map((registration) => (
+                                  <div
+                                    key={registration.id}
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={() =>
+                                      handleSelectPendingRegistration(registration)
+                                    }
+                                    onKeyDown={(event) => {
+                                      if (event.key === "Enter" || event.key === " ") {
+                                        event.preventDefault();
+                                        handleSelectPendingRegistration(registration);
+                                      }
+                                    }}
+                                    className="cursor-pointer space-y-3 p-4 transition-colors hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                                  >
+                                    <div className="space-y-1">
+                                      <p className="text-sm font-medium text-foreground">
+                                        {registration.memberName}
+                                      </p>
+                                      <p className="text-sm text-muted-foreground">
+                                        {registration.eventTitle}
+                                      </p>
+                                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                                        <span>{registration.eventDateLabel}</span>
+                                        <span>&bull;</span>
+                                        <span>{formatSubmittedDate(registration.submittedAt)}</span>
+                                      </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between gap-3">
+                                      <Badge
+                                        variant="outline"
+                                        className={cn(
+                                          "border",
+                                          getRegistrationBadgeClassName(
+                                            registration.registrationStatus,
+                                          ),
+                                        )}
+                                      >
+                                        {registration.registrationStatus}
+                                      </Badge>
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          handleOpenConfirmationDialog(registration);
+                                        }}
+                                      >
+                                        Confirm Registration
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowPendingPaymentsDropdown((currentValue) => !currentValue);
+                            setShowPendingRegistrationsDropdown(false);
+                          }}
+                          className="relative rounded-lg p-2 transition-colors hover:bg-muted"
+                          title="Pending payments"
+                        >
+                          <CreditCard className="h-5 w-5 text-muted-foreground" />
+                          {pendingPaymentRegistrations.length > 0 && (
+                            <span className="absolute right-0 top-0 inline-flex -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold leading-none text-white">
+                              {pendingPaymentRegistrations.length}
+                            </span>
+                          )}
+                        </button>
+
+                        {showPendingPaymentsDropdown && (
+                          <div className="absolute right-0 top-full z-50 mt-2 max-h-96 w-[min(24rem,calc(100vw-3rem))] overflow-y-auto rounded-lg border bg-background shadow-xl">
+                            <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b bg-background p-4">
+                              <h3 className="font-semibold text-foreground">
+                                Pending Payments ({pendingPaymentRegistrations.length})
+                              </h3>
+                              <button
+                                type="button"
+                                onClick={() => setShowPendingPaymentsDropdown(false)}
+                                className="text-muted-foreground transition-colors hover:text-foreground"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+
+                            {pendingPaymentRegistrations.length === 0 ? (
+                              <div className="p-4 text-sm text-muted-foreground">
+                                No pending payments.
+                              </div>
+                            ) : (
+                              <div className="divide-y">
+                                {pendingPaymentRegistrations.map((registration) => {
+                                  const outstandingAmount = Math.max(
+                                    registration.amountDue - registration.amountPaid,
+                                    0,
+                                  );
+
+                                  return (
+                                    <div
+                                      key={registration.id}
+                                      role="button"
+                                      tabIndex={0}
+                                      onClick={() =>
+                                        handleSelectPendingPayment(registration)
+                                      }
+                                      onKeyDown={(event) => {
+                                        if (
+                                          event.key === "Enter" ||
+                                          event.key === " "
+                                        ) {
+                                          event.preventDefault();
+                                          handleSelectPendingPayment(registration);
+                                        }
+                                      }}
+                                      className="cursor-pointer space-y-3 p-4 transition-colors hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                                    >
+                                      <div className="space-y-1">
+                                        <p className="text-sm font-medium text-foreground">
+                                          {registration.memberName}
+                                        </p>
+                                        <p className="text-sm text-muted-foreground">
+                                          {registration.eventTitle}
+                                        </p>
+                                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                                          <span>{registration.eventDateLabel}</span>
+                                          <span>&bull;</span>
+                                          <span>
+                                            Outstanding {formatAmount(outstandingAmount, club?.currency || "ZAR")}
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      <div className="flex items-center justify-between gap-3">
+                                        <Badge
+                                          variant="outline"
+                                          className={cn(
+                                            "border",
+                                            getPaymentBadgeClassName(
+                                              registration.paymentStatus,
+                                            ),
+                                          )}
+                                        >
+                                          {registration.paymentStatus}
+                                        </Badge>
+                                        <Button
+                                          type="button"
+                                          size="sm"
+                                          onClick={(event) => {
+                                            event.stopPropagation();
+                                            handleOpenPaymentDialog(registration);
+                                          }}
+                                        >
+                                          Confirm Payment
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div
+                    className={cn(
+                      "grid items-start gap-3 sm:grid-cols-2 xl:grid-cols-4",
+                      allowsMultiplePricingFilters &&
+                        selectedPricingFilterOptions.length > 0 &&
+                        "pb-10",
+                    )}
+                  >
+                    <div className="grid h-full min-w-0 gap-2">
+                      <label className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        Payment Status
+                      </label>
+                      <Select
+                        value={selectedPaymentStatus}
+                        onValueChange={setSelectedPaymentStatus}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Filter by payment status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All payment states</SelectItem>
+                          <SelectItem value="Paid">Paid</SelectItem>
+                          <SelectItem value="Awaiting payment">
+                            Awaiting payment
+                          </SelectItem>
+                          <SelectItem value="Partially paid">Partially paid</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {registrationFilterFields.map((field) => {
+                      if (field.inputType === "TEXT") {
+                        return (
+                          <div key={field.id} className="grid h-full min-w-0 gap-2">
+                            <label className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                              {field.label}
+                            </label>
+                            <Input
+                              className="w-full"
+                              value={fieldFilters[field.id] || ""}
+                              onChange={(event) =>
+                                setFieldFilters((current) => ({
+                                  ...current,
+                                  [field.id]: event.target.value,
+                                }))
+                              }
+                              placeholder={`Filter by ${field.label.toLowerCase()}`}
+                            />
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div key={field.id} className="grid h-full min-w-0 gap-2">
+                          <label className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                            {field.label}
+                          </label>
+                          <Select
+                            value={fieldFilters[field.id] || "all"}
+                            onValueChange={(value) =>
+                              setFieldFilters((current) => {
+                                if (value === "all") {
+                                  const nextFilters = { ...current };
+                                  delete nextFilters[field.id];
+                                  return nextFilters;
+                                }
+
+                                return {
+                                  ...current,
+                                  [field.id]: value,
+                                };
+                              })
+                            }
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue
+                                placeholder={`Filter by ${field.label.toLowerCase()}`}
+                              />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All</SelectItem>
+                              {field.options.map((option) => (
+                                <SelectItem
+                                  key={`${field.id}-${option}`}
+                                  value={option}
+                                >
+                                  {option}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      );
+                    })}
+
+                    {pricingFilterOptions.length > 0 && (
+                      <div className="grid h-full min-w-0 gap-2">
+                        {allowsMultiplePricingFilters ? (
+                          <div className="relative grid gap-2">
+                            <div className="grid gap-2">
+                              <label className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                                {pricingFilterLabel}
+                              </label>
+                              <DropdownMenu
+                                open={pricingFilterDropdownOpen}
+                                onOpenChange={setPricingFilterDropdownOpen}
+                              >
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="w-full justify-between font-normal"
+                                  >
+                                    {selectedPricingFilters.length > 0
+                                      ? `${selectedPricingFilters.length} option${selectedPricingFilters.length === 1 ? "" : "s"} selected`
+                                      : `Filter by ${pricingFilterLabel.toLowerCase()}`}
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-[16rem]">
+                                  {pricingFilterOptions.map((option) => (
+                                    <DropdownMenuCheckboxItem
+                                      key={option.value}
+                                      checked={selectedPricingFilters.includes(option.value)}
+                                      onSelect={(event) => event.preventDefault()}
+                                      onCheckedChange={(checked) => {
+                                        setSelectedPricingFilters((currentFilters) => {
+                                          if (checked) {
+                                            return currentFilters.includes(option.value)
+                                              ? currentFilters
+                                              : [...currentFilters, option.value];
+                                          }
+
+                                          return currentFilters.filter(
+                                            (pricingFilter) => pricingFilter !== option.value,
+                                          );
+                                        });
+                                      }}
+                                    >
+                                      {option.label}
+                                    </DropdownMenuCheckboxItem>
+                                  ))}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+
+                            {selectedPricingFilterOptions.length > 0 && (
+                              <div className="absolute left-0 right-0 top-full mt-2 flex flex-wrap items-start gap-2">
+                                {selectedPricingFilterOptions.map((option) => (
+                                  <Badge
+                                    key={`selected-pricing-filter-${option.value}`}
+                                    variant="secondary"
+                                    className="px-2 py-0.5 text-xs"
+                                  >
+                                    {option.label}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <>
+                            <label className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                              {pricingFilterLabel}
+                            </label>
+                            <Select
+                              value={selectedPricingFilters[0] || "all"}
+                              onValueChange={(value) =>
+                                setSelectedPricingFilters(value === "all" ? [] : [value])
+                              }
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue
+                                  placeholder={`Filter by ${pricingFilterLabel.toLowerCase()}`}
+                                />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">All</SelectItem>
+                                {pricingFilterOptions.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
-              </div>
 
-              <div className="relative">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowPendingPaymentsDropdown((currentValue) => !currentValue);
-                  setShowPendingRegistrationsDropdown(false);
-                }}
-                className="relative rounded-lg p-2 transition-colors hover:bg-muted"
-                title="Pending payments"
-              >
-                <CreditCard className="h-5 w-5 text-muted-foreground" />
-                {pendingPaymentRegistrations.length > 0 && (
-                  <span className="absolute right-0 top-0 inline-flex -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold leading-none text-white">
-                    {pendingPaymentRegistrations.length}
-                  </span>
-                )}
-              </button>
-
-              {showPendingPaymentsDropdown && (
-                <div className="absolute right-0 top-full z-50 mt-2 max-h-96 w-[min(24rem,calc(100vw-3rem))] overflow-y-auto rounded-lg border bg-background shadow-xl">
-                  <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b bg-background p-4">
-                    <h3 className="font-semibold text-foreground">
-                      Pending Payments ({pendingPaymentRegistrations.length})
-                    </h3>
+                  <div className="flex items-center gap-3 border-t pt-4">
+                    <label className="text-sm font-medium">Results per page:</label>
+                    <Select
+                      value={pendingRegistrationsLimit.toString()}
+                      onValueChange={(value) => {
+                        setPendingRegistrationsLimit(Number.parseInt(value, 10));
+                      }}
+                    >
+                      <SelectTrigger className="w-[100px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="20">20</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <button
                       type="button"
-                      onClick={() => setShowPendingPaymentsDropdown(false)}
-                      className="text-muted-foreground transition-colors hover:text-foreground"
+                      onClick={handleRunRegistrationsQuery}
+                      title="Run database query to refresh event registrations data"
+                      disabled={!selectedEvent || isFetching}
+                      className="flex w-[100px] items-center justify-center rounded-[20px] bg-orange-400 px-4 py-1 font-bold transition hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      <X className="h-4 w-4" />
+                      Run
                     </button>
                   </div>
 
-                  {pendingPaymentRegistrations.length === 0 ? (
-                    <div className="p-4 text-sm text-muted-foreground">
-                      No pending payments.
-                    </div>
-                  ) : (
-                    <div className="divide-y">
-                      {pendingPaymentRegistrations.map((registration) => {
-                        const outstandingAmount = Math.max(
-                          registration.amountDue - registration.amountPaid,
-                          0,
-                        );
-
-                        return (
-                          <div
-                            key={registration.id}
-                            role="button"
-                            tabIndex={0}
-                            onClick={() =>
-                              handleSelectPendingPayment(registration)
-                            }
-                            onKeyDown={(event) => {
-                              if (
-                                event.key === "Enter" ||
-                                event.key === " "
-                              ) {
-                                event.preventDefault();
-                                handleSelectPendingPayment(registration);
-                              }
-                            }}
-                            className="cursor-pointer space-y-3 p-4 transition-colors hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-orange-400"
-                          >
-                            <div className="space-y-1">
-                              <p className="text-sm font-medium text-foreground">
-                                {registration.memberName}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {registration.eventTitle}
-                              </p>
-                              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                                <span>{registration.eventDateLabel}</span>
-                                <span>&bull;</span>
-                                <span>
-                                  Outstanding {formatAmount(outstandingAmount, club?.currency || "ZAR")}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center justify-between gap-3">
-                              <Badge
-                                variant="outline"
-                                className={cn(
-                                  "border",
-                                  getPaymentBadgeClassName(
-                                    registration.paymentStatus,
-                                  ),
-                                )}
-                              >
-                                {registration.paymentStatus}
-                              </Badge>
-                              <Button
-                                type="button"
-                                size="sm"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  handleOpenPaymentDialog(registration);
-                                }}
-                              >
-                                Confirm Payment
-                              </Button>
-                            </div>
-                          </div>
-                        );
-                      })}
+                  {nextRegistrationsPageToken && (
+                    <div className="flex items-center justify-between rounded-md border border-orange-600 bg-orange-100 p-4">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="h-5 w-5 text-orange-600" />
+                        <p className="font-medium text-black">More results available</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          isLoadingMoreRef.current = true;
+                          setRegistrationsPageToken(nextRegistrationsPageToken);
+                        }}
+                        disabled={isLoadingMore}
+                        className="flex items-center gap-2 rounded-[20px] border border-black bg-orange-100 px-4 py-2 font-semibold text-black transition hover:bg-orange-200 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isLoadingMore ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Loading...
+                          </>
+                        ) : (
+                          "Load More"
+                        )}
+                      </button>
                     </div>
                   )}
-                </div>
-              )}
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div
-            className={cn(
-              "grid items-start gap-3 sm:grid-cols-2 xl:grid-cols-4",
-              allowsMultiplePricingFilters && selectedPricingFilterOptions.length > 0 && "pb-10",
-            )}
-          >
-            <div className="grid h-full min-w-0 gap-2">
-              <label className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Payment Status
-              </label>
-              <Select
-                value={selectedPaymentStatus}
-                onValueChange={setSelectedPaymentStatus}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Filter by payment status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All payment states</SelectItem>
-                  <SelectItem value="Paid">Paid</SelectItem>
-                  <SelectItem value="Awaiting payment">
-                    Awaiting payment
-                  </SelectItem>
-                  <SelectItem value="Partially paid">Partially paid</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {registrationFilterFields.map((field) => {
-              if (field.inputType === "TEXT") {
-                return (
-                  <div key={field.id} className="grid h-full min-w-0 gap-2">
-                    <label className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                      {field.label}
-                    </label>
-                    <Input
-                      className="w-full"
-                      value={fieldFilters[field.id] || ""}
-                      onChange={(event) =>
-                        setFieldFilters((current) => ({
-                          ...current,
-                          [field.id]: event.target.value,
-                        }))
-                      }
-                      placeholder={`Filter by ${field.label.toLowerCase()}`}
-                    />
-                  </div>
-                );
-              }
 
-              return (
-                <div key={field.id} className="grid h-full min-w-0 gap-2">
-                  <label className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    {field.label}
-                  </label>
-                  <Select
-                    value={fieldFilters[field.id] || "all"}
-                    onValueChange={(value) =>
-                      setFieldFilters((current) => {
-                        if (value === "all") {
-                          const nextFilters = { ...current };
-                          delete nextFilters[field.id];
-                          return nextFilters;
-                        }
-
-                        return {
-                          ...current,
-                          [field.id]: value,
-                        };
-                      })
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue
-                        placeholder={`Filter by ${field.label.toLowerCase()}`}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
-                      {field.options.map((option) => (
-                        <SelectItem
-                          key={`${field.id}-${option}`}
-                          value={option}
-                        >
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              );
-            })}
-
-            {pricingFilterOptions.length > 0 && (
-              <div className="grid h-full min-w-0 gap-2">
-                {allowsMultiplePricingFilters ? (
-                  <div className="relative grid gap-2">
-                    <div className="grid gap-2">
-                      <label className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                        {pricingFilterLabel}
-                      </label>
-                      <DropdownMenu
-                        open={pricingFilterDropdownOpen}
-                        onOpenChange={setPricingFilterDropdownOpen}
-                      >
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full justify-between font-normal"
-                          >
-                            {selectedPricingFilters.length > 0
-                              ? `${selectedPricingFilters.length} option${selectedPricingFilters.length === 1 ? "" : "s"} selected`
-                              : `Filter by ${pricingFilterLabel.toLowerCase()}`}
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-[16rem]">
-                          {pricingFilterOptions.map((option) => (
-                            <DropdownMenuCheckboxItem
-                              key={option.value}
-                              checked={selectedPricingFilters.includes(option.value)}
-                              onSelect={(event) => event.preventDefault()}
-                              onCheckedChange={(checked) => {
-                                setSelectedPricingFilters((currentFilters) => {
-                                  if (checked) {
-                                    return currentFilters.includes(option.value)
-                                      ? currentFilters
-                                      : [...currentFilters, option.value];
-                                  }
-
-                                  return currentFilters.filter(
-                                    (pricingFilter) => pricingFilter !== option.value,
-                                  );
-                                });
-                              }}
+                  <div className="overflow-hidden rounded-xl border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/40 hover:bg-muted/40">
+                          <TableHead className="w-12 text-center"></TableHead>
+                          <TableHead className="w-[20%] text-center">
+                            Name
+                          </TableHead>
+                          <TableHead className="w-[20%] text-center">
+                            Registration ID
+                          </TableHead>
+                          <TableHead className="w-[20%] text-center">
+                            Payment
+                          </TableHead>
+                          <TableHead className="w-[20%] text-center">
+                            Status
+                          </TableHead>
+                          <TableHead className="w-[20%] text-center">
+                            Submitted
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {isTableLoading ? (
+                          <TableRow>
+                            <TableCell
+                              colSpan={6}
+                              className="py-10 text-center text-muted-foreground"
                             >
-                              {option.label}
-                            </DropdownMenuCheckboxItem>
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-
-                    {selectedPricingFilterOptions.length > 0 && (
-                      <div className="absolute left-0 right-0 top-full mt-2 flex flex-wrap items-start gap-2">
-                        {selectedPricingFilterOptions.map((option) => (
-                          <Badge
-                            key={`selected-pricing-filter-${option.value}`}
-                            variant="secondary"
-                            className="px-2 py-0.5 text-xs"
-                          >
-                            {option.label}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <>
-                    <label className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                      {pricingFilterLabel}
-                    </label>
-                    <Select
-                      value={selectedPricingFilters[0] || "all"}
-                      onValueChange={(value) =>
-                        setSelectedPricingFilters(value === "all" ? [] : [value])
-                      }
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue
-                          placeholder={`Filter by ${pricingFilterLabel.toLowerCase()}`}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All</SelectItem>
-                        {pricingFilterOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3 border-t pt-4">
-            <label className="text-sm font-medium">Results per page:</label>
-            <Select
-              value={pendingRegistrationsLimit.toString()}
-              onValueChange={(value) => {
-                setPendingRegistrationsLimit(Number.parseInt(value, 10));
-              }}
-            >
-              <SelectTrigger className="w-[100px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="20">20</SelectItem>
-              </SelectContent>
-            </Select>
-            <button
-              type="button"
-              onClick={handleRunRegistrationsQuery}
-              title="Run database query to refresh event registrations data"
-              disabled={!selectedEvent || isFetching}
-              className="px-4 py-1 w-[100px] bg-orange-400 hover:bg-orange-500 rounded-[20px] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center font-bold"
-            >
-              Run
-            </button>
-          </div>
-
-          {nextRegistrationsPageToken && (
-            <div className="flex items-center justify-between rounded-md border border-orange-600 bg-orange-100 p-4">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-orange-600" />
-                <p className="font-medium text-black">More results available</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  isLoadingMoreRef.current = true;
-                  setRegistrationsPageToken(nextRegistrationsPageToken);
-                }}
-                disabled={isLoadingMore}
-                className="flex items-center gap-2 rounded-[20px] border border-black bg-orange-100 px-4 py-2 font-semibold text-black transition hover:bg-orange-200 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {isLoadingMore ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Loading...
-                  </>
-                ) : (
-                  "Load More"
-                )}
-              </button>
-            </div>
-          )}
-
-          <div className="overflow-hidden rounded-xl border">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/40 hover:bg-muted/40">
-                  <TableHead className="w-12 text-center"></TableHead>
-                  <TableHead className="w-[20%] text-center">
-                    Name
-                  </TableHead>
-                  <TableHead className="w-[20%] text-center">
-                    Registration ID
-                  </TableHead>
-                  <TableHead className="w-[20%] text-center">
-                    Payment
-                  </TableHead>
-                  <TableHead className="w-[20%] text-center">
-                    Status
-                  </TableHead>
-                  <TableHead className="w-[20%] text-center">
-                    Submitted
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isTableLoading ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      className="py-10 text-center text-muted-foreground"
-                    >
-                      Loading registrations...
-                    </TableCell>
-                  </TableRow>
-                ) : isError ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      className="py-10 text-center text-destructive"
-                    >
-                      Unable to load event registrations right now.
-                    </TableCell>
-                  </TableRow>
-                ) : filteredRegistrations.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      className="py-10 text-center text-muted-foreground"
-                    >
-                      No registrations are available for the selected event.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredRegistrations.map((registration) => (
-                    <Fragment key={registration.id}>
-                      <TableRow
-                        id={`registration-row-${registration.id}`}
-                        className={cn(
-                          "border-border/60 transition-colors",
-                          highlightedRegistrationId === registration.id &&
-                            "bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-50",
-                        )}
-                      >
-                        <TableCell className="text-center">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              setExpandedRegistrationId((currentValue) =>
-                                currentValue === registration.id
-                                  ? null
-                                  : registration.id,
-                              )
-                            }
-                            className="h-7 w-7 p-0"
-                          >
-                            <ChevronDown
+                              Loading registrations...
+                            </TableCell>
+                          </TableRow>
+                        ) : isError ? (
+                          <TableRow>
+                            <TableCell
+                              colSpan={6}
+                              className="py-10 text-center text-destructive"
+                            >
+                              Unable to load event registrations right now.
+                            </TableCell>
+                          </TableRow>
+                        ) : filteredRegistrations.length === 0 ? (
+                          <TableRow>
+                            <TableCell
+                              colSpan={6}
+                              className="py-10 text-center text-muted-foreground"
+                            >
+                              No registrations are available for the selected event.
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          filteredRegistrations.map((registration) => (
+                            <TableRow
+                              key={registration.id}
+                              id={`registration-row-${registration.id}`}
                               className={cn(
-                                "h-4 w-4 transition-transform",
-                                expandedRegistrationId === registration.id &&
-                                  "rotate-180",
+                                "cursor-pointer border-border/60 transition-colors hover:bg-muted/20",
+                                highlightedRegistrationId === registration.id &&
+                                  "bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-50",
                               )}
-                            />
-                          </Button>
-                        </TableCell>
-                        <TableCell className="w-[20%] text-center">
-                          <div>
-                            <p className="font-medium">{`${registration.memberFirstName} ${registration.memberSurname}`}</p>
-                            <div className="mt-1 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                              <span className="font-mono">
-                                Member ID: {getShortUserId(registration.userId)}
-                              </span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-5 w-5 p-0"
-                                onClick={() =>
-                                  void handleCopy(
-                                    registration.userId,
-                                    `user-${registration.id}`,
-                                  )
-                                }
-                                title="Copy user ID"
-                              >
-                                {copiedRegistrationId ===
-                                `user-${registration.id}` ? (
-                                  <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
-                                ) : (
-                                  <Copy className="h-3.5 w-3.5" />
-                                )}
-                              </Button>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="w-[20%] text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            <span className="rounded bg-muted px-2 py-1 font-mono text-xs">
-                              {getShortId(registration.id)}
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0"
-                              onClick={() =>
-                                void handleCopy(
-                                  registration.id,
-                                  `registration-${registration.id}`,
-                                )
-                              }
-                              title="Copy registration ID"
+                              onClick={() => handleFocusRegistration(registration)}
                             >
-                              {copiedRegistrationId ===
-                              `registration-${registration.id}` ? (
-                                <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
-                              ) : (
-                                <Copy className="h-3.5 w-3.5" />
-                              )}
-                            </Button>
-                          </div>
-                        </TableCell>
-                        <TableCell className="w-[20%] text-center">
-                          <div className="space-y-1">
-                            {(() => {
-                              const paymentLabel = isFreeRegistration(registration)
-                                ? "FREE"
-                                : registration.paymentStatus;
-
-                              return (
-                                <>
-                                  <Badge
-                                    className={getPaymentBadgeClassName(
-                                      paymentLabel,
-                                    )}
-                                  >
-                                    {paymentLabel}
-                                  </Badge>
-                                  {!isFreeRegistration(registration) &&
-                                    registration.amountDue > 0 &&
-                                    registration.paymentStatus !== "Paid" && (
-                                      <p className="text-xs text-muted-foreground">
-                                        {formatAmount(
-                                          registration.amountPaid,
-                                          club?.currency || "ZAR",
-                                        )}{" "}
-                                        of{" "}
-                                        {formatAmount(
-                                          registration.amountDue,
-                                          club?.currency || "ZAR",
-                                        )}
-                                      </p>
-                                    )}
-                                </>
-                              );
-                            })()}
-                          </div>
-                        </TableCell>
-                        <TableCell className="w-[20%] text-center">
-                          <Badge
-                            className={getRegistrationBadgeClassName(
-                              registration.registrationStatus,
-                            )}
-                          >
-                            {registration.registrationStatus}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="w-[20%] text-center text-sm text-muted-foreground">
-                          {formatSubmittedDate(registration.submittedAt)}
-                        </TableCell>
-                      </TableRow>
-
-                      {expandedRegistrationId === registration.id && (
-                        <TableRow className="bg-muted/20 hover:bg-muted/20">
-                          <TableCell colSpan={6} className="p-4">
-                            {isRegistrationDetailLoading ? (
-                              <div className="flex min-h-60 items-center justify-center rounded-xl border bg-background">
-                                <div className="flex items-center gap-3 text-muted-foreground">
-                                  <Loader2 className="h-5 w-5 animate-spin" />
-                                  Loading registration details...
-                                </div>
-                              </div>
-                            ) : isRegistrationDetailError ? (
-                              <div className="flex min-h-60 items-center justify-center rounded-xl border bg-background text-destructive">
-                                Unable to load registration details right now.
-                              </div>
-                            ) : (
-                              <div className="space-y-4">
-                                <div className="rounded-xl border bg-background p-4">
-                                  <div className="flex flex-wrap items-start justify-between gap-3">
-                                    <div>
-                                      <p className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                                        Registration Details
-                                      </p>
-                                      <h3 className="mt-2 text-lg font-semibold">
-                                        {registration.memberName}
-                                      </h3>
-                                    </div>
+                              <TableCell className="text-center">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    handleFocusRegistration(registration);
+                                  }}
+                                  className="h-7 w-7 p-0"
+                                >
+                                  <ChevronDown className="h-4 w-4 -rotate-90" />
+                                </Button>
+                              </TableCell>
+                              <TableCell className="w-[20%] text-center">
+                                <div>
+                                  <p className="font-medium">{`${registration.memberFirstName} ${registration.memberSurname}`}</p>
+                                  <div className="mt-1 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                                    <span className="font-mono">
+                                      Member ID: {getShortUserId(registration.userId)}
+                                    </span>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-5 w-5 p-0"
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        void handleCopy(
+                                          registration.userId,
+                                          `user-${registration.id}`,
+                                        );
+                                      }}
+                                      title="Copy user ID"
+                                    >
+                                      {copiedRegistrationId === `user-${registration.id}` ? (
+                                        <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+                                      ) : (
+                                        <Copy className="h-3.5 w-3.5" />
+                                      )}
+                                    </Button>
                                   </div>
-
-                                  {registration.registrationStatus === "Confirmed" &&
-                                    registration.registrationTags.length > 0 && (
-                                      <div className="mt-4 rounded-lg border bg-muted/20 p-3">
-                                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                                          Registration Tags
-                                        </p>
-                                        <div className="mt-3 flex flex-wrap gap-2">
-                                          {registration.registrationTags.map((tag) => (
-                                            <Badge
-                                              key={`${registration.id}-${tag.id}`}
-                                              variant="secondary"
-                                              className="px-3 py-1"
-                                            >
-                                              {tag.label}: {tag.value}
-                                            </Badge>
-                                          ))}
-                                        </div>
-                                      </div>
+                                </div>
+                              </TableCell>
+                              <TableCell className="w-[20%] text-center">
+                                <div className="flex items-center justify-center gap-2">
+                                  <span className="rounded bg-muted px-2 py-1 font-mono text-xs">
+                                    {getShortId(registration.id)}
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 w-6 p-0"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      void handleCopy(
+                                        registration.id,
+                                        `registration-${registration.id}`,
+                                      );
+                                    }}
+                                    title="Copy registration ID"
+                                  >
+                                    {copiedRegistrationId === `registration-${registration.id}` ? (
+                                      <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+                                    ) : (
+                                      <Copy className="h-3.5 w-3.5" />
                                     )}
+                                  </Button>
+                                </div>
+                              </TableCell>
+                              <TableCell className="w-[20%] text-center">
+                                <div className="space-y-1">
+                                  {(() => {
+                                    const paymentLabel = isFreeRegistration(registration)
+                                      ? "FREE"
+                                      : registration.paymentStatus;
 
-                                  <div className="mt-4 grid gap-3 md:grid-cols-2">
-                                    <div className="rounded-lg border bg-muted/20 p-3">
-                                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                                        Event
-                                      </p>
-                                      <p className="mt-2 font-medium">
-                                        {registration.eventTitle}
-                                      </p>
-                                    </div>
-                                    <div className="rounded-lg border bg-muted/20 p-3">
-                                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                                        Registration amount
-                                      </p>
-                                      <p className="mt-2 font-medium">
-                                        {formatRegistrationAmount(
-                                          registration,
-                                          club?.currency || "ZAR",
-                                        )}
-                                      </p>
-                                      {!isFreeRegistration(registration) && (
-                                        <>
-                                          <p className="mt-2 text-sm text-muted-foreground">
-                                            Paid:{" "}
-                                            {formatAmount(
-                                              registration.amountPaid,
-                                              club?.currency || "ZAR",
-                                            )}
-                                          </p>
-                                          {Math.max(
-                                            registration.amountDue -
-                                              registration.amountPaid,
-                                            0,
-                                          ) > 0 && (
-                                            <p className="text-sm text-muted-foreground">
-                                              Outstanding:{" "}
+                                    return (
+                                      <>
+                                        <Badge
+                                          className={getPaymentBadgeClassName(paymentLabel)}
+                                        >
+                                          {paymentLabel}
+                                        </Badge>
+                                        {!isFreeRegistration(registration) &&
+                                          registration.amountDue > 0 &&
+                                          registration.paymentStatus !== "Paid" && (
+                                            <p className="text-xs text-muted-foreground">
                                               {formatAmount(
-                                                Math.max(
-                                                  registration.amountDue -
-                                                    registration.amountPaid,
-                                                  0,
-                                                ),
+                                                registration.amountPaid,
+                                                club?.currency || "ZAR",
+                                              )}{" "}
+                                              of{" "}
+                                              {formatAmount(
+                                                registration.amountDue,
                                                 club?.currency || "ZAR",
                                               )}
                                             </p>
                                           )}
-                                          {registration.paymentStatus !== "Paid" &&
-                                            Math.max(
-                                              registration.amountDue -
-                                                registration.amountPaid,
-                                              0,
-                                            ) > 0 && (
-                                              <Button
-                                                type="button"
-                                                className="mt-3"
-                                                onClick={() =>
-                                                  handleOpenPaymentDialog(
-                                                    registration,
-                                                  )
-                                                }
-                                              >
-                                                Confirm Payment
-                                              </Button>
-                                            )}
-                                        </>
-                                      )}
-                                    </div>
-                                  </div>
+                                      </>
+                                    );
+                                  })()}
                                 </div>
-
-                                {(expandedPricingSelections.length > 0 ||
-                                  (registrationDetail.registration_fields || [])
-                                    .length > 0) && (
-                                  <div className="rounded-xl border bg-background p-4">
-                                    <div className="flex items-center gap-2">
-                                      <Users className="h-4 w-4 text-muted-foreground" />
-                                      <h4 className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                                        Registration Form
-                                      </h4>
-                                    </div>
-                                    <div className="mt-4 grid gap-3 md:grid-cols-2">
-                                      {expandedPricingSelections.length > 0 && (
-                                        <div className="h-full rounded-lg border bg-muted/20 p-3">
-                                          <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                                            {registration.pricingFieldName}
-                                          </p>
-                                          <div className="mt-3 flex flex-wrap gap-2">
-                                            {expandedPricingSelections.map(
-                                              (option) => (
-                                                <Badge
-                                                  key={`${registration.id}-${option.id}`}
-                                                  variant="secondary"
-                                                  className="px-3 py-1"
-                                                >
-                                                  {option.label}
-                                                </Badge>
-                                              ),
-                                            )}
-                                          </div>
-                                        </div>
-                                      )}
-                                      {(
-                                        registrationDetail.registration_fields ||
-                                        []
-                                      ).map((field, index) => (
-                                        <div
-                                          key={`${registration.id}-${field.field_id || field.field_label || index}`}
-                                          className="h-full rounded-lg border bg-muted/20 p-3"
-                                        >
-                                          <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                                            {field.field_label ||
-                                              `Field ${index + 1}`}
-                                          </p>
-                                          <p className="mt-2 text-sm font-medium whitespace-pre-wrap">
-                                            {formatFieldValue(field.value)}
-                                          </p>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                                {registration.notes && (
-                                  <Card>
-                                    <CardHeader>
-                                      <CardTitle className="text-base">
-                                        Internal Notes
-                                      </CardTitle>
-                                      <CardDescription>
-                                        Mock operational context for this
-                                        registration.
-                                      </CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                      <p className="text-sm text-muted-foreground">
-                                        {registration.notes}
-                                      </p>
-                                    </CardContent>
-                                  </Card>
-                                )}
-                              </div>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </Fragment>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                              </TableCell>
+                              <TableCell className="w-[20%] text-center">
+                                <Badge
+                                  className={getRegistrationBadgeClassName(
+                                    registration.registrationStatus,
+                                  )}
+                                >
+                                  {registration.registrationStatus}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="w-[20%] text-center text-sm text-muted-foreground">
+                                {formatSubmittedDate(registration.submittedAt)}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       <Dialog open={paymentDialogOpen} onOpenChange={handleClosePaymentDialog}>
         <DialogContent className="sm:max-w-[480px]">

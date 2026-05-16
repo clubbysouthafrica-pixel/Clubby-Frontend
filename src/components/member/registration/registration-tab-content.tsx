@@ -6,6 +6,7 @@ interface RegistrationTabContentProps {
   clubName: string;
   currency: string;
   clubAccountId: string;
+  userId: string;
 }
 
 export function RegistrationTabContent({
@@ -13,6 +14,7 @@ export function RegistrationTabContent({
   clubName,
   currency,
   clubAccountId,
+  userId,
 }: RegistrationTabContentProps) {
   return (
     <TabsContent value="member-registration">
@@ -21,6 +23,7 @@ export function RegistrationTabContent({
         clubName={clubName}
         currency={currency}
         clubAccountId={clubAccountId}
+        userId={userId}
       />
     </TabsContent>
   );

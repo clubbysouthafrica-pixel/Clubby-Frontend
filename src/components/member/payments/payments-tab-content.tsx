@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { TabsContent } from "@/components/ui/tabs";
 import { 
@@ -17,7 +16,6 @@ import {
   Wallet,
   ChevronRight,
   Clock3,
-  Landmark,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatAmount } from "@/data/currencies";
@@ -89,14 +87,7 @@ export default function PaymentsTabContent({
   highlightedTransactionId,
   highlightedEventRegistrationId,
   expandedRows,
-  editingReference,
-  newReference,
-  savingReference,
   toggleRow,
-  setEditingReference,
-  setNewReference,
-  handleSaveReference,
-  handleCancelEdit,
   handlePayHereClick,
   onViewPaymentTarget,
   onViewRegistrationTarget,
@@ -303,10 +294,9 @@ export default function PaymentsTabContent({
 
   return (
     <TabsContent value="bank" className="mt-3 sm:mt-6">
-      <div className="grid gap-3 sm:gap-5 xl:grid-cols-[320px_minmax(0,1fr)] xl:gap-6">
-        <aside className="space-y-3 sm:space-y-5 xl:sticky xl:top-24 xl:self-start xl:space-y-6">
-          <Card className="overflow-hidden border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] text-slate-900 shadow-[0_24px_70px_-34px_rgba(15,23,42,0.22)]">
-            <CardContent className="space-y-4 p-3 sm:space-y-6 sm:p-6">
+      <div className="grid gap-3 sm:gap-5 xl:grid-cols-[320px_minmax(0,1fr)] xl:items-stretch xl:gap-6">
+        <Card className="h-full overflow-hidden border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] text-slate-900 shadow-[0_24px_70px_-34px_rgba(15,23,42,0.22)]">
+          <CardContent className="flex h-full flex-col space-y-4 p-3 sm:space-y-6 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div className="space-y-1.5 sm:space-y-2">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
@@ -352,7 +342,7 @@ export default function PaymentsTabContent({
                 ) : null}
               </div>
 
-              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <div className="mt-auto grid grid-cols-2 gap-2 sm:gap-3">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
                   <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Paid</p>
                   <p className="mt-1 text-xl font-semibold sm:mt-2 sm:text-2xl">{paidTransactionsCount}</p>
@@ -366,87 +356,11 @@ export default function PaymentsTabContent({
                   <p className="mt-1 text-xl font-semibold sm:mt-2 sm:text-2xl">{formatAmount(totalTransactionAmount, data.currency)}</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+          </CardContent>
+        </Card>
 
-          {bankDetails?.registration_payment_reference ? (
-            <Card className="border-slate-200 bg-white shadow-[0_18px_50px_-32px_rgba(15,23,42,0.35)]">
-              <CardHeader className="px-3 pb-2 pt-3 sm:px-6 sm:pb-3 sm:pt-6">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 sm:h-11 sm:w-11">
-                    <Landmark className="h-5 w-5 text-slate-700" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">Payment reference</CardTitle>
-                    <CardDescription>Use this reference when paying by transfer.</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3 px-3 pb-3 pt-0 sm:space-y-4 sm:px-6 sm:pb-6">
-                {!editingReference ? (
-                  <>
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 sm:px-4 sm:py-4">
-                      <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Reference number</p>
-                      <p className="mt-1.5 break-all font-mono text-base font-semibold text-slate-950 sm:mt-2 sm:text-lg">
-                        {bankDetails.registration_payment_reference}
-                      </p>
-                    </div>
-                    <p className="text-sm leading-5 text-slate-500 sm:leading-6">
-                      Club staff uses this reference to reconcile manual payments like EFT deposits against your member account.
-                    </p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setEditingReference(true)}
-                      className="h-9 w-full border-slate-200 text-sm"
-                    >
-                      Edit reference
-                    </Button>
-                  </>
-                ) : (
-                  <div className="space-y-2.5 sm:space-y-3">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="reference-input" className="text-xs uppercase tracking-[0.16em] text-slate-500">
-                        New reference number
-                      </Label>
-                      <Input
-                        id="reference-input"
-                        value={newReference}
-                        onChange={(e) => setNewReference(e.target.value)}
-                        placeholder="Enter new reference number"
-                        className="font-mono"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={handleSaveReference}
-                        disabled={savingReference || !newReference.trim()}
-                        className="h-9 flex-1 text-sm"
-                      >
-                        {savingReference ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : null}
-                        Save
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={handleCancelEdit}
-                        disabled={savingReference}
-                        className="h-9 flex-1 border-slate-200 text-sm"
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ) : null}
-        </aside>
-
-        <div className="space-y-3 sm:space-y-5 xl:space-y-6">
-          {!data?.resubmission_required ? (
-            <Card className="overflow-hidden border-0 bg-[radial-gradient(circle_at_top_left,_rgba(15,23,42,0.08),_transparent_32%),linear-gradient(180deg,#fff_0%,#f8fafc_100%)] shadow-[0_20px_60px_-34px_rgba(15,23,42,0.35)]">
+        {!data?.resubmission_required ? (
+          <Card className="h-full overflow-hidden border-0 bg-[radial-gradient(circle_at_top_left,_rgba(15,23,42,0.08),_transparent_32%),linear-gradient(180deg,#fff_0%,#f8fafc_100%)] shadow-[0_20px_60px_-34px_rgba(15,23,42,0.35)]">
               <CardHeader className="border-b border-slate-200 px-3 pb-3 pt-3 sm:px-6 sm:pb-5 sm:pt-6">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-4">
                   <div className="flex items-start gap-4">
@@ -477,7 +391,12 @@ export default function PaymentsTabContent({
                     </p>
                   </div>
                 ) : (
-                  <div className={cn("grid gap-3 sm:gap-4", transactionOptions.length > 3 && "xl:max-h-[44rem] xl:overflow-y-auto xl:pr-1")}>
+                  <div
+                    className={cn(
+                      "grid gap-3 sm:gap-4",
+                      "xl:max-h-[25rem] xl:overflow-y-auto xl:pr-1",
+                    )}
+                  >
                     {hasFallbackOutstandingPayment ? (
                       <div className="rounded-[1.75rem] border border-slate-200 bg-white p-3.5 shadow-[0_16px_40px_-30px_rgba(15,23,42,0.35)] transition-all sm:p-5">
                         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-5">
@@ -538,6 +457,7 @@ export default function PaymentsTabContent({
                       const paymentTitle = paymentOption.type || `Payment ${index + 1}`;
                       const orderId = paymentOption.order_id;
                       const eventRegistrationId = paymentOption.event_registration_id;
+                      const storageId = paymentOption.storage_id;
 
                       return (
                         <div
@@ -563,7 +483,7 @@ export default function PaymentsTabContent({
                               <div className="mt-3 flex flex-col gap-2.5 md:mt-4 md:flex-row md:items-end md:justify-between md:gap-3">
                                 <div>
                                   <h3 className="text-lg font-semibold text-slate-950 sm:text-xl">
-                                    {paymentTitle === "ORDER" ? "Shop order" : paymentTitle}
+                                    {paymentTitle === "ORDER" ? "Shop Purchase" : paymentTitle === "STORAGE" ? "Storage Purchase" : paymentTitle === "REGISTRATION" ? "Registration Fee" : paymentTitle}
                                   </h3>
                                   <p className="mt-1 text-sm leading-5 text-slate-500 sm:leading-6">
                                     Transaction amount outstanding for this payment target.
@@ -580,7 +500,7 @@ export default function PaymentsTabContent({
                             </div>
 
                             <div className="flex flex-col gap-2 lg:w-[180px]">
-                              {(orderId || eventRegistrationId) ? (
+                              {(orderId || eventRegistrationId || storageId) ? (
                                 <Button
                                   variant="outline"
                                   onClick={() => onViewPaymentTarget(paymentOption)}
@@ -606,10 +526,10 @@ export default function PaymentsTabContent({
                   </div>
                 )}
               </CardContent>
-            </Card>
-          ) : null}
+          </Card>
+        ) : null}
 
-          <Card className="overflow-hidden border-0 bg-white shadow-[0_20px_60px_-34px_rgba(15,23,42,0.35)]">
+        <Card className="overflow-hidden border-0 bg-white shadow-[0_20px_60px_-34px_rgba(15,23,42,0.35)] xl:col-span-2">
             <CardHeader className="border-b border-slate-200 px-3 pb-3 pt-3 sm:px-6 sm:pb-5 sm:pt-6">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-4">
                 <div className="flex items-start gap-4">
@@ -807,7 +727,6 @@ export default function PaymentsTabContent({
               )}
             </CardContent>
           </Card>
-        </div>
       </div>
     </TabsContent>
   );

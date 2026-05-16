@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import {
   AlertCircle,
@@ -6,11 +7,13 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Download,
   Loader2,
   PencilIcon,
   Tag,
   X,
 } from "lucide-react";
+import QRCode from "react-qr-code";
 
 import { useFetchMemberRegisteration } from "@/queries/registration-form";
 import {
@@ -222,13 +225,17 @@ export function MemberRegistration({
   clubName,
   currency,
   membershipStatus,
+  userId,
 }: {
   clubAccountId: string;
   currency: string;
   clubName: string;
   membershipStatus: string;
+  userId: string;
 }) {
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const [showRegistrationForm, setShowRegistrationForm] = useState(false);
+  const [isQrPreviewOpen, setIsQrPreviewOpen] = useState(false);
   const [isAdminNotesOpen, setIsAdminNotesOpen] = useState(true);
   const [isVariablesOpen, setIsVariablesOpen] = useState(false);
   const [isTagsOpen, setIsTagsOpen] = useState(true);
@@ -239,6 +246,7 @@ export function MemberRegistration({
   const [isSaving, setIsSaving] = useState(false);
   const [loadingFieldId, setLoadingFieldId] = useState<string | null>(null);
   const [fieldMetadata, setFieldMetadata] = useState<Record<string, MemberFieldMetadata>>({});
+  const verificationQrRef = useRef<HTMLDivElement | null>(null);
 
   const { data, isLoading } = useFetchMemberRegisteration(clubAccountId, currency);
 
@@ -275,6 +283,15 @@ export function MemberRegistration({
   }, [data?.variables]);
 
   const memberTags = useMemo(() => extractMemberTags(data), [data]);
+  const verificationLink = useMemo(() => {
+    if (!clubAccountId || !userId || typeof window === "undefined") {
+      return "";
+    }
+
+    const searchParams = new URLSearchParams({ clubName });
+
+    return `${window.location.origin}/clubs/${clubAccountId}/member-verification/${userId}?${searchParams.toString()}`;
+  }, [clubAccountId, clubName, userId]);
 
   const membershipTone = getMembershipTone(membershipStatus);
   const currentPage = visiblePages[currentPageIndex];
@@ -290,6 +307,67 @@ export function MemberRegistration({
   const handleCancelEdit = () => {
     setEditingFieldId(null);
     setEditValue("");
+  };
+
+  const handleOpenVerificationLink = () => {
+    if (!verificationLink) {
+      toast.error("Verification link is not available yet.", { duration: 2500 });
+      return;
+    }
+
+    window.open(verificationLink, "_blank", "noopener,noreferrer");
+  };
+
+  const handleDownloadVerificationQr = () => {
+    const svgElement = verificationQrRef.current?.querySelector("svg");
+
+    if (!svgElement) {
+      toast.error("QR code is not available to download yet.", { duration: 2500 });
+      return;
+    }
+
+    try {
+      const serializer = new XMLSerializer();
+      const svgMarkup = serializer.serializeToString(svgElement);
+      const svgBlob = new Blob([svgMarkup], { type: "image/svg+xml;charset=utf-8" });
+      const objectUrl = URL.createObjectURL(svgBlob);
+      const link = document.createElement("a");
+      const fileName = `${clubName.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "club"}-member-verification-qr.svg`;
+
+      link.href = objectUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(objectUrl);
+    } catch (error) {
+      console.error("Error downloading verification QR code:", error);
+      toast.error("Unable to download the QR code.", { duration: 2500 });
+    }
+  };
+
+  const handleOpenRegistrationView = () => {
+    if (!currentPage) {
+      return;
+    }
+
+    setShowRegistrationForm(true);
+    window.requestAnimationFrame(() => {
+      document.getElementById("registration-page-card")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  };
+
+  const handleOpenOverview = () => {
+    setShowRegistrationForm(false);
+    window.requestAnimationFrame(() => {
+      document.getElementById("registration-overview-card")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
   };
 
   const handleSave = async (field: RegistrationField) => {
@@ -637,183 +715,254 @@ export function MemberRegistration({
 
   return (
     <div className="flex w-full flex-col items-center gap-4 bg-gradient-to-b from-gray-50 to-white px-3 py-4 lg:px-4 lg:gap-8 lg:py-10">
-      <div className="w-full max-w-4xl">
-        <Card className="overflow-hidden border-0 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)]">
-          <CardHeader className="border-b border-slate-200 bg-white px-3 py-4 sm:px-6 sm:py-6 lg:px-10 lg:py-8">
-            <div className="flex flex-col items-center gap-3 text-center sm:gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-lg font-semibold text-slate-700 shadow-sm sm:h-20 sm:w-20 sm:text-2xl">
-                {clubName
-                  .split(" ")
-                  .map((word) => word[0])
-                  .join("")
-                  .slice(0, 2)}
-              </div>
-              <div className="space-y-1.5 sm:space-y-2">
-                <Badge className={cn("border px-3 py-1 text-xs font-semibold", membershipTone.badgeClassName)}>
-                  {formatMembershipLabel(membershipStatus)}
-                </Badge>
-                <CardTitle className="text-xl font-bold text-slate-950 sm:text-2xl lg:text-4xl">
-                  {membershipStatus === "Resubmission required"
-                    ? `Review registration for ${clubName}`
-                    : `${clubName} registration`}
-                </CardTitle>
-                <CardDescription className="mx-auto max-w-2xl text-sm leading-5 text-slate-600 sm:leading-6 lg:text-base">
-                  {membershipTone.description}
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3 bg-white px-3 py-3 sm:space-y-4 sm:px-6 sm:py-6 lg:px-10 lg:py-8">
-            <div className={cn("rounded-2xl border px-3 py-3 sm:px-5 sm:py-4", membershipTone.panelClassName)}>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-semibold">Current registration status</p>
-                  <p className="mt-1 text-sm leading-5 opacity-90 sm:leading-6">{membershipTone.description}</p>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-left sm:min-w-[220px]">
-                  <div className="rounded-xl border border-white/70 bg-white/70 px-3 py-2">
-                    <p className="text-[11px] uppercase tracking-[0.18em] opacity-70">Pages</p>
-                    <p className="mt-1 text-lg font-semibold">{visiblePages.length}</p>
-                  </div>
-                  <div className="rounded-xl border border-white/70 bg-white/70 px-3 py-2">
-                    <p className="text-[11px] uppercase tracking-[0.18em] opacity-70">Notes</p>
-                    <p className="mt-1 text-lg font-semibold">{visibleAdminNotes.length}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {deregReason ? (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-3 text-amber-950 sm:px-5 sm:py-4">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold">Why was this registration deregistered?</p>
-                    <p className="whitespace-pre-wrap text-sm leading-5 text-amber-900/90 sm:leading-6">{deregReason}</p>
-                  </div>
-                </div>
-              </div>
-            ) : null}
-
-            {memberTags.length > 0 ? (
-              <section className="rounded-2xl border border-slate-200 bg-slate-50/70">
-                <button
-                  type="button"
-                  onClick={() => setIsTagsOpen((currentValue) => !currentValue)}
-                  className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left sm:gap-4 sm:px-5 sm:py-4"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">Member tags</p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      Club-assigned tags and identifiers linked to this registration.
-                    </p>
-                  </div>
-                  <ChevronDown
-                    className={cn(
-                      "h-4 w-4 shrink-0 text-slate-500 transition-transform",
-                      isTagsOpen ? "rotate-180" : "rotate-0",
-                    )}
-                  />
-                </button>
-                {isTagsOpen ? (
-                  <div className="border-t border-slate-200 px-3 py-3 sm:px-5 sm:py-4">
-                    <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                      {memberTags.map((tag) => (
-                        <Badge
-                          key={tag.id}
-                          className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700 shadow-sm"
-                        >
-                          <Tag className="h-3.5 w-3.5" />
-                          {tag.label}: {tag.value}
+      <div className="w-full max-w-4xl perspective-[1600px] min-h-[720px]">
+        <AnimatePresence mode="wait" initial={false}>
+          {!showRegistrationForm ? (
+            <motion.div
+              key="registration-overview"
+              id="registration-overview-card"
+              initial={{ opacity: 0, rotateY: -14, x: -16 }}
+              animate={{ opacity: 1, rotateY: 0, x: 0 }}
+              exit={{ opacity: 0, rotateY: 14, x: 16 }}
+              transition={{ duration: 0.28, ease: "easeInOut" }}
+              style={{ transformStyle: "preserve-3d" }}
+            >
+              <Card className="overflow-hidden border-0 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)]">
+                <CardHeader className="border-b border-slate-200 bg-white px-3 py-4 sm:px-6 sm:py-6 lg:px-10 lg:py-8">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="flex flex-col items-center gap-3 text-center sm:gap-4 lg:items-start lg:text-left">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-lg font-semibold text-slate-700 shadow-sm sm:h-20 sm:w-20 sm:text-2xl">
+                        {clubName
+                          .split(" ")
+                          .map((word) => word[0])
+                          .join("")
+                          .slice(0, 2)}
+                      </div>
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <Badge className={cn("border px-3 py-1 text-xs font-semibold", membershipTone.badgeClassName)}>
+                          {formatMembershipLabel(membershipStatus)}
                         </Badge>
-                      ))}
+                        <CardTitle className="text-xl font-bold text-slate-950 sm:text-2xl lg:text-4xl">
+                          {membershipStatus === "Resubmission required"
+                            ? `Review registration for ${clubName}`
+                            : `${clubName} registration`}
+                        </CardTitle>
+                        <CardDescription className="mx-auto max-w-2xl text-sm leading-5 text-slate-600 sm:leading-6 lg:mx-0 lg:text-base">
+                          {membershipTone.description}
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      className="bg-black text-white hover:bg-slate-900 lg:self-start"
+                      onClick={handleOpenRegistrationView}
+                      disabled={!currentPage}
+                    >
+                      Go to registration
+                      <ChevronRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3 bg-white px-3 py-3 sm:space-y-4 sm:px-6 sm:py-6 lg:px-10 lg:py-8">
+                  <div className={cn("rounded-2xl border px-3 py-3 sm:px-5 sm:py-4", membershipTone.panelClassName)}>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-sm font-semibold">Current registration status</p>
+                        <p className="mt-1 text-sm leading-5 opacity-90 sm:leading-6">{membershipTone.description}</p>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-left sm:min-w-[320px]">
+                        <div className="rounded-xl border border-white/70 bg-white/70 px-3 py-2">
+                          <p className="text-[11px] uppercase tracking-[0.18em] opacity-70">Pages</p>
+                          <p className="mt-1 text-lg font-semibold">{visiblePages.length}</p>
+                        </div>
+                        <div className="rounded-xl border border-white/70 bg-white/70 px-3 py-2">
+                          <p className="text-[11px] uppercase tracking-[0.18em] opacity-70">Notes</p>
+                          <p className="mt-1 text-lg font-semibold">{visibleAdminNotes.length}</p>
+                        </div>
+                        <div className="rounded-xl border border-white/70 bg-white/70 px-3 py-2">
+                          <p className="text-[11px] uppercase tracking-[0.18em] opacity-70">Tags</p>
+                          <p className="mt-1 text-lg font-semibold">{memberTags.length}</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                ) : null}
-              </section>
-            ) : null}
 
-            {memberVariables.length > 0 ? (
-              <section className="rounded-2xl border border-slate-200 bg-slate-50/70">
-                <button
-                  type="button"
-                  onClick={() => setIsVariablesOpen((currentValue) => !currentValue)}
-                  className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left sm:gap-4 sm:px-5 sm:py-4"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900">Additional information</p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      Extra club-managed information attached to your member profile.
-                    </p>
-                  </div>
-                  <ChevronDown
-                    className={cn(
-                      "h-4 w-4 shrink-0 text-slate-500 transition-transform",
-                      isVariablesOpen ? "rotate-180" : "rotate-0",
-                    )}
-                  />
-                </button>
-                {isVariablesOpen ? (
-                  <div className="grid gap-2.5 border-t border-slate-200 px-3 py-3 sm:grid-cols-2 sm:px-5 sm:py-4">
-                    {memberVariables.map((variable, index) => (
-                      <div key={`${variable.name}-${index}`} className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm sm:px-4 sm:py-3">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                          {formatVariableName(variable.name)}
-                        </p>
-                        <p className="mt-1.5 text-sm leading-5 text-slate-700 sm:mt-2 sm:leading-6">
-                          {String(variable.value ?? "").trim() || "Does not exist for this member"}
-                        </p>
+                  {deregReason ? (
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-3 text-amber-950 sm:px-5 sm:py-4">
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+                        <div className="space-y-1">
+                          <p className="text-sm font-semibold">Why was this registration deregistered?</p>
+                          <p className="whitespace-pre-wrap text-sm leading-5 text-amber-900/90 sm:leading-6">{deregReason}</p>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                ) : null}
-              </section>
-            ) : null}
+                    </div>
+                  ) : null}
 
-            {visibleAdminNotes.length > 0 ? (
-              <section className="rounded-2xl border border-amber-200 bg-amber-50/60">
-                <button
-                  type="button"
-                  onClick={() => setIsAdminNotesOpen((currentValue) => !currentValue)}
-                  className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left sm:gap-4 sm:px-5 sm:py-4"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-amber-950">Notes from club staff</p>
-                    <p className="mt-1 text-sm text-amber-900/70">
-                      Messages your club has chosen to make visible on your registration.
-                    </p>
-                  </div>
-                  <Badge className="border-amber-200 bg-white text-amber-800">
-                    {visibleAdminNotes.length}
-                  </Badge>
-                </button>
-                {isAdminNotesOpen ? (
-                  <div className="space-y-2.5 border-t border-amber-200 px-3 py-3 sm:space-y-3 sm:px-5 sm:py-4">
-                    {visibleAdminNotes.map((note: { id: string; title: string; content: string }) => (
-                      <div key={note.id} className="rounded-xl border border-amber-200 bg-white/80 px-3 py-2.5 shadow-sm sm:px-4 sm:py-3">
-                        <p className="text-sm font-semibold text-amber-950">{note.title}</p>
-                        <p className="mt-1.5 whitespace-pre-wrap text-sm leading-5 text-amber-900/85 sm:mt-2 sm:leading-6">
-                          {note.content}
-                        </p>
+                  {verificationLink ? (
+                    <section className="rounded-2xl border border-slate-200 bg-slate-50/70">
+                      <div className="grid gap-4 px-3 py-3 sm:px-5 sm:py-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+                        <div className="space-y-2">
+                          <p className="text-sm font-semibold text-slate-900">Membership verification QR code</p>
+                          <p className="text-sm leading-6 text-slate-600">
+                            Scan this code to open a public verification page for this member registration. The page checks this member against the club record without requiring login.
+                          </p>
+                        </div>
+                        <div
+                          ref={verificationQrRef}
+                          className="mx-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                        >
+                          <QRCode size={148} value={verificationLink} />
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                ) : null}
-              </section>
-            ) : null}
-          </CardContent>
-        </Card>
-      </div>
+                      <div className="border-t border-slate-200 px-3 py-3 sm:px-5 sm:py-4">
+                        <div className="flex flex-wrap gap-2">
+                          <Button variant="outline" onClick={() => setIsQrPreviewOpen(true)}>
+                            View QR Code
+                          </Button>
+                          <Button variant="outline" onClick={handleDownloadVerificationQr}>
+                            <Download className="mr-2 h-4 w-4" />
+                            Download QR
+                          </Button>
+                          <Button onClick={handleOpenVerificationLink}>Open Verification Page</Button>
+                        </div>
+                      </div>
+                    </section>
+                  ) : null}
 
-      {currentPage ? (
-        <div id="registration-page-card" className="w-full max-w-4xl">
-          <Card className="overflow-hidden border-0 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)]">
+                  {memberTags.length > 0 ? (
+                    <section className="rounded-2xl border border-slate-200 bg-slate-50/70">
+                      <button
+                        type="button"
+                        onClick={() => setIsTagsOpen((currentValue) => !currentValue)}
+                        className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left sm:gap-4 sm:px-5 sm:py-4"
+                      >
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900">Member tags</p>
+                          <p className="mt-1 text-sm text-slate-500">
+                            Club-assigned tags and identifiers linked to this registration.
+                          </p>
+                        </div>
+                        <ChevronDown
+                          className={cn(
+                            "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+                            isTagsOpen ? "rotate-180" : "rotate-0",
+                          )}
+                        />
+                      </button>
+                      {isTagsOpen ? (
+                        <div className="border-t border-slate-200 px-3 py-3 sm:px-5 sm:py-4">
+                          <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                            {memberTags.map((tag) => (
+                              <Badge
+                                key={tag.id}
+                                className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700 shadow-sm"
+                              >
+                                <Tag className="h-3.5 w-3.5" />
+                                {tag.label}: {tag.value}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </section>
+                  ) : null}
+
+                  {memberVariables.length > 0 ? (
+                    <section className="rounded-2xl border border-slate-200 bg-slate-50/70">
+                      <button
+                        type="button"
+                        onClick={() => setIsVariablesOpen((currentValue) => !currentValue)}
+                        className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left sm:gap-4 sm:px-5 sm:py-4"
+                      >
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900">Additional information</p>
+                          <p className="mt-1 text-sm text-slate-500">
+                            Extra club-managed information attached to your member profile.
+                          </p>
+                        </div>
+                        <ChevronDown
+                          className={cn(
+                            "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+                            isVariablesOpen ? "rotate-180" : "rotate-0",
+                          )}
+                        />
+                      </button>
+                      {isVariablesOpen ? (
+                        <div className="grid gap-2.5 border-t border-slate-200 px-3 py-3 sm:grid-cols-2 sm:px-5 sm:py-4">
+                          {memberVariables.map((variable, index) => (
+                            <div key={`${variable.name}-${index}`} className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm sm:px-4 sm:py-3">
+                              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                {formatVariableName(variable.name)}
+                              </p>
+                              <p className="mt-1.5 text-sm leading-5 text-slate-700 sm:mt-2 sm:leading-6">
+                                {String(variable.value ?? "").trim() || "Does not exist for this member"}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+                    </section>
+                  ) : null}
+
+                  {visibleAdminNotes.length > 0 ? (
+                    <section className="rounded-2xl border border-amber-200 bg-amber-50/60">
+                      <button
+                        type="button"
+                        onClick={() => setIsAdminNotesOpen((currentValue) => !currentValue)}
+                        className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left sm:gap-4 sm:px-5 sm:py-4"
+                      >
+                        <div>
+                          <p className="text-sm font-semibold text-amber-950">Notes from club staff</p>
+                          <p className="mt-1 text-sm text-amber-900/70">
+                            Messages your club has chosen to make visible on your registration.
+                          </p>
+                        </div>
+                        <Badge className="border-amber-200 bg-white text-amber-800">
+                          {visibleAdminNotes.length}
+                        </Badge>
+                      </button>
+                      {isAdminNotesOpen ? (
+                        <div className="space-y-2.5 border-t border-amber-200 px-3 py-3 sm:space-y-3 sm:px-5 sm:py-4">
+                          {visibleAdminNotes.map((note: { id: string; title: string; content: string }) => (
+                            <div key={note.id} className="rounded-xl border border-amber-200 bg-white/80 px-3 py-2.5 shadow-sm sm:px-4 sm:py-3">
+                              <p className="text-sm font-semibold text-amber-950">{note.title}</p>
+                              <p className="mt-1.5 whitespace-pre-wrap text-sm leading-5 text-amber-900/85 sm:mt-2 sm:leading-6">
+                                {note.content}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+                    </section>
+                  ) : null}
+
+                </CardContent>
+              </Card>
+            </motion.div>
+          ) : currentPage ? (
+            <motion.div
+              key="registration-form"
+              id="registration-page-card"
+              initial={{ opacity: 0, rotateY: 14, x: 16 }}
+              animate={{ opacity: 1, rotateY: 0, x: 0 }}
+              exit={{ opacity: 0, rotateY: -14, x: -16 }}
+              transition={{ duration: 0.28, ease: "easeInOut" }}
+              style={{ transformStyle: "preserve-3d" }}
+            >
+              <Card className="overflow-hidden border-0 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.35)]">
             <CardHeader className="border-b border-slate-200 bg-white px-3 py-4 sm:px-6 sm:py-6 lg:px-10 lg:py-8">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-4">
                 <div>
-                  <CardDescription className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                    Submitted registration form
-                  </CardDescription>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="mb-3 w-fit border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                    onClick={handleOpenOverview}
+                  >
+                    <ChevronLeft className="mr-1 h-4 w-4" />
+                    Back to overview
+                  </Button>
                   <CardTitle className="mt-1.5 text-xl font-bold text-slate-950 sm:mt-2 sm:text-2xl">
                     {currentPage.page_header}
                   </CardTitle>
@@ -971,8 +1120,61 @@ export function MemberRegistration({
               ) : null}
             </CardContent>
           </Card>
-        </div>
-      ) : null}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </div>
+
+      <AnimatePresence>
+        {isQrPreviewOpen && verificationLink ? (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-6 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsQrPreviewOpen(false)}
+          >
+            <motion.div
+              className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_32px_90px_-45px_rgba(15,23,42,0.55)] sm:p-6"
+              initial={{ opacity: 0, scale: 0.92, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 12 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-lg font-semibold text-slate-950">Membership verification QR code</p>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">
+                    Scan to open the public member verification page.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0"
+                  onClick={() => setIsQrPreviewOpen(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="mt-5 flex justify-center rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <QRCode size={280} value={verificationLink} />
+              </div>
+
+              <div className="mt-5 flex flex-wrap justify-end gap-2">
+                <Button variant="outline" onClick={handleDownloadVerificationQr}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download QR
+                </Button>
+                <Button onClick={() => setIsQrPreviewOpen(false)}>Close</Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }

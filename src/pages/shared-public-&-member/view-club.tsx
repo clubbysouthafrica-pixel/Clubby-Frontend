@@ -1371,6 +1371,13 @@ export default function ViewClubPage() {
       setOrderSearch("");
       setEventRegistrationSearch(paymentOption.event_registration_id);
       handleSectionChange("events");
+      return;
+    }
+
+    if (paymentOption.storage_id) {
+      setOrderSearch("");
+      setEventRegistrationSearch("");
+      handleSectionChange("storage");
     }
   };
 
@@ -1766,6 +1773,7 @@ export default function ViewClubPage() {
                     clubName={data.club_name}
                     currency={data.currency}
                     clubAccountId={data.club_account_id}
+                    userId={data.user_id ?? ""}
                   />
                   <ClubShopTab
                     enabled={Boolean(data?.enable_shop)}

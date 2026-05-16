@@ -17,6 +17,7 @@ import OnboardMember from "@/pages/member/onboard-member";
 import AdminRegistrationFormPage from "@/pages/admin/registration-form/create-form";
 import BrowseClubsPage from "@/pages/public/browse-clubs";
 import PublicJoinRegisterPage from "@/pages/public/public-join-register";
+import PublicMemberVerificationPage from "@/pages/public/member-verification";
 import ActivateAccount from "@/pages/public/login/temporary-password/ActivateAccount";
 import { ClubRegisterForm } from "@/components/member/register/registration_form";
 import TermsPage from "@/pages/public/terms";
@@ -61,6 +62,10 @@ export default function MarketRoutes() {
       <Route
         path="/clubs/:clubId/public/register"
         element={<PublicJoinRegisterPage />}
+      ></Route>
+      <Route
+        path="/clubs/:clubId/member-verification/:memberUserId"
+        element={<PublicMemberVerificationPage />}
       ></Route>
       <Route
         path="/clubs/:clubId/register"

@@ -1,5 +1,11 @@
 import { RegisterClubMember } from "@/interfaces/club";
 import { api } from "./api";
+import {
+    getClubMember,
+    type GetClubMemberResponse,
+} from "@/services/club-members";
+
+export type { GetClubMemberResponse };
 
 export const fetchClubMembers = (clubId: string, activeKeys?: string[], memberType?: string, limit?: number, pageToken?: string, memberName?: string, memberId?: string, customFilters?: Array<{ field_id: string; type: string; input_type: string; value: string; condition?: string }>, page?: string, showArchived?: boolean) => {
     const params = new URLSearchParams();
@@ -42,6 +48,8 @@ export const fetchClubMembers = (clubId: string, activeKeys?: string[], memberTy
     return api.post(`/clubMember/getAllClubMembers?${params.toString()}`, requestBody)
         .then(res => res.data);
 } 
+
+export { getClubMember };
 
 export const registerMemberToClub = (request: RegisterClubMember) => 
     api.post("/clubMember/registerMember", {

@@ -5,6 +5,7 @@ type ClubRegistrationTabProps = {
   clubName: string;
   currency: string;
   clubAccountId: string;
+  userId: string;
 };
 
 export function ClubRegistrationTab(props: ClubRegistrationTabProps) {

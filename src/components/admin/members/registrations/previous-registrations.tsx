@@ -95,9 +95,7 @@ export default function PreviousMembersList({
   listActionItems,
   showTenRows = false,
   setSelectedMember,
-  setDeregisteredMembers,
   setDeregisteredMembersLength,
-  setlistActionItems,
   showArchived = false,
 }: PreviousMembersListProps) {
   // Use raw clubMembers.deregistered - backend already handles pagination and member_name/member_id filtering

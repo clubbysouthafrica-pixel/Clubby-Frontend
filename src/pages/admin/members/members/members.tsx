@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState, useRef } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useFetchClubMembers } from "@/queries/admin/club-members";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { Label } from "@/components/ui/label";
@@ -22,9 +23,10 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import MembersTable from "@/components/admin/members/members/members_table";
-import { Loader2, X, Download, AlertCircle, Users } from "lucide-react";
+import { Loader2, X, Download, AlertCircle, Users, ArrowLeft } from "lucide-react";
 import { exportTableData } from "@/helpers/admin/members/csv-export";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import AddFiltersDialog from "@/components/admin/members/registrations/features/add-filters-dialog";
 import AddColumnsDialog from "@/components/admin/members/registrations/features/add-columns-dialog";
 import { countryCodes, getDialingCode } from "@/data/country-codes";
@@ -384,8 +386,29 @@ export default function MembersPage() {
     });
   };
 
+  const selectedDirectoryMember =
+    hashUserId &&
+    selectedMember &&
+    typeof selectedMember === "object" &&
+    "user_id" in selectedMember &&
+    typeof (selectedMember as ClubMember).user_id === "string"
+      ? (selectedMember as ClubMember)
+      : null;
+
+  const handleBackToMembers = () => {
+    setSelectedMember({});
+    setHashUserId(null);
+    window.history.pushState(
+      "",
+      document.title,
+      window.location.pathname + window.location.search,
+    );
+  };
+
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[linear-gradient(180deg,_#e7e5e4_0%,_#f5f5f4_22%,_#fafaf9_22%,_#fafaf9_100%)] text-slate-900">
+    <div
+      className={`min-h-screen ${selectedDirectoryMember ? "overflow-visible" : "overflow-x-hidden"} bg-[linear-gradient(180deg,_#e7e5e4_0%,_#f5f5f4_22%,_#fafaf9_22%,_#fafaf9_100%)] text-slate-900`}
+    >
       {clubLoading ? (
         <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(214,211,209,0.55),_transparent_32%),linear-gradient(180deg,_#e7e5e4_0%,_#f5f5f4_40%,_#fafaf9_100%)] px-6">
           <div className="flex flex-col items-center gap-4 rounded-[24px] border border-stone-300/70 bg-white/90 px-8 py-10 text-zinc-900 shadow-xl backdrop-blur">
@@ -396,7 +419,42 @@ export default function MembersPage() {
           </div>
         </div>
       ) : (
-        <div className="flex w-full max-w-full flex-col gap-3 overflow-x-hidden px-2 py-3 sm:px-3 md:px-4 md:py-4 xl:px-5 2xl:px-6">
+        <div
+          className={`flex w-full max-w-full flex-col gap-3 ${selectedDirectoryMember ? "overflow-visible" : "overflow-x-hidden"} px-2 py-3 sm:px-3 md:px-4 md:py-4 xl:px-5 2xl:px-6`}
+        >
+          <AnimatePresence mode="wait" initial={false}>
+            {selectedDirectoryMember ? (
+              <div className="flex flex-col gap-4">
+                <div className="sticky top-1 z-10 flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-slate-200/70 bg-white/95 p-3 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleBackToMembers}
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Go back to members
+                  </Button>
+                </div>
+
+                <motion.div
+                  key="member-detail"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.28, ease: "easeInOut" }}
+                >
+                  <SelectedMemberDialog selectedMember={selectedDirectoryMember} />
+                </motion.div>
+              </div>
+            ) : (
+              <motion.div
+                key="members-overview"
+                initial={{ opacity: 0, rotateY: -18, x: -20 }}
+                animate={{ opacity: 1, rotateY: 0, x: 0 }}
+                exit={{ opacity: 0, rotateY: 18, x: 20 }}
+                transition={{ duration: 0.28, ease: "easeInOut" }}
+                style={{ transformStyle: "preserve-3d" }}
+              >
           <section className="relative overflow-hidden rounded-[24px] border border-stone-300/70 bg-stone-200 px-4 py-4 text-zinc-900 shadow-[0_18px_40px_rgba(120,113,108,0.16)] md:px-5 md:py-4">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.72),_transparent_28%),radial-gradient(circle_at_right,_rgba(214,211,209,0.55),_transparent_24%)]" />
             <div className="relative flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
@@ -1095,13 +1153,10 @@ export default function MembersPage() {
               </Card>
             </div>
           </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-      )}
-      {hashUserId && (
-        <SelectedMemberDialog
-          selectedMember={selectedMember}
-          setSelectedMember={setSelectedMember}
-        />
       )}
     </div>
   );
