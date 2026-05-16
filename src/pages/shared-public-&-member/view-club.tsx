@@ -25,7 +25,6 @@ import { useFetchClub, useFetchClubBankDetails } from "@/queries/clubs";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useCallback, useEffect, useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { getMemberOrders } from "@/services/orders";
 import { cancelOrder } from "@/services/orders";
 import { getEventsIncludingAll } from "@/services/events";
 import { getVenues } from "@/services/venues";
@@ -429,58 +428,6 @@ function getGalleryImages(value: unknown) {
     .filter((image): image is ClubGalleryImage => Boolean(image));
 }
 
-const getOrderPaymentBadgeClassName = (status?: string) => {
-  if (status === "PAID" || status === "PAID (Partial Refund)") {
-    return "bg-green-100 text-green-800 border-green-200";
-  }
-
-  if (status === "PENDING") {
-    return "bg-orange-100 text-orange-800 border-orange-200";
-  }
-
-  if (status === "PARTIALLY_PAID") {
-    return "bg-purple-100 text-purple-800 border-purple-200";
-  }
-
-  if (status === "CANCELLED" || status === "REFUND" || status === "REFUNDED") {
-    return "bg-red-100 text-red-800 border-red-200";
-  }
-
-  return "bg-gray-100 text-gray-800 border-gray-200";
-};
-
-const getOrderFulfillmentBadgeClassName = (status?: string) => {
-  if (status === "DELIVERED") {
-    return "bg-green-100 text-green-800 border-green-200";
-  }
-
-  if (status === "NOT_PROCESSED") {
-    return "bg-orange-100 text-orange-800 border-orange-200";
-  }
-
-  if (status === "PROCESSING" || status === "PARTIALLY_DELIVERED") {
-    return "bg-purple-100 text-purple-800 border-purple-200";
-  }
-
-  if (status === "CANCELLED" || status === "REFUND" || status === "REFUNDED") {
-    return "bg-red-100 text-red-800 border-red-200";
-  }
-
-  return "bg-gray-100 text-gray-800 border-gray-200";
-};
-
-const getRefundedAmount = (order: MemberOrder) => {
-  if (
-    order.payment_status !== "PAID (Partial Refund)" &&
-    order.payment_status !== "REFUND" &&
-    order.payment_status !== "REFUNDED"
-  ) {
-    return 0;
-  }
-
-  return Math.max((order.total_amount || 0) - (order.amount_paid || 0), 0);
-};
-
 export default function ViewClubPage() {
   const auth = useContext(AuthContext);
   const isLoggedIn = !!auth?.user;
@@ -836,13 +783,6 @@ export default function ViewClubPage() {
   >(null);
   const [highlightedEventRegistrationId, setHighlightedEventRegistrationId] =
     useState<string | null>(null);
-  const [orderSortColumn, setOrderSortColumn] = useState<
-    "date" | "payment_status" | "fulfillment_status" | "total" | null
-  >(null);
-  const [orderSortDirection, setOrderSortDirection] = useState<"asc" | "desc">(
-    "asc",
-  );
-  const [orderSearch, setOrderSearch] = useState("");
   const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(
     null,
   );
@@ -875,19 +815,6 @@ export default function ViewClubPage() {
     selectedPaymentOption,
     selectedPaymentTransactionId,
   ]);
-
-  const {
-    data: memberOrders,
-    isLoading: isOrdersLoading,
-    error: ordersError,
-  } = useQuery({
-    queryKey: ["member-orders", data?.club_account_id],
-    queryFn: () => getMemberOrders(data?.club_account_id || ""),
-    enabled:
-      !!data?.club_account_id &&
-      !!data?.club_member_exists &&
-      activeTab === "shop",
-  });
 
   const {
     data: homeEventsData,
@@ -961,12 +888,6 @@ export default function ViewClubPage() {
       venues.length > 0 &&
       !!data?.member_name,
   });
-
-  const memberOrderList = useMemo(() => {
-    return Array.isArray(memberOrders?.orders)
-      ? (memberOrders.orders as MemberOrder[])
-      : [];
-  }, [memberOrders?.orders]);
 
   const homeEvents = useMemo(() => {
     return sanitizeEvents(
@@ -1080,89 +1001,6 @@ export default function ViewClubPage() {
     return getGalleryImages(data?.gallery_images);
   }, [data?.gallery_images]);
 
-  const handleOrderSort = (
-    column: "date" | "payment_status" | "fulfillment_status" | "total",
-  ) => {
-    if (orderSortColumn === column) {
-      setOrderSortDirection(orderSortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setOrderSortColumn(column);
-      setOrderSortDirection("asc");
-    }
-  };
-
-  const filteredOrders = useMemo(() => {
-    const query = orderSearch.trim().toLowerCase();
-
-    if (!query) {
-      return memberOrderList;
-    }
-
-    return memberOrderList.filter((order) => {
-      const itemsText = Array.isArray(order.items)
-        ? order.items
-            .map((item) => {
-              return `${String(item.name ?? "")} ${String(item.quantity ?? "")}`;
-            })
-            .join(" ")
-            .toLowerCase()
-        : "";
-
-      return [
-        order.order_id,
-        order.payment_status,
-        order.fulfillment_status,
-        String(order.total_amount ?? ""),
-        String(order.amount_paid ?? ""),
-        itemsText,
-      ].some((value) =>
-        String(value ?? "")
-          .toLowerCase()
-          .includes(query),
-      );
-    });
-  }, [memberOrderList, orderSearch]);
-
-  const sortedOrders = useMemo(() => {
-    const sorted = [...filteredOrders];
-
-    if (!orderSortColumn) return sorted;
-
-    sorted.sort((a, b) => {
-      let aValue: string | number = "";
-      let bValue: string | number = "";
-
-      if (orderSortColumn === "date") {
-        aValue = a.created_date || 0;
-        bValue = b.created_date || 0;
-      } else if (orderSortColumn === "payment_status") {
-        aValue = a.payment_status || "";
-        bValue = b.payment_status || "";
-      } else if (orderSortColumn === "fulfillment_status") {
-        aValue = a.fulfillment_status || "";
-        bValue = b.fulfillment_status || "";
-      } else if (orderSortColumn === "total") {
-        aValue = a.total_amount || 0;
-        bValue = b.total_amount || 0;
-      }
-
-      if (typeof aValue === "string" && typeof bValue === "string") {
-        return orderSortDirection === "asc"
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      } else {
-        const leftValue = typeof aValue === "number" ? aValue : 0;
-        const rightValue = typeof bValue === "number" ? bValue : 0;
-
-        return orderSortDirection === "asc"
-          ? leftValue - rightValue
-          : rightValue - leftValue;
-      }
-    });
-
-    return sorted;
-  }, [filteredOrders, orderSortColumn, orderSortDirection]);
-
   useEffect(() => {
     const fallbackDateKey = nextHomeEvent?.startDate || todayKey;
 
@@ -1267,33 +1105,6 @@ export default function ViewClubPage() {
     [canViewStorage, clubId, getSectionPath, navigate],
   );
 
-  const handleOrderPayNowClick = (orderId?: string) => {
-    if (!orderId) {
-      toast.error("This order is missing its payment reference.");
-      return;
-    }
-
-    if (activeBankDetailsLoading) {
-      toast.error("Payment details are still loading. Please wait...");
-      return;
-    }
-
-    const matchedPayment = activeBankDetails?.transaction_options?.find(
-      (payment: PaymentTransactionOption) => payment.order_id === orderId,
-    );
-
-    if (!matchedPayment) {
-      toast.error("No payment option was found for this order.");
-      return;
-    }
-
-    handlePayHereClick(matchedPayment);
-  };
-
-  const handleCancelOrderClick = (order: MemberOrder) => {
-    setSelectedOrderForCancel(order);
-  };
-
   const handleConfirmCancelOrder = async () => {
     const order = selectedOrderForCancel;
 
@@ -1362,27 +1173,23 @@ export default function ViewClubPage() {
   const handleViewPaymentTarget = (paymentOption: PaymentTransactionOption) => {
     if (paymentOption.order_id) {
       setEventRegistrationSearch("");
-      setOrderSearch(paymentOption.order_id);
       handleSectionChange("shop");
       return;
     }
 
     if (paymentOption.event_registration_id) {
-      setOrderSearch("");
       setEventRegistrationSearch(paymentOption.event_registration_id);
       handleSectionChange("events");
       return;
     }
 
     if (paymentOption.storage_id) {
-      setOrderSearch("");
       setEventRegistrationSearch("");
       handleSectionChange("storage");
     }
   };
 
   const handleViewRegistrationPaymentTarget = () => {
-    setOrderSearch("");
     setEventRegistrationSearch("");
     handleSectionChange("member-registration");
   };
@@ -1777,29 +1584,6 @@ export default function ViewClubPage() {
                   />
                   <ClubShopTab
                     enabled={Boolean(data?.enable_shop)}
-                    currency={data.currency}
-                    orderSearch={orderSearch}
-                    setOrderSearch={setOrderSearch}
-                    orderSortColumn={orderSortColumn}
-                    orderSortDirection={orderSortDirection}
-                    onOrderSort={handleOrderSort}
-                    isOrdersLoading={isOrdersLoading}
-                    ordersError={ordersError}
-                    memberOrderList={memberOrderList}
-                    sortedOrders={sortedOrders}
-                    expandedRows={expandedRows}
-                    onToggleRow={toggleRow}
-                    onOpenStore={() => navigate(`/myclubs/${clubId}/store`)}
-                    onOrderPayNow={handleOrderPayNowClick}
-                    onOrderCancel={handleCancelOrderClick}
-                    cancellingOrderId={cancellingOrderId}
-                    getOrderPaymentBadgeClassName={
-                      getOrderPaymentBadgeClassName
-                    }
-                    getOrderFulfillmentBadgeClassName={
-                      getOrderFulfillmentBadgeClassName
-                    }
-                    getRefundedAmount={getRefundedAmount}
                   />
                   <ClubBookingsTab
                     canViewBookings={canViewBookings}

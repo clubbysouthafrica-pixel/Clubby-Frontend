@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,13 +13,28 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ShoppingCart, Package, Minus, Plus, ArrowLeft, CreditCard, AlertTriangle } from "lucide-react";
+import {
+  ShoppingCart,
+  Package,
+  Minus,
+  Plus,
+  ArrowLeft,
+  CreditCard,
+  AlertTriangle,
+  ChevronRight,
+  Loader2,
+  Receipt,
+  Clock3,
+  CheckCircle,
+  ShoppingBag,
+} from "lucide-react";
 import { formatAmount } from "@/data/currencies";
 import { useFetchClub } from "@/queries/clubs";
 import { getClubProducts } from "@/services/shop";
-import { createOrder } from "@/services/orders";
+import { createOrder, getMemberOrders } from "@/services/orders";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const useFetchClubProducts = (clubAccountId: string) => {
   return useQuery({
@@ -35,21 +50,120 @@ type CartItem = {
   price: number;
   quantity: number;
   allowMultiple: boolean;
+  imageUrl?: string;
 };
 
-export default function MemberShopPage() {
+type ShopProduct = {
+  product_id: number;
+  name: string;
+  price: number;
+  description?: string;
+  product_image_url?: string;
+  purchase_limit?: "single" | "multiple" | string;
+  active_product?: boolean;
+};
+
+type MemberOrderItem = {
+  product_id?: string;
+  name?: string;
+  quantity?: number;
+  price?: number;
+  subtotal?: number;
+};
+
+type MemberOrder = {
+  order_id?: string;
+  transaction_id?: string;
+  created_date?: number;
+  payment_status?: string;
+  fulfillment_status?: string;
+  total_amount?: number;
+  amount_paid?: number;
+  items?: MemberOrderItem[];
+};
+
+const useFetchMemberOrders = (clubAccountId: string) => {
+  return useQuery({
+    queryKey: ["member-shop-orders", clubAccountId],
+    queryFn: () => getMemberOrders(clubAccountId),
+    enabled: !!clubAccountId,
+  });
+};
+
+function getPaymentStatusBadgeClassName(status?: string) {
+  if (status === "PENDING" || status === "PARTIALLY_PAID") {
+    return "border-amber-200 bg-amber-50 text-amber-700";
+  }
+
+  if (status?.includes("REFUND") || status === "CANCELLED") {
+    return "border-rose-200 bg-rose-50 text-rose-700";
+  }
+
+  return "border-emerald-200 bg-emerald-50 text-emerald-700";
+}
+
+function getFulfillmentStatusBadgeClassName(status?: string) {
+  if (status === "FULFILLED") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  }
+
+  if (status === "PARTIALLY_FULFILLED") {
+    return "border-sky-200 bg-sky-50 text-sky-700";
+  }
+
+  return "border-slate-200 bg-slate-100 text-slate-700";
+}
+
+type MemberShopPageProps = {
+  embedded?: boolean;
+};
+
+export default function MemberShopPage({ embedded = false }: MemberShopPageProps) {
   const { clubId } = useParams();
   const navigate = useNavigate();
+  const ordersSectionRef = useRef<HTMLDivElement | null>(null);
   
   // Fetch club data to check registration status
   const { data: clubData, isLoading: isClubLoading } = useFetchClub(clubId || "");
   
   // Fetch club products from API
   const { data: productsData, isLoading: isProductsLoading, error: productsError } = useFetchClubProducts(clubData?.club_account_id || "");
+  const {
+    data: ordersData,
+    isLoading: isOrdersLoading,
+  } = useFetchMemberOrders(clubData?.club_account_id || "");
   
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [orderDialog, setOrderDialog] = useState(false);
+  const [showOrdersSection, setShowOrdersSection] = useState(false);
+
+  const clubCurrency = clubData?.currency || "ZAR";
+  const availableProducts = useMemo<ShopProduct[]>(() => {
+    const products = Array.isArray(productsData?.products)
+      ? (productsData.products as ShopProduct[])
+      : [];
+
+    return products.filter((product) => product.active_product);
+  }, [productsData?.products]);
+
+  const memberOrders = useMemo<MemberOrder[]>(() => {
+    return Array.isArray(ordersData?.orders) ? ordersData.orders : [];
+  }, [ordersData?.orders]);
+
+  const pendingOrdersCount = useMemo(
+    () => memberOrders.filter((order) => order.payment_status === "PENDING" || order.payment_status === "PARTIALLY_PAID").length,
+    [memberOrders],
+  );
+
+  const fulfilledOrdersCount = useMemo(
+    () => memberOrders.filter((order) => order.fulfillment_status === "FULFILLED").length,
+    [memberOrders],
+  );
+
+  const cartTotal = useMemo(() => {
+    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+  }, [cart]);
   
   // Check if user is registered with the club
   useEffect(() => {
@@ -65,13 +179,32 @@ export default function MemberShopPage() {
 
   // Scroll to top when component mounts
   useEffect(() => {
+    if (embedded) {
+      return;
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
+  }, [embedded]);
+
+  useEffect(() => {
+    if (!showOrdersSection) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      ordersSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 100);
+
+    return () => window.clearTimeout(timeout);
+  }, [showOrdersSection]);
   
   // Show loading state while checking registration or loading products
   if (isClubLoading || isProductsLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className={cn("flex items-center justify-center", embedded ? "min-h-[320px]" : "min-h-screen bg-gray-50")}>
         <div className="text-center">
           <Package className="h-12 w-12 mx-auto text-gray-400 mb-4 animate-pulse" />
           <p className="text-gray-600">Loading shop...</p>
@@ -83,7 +216,7 @@ export default function MemberShopPage() {
   // Show access denied if not registered
   if (clubData && (!clubData.club_member_exists || !clubData.registered)) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className={cn("flex items-center justify-center", embedded ? "min-h-[320px]" : "min-h-screen bg-gray-50")}>
         <div className="text-center max-w-md mx-auto px-4">
           <AlertTriangle className="h-12 w-12 mx-auto text-orange-400 mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Access Restricted</h2>
@@ -102,7 +235,7 @@ export default function MemberShopPage() {
   // Handle products error
   if (productsError) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className={cn("flex items-center justify-center", embedded ? "min-h-[320px]" : "min-h-screen bg-gray-50")}>
         <div className="text-center max-w-md mx-auto px-4">
           <AlertTriangle className="h-12 w-12 mx-auto text-red-400 mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Products</h2>
@@ -118,13 +251,7 @@ export default function MemberShopPage() {
     );
   }
 
-  const availableProducts = (productsData?.products || []).filter(
-    (product: any) => product.active_product
-  );
-  
-  const clubCurrency = clubData?.currency || "ZAR";
-
-  const addToCart = (product: any) => {
+  const addToCart = (product: ShopProduct) => {
     const existingItem = cart.find(item => item.productId === product.product_id);
     
     if (existingItem) {
@@ -145,6 +272,7 @@ export default function MemberShopPage() {
         price: product.price,
         quantity: 1,
         allowMultiple: product.purchase_limit === "multiple",
+        imageUrl: product.product_image_url,
       };
       setCart([...cart, newItem]);
     }
@@ -170,7 +298,7 @@ export default function MemberShopPage() {
   };
 
   const getTotalAmount = () => {
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    return cartTotal;
   };
 
   const getTotalItems = () => {
@@ -213,111 +341,360 @@ export default function MemberShopPage() {
       queryParams.append('paymentScreen', 'true');
 
       navigate(`/myclubs/${clubId}/payments?${queryParams.toString()}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error creating order:", error);
-      const errorMessage = error.response?.data?.message || error.message || "Failed to create order. Please try again.";
+      const errorMessage =
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === "string"
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : error instanceof Error
+            ? error.message
+            : "Failed to create order. Please try again.";
       toast.error(errorMessage);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between py-4 md:h-16">
-            <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate(`/myclubs/${clubId}/shop`)}
-                className="flex items-center gap-2 w-fit"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Club
-              </Button>
-            </div>
-            <Button
-              onClick={() => setShowCart(true)}
-              className="relative mt-3 md:mt-0"
-              variant={cart.length > 0 ? "default" : "outline"}
-            >
-              <ShoppingCart className="h-4 w-4 mr-2" />
-              Cart
-              {cart.length > 0 && (
-                <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 text-xs">
-                  {getTotalItems()}
-                </Badge>
-              )}
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {availableProducts.length === 0 ? (
-          <div className="text-center py-12">
-            <Package className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <h2 className="text-lg font-medium text-gray-900 mb-2">No Products Available</h2>
-            <p className="text-gray-600">Check back later for new merchandise!</p>
-          </div>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {availableProducts.map((product: any) => {
-              const inCartQuantity = cart.find(item => item.productId === product.product_id)?.quantity || 0;
-              
-              return (
-                <Card key={product.product_id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="aspect-square bg-gray-100 flex items-center justify-center">
-                    {product.product_image_url ? (
-                      <img 
-                        src={product.product_image_url} 
-                        alt={product.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <Package className="h-16 w-16 text-gray-400" />
-                    )}
-                  </div>
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-lg">{product.name}</CardTitle>
-                        <p className="text-2xl font-bold text-primary mt-1">
-                          {formatAmount(product.price, clubCurrency)}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        {inCartQuantity > 0 && (
-                          <p className="text-xs text-orange-600">
-                            {inCartQuantity} in cart
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="mb-4">
-                      {product.description || "No description available"}
-                    </CardDescription>
-                    <Button 
-                      onClick={() => addToCart(product)} 
-                      className="w-full"
+    <div className={cn(embedded ? "bg-transparent" : "min-h-screen bg-background")}>
+      <div className={cn("mx-auto max-w-7xl", embedded ? "px-0 py-0" : "px-3 py-2 sm:px-6 sm:py-6 lg:px-8 lg:py-8")}>
+        <div className="space-y-2.5 sm:space-y-4">
+          <Card className="overflow-hidden py-2 border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] text-slate-900 shadow-[0_24px_70px_-34px_rgba(15,23,42,0.22)]">
+            <CardContent className="space-y-2 p-2 sm:space-y-6 sm:p-6">
+              <div className="flex flex-col gap-2 sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="space-y-1 sm:space-y-3">
+                  {!embedded ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate(`/myclubs/${clubId}`)}
+                      className="h-5 w-fit px-0 text-[10px] text-slate-600 hover:bg-transparent hover:text-slate-900 sm:h-9 sm:text-sm"
                     >
-                      <ShoppingCart className="h-4 w-4 mr-2" />
-                      Add to Cart
+                      <ArrowLeft className="mr-1.5 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
+                      Back to club
                     </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                  ) : null}
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 sm:h-12 sm:w-12 sm:rounded-2xl">
+                      <ShoppingBag className="h-4 w-4 text-slate-700 sm:h-6 sm:w-6" />
+                    </div>
+                    <div>
+                      <h1 className="text-base font-semibold tracking-tight leading-tight sm:text-3xl">
+                        Member shop
+                      </h1>
+                    </div>
+                  </div>
+                  <p className="hidden max-w-2xl text-sm leading-6 text-slate-600 sm:block sm:text-base">
+                    Browse club merchandise, build your cart, and then jump into your order history only when you need it.
+                  </p>
+                </div>
+                <div className="grid grid-cols-3 gap-1 sm:grid-cols-3 sm:gap-2">
+                  <div className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-center shadow-sm sm:rounded-2xl sm:px-4 sm:py-3 sm:text-left">
+                    <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500 sm:text-[11px] sm:tracking-[0.18em]">Products</p>
+                    <p className="mt-0.5 text-sm font-semibold text-slate-950 sm:mt-2 sm:text-2xl">{availableProducts.length}</p>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-center shadow-sm sm:rounded-2xl sm:px-4 sm:py-3 sm:text-left">
+                    <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500 sm:text-[11px] sm:tracking-[0.18em]">Orders</p>
+                    <p className="mt-0.5 text-sm font-semibold text-slate-950 sm:mt-2 sm:text-2xl">{memberOrders.length}</p>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-center shadow-sm sm:rounded-2xl sm:px-4 sm:py-3 sm:text-left">
+                    <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500 sm:text-[11px] sm:tracking-[0.18em]">Cart</p>
+                    <p className="mt-0.5 text-[11px] font-semibold text-slate-950 sm:mt-2 sm:text-2xl">{formatAmount(cartTotal, clubCurrency)}</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="h-full py-2 overflow-hidden border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] text-slate-900 shadow-[0_24px_70px_-34px_rgba(15,23,42,0.22)]">
+            <CardContent className="flex h-full flex-col gap-2.5 p-2.5 sm:gap-4 sm:p-6">
+              <div className="space-y-0.5 sm:space-y-1">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 sm:text-xs sm:tracking-[0.22em]">
+                  Quick actions
+                </p>
+                <h2 className="text-sm font-semibold sm:text-xl">Shop control panel</h2>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm sm:rounded-3xl sm:p-4">
+                <div className="flex items-center justify-between gap-3 sm:block">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500 sm:text-xs sm:tracking-[0.18em]">Pending orders</p>
+                    <p className="mt-0.5 text-xl font-semibold tracking-tight sm:mt-2 sm:text-3xl">{pendingOrdersCount}</p>
+                  </div>
+                  <div className="text-right sm:mt-1 sm:text-left">
+                    <p className="text-[11px] text-slate-500 sm:text-sm">
+                      {fulfilledOrdersCount} fulfilled
+                    </p>
+                  </div>
+                </div>
+                <p className="mt-1 hidden text-xs text-slate-500 sm:mt-1 sm:block sm:text-sm">
+                  {fulfilledOrdersCount} fulfilled so far
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-9 w-full justify-between border-slate-200 bg-white px-2.5 text-xs text-slate-700 hover:bg-slate-50 sm:h-11 sm:px-3 sm:text-sm"
+                  onClick={() => setShowOrdersSection((value) => !value)}
+                >
+                  <span className="flex items-center gap-1.5 sm:gap-2">
+                    <Receipt className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <span className="truncate">
+                      {showOrdersSection ? "Hide orders" : "View orders"}
+                    </span>
+                  </span>
+                  <ChevronRight className={cn("h-3.5 w-3.5 transition-transform sm:h-4 sm:w-4", showOrdersSection && "rotate-90")} />
+                </Button>
+
+                <Button
+                  type="button"
+                  className="relative h-9 w-full justify-between bg-black px-2.5 text-xs text-white hover:bg-slate-900 sm:h-11 sm:px-3 sm:text-sm"
+                  onClick={() => setShowCart(true)}
+                >
+                  <span className="flex items-center gap-1.5 sm:gap-2">
+                    <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    View cart
+                  </span>
+                  {cart.length > 0 ? (
+                    <Badge className="border-white/20 bg-white/10 px-1.5 py-0 text-[10px] text-white sm:text-xs">
+                      {getTotalItems()} items
+                    </Badge>
+                  ) : (
+                    <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="mt-3 space-y-2.5 sm:mt-6 sm:space-y-4">
+          <div className="flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between sm:gap-3">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 sm:text-xs sm:tracking-[0.22em]">
+                Shop catalog
+              </p>
+              <h2 className="text-base font-semibold tracking-tight leading-tight sm:text-3xl">
+                Items for sale
+              </h2>
+              <p className="hidden mt-1 text-sm leading-6 text-slate-500 sm:block">
+                Choose what you want first. Orders and payment follow after checkout.
+              </p>
+            </div>
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] text-slate-600 shadow-sm sm:px-3 sm:py-2 sm:text-sm">
+              <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              {getTotalItems()} item{getTotalItems() === 1 ? "" : "s"} in cart
+            </div>
           </div>
-        )}
+
+          {availableProducts.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center">
+              <Package className="mx-auto h-12 w-12 text-slate-400" />
+              <h2 className="mt-4 text-lg font-medium text-slate-900">No products available</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-500">Check back later for new merchandise.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
+              {availableProducts.map((product) => {
+                const inCartQuantity = cart.find(item => item.productId === product.product_id)?.quantity || 0;
+
+                return (
+                  <Card
+                    key={product.product_id}
+                    className="overflow-hidden border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] shadow-[0_20px_60px_-34px_rgba(15,23,42,0.18)] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_28px_70px_-34px_rgba(15,23,42,0.24)]"
+                  >
+                    <div className="aspect-square overflow-hidden bg-slate-100 sm:aspect-[4/3]">
+                      {product.product_image_url ? (
+                        <img
+                          src={product.product_image_url}
+                          alt={product.name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center">
+                          <Package className="h-16 w-16 text-slate-400" />
+                        </div>
+                      )}
+                    </div>
+                    <CardHeader className="space-y-1.5 p-2 sm:space-y-4 sm:p-6">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <CardTitle className="line-clamp-2 text-xs leading-4 text-slate-950 sm:text-lg sm:leading-6">{product.name}</CardTitle>
+                          <p className="mt-0.5 text-sm font-semibold tracking-tight text-slate-950 sm:mt-2 sm:text-3xl">
+                            {formatAmount(product.price, clubCurrency)}
+                          </p>
+                        </div>
+                        {inCartQuantity > 0 ? (
+                          <Badge className="border-amber-200 bg-amber-50 px-1.5 py-0 text-[10px] text-amber-700 sm:text-xs">
+                            {inCartQuantity}
+                          </Badge>
+                        ) : null}
+                      </div>
+                      <CardDescription className="line-clamp-2 min-h-0 text-[10px] leading-3.5 text-slate-500 sm:min-h-12 sm:text-sm sm:leading-6">
+                        {product.description || "No description available"}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-1.5 p-2 pt-0 sm:space-y-4 sm:p-6 sm:pt-0">
+                      <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-2 py-1.5 text-[9px] text-slate-600 shadow-sm sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm">
+                        <span>Limit</span>
+                        <span className="font-medium text-slate-900">
+                          {product.purchase_limit === "multiple" ? "Multiple" : "Single"}
+                        </span>
+                      </div>
+                      <Button onClick={() => addToCart(product)} className="h-7 w-full bg-black px-2 text-[10px] text-white hover:bg-slate-900 sm:h-11 sm:text-sm">
+                        <ShoppingCart className="mr-1 h-3 w-3 sm:mr-2 sm:h-4 sm:w-4" />
+                        Add
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {showOrdersSection ? (
+          <Card ref={ordersSectionRef} className="mt-6 overflow-hidden border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] shadow-[0_24px_70px_-34px_rgba(15,23,42,0.22)]">
+            <CardHeader className="border-b border-slate-200/80">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100">
+                    <Receipt className="h-5 w-5 text-slate-700" />
+                  </div>
+                  <div>
+                    <CardTitle>Your orders</CardTitle>
+                    <CardDescription>
+                      Review payment progress and fulfillment without leaving the shop.
+                    </CardDescription>
+                  </div>
+                </div>
+                <Button variant="outline" onClick={() => setShowOrdersSection(false)}>
+                  Hide orders
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6">
+              {isOrdersLoading ? (
+                <div className="flex min-h-40 flex-col items-center justify-center text-center text-slate-500">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                  <p className="mt-3 text-sm">Loading your orders...</p>
+                </div>
+              ) : memberOrders.length === 0 ? (
+                <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center">
+                  <Receipt className="mx-auto h-10 w-10 text-slate-400" />
+                  <p className="mt-4 text-lg font-semibold text-slate-900">No orders yet</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Start with the items for sale above. Your order history will appear here once you place something.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-4 xl:grid-cols-2">
+                  {memberOrders.map((order) => {
+                    const orderItems = Array.isArray(order.items) ? order.items : [];
+                    const totalItems = orderItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+                    const createdDate = order.created_date
+                      ? new Date(order.created_date * 1000).toLocaleDateString()
+                      : "Unknown date";
+
+                    return (
+                      <div key={order.order_id || order.transaction_id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="space-y-2">
+                            <p className="text-sm font-semibold text-slate-900">
+                              Order #{order.order_id?.slice(0, 8) || "N/A"}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                              <span className="inline-flex items-center gap-1">
+                                <Clock3 className="h-4 w-4" />
+                                {createdDate}
+                              </span>
+                              <span>{totalItems} item{totalItems === 1 ? "" : "s"}</span>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <Badge className={cn("font-medium", getPaymentStatusBadgeClassName(order.payment_status))}>
+                              {order.payment_status || "Unknown payment status"}
+                            </Badge>
+                            <Badge className={cn("font-medium", getFulfillmentStatusBadgeClassName(order.fulfillment_status))}>
+                              {order.fulfillment_status || "Unknown fulfillment"}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Total</p>
+                            <p className="mt-2 text-lg font-semibold text-slate-950">
+                              {formatAmount(order.total_amount || 0, clubCurrency)}
+                            </p>
+                          </div>
+                          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Amount paid</p>
+                            <p className="mt-2 text-lg font-semibold text-slate-950">
+                              {formatAmount(order.amount_paid || 0, clubCurrency)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 space-y-2">
+                          {orderItems.slice(0, 3).map((item, index) => (
+                            <div
+                              key={`${order.order_id || "order"}-${item.product_id || item.name || index}`}
+                              className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm"
+                            >
+                              <div>
+                                <p className="font-medium text-slate-900">{item.name || "Unnamed item"}</p>
+                                <p className="text-slate-500">Qty {item.quantity || 0}</p>
+                              </div>
+                              <p className="font-semibold text-slate-900">
+                                {formatAmount(item.subtotal || 0, clubCurrency)}
+                              </p>
+                            </div>
+                          ))}
+                          {orderItems.length > 3 ? (
+                            <p className="text-sm text-slate-500">
+                              + {orderItems.length - 3} more item{orderItems.length - 3 === 1 ? "" : "s"}
+                            </p>
+                          ) : null}
+                        </div>
+
+                        {(order.payment_status === "PENDING" || order.payment_status === "PARTIALLY_PAID") && order.order_id ? (
+                          <Button
+                            className="mt-4 bg-black text-white hover:bg-slate-900"
+                            onClick={() => {
+                              const queryParams = new URLSearchParams({
+                                orderId: order.order_id || "",
+                                paymentScreen: "true",
+                              });
+
+                              navigate(`/myclubs/${clubId}/payments?${queryParams.toString()}`);
+                            }}
+                          >
+                            <CreditCard className="mr-2 h-4 w-4" />
+                            Continue to payment
+                          </Button>
+                        ) : order.fulfillment_status === "FULFILLED" ? (
+                          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700">
+                            <CheckCircle className="h-4 w-4" />
+                            Order fulfilled
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
 
       {/* Cart Dialog */}
       <Dialog open={showCart} onOpenChange={setShowCart}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md border-slate-200 bg-white shadow-[0_24px_80px_-40px_rgba(15,23,42,0.45)]">
           <DialogHeader>
             <DialogTitle>Shopping Cart</DialogTitle>
             <DialogDescription>
@@ -327,11 +704,11 @@ export default function MemberShopPage() {
           
           <div className="space-y-4">
             {cart.length === 0 ? (
-              <p className="text-center text-gray-500 py-8">Your cart is empty</p>
+              <p className="py-8 text-center text-gray-500">Your cart is empty</p>
             ) : (
               <>
                 {cart.map((item) => (
-                  <div key={item.productId} className="flex items-center justify-between py-2">
+                  <div key={item.productId} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 px-3 py-3">
                     <div className="flex-1">
                       <h4 className="font-medium">{item.name}</h4>
                       <p className="text-sm text-gray-600">
@@ -372,7 +749,7 @@ export default function MemberShopPage() {
                 
                 <Separator />
                 
-                <div className="flex items-center justify-between font-medium text-lg">
+                <div className="flex items-center justify-between text-lg font-medium">
                   <span>Total:</span>
                   <span>{formatAmount(getTotalAmount(), clubCurrency)}</span>
                 </div>
@@ -400,7 +777,7 @@ export default function MemberShopPage() {
 
       {/* Order Confirmation Dialog */}
       <Dialog open={orderDialog} onOpenChange={setOrderDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md border-slate-200 bg-white shadow-[0_24px_80px_-40px_rgba(15,23,42,0.45)]">
           <DialogHeader>
             <DialogTitle>Confirm Your Order</DialogTitle>
             <DialogDescription>
