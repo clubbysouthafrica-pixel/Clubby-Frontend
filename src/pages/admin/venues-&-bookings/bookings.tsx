@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertCircle,
@@ -61,27 +61,10 @@ type Booking = {
 
 const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-function getWeekStart(date = new Date()) {
-  const next = new Date(date);
-  const day = next.getDay();
-  const diff = next.getDate() - day + (day === 0 ? -6 : 1);
-  next.setDate(diff);
-  next.setHours(0, 0, 0, 0);
-  return next;
-}
-
 function getDayStart(date = new Date()) {
   const next = new Date(date);
   next.setHours(0, 0, 0, 0);
   return next;
-}
-
-function getDaysInWeek(start: Date) {
-  return Array.from({ length: 7 }, (_, index) => {
-    const day = new Date(start);
-    day.setDate(day.getDate() + index);
-    return day;
-  });
 }
 
 function getDaysFrom(start: Date, count: number) {
@@ -351,7 +334,6 @@ export default function BookingsPage() {
   const [deleteBookingName, setDeleteBookingName] = useState<string | null>(null);
   const [isDeletingBooking, setIsDeletingBooking] = useState(false);
 
-  const daysInWeek = useMemo(() => getDaysInWeek(getWeekStart(currentWeekStart)), [currentWeekStart]);
   const visibleDayCount = 5;
   const visibleRangeStart = useMemo(() => currentWeekStart, [currentWeekStart]);
   const visibleDays = useMemo(() => getDaysFrom(visibleRangeStart, visibleDayCount), [visibleDayCount, visibleRangeStart]);
