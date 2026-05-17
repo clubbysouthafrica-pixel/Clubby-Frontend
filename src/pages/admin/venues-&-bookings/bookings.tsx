@@ -6,7 +6,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Edit2,
-  Grid3X3,
   List,
   Loader2,
   MapPin,
@@ -59,8 +58,6 @@ type Booking = {
   slot_time: number;
   name?: string | null;
 };
-
-type BookingViewMode = "calendar" | "availability";
 
 const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -335,7 +332,6 @@ export default function BookingsPage() {
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [currentWeekStart, setCurrentWeekStart] = useState(() => getDayStart());
-  const [viewMode, setViewMode] = useState<BookingViewMode>("availability");
   const [showSettings, setShowSettings] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
   const [isVenueEditorOpen, setIsVenueEditorOpen] = useState(false);
@@ -354,18 +350,11 @@ export default function BookingsPage() {
   const [deleteSlotTime, setDeleteSlotTime] = useState<number | null>(null);
   const [deleteBookingName, setDeleteBookingName] = useState<string | null>(null);
   const [isDeletingBooking, setIsDeletingBooking] = useState(false);
-  const timeSlotsRef = useRef<HTMLDivElement>(null);
 
   const daysInWeek = useMemo(() => getDaysInWeek(getWeekStart(currentWeekStart)), [currentWeekStart]);
-  const visibleDayCount = viewMode === "availability" ? 5 : 7;
-  const visibleRangeStart = useMemo(
-    () => (viewMode === "availability" ? currentWeekStart : getWeekStart(currentWeekStart)),
-    [currentWeekStart, viewMode],
-  );
-  const visibleDays = useMemo(
-    () => (viewMode === "availability" ? getDaysFrom(visibleRangeStart, visibleDayCount) : daysInWeek),
-    [daysInWeek, visibleDayCount, viewMode, visibleRangeStart],
-  );
+  const visibleDayCount = 5;
+  const visibleRangeStart = useMemo(() => currentWeekStart, [currentWeekStart]);
+  const visibleDays = useMemo(() => getDaysFrom(visibleRangeStart, visibleDayCount), [visibleDayCount, visibleRangeStart]);
   const selectedVenue = useMemo(
     () => venues.find((venue) => venue.venue_id === selectedVenueId) ?? null,
     [selectedVenueId, venues],
@@ -433,13 +422,6 @@ export default function BookingsPage() {
   useEffect(() => {
     fetchBookings();
   }, [fetchBookings]);
-
-  useEffect(() => {
-    if (!timeSlotsRef.current || viewMode !== "calendar") return;
-    const rowHeight = bookingUnit === 15 ? 12 : bookingUnit === 30 ? 24 : bookingUnit === 45 ? 36 : 48;
-    const slotsPerHour = 60 / bookingUnit;
-    timeSlotsRef.current.scrollTop = 8 * slotsPerHour * rowHeight;
-  }, [bookingUnit, selectedVenueId, viewMode]);
 
   const getSchedule = useCallback(
     (date: Date) => selectedVenue?.times.find((time) => time.day_of_week === getVenueDayIndex(date)) ?? null,
@@ -532,7 +514,7 @@ export default function BookingsPage() {
 
   useEffect(() => {
     clearSelectedBookingRange();
-  }, [clearSelectedBookingRange, currentWeekStart, selectedVenueId, viewMode]);
+  }, [clearSelectedBookingRange, currentWeekStart, selectedVenueId]);
 
   const handleAvailabilitySlotClick = (dayIdx: number, timeIdx: number) => {
     const date = visibleDays[dayIdx];
@@ -610,7 +592,7 @@ export default function BookingsPage() {
 
   return (
     <div className="space-y-6 px-4 pb-6 pt-4 md:px-6 md:pb-8 md:pt-6">
-      {selectedSlot && viewMode === "availability" && !isVenueEditorOpen ? (
+      {selectedSlot && !isVenueEditorOpen ? (
         <div className="fixed left-1/2 top-2 z-50 w-[calc(100vw-1rem)] max-w-5xl -translate-x-1/2 sm:top-4 sm:w-[calc(100vw-1.5rem)]">
           <div className="relative flex flex-col gap-2 overflow-hidden rounded-[1.25rem] border border-sky-800 bg-sky-700 px-3 py-2 shadow-[0_28px_80px_-32px_rgba(3,105,161,0.55)] ring-2 ring-sky-900/20 sm:flex-row sm:items-center sm:justify-between sm:gap-2.5 sm:rounded-[1.5rem] sm:px-4 sm:py-2.5">
             <div className="pointer-events-none absolute inset-y-0 left-0 w-1.5 bg-sky-950" />
@@ -745,7 +727,7 @@ export default function BookingsPage() {
                   <CardHeader className="gap-4 border-b border-slate-200/80 pb-4 md:flex-row md:items-center md:justify-between">
                     <div>
                       <CardTitle>{selectedVenue ? "Available Blocks" : "Select a Venue"}</CardTitle>
-                      <CardDescription>{selectedVenue ? (viewMode === "calendar" ? "Inspect booked and open slots across the week for the selected venue." : "Use the same block-based availability view members use when reserving a venue.") : "Choose a venue from the left-hand panel to start managing bookings."}</CardDescription>
+                      <CardDescription>{selectedVenue ? "Use the same block-based availability view members use when reserving a venue." : "Choose a venue from the left-hand panel to start managing bookings."}</CardDescription>
                     </div>
                           <div className="flex flex-col items-stretch gap-3 md:min-w-[260px] md:max-w-[320px]">
                             {selectedVenue ? <div className="flex flex-wrap gap-2"><Badge variant="outline">{bookingUnit}m booking unit</Badge><Badge variant="outline">{bookings.length} booked slots</Badge></div> : null}
@@ -753,19 +735,16 @@ export default function BookingsPage() {
                               <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Range in view</p>
                               <p className="mt-1.5 text-base font-semibold text-slate-950">{formatWeekRange(visibleDays)}</p>
                             </div>
-                            <div className="grid grid-cols-2 gap-2 rounded-[1rem] border border-slate-200 bg-white p-1">
-                              <Button variant="ghost" size="sm" className={cn("rounded-[0.8rem] text-slate-600 hover:bg-slate-100", viewMode === "availability" && "border border-slate-900 bg-slate-50 font-medium text-slate-950")} onClick={() => setViewMode("availability")}><List className="mr-2 h-4 w-4" />Available Blocks</Button>
-                              <Button variant="ghost" size="sm" className={cn("rounded-[0.8rem] text-slate-600 hover:bg-slate-100", viewMode === "calendar" && "border border-slate-900 bg-slate-50 font-medium text-slate-950")} onClick={() => setViewMode("calendar")}><Grid3X3 className="mr-2 h-4 w-4" />Calendar View</Button>
-                            </div>
+                            <div className="rounded-[1rem] border border-slate-200 bg-white p-1.5 text-center text-sm font-medium text-slate-700"><div className="flex items-center justify-center gap-2"><List className="h-4 w-4" />Available Blocks</div></div>
                             <div className="grid grid-cols-3 gap-2">
-                              <Button variant="outline" size="sm" onClick={() => { const next = new Date(currentWeekStart); next.setDate(next.getDate() - visibleDayCount); setCurrentWeekStart(next); }} disabled={viewMode === "availability" ? currentWeekStart.getTime() <= getDayStart().getTime() : getWeekStart(currentWeekStart).getTime() <= getWeekStart().getTime()}><ChevronLeft className="mr-1 h-4 w-4" />Previous</Button>
+                              <Button variant="outline" size="sm" onClick={() => { const next = new Date(currentWeekStart); next.setDate(next.getDate() - visibleDayCount); setCurrentWeekStart(next); }} disabled={currentWeekStart.getTime() <= getDayStart().getTime()}><ChevronLeft className="mr-1 h-4 w-4" />Previous</Button>
                               <Button variant="outline" size="sm" onClick={() => setCurrentWeekStart(getDayStart())}>Today</Button>
                               <Button variant="outline" size="sm" onClick={() => { const next = new Date(currentWeekStart); next.setDate(next.getDate() + visibleDayCount); setCurrentWeekStart(next); }}>Next<ChevronRight className="ml-1 h-4 w-4" /></Button>
                             </div>
                           </div>
                   </CardHeader>
                   <CardContent className="p-4 md:p-5">
-                    {!selectedVenue ? <div className="rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50 p-10 text-center text-sm text-slate-500">Choose a venue from the left-hand panel to inspect its availability and bookings.</div> : loadingBookings ? <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" />Loading bookings...</div> : viewMode === "availability" ? <div className="space-y-4"><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{visibleDays.map((date, dayIdx) => { const visibleSlotIndices = visibleSlotIndicesByDay[dayIdx] || []; const isClosed = isDayClosed(date); return <div key={date.toISOString()} className="rounded-[1.25rem] border border-slate-200 bg-white p-3 shadow-[0_16px_40px_-30px_rgba(15,23,42,0.18)]"><div className="mb-3 border-b border-slate-200 pb-3 text-center"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{formatWeekday(date)}</p><p className="mt-1 text-base font-semibold text-slate-950">{date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p></div>{isClosed ? <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-5 text-center text-sm text-slate-500">Closed</div> : visibleSlotIndices.length === 0 ? <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-5 text-center text-sm text-slate-500">No booking blocks available</div> : <div className="grid grid-cols-2 gap-2">{visibleSlotIndices.map((timeIdx) => { const booking = getBookingForSlot(dayIdx, timeIdx); const isBooked = !!booking; const isSelected = isSlotSelected(dayIdx, timeIdx); return <button key={`${dayIdx}-${timeIdx}`} type="button" onClick={() => { if (isBooked && booking) { setDeleteSlotTime(booking.slot_time); setDeleteBookingName(booking.name || "Booked"); return; } handleAvailabilitySlotClick(dayIdx, timeIdx); }} className={cn("h-14 rounded-xl border px-2 py-1 text-[11px] transition-colors", isSelected ? "border-slate-900 bg-slate-900 text-white" : isBooked ? "cursor-pointer border-slate-300 bg-slate-200 text-slate-700 shadow-inner" : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100")}><div className="flex h-full flex-col items-center justify-center gap-1 overflow-hidden leading-none"><span className="truncate font-semibold">{formatSlotRange(timeSlots, timeIdx)}</span>{isBooked && booking?.name ? <span className="max-w-full truncate rounded-full border border-slate-400/60 bg-slate-100 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-slate-700">{abbreviateBookingName(booking.name)}</span> : null}</div></button>; })}</div>}</div>; })}</div><div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">Click available blocks one by one to build your booking range. Click a booked block to inspect and delete that booking slot.</div></div> : <div className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white"><div className="grid grid-cols-8 border-b border-slate-200 bg-slate-50"><div className="border-r border-slate-200 p-3 text-center text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Time</div>{visibleDays.map((date) => <div key={date.toISOString()} className={cn("border-r border-slate-200 p-3 text-center last:border-r-0", (isDayClosed(date) || isPastDay(date)) && "bg-slate-100 opacity-60")}><p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{formatWeekday(date, "long")}</p><p className="mt-1 text-lg font-semibold text-slate-900">{date.getDate()}</p></div>)}</div><div ref={timeSlotsRef} className="max-h-[620px] overflow-y-auto" onMouseLeave={() => setDragEnd(dragStart || dragEnd)}>{timeSlots.map((time, timeIdx) => <div key={time} className={cn("grid grid-cols-8 border-b border-slate-200", bookingUnit === 15 ? "min-h-3" : bookingUnit === 30 ? "min-h-6" : bookingUnit === 45 ? "min-h-9" : "min-h-12")}><div className="border-r border-slate-200 bg-slate-50 px-2 py-0 text-xs font-semibold text-slate-500">{time.endsWith(":00") ? <span className="relative -top-2 inline-block bg-white px-1">{time}</span> : null}</div>{visibleDays.map((date, dayIdx) => { const booking = getBookingForSlot(dayIdx, timeIdx); const booked = !!booking; const disabled = isPastDay(date) || isDayClosed(date) || !isWithinHours(date, time) || booked; const selected = dragStart && dragEnd && dragStart.dayIdx === dayIdx && dragEnd.dayIdx === dayIdx && timeIdx >= Math.min(dragStart.timeIdx, dragEnd.timeIdx) && timeIdx <= Math.max(dragStart.timeIdx, dragEnd.timeIdx); return <div key={`${date.toISOString()}-${time}`} className={cn("relative border-r border-slate-200 last:border-r-0", booked && "bg-rose-500 hover:bg-rose-600", !booked && !disabled && "cursor-pointer hover:bg-sky-50", disabled && !booked && "bg-slate-100/80", selected && "bg-sky-600 hover:bg-sky-600")} onMouseDown={() => { if (!disabled) { setDragStart({ dayIdx, timeIdx }); setDragEnd({ dayIdx, timeIdx }); } }} onMouseEnter={() => { if (dragStart && dragStart.dayIdx === dayIdx && !booked) setDragEnd({ dayIdx, timeIdx }); }} onClick={() => { if (booking) { setDeleteSlotTime(booking.slot_time); setDeleteBookingName(booking.name || "Booked"); } }}>{booking ? <div className="flex h-full min-h-full flex-col items-center justify-center px-1 py-2 text-center text-[11px] font-semibold text-white"><span>{time} - {timeSlots[timeIdx + 1] || "23:59"}</span><span className="truncate">{booking.name || "Booked"}</span></div> : null}</div>; })}</div>)}</div><div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500"><span>Drag across open slots to create a booking.</span><span>Click an existing booking to delete that slot.</span></div></div>}
+                    {!selectedVenue ? <div className="rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50 p-10 text-center text-sm text-slate-500">Choose a venue from the left-hand panel to inspect its availability and bookings.</div> : loadingBookings ? <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" />Loading bookings...</div> : <div className="space-y-4"><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{visibleDays.map((date, dayIdx) => { const visibleSlotIndices = visibleSlotIndicesByDay[dayIdx] || []; const isClosed = isDayClosed(date); return <div key={date.toISOString()} className="rounded-[1.25rem] border border-slate-200 bg-white p-3 shadow-[0_16px_40px_-30px_rgba(15,23,42,0.18)]"><div className="mb-3 border-b border-slate-200 pb-3 text-center"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{formatWeekday(date)}</p><p className="mt-1 text-base font-semibold text-slate-950">{date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p></div>{isClosed ? <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-5 text-center text-sm text-slate-500">Closed</div> : visibleSlotIndices.length === 0 ? <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-5 text-center text-sm text-slate-500">No booking blocks available</div> : <div className="grid grid-cols-2 gap-2">{visibleSlotIndices.map((timeIdx) => { const booking = getBookingForSlot(dayIdx, timeIdx); const isBooked = !!booking; const isSelected = isSlotSelected(dayIdx, timeIdx); return <button key={`${dayIdx}-${timeIdx}`} type="button" onClick={() => { if (isBooked && booking) { setDeleteSlotTime(booking.slot_time); setDeleteBookingName(booking.name || "Booked"); return; } handleAvailabilitySlotClick(dayIdx, timeIdx); }} className={cn("h-14 rounded-xl border px-2 py-1 text-[11px] transition-colors", isSelected ? "border-slate-900 bg-slate-900 text-white" : isBooked ? "cursor-pointer border-slate-300 bg-slate-200 text-slate-700 shadow-inner" : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100")}><div className="flex h-full flex-col items-center justify-center gap-1 overflow-hidden leading-none"><span className="truncate font-semibold">{formatSlotRange(timeSlots, timeIdx)}</span>{isBooked && booking?.name ? <span className="max-w-full truncate rounded-full border border-slate-400/60 bg-slate-100 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-slate-700">{abbreviateBookingName(booking.name)}</span> : null}</div></button>; })}</div>}</div>; })}</div><div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">Click available blocks one by one to build your booking range. Click a booked block to inspect and delete that booking slot.</div></div>}
                   </CardContent>
                 </Card>
               </motion.div>

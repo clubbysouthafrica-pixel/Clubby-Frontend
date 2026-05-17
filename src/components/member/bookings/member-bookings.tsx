@@ -1,8 +1,6 @@
 import {
   useState,
   useEffect,
-  useRef,
-  useLayoutEffect,
   useCallback,
   useMemo,
 } from "react";
@@ -10,7 +8,6 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
-  Clock3,
   Grid3X3,
   Loader2,
   MapPin,
@@ -65,8 +62,6 @@ interface MemberBookingsProps {
   error: string | null;
   memberName?: string;
 }
-
-type BookingViewMode = "calendar" | "availability";
 
 function formatWeekday(date: Date, weekday: "short" | "long" = "short") {
   return new Intl.DateTimeFormat("en-US", { weekday }).format(date);
@@ -143,7 +138,6 @@ export default function MemberBookings({
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
-  const [hasInitialScrolled, setHasInitialScrolled] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{
     dayIdx: number;
     startTimeIdx: number;
@@ -164,9 +158,6 @@ export default function MemberBookings({
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const [isCreatingBooking, setIsCreatingBooking] = useState(false);
   const [bookingName, setBookingName] = useState(memberName);
-  const [bookingViewMode, setBookingViewMode] =
-    useState<BookingViewMode>("availability");
-  const timeSlotsRef = useRef<HTMLDivElement>(null);
 
   const getDaysInWeek = () => {
     const days: Date[] = [];
@@ -179,7 +170,7 @@ export default function MemberBookings({
   };
 
   const daysInWeek = getDaysInWeek();
-  const visibleDayCount = bookingViewMode === "availability" ? 5 : 7;
+  const visibleDayCount = 5;
   const visibleDays = daysInWeek.slice(0, visibleDayCount);
 
   useEffect(() => {
@@ -193,43 +184,6 @@ export default function MemberBookings({
       setBookings([]);
     }
   }, [bookingsLoading]);
-
-  useEffect(() => {
-    // Reset initial scroll flag when venue changes
-    setHasInitialScrolled(false);
-  }, [selectedVenueId]);
-
-  useEffect(() => {
-    if (bookingViewMode === "calendar") {
-      setHasInitialScrolled(false);
-    }
-  }, [bookingViewMode]);
-
-  useLayoutEffect(() => {
-    // Scroll to 8am when the calendar view becomes active, don't wait for bookings
-    if (
-      timeSlotsRef.current &&
-      !hasInitialScrolled &&
-      selectedVenueId &&
-      bookingViewMode === "calendar"
-    ) {
-      const selectedVenue = venues.find(
-        (venue) => venue.venue_id === selectedVenueId,
-      );
-      const bookingUnit = selectedVenue?.smallest_booking_unit || 60;
-      let rowHeight: number;
-
-      if (bookingUnit === 15) rowHeight = 12;
-      else if (bookingUnit === 30) rowHeight = 24;
-      else if (bookingUnit === 45) rowHeight = 36;
-      else rowHeight = 48;
-
-      const slotsPerHour = 60 / bookingUnit;
-      const scrollPosition = 8 * slotsPerHour * rowHeight;
-      timeSlotsRef.current.scrollTop = scrollPosition;
-      setHasInitialScrolled(true);
-    }
-  }, [bookingViewMode, selectedVenueId, hasInitialScrolled, venues]);
 
   useEffect(() => {
     if (!selectedVenueId) return;
@@ -272,14 +226,6 @@ export default function MemberBookings({
     const venue = getSelectedVenue();
     return venue?.smallest_booking_unit || 60;
   }, [getSelectedVenue]);
-
-  const getRowHeightClass = () => {
-    const bookingUnit = getBookingUnit();
-    if (bookingUnit === 15) return "h-3";
-    if (bookingUnit === 30) return "h-5";
-    if (bookingUnit === 45) return "h-7";
-    return "h-9";
-  };
 
   const validateSelectionDuration = useCallback(
     (
@@ -355,10 +301,6 @@ export default function MemberBookings({
       memberName,
     ],
   );
-
-  const shouldShowTimeLabel = (timeSlot: string) => {
-    return timeSlot.endsWith(":00");
-  };
 
   const generateTimeSlots = () => {
     const bookingUnit = getBookingUnit();
@@ -614,12 +556,11 @@ export default function MemberBookings({
     setSelectionError(null);
     setIsDialogOpen(false);
     setBookingDialogError(null);
-  }, [bookingViewMode, currentWeekStart, selectedVenueId]);
+  }, [currentWeekStart, selectedVenueId]);
 
   const handleSelectableSlotClick = (dayIdx: number, timeIdx: number) => {
     const isDisabled = isSlotDisabled(dayIdx, timeIdx);
     const clickedSameSlotTwice =
-      bookingViewMode === "availability" &&
       lastClickedSlot?.dayIdx === dayIdx &&
       lastClickedSlot?.timeIdx === timeIdx;
 
@@ -691,7 +632,6 @@ export default function MemberBookings({
 
   const selectedVenue = getSelectedVenue();
   const bookingUnit = getBookingUnit();
-  const timeColumnWidth = isMobile ? 60 : 80;
   const openDaysCount = visibleDays.reduce((total, date, dayIdx) => {
     const visibleSlotIndices = visibleSlotIndicesByDay[dayIdx] || [];
 
@@ -823,7 +763,7 @@ export default function MemberBookings({
                 <div className="rounded-[1rem] border border-slate-200 bg-white p-2.5 sm:rounded-[1.25rem] sm:p-4">
                   <div className="flex flex-wrap items-center gap-1 sm:gap-2">
                     <Badge className="border-slate-200 bg-slate-50 text-slate-700">
-                      {bookingViewMode === "availability" ? (isMobile ? "Blocks" : "Available blocks") : (isMobile ? "Calendar" : "Calendar view")}
+                      {isMobile ? "Blocks" : "Available blocks"}
                     </Badge>
                     {selectedVenue && !isMobile ? (
                       <Badge className="border-slate-200 bg-slate-50 text-slate-700">
@@ -835,9 +775,7 @@ export default function MemberBookings({
                     {bookingsLoading ? "Refreshing..." : formatWeekRange()}
                   </p>
                   <p className="mt-0.5 hidden text-xs leading-5 text-slate-500 sm:block sm:text-sm sm:leading-5">
-                    {bookingViewMode === "availability"
-                      ? "Choose adjacent blocks to grow or reset your selection quickly."
-                      : "Review the full venue calendar and book directly from open slots."}
+                    Choose adjacent blocks to grow or reset your selection quickly.
                   </p>
                   <div className="mt-2 flex flex-wrap items-center gap-1 sm:gap-2">
                     <Badge className="border-slate-200 bg-slate-50 text-slate-700">
@@ -868,9 +806,7 @@ export default function MemberBookings({
                   <div className="col-span-2 hidden rounded-[1rem] border border-slate-200 bg-slate-50 p-2.5 sm:block sm:p-3">
                     <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Selection tip</p>
                     <p className="mt-1 text-xs leading-5 text-slate-700 sm:text-sm sm:leading-5">
-                      {bookingViewMode === "availability"
-                        ? "Tap the same block again to reset the range back to that starting point."
-                        : "Use the calendar when you need a full-day view of booked and open time."}
+                      Tap the same block again to reset the range back to that starting point.
                     </p>
                   </div>
                 </div>
@@ -933,47 +869,16 @@ export default function MemberBookings({
                 <div className="flex flex-col gap-2.5 lg:flex-row lg:items-end lg:justify-between lg:gap-3">
                   <div className="flex items-start gap-2.5 sm:gap-4">
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700 shadow-sm sm:h-11 sm:w-11 sm:rounded-2xl">
-                      {bookingViewMode === "availability" ? (
-                        <Grid3X3 className="h-5 w-5" />
-                      ) : (
-                        <Clock3 className="h-5 w-5" />
-                      )}
+                      <Grid3X3 className="h-5 w-5" />
                     </div>
                     <div>
                       <CardTitle className="text-base text-slate-950 sm:text-xl">
                         {selectedVenue?.venue_name || "Bookings"}
                       </CardTitle>
                       <CardDescription className="mt-0.5 hidden max-w-2xl text-xs leading-5 text-slate-500 sm:block sm:text-sm sm:leading-5">
-                        Switch between fast block selection and the full venue timeline without losing your place.
+                        Pick from the available booking blocks without leaving this view.
                       </CardDescription>
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:items-center sm:gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setBookingViewMode("availability")}
-                      className={cn(
-                        "h-7.5 border-slate-200 bg-white px-2 text-[11px] text-slate-600 hover:bg-slate-50 sm:h-8 sm:px-2.5 sm:text-sm",
-                        bookingViewMode === "availability" &&
-                          "border-slate-900 bg-slate-900 text-white hover:bg-slate-900",
-                      )}
-                    >
-                      Available Blocks
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setBookingViewMode("calendar")}
-                      className={cn(
-                        "h-7.5 border-slate-200 bg-white px-2 text-[11px] text-slate-600 hover:bg-slate-50 sm:h-8 sm:px-2.5 sm:text-sm",
-                        bookingViewMode === "calendar" &&
-                          "border-slate-900 bg-slate-900 text-white hover:bg-slate-900",
-                      )}
-                    >
-                      Calendar View
-                    </Button>
                   </div>
                 </div>
               </CardHeader>
@@ -1021,149 +926,6 @@ export default function MemberBookings({
                   </div>
                 </div>
 
-                {bookingViewMode === "calendar" ? (
-                  <div className="overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white shadow-[0_16px_40px_-30px_rgba(15,23,42,0.18)] sm:rounded-[1.5rem]">
-                <div
-                  className={`grid border-b border-slate-200 bg-slate-50 ${getRowHeightClass()}`}
-                  style={{
-                    gridTemplateColumns: `${timeColumnWidth}px repeat(${visibleDays.length}, minmax(0, 1fr))`,
-                  }}
-                >
-                  <div className="flex items-center justify-center border-r border-slate-200 p-2 text-xs font-semibold text-slate-500">
-                    Time
-                  </div>
-                  {visibleDays.map((date, idx) => {
-                    const isPast = isPastDay(date);
-                    const isClosed = isDayClosedForVenue(date);
-
-                    return (
-                      <div
-                        key={idx}
-                        className={`flex flex-col items-center justify-center border-r border-slate-200 p-1.5 text-center sm:p-3 ${
-                          isPast || isClosed ? "bg-slate-100 opacity-50" : ""
-                        }`}
-                      >
-                        <p className="text-[10px] font-semibold text-slate-500 sm:text-xs">
-                          {formatWeekday(date)}
-                        </p>
-                        <p className="text-[13px] font-bold text-slate-950 sm:text-sm">{date.getDate()}</p>
-                        {isClosed && (
-                          <p className="text-xs text-slate-500">Closed</p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {isMobile && (
-                  <Button
-                    onClick={() => {
-                      if (timeSlotsRef.current) {
-                        timeSlotsRef.current.scrollBy({
-                          top: -100,
-                          behavior: "smooth",
-                        });
-                      }
-                    }}
-                    className="h-8 w-full rounded-none border-b border-slate-200 bg-slate-100 py-1 font-semibold text-slate-700 hover:bg-slate-200"
-                  >
-                    <ChevronLeft className="h-5 w-5 rotate-90" />
-                  </Button>
-                )}
-
-                <div
-                  ref={timeSlotsRef}
-                  className="max-h-[480px] overflow-y-auto sm:max-h-[560px]"
-                >
-                  {timeSlots.map((time, timeIdx) => (
-                    <div
-                      key={time}
-                      className={`grid border-b border-slate-200 transition-all hover:bg-slate-50 ${getRowHeightClass()}`}
-                      style={{
-                        gridTemplateColumns: `${timeColumnWidth}px repeat(${visibleDays.length}, minmax(0, 1fr))`,
-                      }}
-                    >
-                      <div className="relative flex items-start border-r border-slate-200 bg-slate-50 p-0 text-xs font-extrabold text-slate-500">
-                        {shouldShowTimeLabel(time) ? (
-                          <span
-                            className="relative z-10 bg-white px-1"
-                            style={{ marginTop: "-0.5rem" }}
-                          >
-                            {time}
-                          </span>
-                        ) : (
-                          ""
-                        )}
-                      </div>
-                      {visibleDays.map((date, dayIdx) => {
-                        const isPast = isPastDay(date);
-                        const isClosed = isDayClosedForVenue(date);
-                        const isAvailable = isTimeInOperatingHours(time, date);
-                        const isBooked = isSlotBooked(dayIdx, timeIdx);
-                        const isDisabled =
-                          isPast || isClosed || !isAvailable || isBooked;
-                        const isDragging = isSlotSelected(dayIdx, timeIdx);
-                        const bookingName = isBooked
-                          ? getBookingNameForSlot(dayIdx, timeIdx)
-                          : null;
-
-                        return (
-                          <div
-                            key={`${dayIdx}-${timeIdx}`}
-                            data-day-idx={dayIdx}
-                            data-time-idx={timeIdx}
-                            onClick={() =>
-                              handleSelectableSlotClick(dayIdx, timeIdx)
-                            }
-                            title={isBooked && bookingName ? bookingName : undefined}
-                            className={`group relative flex items-center justify-center border-r border-slate-200 p-1 transition-colors select-none sm:p-2 ${
-                              isBooked
-                                ? "pointer-events-none cursor-default border-slate-300 bg-slate-200 shadow-inner"
-                                : isDisabled
-                                  ? "pointer-events-none cursor-default bg-slate-200 opacity-50"
-                                  : "cursor-pointer"
-                            } ${
-                              isDragging
-                                ? "bg-slate-900 hover:bg-slate-900"
-                                : !isDisabled
-                                  ? "hover:bg-slate-100"
-                                  : ""
-                            }`}
-                          >
-                            {isBooked && bookingName && (
-                              <div className="pointer-events-none flex h-full w-full items-center justify-center overflow-hidden px-1">
-                                <div className="max-w-full truncate rounded-full border border-slate-400/60 bg-slate-100 px-1 py-0.5 text-center text-[8px] font-semibold uppercase tracking-[0.06em] text-slate-700 sm:px-1.5 sm:text-[9px] sm:tracking-[0.08em]">
-                                  {abbreviateBookingName(bookingName)}
-                                </div>
-                              </div>
-                            )}
-                            {!isDisabled && !isDragging && (
-                              <div className="absolute inset-0 bg-slate-200/70 opacity-0 transition-opacity group-hover:opacity-100" />
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
-
-                {isMobile && (
-                  <Button
-                    onClick={() => {
-                      if (timeSlotsRef.current) {
-                        timeSlotsRef.current.scrollBy({
-                          top: 100,
-                          behavior: "smooth",
-                        });
-                      }
-                    }}
-                    className="h-8 w-full rounded-none border-t border-slate-200 bg-slate-100 py-1 font-semibold text-slate-700 hover:bg-slate-200"
-                  >
-                    <ChevronLeft className="h-5 w-5 -rotate-90" />
-                  </Button>
-                )}
-              </div>
-            ) : (
               <div className="grid gap-1 sm:grid-cols-2 sm:gap-2 lg:grid-cols-5">
                 {visibleDays.map((date, dayIdx) => {
                   const visibleSlotIndices =
@@ -1262,22 +1024,11 @@ export default function MemberBookings({
                   );
                 })}
               </div>
-            )}
 
                 <div className="rounded-[0.85rem] border border-slate-200 bg-slate-50 px-1.5 py-1 text-[9px] text-slate-600 sm:rounded-[1.1rem] sm:px-3 sm:py-2 sm:text-xs">
-              {bookingViewMode === "availability" ? (
-                <>
-                  {isMobile
-                    ? "Tap blocks to build your range"
-                    : "Click available blocks one by one to build your booking range"}
-                </>
-              ) : (
-                <>
-                  {isMobile
-                    ? "Tap slots to build your range"
-                    : "Click available slots one by one to build your booking range"}
-                </>
-              )}
+              {isMobile
+                ? "Tap blocks to build your range"
+                : "Click available blocks one by one to build your booking range"}
                 </div>
               </CardContent>
             </Card>
