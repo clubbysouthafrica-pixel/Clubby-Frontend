@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,8 +31,8 @@ import {
 import { formatAmount } from "@/data/currencies";
 import { useFetchClub } from "@/queries/clubs";
 import { getClubProducts } from "@/services/shop";
-import { createOrder, getMemberOrders } from "@/services/orders";
-import { useQuery } from "@tanstack/react-query";
+import { cancelOrder, createOrder, getMemberOrders } from "@/services/orders";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -67,6 +67,8 @@ type MemberOrderItem = {
   product_id?: string;
   name?: string;
   quantity?: number;
+  refund_quantity?: number;
+  fulfillment_quantity?: number;
   price?: number;
   subtotal?: number;
 };
@@ -103,12 +105,23 @@ function getPaymentStatusBadgeClassName(status?: string) {
 }
 
 function getFulfillmentStatusBadgeClassName(status?: string) {
-  if (status === "FULFILLED") {
+  if (status === "DELIVERED" || status === "FULFILLED") {
     return "border-emerald-200 bg-emerald-50 text-emerald-700";
   }
 
-  if (status === "PARTIALLY_FULFILLED") {
+  if (
+    status === "PARTIALLY_DELIVERED" ||
+    status === "PARTIALLY_FULFILLED"
+  ) {
     return "border-sky-200 bg-sky-50 text-sky-700";
+  }
+
+  if (status === "PROCESSING") {
+    return "border-violet-200 bg-violet-50 text-violet-700";
+  }
+
+  if (status === "NOT_PROCESSED") {
+    return "border-slate-200 bg-slate-100 text-slate-700";
   }
 
   return "border-slate-200 bg-slate-100 text-slate-700";
@@ -121,7 +134,7 @@ type MemberShopPageProps = {
 export default function MemberShopPage({ embedded = false }: MemberShopPageProps) {
   const { clubId } = useParams();
   const navigate = useNavigate();
-  const ordersSectionRef = useRef<HTMLDivElement | null>(null);
+  const queryClient = useQueryClient();
   
   // Fetch club data to check registration status
   const { data: clubData, isLoading: isClubLoading } = useFetchClub(clubId || "");
@@ -137,6 +150,9 @@ export default function MemberShopPage({ embedded = false }: MemberShopPageProps
   const [showCart, setShowCart] = useState(false);
   const [orderDialog, setOrderDialog] = useState(false);
   const [showOrdersSection, setShowOrdersSection] = useState(false);
+  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
+  const [selectedOrderForCancel, setSelectedOrderForCancel] =
+    useState<MemberOrder | null>(null);
 
   const clubCurrency = clubData?.currency || "ZAR";
   const availableProducts = useMemo<ShopProduct[]>(() => {
@@ -161,9 +177,53 @@ export default function MemberShopPage({ embedded = false }: MemberShopPageProps
     [memberOrders],
   );
 
+  const handleConfirmCancelOrder = async () => {
+    const order = selectedOrderForCancel;
+
+    if (
+      !order ||
+      !clubData?.club_account_id ||
+      !order.order_id ||
+      !order.transaction_id
+    ) {
+      toast.error("This order is missing the details required to cancel it.");
+      return;
+    }
+
+    try {
+      setCancellingOrderId(order.order_id);
+      await cancelOrder({
+        transaction_id: order.transaction_id,
+        club_account_id: clubData.club_account_id,
+        order_id: order.order_id,
+      });
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["member-shop-orders", clubData.club_account_id],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["getClubBankDetails", clubData.club_account_id],
+        }),
+      ]);
+      setSelectedOrderForCancel(null);
+      toast.success("Order cancelled successfully.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to cancel the order.",
+      );
+    } finally {
+      setCancellingOrderId(null);
+    }
+  };
+
   const cartTotal = useMemo(() => {
     return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
   }, [cart]);
+
+  const totalCartItems = useMemo(() => {
+    return cart.reduce((total, item) => total + item.quantity, 0);
+  }, [cart]);
+  const hasCartItems = totalCartItems > 0;
   
   // Check if user is registered with the club
   useEffect(() => {
@@ -186,21 +246,6 @@ export default function MemberShopPage({ embedded = false }: MemberShopPageProps
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [embedded]);
 
-  useEffect(() => {
-    if (!showOrdersSection) {
-      return;
-    }
-
-    const timeout = window.setTimeout(() => {
-      ordersSectionRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }, 100);
-
-    return () => window.clearTimeout(timeout);
-  }, [showOrdersSection]);
-  
   // Show loading state while checking registration or loading products
   if (isClubLoading || isProductsLoading) {
     return (
@@ -277,11 +322,15 @@ export default function MemberShopPage({ embedded = false }: MemberShopPageProps
       setCart([...cart, newItem]);
     }
     
-    toast.success(`${product.name} added to cart`);
   };
 
   const removeFromCart = (productId: number) => {
     setCart(cart.filter(item => item.productId !== productId));
+  };
+
+  const clearCart = () => {
+    setCart([]);
+    setShowCart(false);
   };
 
   const updateQuantity = (productId: number, newQuantity: number) => {
@@ -302,7 +351,7 @@ export default function MemberShopPage({ embedded = false }: MemberShopPageProps
   };
 
   const getTotalItems = () => {
-    return cart.reduce((total, item) => total + item.quantity, 0);
+    return totalCartItems;
   };
 
   const handleCreateOrder = async () => {
@@ -358,7 +407,10 @@ export default function MemberShopPage({ embedded = false }: MemberShopPageProps
 
   return (
     <div className={cn(embedded ? "bg-transparent" : "min-h-screen bg-background")}>
-      <div className={cn("mx-auto max-w-7xl", embedded ? "px-0 py-0" : "px-3 py-2 sm:px-6 sm:py-6 lg:px-8 lg:py-8")}>
+      <div className={cn(
+        "mx-auto max-w-7xl",
+        embedded ? "px-0 py-0" : "px-3 py-2 sm:px-6 sm:py-6 lg:px-8 lg:py-8",
+      )}>
         <div className="space-y-2.5 sm:space-y-4">
           <Card className="overflow-hidden py-2 border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] text-slate-900 shadow-[0_24px_70px_-34px_rgba(15,23,42,0.22)]">
             <CardContent className="space-y-2 p-2 sm:space-y-6 sm:p-6">
@@ -433,7 +485,7 @@ export default function MemberShopPage({ embedded = false }: MemberShopPageProps
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2">
                 <Button
                   type="button"
                   variant="outline"
@@ -441,123 +493,86 @@ export default function MemberShopPage({ embedded = false }: MemberShopPageProps
                   onClick={() => setShowOrdersSection((value) => !value)}
                 >
                   <span className="flex items-center gap-1.5 sm:gap-2">
-                    <Receipt className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    {showOrdersSection ? (
+                      <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    ) : (
+                      <Receipt className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    )}
                     <span className="truncate">
-                      {showOrdersSection ? "Hide orders" : "View orders"}
+                      {showOrdersSection ? "Back to items" : "View orders"}
                     </span>
                   </span>
-                  <ChevronRight className={cn("h-3.5 w-3.5 transition-transform sm:h-4 sm:w-4", showOrdersSection && "rotate-90")} />
-                </Button>
-
-                <Button
-                  type="button"
-                  className="relative h-9 w-full justify-between bg-black px-2.5 text-xs text-white hover:bg-slate-900 sm:h-11 sm:px-3 sm:text-sm"
-                  onClick={() => setShowCart(true)}
-                >
-                  <span className="flex items-center gap-1.5 sm:gap-2">
-                    <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    View cart
-                  </span>
-                  {cart.length > 0 ? (
-                    <Badge className="border-white/20 bg-white/10 px-1.5 py-0 text-[10px] text-white sm:text-xs">
-                      {getTotalItems()} items
-                    </Badge>
-                  ) : (
-                    <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  )}
+                  <ChevronRight className={cn("h-3.5 w-3.5 transition-transform sm:h-4 sm:w-4", showOrdersSection && "rotate-180")} />
                 </Button>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <div className="mt-3 space-y-2.5 sm:mt-6 sm:space-y-4">
-          <div className="flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between sm:gap-3">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 sm:text-xs sm:tracking-[0.22em]">
-                Shop catalog
-              </p>
-              <h2 className="text-base font-semibold tracking-tight leading-tight sm:text-3xl">
-                Items for sale
-              </h2>
-              <p className="hidden mt-1 text-sm leading-6 text-slate-500 sm:block">
-                Choose what you want first. Orders and payment follow after checkout.
-              </p>
-            </div>
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] text-slate-600 shadow-sm sm:px-3 sm:py-2 sm:text-sm">
-              <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              {getTotalItems()} item{getTotalItems() === 1 ? "" : "s"} in cart
+        {hasCartItems ? (
+          <div className="sticky top-32 z-30 mt-2 sm:top-20 sm:mt-6">
+            <div className="rounded-[1.1rem] border border-slate-200 bg-slate-950 px-2.5 py-2 text-white shadow-[0_24px_60px_-34px_rgba(15,23,42,0.55)] sm:rounded-[1.4rem] sm:px-4 sm:py-3">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-300 sm:text-xs sm:tracking-[0.2em]">
+                    Active Cart
+                  </p>
+                  <p className="mt-0.5 truncate text-[12px] font-semibold text-white sm:mt-1 sm:text-sm">
+                    {totalCartItems} item{totalCartItems === 1 ? "" : "s"} selected
+                  </p>
+                  <p className="hidden text-[11px] text-slate-300 sm:mt-0.5 sm:block sm:text-xs">
+                    {formatAmount(cartTotal, clubCurrency)} ready to review.
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={clearCart}
+                    className="h-8 border-slate-600 bg-slate-900 px-2.5 text-[10px] font-semibold text-white hover:bg-slate-800 hover:text-white sm:h-10 sm:px-4 sm:text-xs"
+                  >
+                    <span className="sm:hidden">Clear</span>
+                    <span className="hidden sm:inline">Clear cart</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => setShowCart(true)}
+                    className="h-8 bg-white px-2.5 text-[10px] font-semibold text-slate-950 hover:bg-slate-100 sm:h-10 sm:px-4 sm:text-xs"
+                  >
+                    <ShoppingCart className="mr-1 h-3.5 w-3.5 sm:mr-1.5 sm:h-4 sm:w-4" />
+                    <span className="sm:hidden">Cart</span>
+                    <span className="hidden sm:inline">Go to cart</span>
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
+        ) : null}
 
-          {availableProducts.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center">
-              <Package className="mx-auto h-12 w-12 text-slate-400" />
-              <h2 className="mt-4 text-lg font-medium text-slate-900">No products available</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-500">Check back later for new merchandise.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
-              {availableProducts.map((product) => {
-                const inCartQuantity = cart.find(item => item.productId === product.product_id)?.quantity || 0;
+        <div className="mt-3 space-y-2.5 sm:mt-6 sm:space-y-4">
+          {showOrdersSection ? (
+            <>
+              <div className="flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between sm:gap-3">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 sm:text-xs sm:tracking-[0.22em]">
+                    Order history
+                  </p>
+                  <h2 className="text-base font-semibold tracking-tight leading-tight sm:text-3xl">
+                    Your orders
+                  </h2>
+                  <p className="hidden mt-1 text-sm leading-6 text-slate-500 sm:block">
+                    Review what has been paid, delivered, processed, or still waiting.
+                  </p>
+                </div>
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] text-slate-600 shadow-sm sm:px-3 sm:py-2 sm:text-sm">
+                  <Receipt className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  {memberOrders.length} order{memberOrders.length === 1 ? "" : "s"}
+                </div>
+              </div>
 
-                return (
-                  <Card
-                    key={product.product_id}
-                    className="overflow-hidden border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] shadow-[0_20px_60px_-34px_rgba(15,23,42,0.18)] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_28px_70px_-34px_rgba(15,23,42,0.24)]"
-                  >
-                    <div className="aspect-square overflow-hidden bg-slate-100 sm:aspect-[4/3]">
-                      {product.product_image_url ? (
-                        <img
-                          src={product.product_image_url}
-                          alt={product.name}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center">
-                          <Package className="h-16 w-16 text-slate-400" />
-                        </div>
-                      )}
-                    </div>
-                    <CardHeader className="space-y-1.5 p-2 sm:space-y-4 sm:p-6">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <CardTitle className="line-clamp-2 text-xs leading-4 text-slate-950 sm:text-lg sm:leading-6">{product.name}</CardTitle>
-                          <p className="mt-0.5 text-sm font-semibold tracking-tight text-slate-950 sm:mt-2 sm:text-3xl">
-                            {formatAmount(product.price, clubCurrency)}
-                          </p>
-                        </div>
-                        {inCartQuantity > 0 ? (
-                          <Badge className="border-amber-200 bg-amber-50 px-1.5 py-0 text-[10px] text-amber-700 sm:text-xs">
-                            {inCartQuantity}
-                          </Badge>
-                        ) : null}
-                      </div>
-                      <CardDescription className="line-clamp-2 min-h-0 text-[10px] leading-3.5 text-slate-500 sm:min-h-12 sm:text-sm sm:leading-6">
-                        {product.description || "No description available"}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-1.5 p-2 pt-0 sm:space-y-4 sm:p-6 sm:pt-0">
-                      <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-2 py-1.5 text-[9px] text-slate-600 shadow-sm sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm">
-                        <span>Limit</span>
-                        <span className="font-medium text-slate-900">
-                          {product.purchase_limit === "multiple" ? "Multiple" : "Single"}
-                        </span>
-                      </div>
-                      <Button onClick={() => addToCart(product)} className="h-7 w-full bg-black px-2 text-[10px] text-white hover:bg-slate-900 sm:h-11 sm:text-sm">
-                        <ShoppingCart className="mr-1 h-3 w-3 sm:mr-2 sm:h-4 sm:w-4" />
-                        Add
-                      </Button>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {showOrdersSection ? (
-          <Card ref={ordersSectionRef} className="mt-6 overflow-hidden border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] shadow-[0_24px_70px_-34px_rgba(15,23,42,0.22)]">
+              <Card className="overflow-hidden border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] shadow-[0_24px_70px_-34px_rgba(15,23,42,0.22)]">
             <CardHeader className="border-b border-slate-200/80">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex items-center gap-3">
@@ -572,7 +587,7 @@ export default function MemberShopPage({ embedded = false }: MemberShopPageProps
                   </div>
                 </div>
                 <Button variant="outline" onClick={() => setShowOrdersSection(false)}>
-                  Hide orders
+                  Back to items
                 </Button>
               </div>
             </CardHeader>
@@ -587,7 +602,7 @@ export default function MemberShopPage({ embedded = false }: MemberShopPageProps
                   <Receipt className="mx-auto h-10 w-10 text-slate-400" />
                   <p className="mt-4 text-lg font-semibold text-slate-900">No orders yet</p>
                   <p className="mt-2 text-sm leading-6 text-slate-500">
-                    Start with the items for sale above. Your order history will appear here once you place something.
+                    Start with the items for sale. Your order history will appear here once you place something.
                   </p>
                 </div>
               ) : (
@@ -598,6 +613,11 @@ export default function MemberShopPage({ embedded = false }: MemberShopPageProps
                     const createdDate = order.created_date
                       ? new Date(order.created_date * 1000).toLocaleDateString()
                       : "Unknown date";
+                    const isPendingOrder = order.payment_status === "PENDING";
+                    const canContinuePayment =
+                      (order.payment_status === "PENDING" ||
+                        order.payment_status === "PARTIALLY_PAID") &&
+                      Boolean(order.order_id);
 
                     return (
                       <div key={order.order_id || order.transaction_id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -640,43 +660,84 @@ export default function MemberShopPage({ embedded = false }: MemberShopPageProps
                         </div>
 
                         <div className="mt-4 space-y-2">
-                          {orderItems.slice(0, 3).map((item, index) => (
-                            <div
-                              key={`${order.order_id || "order"}-${item.product_id || item.name || index}`}
-                              className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm"
-                            >
-                              <div>
-                                <p className="font-medium text-slate-900">{item.name || "Unnamed item"}</p>
-                                <p className="text-slate-500">Qty {item.quantity || 0}</p>
+                          {orderItems.map((item, index) => {
+                            const quantity = Number(item.quantity || 0);
+                            const deliveredQuantity = Math.min(
+                              Number(item.fulfillment_quantity || 0),
+                              quantity,
+                            );
+                            const refundedQuantity = Math.min(
+                              Number(item.refund_quantity || 0),
+                              Math.max(quantity - deliveredQuantity, 0),
+                            );
+                            const pendingQuantity = Math.max(
+                              quantity - deliveredQuantity - refundedQuantity,
+                              0,
+                            );
+
+                            return (
+                              <div
+                                key={`${order.order_id || "order"}-${item.product_id || item.name || index}`}
+                                className="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm"
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-medium text-slate-900">{item.name || "Unnamed item"}</p>
+                                  <p className="text-slate-500">Qty {item.quantity || 0}</p>
+                                  <div className="mt-2 flex flex-wrap gap-1.5">
+                                    {deliveredQuantity > 0 ? (
+                                      <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+                                        Delivered {deliveredQuantity}
+                                      </span>
+                                    ) : null}
+                                    {pendingQuantity > 0 ? (
+                                      <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+                                        Not delivered {pendingQuantity}
+                                      </span>
+                                    ) : null}
+                                    {refundedQuantity > 0 ? (
+                                      <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
+                                        Refunded {refundedQuantity}
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                </div>
+                                <p className="font-semibold text-slate-900">
+                                  {formatAmount(item.subtotal || 0, clubCurrency)}
+                                </p>
                               </div>
-                              <p className="font-semibold text-slate-900">
-                                {formatAmount(item.subtotal || 0, clubCurrency)}
-                              </p>
-                            </div>
-                          ))}
-                          {orderItems.length > 3 ? (
-                            <p className="text-sm text-slate-500">
-                              + {orderItems.length - 3} more item{orderItems.length - 3 === 1 ? "" : "s"}
-                            </p>
-                          ) : null}
+                            );
+                          })}
                         </div>
 
-                        {(order.payment_status === "PENDING" || order.payment_status === "PARTIALLY_PAID") && order.order_id ? (
-                          <Button
-                            className="mt-4 bg-black text-white hover:bg-slate-900"
-                            onClick={() => {
-                              const queryParams = new URLSearchParams({
-                                orderId: order.order_id || "",
-                                paymentScreen: "true",
-                              });
+                        {canContinuePayment || isPendingOrder ? (
+                          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                            {canContinuePayment ? (
+                              <Button
+                                className="bg-black text-white hover:bg-slate-900"
+                                onClick={() => {
+                                  const queryParams = new URLSearchParams({
+                                    orderId: order.order_id || "",
+                                    paymentScreen: "true",
+                                  });
 
-                              navigate(`/myclubs/${clubId}/payments?${queryParams.toString()}`);
-                            }}
-                          >
-                            <CreditCard className="mr-2 h-4 w-4" />
-                            Continue to payment
-                          </Button>
-                        ) : order.fulfillment_status === "FULFILLED" ? (
+                                  navigate(`/myclubs/${clubId}/payments?${queryParams.toString()}`);
+                                }}
+                              >
+                                <CreditCard className="mr-2 h-4 w-4" />
+                                Continue to payment
+                              </Button>
+                            ) : null}
+                            {isPendingOrder ? (
+                              <Button
+                                variant="outline"
+                                className="border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
+                                onClick={() => setSelectedOrderForCancel(order)}
+                              >
+                                Cancel order
+                              </Button>
+                            ) : null}
+                          </div>
+                        ) : order.fulfillment_status === "FULFILLED" || order.fulfillment_status === "DELIVERED" ? (
                           <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700">
                             <CheckCircle className="h-4 w-4" />
                             Order fulfilled
@@ -689,7 +750,94 @@ export default function MemberShopPage({ embedded = false }: MemberShopPageProps
               )}
             </CardContent>
           </Card>
-        ) : null}
+            </>
+          ) : (
+            <>
+              <div className="flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between sm:gap-3">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 sm:text-xs sm:tracking-[0.22em]">
+                    Shop catalog
+                  </p>
+                  <h2 className="text-base font-semibold tracking-tight leading-tight sm:text-3xl">
+                    Items for sale
+                  </h2>
+                  <p className="hidden mt-1 text-sm leading-6 text-slate-500 sm:block">
+                    Choose what you want first. Orders and payment follow after checkout.
+                  </p>
+                </div>
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] text-slate-600 shadow-sm sm:px-3 sm:py-2 sm:text-sm">
+                  <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  {totalCartItems} item{totalCartItems === 1 ? "" : "s"} in cart
+                </div>
+              </div>
+
+              {availableProducts.length === 0 ? (
+                <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center">
+                  <Package className="mx-auto h-12 w-12 text-slate-400" />
+                  <h2 className="mt-4 text-lg font-medium text-slate-900">No products available</h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">Check back later for new merchandise.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
+                  {availableProducts.map((product) => {
+                    const inCartQuantity = cart.find(item => item.productId === product.product_id)?.quantity || 0;
+
+                    return (
+                      <Card
+                        key={product.product_id}
+                        className="overflow-hidden border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] shadow-[0_20px_60px_-34px_rgba(15,23,42,0.18)] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_28px_70px_-34px_rgba(15,23,42,0.24)]"
+                      >
+                        <div className="aspect-square overflow-hidden bg-slate-100 sm:aspect-[4/3]">
+                          {product.product_image_url ? (
+                            <img
+                              src={product.product_image_url}
+                              alt={product.name}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center">
+                              <Package className="h-16 w-16 text-slate-400" />
+                            </div>
+                          )}
+                        </div>
+                        <CardHeader className="space-y-1.5 p-2 sm:space-y-4 sm:p-6">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <CardTitle className="line-clamp-2 text-xs leading-4 text-slate-950 sm:text-lg sm:leading-6">{product.name}</CardTitle>
+                              <p className="mt-0.5 text-sm font-semibold tracking-tight text-slate-950 sm:mt-2 sm:text-3xl">
+                                {formatAmount(product.price, clubCurrency)}
+                              </p>
+                            </div>
+                            {inCartQuantity > 0 ? (
+                              <Badge className="border-amber-200 bg-amber-50 px-1.5 py-0 text-[10px] text-amber-700 sm:text-xs">
+                                {inCartQuantity}
+                              </Badge>
+                            ) : null}
+                          </div>
+                          <CardDescription className="line-clamp-2 min-h-0 text-[10px] leading-3.5 text-slate-500 sm:min-h-12 sm:text-sm sm:leading-6">
+                            {product.description || "No description available"}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-1.5 p-2 pt-0 sm:space-y-4 sm:p-6 sm:pt-0">
+                          <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-2 py-1.5 text-[9px] text-slate-600 shadow-sm sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm">
+                            <span>Limit</span>
+                            <span className="font-medium text-slate-900">
+                              {product.purchase_limit === "multiple" ? "Multiple" : "Single"}
+                            </span>
+                          </div>
+                          <Button onClick={() => addToCart(product)} className="h-7 w-full bg-black px-2 text-[10px] text-white hover:bg-slate-900 sm:h-11 sm:text-sm">
+                            <ShoppingCart className="mr-1 h-3 w-3 sm:mr-2 sm:h-4 sm:w-4" />
+                            Add
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Cart Dialog */}
@@ -807,7 +955,7 @@ export default function MemberShopPage({ embedded = false }: MemberShopPageProps
             
             <div className="bg-blue-50 p-3 rounded-lg">
               <p className="text-sm text-blue-800">
-                📧 Return to Shop to view your order and pay.
+                📧 Confirm your order and proceed to payment.
               </p>
             </div>
           </div>
@@ -818,6 +966,78 @@ export default function MemberShopPage({ embedded = false }: MemberShopPageProps
             </Button>
             <Button onClick={handleCreateOrder}>
               Confirm Order
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={selectedOrderForCancel !== null}
+        onOpenChange={(open) => {
+          if (!open && !cancellingOrderId) {
+            setSelectedOrderForCancel(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Remove Order</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel order {" "}
+              {selectedOrderForCancel?.transaction_id?.substring(0, 8)}?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between gap-4">
+                <span className="text-muted-foreground">Order ID:</span>
+                <span className="font-medium">
+                  {selectedOrderForCancel?.order_id ?? "N/A"}
+                </span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-muted-foreground">Amount:</span>
+                <span className="font-medium">
+                  {formatAmount(
+                    selectedOrderForCancel?.total_amount || 0,
+                    clubCurrency,
+                  )}
+                </span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-muted-foreground">Status:</span>
+                <span className="font-medium">
+                  {selectedOrderForCancel?.payment_status ?? "Unknown"}
+                </span>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              This will cancel the pending order and remove it from the payment
+              flow.
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSelectedOrderForCancel(null)}
+              disabled={Boolean(cancellingOrderId)}
+            >
+              Keep Order
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmCancelOrder}
+              disabled={Boolean(cancellingOrderId)}
+            >
+              {cancellingOrderId ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Cancelling...
+                </>
+              ) : (
+                "Remove Order"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

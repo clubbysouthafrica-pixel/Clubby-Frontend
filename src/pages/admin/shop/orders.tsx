@@ -2102,13 +2102,12 @@ export default function OrdersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Cancel Order Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Cancel Order</DialogTitle>
+            <DialogTitle>Remove Order</DialogTitle>
             <DialogDescription>
-              Are you sure you want to cancel order{" "}
+              Are you sure you want to remove your order{" "}
               {selectedOrderForDelete?.transaction_id?.substring(0, 8)}?
             </DialogDescription>
           </DialogHeader>
@@ -2196,7 +2195,7 @@ export default function OrdersPage() {
                   Cancelling...
                 </>
               ) : (
-                "Cancel Order"
+                "Remove Order"
               )}
             </Button>
           </DialogFooter>

@@ -12,7 +12,7 @@ import {
 } from "../ui/dialog";
 import { Button } from "../ui/button";
 
-type StorageItem = {
+export type StorageItem = {
     id?: string;
     storage_id?: string;
     name?: string;

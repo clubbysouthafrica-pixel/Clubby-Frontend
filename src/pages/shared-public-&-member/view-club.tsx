@@ -1,14 +1,7 @@
 // fixed erroneous import from prior patch
 import Pager from "@/components/pager.tsx";
 import { Tabs, TabsContent } from "@/components/ui/tabs.tsx";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog.tsx";
+import { Dialog, DialogContent } from "@/components/ui/dialog.tsx";
 import {
   Calendar,
   CalendarDays,
@@ -25,14 +18,11 @@ import { useFetchClub, useFetchClubBankDetails } from "@/queries/clubs";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useCallback, useEffect, useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { cancelOrder } from "@/services/orders";
 import { getEventsIncludingAll } from "@/services/events";
 import { getVenues } from "@/services/venues";
 import { getBookings } from "@/services/bookings";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { formatAmount } from "@/data/currencies";
 
 import PaymentOptionsScreen from "@/components/member/payments/payment-options-screen";
 import type {
@@ -60,7 +50,9 @@ import {
 import { ClubPaymentsTab } from "@/components/member/view-club-tabs/club-payments-tab";
 import { ClubShopTab } from "@/components/member/view-club-tabs/club-shop-tab";
 import MemberStorage from "@/components/member/storage/storage";
-import StorageRequestDialog from "@/components/storage-request-dialog/StorageRequestDialog";
+import StorageRequestDialog, {
+  type StorageItem,
+} from "@/components/storage-request-dialog/StorageRequestDialog";
 import { isStorageFeatureEnabled } from "@/lib/feature-flags";
 
 function epochToJoinedString(epoch: number): string {
@@ -79,27 +71,6 @@ const countryMap: Record<string, string> = {
   GB: "United Kingdom",
   DE: "Germany",
   FR: "France",
-};
-
-type MemberOrderItem = {
-  product_id?: string;
-  name?: string;
-  quantity?: number;
-  refund_quantity?: number;
-  fulfillment_quantity?: number;
-  price?: number;
-  subtotal?: number;
-};
-
-type MemberOrder = {
-  order_id?: string;
-  transaction_id?: string;
-  created_date?: number;
-  payment_status?: string;
-  fulfillment_status?: string;
-  total_amount?: number;
-  amount_paid?: number;
-  items?: MemberOrderItem[];
 };
 
 type VenueSchedule = {
@@ -433,7 +404,6 @@ export default function ViewClubPage() {
   const isLoggedIn = !!auth?.user;
 
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { clubId } = useParams();
   const { pathname, search } = useLocation();
   const paymentQueryParams = useMemo(() => new URLSearchParams(search), [search]);
@@ -542,7 +512,8 @@ export default function ViewClubPage() {
   const [activeTab, setActiveTab] = useState<ClubSection>(() =>
     getClubSectionFromPath(pathname, clubId as string),
   );
-  const [selectedStorageItem, setSelectedStorageItem] = useState<any>(null);
+  const [selectedStorageItem, setSelectedStorageItem] =
+    useState<StorageItem | null>(null);
 
   const routeSection = useMemo(
     () => getClubSectionFromPath(pathname, clubId as string),
@@ -783,11 +754,6 @@ export default function ViewClubPage() {
   >(null);
   const [highlightedEventRegistrationId, setHighlightedEventRegistrationId] =
     useState<string | null>(null);
-  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(
-    null,
-  );
-  const [selectedOrderForCancel, setSelectedOrderForCancel] =
-    useState<MemberOrder | null>(null);
   const [eventRegistrationSearch, setEventRegistrationSearch] = useState("");
   const [venues, setVenues] = useState<Venue[]>([]);
   const [venuesLoading, setVenuesLoading] = useState(false);
@@ -1104,47 +1070,6 @@ export default function ViewClubPage() {
     },
     [canViewStorage, clubId, getSectionPath, navigate],
   );
-
-  const handleConfirmCancelOrder = async () => {
-    const order = selectedOrderForCancel;
-
-    if (
-      !order ||
-      !data?.club_account_id ||
-      !order.order_id ||
-      !order.transaction_id
-    ) {
-      toast.error("This order is missing the details required to cancel it.");
-      return;
-    }
-
-    try {
-      setCancellingOrderId(order.order_id);
-      await cancelOrder({
-        transaction_id: order.transaction_id,
-        club_account_id: data.club_account_id,
-        order_id: order.order_id,
-      });
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: ["member-orders", data.club_account_id],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ["getClubBankDetails", data.club_account_id],
-        }),
-      ]);
-      setSelectedOrderForCancel(null);
-      toast.success("Order cancelled successfully.");
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to cancel the order.",
-      );
-    } finally {
-      setCancellingOrderId(null);
-    }
-  };
 
   const handleEventRegistrationPayNowClick = (eventRegistrationId?: string) => {
     if (!eventRegistrationId) {
@@ -1785,78 +1710,6 @@ export default function ViewClubPage() {
                 )}
               </div>
             )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={selectedOrderForCancel !== null}
-        onOpenChange={(open) => {
-          if (!open && !cancellingOrderId) {
-            setSelectedOrderForCancel(null);
-          }
-        }}
-      >
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Cancel Order</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to cancel order{" "}
-              {selectedOrderForCancel?.transaction_id?.substring(0, 8)}?
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">Order ID:</span>
-                <span className="font-medium">
-                  {selectedOrderForCancel?.order_id ?? "N/A"}
-                </span>
-              </div>
-              <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">Amount:</span>
-                <span className="font-medium">
-                  {formatAmount(
-                    selectedOrderForCancel?.total_amount || 0,
-                    data?.currency,
-                  )}
-                </span>
-              </div>
-              <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">Status:</span>
-                <span className="font-medium">
-                  {selectedOrderForCancel?.payment_status ?? "Unknown"}
-                </span>
-              </div>
-            </div>
-
-            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-              This will cancel the pending order and remove it from the payment
-              flow.
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setSelectedOrderForCancel(null)}
-              disabled={Boolean(cancellingOrderId)}
-            >
-              Keep Order
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleConfirmCancelOrder}
-              disabled={Boolean(cancellingOrderId)}
-            >
-              {cancellingOrderId ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Cancelling...
-                </>
-              ) : (
-                "Cancel Order"
-              )}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
