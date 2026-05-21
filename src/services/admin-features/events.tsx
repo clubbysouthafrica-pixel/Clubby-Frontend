@@ -65,6 +65,12 @@ export interface DeleteEventRequest {
   event_id: string;
 }
 
+export interface DeleteEventRegistrationRequest {
+  club_account_id: string;
+  event_id: string;
+  event_registration_id: string;
+}
+
 export interface GetEventsResponse {
   events: unknown[];
 }
@@ -250,6 +256,28 @@ export const deleteEvent = async (
 ): Promise<EventAdminActionResponse> => {
   try {
     const res = await api.post("/events/deleteEvent", payload);
+    return { status: res.status, data: res.data };
+  } catch (err: unknown) {
+    const apiError = err as {
+      response?: {
+        status: number;
+        data: unknown;
+      };
+    };
+
+    if (apiError.response) {
+      return { status: apiError.response.status, data: apiError.response.data };
+    }
+
+    throw err;
+  }
+};
+
+export const deleteEventRegistration = async (
+  payload: DeleteEventRegistrationRequest,
+): Promise<EventAdminActionResponse> => {
+  try {
+    const res = await api.post("/events/deleteRegistration", payload);
     return { status: res.status, data: res.data };
   } catch (err: unknown) {
     const apiError = err as {

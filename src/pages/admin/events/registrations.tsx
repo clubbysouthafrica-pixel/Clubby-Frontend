@@ -9,6 +9,7 @@ import {
   Filter,
   Loader2,
   Ticket,
+  Trash2,
   Users,
   X,
 } from "lucide-react";
@@ -60,6 +61,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   confirmEventRegistration,
   confirmEventPayment,
+  deleteEventRegistration,
   getEvents,
   getEventRegistration,
   getEventRegistrations,
@@ -995,6 +997,9 @@ export default function EventRegistrationsPage() {
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false);
   const [selectedRegistrationForConfirmation, setSelectedRegistrationForConfirmation] =
     useState<EventRegistration | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedRegistrationForDelete, setSelectedRegistrationForDelete] =
+    useState<EventRegistration | null>(null);
   const [confirmationTagValues, setConfirmationTagValues] = useState<
     Record<string, string>
   >({});
@@ -1005,6 +1010,7 @@ export default function EventRegistrationsPage() {
   const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
   const [isConfirmingRegistration, setIsConfirmingRegistration] =
     useState(false);
+  const [isDeletingRegistration, setIsDeletingRegistration] = useState(false);
   const [showPendingRegistrationsDropdown, setShowPendingRegistrationsDropdown] =
     useState(false);
   const [showPendingPaymentsDropdown, setShowPendingPaymentsDropdown] =
@@ -1576,6 +1582,20 @@ export default function EventRegistrationsPage() {
     handleOpenConfirmationDialog(registration);
   };
 
+  const handleOpenDeleteDialog = (registration: EventRegistration) => {
+    if (registration.paymentStatus !== "Awaiting payment") {
+      toast.error(
+        "Only registrations awaiting payment can be deleted right now.",
+      );
+      return;
+    }
+
+    setShowPendingRegistrationsDropdown(false);
+    setShowPendingPaymentsDropdown(false);
+    setSelectedRegistrationForDelete(registration);
+    setDeleteDialogOpen(true);
+  };
+
   const handleCloseConfirmationDialog = () => {
     if (isConfirmingRegistration) {
       return;
@@ -1585,6 +1605,15 @@ export default function EventRegistrationsPage() {
     setSelectedRegistrationForConfirmation(null);
     setConfirmationTagValues({});
     setConfirmationTagErrors({});
+  };
+
+  const handleCloseDeleteDialog = () => {
+    if (isDeletingRegistration) {
+      return;
+    }
+
+    setDeleteDialogOpen(false);
+    setSelectedRegistrationForDelete(null);
   };
 
   const handleClosePaymentDialog = () => {
@@ -1785,6 +1814,62 @@ export default function EventRegistrationsPage() {
       toast.error(message);
     } finally {
       setIsConfirmingRegistration(false);
+    }
+  };
+
+  const handleDeleteRegistration = async () => {
+    if (!selectedRegistrationForDelete || !club?.club_account_id) {
+      return;
+    }
+
+    if (selectedRegistrationForDelete.paymentStatus !== "Awaiting payment") {
+      toast.error(
+        "Only registrations awaiting payment can be deleted right now.",
+      );
+      return;
+    }
+
+    setIsDeletingRegistration(true);
+
+    try {
+      const response = await deleteEventRegistration({
+        club_account_id: club.club_account_id,
+        event_id: selectedRegistrationForDelete.eventId,
+        event_registration_id: selectedRegistrationForDelete.id,
+      });
+
+      const responseMessage =
+        response.data &&
+        typeof response.data === "object" &&
+        "message" in response.data &&
+        typeof response.data.message === "string"
+          ? response.data.message
+          : undefined;
+
+      if (response.status !== 200) {
+        toast.error(responseMessage || "Failed to delete registration.");
+        return;
+      }
+
+      setAllRegistrations((currentRegistrations) =>
+        currentRegistrations.filter(
+          (registration) => registration.id !== selectedRegistrationForDelete.id,
+        ),
+      );
+      setHighlightedRegistrationId((currentValue) =>
+        currentValue === selectedRegistrationForDelete.id ? null : currentValue,
+      );
+      setExpandedRegistrationId((currentValue) =>
+        currentValue === selectedRegistrationForDelete.id ? null : currentValue,
+      );
+      toast.success(responseMessage || "Registration deleted successfully.");
+      handleCloseDeleteDialog();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Error deleting registration.";
+      toast.error(message);
+    } finally {
+      setIsDeletingRegistration(false);
     }
   };
 
@@ -2747,20 +2832,17 @@ export default function EventRegistrationsPage() {
                       <TableHeader>
                         <TableRow className="bg-muted/40 hover:bg-muted/40">
                           <TableHead className="w-12 text-center"></TableHead>
-                          <TableHead className="w-[20%] text-center">
+                          <TableHead className="w-[28%] text-center">
                             Name
                           </TableHead>
-                          <TableHead className="w-[20%] text-center">
-                            Registration ID
-                          </TableHead>
-                          <TableHead className="w-[20%] text-center">
+                          <TableHead className="w-[28%] text-center">
                             Payment
                           </TableHead>
-                          <TableHead className="w-[20%] text-center">
+                          <TableHead className="w-[28%] text-center">
                             Status
                           </TableHead>
-                          <TableHead className="w-[20%] text-center">
-                            Submitted
+                          <TableHead className="w-16 text-center">
+                            Actions
                           </TableHead>
                         </TableRow>
                       </TableHeader>
@@ -2768,7 +2850,7 @@ export default function EventRegistrationsPage() {
                         {isTableLoading ? (
                           <TableRow>
                             <TableCell
-                              colSpan={6}
+                              colSpan={5}
                               className="py-10 text-center text-muted-foreground"
                             >
                               Loading registrations...
@@ -2777,7 +2859,7 @@ export default function EventRegistrationsPage() {
                         ) : isError ? (
                           <TableRow>
                             <TableCell
-                              colSpan={6}
+                              colSpan={5}
                               className="py-10 text-center text-destructive"
                             >
                               Unable to load event registrations right now.
@@ -2786,7 +2868,7 @@ export default function EventRegistrationsPage() {
                         ) : filteredRegistrations.length === 0 ? (
                           <TableRow>
                             <TableCell
-                              colSpan={6}
+                              colSpan={5}
                               className="py-10 text-center text-muted-foreground"
                             >
                               No registrations are available for the selected event.
@@ -2822,7 +2904,7 @@ export default function EventRegistrationsPage() {
                                   <p className="font-medium">{`${registration.memberFirstName} ${registration.memberSurname}`}</p>
                                   <div className="mt-1 flex items-center justify-center gap-2 text-xs text-muted-foreground">
                                     <span className="font-mono">
-                                      Member ID: {getShortUserId(registration.userId)}
+                                      User ID: {getShortUserId(registration.userId)}
                                     </span>
                                     <Button
                                       variant="ghost"
@@ -2846,33 +2928,7 @@ export default function EventRegistrationsPage() {
                                   </div>
                                 </div>
                               </TableCell>
-                              <TableCell className="w-[20%] text-center">
-                                <div className="flex items-center justify-center gap-2">
-                                  <span className="rounded bg-muted px-2 py-1 font-mono text-xs">
-                                    {getShortId(registration.id)}
-                                  </span>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-6 w-6 p-0"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      void handleCopy(
-                                        registration.id,
-                                        `registration-${registration.id}`,
-                                      );
-                                    }}
-                                    title="Copy registration ID"
-                                  >
-                                    {copiedRegistrationId === `registration-${registration.id}` ? (
-                                      <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
-                                    ) : (
-                                      <Copy className="h-3.5 w-3.5" />
-                                    )}
-                                  </Button>
-                                </div>
-                              </TableCell>
-                              <TableCell className="w-[20%] text-center">
+                              <TableCell className="w-[28%] text-center">
                                 <div className="space-y-1">
                                   {(() => {
                                     const paymentLabel = isFreeRegistration(registration)
@@ -2906,7 +2962,7 @@ export default function EventRegistrationsPage() {
                                   })()}
                                 </div>
                               </TableCell>
-                              <TableCell className="w-[20%] text-center">
+                              <TableCell className="w-[28%] text-center">
                                 <Badge
                                   className={getRegistrationBadgeClassName(
                                     registration.registrationStatus,
@@ -2915,8 +2971,24 @@ export default function EventRegistrationsPage() {
                                   {registration.registrationStatus}
                                 </Badge>
                               </TableCell>
-                              <TableCell className="w-[20%] text-center text-sm text-muted-foreground">
-                                {formatSubmittedDate(registration.submittedAt)}
+                              <TableCell className="w-16 text-center">
+                                {registration.paymentStatus === "Awaiting payment" ? (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      handleOpenDeleteDialog(registration);
+                                    }}
+                                    title="Delete registration"
+                                    aria-label={`Delete registration for ${registration.memberName}`}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">-</span>
+                                )}
                               </TableCell>
                             </TableRow>
                           ))
@@ -3126,6 +3198,72 @@ export default function EventRegistrationsPage() {
               {isConfirmingRegistration
                 ? "Processing..."
                 : "Confirm Registration"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={handleCloseDeleteDialog}>
+        <DialogContent className="sm:max-w-[460px]">
+          <DialogHeader>
+            <DialogTitle>Delete Event Registration</DialogTitle>
+            <DialogDescription>
+              Remove {selectedRegistrationForDelete?.memberName || "this registration"} from the event registrations list.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="rounded-lg border bg-muted/20 p-4">
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <span className="text-muted-foreground">Registration</span>
+                <span className="font-medium">
+                  {selectedRegistrationForDelete?.memberName || "N/A"}
+                </span>
+              </div>
+              <div className="mt-2 flex items-center justify-between gap-3 text-sm">
+                <span className="text-muted-foreground">Payment status</span>
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "border",
+                    getPaymentBadgeClassName(
+                      selectedRegistrationForDelete?.paymentStatus ||
+                        "Awaiting payment",
+                    ),
+                  )}
+                >
+                  {selectedRegistrationForDelete?.paymentStatus ||
+                    "Awaiting payment"}
+                </Badge>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+              This removes the registration and its associated unpaid transaction.
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleCloseDeleteDialog}
+              disabled={isDeletingRegistration}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteRegistration}
+              disabled={isDeletingRegistration}
+            >
+              {isDeletingRegistration ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete registration"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
