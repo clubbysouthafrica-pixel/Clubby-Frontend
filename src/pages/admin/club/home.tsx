@@ -11,7 +11,6 @@ import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { HomeSectionCards } from "@/components/admin/club/home/section-cards";
 import {
   ArrowRight,
-  BarChart3,
   BoxIcon,
   CalendarDays,
   CheckCircle2,
@@ -143,17 +142,7 @@ export default function HomeDashboardPage() {
         items: [
           { title: "Create Form", route: "/manage/registrations/forms" },
         ],
-      },
-      {
-        title: "Reporting",
-        description: "Open reporting views for fees, shop and payments.",
-        icon: BarChart3,
-        items: [
-          { title: "Registration fees", route: "/reporting/registration" },
-          { title: "Shop reports", route: "/reporting/shop" },
-          { title: "Income & Payments", route: "/reporting/transactions" },
-        ],
-      },
+      }
     ].filter(
       (section) =>
         section.title !== "Storage & Requests" ||

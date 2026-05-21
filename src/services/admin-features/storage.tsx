@@ -1,5 +1,18 @@
 import { api } from "./api";
 
+type StorageLayoutUpdateRequest = {
+  storage_id: string;
+  storage_name: string;
+  parent_id?: string | null;
+  price_cents: number;
+  club_account_id?: string;
+  grid_position: number;
+  grid_row: number;
+  grid_column: number;
+  layout_rows: number;
+  layout_columns: number;
+};
+
 // Create a storage unit
 export const createStorageUnit = (storageRequest: any) => {
   return api
@@ -35,4 +48,10 @@ export const updateStorageRequestUnit = (storageRequest: any) => {
   return api
     .put(`/storage/updateStorageRequest`, storageRequest)
     .then((res) => res.data);
+};
+
+export const updateStorageUnitLayouts = (
+  storageUnits: StorageLayoutUpdateRequest[],
+) => {
+  return Promise.all(storageUnits.map((storageUnit) => createStorageUnit(storageUnit)));
 };
