@@ -18,6 +18,7 @@ export interface Club {
     enable_shop?: boolean
     enable_events?: boolean
     enable_storage?: boolean
+    storage_rebooking_protection_enabled?: boolean
     venues_enabled?: boolean
     registration_form_exists?: boolean
     currency_exists?: boolean

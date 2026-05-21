@@ -547,11 +547,19 @@ export default function ViewClubPage() {
     !!data?.club_member_exists &&
     !!data?.registered &&
     !!data?.enable_events;
+  const storageEnabled =
+    typeof data?.enable_storage === "boolean" ? data.enable_storage : null;
+  const isStorageExplicitlyDisabled =
+    isLoggedIn &&
+    !!data?.club_member_exists &&
+    !!data?.registered &&
+    isStorageFeatureEnabled &&
+    storageEnabled === false;
   const canViewStorage =
     isLoggedIn &&
     !!data?.club_member_exists &&
     !!data?.registered &&
-    !!data?.enable_storage &&
+    storageEnabled === true &&
     isStorageFeatureEnabled;
 
   const todayKey = useMemo(() => formatDateKey(new Date()), []);
@@ -570,7 +578,11 @@ export default function ViewClubPage() {
     const shouldOpenPaymentScreen = queryParams.get("paymentScreen") === "true";
     let matchedPaymentOption: PaymentTransactionOption | null = null;
 
-    if (routeSection === "storage" && !canViewStorage && clubId) {
+    if (
+      routeSection === "storage" &&
+      (isStorageExplicitlyDisabled || !canViewStorage) &&
+      clubId
+    ) {
       navigate(
         {
           pathname: getSectionPath("home"),
@@ -590,7 +602,8 @@ export default function ViewClubPage() {
       navigate(
         {
           pathname: getSectionPath(
-            requestedSection === "storage" && !canViewStorage
+            requestedSection === "storage" &&
+              (isStorageExplicitlyDisabled || !canViewStorage)
               ? "home"
               : requestedSection,
           ),
@@ -726,6 +739,7 @@ export default function ViewClubPage() {
     activeBankDetailsLoading,
     canViewStorage,
     clubId,
+    isStorageExplicitlyDisabled,
     navigate,
     getSectionPath,
     paymentTransactionId,
