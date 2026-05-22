@@ -485,8 +485,13 @@ const StorageAdmin: React.FC = () => {
     : [];
 
   const handleRemoveUnit = async (id: string) => {
+    if (!club?.club_account_id) {
+      toast.error("Missing club account id");
+      return;
+    }
+
     try {
-      await removeStorage(id);
+      await removeStorage(id, club.club_account_id);
       setUnits((prev) =>
         prev
           // Remove the unit itself

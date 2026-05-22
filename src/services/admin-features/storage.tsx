@@ -21,9 +21,17 @@ export const createStorageUnit = (storageRequest: any) => {
 };
 
 // Remove a storage unit by ID
-export const removeStorage = (storageId: string) => {
+export const removeStorage = (
+  storageId: string,
+  clubAccountId: string,
+) => {
   return api
-    .delete(`/storage/removeStorage`, { params: { storage_id: storageId } })
+    .delete(`/storage/removeStorage`, {
+      params: {
+        storage_id: storageId,
+        club_account_id: clubAccountId,
+      },
+    })
     .then((res) => res.data);
 };
 
