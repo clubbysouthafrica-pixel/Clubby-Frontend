@@ -35,7 +35,10 @@ export default function HomeDashboardPage() {
   const clubAccountId = club?.club_account_id ?? "";
   const { data: adminClubsResponse } = useFetchAdminClubs();
   const { data: fetchedClub, isLoading: fetchedClubLoading } =
-    useFetchClub(clubAccountId, { stats: true });
+    useFetchClub(clubAccountId, {
+      includeAccountBalance: true,
+      stats: true,
+    });
   const adminClubItems = adminClubsResponse?.data?.items ?? [];
   const activeAdminClub = adminClubItems.find(
     (item: { club_account_id?: string }) => item.club_account_id === clubAccountId,

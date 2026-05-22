@@ -11,7 +11,7 @@ export const useFetchAdminClubs = () => {
 
 export const useFetchClub = (clubAccountId: string, options?: FetchClubOptions) => {
     return useQuery({
-      queryKey: ['getClub', clubAccountId, options?.includeImages, options?.stats],
+      queryKey: ['getClub', clubAccountId, options?.includeImages, options?.includeAccountBalance, options?.stats],
       queryFn: ({ queryKey }) => {
         const [, clubId] = queryKey;
         return fetchClub(clubId as string, options);

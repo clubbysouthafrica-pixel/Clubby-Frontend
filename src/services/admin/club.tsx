@@ -3,6 +3,7 @@ import { api } from "./api";
 
 export type FetchClubOptions = {
     includeImages?: boolean;
+    includeAccountBalance?: boolean;
     stats?: boolean;
 };
 
@@ -10,6 +11,9 @@ export const fetchClub = (clubAccountId: string, options?: FetchClubOptions): Pr
     let url = `/club/getClub?club_account_id=${clubAccountId}`;
     if (options?.includeImages) {
         url += `&includeImages=true`;
+    }
+    if (options?.includeAccountBalance) {
+        url += `&includeAccountBalance=true`;
     }
     if (options?.stats) {
         url += `&stats=true`;
