@@ -455,20 +455,14 @@ export default function MembersPage() {
                 transition={{ duration: 0.28, ease: "easeInOut" }}
                 style={{ transformStyle: "preserve-3d" }}
               >
-          <section className="relative overflow-hidden rounded-[24px] border border-stone-300/70 bg-stone-200 px-4 py-4 text-zinc-900 shadow-[0_18px_40px_rgba(120,113,108,0.16)] md:px-5 md:py-4">
+          <section className="mb-2 relative overflow-hidden rounded-[24px] border border-stone-300/70 bg-stone-200 px-4 py-4 text-zinc-900 shadow-[0_18px_40px_rgba(120,113,108,0.16)] md:px-5 md:py-4">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.72),_transparent_28%),radial-gradient(circle_at_right,_rgba(214,211,209,0.55),_transparent_24%)]" />
             <div className="relative flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-3xl">
-                <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-stone-300 bg-white/70 px-2.5 py-1 text-[11px] text-zinc-600 backdrop-blur">
+                <div className="inline-flex items-center gap-2 rounded-full border border-stone-300 bg-white/70 px-2.5 py-1 text-[11px] text-zinc-600 backdrop-blur">
                   <Users className="h-3.5 w-3.5 text-zinc-500" />
                   Member directory
                 </div>
-                <h1 className="text-xl font-semibold tracking-tight md:text-3xl">
-                  Club members
-                </h1>
-                <p className="mt-1.5 max-w-2xl text-xs leading-5 text-zinc-600 md:text-sm">
-                  Manage member records, apply profile filters, and review registration states from one workspace.
-                </p>
               </div>
             </div>
           </section>

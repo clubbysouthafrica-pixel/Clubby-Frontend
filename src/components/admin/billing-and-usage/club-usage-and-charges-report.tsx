@@ -389,35 +389,36 @@ export default function ClubUsageAndCharges({
       ),
     [previousMonthRows],
   );
+  const isTableScrollable = previousMonthRows.length > 3;
 
   return (
-    <div className="space-y-4">
-      <Card className="w-full gap-2 rounded-[24px] border border-slate-200/70 bg-white/95 p-3 shadow-[0_16px_36px_rgba(15,23,42,0.07)] md:p-4">
+    <div className="space-y-2.5">
+      <Card className="w-full gap-1.5 rounded-[20px] border border-slate-200/70 bg-white/95 p-2 shadow-[0_16px_36px_rgba(15,23,42,0.07)] md:p-2.5">
         <Tabs
           value={selectedTab}
           onValueChange={setSelectedTab}
-          className="w-full flex-col gap-4"
+          className="w-full flex-col gap-2.5"
         >
-          <div className="rounded-[18px] border border-slate-200/70 bg-slate-50/90 p-1.5 backdrop-blur">
+          <div className="rounded-[16px] border border-slate-200/70 bg-slate-50/90 p-1 backdrop-blur">
             <Label htmlFor="view-selector" className="sr-only">
               View
             </Label>
             <TabsList className="h-auto gap-2 bg-transparent p-0">
               <TabsTrigger
                 value="Registrations"
-                className="h-8 rounded-full border border-slate-200 bg-white px-3.5 text-xs font-medium text-zinc-700 data-[state=active]:bg-zinc-700 data-[state=active]:text-white"
+                className="h-7 rounded-full border border-slate-200 bg-white px-3 text-[11px] font-medium text-zinc-700 data-[state=active]:bg-zinc-700 data-[state=active]:text-white"
               >
                 Registrations
               </TabsTrigger>
               <TabsTrigger
                 value="Emails"
-                className="h-8 rounded-full border border-slate-200 bg-white px-3.5 text-xs font-medium text-zinc-700 data-[state=active]:bg-zinc-700 data-[state=active]:text-white"
+                className="h-7 rounded-full border border-slate-200 bg-white px-3 text-[11px] font-medium text-zinc-700 data-[state=active]:bg-zinc-700 data-[state=active]:text-white"
               >
                 Emails
               </TabsTrigger>
               <TabsTrigger
                 value="Orders"
-                className="h-8 rounded-full border border-slate-200 bg-white px-3.5 text-xs font-medium text-zinc-700 data-[state=active]:bg-zinc-700 data-[state=active]:text-white"
+                className="h-7 rounded-full border border-slate-200 bg-white px-3 text-[11px] font-medium text-zinc-700 data-[state=active]:bg-zinc-700 data-[state=active]:text-white"
               >
                 Shop
               </TabsTrigger>
@@ -435,7 +436,7 @@ export default function ClubUsageAndCharges({
 
             return (
               <div key={metricKey}>
-                <div className="grid gap-2 pb-3 md:grid-cols-3">
+                <div className="grid gap-1.5 pb-2 md:grid-cols-3">
                   {Object.entries(metricData).map(([k, value]) => {
                     if (k === "month_data") return null;
                     if (metricKey === "Orders" && k === "sales") return null;
@@ -448,13 +449,13 @@ export default function ClubUsageAndCharges({
                     return (
                       <Card
                         key={k}
-                        className="rounded-[18px] border border-slate-200/70 bg-slate-50/80 p-3 shadow-none"
+                        className="rounded-[16px] border border-slate-200/70 bg-slate-50/80 p-2 shadow-none"
                       >
                         <CardHeader className="flex flex-col items-center justify-center p-0 text-center">
-                          <CardDescription className="text-[10px] uppercase tracking-[0.18em] text-zinc-400">
+                          <CardDescription className="text-[9px] uppercase tracking-[0.16em] text-zinc-400">
                             {k}
                           </CardDescription>
-                          <CardTitle className="mt-1 text-xl font-semibold tabular-nums text-zinc-900">
+                          <CardTitle className="mt-0.5 text-base font-semibold tabular-nums leading-tight text-zinc-900 md:text-lg">
                             {displayValue}
                           </CardTitle>
                         </CardHeader>
@@ -463,22 +464,22 @@ export default function ClubUsageAndCharges({
                   })}
                 </div>
 
-                <section className="rounded-[20px] border border-slate-200/70 bg-white p-3 shadow-sm md:p-4">
-                  <ResponsiveContainer width="100%" height={280}>
+                <section className="rounded-[18px] border border-slate-200/70 bg-white p-2 shadow-sm md:p-2.5">
+                  <ResponsiveContainer width="100%" height={210}>
                     <BarChart data={metricData.month_data} barGap={10}>
                       <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" vertical={false} />
                       <XAxis
                         dataKey="name"
                         tickLine={false}
                         axisLine={false}
-                        tick={{ fill: "#64748b", fontSize: 12 }}
+                        tick={{ fill: "#64748b", fontSize: 11 }}
                       />
                       {metricKey !== "Orders" && (
                         <YAxis
                           yAxisId="left"
                           tickLine={false}
                           axisLine={false}
-                          tick={{ fill: "#64748b", fontSize: 12 }}
+                          tick={{ fill: "#64748b", fontSize: 11 }}
                         />
                       )}
                       <YAxis
@@ -486,14 +487,15 @@ export default function ClubUsageAndCharges({
                         orientation="right"
                         tickLine={false}
                         axisLine={false}
-                        tick={{ fill: "#64748b", fontSize: 12 }}
+                        tick={{ fill: "#64748b", fontSize: 11 }}
                         tickFormatter={(value) => formatAmount(value, currency)}
                       />
                       <Tooltip
                         contentStyle={{
-                          borderRadius: "16px",
+                          borderRadius: "14px",
                           border: "1px solid #e2e8f0",
                           boxShadow: "0 12px 30px rgba(15, 23, 42, 0.10)",
+                          padding: "8px 10px",
                         }}
                         formatter={(value, name) => {
                           if (name === "Charges" || name === "Email Charges") {
@@ -505,11 +507,11 @@ export default function ClubUsageAndCharges({
                           return [value, name];
                         }}
                       />
-                      <Legend />
+                      <Legend wrapperStyle={{ paddingTop: 6, fontSize: 11 }} />
                       {metricKey !== "Orders" && (
                         <Bar
                           yAxisId="left"
-                          radius={[10, 10, 0, 0]}
+                          radius={[8, 8, 0, 0]}
                           dataKey={metricKey === "Registrations" ? "users" : "emails"}
                           fill="#475569"
                           name={metricKey === "Registrations" ? "Users" : "Emails Sent"}
@@ -517,7 +519,7 @@ export default function ClubUsageAndCharges({
                       )}
                       <Bar
                         yAxisId="right"
-                        radius={[10, 10, 0, 0]}
+                        radius={[8, 8, 0, 0]}
                         dataKey="charge"
                         fill="#d97706"
                         name="Charges"
@@ -531,14 +533,14 @@ export default function ClubUsageAndCharges({
         </Tabs>
       </Card>
 
-      <div className="overflow-hidden rounded-[24px] border border-slate-200/70 bg-white shadow-[0_16px_36px_rgba(15,23,42,0.07)]">
+      <div className="overflow-hidden rounded-[22px] border border-slate-200/70 bg-white shadow-[0_16px_36px_rgba(15,23,42,0.07)]">
         <DndContext
           collisionDetection={closestCenter}
           sensors={sensors}
           id={sortableId}
         >
           <Table>
-            <TableHeader className="sticky top-0 z-10 bg-slate-50/95">
+            <TableHeader className="bg-slate-50/95">
               <TableRow>
                 <TableHead className="text-center w-1/6">Month</TableHead>
                 <TableHead className="text-center w-1/7">
@@ -549,150 +551,161 @@ export default function ClubUsageAndCharges({
                 <TableHead className="text-center w-1/4">Payment</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
-              {previousMonthRows.map((row) => {
-                const {
-                  month,
-                  payment,
-                  isPaid,
-                  registrationCount,
-                  emailCount,
-                  salesCount,
-                  monthData,
-                  outstandingAmount,
-                } = row;
-                const totalAmount =
-                  monthData.total_amount ??
-                  (monthData.registration_amount ?? 0) +
-                    (monthData.email_amount ?? 0) +
-                    (monthData.order_amount ?? 0);
-                const paidAmount = Math.max(totalAmount - outstandingAmount, 0);
-                const canGenerateInvoice = isPaid && month !== currentYearMonth;
-                const paymentLabel = getBillingPaymentLabel(
-                  isPaid,
-                  outstandingAmount,
-                  totalAmount,
-                );
-                const paymentClassName = getBillingPaymentClassName(
-                  isPaid,
-                  outstandingAmount,
-                  totalAmount,
-                );
+          </Table>
+          <div className={isTableScrollable ? "max-h-[360px] overflow-y-auto border-t border-slate-200/70" : "border-t border-slate-200/70"}>
+            <Table>
+              <TableBody>
+                {previousMonthRows.map((row) => {
+                  const {
+                    month,
+                    payment,
+                    isPaid,
+                    registrationCount,
+                    emailCount,
+                    salesCount,
+                    monthData,
+                    outstandingAmount,
+                  } = row;
+                  const totalAmount =
+                    monthData.total_amount ??
+                    (monthData.registration_amount ?? 0) +
+                      (monthData.email_amount ?? 0) +
+                      (monthData.order_amount ?? 0);
+                  const paidAmount = Math.max(totalAmount - outstandingAmount, 0);
+                  const canGenerateInvoice = isPaid && month !== currentYearMonth;
+                  const paymentLabel = getBillingPaymentLabel(
+                    isPaid,
+                    outstandingAmount,
+                    totalAmount,
+                  );
+                  const paymentClassName = getBillingPaymentClassName(
+                    isPaid,
+                    outstandingAmount,
+                    totalAmount,
+                  );
 
-                return (
-                <TableRow
-                  key={month}
-                  className={selectedMonth === month ? "bg-slate-50" : "bg-white"}
-                >
-                  <TableCell className="text-center w-1/6">
-                    <span className="inline-flex rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
-                      {month}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-center w-1/7">
-                    {formatAmount(
-                      monthData.registration_amount ?? 0,
-                      currency
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center w-1/7">
-                    {formatAmount(
-                      monthData.email_amount ?? 0,
-                      currency
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center w-1/7">
-                    {formatAmount(
-                      monthData.order_amount || 0,
-                      currency
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center w-1/4">
-                    {isPaid ? (
-                      <div className="space-y-1">
-                        <p className={`font-bold ${paymentClassName}`}>
-                          {paymentLabel}
-                        </p>
-                        <p className="text-[11px] text-slate-500">
-                          {formatAmount(totalAmount, currency)} total
-                        </p>
-                        {canGenerateInvoice ? (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              downloadInvoicePdf({
-                                month,
-                                clubName: clubName ?? "your club",
-                                currency,
-                                paymentDate: payment?.payment_date,
-                                registrationCount,
-                                registrationAmount: monthData.registration_amount ?? 0,
-                                emailCount,
-                                emailAmount: monthData.email_amount ?? 0,
-                                salesCount,
-                                orderAmount: monthData.order_amount ?? 0,
-                                totalAmount,
-                              })
-                            }
-                            className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 cursor-pointer"
-                            title="Download invoice"
-                          >
-                            <Download className="h-3.5 w-3.5" />
-                            Invoice
-                          </button>
-                        ) : (
-                          <p className="text-[11px] text-slate-500">
-                            Invoice available after month end
-                          </p>
+                  return (
+                    <TableRow
+                      key={month}
+                      className={selectedMonth === month ? "bg-slate-50" : "bg-white"}
+                    >
+                      <TableCell className="w-1/6 py-2.5 text-center">
+                        <span className="inline-flex rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700">
+                          {month}
+                        </span>
+                      </TableCell>
+                      <TableCell className="w-1/7 py-2.5 text-center text-sm">
+                        {formatAmount(
+                          monthData.registration_amount ?? 0,
+                          currency
                         )}
-                      </div>
-                    ) : (
-                      <div className="space-y-1">
-                        <p className={`font-bold ${paymentClassName}`}>
-                          {paymentLabel}
-                        </p>
-                        <p className="text-[11px] text-slate-500">
-                          {formatAmount(paidAmount, currency)} of {formatAmount(totalAmount, currency)}
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => onMonthSelect?.(month)}
-                          className={selectedMonth === month
-                            ? "inline-flex rounded-full bg-amber-200 px-3 py-1 text-xs font-medium text-amber-800"
-                            : "inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-200 cursor-pointer"
-                          }
-                        >
-                          Outstanding: {formatAmount(outstandingAmount, currency)}
-                        </button>
-                      </div>
-                    )}
+                      </TableCell>
+                      <TableCell className="w-1/7 py-2.5 text-center text-sm">
+                        {formatAmount(
+                          monthData.email_amount ?? 0,
+                          currency
+                        )}
+                      </TableCell>
+                      <TableCell className="w-1/7 py-2.5 text-center text-sm">
+                        {formatAmount(
+                          monthData.order_amount || 0,
+                          currency
+                        )}
+                      </TableCell>
+                      <TableCell className="w-1/4 py-2.5 text-center">
+                        {isPaid ? (
+                          <div className="space-y-1">
+                            <p className={`font-bold ${paymentClassName}`}>
+                              {paymentLabel}
+                            </p>
+                            <p className="text-[11px] text-slate-500">
+                              {formatAmount(totalAmount, currency)} total
+                            </p>
+                            {canGenerateInvoice ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  downloadInvoicePdf({
+                                    month,
+                                    clubName: clubName ?? "your club",
+                                    currency,
+                                    paymentDate: payment?.payment_date,
+                                    registrationCount,
+                                    registrationAmount: monthData.registration_amount ?? 0,
+                                    emailCount,
+                                    emailAmount: monthData.email_amount ?? 0,
+                                    salesCount,
+                                    orderAmount: monthData.order_amount ?? 0,
+                                    totalAmount,
+                                  })
+                                }
+                                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 cursor-pointer"
+                                title="Download invoice"
+                              >
+                                <Download className="h-3.5 w-3.5" />
+                                Invoice
+                              </button>
+                            ) : (
+                              <p className="text-[11px] text-slate-500">
+                                Invoice available after month end
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="space-y-1">
+                            <p className={`font-bold ${paymentClassName}`}>
+                              {paymentLabel}
+                            </p>
+                            <p className="text-[11px] text-slate-500">
+                              {formatAmount(paidAmount, currency)} of {formatAmount(totalAmount, currency)}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => onMonthSelect?.(month)}
+                              className={selectedMonth === month
+                                ? "inline-flex rounded-full bg-amber-200 px-3 py-1 text-xs font-medium text-amber-800"
+                                : "inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-200 cursor-pointer"
+                              }
+                            >
+                              Outstanding: {formatAmount(outstandingAmount, currency)}
+                            </button>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="border-t border-slate-200/70 bg-zinc-700">
+            <Table>
+              <TableBody>
+                <TableRow className="bg-zinc-700 font-semibold text-white hover:bg-zinc-700">
+                  <TableCell className="w-1/6 py-2.5 text-center text-white">Total</TableCell>
+                  <TableCell className="w-1/7 py-2.5 text-center">
+                    {formatAmount(previousMonthsTotals.registrationAmount, currency)}
+                  </TableCell>
+                  <TableCell className="w-1/7 py-2.5 text-center">
+                    {formatAmount(previousMonthsTotals.emailAmount, currency)}
+                  </TableCell>
+                  <TableCell className="w-1/7 py-2.5 text-center">
+                    {formatAmount(previousMonthsTotals.orderAmount, currency)}
+                  </TableCell>
+                  <TableCell className="w-1/4 py-2.5 text-center text-white">
+                    <div className="space-y-1">
+                      <p className="font-bold text-white">
+                        {formatAmount(previousMonthsTotals.totalAmount, currency)} total
+                      </p>
+                      <p className="text-[11px] font-medium text-slate-200">
+                        Outstanding: {formatAmount(previousMonthsTotals.outstandingAmount, currency)}
+                      </p>
+                    </div>
                   </TableCell>
                 </TableRow>
-              );})}
-              <TableRow className="bg-zinc-700 font-semibold text-white hover:bg-zinc-700">
-                <TableCell className="text-center w-1/6 text-white">Total</TableCell>
-                <TableCell className="text-center w-1/7">
-                  {formatAmount(previousMonthsTotals.registrationAmount, currency)}
-                </TableCell>
-                <TableCell className="text-center w-1/7">
-                  {formatAmount(previousMonthsTotals.emailAmount, currency)}
-                </TableCell>
-                <TableCell className="text-center w-1/7">
-                  {formatAmount(previousMonthsTotals.orderAmount, currency)}
-                </TableCell>
-                <TableCell className="text-center w-1/4 text-white">
-                  <div className="space-y-1">
-                    <p className="font-bold text-white">
-                      {formatAmount(previousMonthsTotals.totalAmount, currency)} total
-                    </p>
-                    <p className="text-[11px] font-medium text-slate-200">
-                      Outstanding: {formatAmount(previousMonthsTotals.outstandingAmount, currency)}
-                    </p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+              </TableBody>
+            </Table>
+          </div>
         </DndContext>
       </div>
     </div>

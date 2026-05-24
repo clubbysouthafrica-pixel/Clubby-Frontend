@@ -1266,15 +1266,30 @@ export default function GeneralReportingPage() {
             </div>
           )}
 
-          <div className="mt-4 h-[320px] overflow-y-auto rounded-[20px] border border-slate-200">
-            <Table>
-              <TableHeader className="sticky top-0 z-10 bg-zinc-700 [&_tr]:border-zinc-600">
+          <div className="mt-4 overflow-hidden rounded-[20px] border border-slate-200">
+            <Table
+              className="table-fixed"
+              style={{
+                width: "max-content",
+                minWidth: "100%",
+                maxWidth: "none",
+              }}
+            >
+              <colgroup>
+                <col style={{ width: "40px" }} />
+                <col style={{ width: "180px" }} />
+                <col style={{ width: "220px" }} />
+                <col style={{ width: "180px" }} />
+                <col style={{ width: "120px" }} />
+                <col style={{ width: "160px" }} />
+              </colgroup>
+              <TableHeader className="bg-zinc-700 [&_tr]:border-zinc-600">
                 <TableRow>
-                  <TableHead className="h-11 w-10 text-center text-slate-200" />
-                  <TableHead className="h-11 text-center text-xs text-slate-200">
+                  <TableHead className="h-11 w-10 px-0 text-center text-slate-200" />
+                  <TableHead className="h-11 w-[180px] text-center text-xs text-slate-200">
                     Transaction ID
                   </TableHead>
-                  <TableHead className="h-11 text-center text-xs text-slate-200">
+                  <TableHead className="h-11 w-[220px] text-center text-xs text-slate-200">
                     <button
                       type="button"
                       className="inline-flex w-full items-center justify-center gap-1 hover:underline"
@@ -1301,13 +1316,13 @@ export default function GeneralReportingPage() {
                       )}
                     </button>
                   </TableHead>
-                  <TableHead className="h-11 text-center text-xs text-slate-200">
+                  <TableHead className="h-11 w-[180px] text-center text-xs text-slate-200">
                     Transaction Type
                   </TableHead>
-                  <TableHead className="h-11 text-center text-xs text-slate-200">
+                  <TableHead className="h-11 w-[120px] text-center text-xs text-slate-200">
                     Flow
                   </TableHead>
-                  <TableHead className="h-11 text-center text-xs text-slate-200">
+                  <TableHead className="h-11 w-[160px] text-center text-xs text-slate-200">
                     <button
                       type="button"
                       className="inline-flex w-full items-center justify-center gap-1 hover:underline"
@@ -1336,6 +1351,28 @@ export default function GeneralReportingPage() {
                   </TableHead>
                 </TableRow>
               </TableHeader>
+            </Table>
+
+            <div
+              className="h-[320px] overflow-y-auto border-t border-slate-200"
+              style={{ scrollbarGutter: "stable" }}
+            >
+              <Table
+                className="table-fixed"
+                style={{
+                  width: "max-content",
+                  minWidth: "100%",
+                  maxWidth: "none",
+                }}
+              >
+                <colgroup>
+                  <col style={{ width: "40px" }} />
+                  <col style={{ width: "180px" }} />
+                  <col style={{ width: "220px" }} />
+                  <col style={{ width: "180px" }} />
+                  <col style={{ width: "120px" }} />
+                  <col style={{ width: "160px" }} />
+                </colgroup>
 
               <TableBody>
                 {allTransactions
@@ -1366,7 +1403,7 @@ export default function GeneralReportingPage() {
                         className="cursor-pointer border-slate-200 bg-white text-sm hover:bg-slate-50"
                         onClick={() => toggleRow(tx.transaction_id)}
                       >
-                        <TableCell className="text-center">
+                        <TableCell className="w-10 px-0 text-center">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             className={`mx-auto h-3.5 w-3.5 transition-transform ${
@@ -1384,7 +1421,7 @@ export default function GeneralReportingPage() {
                             />
                           </svg>
                         </TableCell>
-                        <TableCell className="text-center">
+                        <TableCell className="w-[180px] text-center">
                           <div className="inline-flex items-center justify-center gap-2">
                             <span className="font-mono text-[11px] md:text-xs">
                               {tx.transaction_id.slice(0, 8)}...
@@ -1402,7 +1439,7 @@ export default function GeneralReportingPage() {
                             </button>
                           </div>
                         </TableCell>
-                        <TableCell className="text-center">
+                        <TableCell className="w-[220px] text-center">
                           <div className="space-y-0.5">
                             <p>{tx.name || "N/A"}</p>
                             {typeof tx.user_id === "string" && tx.user_id.trim() && (
@@ -1425,7 +1462,7 @@ export default function GeneralReportingPage() {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="text-center">
+                        <TableCell className="w-[180px] text-center">
                           <div className="space-y-0.5">
                             <Badge
                               variant="outline"
@@ -1500,7 +1537,7 @@ export default function GeneralReportingPage() {
                               )}
                           </div>
                         </TableCell>
-                        <TableCell className="text-center">
+                        <TableCell className="w-[120px] text-center">
                           {(() => {
                             const TransactionTypeIcon = getTransactionTypeIcon(tx);
 
@@ -1519,7 +1556,7 @@ export default function GeneralReportingPage() {
                             );
                           })()}
                         </TableCell>
-                        <TableCell className="text-center">
+                        <TableCell className="w-[160px] text-center">
                           <div className="space-y-0.5">
                             <p
                               className={`font-bold ${getTransactionPaymentClassName(tx)}`}
@@ -1677,7 +1714,8 @@ export default function GeneralReportingPage() {
                     </Fragment>
                   ))}
               </TableBody>
-            </Table>
+              </Table>
+            </div>
           </div>
         </section>
         )}

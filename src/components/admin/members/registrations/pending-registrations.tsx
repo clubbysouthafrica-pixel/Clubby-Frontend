@@ -443,13 +443,20 @@ export default function PendingMembersList({
     setDeregisterMembers(updatedDeregisterMembers);
   }, [listActionItems, baseUnregisteredMembers]);
 
-  const headerHeight = 48;
   const rowHeight = 60;
   const maxVisibleRows = showTenRows ? 10 : 5;
-  const shouldScrollY = baseUnregisteredMembers.length > maxVisibleRows;
+  const shouldScrollY = sortedUnregisteredMembers.length > maxVisibleRows;
   const tableViewportMaxHeight = shouldScrollY
-    ? headerHeight + maxVisibleRows * rowHeight
+    ? maxVisibleRows * rowHeight
     : undefined;
+  const tableColumnWidths = [
+    "80px",
+    "150px",
+    "150px",
+    "190px",
+    "150px",
+    ...activeColumnKeys.map(() => "150px"),
+  ];
 
   return (
     <div className="flex flex-col gap-4">
@@ -552,38 +559,45 @@ export default function PendingMembersList({
         </div>
       )}
       <div className="w-full max-w-full min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white [contain:inline-size]">
-        <div
-          className={`block max-w-full overflow-x-auto ${
-            shouldScrollY ? "overflow-y-auto" : "overflow-y-visible"
-          }`}
-          style={
-            tableViewportMaxHeight
-              ? { maxHeight: `${tableViewportMaxHeight}px` }
-              : undefined
-          }
-        >
+        <div className="block max-w-full overflow-x-auto">
           <DndContext
             collisionDetection={closestCenter}
             sensors={sensors}
             id={sortableId}
           >
-            <Table
-              className="table-auto"
-              style={{
-                width: "max-content",
-                minWidth: "100%",
-                maxWidth: "none",
-              }}
+            <div
+              className={shouldScrollY ? "overflow-y-auto" : "overflow-y-visible"}
+              style={
+                tableViewportMaxHeight
+                  ? {
+                      maxHeight: `${tableViewportMaxHeight}px`,
+                      scrollbarGutter: "stable",
+                    }
+                  : undefined
+              }
             >
+              <Table
+                className="table-fixed"
+                style={{
+                  width: "max-content",
+                  minWidth: "100%",
+                  maxWidth: "none",
+                }}
+              >
+                <colgroup>
+                  {tableColumnWidths.map((width, index) => (
+                    <col key={`pending-col-${index}`} style={{ width }} />
+                  ))}
+                </colgroup>
               <TableHeader className="sticky top-0 z-10 bg-zinc-700 [&_tr]:border-zinc-600">
                 <TableRow>
-                  <TableHead className="sticky left-0 z-20 w-[80px] flex-shrink-0 bg-zinc-700 py-2 text-center text-slate-200">
+                  <TableHead className="sticky left-0 z-30 w-[80px] flex-shrink-0 bg-zinc-700 py-2 text-center text-slate-200">
                     <div className="mx-auto flex w-fit items-center justify-center rounded-full border border-slate-200/80 bg-slate-50 pl-3 pr-1 transition-colors hover:bg-white">
                       <Checkbox
                         checked={allMembersSelected}
                         onCheckedChange={(checked: boolean) => {
                           if (checked) {
-                            setAllListActionItems(sortedUnregisteredMembers);
+                            setAllListActionItems(baseUnregisteredMembers);
                           } else {
                             setlistActionItems([]);
                             setDeregisterMembers([]);
@@ -628,10 +642,10 @@ export default function PendingMembersList({
                       </DropdownMenu>
                     </div>
                   </TableHead>
-                  <TableHead className="h-11 w-[190px] text-center text-xs text-slate-200">
+                  <TableHead className="h-11 w-[150px] px-0 text-center text-xs text-slate-200">
                     <button
                       type="button"
-                      className="inline-flex items-center gap-1 hover:underline w-full justify-center"
+                      className="grid w-full grid-cols-[10px_auto_auto_10px] items-center justify-center gap-1 px-1.5 hover:underline"
                       onClick={() => {
                         setMemberNameSortAsc((prev) =>
                           prev === null ? true : !prev,
@@ -641,23 +655,27 @@ export default function PendingMembersList({
                       }}
                       title="Toggle sort by Member Name"
                     >
-                      Member Name
-                      {memberNameSortAsc === null ? (
-                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
-                      ) : (
-                        <span className="text-xs">
-                          {memberNameSortAsc ? "▲" : "▼"}
-                        </span>
-                      )}
+                      <span aria-hidden="true" />
+                      <span className="text-center">Member Name</span>
+                      <span className="flex justify-start">
+                        {memberNameSortAsc === null ? (
+                          <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                        ) : (
+                          <span className="text-xs">
+                            {memberNameSortAsc ? "▲" : "▼"}
+                          </span>
+                        )}
+                      </span>
+                      <span aria-hidden="true" />
                     </button>
                   </TableHead>
                   <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
                     Email
                   </TableHead>
-                  <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
+                  <TableHead className="h-11 w-[190px] px-0 text-center text-xs text-slate-200">
                     <button
                       type="button"
-                      className="inline-flex items-center gap-1 hover:underline w-full justify-center"
+                      className="grid w-full grid-cols-[10px_auto_auto_10px] items-center justify-center gap-1 px-1.5 hover:underline"
                       onClick={() => {
                         setOutstandingAmountSortAsc((prev) =>
                           prev === null ? true : !prev,
@@ -668,20 +686,24 @@ export default function PendingMembersList({
                       }}
                       title="Toggle sort by registration fee summary"
                     >
-                      Registration Fee
-                      {outstandingAmountSortAsc === null ? (
-                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
-                      ) : (
-                        <span className="text-xs">
-                          {outstandingAmountSortAsc ? "▲" : "▼"}
-                        </span>
-                      )}
+                      <span aria-hidden="true" />
+                      <span className="text-center">Registration Fee</span>
+                      <span className="flex justify-start">
+                        {outstandingAmountSortAsc === null ? (
+                          <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                        ) : (
+                          <span className="text-xs">
+                            {outstandingAmountSortAsc ? "▲" : "▼"}
+                          </span>
+                        )}
+                      </span>
+                      <span aria-hidden="true" />
                     </button>
                   </TableHead>
-                  <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
+                  <TableHead className="h-11 w-[150px] px-0 text-center text-xs text-slate-200">
                     <button
                       type="button"
-                      className="inline-flex items-center gap-1 hover:underline w-full justify-center"
+                      className="grid w-full grid-cols-[10px_auto_auto_10px] items-center justify-center gap-1 px-1.5 hover:underline"
                       onClick={() => {
                         setSubmittedSortAsc((prev) =>
                           prev === null ? true : !prev,
@@ -691,14 +713,18 @@ export default function PendingMembersList({
                       }}
                       title="Toggle sort by Registration Submitted On"
                     >
-                      Registration Submitted
-                      {submittedSortAsc === null ? (
-                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
-                      ) : (
-                        <span className="text-xs">
-                          {submittedSortAsc ? "▲" : "▼"}
-                        </span>
-                      )}
+                      <span aria-hidden="true" />
+                      <span className="text-center">Registration Submitted</span>
+                      <span className="flex justify-start">
+                        {submittedSortAsc === null ? (
+                          <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                        ) : (
+                          <span className="text-xs">
+                            {submittedSortAsc ? "▲" : "▼"}
+                          </span>
+                        )}
+                      </span>
+                      <span aria-hidden="true" />
                     </button>
                   </TableHead>
                   {clubMembers?.filters
@@ -793,19 +819,23 @@ export default function PendingMembersList({
                             />
                           </div>
                         </TableCell>
-                        <TableCell className="w-[150px] text-center text-sm font-medium text-slate-900">
-                          <span className="underline decoration-slate-400 underline-offset-2">
-                            {member.member_first_name +
-                              " " +
-                              member.member_surname}
-                          </span>
+                        <TableCell className="w-[150px] px-0 text-sm font-medium text-slate-900">
+                          <div className="flex w-full justify-center px-2 text-center">
+                            <span className="underline decoration-slate-400 underline-offset-2">
+                              {member.member_first_name +
+                                " " +
+                                member.member_surname}
+                            </span>
+                          </div>
                         </TableCell>
-                        <TableCell className="w-[150px] text-center text-sm text-slate-800">
-                          {member.member_email === "n/a" ? (
-                            <span className="text-gray-400">n/a</span>
-                          ) : (
-                            member.member_email
-                          )}
+                        <TableCell className="w-[150px] px-0 text-sm text-slate-800">
+                          <div className="flex w-full justify-center px-2 text-center">
+                            {member.member_email === "n/a" ? (
+                              <span className="text-gray-400">n/a</span>
+                            ) : (
+                              member.member_email
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="w-[190px] text-center">
                           {(() => {
@@ -850,12 +880,14 @@ export default function PendingMembersList({
                             );
                           })()}
                         </TableCell>
-                        <TableCell className="w-[150px] text-center text-sm text-slate-800">
-                          {member.registration_submitted_on
-                            ? new Date(
-                                member.registration_submitted_on,
-                              ).toLocaleString()
-                            : "-"}
+                        <TableCell className="w-[150px] px-0 text-sm text-slate-800">
+                          <div className="flex w-full justify-center px-2 text-center">
+                            {member.registration_submitted_on
+                              ? new Date(
+                                  member.registration_submitted_on,
+                                ).toLocaleString()
+                              : "-"}
+                          </div>
                         </TableCell>
                         {clubMembers?.filters
                           ?.filter((col: any) =>
@@ -1340,6 +1372,7 @@ export default function PendingMembersList({
                 )}
               </TableBody>
             </Table>
+            </div>
           </DndContext>
         </div>
       </div>

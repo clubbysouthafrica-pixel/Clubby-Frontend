@@ -173,34 +173,59 @@ export default function MembersTable({
     () => MEMBER_PROFILE_COLUMNS.filter((column) => activeColumnKeys.includes(column.key)),
     [activeColumnKeys],
   );
+  const headerHeight = 44;
+  const rowHeight = 56;
+  const maxVisibleRows = 10;
+  const shouldScrollY = members.length > maxVisibleRows;
+  const tableViewportMaxHeight = shouldScrollY
+    ? headerHeight + maxVisibleRows * rowHeight
+    : undefined;
+  const tableColumnWidths = [
+    "80px",
+    "150px",
+    "150px",
+    "120px",
+    "120px",
+    ...selectedProfileColumns.map(() => "170px"),
+  ];
 
   return (
     <>
 
       <div className="w-full max-w-full min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white [contain:inline-size]">
-        <div
-          className={`block max-w-full overflow-x-auto ${
-            members.length > 10
-              ? "overflow-y-auto"
-              : "overflow-y-hidden"
-          }`}
-        >
+        <div className="block max-w-full overflow-x-auto">
         <DndContext
           collisionDetection={closestCenter}
           sensors={sensors}
           id={sortableId}
         >
+          <div
+            className={shouldScrollY ? "overflow-y-auto" : "overflow-y-hidden"}
+            style={
+              tableViewportMaxHeight
+                ? {
+                    maxHeight: `${tableViewportMaxHeight}px`,
+                    scrollbarGutter: "stable",
+                  }
+                : undefined
+            }
+          >
           <Table
-            className="table-auto"
+            className="table-fixed"
             style={{
               width: "max-content",
               minWidth: "100%",
               maxWidth: "none",
             }}
           >
+            <colgroup>
+              {tableColumnWidths.map((width, index) => (
+                <col key={`members-col-${index}`} style={{ width }} />
+              ))}
+            </colgroup>
             <TableHeader className="sticky top-0 z-10 bg-zinc-700 [&_tr]:border-zinc-600">
               <TableRow>
-                <TableHead className="sticky left-0 z-20 w-[80px] flex-shrink-0 bg-zinc-700 py-2 text-center text-slate-200">
+                <TableHead className="sticky left-0 z-30 w-[80px] flex-shrink-0 bg-zinc-700 py-2 text-center text-slate-200">
                   <div className="mx-auto flex w-fit items-center justify-center rounded-full border border-slate-200/80 bg-slate-50 pl-3 pr-1 transition-colors hover:bg-white">
                     <Checkbox
                       checked={allMembersSelected}
@@ -213,7 +238,7 @@ export default function MembersTable({
                           setAllMembersSelected(false);
                         }
                       }}
-                      className="w-4 h-4 border-gray-300 border-1 hover:border-gray-400 transition-colors"
+                      className="h-5 w-5 rounded-[6px] border-2 border-slate-400 bg-white shadow-sm transition-colors hover:border-slate-500 data-[state=checked]:border-slate-600 data-[state=checked]:bg-slate-600 data-[state=checked]:text-white"
                     />
                     <DropdownMenu modal={false}>
                       <DropdownMenuTrigger asChild>
@@ -244,18 +269,15 @@ export default function MembersTable({
                                   ),
                               );
                               if (membersToDelete.length > 0) {
-                                // Check if all selected members are deregistered
                                 const nonDeregistered = membersToDelete.filter(
-                                  (member: any) => 
-                                    member.registered || !member.resubmission_required
+                                  (member: any) =>
+                                    member.registered || !member.resubmission_required,
                                 );
-                                
+
                                 if (nonDeregistered.length > 0) {
-                                  // Some members are not deregistered
                                   setMembersRequiringDeregistration(nonDeregistered);
                                   setIsValidationDialogOpen(true);
                                 } else {
-                                  // All members are deregistered - proceed with delete
                                   setSelectedMembersToDelete(membersToDelete);
                                   setIsDeleteDialogOpen(true);
                                 }
@@ -271,10 +293,10 @@ export default function MembersTable({
                     </DropdownMenu>
                   </div>
                 </TableHead>
-                <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
+                <TableHead className="h-11 w-[150px] px-0 text-center text-xs text-slate-200">
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1 hover:underline w-full justify-center"
+                    className="grid w-full grid-cols-[10px_auto_auto_10px] items-center justify-center gap-1 px-1.5 hover:underline"
                     onClick={() => {
                       setMemberNameSortAsc((prev) => (prev === null ? true : !prev));
                       setRegSortAsc(null);
@@ -282,21 +304,25 @@ export default function MembersTable({
                     }}
                     title="Toggle sort by Member Name"
                   >
-                    Member name
-                    {memberNameSortAsc === null ? (
-                      <ChevronsUpDown className="h-3 w-3 opacity-60" />
-                    ) : (
-                      <span className="text-xs">{memberNameSortAsc ? "▲" : "▼"}</span>
-                    )}
+                    <span aria-hidden="true" />
+                    <span className="text-center">Member name</span>
+                    <span className="flex justify-start">
+                      {memberNameSortAsc === null ? (
+                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                      ) : (
+                        <span className="text-xs">{memberNameSortAsc ? "▲" : "▼"}</span>
+                      )}
+                    </span>
+                    <span aria-hidden="true" />
                   </button>
                 </TableHead>
                 <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
                   Email
                 </TableHead>
-                <TableHead className="h-11 w-[120px] text-center text-xs text-slate-200">
+                <TableHead className="h-11 w-[120px] px-0 text-center text-xs text-slate-200">
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1 hover:underline w-full justify-center"
+                    className="grid w-full grid-cols-[10px_auto_auto_10px] items-center justify-center gap-1 px-1.5 hover:underline"
                     onClick={() => {
                       setStatusSortAsc((prev) => (prev === null ? true : !prev));
                       setMemberNameSortAsc(null);
@@ -304,12 +330,16 @@ export default function MembersTable({
                     }}
                     title="Toggle sort by Status"
                   >
-                    Status
-                    {statusSortAsc === null ? (
-                      <ChevronsUpDown className="h-3 w-3 opacity-60" />
-                    ) : (
-                      <span className="text-xs">{statusSortAsc ? "▲" : "▼"}</span>
-                    )}
+                    <span aria-hidden="true" />
+                    <span className="text-center">Status</span>
+                    <span className="flex justify-start">
+                      {statusSortAsc === null ? (
+                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                      ) : (
+                        <span className="text-xs">{statusSortAsc ? "▲" : "▼"}</span>
+                      )}
+                    </span>
+                    <span aria-hidden="true" />
                   </button>
                 </TableHead>
                 <TableHead className="h-11 w-[120px] text-center text-xs text-slate-200">
@@ -332,9 +362,9 @@ export default function MembersTable({
                         setSelectedMember(member);
                         window.location.hash = member.user_id;
                       }}
-                      className={`group h-14 cursor-pointer border-slate-200 bg-white text-sm transition-colors hover:bg-slate-50 ${expandedMemberId === member.user_id ? "border-l-4 border-l-blue-500 bg-slate-50" : "border-l-4 border-l-transparent"}`}
+                      className={`group h-14 cursor-pointer border-slate-200 bg-white text-sm transition-colors hover:bg-slate-50 ${expandedMemberId === member.user_id ? "bg-slate-50 shadow-[inset_4px_0_0_0_#3b82f6]" : ""}`}
                     >
-                      <TableCell className="relative sticky left-0 z-20 w-[80px] flex-shrink-0 bg-white text-center">
+                      <TableCell className={`relative sticky left-0 z-20 w-[80px] flex-shrink-0 text-center ${expandedMemberId === member.user_id ? "bg-slate-50" : "bg-white"}`}>
                         <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
                           <Checkbox
                             checked={listActionItems.some(
@@ -383,13 +413,16 @@ export default function MembersTable({
                                 setAllMembersSelected(false);
                               }
                             }}
+                                className="h-5 w-5 rounded-[6px] border-2 border-slate-300 bg-white shadow-sm transition-colors hover:border-slate-500 data-[state=checked]:border-slate-600 data-[state=checked]:bg-slate-600 data-[state=checked]:text-white"
                           />
                         </div>
                       </TableCell>
-                      <TableCell className="w-[150px] text-center text-sm font-medium text-slate-900">
-                        <span className="underline decoration-slate-400 underline-offset-2">
-                          {member.member_first_name + " " + member.member_surname}
-                        </span>
+                      <TableCell className="w-[150px] px-0 text-sm font-medium text-slate-900">
+                        <div className="flex w-full justify-center px-2 text-center">
+                          <span className="underline decoration-slate-400 underline-offset-2">
+                            {member.member_first_name + " " + member.member_surname}
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell className="w-[150px] text-center text-sm text-slate-800">
                         {member.member_email === "n/a" ? (
@@ -398,42 +431,46 @@ export default function MembersTable({
                           member.member_email
                         )}
                       </TableCell>
-                      <TableCell className="w-[120px] text-center">
+                      <TableCell className="w-[120px] px-0 text-center">
                         {(() => {
                           const { status, className } = getMemberStatus(
                             member.registered,
                             member.resubmission_required
                           );
                           return (
-                            <Badge className={className}>
-                              {status}
-                            </Badge>
+                            <div className="flex w-full justify-center px-2">
+                              <Badge className={className}>
+                                {status}
+                              </Badge>
+                            </div>
                           );
                         })()}
                       </TableCell>
-                      <TableCell className="w-[120px] text-center">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setExpandedMemberId(
-                              expandedMemberId === member.user_id
-                                ? null
-                                : member.user_id
-                            )
-                          }}
-                          className="gap-1 rounded-full px-2.5 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                        >
-                          <ChevronRight
-                            className={`h-4 w-4 transition-transform ${
-                              expandedMemberId === member.user_id
-                                ? "rotate-90"
-                                : ""
-                            }`}
-                          />
-                          {member.registrations?.length || 0}
-                        </Button>
+                      <TableCell className="w-[120px] px-0 text-center">
+                        <div className="flex w-full justify-center px-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedMemberId(
+                                expandedMemberId === member.user_id
+                                  ? null
+                                  : member.user_id
+                              )
+                            }}
+                            className="gap-1 rounded-full px-2.5 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                          >
+                            <ChevronRight
+                              className={`h-4 w-4 transition-transform ${
+                                expandedMemberId === member.user_id
+                                  ? "rotate-90"
+                                  : ""
+                              }`}
+                            />
+                            {member.registrations?.length || 0}
+                          </Button>
+                        </div>
                       </TableCell>
                       {selectedProfileColumns.map((column) => {
                         const columnValue = getMemberProfileColumnValue(member, column.key);
@@ -559,6 +596,7 @@ export default function MembersTable({
               )}
             </TableBody>
           </Table>
+          </div>
         </DndContext>
         </div>
       </div>

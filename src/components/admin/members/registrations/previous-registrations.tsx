@@ -170,54 +170,63 @@ export default function PreviousMembersList({
     setDeregisteredMembersLength(sortedDeregisteredMembers.length);
   }, [setDeregisteredMembersLength, sortedDeregisteredMembers]);
 
-  const headerHeight = 48;
   const rowHeight = 60;
-  const visibleRowCount = Math.min(
-    sortedDeregisteredMembers.length,
-    showTenRows ? 10 : 5,
-  );
-  const tableViewportMaxHeight =
-    visibleRowCount > 0
-      ? headerHeight + visibleRowCount * rowHeight
-      : undefined;
-  const shouldScrollY =
-    sortedDeregisteredMembers.length > (showTenRows ? 10 : 5);
+  const maxVisibleRows = showTenRows ? 10 : 5;
+  const shouldScrollY = sortedDeregisteredMembers.length > maxVisibleRows;
+  const tableViewportMaxHeight = shouldScrollY
+    ? maxVisibleRows * rowHeight
+    : undefined;
+  const tableColumnWidths = [
+    "120px",
+    "220px",
+    "150px",
+    "150px",
+    "150px",
+    ...activeColumnKeys.map(() => "150px"),
+  ];
 
   return (
     <>
       <div className="w-full max-w-full min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white [contain:inline-size]">
-        <div
-          className={`block max-w-full overflow-x-auto ${
-            shouldScrollY ? "overflow-y-auto" : "overflow-y-hidden"
-          }`}
-          style={
-            tableViewportMaxHeight
-              ? { maxHeight: `${tableViewportMaxHeight}px` }
-              : undefined
-          }
-        >
+        <div className="block max-w-full overflow-x-auto">
         <DndContext
           collisionDetection={closestCenter}
           sensors={sensors}
           id={sortableId}
         >
+          <div
+            className={shouldScrollY ? "overflow-y-auto" : "overflow-y-hidden"}
+            style={
+              tableViewportMaxHeight
+                ? {
+                    maxHeight: `${tableViewportMaxHeight}px`,
+                    scrollbarGutter: "stable",
+                  }
+                : undefined
+            }
+          >
           <Table
-            className="table-auto"
+            className="table-fixed"
             style={{
               width: "max-content",
               minWidth: "100%",
               maxWidth: "none",
             }}
           >
+            <colgroup>
+              {tableColumnWidths.map((width, index) => (
+                <col key={`previous-col-${index}`} style={{ width }} />
+              ))}
+            </colgroup>
             <TableHeader className="sticky top-0 z-10 bg-zinc-700 [&_tr]:border-zinc-600">
               <TableRow>
-                <TableHead className="sticky left-0 z-20 h-11 w-[120px] flex-shrink-0 bg-zinc-700 py-2 text-center text-xs text-slate-200">
+                <TableHead className="sticky left-0 z-30 h-11 w-[120px] flex-shrink-0 bg-zinc-700 py-2 text-center text-xs text-slate-200">
                   Actions
                 </TableHead>
-                <TableHead className="h-11 w-[220px] text-center text-xs text-slate-200">
+                <TableHead className="h-11 w-[220px] px-0 text-center text-xs text-slate-200">
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1 hover:underline w-full justify-center"
+                    className="grid w-full grid-cols-[10px_auto_auto_10px] items-center justify-center gap-1 px-1.5 hover:underline"
                     onClick={() => {
                       setMemberNameSortAsc((prev) =>
                         prev === null ? true : !prev,
@@ -227,21 +236,25 @@ export default function PreviousMembersList({
                     }}
                     title="Toggle sort by Member Name"
                   >
-                    Member Name
-                    {memberNameSortAsc === null ? (
-                      <ChevronsUpDown className="h-3 w-3 opacity-60" />
-                    ) : (
-                      <span className="text-xs">
-                        {memberNameSortAsc ? "▲" : "▼"}
-                      </span>
-                    )}
+                    <span aria-hidden="true" />
+                    <span className="text-center">Member Name</span>
+                    <span className="flex justify-start">
+                      {memberNameSortAsc === null ? (
+                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                      ) : (
+                        <span className="text-xs">
+                          {memberNameSortAsc ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </span>
+                    <span aria-hidden="true" />
                   </button>
                 </TableHead>
                 <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">Email</TableHead>
-                <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
+                <TableHead className="h-11 w-[150px] px-0 text-center text-xs text-slate-200">
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1 hover:underline w-full justify-center"
+                    className="grid w-full grid-cols-[10px_auto_auto_10px] items-center justify-center gap-1 px-1.5 hover:underline"
                     onClick={() => {
                       setTotalFeeSortAsc((prev) =>
                         prev === null ? true : !prev,
@@ -251,33 +264,41 @@ export default function PreviousMembersList({
                     }}
                     title="Toggle sort by Total Fee"
                   >
-                    Total Fee
-                    {totalFeeSortAsc === null ? (
-                      <ChevronsUpDown className="h-3 w-3 opacity-60" />
-                    ) : (
-                      <span className="text-xs">
-                        {totalFeeSortAsc ? "▲" : "▼"}
-                      </span>
-                    )}
+                    <span aria-hidden="true" />
+                    <span className="text-center">Total Fee</span>
+                    <span className="flex justify-start">
+                      {totalFeeSortAsc === null ? (
+                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                      ) : (
+                        <span className="text-xs">
+                          {totalFeeSortAsc ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </span>
+                    <span aria-hidden="true" />
                   </button>
                 </TableHead>
-                <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
+                <TableHead className="h-11 w-[150px] px-0 text-center text-xs text-slate-200">
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1 hover:underline"
+                    className="grid w-full grid-cols-[10px_auto_auto_10px] items-center justify-center gap-1 px-1.5 hover:underline"
                     onClick={() =>
                       setDeregSortAsc((prev) => (prev === null ? true : !prev))
                     }
                     title="Toggle sort by Deregistered On"
                   >
-                    Deregistered On
-                    {deregSortAsc === null ? (
-                      <ChevronsUpDown className="h-3 w-3 opacity-60" />
-                    ) : (
-                      <span className="text-xs">
-                        {deregSortAsc ? "▲" : "▼"}
-                      </span>
-                    )}
+                    <span aria-hidden="true" />
+                    <span className="text-center">Deregistered On</span>
+                    <span className="flex justify-start">
+                      {deregSortAsc === null ? (
+                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                      ) : (
+                        <span className="text-xs">
+                          {deregSortAsc ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </span>
+                    <span aria-hidden="true" />
                   </button>
                 </TableHead>
                 {clubMembers?.filters
@@ -312,9 +333,9 @@ export default function PreviousMembersList({
                         : ""
                     }`}
                   >
-                    <TableCell className="relative sticky left-0 z-20 w-[120px] flex-shrink-0 bg-white text-center">
+                    <TableCell className="relative sticky left-0 z-20 w-[120px] flex-shrink-0 bg-white px-0 text-center">
                       <div
-                        className="flex justify-center gap-2"
+                        className="flex w-full justify-center gap-2 px-2"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Tooltip>
@@ -399,8 +420,8 @@ export default function PreviousMembersList({
                         </Tooltip>
                       </div>
                     </TableCell>
-                    <TableCell className="text-center w-[150px]">
-                      <div className="flex items-center justify-center gap-2">
+                    <TableCell className="w-[220px] px-0 text-center">
+                      <div className="flex w-full items-center justify-center gap-2 px-2">
                         <span className="underline">
                           {member.member_first_name +
                             " " +
@@ -408,10 +429,12 @@ export default function PreviousMembersList({
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-center w-[150px]">
-                      {member.member_email === "n/a" ? <span className="text-gray-400">n/a</span> : member.member_email}
+                    <TableCell className="w-[150px] px-0 text-center">
+                      <div className="flex w-full justify-center px-2 text-center">
+                        {member.member_email === "n/a" ? <span className="text-gray-400">n/a</span> : member.member_email}
+                      </div>
                     </TableCell>
-                    <TableCell className="text-center w-[150px]">
+                    <TableCell className="w-[150px] px-0 text-center">
                       {(() => {
                         const paymentStatus = getRegistrationPaymentStatus(member);
                         const totalFee = member.total_fee || 0;
@@ -419,28 +442,40 @@ export default function PreviousMembersList({
                         const amountPaid = Math.max(totalFee - outstandingAmount, 0);
 
                         if (!totalFee) {
-                          return <span className="text-gray-400">n/a</span>;
+                          return <div className="flex w-full justify-center px-2 text-center"><span className="text-gray-400">n/a</span></div>;
                         }
 
                         return (
-                          <div className="flex flex-col items-center gap-2 text-center">
-                            <Badge className={paymentStatus.className}>
-                              {paymentStatus.label}
-                            </Badge>
-                            <p className="text-xs font-medium text-foreground">
-                              {outstandingAmount > 0
-                                ? `${formatAmount(amountPaid, club?.currency)} of ${formatAmount(totalFee, club?.currency)}`
-                                : formatAmount(totalFee, club?.currency)}
-                            </p>
+                          <div className="flex w-full justify-center px-2 text-center">
+                            <div className="flex flex-col items-center gap-2 text-center">
+                              <Badge className={paymentStatus.className}>
+                                {paymentStatus.label}
+                              </Badge>
+                              <p className="text-xs font-medium text-foreground">
+                                {outstandingAmount > 0
+                                  ? `${formatAmount(amountPaid, club?.currency)} of ${formatAmount(totalFee, club?.currency)}`
+                                  : formatAmount(totalFee, club?.currency)}
+                              </p>
+                            </div>
                           </div>
                         );
                       })()}
                     </TableCell>
-                    <TableCell className="text-center w-[150px]">
+                    <TableCell className="relative w-[150px] px-0 text-center">
+                      <div className="flex w-full justify-center px-2 text-center">
+                        {member?.last_season_registration ||
+                        !member?.deregistered_on ? (
+                          <Badge className="bg-red-100 text-red-800 border-red-300">
+                            Previous Season Registration
+                          </Badge>
+                        ) : (
+                          new Date(member?.deregistered_on).toLocaleString()
+                        )}
+                      </div>
                       {member.missing_club_member && (
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <div className="absolute top-5 right-5 transform translate-x-1 -translate-y-1">
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
                               <AlertTriangle className="h-4 w-4 text-red-600 fill-red-100" />
                             </div>
                           </TooltipTrigger>
@@ -448,14 +483,6 @@ export default function PreviousMembersList({
                             This member no longer exists with the club
                           </TooltipContent>
                         </Tooltip>
-                      )}
-                      {member?.last_season_registration ||
-                      !member?.deregistered_on ? (
-                        <Badge className="bg-red-100 text-red-800 border-red-300">
-                          Previous Season Registration
-                        </Badge>
-                      ) : (
-                        new Date(member?.deregistered_on).toLocaleString()
                       )}
                     </TableCell>
                     {clubMembers?.filters
@@ -530,6 +557,7 @@ export default function PreviousMembersList({
               )}
             </TableBody>
           </Table>
+          </div>
         </DndContext>
         </div>
       </div>

@@ -130,12 +130,16 @@ export default function BillingPage() {
       ...monthChoices,
     ];
   }, [club?.currency, hasAllOutstandingOption, payableMonthlyPaymentOptions, totalOutstandingAmount]);
+  const oldestOutstandingPaymentChoice = useMemo(
+    () => [...paymentChoices].reverse().find(({ isPaid, isAllOutstanding }) => !isPaid && !isAllOutstanding),
+    [paymentChoices],
+  );
   const selectedPaymentChoice = useMemo(
     () =>
       paymentChoices.find(({ value }) => value === selectedMonth) ??
-      paymentChoices.find(({ isAllOutstanding }) => isAllOutstanding) ??
-      paymentChoices.find(({ isPaid }) => !isPaid),
-    [paymentChoices, selectedMonth],
+      oldestOutstandingPaymentChoice ??
+      paymentChoices.find(({ isAllOutstanding }) => isAllOutstanding),
+    [oldestOutstandingPaymentChoice, paymentChoices, selectedMonth],
   );
   const { refetch: refetchClubbyCheckoutUrl } = useGetClubbyCheckoutUrlQuery(
     club?.club_account_id,
@@ -179,12 +183,13 @@ export default function BillingPage() {
 
     if (!paymentChoices.some(({ value }) => value === selectedMonth)) {
       setSelectedMonth(
-        paymentChoices.find(({ isAllOutstanding }) => isAllOutstanding)?.value ??
-          payableMonthlyPaymentOptions[0]?.month ??
+        oldestOutstandingPaymentChoice?.value ??
+          paymentChoices.find(({ isAllOutstanding }) => isAllOutstanding)?.value ??
+          payableMonthlyPaymentOptions[payableMonthlyPaymentOptions.length - 1]?.month ??
           "",
       );
     }
-  }, [payableMonthlyPaymentOptions, paymentChoices, selectedMonth]);
+  }, [oldestOutstandingPaymentChoice, payableMonthlyPaymentOptions, paymentChoices, selectedMonth]);
 
   const handlePayNowClick = async () => {
     if (!club?.club_account_id || !selectedPaymentChoice) {
@@ -230,8 +235,8 @@ export default function BillingPage() {
   }
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,_#e7e5e4_0%,_#f5f5f4_22%,_#fafaf9_22%,_#fafaf9_100%)] text-slate-900">
-      <div className="flex w-full max-w-none flex-col gap-3 px-2 py-3 sm:px-3 md:px-4 md:py-4 xl:px-5 2xl:px-6">
-        <section className="relative overflow-hidden rounded-[24px] border border-stone-300/70 bg-stone-200 px-4 py-4 text-zinc-900 shadow-[0_18px_40px_rgba(120,113,108,0.16)] md:px-5 md:py-4">
+      <div className="flex w-full max-w-none flex-col gap-2.5 px-2 py-2.5 sm:px-3 md:px-4 md:py-3 xl:px-5 2xl:px-6">
+        <section className="relative overflow-hidden rounded-[22px] border border-stone-300/70 bg-stone-200 px-4 py-3.5 text-zinc-900 shadow-[0_18px_40px_rgba(120,113,108,0.16)] md:px-5 md:py-3.5">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.72),_transparent_28%),radial-gradient(circle_at_right,_rgba(214,211,209,0.55),_transparent_24%)]" />
           <div className="relative flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
@@ -276,11 +281,11 @@ export default function BillingPage() {
             </div>
           </div>
 
-          <div className="relative mt-3 grid gap-2 md:grid-cols-3">
+          <div className="relative mt-2.5 grid gap-2 md:grid-cols-3">
             {summaryCards.map(({ label, value, icon: Icon, tone }) => (
               <div
                 key={label}
-                className="rounded-[18px] border border-stone-300/70 bg-white/75 p-3 backdrop-blur"
+                className="rounded-[18px] border border-stone-300/70 bg-white/75 p-2.5 backdrop-blur"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -298,27 +303,37 @@ export default function BillingPage() {
           </div>
         </section>
 
-        <section className="order-2 rounded-[24px] border border-slate-200/70 bg-white/90 p-2.5 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur md:p-3">
+        <section className="order-2 rounded-[22px] border border-slate-200/70 bg-white/90 p-2 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur md:p-2.5">
           <div className="rounded-[18px] border border-slate-200/70 bg-slate-50/90 p-1.5 backdrop-blur">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div className="flex flex-wrap gap-2">
                 {paymentChoices.length > 0 && (
-                  <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                    <SelectTrigger className="h-8 min-w-[260px] rounded-full bg-white text-xs">
-                      <SelectValue placeholder="Select payment option" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {paymentChoices.map(({ value, label, isPaid, isAllOutstanding }) => (
-                        <SelectItem
-                          key={value}
-                          value={value}
-                          disabled={isPaid && !isAllOutstanding}
-                        >
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-1">
+                    <div className="pl-1">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                        Choose a month to pay
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Use this selector to switch between outstanding months or pay all outstanding months.
+                      </p>
+                    </div>
+                    <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                      <SelectTrigger className="h-8 min-w-[260px] rounded-full bg-white text-xs">
+                        <SelectValue placeholder="Select payment option" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {paymentChoices.map(({ value, label, isPaid, isAllOutstanding }) => (
+                          <SelectItem
+                            key={value}
+                            value={value}
+                            disabled={isPaid && !isAllOutstanding}
+                          >
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 )}
               </div>
 
@@ -336,13 +351,13 @@ export default function BillingPage() {
             </div>
           </div>
 
-          <div className="space-y-3 px-1 pb-1 pt-2.5 md:px-2 md:pb-2">
+          <div className="space-y-2.5 px-1 pb-1 pt-2 md:px-1.5 md:pb-1.5">
             {showPayNow ? (
               <button
                 type="button"
                 onClick={handlePayNowClick}
                 disabled={!selectedPaymentChoice || isPayfastLoading}
-                className="flex w-full items-center justify-between rounded-[20px] border border-slate-200/70 bg-white px-5 py-4 text-left shadow-sm transition-all duration-200 hover:border-[#59b9e6] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex w-full items-center justify-between rounded-[18px] border border-slate-200/70 bg-white px-4 py-3 text-left shadow-sm transition-all duration-200 hover:border-[#59b9e6] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <div className="flex items-center gap-4">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-slate-300 bg-white transition-colors">
@@ -350,12 +365,12 @@ export default function BillingPage() {
                   </div>
 
                   <div>
-                    <p className="text-xl font-semibold text-gray-950 sm:text-2xl">
+                    <p className="text-lg font-semibold text-gray-950 sm:text-xl">
                       {isPayfastLoading
                         ? "Redirecting..."
                         : `Pay Now (${formatAmount(selectedPaymentChoice?.amount ?? 0, club?.currency)})`}
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs text-muted-foreground sm:text-sm">
                       {selectedPaymentChoice
                         ? selectedPaymentChoice.isAllOutstanding
                           ? `Pay all outstanding months with PayFast for ${formatAmount(selectedPaymentChoice.amount, club?.currency)}.`
@@ -367,15 +382,15 @@ export default function BillingPage() {
 
                 <div className="flex items-center gap-3 pl-4">
                   <div className="flex flex-col items-start leading-none">
-                    <span className="text-[2rem] font-light tracking-[-0.08em] text-[#0072bc] sm:text-[2.6rem]">
+                    <span className="text-[1.7rem] font-light tracking-[-0.08em] text-[#0072bc] sm:text-[2.2rem]">
                       payfast
                     </span>
-                    <span className="pl-1 text-[0.85rem] font-normal tracking-[-0.04em] text-[#0072bc] sm:text-[1.1rem]">
+                    <span className="pl-1 text-[0.75rem] font-normal tracking-[-0.04em] text-[#0072bc] sm:text-[0.95rem]">
                       by network
                     </span>
                   </div>
                   <ChevronRight
-                    className="h-9 w-9 text-[#ef476f] sm:h-12 sm:w-12"
+                    className="h-8 w-8 text-[#ef476f] sm:h-10 sm:w-10"
                     strokeWidth={2.5}
                   />
                 </div>

@@ -99,47 +99,57 @@ export default function RegisteredMembersList({
     return sortedCopy;
   }, [baseRegisteredMembers, regSortAsc, memberNameSortAsc, totalFeeSortAsc]);
 
-  const headerHeight = 48;
   const rowHeight = 60;
-  const visibleRowCount = Math.min(
-    baseRegisteredMembers.length,
-    showTenRows ? 10 : 5,
-  );
-  const tableViewportMaxHeight =
-    visibleRowCount > 0
-      ? headerHeight + visibleRowCount * rowHeight
-      : undefined;
-  const shouldScrollY = baseRegisteredMembers.length > (showTenRows ? 10 : 5);
+  const maxVisibleRows = showTenRows ? 10 : 5;
+  const shouldScrollY = baseRegisteredMembers.length > maxVisibleRows;
+  const tableViewportMaxHeight = shouldScrollY
+    ? maxVisibleRows * rowHeight
+    : undefined;
+  const tableColumnWidths = [
+    "80px",
+    "150px",
+    "150px",
+    "150px",
+    "150px",
+    ...activeColumnKeys.map(() => "150px"),
+  ];
 
   return (
     <>
       <div className="w-full max-w-full min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white [contain:inline-size]">
-        <div
-          className={`block max-w-full overflow-x-auto ${
-            shouldScrollY ? "overflow-y-auto" : "overflow-y-hidden"
-          }`}
-          style={
-            tableViewportMaxHeight
-              ? { maxHeight: `${tableViewportMaxHeight}px` }
-              : undefined
-          }
-        >
+        <div className="block max-w-full overflow-x-auto">
           <DndContext
             collisionDetection={closestCenter}
             sensors={sensors}
             id={sortableId}
           >
-            <Table
-              className="table-auto"
-              style={{
-                width: "max-content",
-                minWidth: "100%",
-                maxWidth: "none",
-              }}
+            <div
+              className={shouldScrollY ? "overflow-y-auto" : "overflow-y-hidden"}
+              style={
+                tableViewportMaxHeight
+                  ? {
+                      maxHeight: `${tableViewportMaxHeight}px`,
+                      scrollbarGutter: "stable",
+                    }
+                  : undefined
+              }
             >
-              <TableHeader className="sticky top-0 z-10 bg-zinc-700 [&_tr]:border-zinc-600">
-                <TableRow>
-                <TableHead className="sticky left-0 z-20 w-[80px] flex-shrink-0 bg-zinc-700 py-2 text-center text-slate-200">
+              <Table
+                className="table-fixed"
+                style={{
+                  width: "max-content",
+                  minWidth: "100%",
+                  maxWidth: "none",
+                }}
+              >
+                <colgroup>
+                  {tableColumnWidths.map((width, index) => (
+                    <col key={`active-col-${index}`} style={{ width }} />
+                  ))}
+                </colgroup>
+            <TableHeader className="sticky top-0 z-10 bg-zinc-700 [&_tr]:border-zinc-600">
+              <TableRow>
+                <TableHead className="sticky left-0 z-30 w-[80px] flex-shrink-0 bg-zinc-700 py-2 text-center text-slate-200">
                   <div className="mx-auto flex w-fit items-center justify-center rounded-full border border-slate-200/80 bg-slate-50 pl-3 pr-1 transition-colors hover:bg-white">
                     <Checkbox
                       checked={allMembersSelected}
@@ -181,10 +191,10 @@ export default function RegisteredMembersList({
                     </DropdownMenu>
                   </div>
                 </TableHead>
-                <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
+                <TableHead className="h-11 w-[150px] px-0 text-center text-xs text-slate-200">
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1 hover:underline w-full justify-center"
+                    className="grid w-full grid-cols-[10px_auto_auto_10px] items-center justify-center gap-1 px-1.5 hover:underline"
                     onClick={() => {
                       setMemberNameSortAsc((prev) => (prev === null ? true : !prev));
                       setRegSortAsc(null);
@@ -192,21 +202,25 @@ export default function RegisteredMembersList({
                     }}
                     title="Toggle sort by Member Name"
                   >
-                    Member name
-                    {memberNameSortAsc === null ? (
-                      <ChevronsUpDown className="h-3 w-3 opacity-60" />
-                    ) : (
-                      <span className="text-xs">{memberNameSortAsc ? "▲" : "▼"}</span>
-                    )}
+                    <span aria-hidden="true" />
+                    <span className="text-center">Member name</span>
+                    <span className="flex justify-start">
+                      {memberNameSortAsc === null ? (
+                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                      ) : (
+                        <span className="text-xs">{memberNameSortAsc ? "▲" : "▼"}</span>
+                      )}
+                    </span>
+                    <span aria-hidden="true" />
                   </button>
                 </TableHead>
                 <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
                   Email
                 </TableHead>
-                <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
+                <TableHead className="h-11 w-[150px] px-0 text-center text-xs text-slate-200">
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1 hover:underline w-full justify-center"
+                    className="grid w-full grid-cols-[10px_auto_auto_10px] items-center justify-center gap-1 px-1.5 hover:underline"
                     onClick={() => {
                       setTotalFeeSortAsc((prev) => (prev === null ? true : !prev));
                       setRegSortAsc(null);
@@ -214,29 +228,37 @@ export default function RegisteredMembersList({
                     }}
                     title="Toggle sort by Total Fee"
                   >
-                    Registration Fee
-                    {totalFeeSortAsc === null ? (
-                      <ChevronsUpDown className="h-3 w-3 opacity-60" />
-                    ) : (
-                      <span className="text-xs">{totalFeeSortAsc ? "▲" : "▼"}</span>
-                    )}
+                    <span aria-hidden="true" />
+                    <span className="text-center">Registration Fee</span>
+                    <span className="flex justify-start">
+                      {totalFeeSortAsc === null ? (
+                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                      ) : (
+                        <span className="text-xs">{totalFeeSortAsc ? "▲" : "▼"}</span>
+                      )}
+                    </span>
+                    <span aria-hidden="true" />
                   </button>
                 </TableHead>
-                <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
+                <TableHead className="h-11 w-[150px] px-0 text-center text-xs text-slate-200">
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1 hover:underline"
+                    className="grid w-full grid-cols-[10px_auto_auto_10px] items-center justify-center gap-1 px-1.5 hover:underline"
                     onClick={() =>
                       setRegSortAsc((prev) => (prev === null ? true : !prev))
                     }
                     title="Toggle sort by Registered On"
                   >
-                    Registered On
-                    {regSortAsc === null ? (
-                      <ChevronsUpDown className="h-3 w-3 opacity-60" />
-                    ) : (
-                      <span className="text-xs">{regSortAsc ? "▲" : "▼"}</span>
-                    )}
+                    <span aria-hidden="true" />
+                    <span className="text-center">Registered On</span>
+                    <span className="flex justify-start">
+                      {regSortAsc === null ? (
+                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                      ) : (
+                        <span className="text-xs">{regSortAsc ? "▲" : "▼"}</span>
+                      )}
+                    </span>
+                    <span aria-hidden="true" />
                   </button>
                 </TableHead>
                 {clubMembers?.filters
@@ -324,33 +346,41 @@ export default function RegisteredMembersList({
                         />
                       </div>
                     </TableCell>
-                    <TableCell className="w-[150px] text-center text-sm font-medium text-slate-900">
-                      <span className="underline decoration-slate-400 underline-offset-2">
-                        {member.member_first_name + " " + member.member_surname}
-                      </span>
-                    </TableCell>
-                    <TableCell className="w-[150px] text-center text-sm text-slate-800">
-                      {member.member_email === "n/a" ? (
-                        <span className="text-gray-400">n/a</span>
-                      ) : (
-                        member.member_email
-                      )}
-                    </TableCell>
-                    <TableCell className="w-[150px] text-center text-sm font-medium text-slate-900">
-                      {member.total_fee === 0 ? (
-                        <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-                          Free
+                    <TableCell className="w-[150px] px-0 text-sm font-medium text-slate-900">
+                      <div className="flex w-full justify-center px-2 text-center">
+                        <span className="underline decoration-slate-400 underline-offset-2">
+                          {member.member_first_name + " " + member.member_surname}
                         </span>
-                      ) : member.total_fee != null ? (
-                        formatAmount(member.total_fee, currency)
-                      ) : (
-                        <span className="text-gray-400">n/a</span>
-                      )}
+                      </div>
                     </TableCell>
-                    <TableCell className="w-[150px] text-center text-sm text-slate-800">
-                      {member.registered_on
-                        ? new Date(member.registered_on).toLocaleString()
-                        : "-"}
+                    <TableCell className="w-[150px] px-0 text-sm text-slate-800">
+                      <div className="flex w-full justify-center px-2 text-center">
+                        {member.member_email === "n/a" ? (
+                          <span className="text-gray-400">n/a</span>
+                        ) : (
+                          member.member_email
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="w-[150px] px-0 text-sm font-medium text-slate-900">
+                      <div className="flex w-full justify-center px-2 text-center">
+                        {member.total_fee === 0 ? (
+                          <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                            Free
+                          </span>
+                        ) : member.total_fee != null ? (
+                          formatAmount(member.total_fee, currency)
+                        ) : (
+                          <span className="text-gray-400">n/a</span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="w-[150px] px-0 text-sm text-slate-800">
+                      <div className="flex w-full justify-center px-2 text-center">
+                        {member.registered_on
+                          ? new Date(member.registered_on).toLocaleString()
+                          : "-"}
+                      </div>
                     </TableCell>
                     {clubMembers?.filters
                       ?.filter((col: any) => activeColumnKeys.includes(col.key))
@@ -421,7 +451,8 @@ export default function RegisteredMembersList({
                 />
               )}
             </TableBody>
-          </Table>
+              </Table>
+            </div>
           </DndContext>
         </div>
       </div>
