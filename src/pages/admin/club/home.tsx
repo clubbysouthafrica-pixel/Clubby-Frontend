@@ -5,27 +5,15 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { formatAmount } from "@/data/currencies";
 import { useNavigate } from "react-router-dom";
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo } from "react";
 import {
-  ClubAccountBalanceEntry,
   ClubContext,
   ClubContextType,
 } from "@/context/ClubContext";
 import { HomeSectionCards } from "@/components/admin/club/home/section-cards";
 import {
   ArrowRight,
-  CircleAlert,
   BoxIcon,
   CalendarDays,
   CheckCircle2,
@@ -68,8 +56,6 @@ export default function HomeDashboardPage() {
     [activeAdminClub, fetchedClub, club],
   );
   const navigate = useNavigate();
-  const [isOutstandingBalanceDialogOpen, setIsOutstandingBalanceDialogOpen] =
-    useState(true);
 
   const featureStatus = useMemo(
     () => [
@@ -173,35 +159,6 @@ export default function HomeDashboardPage() {
 
   const enabledFeatures = featureStatus.filter((item) => item.enabled);
   const disabledFeatures = featureStatus.filter((item) => !item.enabled);
-  const outstandingAccountBalanceEntries =
-    (currentClub?.account_balance_entries ?? []) as ClubAccountBalanceEntry[];
-  const totalOutstandingAccountBalance = useMemo(
-    () =>
-      outstandingAccountBalanceEntries.reduce(
-        (total: number, entry: ClubAccountBalanceEntry) =>
-          total + (entry.outstanding_amount ?? 0),
-        0,
-      ),
-    [outstandingAccountBalanceEntries],
-  );
-  const outstandingBalanceMonthsLabel = useMemo(() => {
-    const formatter = new Intl.DateTimeFormat("en", {
-      month: "long",
-      year: "numeric",
-      timeZone: "UTC",
-    });
-
-    return outstandingAccountBalanceEntries
-      .map(({ month_date }: ClubAccountBalanceEntry) => {
-        const parsedDate = new Date(`${month_date}-01T00:00:00Z`);
-        if (Number.isNaN(parsedDate.getTime())) {
-          return month_date;
-        }
-        return formatter.format(parsedDate);
-      })
-      .join(", ");
-  }, [outstandingAccountBalanceEntries]);
-
   useEffect(() => {
     if (fetchedClub && club) {
       const nextClub = {
@@ -222,14 +179,6 @@ export default function HomeDashboardPage() {
     !clubAccountId ||
     fetchedClubLoading ||
     !currentClub?.club_account_id;
-  const shouldShowOutstandingBalanceDialog =
-    outstandingAccountBalanceEntries.length > 0 &&
-    isOutstandingBalanceDialogOpen;
-
-  const handleBillingNavigation = () => {
-    setIsOutstandingBalanceDialogOpen(false);
-    navigate("/billing&usage");
-  };
 
   if (isInitialLoad) {
     return (
@@ -241,50 +190,6 @@ export default function HomeDashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Dialog
-        open={shouldShowOutstandingBalanceDialog}
-        onOpenChange={setIsOutstandingBalanceDialogOpen}
-      >
-        <DialogContent className="sm:max-w-xl border-amber-200 bg-white" showCloseButton={false}>
-          <DialogHeader className="space-y-3 text-left">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-              <CircleAlert className="h-6 w-6" />
-            </div>
-            <DialogTitle>Outstanding Clubby balance</DialogTitle>
-            <DialogDescription className="space-y-3 text-slate-600">
-              <p>
-                There {outstandingAccountBalanceEntries.length === 1 ? "is" : "are"} unpaid
-                account balance {outstandingAccountBalanceEntries.length === 1 ? "entry" : "entries"}
-                {outstandingBalanceMonthsLabel ? ` for ${outstandingBalanceMonthsLabel}` : ""}.
-              </p>
-              <p>
-                Please review and pay {outstandingAccountBalanceEntries.length === 1 ? "this amount" : "these amounts"}
-                in Billing &amp; Usage before continuing.
-              </p>
-              <p className="font-medium text-slate-950">
-                Total outstanding: {formatAmount(totalOutstandingAccountBalance, currentClub?.currency)}
-              </p>
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsOutstandingBalanceDialogOpen(false)}
-            >
-              Not now
-            </Button>
-            <Button
-              type="button"
-              className="bg-amber-600 text-white hover:bg-amber-700"
-              onClick={handleBillingNavigation}
-            >
-              Go to Billing &amp; Usage
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       <div className="border-b border-slate-200 bg-white">
         <div className="w-full px-6 py-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">

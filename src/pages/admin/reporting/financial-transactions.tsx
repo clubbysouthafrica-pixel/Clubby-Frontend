@@ -238,6 +238,17 @@ export default function FinancialTransactionsPage() {
   const [copiedTransactionId, setCopiedTransactionId] = useState<string | null>(
     null,
   );
+  const [highlightedTransactionId, setHighlightedTransactionId] = useState<
+    string | null
+  >(null);
+  const transactionsTableRef = useRef<HTMLDivElement | null>(null);
+  const transactionRowRefs = useRef<Record<string, HTMLTableRowElement | null>>(
+    {},
+  );
+  const handledOpenTransactionIdRef = useRef<string | null>(null);
+  const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const {
     data: transactions,
@@ -373,6 +384,69 @@ export default function FinancialTransactionsPage() {
     isLoadingMoreRef.current = false;
     setAllTransactions([]);
   }, [searchParams]);
+
+  React.useEffect(() => {
+    const openTransactionIdFromQuery =
+      searchParams.get("openTransactionId")?.trim() ?? "";
+
+    if (!openTransactionIdFromQuery) {
+      handledOpenTransactionIdRef.current = null;
+      setHighlightedTransactionId(null);
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+        highlightTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    if (handledOpenTransactionIdRef.current === openTransactionIdFromQuery) {
+      return;
+    }
+
+    const matchedTransaction = allTransactions.find(
+      (tx) => tx.transaction_id === openTransactionIdFromQuery,
+    );
+
+    if (!matchedTransaction) {
+      return;
+    }
+
+    handledOpenTransactionIdRef.current = openTransactionIdFromQuery;
+    setHighlightedTransactionId(openTransactionIdFromQuery);
+
+    if (highlightTimeoutRef.current) {
+      clearTimeout(highlightTimeoutRef.current);
+    }
+
+    window.requestAnimationFrame(() => {
+      transactionsTableRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+
+      window.setTimeout(() => {
+        transactionRowRefs.current[openTransactionIdFromQuery]?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 150);
+    });
+
+    highlightTimeoutRef.current = setTimeout(() => {
+      setHighlightedTransactionId((current) =>
+        current === openTransactionIdFromQuery ? null : current,
+      );
+      highlightTimeoutRef.current = null;
+    }, 2600);
+  }, [allTransactions, searchParams]);
+
+  React.useEffect(() => {
+    return () => {
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+      }
+    };
+  }, []);
 
   if (clubLoading) {
     return (
@@ -688,6 +762,7 @@ export default function FinancialTransactionsPage() {
         )}
 
         <div
+          ref={transactionsTableRef}
           className={`overflow-hidden rounded-lg border ${
             allTransactions.length > 10 ? "max-h-[600px] overflow-y-auto" : ""
           }`}
@@ -787,7 +862,14 @@ export default function FinancialTransactionsPage() {
                 .map((tx: any) => (
                   <React.Fragment key={tx.transaction_id}>
                     <TableRow
-                      className="cursor-pointer hover:bg-muted/50 transition"
+                      ref={(element) => {
+                        transactionRowRefs.current[tx.transaction_id] = element;
+                      }}
+                      className={`cursor-pointer transition-colors duration-500 hover:bg-muted/50 ${
+                        highlightedTransactionId === tx.transaction_id
+                          ? "bg-yellow-100 ring-1 ring-yellow-300"
+                          : ""
+                      }`}
                       onClick={() => toggleRow(tx.transaction_id)}
                     >
                       <TableCell className="text-center">

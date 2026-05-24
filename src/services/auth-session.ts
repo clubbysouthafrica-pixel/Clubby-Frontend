@@ -5,6 +5,8 @@ const ACCESS_TOKEN_KEY = "accessToken";
 const REFRESH_TOKEN_KEY = "refreshToken";
 const ADMIN_KEY = "isAdmin";
 const ACTIVE_CLUB_KEY = "activeClub";
+const OUTSTANDING_BALANCE_DIALOG_KEY_PREFIX =
+  "admin-outstanding-balance-dialog-shown:";
 
 let isRedirectingToLogin = false;
 const EXPLICIT_DENY_MESSAGE = "user is not authorized to access this resource with an explicit deny in an identity-based policy";
@@ -121,6 +123,14 @@ export function clearStoredAuth() {
   localStorage.removeItem(REFRESH_TOKEN_KEY);
   localStorage.removeItem(ADMIN_KEY);
   localStorage.removeItem(ACTIVE_CLUB_KEY);
+
+  if (typeof window !== "undefined") {
+    Object.keys(window.sessionStorage).forEach((key) => {
+      if (key.startsWith(OUTSTANDING_BALANCE_DIALOG_KEY_PREFIX)) {
+        window.sessionStorage.removeItem(key);
+      }
+    });
+  }
 
   delete axios.defaults.headers.common.Authorization;
 }

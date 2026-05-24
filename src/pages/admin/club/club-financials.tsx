@@ -768,13 +768,6 @@ export default function GeneralReportingPage() {
                 <BarChart3 className="h-3.5 w-3.5 text-zinc-500" />
                 Analytics overview
               </div>
-              <h1 className="text-xl font-semibold tracking-tight md:text-3xl">
-                Club reporting with live transaction visibility
-              </h1>
-              <p className="mt-2 max-w-2xl text-[11px] leading-4 text-zinc-600 md:text-xs">
-                Review season performance, export report snapshots, and manage
-                transaction activity without switching pages.
-              </p>
             </div>
 
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
