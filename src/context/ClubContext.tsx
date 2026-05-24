@@ -1,5 +1,10 @@
 import {createContext, ReactNode, useEffect, useState} from 'react';
 
+export interface ClubAccountBalanceEntry {
+    month_date: string
+    outstanding_amount: number
+}
+
 export interface ClubContextType {
     club: Club | null;
     setClub: (club: Club) => void;
@@ -24,6 +29,7 @@ export interface Club {
     currency_exists?: boolean
     country_exists?: boolean
     bank_details_exists?: boolean
+    account_balance_entries?: ClubAccountBalanceEntry[]
 }
 
 interface ClubProviderProps {
