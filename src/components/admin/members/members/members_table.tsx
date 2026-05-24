@@ -123,6 +123,7 @@ export default function MembersTable({
     const params = new URLSearchParams({
       tab: getRegistrationsTab(member),
       memberId: member.user_id,
+      source: "members-table",
     });
 
     if (registrationId?.trim()) {

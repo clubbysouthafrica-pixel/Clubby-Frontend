@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFetchClubMembers } from "@/queries/admin/club-members";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { Label } from "@/components/ui/label";
@@ -64,6 +64,7 @@ export default function RegistrationsPage() {
   const { club, isLoading: clubLoading } = useContext(
     ClubContext,
   ) as ClubContextType;
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [requestedKeys, setRequestedKeys] = useState<string[]>([]);
   const initialTab = searchParams.get("tab");
@@ -216,6 +217,8 @@ export default function RegistrationsPage() {
     showPendingRegistrationsDropdown,
     setShowPendingRegistrationsDropdown,
   ] = useState(false);
+  const [isReturningToMembersTable, setIsReturningToMembersTable] =
+    useState(false);
 
   const [availableDynamicFilters, setAvailableDynamicFilters] = useState<
     AvailableDynamicFilter[]
@@ -629,22 +632,28 @@ export default function RegistrationsPage() {
   }, [isSuccess]);
 
   const selectedRegistrationMember =
-    hashUserId &&
     selectedMember &&
     typeof selectedMember === "object" &&
     "user_id" in selectedMember &&
     typeof (selectedMember as ClubMember).user_id === "string"
       ? (selectedMember as ClubMember)
       : null;
+  const openedFromMembersTable =
+    searchParams.get("source") === "members-table";
 
   const handleBackToRegistrations = () => {
+    if (openedFromMembersTable) {
+      setIsReturningToMembersTable(true);
+      return;
+    }
+
     setSelectedMember({});
     setHashUserId(null);
+
     const nextSearchParams = new URLSearchParams(searchParams);
     nextSearchParams.delete("memberId");
     nextSearchParams.delete("registrationId");
     setSearchParams(nextSearchParams);
-    window.history.pushState("", document.title, window.location.pathname);
   };
 
   const handleReviewPendingRegistration = (member: ClubMember) => {
@@ -822,15 +831,34 @@ export default function RegistrationsPage() {
         >
           <AnimatePresence mode="wait" initial={false}>
             {selectedRegistrationMember ? (
-              <div className="flex flex-col gap-4">
+              <motion.div
+                key="registration-detail-shell"
+                className="flex flex-col gap-4"
+                initial={{ opacity: 0, rotateY: -18, x: -20 }}
+                animate={
+                  isReturningToMembersTable
+                    ? { opacity: 0, rotateY: 18, x: 20 }
+                    : { opacity: 1, rotateY: 0, x: 0 }
+                }
+                transition={{ duration: 0.28, ease: "easeInOut" }}
+                style={{ transformStyle: "preserve-3d" }}
+                onAnimationComplete={() => {
+                  if (isReturningToMembersTable) {
+                    navigate("/manage/members");
+                  }
+                }}
+              >
                 <div className="sticky top-1 z-10 flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-slate-200/70 bg-white/95 p-3 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={handleBackToRegistrations}
+                    disabled={isReturningToMembersTable}
                   >
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Go back to registrations
+                    {openedFromMembersTable
+                      ? "Go back to members table"
+                      : "Go back to registrations"}
                   </Button>
                   {isPendingSelectedRegistration ? (
                     <Button
@@ -858,7 +886,7 @@ export default function RegistrationsPage() {
                     clubAccountId={club?.club_account_id ?? ""}
                   />
                 </motion.div>
-              </div>
+              </motion.div>
             ) : (
               <motion.div
                 key="registration-overview"

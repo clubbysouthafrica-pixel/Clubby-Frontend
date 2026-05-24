@@ -63,6 +63,7 @@ export default function RegistrationDialog({
                         clubAccountId={clubAccountId}
                         currency={currency}
                         registrationId={selectedMember.registration_id}
+                        isMissingClubMember={isMissingMember}
                     />
                 </CardContent>
             </Card>

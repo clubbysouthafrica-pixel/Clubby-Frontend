@@ -13,7 +13,6 @@ import {
   ChevronsUpDown,
   Archive,
   ArchiveRestore,
-  AlertTriangle,
 } from "lucide-react";
 import { Club } from "@/context/ClubContext";
 import { Badge } from "@/components/ui/badge";
@@ -431,7 +430,16 @@ export default function PreviousMembersList({
                     </TableCell>
                     <TableCell className="w-[150px] px-0 text-center">
                       <div className="flex w-full justify-center px-2 text-center">
-                        {member.member_email === "n/a" ? <span className="text-gray-400">n/a</span> : member.member_email}
+                        <div className="flex flex-col items-center gap-2 text-center">
+                          {member.member_email !== "n/a"
+                            ? member.member_email
+                            : null}
+                          {member.missing_club_member ? (
+                            <Badge className="border-red-300 bg-red-100 text-red-800">
+                              No longer exists with the club
+                            </Badge>
+                          ) : null}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className="w-[150px] px-0 text-center">
@@ -472,18 +480,6 @@ export default function PreviousMembersList({
                           new Date(member?.deregistered_on).toLocaleString()
                         )}
                       </div>
-                      {member.missing_club_member && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                              <AlertTriangle className="h-4 w-4 text-red-600 fill-red-100" />
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent side="right">
-                            This member no longer exists with the club
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
                     </TableCell>
                     {clubMembers?.filters
                       ?.filter((col: any) => activeColumnKeys.includes(col.key))

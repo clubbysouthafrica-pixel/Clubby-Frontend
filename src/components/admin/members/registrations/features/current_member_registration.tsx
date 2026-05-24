@@ -168,12 +168,14 @@ export function CurrentMemberRegistration({
   currency,
   clubName,
   registrationId,
+  isMissingClubMember = false,
 }: {
   userId: string;
   clubAccountId: string;
   currency: string;
   clubName: string;
   registrationId?: string;
+  isMissingClubMember?: boolean;
 }) {
   const navigate = useNavigate();
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
@@ -419,25 +421,27 @@ export function CurrentMemberRegistration({
                     <p className="text-sm font-semibold">Identifiers</p>
                   </div>
                   <div className="flex flex-col gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-auto w-full justify-between rounded-2xl border-slate-200 bg-slate-50 px-4 py-3 text-left shadow-sm transition hover:border-slate-300 hover:bg-slate-100"
-                      onClick={() => {
-                        navigate(`/manage/members?memberId=${encodeURIComponent(userId)}`);
-                      }}
-                    >
-                      <span className="flex min-w-0 flex-1 items-center gap-3">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-slate-700 shadow-sm">
-                          <UserRound className="h-4 w-4" />
+                    {!isMissingClubMember ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-auto w-full justify-between rounded-2xl border-slate-200 bg-slate-50 px-4 py-3 text-left shadow-sm transition hover:border-slate-300 hover:bg-slate-100"
+                        onClick={() => {
+                          navigate(`/manage/members?memberId=${encodeURIComponent(userId)}`);
+                        }}
+                      >
+                        <span className="flex min-w-0 flex-1 items-center gap-3">
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-slate-700 shadow-sm">
+                            <UserRound className="h-4 w-4" />
+                          </span>
+                          <span className="flex min-w-0 flex-1 flex-col items-start">
+                            <span className="text-sm font-semibold text-slate-900">Go to member</span>
+                            <span className="whitespace-normal break-words text-xs text-slate-500">Open this member in the members workspace</span>
+                          </span>
                         </span>
-                        <span className="flex min-w-0 flex-1 flex-col items-start">
-                          <span className="text-sm font-semibold text-slate-900">Go to member</span>
-                          <span className="whitespace-normal break-words text-xs text-slate-500">Open this member in the members workspace</span>
-                        </span>
-                      </span>
-                      <ArrowUpRight className="ml-3 h-4 w-4 shrink-0 text-slate-400" />
-                    </Button>
+                        <ArrowUpRight className="ml-3 h-4 w-4 shrink-0 text-slate-400" />
+                      </Button>
+                    ) : null}
                     {typeof data?.transaction_id === "string" && data.transaction_id.trim() ? (
                       <Button
                         type="button"
