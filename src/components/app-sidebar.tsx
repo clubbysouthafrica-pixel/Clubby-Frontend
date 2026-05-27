@@ -19,7 +19,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { useFetchAdminClubs } from "@/queries/admin/clubs";
-import { ClubContext, ClubContextType } from "@/context/ClubContext";
+import { Club, ClubContext, ClubContextType } from "@/context/ClubContext";
 import { AuthContext, AuthContextType } from "@/context/AuthContext";
 import { useGetProfileQuery } from "@/queries/profile";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -122,6 +122,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const location = useLocation();
   const pathname = location.pathname;
+  const adminClubItems = clubData?.data?.items as Club[] | undefined;
 
   const navItems = React.useMemo(() => {
     const baseItems = [
@@ -194,7 +195,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const visibleItems = isStageRestrictedClub
       ? baseItems
           .filter(
-            (item) => item.title === "Club" || item.title === "Registration form",
+            (item) =>
+              item.title === "Club" ||
+              item.title === "Members" ||
+              item.title === "Registration form",
           )
           .map((item) => {
             if (item.title === "Club") {
@@ -203,6 +207,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 items: item.items.filter(
                   (subItem) =>
                     subItem.title === "Home" || subItem.title === "Club financials",
+                ),
+              };
+            }
+
+            if (item.title === "Members") {
+              return {
+                ...item,
+                items: item.items.filter(
+                  (subItem) => subItem.title === "Registrations",
                 ),
               };
             }
@@ -241,7 +254,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         {!loadingClubs && (
-          <ClubSwitcher clubs={((clubData as any).data as any)?.items} />
+          <ClubSwitcher clubs={adminClubItems ?? []} />
         )}
       </SidebarHeader>
       <SidebarContent>
