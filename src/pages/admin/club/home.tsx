@@ -56,6 +56,9 @@ export default function HomeDashboardPage() {
     [activeAdminClub, fetchedClub, club],
   );
   const navigate = useNavigate();
+  const isStageRestrictedClub =
+    import.meta.env.VITE_ENVIRONMENT === "Stage" &&
+    clubAccountId === "club_1779873109284_101715";
 
   const featureStatus = useMemo(
     () => [
@@ -204,9 +207,11 @@ export default function HomeDashboardPage() {
                   <span>Access: <span className="font-medium text-slate-900">{currentClub?.access}</span></span>
                 </div>
             </div>
-            <div className="flex shrink-0 items-center">
-              <DeregisterSeasonDialog clubId={currentClub?.club_account_id ?? ""} />
-            </div>
+            {!isStageRestrictedClub && (
+              <div className="flex shrink-0 items-center">
+                <DeregisterSeasonDialog clubId={currentClub?.club_account_id ?? ""} />
+              </div>
+            )}
           </div>
         </div>
       </div>
