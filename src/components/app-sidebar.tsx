@@ -30,6 +30,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { club, setClub } = React.useContext(ClubContext) as ClubContextType;
   const { data: clubData, isLoading: loadingClubs } = useFetchAdminClubs();
   const syncedClubSummaryRef = React.useRef<string | null>(null);
+  const isStageRestrictedClub =
+    import.meta.env.VITE_ENVIRONMENT === "Stage" &&
+    club?.club_account_id === "club_1779873109284_101715";
 
   const { isAdmin } = React.useContext(AuthContext) as AuthContextType;
   const { data: profile } = useGetProfileQuery(isAdmin);
@@ -188,6 +191,34 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       });
     }
 
+    const visibleItems = isStageRestrictedClub
+      ? baseItems
+          .filter(
+            (item) => item.title === "Club" || item.title === "Registration form",
+          )
+          .map((item) => {
+            if (item.title === "Club") {
+              return {
+                ...item,
+                items: item.items.filter(
+                  (subItem) =>
+                    subItem.title === "Home" || subItem.title === "Club financials",
+                ),
+              };
+            }
+
+            return {
+              ...item,
+              items: item.items.filter(
+                (subItem) => subItem.url === "/manage/registrations/forms",
+              ).map((subItem) => ({
+                ...subItem,
+                title: "Create registration form",
+              })),
+            };
+          })
+      : baseItems;
+
     const matchesUrl = (url: string | undefined) => {
       if (!url) return false;
       // root path must match exactly — otherwise startsWith("/") will match everything
@@ -195,7 +226,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       return pathname === url || pathname.startsWith(url);
     };
 
-    return baseItems.map((item) => {
+    return visibleItems.map((item) => {
       const matched =
         matchesUrl(item.url) || item.items?.some((s) => matchesUrl(s.url));
 
@@ -204,7 +235,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         isActive: Boolean(matched),
       };
     });
-  }, [pathname, club]);
+  }, [isStageRestrictedClub, pathname]);
 
   return (
     <Sidebar collapsible="icon" {...props}>
