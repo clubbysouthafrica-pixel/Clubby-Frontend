@@ -207,7 +207,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 items: item.items.filter(
                   (subItem) =>
                     subItem.title === "Home" ||
-                    subItem.title === "Manage Club" ||
                     subItem.title === "Club financials",
                 ),
               };
