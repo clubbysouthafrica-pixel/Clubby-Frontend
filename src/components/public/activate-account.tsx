@@ -67,7 +67,11 @@ export function ActivateAccountForm({
         event.preventDefault();
 
         if (!isPasswordValid) {
-            setError("Password must meet all the listed requirements.")
+            const unmetRequirements = passwordChecks
+                .filter((requirement) => !requirement.met)
+                .map((requirement) => requirement.label.toLowerCase());
+
+            setError(`Password must include ${unmetRequirements.join(", ")}.`)
             return
         }
 
@@ -170,6 +174,19 @@ export function ActivateAccountForm({
                                     }}
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </div>
+                                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                                    <p className="font-medium text-slate-700">Password requirements</p>
+                                    <ul className="mt-2 space-y-1">
+                                        {passwordChecks.map((requirement) => (
+                                            <li
+                                                key={requirement.label}
+                                                className={requirement.met ? "text-emerald-700" : "text-slate-600"}
+                                            >
+                                                {requirement.met ? "✓" : "•"} {requirement.label}
+                                            </li>
+                                        ))}
+                                    </ul>
                                 </div>
                             </div>
                             <div className="grid gap-3 relative">
