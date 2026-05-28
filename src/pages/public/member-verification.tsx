@@ -1,10 +1,11 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, ShieldAlert, ShieldCheck, UserRoundX } from "lucide-react";
+import { ShieldAlert, ShieldCheck, UserRoundX } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Card,
   CardContent,
@@ -13,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useFetchClub } from "@/queries/clubs";
 import {
   getClubMember,
   type GetClubMemberResponse,
@@ -124,10 +126,10 @@ function getVerificationTone(
 
 function VerificationSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-4">
-      <Skeleton className="h-8 w-56" />
-      <Skeleton className="h-28 w-full rounded-3xl" />
-      <Skeleton className="h-52 w-full rounded-3xl" />
+    <div className="mx-auto w-full max-w-md space-y-3">
+      <Skeleton className="mx-auto h-20 w-20 rounded-full sm:h-28 sm:w-28" />
+      <Skeleton className="mx-auto h-5 w-40 sm:h-7 sm:w-56" />
+      <Skeleton className="h-[26rem] w-full rounded-[2rem] sm:h-[34rem]" />
     </div>
   );
 }
@@ -138,6 +140,7 @@ export default function PublicMemberVerificationPage() {
     memberUserId: string;
   }>();
   const [searchParams] = useSearchParams();
+  const { data: clubData } = useFetchClub(clubId || "", Boolean(clubId));
 
   const { data, dataUpdatedAt, isLoading, isError } = useQuery({
     queryKey: ["public-member-verification", clubId, memberUserId],
@@ -154,6 +157,21 @@ export default function PublicMemberVerificationPage() {
     return names.join(" ");
   }, [data?.user?.first_name, data?.user?.surname]);
   const clubName = useMemo(() => searchParams.get("clubName")?.trim() || "", [searchParams]);
+  const clubDisplayName = useMemo(
+    () => clubName || clubData?.club_name?.trim() || "Club member status",
+    [clubData?.club_name, clubName],
+  );
+  const clubProfileImage = clubData?.club_profile_url?.trim() || "";
+  const clubInitials = useMemo(() => {
+    const initials = clubDisplayName
+      .split(" ")
+      .filter((value: string) => Boolean(value.trim()))
+      .slice(0, 2)
+      .map((value: string) => value[0]?.toUpperCase() || "")
+      .join("");
+
+    return initials || "CM";
+  }, [clubDisplayName]);
 
   const verificationTone = useMemo(
     () => getVerificationTone(data, dataUpdatedAt),
@@ -163,7 +181,7 @@ export default function PublicMemberVerificationPage() {
 
   if (!clubId || !memberUserId) {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(226,232,240,0.9),_transparent_45%),linear-gradient(180deg,_#f8fafc_0%,_#eef2ff_100%)] px-4 py-12">
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(226,232,240,0.75),_transparent_45%),linear-gradient(180deg,_#fafaf9_0%,_#f1f5f9_100%)] px-4 py-12">
         <Card className="mx-auto max-w-2xl border-slate-200 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.45)]">
           <CardHeader>
             <CardTitle>Invalid verification link</CardTitle>
@@ -177,24 +195,18 @@ export default function PublicMemberVerificationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(191,219,254,0.45),_transparent_35%),linear-gradient(180deg,_#f8fafc_0%,_#eef2ff_100%)] px-4 py-10 sm:px-6 sm:py-14">
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-        <div className="space-y-2 text-center">
-          <Badge className="border border-slate-200 bg-white px-3 py-1 text-slate-700 shadow-sm">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(226,232,240,0.65),_transparent_35%),linear-gradient(180deg,_#fafaf9_0%,_#f1f5f9_100%)] px-3 py-3 sm:px-6 sm:py-14">
+      <div className="mx-auto flex w-full max-w-md flex-col gap-2.5 sm:gap-5">
+        <div className="space-y-1 text-center">
+          <p className="text-[10px] font-medium uppercase tracking-[0.28em] text-slate-500 sm:text-xs">
             Public membership verification
-          </Badge>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-            {clubName ? `${clubName}` : "Club member status"}
-          </h1>
-          <p className="mx-auto max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-            This page checks whether the scanned member is currently associated with the club and shows the latest registration status returned by the verification endpoint.
           </p>
         </div>
 
         {isLoading ? <VerificationSkeleton /> : null}
 
         {!isLoading && isError ? (
-          <Card className="border-rose-200 bg-white shadow-[0_24px_80px_-48px_rgba(15,23,42,0.45)]">
+          <Card className="overflow-hidden rounded-[2rem] border-rose-200 bg-white shadow-[0_24px_80px_-48px_rgba(15,23,42,0.45)]">
             <CardHeader>
               <CardTitle>Verification failed</CardTitle>
               <CardDescription>
@@ -206,57 +218,52 @@ export default function PublicMemberVerificationPage() {
 
         {!isLoading && !isError ? (
           <>
-            <Card className="overflow-hidden border-0 bg-white shadow-[0_24px_80px_-48px_rgba(15,23,42,0.45)]">
+            <Card className="overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-[0_28px_90px_-54px_rgba(15,23,42,0.45)] sm:rounded-[2rem]">
               <CardContent className="p-0">
-                <div className={cn("border px-6 py-6 sm:px-8 sm:py-8", verificationTone.panelClassName)}>
-                  <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="space-y-3">
-                      <Badge className={cn("border px-3 py-1 text-xs font-semibold", verificationTone.badgeClassName)}>
-                        {verificationTone.badgeLabel}
-                      </Badge>
-                      <div>
-                        <h2 className="text-2xl font-semibold tracking-tight">
-                          {verificationTone.title}
-                        </h2>
-                        <p className="mt-2 max-w-xl text-sm leading-6 opacity-90 sm:text-base">
-                          {verificationTone.description}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/60 bg-white/70 shadow-sm">
-                      <VerificationIcon className="h-10 w-10" />
-                    </div>
+                <div className="border-b border-slate-200 bg-[linear-gradient(180deg,_rgba(248,250,252,0.95)_0%,_rgba(241,245,249,0.9)_100%)] px-4 pb-4 pt-5 text-center sm:px-7 sm:pb-6 sm:pt-8">
+                  <Avatar className="mx-auto h-20 w-20 border-4 border-white bg-white shadow-[0_18px_40px_-24px_rgba(15,23,42,0.45)] sm:h-32 sm:w-32">
+                    <AvatarImage className="object-cover object-center" src={clubProfileImage} alt={clubDisplayName} />
+                    <AvatarFallback className="bg-slate-100 text-lg font-semibold text-slate-700 sm:text-3xl">
+                      {clubInitials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="mt-3 space-y-0.5 sm:mt-5 sm:space-y-1">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.28em] text-slate-500 sm:text-xs">
+                      {clubDisplayName}
+                    </p>
+                    <h1 className="text-lg font-bold tracking-tight text-slate-950 sm:text-3xl">
+                      {fullName || "Unknown member"}
+                    </h1>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
 
-            <Card className="border-0 bg-white shadow-[0_24px_80px_-48px_rgba(15,23,42,0.45)]">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-slate-500" />
-                  Verification details
-                </CardTitle>
-                <CardDescription>
-                  Returned directly from the club member verification endpoint.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                    Club name
-                  </p>
-                  <p className="mt-2 text-lg font-semibold text-slate-950">
-                    {clubName || "Unknown club"}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                    Member name
-                  </p>
-                  <p className="mt-2 text-lg font-semibold text-slate-950">
-                    {fullName || "Unknown member"}
-                  </p>
+                <div className="px-3 py-3 sm:px-6 sm:py-6">
+                  <div className={cn("rounded-[1.25rem] border px-3 py-3 sm:rounded-[1.5rem] sm:px-5 sm:py-5", verificationTone.panelClassName)}>
+                    <div className="flex items-start gap-2.5 sm:gap-4">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/60 bg-white/80 shadow-sm sm:h-14 sm:w-14">
+                        <VerificationIcon className="h-5 w-5 sm:h-7 sm:w-7" />
+                      </div>
+                      <div className="min-w-0 space-y-1.5 sm:space-y-2">
+                        <Badge className={cn("border px-2 py-0.5 text-[10px] font-semibold sm:px-3 sm:py-1 sm:text-xs", verificationTone.badgeClassName)}>
+                          {verificationTone.badgeLabel}
+                        </Badge>
+                        <div>
+                          <h2 className="text-sm font-semibold tracking-tight sm:text-xl">
+                            {verificationTone.title}
+                          </h2>
+                          <p className="mt-0.5 text-[11px] leading-4.5 opacity-90 sm:mt-1 sm:text-sm sm:leading-6">
+                            {verificationTone.description}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-2.5 rounded-[1rem] border border-slate-200 bg-slate-50 px-3 py-2 text-center sm:mt-4 sm:rounded-[1.25rem] sm:px-4 sm:py-3">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-500 sm:text-xs">
+                      Membership credential
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -264,7 +271,7 @@ export default function PublicMemberVerificationPage() {
         ) : null}
 
         <div className="flex justify-center">
-          <Button asChild variant="outline" className="bg-white">
+          <Button asChild variant="outline" className="h-8 rounded-full bg-white px-3 text-xs sm:h-10 sm:px-4 sm:text-sm">
             <Link to={`/clubs/${clubId}`}>View club</Link>
           </Button>
         </div>

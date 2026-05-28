@@ -29,6 +29,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import AddFiltersDialog from "@/components/admin/members/registrations/features/add-filters-dialog";
 import AddColumnsDialog from "@/components/admin/members/registrations/features/add-columns-dialog";
+import MemberVerificationScannerDialog from "@/components/admin/members/members/features/member-verification-scanner-dialog";
 import { countryCodes, getDialingCode } from "@/data/country-codes";
 import {
   MEMBER_PROFILE_COLUMNS,
@@ -358,6 +359,40 @@ export default function MembersPage() {
     setAllMembersSelected(false);
   }, [searchParams]);
 
+  useEffect(() => {
+    const memberIdFromQuery = searchParams.get("memberId")?.trim() ?? "";
+
+    if (!memberIdFromQuery || allRegisteredMembers.length === 0) {
+      return;
+    }
+
+    const matchedMember = allRegisteredMembers.find(
+      (member) => member.user_id === memberIdFromQuery,
+    );
+
+    if (!matchedMember) {
+      return;
+    }
+
+    const selectedMemberUserId =
+      selectedMember &&
+      typeof selectedMember === "object" &&
+      "user_id" in selectedMember &&
+      typeof (selectedMember as ClubMember).user_id === "string"
+        ? (selectedMember as ClubMember).user_id
+        : null;
+
+    if (
+      selectedMemberUserId === memberIdFromQuery &&
+      hashUserId === memberIdFromQuery
+    ) {
+      return;
+    }
+
+    setSelectedMember(matchedMember);
+    setHashUserId(memberIdFromQuery);
+  }, [allRegisteredMembers, hashUserId, searchParams, selectedMember]);
+
   const resetFilters = () => {
     setMemberNameFilter("");
     setMemberIdFilter("");
@@ -464,6 +499,11 @@ export default function MembersPage() {
                   Member directory
                 </div>
               </div>
+              {club?.club_account_id ? (
+                <MemberVerificationScannerDialog
+                  clubId={club.club_account_id}
+                />
+              ) : null}
             </div>
           </section>
 
