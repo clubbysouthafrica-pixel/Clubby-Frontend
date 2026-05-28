@@ -12,6 +12,7 @@ interface AddFiltersDialogProps {
   activeFilterKeys: string[];
   onFilterKeysChange: (keys: string[]) => void;
   buttonText?: string;
+  triggerClassName?: string;
   title?: string;
   description?: string;
 }
@@ -23,6 +24,7 @@ export default function AddFiltersDialog({
   activeFilterKeys,
   onFilterKeysChange,
   buttonText = "+ Add Filter",
+  triggerClassName,
   title = "Add Filters",
   description = "Select which filters you want to display",
 }: AddFiltersDialogProps) {
@@ -73,7 +75,7 @@ export default function AddFiltersDialog({
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className="h-8 rounded-full border-slate-200 bg-white px-3.5 text-xs text-zinc-700 hover:bg-slate-100"
+          className={`h-8 rounded-full border-slate-200 bg-white px-3.5 text-xs text-zinc-700 hover:bg-slate-100 ${triggerClassName ?? ""}`}
         >
           {buttonText}
         </Button>

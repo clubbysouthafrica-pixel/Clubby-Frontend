@@ -455,7 +455,7 @@ export default function MembersPage() {
         </div>
       ) : (
         <div
-          className={`flex w-full max-w-full flex-col gap-3 ${selectedDirectoryMember ? "overflow-visible" : "overflow-x-hidden"} px-2 py-3 sm:px-3 md:px-4 md:py-4 xl:px-5 2xl:px-6`}
+          className={`flex w-full max-w-full flex-col gap-2.5 ${selectedDirectoryMember ? "overflow-visible" : "overflow-x-hidden"} px-2 py-2.5 sm:px-3 sm:py-3 md:px-4 md:py-4 xl:px-5 2xl:px-6`}
         >
           <AnimatePresence mode="wait" initial={false}>
             {selectedDirectoryMember ? (
@@ -490,12 +490,12 @@ export default function MembersPage() {
                 transition={{ duration: 0.28, ease: "easeInOut" }}
                 style={{ transformStyle: "preserve-3d" }}
               >
-          <section className="mb-2 relative overflow-hidden rounded-[24px] border border-stone-300/70 bg-stone-200 px-4 py-4 text-zinc-900 shadow-[0_18px_40px_rgba(120,113,108,0.16)] md:px-5 md:py-4">
+          <section className="mb-1.5 relative overflow-hidden rounded-[22px] border border-stone-300/70 bg-stone-200 px-3 py-3 text-zinc-900 shadow-[0_18px_40px_rgba(120,113,108,0.16)] md:px-5 md:py-4">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.72),_transparent_28%),radial-gradient(circle_at_right,_rgba(214,211,209,0.55),_transparent_24%)]" />
-            <div className="relative flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div className="relative flex flex-col gap-2.5 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-3xl">
-                <div className="inline-flex items-center gap-2 rounded-full border border-stone-300 bg-white/70 px-2.5 py-1 text-[11px] text-zinc-600 backdrop-blur">
-                  <Users className="h-3.5 w-3.5 text-zinc-500" />
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-stone-300 bg-white/70 px-2 py-0.5 text-[10px] text-zinc-600 backdrop-blur sm:px-2.5 sm:py-1 sm:text-[11px]">
+                  <Users className="h-3 w-3 text-zinc-500 sm:h-3.5 sm:w-3.5" />
                   Member directory
                 </div>
               </div>
@@ -508,16 +508,16 @@ export default function MembersPage() {
           </section>
 
           <div className="flex w-full max-w-full min-w-0 flex-col justify-start gap-3 overflow-x-hidden">
-            <Card className="max-w-full overflow-hidden rounded-[24px] border border-slate-200/70 bg-white/90 p-4 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur md:p-5">
-              <div className="flex items-center">
+            <Card className="max-w-full overflow-hidden rounded-[22px] border border-slate-200/70 bg-white/90 p-2.5 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur md:p-5">
+              <div className="flex items-center justify-between gap-2">
                 <p
-                  className="cursor-pointer text-xs font-medium uppercase tracking-[0.18em] text-slate-500 underline decoration-slate-300 underline-offset-4"
+                  className="cursor-pointer text-[9px] font-medium uppercase tracking-[0.14em] text-slate-500 underline decoration-slate-300 underline-offset-4 sm:text-xs sm:tracking-[0.18em]"
                   onClick={resetFilters}
                 >
                   Reset filters
                 </p>
               </div>
-              <div className="flex flex-row flex-wrap gap-2">
+              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
                 <Input
                   placeholder="Filter by member name"
                   value={memberNameFilter}
@@ -527,7 +527,7 @@ export default function MembersPage() {
                     setDeregisterMembers([]);
                     setAllMembersSelected(false);
                   }}
-                  className="h-8 w-[300px] rounded-full border-slate-200 bg-white text-xs text-slate-700 placeholder:text-slate-400"
+                  className="h-7 w-full rounded-full border-slate-200 bg-white px-2.5 text-[10px] text-slate-700 placeholder:text-slate-400 sm:h-8 sm:max-w-[300px] sm:px-3 sm:text-xs"
                 />
                 <Input
                   placeholder="Filter by member ID"
@@ -538,7 +538,7 @@ export default function MembersPage() {
                     setDeregisterMembers([]);
                     setAllMembersSelected(false);
                   }}
-                  className="h-8 w-[300px] rounded-full border-slate-200 bg-white text-xs text-slate-700 placeholder:text-slate-400"
+                  className="h-7 w-full rounded-full border-slate-200 bg-white px-2.5 text-[10px] text-slate-700 placeholder:text-slate-400 sm:h-8 sm:max-w-[300px] sm:px-3 sm:text-xs"
                 />
                 <Select
                   value={memberType}
@@ -549,7 +549,7 @@ export default function MembersPage() {
                     setAllMembersSelected(false);
                   }}
                 >
-                  <SelectTrigger className="h-8 w-[300px] rounded-full bg-white text-xs text-slate-700">
+                  <SelectTrigger className="h-7 w-full rounded-full border-slate-200 bg-white px-2.5 text-[10px] text-slate-700 sm:h-8 sm:max-w-[300px] sm:px-3 sm:text-xs">
                     <SelectValue placeholder="Select member type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -585,11 +585,11 @@ export default function MembersPage() {
                   });
 
                   return (
-                    <div className="flex flex-col gap-2 p-2">
-                      <span className="text-xs font-semibold text-muted-foreground">
+                    <div className="flex flex-col gap-1 pt-1">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:text-[11px] sm:tracking-normal">
                         Custom Filters
                       </span>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:gap-2">
                         {sortedFilters.map(
                           ({ key, field_name, options, type, input_type }) => {
                             // Handle billing:number type with comparison operators
@@ -613,10 +613,10 @@ export default function MembersPage() {
                               return (
                                 <div
                                   key={key}
-                                  className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-3"
+                                  className="w-full rounded-[16px] border border-slate-200 bg-slate-50/70 p-2 sm:w-auto sm:rounded-[18px] sm:p-3"
                                 >
-                                  <div className="mb-2 flex items-center justify-between gap-2">
-                                    <Label className="text-xs font-semibold">
+                                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                                    <Label className="text-[11px] font-semibold sm:text-xs">
                                       {field_name}
                                     </Label>
                                     <button
@@ -635,7 +635,7 @@ export default function MembersPage() {
                                       <X className="h-3 w-3" />
                                     </button>
                                   </div>
-                                  <div className="flex gap-2 items-center">
+                                  <div className="flex flex-col items-stretch gap-1.5 sm:flex-row sm:items-center sm:gap-2">
                                     <Select
                                       onValueChange={(newOperator) => {
                                         setDynamicFilters((prev) => ({
@@ -651,7 +651,7 @@ export default function MembersPage() {
                                       }}
                                       value={operator}
                                     >
-                                      <SelectTrigger className="h-8 w-[200px] rounded-full bg-white text-xs text-slate-700">
+                                      <SelectTrigger className="h-7 w-full rounded-full border-slate-200 bg-white px-2.5 text-[10px] text-slate-700 sm:h-8 sm:w-[200px] sm:text-xs">
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
@@ -694,7 +694,7 @@ export default function MembersPage() {
                                         setDeregisterMembers([]);
                                         setAllMembersSelected(false);
                                       }}
-                                      className="h-8 w-[150px] rounded-full border-slate-200 bg-white text-xs text-slate-700"
+                                      className="h-7 w-full rounded-full border-slate-200 bg-white px-2.5 text-[10px] text-slate-700 sm:h-8 sm:w-[150px] sm:text-xs"
                                     />
                                   </div>
                                 </div>
@@ -705,10 +705,10 @@ export default function MembersPage() {
                               return (
                                 <div
                                   key={key}
-                                  className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-3"
+                                  className="w-full rounded-[16px] border border-slate-200 bg-slate-50/70 p-2 sm:w-auto sm:rounded-[18px] sm:p-3"
                                 >
-                                  <div className="mb-2 flex items-center justify-between gap-2">
-                                    <Label className="text-xs font-semibold">
+                                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                                    <Label className="text-[11px] font-semibold sm:text-xs">
                                       {field_name}
                                     </Label>
                                     <button
@@ -739,7 +739,7 @@ export default function MembersPage() {
                                       setDeregisterMembers([]);
                                       setAllMembersSelected(false);
                                     }}
-                                    className="h-8 w-[280px] rounded-full border-slate-200 bg-white text-xs text-slate-700"
+                                    className="h-7 w-full rounded-full border-slate-200 bg-white px-2.5 text-[10px] text-slate-700 sm:h-8 sm:w-[280px] sm:text-xs"
                                   />
                                 </div>
                               );
@@ -757,10 +757,10 @@ export default function MembersPage() {
                               return (
                                 <div
                                   key={key}
-                                  className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-3"
+                                  className="w-full rounded-[16px] border border-slate-200 bg-slate-50/70 p-2 sm:w-auto sm:rounded-[18px] sm:p-3"
                                 >
-                                  <div className="mb-2 flex items-center justify-between gap-2">
-                                    <Label className="text-xs font-semibold">
+                                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                                    <Label className="text-[11px] font-semibold sm:text-xs">
                                       {field_name}
                                     </Label>
                                     <button
@@ -784,7 +784,7 @@ export default function MembersPage() {
                                       <X className="h-3 w-3" />
                                     </button>
                                   </div>
-                                  <div className="flex gap-2">
+                                  <div className="flex flex-col gap-1.5 sm:flex-row sm:gap-2">
                                     <Select
                                       value={phoneFilter.countryCode || filterCountryCodes[key] || "ZA"}
                                       onValueChange={(countryCode) => {
@@ -804,7 +804,7 @@ export default function MembersPage() {
                                         setAllMembersSelected(false);
                                       }}
                                     >
-                                      <SelectTrigger className="h-8 w-[130px] rounded-full bg-white text-xs text-slate-700">
+                                      <SelectTrigger className="h-7 w-full rounded-full border-slate-200 bg-white px-2.5 text-[10px] text-slate-700 sm:h-8 sm:w-[130px] sm:text-xs">
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
@@ -838,7 +838,7 @@ export default function MembersPage() {
                                           setAllMembersSelected(false);
                                         }
                                       }}
-                                      className="h-8 w-[148px] rounded-full border-slate-200 bg-white text-xs text-slate-700"
+                                      className="h-7 w-full rounded-full border-slate-200 bg-white px-2.5 text-[10px] text-slate-700 sm:h-8 sm:w-[148px] sm:text-xs"
                                       maxLength={20}
                                     />
                                   </div>
@@ -850,10 +850,10 @@ export default function MembersPage() {
                               return (
                                 <div
                                   key={key}
-                                  className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-3"
+                                  className="w-full rounded-[16px] border border-slate-200 bg-slate-50/70 p-2 sm:w-auto sm:rounded-[18px] sm:p-3"
                                 >
-                                  <div className="mb-2 flex items-center justify-between gap-2">
-                                    <Label className="text-xs font-semibold">
+                                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                                    <Label className="text-[11px] font-semibold sm:text-xs">
                                       {field_name}
                                     </Label>
                                     <button
@@ -884,7 +884,7 @@ export default function MembersPage() {
                                       setDeregisterMembers([]);
                                       setAllMembersSelected(false);
                                     }}
-                                    className="h-8 w-[280px] rounded-full border-slate-200 bg-white text-xs text-slate-700"
+                                    className="h-7 w-full rounded-full border-slate-200 bg-white px-2.5 text-[10px] text-slate-700 sm:h-8 sm:w-[280px] sm:text-xs"
                                   />
                                 </div>
                               );
@@ -899,10 +899,10 @@ export default function MembersPage() {
                               return (
                                 <div
                                   key={key}
-                                  className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-3"
+                                  className="w-full rounded-[16px] border border-slate-200 bg-slate-50/70 p-2 sm:w-auto sm:rounded-[18px] sm:p-3"
                                 >
-                                  <div className="mb-2 flex items-center justify-between gap-2">
-                                    <Label className="text-xs font-semibold">
+                                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                                    <Label className="text-[11px] font-semibold sm:text-xs">
                                       {field_name}
                                     </Label>
                                     <button
@@ -944,10 +944,10 @@ export default function MembersPage() {
                             return (
                               <div
                                 key={key}
-                                className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-3"
+                                className="w-full rounded-[16px] border border-slate-200 bg-slate-50/70 p-2 sm:w-auto sm:rounded-[18px] sm:p-3"
                               >
-                                <div className="mb-2 flex items-center justify-between gap-2">
-                                  <Label className="text-xs font-semibold">
+                                <div className="mb-1.5 flex items-center justify-between gap-2">
+                                  <Label className="text-[11px] font-semibold sm:text-xs">
                                     {field_name}
                                   </Label>
                                   <button
@@ -978,7 +978,7 @@ export default function MembersPage() {
                                   }}
                                   value={dynamicFilters[key] || ""}
                                 >
-                                  <SelectTrigger className="h-8 w-[280px] rounded-full bg-white text-xs text-slate-700">
+                                  <SelectTrigger className="h-7 w-full rounded-full border-slate-200 bg-white px-2.5 text-[10px] text-slate-700 sm:h-8 sm:w-[280px] sm:text-xs">
                                     <SelectValue placeholder="All" />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -998,13 +998,15 @@ export default function MembersPage() {
                     </div>
                   );
                 })()}
-              <div className="flex flex-row gap-2 items-start">
+              <div className="grid grid-cols-2 gap-1.5 sm:flex sm:flex-row sm:items-start">
                 <AddFiltersDialog
                   open={showFilterSelector}
                   onOpenChange={setShowFilterSelector}
                   availableFields={availableDynamicFilters}
                   activeFilterKeys={activeFilterKeys}
                   onFilterKeysChange={setActiveFilterKeys}
+                  buttonText="Filters"
+                  triggerClassName="h-7 w-full justify-center border-slate-200 px-2 text-[10px] sm:h-8 sm:w-auto sm:px-3 sm:text-xs"
                   description="Select which filters you want to display. After selecting, click the Run button below to apply these filters."
                 />
                 <AddColumnsDialog
@@ -1013,6 +1015,8 @@ export default function MembersPage() {
                   availableFields={MEMBER_PROFILE_COLUMNS}
                   activeColumnKeys={activeColumnKeysRegistered}
                   onColumnKeysChange={setActiveColumnKeysRegistered}
+                  buttonText="Columns"
+                  triggerClassName="h-7 w-full justify-center border-slate-200 px-2 text-[10px] sm:h-8 sm:w-auto sm:px-3 sm:text-xs"
                   title="Add Member Columns"
                   description="Select which columns you want to display. After selecting, click the Run button below to apply these columns."
                 />
@@ -1026,7 +1030,7 @@ export default function MembersPage() {
                     return (
                       <div
                           key={key}
-                          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700"
+                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700 sm:px-3 sm:text-xs"
                         >
                         {field?.field_name || key}
                         <button
@@ -1044,13 +1048,13 @@ export default function MembersPage() {
                   })}
                 </div>
               )}
-              <div className="mt-3 flex flex-col gap-3 border-t border-slate-200 pt-3 md:flex-row md:items-center md:justify-between">
-                <p className="text-xs leading-5 text-slate-500">
+              <div className="mt-1.5 flex flex-col gap-1.5 border-t border-slate-200 pt-1.5 md:flex-row md:items-center md:justify-between">
+                <p className="hidden text-[11px] leading-4 text-slate-500 sm:block sm:text-xs sm:leading-5">
                   Configure your filters and columns above, then click the <span className="font-semibold">Run</span> button to apply your selections and display the results.
                 </p>
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex items-center gap-3">
-                    <Label className="text-xs font-medium text-slate-600">Results per page:</Label>
+                <div className="flex w-full items-center justify-between gap-1.5 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <Label className="text-[10px] font-medium text-slate-600 sm:text-xs">Rows:</Label>
                     <Select
                       value={memberLimit.toString()}
                       onValueChange={(value) => {
@@ -1063,7 +1067,7 @@ export default function MembersPage() {
                         setAllMembersSelected(false);
                       }}
                     >
-                      <SelectTrigger className="h-8 w-[100px] rounded-full bg-white text-xs text-slate-700">
+                      <SelectTrigger className="h-7 w-[72px] rounded-full border-slate-200 bg-white px-2 text-[10px] text-slate-700 sm:h-8 sm:w-[100px] sm:px-2.5 sm:text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -1085,7 +1089,7 @@ export default function MembersPage() {
                       await refetchClubMembers();
                     }}
                     title="Run database query to refresh members data"
-                    className="inline-flex h-8 w-[100px] items-center justify-center rounded-full bg-zinc-700 px-4 text-xs font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex h-7 min-w-[72px] items-center justify-center rounded-full bg-zinc-700 px-2.5 text-[10px] font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 sm:h-8 sm:min-w-[92px] sm:px-3 sm:text-xs"
                   >
                     Run
                   </button>
@@ -1093,9 +1097,9 @@ export default function MembersPage() {
               </div>
             </Card>
             <div className="relative flex min-w-0 max-w-full flex-col gap-4 overflow-hidden">
-              <Card className="max-w-full overflow-hidden rounded-[24px] border border-slate-200/70 bg-white/95 p-4 shadow-[0_16px_36px_rgba(15,23,42,0.07)] md:p-5">
+              <Card className="max-w-full overflow-hidden rounded-[22px] border border-slate-200/70 bg-white/95 p-3 shadow-[0_16px_36px_rgba(15,23,42,0.07)] md:p-5">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-semibold text-slate-950">
+                  <h2 className="text-base font-semibold text-slate-950 sm:text-xl">
                     Members - Items returned (
                     {registeredMembersLength})
                   </h2>
@@ -1177,7 +1181,7 @@ export default function MembersPage() {
                     />
                     <button
                       onClick={handleDownloadRegisteredMembers}
-                      className="mt-4 p-2 w-fit bg-transparent cursor-pointer hover:bg-gray-100 transition rounded-md disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      className="mt-3 w-fit rounded-md bg-transparent p-1.5 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:bg-gray-400 sm:mt-4 sm:p-2"
                       title="Download table data as CSV"
                     >
                       <Download className="h-5 w-5 text-green-600" />

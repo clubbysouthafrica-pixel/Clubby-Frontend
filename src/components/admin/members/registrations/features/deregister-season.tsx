@@ -410,7 +410,7 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
           </p>
         </TooltipContent>
       </Tooltip>
-      <DialogContent className="sm:max-w-[640px] md:max-w-[768px]">
+      <DialogContent className="max-h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] overflow-y-auto rounded-[24px] border-slate-200 p-4 sm:max-w-[640px] sm:p-6 md:max-w-[768px]">
         <DialogHeader>
           <DialogTitle>Start New Club Season</DialogTitle>
           <DialogDescription>
@@ -438,19 +438,19 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
         </DialogHeader>
         {!errorMessage && (
           <>
-            <div className="space-y-2 bg-blue-50 p-3 rounded-lg border border-blue-200">
+            <div className="space-y-2 rounded-lg border border-blue-200 bg-blue-50 p-2.5 sm:p-3">
               <p className="text-sm font-semibold text-blue-900">What happens next:</p>
-              <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+              <ul className="list-inside list-disc space-y-1 text-xs text-blue-800 sm:text-sm">
                 <li>All members will be placed in the members requiring re registration table</li>
                 <li>All members will need to resubmit registrations to join the club again</li>
                 <li>All reporting for the current season is set to 0</li>
                 <li>The previous season reporting can still be found under the reporting season but is historical</li>
               </ul>
             </div>
-            <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-2.5 sm:p-3">
               <div>
                 <p className="text-sm font-semibold text-slate-900">Perform system check</p>
-                <p className="mt-1 text-sm text-slate-600">
+                <p className="mt-1 text-xs text-slate-600 sm:text-sm">
                   Before starting a new season, all registration, shop, storage, orders, and event registration data needs to be consolidated.
                 </p>
               </div>
@@ -465,10 +465,10 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
                 {isCheckingSystem ? "Performing system check..." : "Perform system check"}
               </Button>
               {systemCheckResults.shop_status || systemCheckResults.storage_status || systemCheckResults.registration_status ? (
-                <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                <div className="rounded-lg border border-slate-200 bg-white px-2.5 py-2 sm:px-3">
                   <ul className="divide-y divide-slate-200">
                     {systemCheckResults.registration_status ? (
-                      <li className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+                      <li className="flex items-start gap-2.5 py-2.5 first:pt-0 last:pb-0 sm:gap-3 sm:py-3">
                         {systemCheckResults.registration_status.status === "success" ? (
                           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
                         ) : systemCheckResults.registration_status.status === "loading" ? (
@@ -476,9 +476,9 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
                         ) : (
                           <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
                         )}
-                        <div className="min-w-0 flex-1 border-l-2 border-slate-200 pl-3">
+                        <div className="min-w-0 flex-1 border-l-2 border-slate-200 pl-2.5 sm:pl-3">
                           <p className="text-sm font-medium text-slate-900">Registration status</p>
-                          <p className={systemCheckResults.registration_status.status === "success" ? "text-sm text-emerald-700" : systemCheckResults.registration_status.status === "loading" ? "text-sm text-slate-600" : "text-sm text-rose-700"}>
+                          <p className={systemCheckResults.registration_status.status === "success" ? "text-xs text-emerald-700 sm:text-sm" : systemCheckResults.registration_status.status === "loading" ? "text-xs text-slate-600 sm:text-sm" : "text-xs text-rose-700 sm:text-sm"}>
                             {systemCheckResults.registration_status.message}
                           </p>
                           {shouldShowPendingMembersLink ? (
@@ -497,7 +497,7 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
                       </li>
                     ) : null}
                     {systemCheckResults.shop_status ? (
-                      <li className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+                      <li className="flex items-start gap-2.5 py-2.5 first:pt-0 last:pb-0 sm:gap-3 sm:py-3">
                         {systemCheckResults.shop_status.status === "success" ? (
                           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
                         ) : systemCheckResults.shop_status.status === "loading" ? (
@@ -507,9 +507,9 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
                         ) : (
                           <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
                         )}
-                        <div className="min-w-0 flex-1 border-l-2 border-slate-200 pl-3">
+                        <div className="min-w-0 flex-1 border-l-2 border-slate-200 pl-2.5 sm:pl-3">
                           <p className="text-sm font-medium text-slate-900">Shop status</p>
-                          <p className={systemCheckResults.shop_status.status === "success" ? "text-sm text-emerald-700" : systemCheckResults.shop_status.status === "loading" ? "text-sm text-slate-600" : systemCheckResults.shop_status.status === "blocked" ? "text-sm text-amber-700" : "text-sm text-rose-700"}>
+                          <p className={systemCheckResults.shop_status.status === "success" ? "text-xs text-emerald-700 sm:text-sm" : systemCheckResults.shop_status.status === "loading" ? "text-xs text-slate-600 sm:text-sm" : systemCheckResults.shop_status.status === "blocked" ? "text-xs text-amber-700 sm:text-sm" : "text-xs text-rose-700 sm:text-sm"}>
                             {systemCheckResults.shop_status.message}
                           </p>
                           {shouldShowOrdersLink ? (
@@ -542,7 +542,7 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
                       </li>
                     ) : null}
                     {systemCheckResults.storage_status ? (
-                      <li className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+                      <li className="flex items-start gap-2.5 py-2.5 first:pt-0 last:pb-0 sm:gap-3 sm:py-3">
                         {systemCheckResults.storage_status.status === "success" ? (
                           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
                         ) : systemCheckResults.storage_status.status === "loading" ? (
@@ -552,9 +552,9 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
                         ) : (
                           <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
                         )}
-                        <div className="min-w-0 flex-1 border-l-2 border-slate-200 pl-3">
+                        <div className="min-w-0 flex-1 border-l-2 border-slate-200 pl-2.5 sm:pl-3">
                           <p className="text-sm font-medium text-slate-900">Storage status</p>
-                          <p className={systemCheckResults.storage_status.status === "success" ? "text-sm text-emerald-700" : systemCheckResults.storage_status.status === "loading" ? "text-sm text-slate-600" : systemCheckResults.storage_status.status === "blocked" ? "text-sm text-amber-700" : "text-sm text-rose-700"}>
+                          <p className={systemCheckResults.storage_status.status === "success" ? "text-xs text-emerald-700 sm:text-sm" : systemCheckResults.storage_status.status === "loading" ? "text-xs text-slate-600 sm:text-sm" : systemCheckResults.storage_status.status === "blocked" ? "text-xs text-amber-700 sm:text-sm" : "text-xs text-rose-700 sm:text-sm"}>
                             {systemCheckResults.storage_status.message}
                           </p>
                           {shouldShowStorageLink ? (
@@ -573,7 +573,7 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
                       </li>
                     ) : null}
                     {systemCheckResults.event_status ? (
-                      <li className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+                      <li className="flex items-start gap-2.5 py-2.5 first:pt-0 last:pb-0 sm:gap-3 sm:py-3">
                         {systemCheckResults.event_status.status === "success" ? (
                           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
                         ) : systemCheckResults.event_status.status === "loading" ? (
@@ -583,9 +583,9 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
                         ) : (
                           <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
                         )}
-                        <div className="min-w-0 flex-1 border-l-2 border-slate-200 pl-3">
+                        <div className="min-w-0 flex-1 border-l-2 border-slate-200 pl-2.5 sm:pl-3">
                           <p className="text-sm font-medium text-slate-900">Event registrations status</p>
-                          <p className={systemCheckResults.event_status.status === "success" ? "text-sm text-emerald-700" : systemCheckResults.event_status.status === "loading" ? "text-sm text-slate-600" : systemCheckResults.event_status.status === "blocked" ? "text-sm text-amber-700" : "text-sm text-rose-700"}>
+                          <p className={systemCheckResults.event_status.status === "success" ? "text-xs text-emerald-700 sm:text-sm" : systemCheckResults.event_status.status === "loading" ? "text-xs text-slate-600 sm:text-sm" : systemCheckResults.event_status.status === "blocked" ? "text-xs text-amber-700 sm:text-sm" : "text-xs text-rose-700 sm:text-sm"}>
                             {systemCheckResults.event_status.message}
                           </p>
                           {shouldShowEventRegistrationsLink ? (
@@ -623,7 +623,7 @@ export default function DeregisterSeasonDialog({ clubId }: ImageProps) {
             {hasPassedSystemCheck ? (
               <>
                 <div>
-                  <span className="text-red-600">
+                  <span className="text-sm text-red-600">
                     ⚠️ This process is irreversible. Archived data will remain
                     accessible in a read-only format, but current members will
                     lose access and must register again for the new season.

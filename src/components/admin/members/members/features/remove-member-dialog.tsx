@@ -73,7 +73,7 @@ export default function RemoveMemberDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[640px] md:max-w-[768px]">
+            <DialogContent className="max-h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] overflow-y-auto rounded-[24px] p-3 sm:max-w-[640px] sm:p-6 md:max-w-[768px]">
                 <DialogHeader>
                     <DialogTitle>Remove {members.length > 1 ? "Members" : "Member"}</DialogTitle>
                     <DialogDescription>
@@ -83,16 +83,16 @@ export default function RemoveMemberDialog({
                             <p>Remove <span className="font-semibold">{members.length} members</span>:</p>
                         )}
                     </DialogDescription>
-                    <div className="rounded-lg border bg-white shadow-sm overflow-hidden mt-4">
+                    <div className="mt-3 overflow-hidden rounded-lg border bg-white shadow-sm sm:mt-4">
                         <div className="p-2">
                             <Input
                                 placeholder="Search members"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="mb-2"
+                                className="mb-1.5 h-8 text-xs sm:mb-2"
                             />
                         </div>
-                        <div className="max-h-[200px] overflow-y-auto divide-y divide-gray-100 scrollable-list">
+                        <div className="max-h-[180px] overflow-y-auto divide-y divide-gray-100 scrollable-list sm:max-h-[200px]">
                             {filteredMembers.map((member) => {
                                 const initials = `${member.member_first_name} ${member.member_surname}`
                                     .split(" ")
@@ -103,16 +103,16 @@ export default function RemoveMemberDialog({
                                 return (
                                     <div
                                         key={member.user_id}
-                                        className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50"
+                                        className="flex items-center gap-2 px-2 py-2 hover:bg-gray-50 sm:gap-3 sm:px-3"
                                     >
-                                        <div className="h-8 w-8 rounded-full bg-red-600 text-white flex items-center justify-center text-sm shadow-sm">
+                                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-xs text-white shadow-sm sm:h-8 sm:w-8 sm:text-sm">
                                             {initials}
                                         </div>
-                                        <div className="flex flex-col">
-                                            <span className="font-medium text-sm">{member.member_first_name} {member.member_surname}</span>
+                                        <div className="flex min-w-0 flex-1 flex-col">
+                                            <span className="truncate font-medium text-xs sm:text-sm">{member.member_first_name} {member.member_surname}</span>
                                         </div>
                                         <div className="ml-auto">
-                                            <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-600 font-medium">
+                                            <span className="inline-flex items-center rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-600 sm:px-2 sm:text-xs">
                                                 To Remove
                                             </span>
                                         </div>
@@ -123,22 +123,23 @@ export default function RemoveMemberDialog({
                     </div>
                 </DialogHeader>
 
-                <div className="mt-4 space-y-2 bg-red-50 p-3 rounded-lg border border-red-200">
+                <div className="mt-3 space-y-1.5 rounded-lg border border-red-200 bg-red-50 p-2.5 sm:mt-4 sm:space-y-2 sm:p-3">
                     <p className="text-sm font-semibold text-red-900">What happens next:</p>
-                    <ul className="text-sm text-red-800 space-y-1 list-disc list-inside">
+                    <ul className="list-inside list-disc space-y-1 text-xs text-red-800 sm:text-sm">
                         <li>{members.length > 1 ? "These members will" : "This member will"} be permanently removed from the club</li>
                         <li>{members.length > 1 ? "They will" : "They will"} need to submit a brand new registration to re-join the club</li>
                         <li>All registration data associated with {members.length > 1 ? "these members" : "this member"} will be removed</li>
                     </ul>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-start gap-2 sm:items-center">
                     <Checkbox
                         id="remove-consent"
                         onCheckedChange={(checked: boolean) => setConfirmed(!!checked)}
                         disabled={displaySuccess}
+                        className="mt-0.5 sm:mt-0"
                     />
-                    <DialogDescription className="text-black">
+                    <DialogDescription className="text-xs leading-4 text-black sm:text-sm sm:leading-5">
                         I understand that this action will permanently remove {members.length > 1 ? "these members" : "the member"} from the club.
                     </DialogDescription>
                 </div>
@@ -151,14 +152,15 @@ export default function RemoveMemberDialog({
                     </Alert>
                 )}
 
-                <DialogFooter>
+                <DialogFooter className="gap-2 sm:gap-0">
                     <DialogClose asChild>
-                        <Button variant="outline">Cancel</Button>
+                        <Button variant="outline" className="h-8 w-full text-xs sm:h-10 sm:w-auto sm:text-sm">Cancel</Button>
                     </DialogClose>
                     <Button
                         onClick={handleRemove}
                         disabled={isRemoving || !confirmed || displaySuccess}
                         variant="destructive"
+                        className="h-8 w-full text-xs sm:h-10 sm:w-auto sm:text-sm"
                     >
                         {isRemoving ? "Removing..." : displaySuccess ? "Removed" : "Remove"}
                     </Button>

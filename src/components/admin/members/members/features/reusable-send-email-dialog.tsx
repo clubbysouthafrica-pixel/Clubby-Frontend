@@ -80,22 +80,22 @@ export default function ReusableSendEmailDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[640px] md:max-w-[768px]">
+      <DialogContent className="max-h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] overflow-y-auto rounded-[24px] p-3 sm:max-w-[640px] sm:p-6 md:max-w-[768px]">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
             {description} ({contactsList.length}):
           </DialogDescription>
-          <div className="rounded-lg border bg-white shadow-sm overflow-hidden">
+          <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
             <div className="p-2">
               <Input
                 placeholder="Search for contact"
                 value={contactQuery}
                 onChange={(e) => setContactQuery(e.target.value)}
-                className="mb-2"
+                className="mb-1.5 h-8 text-xs sm:mb-2"
               />
             </div>
-            <div className="max-h-[80px] overflow-y-auto divide-y divide-gray-100 pr-2 scrollable-list">
+            <div className="max-h-[112px] overflow-y-auto divide-y divide-gray-100 pr-1 sm:max-h-[120px] sm:pr-2 scrollable-list">
               {contactsList
                 .filter((contact) =>
                   `${contact.name} ${contact.email}`.toLowerCase().includes(contactQuery.toLowerCase())
@@ -110,19 +110,19 @@ export default function ReusableSendEmailDialog({
                   return (
                     <div
                       key={contact.email}
-                      className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50"
+                      className="flex items-center gap-2 px-2 py-2 hover:bg-gray-50 sm:gap-3 sm:px-3"
                     >
-                      <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center text-sm shadow-sm">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs text-white shadow-sm sm:h-8 sm:w-8 sm:text-sm">
                         {initials}
                       </div>
-                      <div className="flex flex-col">
-                        <span className="font-medium text-sm">{contact.name}</span>
-                        <span className="text-xs text-muted-foreground">
+                      <div className="flex min-w-0 flex-1 flex-col">
+                        <span className="truncate font-medium text-xs sm:text-sm">{contact.name}</span>
+                        <span className="truncate text-[11px] text-muted-foreground sm:text-xs">
                           {contact.email}
                         </span>
                       </div>
                       <div className="ml-auto">
-                        <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                        <span className="inline-flex items-center rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-600 sm:px-2 sm:text-xs">
                           Selected
                         </span>
                       </div>
@@ -133,19 +133,20 @@ export default function ReusableSendEmailDialog({
           </div>
         </DialogHeader>
 
-        <div className="space-y-4 w-full">
-          <div className="grid gap-3">
-            <Label htmlFor="subject">Subject</Label>
+        <div className="w-full space-y-3 sm:space-y-4">
+          <div className="grid gap-2 sm:gap-3">
+            <Label htmlFor="subject" className="text-xs sm:text-sm">Subject</Label>
             <Input
               id="subject"
               placeholder="Enter email subject"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
+              className="h-8 text-xs sm:text-sm"
             />
           </div>
-          <div className="grid gap-3 border:none">
+          <div className="grid gap-2 sm:gap-3 border:none">
             <ReactQuill
-              className="border"
+              className="mobile-email-editor border"
               theme="snow"
               value={body}
               onChange={(val: string) => setBody(val)}
@@ -179,6 +180,16 @@ export default function ReusableSendEmailDialog({
               max-height: 300px;
               overflow-y: auto;
             }
+            @media (max-width: 639px) {
+              .mobile-email-editor .ql-toolbar {
+                padding: 6px;
+              }
+              .mobile-email-editor .ql-editor {
+                height: 180px;
+                max-height: 180px;
+                font-size: 12px;
+              }
+            }
             .scrollable-list::-webkit-scrollbar { width: 8px; }
             .scrollable-list::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 9999px; }
             .scrollable-list { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.08) transparent; }
@@ -200,9 +211,9 @@ export default function ReusableSendEmailDialog({
           </Alert>
         )}
 
-        <DialogFooter className="relative z-20 bg-background">
+        <DialogFooter className="relative z-20 gap-2 bg-background sm:gap-0">
           <Button
-            className="w-full relative z-30"
+            className="relative z-30 h-8 w-full text-xs sm:h-10 sm:text-sm"
             type="button"
             disabled={
               isPending ||
@@ -217,7 +228,7 @@ export default function ReusableSendEmailDialog({
             }}
           >
             {isPending ? "Sending..." : "Send"}
-            <MessagesSquare className="w-4 h-4 ml-2" />
+            <MessagesSquare className="ml-2 h-4 w-4" />
           </Button>
         </DialogFooter>
       </DialogContent>

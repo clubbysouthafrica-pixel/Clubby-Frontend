@@ -827,7 +827,7 @@ export default function RegistrationsPage() {
         </div>
       ) : (
         <div
-          className={`flex w-full max-w-full flex-col gap-3 ${selectedRegistrationMember ? "overflow-visible" : "overflow-x-hidden"} px-2 py-3 sm:px-3 md:px-4 md:py-4 xl:px-5 2xl:px-6`}
+          className={`flex w-full max-w-full flex-col gap-2.5 ${selectedRegistrationMember ? "overflow-visible" : "overflow-x-hidden"} px-2 py-2.5 sm:px-3 sm:py-3 md:px-4 md:py-4 xl:px-5 2xl:px-6`}
         >
           <AnimatePresence mode="wait" initial={false}>
             {selectedRegistrationMember ? (
@@ -972,27 +972,27 @@ export default function RegistrationsPage() {
               setActiveColumnKeysPending([]);
               setActiveColumnKeysPrevious([]);
             }}
-            className="w-full flex-col justify-start gap-3"
+            className="w-full flex-col justify-start gap-2.5"
           >
-            <section className="rounded-[24px] border border-slate-200/70 bg-white/90 p-2.5 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur md:p-3">
-              <div className="rounded-[18px] border border-slate-200/70 bg-slate-50/90 p-1.5 backdrop-blur">
-                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <section className="rounded-[22px] border border-slate-200/70 bg-white/90 p-2 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur md:p-3">
+              <div className="rounded-[16px] border border-slate-200/70 bg-slate-50/90 p-1 backdrop-blur sm:rounded-[18px] sm:p-1.5">
+                <div className="flex flex-col gap-1.5 md:flex-row md:items-center md:justify-between">
                   <TabsList className="h-auto flex-wrap justify-start gap-2 bg-transparent p-0">
                     <TabsTrigger
                       value="registered-members"
-                      className="h-8 min-w-[180px] rounded-full border border-slate-200 bg-white px-3.5 text-xs font-medium text-zinc-700 data-[state=active]:bg-zinc-700 data-[state=active]:text-white"
+                      className="h-7 min-w-[150px] rounded-full border border-slate-200 bg-white px-2.5 text-[10px] font-medium text-zinc-700 data-[state=active]:bg-zinc-700 data-[state=active]:text-white sm:h-8 sm:min-w-[180px] sm:px-3.5 sm:text-xs"
                     >
                       Active Registrations
                     </TabsTrigger>
                     <TabsTrigger
                       value="pending-members"
-                      className="h-8 min-w-[180px] rounded-full border border-slate-200 bg-white px-3.5 text-xs font-medium text-zinc-700 data-[state=active]:bg-zinc-700 data-[state=active]:text-white"
+                      className="h-7 min-w-[150px] rounded-full border border-slate-200 bg-white px-2.5 text-[10px] font-medium text-zinc-700 data-[state=active]:bg-zinc-700 data-[state=active]:text-white sm:h-8 sm:min-w-[180px] sm:px-3.5 sm:text-xs"
                     >
                       Pending Registrations
                     </TabsTrigger>
                     <TabsTrigger
                       value="previous-members"
-                      className="h-8 min-w-[180px] rounded-full border border-slate-200 bg-white px-3.5 text-xs font-medium text-zinc-700 data-[state=active]:bg-zinc-700 data-[state=active]:text-white"
+                      className="h-7 min-w-[150px] rounded-full border border-slate-200 bg-white px-2.5 text-[10px] font-medium text-zinc-700 data-[state=active]:bg-zinc-700 data-[state=active]:text-white sm:h-8 sm:min-w-[180px] sm:px-3.5 sm:text-xs"
                     >
                       De-registrations
                     </TabsTrigger>
@@ -1000,16 +1000,16 @@ export default function RegistrationsPage() {
                 </div>
               </div>
             </section>
-            <Card className="rounded-[24px] border border-slate-200/70 bg-white/90 p-4 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur md:p-5">
-              <div className="flex items-center">
+            <Card className="rounded-[22px] border border-slate-200/70 bg-white/90 p-2.5 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur md:p-5">
+              <div className="flex items-center justify-between gap-2">
                 <p
-                  className="cursor-pointer text-xs font-medium uppercase tracking-[0.18em] text-slate-500 underline decoration-slate-300 underline-offset-4"
+                  className="cursor-pointer text-[9px] font-medium uppercase tracking-[0.14em] text-slate-500 underline decoration-slate-300 underline-offset-4 sm:text-xs sm:tracking-[0.18em]"
                   onClick={resetFilters}
                 >
                   Reset filters
                 </p>
               </div>
-              <div className="flex flex-row flex-wrap gap-2">
+              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
                 <Input
                   placeholder="Filter by member name"
                   value={memberNameFilter}
@@ -1019,7 +1019,7 @@ export default function RegistrationsPage() {
                     setDeregisterMembers([]);
                     setAllMembersSelected(false);
                   }}
-                  className="h-8 w-[300px] rounded-full border-slate-200 bg-white text-xs text-slate-700 placeholder:text-slate-400"
+                  className="h-7 w-full rounded-full border-slate-200 bg-white px-2.5 text-[10px] text-slate-700 placeholder:text-slate-400 sm:h-8 sm:max-w-[300px] sm:px-3 sm:text-xs"
                 />
                 <Input
                   placeholder="Filter by member ID"
@@ -1030,7 +1030,7 @@ export default function RegistrationsPage() {
                     setDeregisterMembers([]);
                     setAllMembersSelected(false);
                   }}
-                  className="h-8 w-[300px] rounded-full border-slate-200 bg-white text-xs text-slate-700 placeholder:text-slate-400"
+                  className="h-7 w-full rounded-full border-slate-200 bg-white px-2.5 text-[10px] text-slate-700 placeholder:text-slate-400 sm:h-8 sm:max-w-[300px] sm:px-3 sm:text-xs"
                 />
               </div>
 
@@ -1058,11 +1058,11 @@ export default function RegistrationsPage() {
                   });
 
                   return (
-                    <div className="flex flex-col gap-2 p-2">
-                      <span className="text-xs font-semibold text-muted-foreground">
+                    <div className="flex flex-col gap-1 pt-1">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:text-[11px] sm:tracking-normal">
                         Custom Filters
                       </span>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:gap-2">
                         {sortedFilters.map(
                           ({ key, field_name, options, type }) => {
                             if (type === "billing:number") {
@@ -1085,10 +1085,10 @@ export default function RegistrationsPage() {
                               return (
                                 <div
                                   key={key}
-                                  className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-3"
+                                  className="w-full rounded-[16px] border border-slate-200 bg-slate-50/70 p-2 sm:w-auto sm:rounded-[18px] sm:p-3"
                                 >
-                                  <div className="flex items-center justify-between gap-2 mb-2">
-                                    <Label className="text-xs font-semibold">
+                                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                                    <Label className="text-[11px] font-semibold sm:text-xs">
                                       {field_name}
                                     </Label>
                                     <button
@@ -1107,7 +1107,7 @@ export default function RegistrationsPage() {
                                       <X className="h-3 w-3" />
                                     </button>
                                   </div>
-                                  <div className="flex gap-2 items-center">
+                                  <div className="flex flex-col items-stretch gap-1.5 sm:flex-row sm:items-center sm:gap-2">
                                     <Select
                                       onValueChange={(newOperator) => {
                                         setDynamicFilters((prev) => ({
@@ -1123,7 +1123,7 @@ export default function RegistrationsPage() {
                                       }}
                                       value={operator}
                                     >
-                                      <SelectTrigger className="h-8 w-[200px] rounded-full bg-white text-xs text-slate-700">
+                                      <SelectTrigger className="h-7 w-full rounded-full border-slate-200 bg-white px-2.5 text-[10px] text-slate-700 sm:h-8 sm:w-[200px] sm:text-xs">
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
@@ -1166,7 +1166,7 @@ export default function RegistrationsPage() {
                                         setDeregisterMembers([]);
                                         setAllMembersSelected(false);
                                       }}
-                                      className="w-[150px] text-sm"
+                                      className="h-7 w-full rounded-full border-slate-200 bg-white px-2.5 text-[10px] text-slate-700 sm:h-8 sm:w-[150px] sm:text-xs"
                                     />
                                   </div>
                                 </div>
@@ -1181,10 +1181,10 @@ export default function RegistrationsPage() {
                               return (
                                 <div
                                   key={key}
-                                  className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-3"
+                                  className="w-full rounded-[16px] border border-slate-200 bg-slate-50/70 p-2 sm:w-auto sm:rounded-[18px] sm:p-3"
                                 >
-                                  <div className="flex items-center justify-between gap-2 mb-2">
-                                    <Label className="text-xs font-semibold">
+                                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                                    <Label className="text-[11px] font-semibold sm:text-xs">
                                       {field_name}
                                     </Label>
                                     <button
@@ -1215,7 +1215,7 @@ export default function RegistrationsPage() {
                                       setDeregisterMembers([]);
                                       setAllMembersSelected(false);
                                     }}
-                                    className="h-8 w-[280px] rounded-full border-slate-200 bg-white text-xs text-slate-700"
+                                    className="h-7 w-full rounded-full border-slate-200 bg-white px-2.5 text-[10px] text-slate-700 sm:h-8 sm:w-[280px] sm:text-xs"
                                   />
                                 </div>
                               );
@@ -1230,10 +1230,10 @@ export default function RegistrationsPage() {
                               return (
                                 <div
                                   key={key}
-                                  className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-3"
+                                  className="w-full rounded-[16px] border border-slate-200 bg-slate-50/70 p-2 sm:w-auto sm:rounded-[18px] sm:p-3"
                                 >
-                                  <div className="flex items-center justify-between gap-2 mb-2">
-                                    <Label className="text-xs font-semibold">
+                                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                                    <Label className="text-[11px] font-semibold sm:text-xs">
                                       {field_name}
                                     </Label>
                                     <button
@@ -1267,7 +1267,7 @@ export default function RegistrationsPage() {
                                   />
                                   <label
                                     htmlFor={key}
-                                    className="text-sm font-medium cursor-pointer ml-2"
+                                    className="ml-2 cursor-pointer text-[11px] font-medium sm:text-sm"
                                   >
                                     Enabled
                                   </label>
@@ -1278,10 +1278,10 @@ export default function RegistrationsPage() {
                             return (
                               <div
                                 key={key}
-                                className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-3"
+                                className="w-full rounded-[16px] border border-slate-200 bg-slate-50/70 p-2 sm:w-auto sm:rounded-[18px] sm:p-3"
                               >
-                                <div className="flex items-center justify-between gap-2 mb-2">
-                                  <Label className="text-xs font-semibold">
+                                <div className="mb-1.5 flex items-center justify-between gap-2">
+                                  <Label className="text-[11px] font-semibold sm:text-xs">
                                     {field_name}
                                   </Label>
                                   <button
@@ -1312,7 +1312,7 @@ export default function RegistrationsPage() {
                                   }}
                                   value={dynamicFilterTextValues[key] || ""}
                                 >
-                                  <SelectTrigger className="h-8 w-[280px] rounded-full bg-white text-xs text-slate-700">
+                                  <SelectTrigger className="h-7 w-full rounded-full border-slate-200 bg-white px-2.5 text-[10px] text-slate-700 sm:h-8 sm:w-[280px] sm:text-xs">
                                     <SelectValue placeholder="All" />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -1332,13 +1332,15 @@ export default function RegistrationsPage() {
                     </div>
                   );
                 })()}
-              <div className="flex flex-row gap-2 items-start">
+              <div className="grid grid-cols-2 gap-1.5 sm:flex sm:flex-row sm:items-start">
                 <AddFiltersDialog
                   open={showFilterSelector}
                   onOpenChange={setShowFilterSelector}
                   availableFields={availableDynamicFilters}
                   activeFilterKeys={activeFilterKeys}
                   onFilterKeysChange={setActiveFilterKeys}
+                  buttonText="Filters"
+                  triggerClassName="h-7 w-full justify-center border-slate-200 px-2 text-[10px] sm:h-8 sm:w-auto sm:px-3 sm:text-xs"
                   description="Select which filters you want to display. After selecting, click the Run button below to apply these filters."
                 />
                 {selectedTab === "registered-members" && (
@@ -1348,6 +1350,8 @@ export default function RegistrationsPage() {
                     availableFields={availableDynamicFilters}
                     activeColumnKeys={activeColumnKeysRegistered}
                     onColumnKeysChange={setActiveColumnKeysRegistered}
+                    buttonText="Columns"
+                    triggerClassName="h-7 w-full justify-center border-slate-200 px-2 text-[10px] sm:h-8 sm:w-auto sm:px-3 sm:text-xs"
                     description="Select which columns you want to display. After selecting, click the Run button below to apply these columns."
                   />
                 )}
@@ -1358,6 +1362,8 @@ export default function RegistrationsPage() {
                     availableFields={availableDynamicFilters}
                     activeColumnKeys={activeColumnKeysPending}
                     onColumnKeysChange={setActiveColumnKeysPending}
+                    buttonText="Columns"
+                    triggerClassName="h-7 w-full justify-center border-slate-200 px-2 text-[10px] sm:h-8 sm:w-auto sm:px-3 sm:text-xs"
                     description="Select which columns you want to display. After selecting, click the Run button below to apply these columns."
                   />
                 )}
@@ -1368,6 +1374,8 @@ export default function RegistrationsPage() {
                     availableFields={availableDynamicFilters}
                     activeColumnKeys={activeColumnKeysPrevious}
                     onColumnKeysChange={setActiveColumnKeysPrevious}
+                    buttonText="Columns"
+                    triggerClassName="h-7 w-full justify-center border-slate-200 px-2 text-[10px] sm:h-8 sm:w-auto sm:px-3 sm:text-xs"
                     description="Select which columns you want to display. After selecting, click the Run button below to apply these columns."
                   />
                 )}
@@ -1384,7 +1392,7 @@ export default function RegistrationsPage() {
                       return (
                         <div
                           key={key}
-                          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700"
+                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700 sm:px-3 sm:text-xs"
                         >
                           {field?.field_name || key}
                           <button
@@ -1408,7 +1416,7 @@ export default function RegistrationsPage() {
                       return (
                         <div
                           key={key}
-                          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700"
+                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700 sm:px-3 sm:text-xs"
                         >
                           {field?.field_name || key}
                           <button
@@ -1432,7 +1440,7 @@ export default function RegistrationsPage() {
                       return (
                         <div
                           key={key}
-                          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700"
+                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700 sm:px-3 sm:text-xs"
                         >
                           {field?.field_name || key}
                           <button
@@ -1450,16 +1458,16 @@ export default function RegistrationsPage() {
                     })}
                 </div>
               )}
-              <div className="mt-3 flex flex-col gap-3 border-t border-slate-200 pt-3 md:flex-row md:items-center md:justify-between">
-                <p className="text-xs leading-5 text-slate-500">
+              <div className="mt-1.5 flex flex-col gap-1.5 border-t border-slate-200 pt-1.5 md:flex-row md:items-center md:justify-between">
+                <p className="hidden text-[11px] leading-4 text-slate-500 sm:block sm:text-xs sm:leading-5">
                   Configure your filters and columns above, then click the{" "}
                   <span className="font-semibold">Run</span> button to apply
                   your selections and display the results.
                 </p>
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex items-center gap-3">
-                    <Label className="text-xs font-medium text-slate-600">
-                      Results per page:
+                <div className="flex w-full items-center justify-between gap-1.5 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <Label className="text-[10px] font-medium text-slate-600 sm:text-xs">
+                      Rows:
                     </Label>
                     <Select
                       value={memberLimit.toString()}
@@ -1473,7 +1481,7 @@ export default function RegistrationsPage() {
                         setAllMembersSelected(false);
                       }}
                     >
-                      <SelectTrigger className="h-8 w-[100px] rounded-full bg-white text-xs text-slate-700">
+                      <SelectTrigger className="h-7 w-[72px] rounded-full border-slate-200 bg-white px-2 text-[10px] text-slate-700 sm:h-8 sm:w-[100px] sm:px-2.5 sm:text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -1503,7 +1511,7 @@ export default function RegistrationsPage() {
                       await refetchClubMembers();
                     }}
                     title="Run database query to refresh members data"
-                    className="inline-flex h-8 w-[100px] items-center justify-center rounded-full bg-zinc-700 px-4 text-xs font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex h-7 min-w-[72px] items-center justify-center rounded-full bg-zinc-700 px-2.5 text-[10px] font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 sm:h-8 sm:min-w-[92px] sm:px-3 sm:text-xs"
                   >
                     Run
                   </button>
