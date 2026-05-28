@@ -24,6 +24,7 @@ import ReusableDeregisterDialog from "./features/reusable-deregister-dialog";
 import ReusableSendEmailDialog from "@/components/admin/members/members/features/reusable-send-email-dialog";
 import { formatAmount } from "@/data/currencies";
 import EmptyRegistrationsRow from "@/components/admin/members/registrations/features/empty-registrations-row";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ImageProps {
   sensors: any;
@@ -65,6 +66,7 @@ export default function RegisteredMembersList({
   setDeregisterMembers,
   setAllMembersSelected,
 }: ImageProps) {
+  const isMobile = useIsMobile();
   const baseRegisteredMembers = clubMembers?.registered || [];
   const [regSortAsc, setRegSortAsc] = useState<boolean | null>(null);
   const [memberNameSortAsc, setMemberNameSortAsc] = useState<boolean | null>(null);
@@ -99,24 +101,24 @@ export default function RegisteredMembersList({
     return sortedCopy;
   }, [baseRegisteredMembers, regSortAsc, memberNameSortAsc, totalFeeSortAsc]);
 
-  const rowHeight = 60;
+  const rowHeight = isMobile ? 46 : 60;
   const maxVisibleRows = showTenRows ? 10 : 5;
   const shouldScrollY = baseRegisteredMembers.length > maxVisibleRows;
   const tableViewportMaxHeight = shouldScrollY
     ? maxVisibleRows * rowHeight
     : undefined;
   const tableColumnWidths = [
-    "80px",
-    "150px",
-    "150px",
-    "150px",
-    "150px",
-    ...activeColumnKeys.map(() => "150px"),
+    isMobile ? "56px" : "80px",
+    isMobile ? "122px" : "150px",
+    isMobile ? "138px" : "150px",
+    isMobile ? "112px" : "150px",
+    isMobile ? "122px" : "150px",
+    ...activeColumnKeys.map(() => (isMobile ? "132px" : "150px")),
   ];
 
   return (
     <>
-      <div className="w-full max-w-full min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white [contain:inline-size]">
+      <div className="w-full max-w-full min-w-0 overflow-hidden rounded-[18px] border border-slate-200 bg-white [contain:inline-size] sm:rounded-[20px]">
         <div className="block max-w-full overflow-x-auto">
           <DndContext
             collisionDetection={closestCenter}
@@ -149,8 +151,8 @@ export default function RegisteredMembersList({
                 </colgroup>
             <TableHeader className="sticky top-0 z-10 bg-zinc-700 [&_tr]:border-zinc-600">
               <TableRow>
-                <TableHead className="sticky left-0 z-30 w-[80px] flex-shrink-0 bg-zinc-700 py-2 text-center text-slate-200">
-                  <div className="mx-auto flex w-fit items-center justify-center rounded-full border border-slate-200/80 bg-slate-50 pl-3 pr-1 transition-colors hover:bg-white">
+                <TableHead className="sticky left-0 z-30 w-[56px] flex-shrink-0 bg-zinc-700 px-1 py-1.5 text-center text-slate-200 sm:w-[80px] sm:py-2">
+                  <div className="mx-auto flex w-fit items-center justify-center rounded-full border border-slate-200/80 bg-slate-50 pl-1.5 pr-0.5 transition-colors hover:bg-white sm:pl-3 sm:pr-1">
                     <Checkbox
                       checked={allMembersSelected}
                       onCheckedChange={(checked: boolean) => {
@@ -162,12 +164,12 @@ export default function RegisteredMembersList({
                           setAllMembersSelected(false);
                         }
                       }}
-                      className="h-5 w-5 rounded-[6px] border-2 border-slate-400 bg-white shadow-sm transition-colors hover:border-slate-500 data-[state=checked]:border-slate-600 data-[state=checked]:bg-slate-600 data-[state=checked]:text-white"
+                      className="h-4 w-4 rounded-[5px] border-2 border-slate-400 bg-white shadow-sm transition-colors hover:border-slate-500 data-[state=checked]:border-slate-600 data-[state=checked]:bg-slate-600 data-[state=checked]:text-white sm:h-5 sm:w-5 sm:rounded-[6px]"
                     />
                     <DropdownMenu modal={false}>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 rounded-full p-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
-                          <ChevronDown className="h-4 w-4" />
+                        <Button variant="ghost" size="sm" className="h-6 w-6 rounded-full p-0 text-slate-600 hover:bg-slate-100 hover:text-slate-900 sm:h-7 sm:w-7">
+                          <ChevronDown className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48 rounded-[18px] border-slate-200">
@@ -191,10 +193,10 @@ export default function RegisteredMembersList({
                     </DropdownMenu>
                   </div>
                 </TableHead>
-                <TableHead className="h-11 w-[150px] px-0 text-center text-xs text-slate-200">
+                <TableHead className="h-9 w-[122px] px-0 text-center text-[10px] text-slate-200 sm:h-11 sm:w-[150px] sm:text-xs">
                   <button
                     type="button"
-                    className="grid w-full grid-cols-[10px_auto_auto_10px] items-center justify-center gap-1 px-1.5 hover:underline"
+                    className="grid w-full grid-cols-[8px_auto_auto_8px] items-center justify-center gap-0.5 px-1 hover:underline sm:grid-cols-[10px_auto_auto_10px] sm:gap-1 sm:px-1.5"
                     onClick={() => {
                       setMemberNameSortAsc((prev) => (prev === null ? true : !prev));
                       setRegSortAsc(null);
@@ -206,21 +208,21 @@ export default function RegisteredMembersList({
                     <span className="text-center">Member name</span>
                     <span className="flex justify-start">
                       {memberNameSortAsc === null ? (
-                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                        <ChevronsUpDown className="h-2.5 w-2.5 opacity-60 sm:h-3 sm:w-3" />
                       ) : (
-                        <span className="text-xs">{memberNameSortAsc ? "▲" : "▼"}</span>
+                        <span className="text-[10px] sm:text-xs">{memberNameSortAsc ? "▲" : "▼"}</span>
                       )}
                     </span>
                     <span aria-hidden="true" />
                   </button>
                 </TableHead>
-                <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
+                <TableHead className="h-9 w-[138px] text-center text-[10px] text-slate-200 sm:h-11 sm:w-[150px] sm:text-xs">
                   Email
                 </TableHead>
-                <TableHead className="h-11 w-[150px] px-0 text-center text-xs text-slate-200">
+                <TableHead className="h-9 w-[112px] px-0 text-center text-[10px] text-slate-200 sm:h-11 sm:w-[150px] sm:text-xs">
                   <button
                     type="button"
-                    className="grid w-full grid-cols-[10px_auto_auto_10px] items-center justify-center gap-1 px-1.5 hover:underline"
+                    className="grid w-full grid-cols-[8px_auto_auto_8px] items-center justify-center gap-0.5 px-1 hover:underline sm:grid-cols-[10px_auto_auto_10px] sm:gap-1 sm:px-1.5"
                     onClick={() => {
                       setTotalFeeSortAsc((prev) => (prev === null ? true : !prev));
                       setRegSortAsc(null);
@@ -232,18 +234,18 @@ export default function RegisteredMembersList({
                     <span className="text-center">Registration Fee</span>
                     <span className="flex justify-start">
                       {totalFeeSortAsc === null ? (
-                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                        <ChevronsUpDown className="h-2.5 w-2.5 opacity-60 sm:h-3 sm:w-3" />
                       ) : (
-                        <span className="text-xs">{totalFeeSortAsc ? "▲" : "▼"}</span>
+                        <span className="text-[10px] sm:text-xs">{totalFeeSortAsc ? "▲" : "▼"}</span>
                       )}
                     </span>
                     <span aria-hidden="true" />
                   </button>
                 </TableHead>
-                <TableHead className="h-11 w-[150px] px-0 text-center text-xs text-slate-200">
+                <TableHead className="h-9 w-[122px] px-0 text-center text-[10px] text-slate-200 sm:h-11 sm:w-[150px] sm:text-xs">
                   <button
                     type="button"
-                    className="grid w-full grid-cols-[10px_auto_auto_10px] items-center justify-center gap-1 px-1.5 hover:underline"
+                    className="grid w-full grid-cols-[8px_auto_auto_8px] items-center justify-center gap-0.5 px-1 hover:underline sm:grid-cols-[10px_auto_auto_10px] sm:gap-1 sm:px-1.5"
                     onClick={() =>
                       setRegSortAsc((prev) => (prev === null ? true : !prev))
                     }
@@ -253,9 +255,9 @@ export default function RegisteredMembersList({
                     <span className="text-center">Registered On</span>
                     <span className="flex justify-start">
                       {regSortAsc === null ? (
-                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
+                        <ChevronsUpDown className="h-2.5 w-2.5 opacity-60 sm:h-3 sm:w-3" />
                       ) : (
-                        <span className="text-xs">{regSortAsc ? "▲" : "▼"}</span>
+                        <span className="text-[10px] sm:text-xs">{regSortAsc ? "▲" : "▼"}</span>
                       )}
                     </span>
                     <span aria-hidden="true" />
@@ -266,7 +268,7 @@ export default function RegisteredMembersList({
                   .map((column: any) => (
                     <TableHead
                       key={column.key}
-                      className="h-11 w-[150px] text-center text-xs text-slate-200"
+                      className="h-9 w-[132px] text-center text-[10px] text-slate-200 sm:h-11 sm:w-[150px] sm:text-xs"
                     >
                       {column.field_name}
                     </TableHead>
@@ -282,7 +284,7 @@ export default function RegisteredMembersList({
                       setSelectedMember(member);
                       window.location.hash = member.user_id;
                     }}
-                    className={`group h-14 cursor-pointer border-slate-200 bg-white text-sm transition-colors hover:bg-slate-50 ${
+                    className={`group h-11 cursor-pointer border-slate-200 bg-white text-xs transition-colors hover:bg-slate-50 sm:h-14 sm:text-sm ${
                       listActionItems.some(
                         (item) =>
                           item.email === member.member_email &&
@@ -293,7 +295,7 @@ export default function RegisteredMembersList({
                         : ""
                     }`}
                   >
-                    <TableCell className="relative sticky left-0 z-20 w-[80px] flex-shrink-0 bg-white text-center">
+                    <TableCell className="relative sticky left-0 z-20 w-[56px] bg-white px-1 py-1.5 text-center sm:w-[80px]">
                       <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           checked={listActionItems.some(
@@ -342,41 +344,41 @@ export default function RegisteredMembersList({
                               setAllMembersSelected(false);
                             }
                           }}
-                          className="h-5 w-5 rounded-[6px] border-2 border-slate-300 bg-white shadow-sm transition-colors hover:border-slate-500 data-[state=checked]:border-slate-600 data-[state=checked]:bg-slate-600 data-[state=checked]:text-white"
+                          className="h-4 w-4 rounded-[5px] border-2 border-slate-300 bg-white shadow-sm transition-colors hover:border-slate-500 data-[state=checked]:border-slate-600 data-[state=checked]:bg-slate-600 data-[state=checked]:text-white sm:h-5 sm:w-5 sm:rounded-[6px]"
                         />
                       </div>
                     </TableCell>
-                    <TableCell className="w-[150px] px-0 text-sm font-medium text-slate-900">
-                      <div className="flex w-full justify-center px-2 text-center">
-                        <span className="underline decoration-slate-400 underline-offset-2">
+                    <TableCell className="w-[122px] px-0 text-[11px] font-medium leading-4 text-slate-900 sm:w-[150px] sm:text-sm">
+                      <div className="flex w-full justify-center px-1.5 text-center sm:px-2">
+                        <span className="line-clamp-2 underline decoration-slate-400 underline-offset-2 sm:line-clamp-1">
                           {member.member_first_name + " " + member.member_surname}
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="w-[150px] px-0 text-sm text-slate-800">
-                      <div className="flex w-full justify-center px-2 text-center">
+                    <TableCell className="w-[138px] px-1 text-[11px] leading-4 text-slate-800 sm:w-[150px] sm:text-sm">
+                      <div className="flex w-full justify-center px-1.5 text-center sm:px-2">
                         {member.member_email === "n/a" ? (
                           <span className="text-gray-400">n/a</span>
                         ) : (
-                          member.member_email
+                          <span className="line-clamp-2 break-all sm:line-clamp-1">{member.member_email}</span>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="w-[150px] px-0 text-sm font-medium text-slate-900">
-                      <div className="flex w-full justify-center px-2 text-center">
+                    <TableCell className="w-[112px] px-0 text-[11px] font-medium leading-4 text-slate-900 sm:w-[150px] sm:text-sm">
+                      <div className="flex w-full justify-center px-1.5 text-center sm:px-2">
                         {member.total_fee === 0 ? (
-                          <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                          <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 sm:px-2.5 sm:py-1 sm:text-xs">
                             Free
                           </span>
                         ) : member.total_fee != null ? (
-                          formatAmount(member.total_fee, currency)
+                          <span className="line-clamp-2 sm:line-clamp-1">{formatAmount(member.total_fee, currency)}</span>
                         ) : (
                           <span className="text-gray-400">n/a</span>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="w-[150px] px-0 text-sm text-slate-800">
-                      <div className="flex w-full justify-center px-2 text-center">
+                    <TableCell className="w-[122px] px-0 text-[10px] leading-4 text-slate-800 sm:w-[150px] sm:text-sm">
+                      <div className="flex w-full justify-center px-1.5 text-center sm:px-2">
                         {member.registered_on
                           ? new Date(member.registered_on).toLocaleString()
                           : "-"}
@@ -433,12 +435,12 @@ export default function RegisteredMembersList({
                         return (
                           <TableCell
                             key={column.key}
-                            className="w-[150px] text-center text-sm text-slate-800"
+                            className="w-[132px] px-1.5 text-center text-[11px] leading-4 text-slate-800 sm:w-[150px] sm:text-sm"
                           >
                             {columnValue === "N/A" ? (
                               <span className="text-gray-400">n/a</span>
                             ) : (
-                              columnValue
+                              <span className="line-clamp-2 break-words sm:line-clamp-1">{columnValue}</span>
                             )}
                           </TableCell>
                         );
