@@ -67,8 +67,8 @@ function getVerificationTone(response?: GetClubMemberResponse): VerificationTone
       title: "Previously registered member",
       description: "The scanned user has a club member record, but their latest registration is deregistered.",
       badgeLabel: response.registration,
-      badgeClassName: "border-amber-200 bg-amber-50 text-amber-800",
-      panelClassName: "border-amber-200 bg-amber-50 text-amber-900",
+      badgeClassName: "border-rose-200 bg-rose-50 text-rose-700",
+      panelClassName: "border-rose-200 bg-rose-50 text-rose-900",
       icon: ShieldAlert,
     };
   }
@@ -78,8 +78,8 @@ function getVerificationTone(response?: GetClubMemberResponse): VerificationTone
       title: "Pending approval",
       description: "The scanned user is linked to the club, but their current registration is still pending.",
       badgeLabel: "Pending",
-      badgeClassName: "border-sky-200 bg-sky-50 text-sky-800",
-      panelClassName: "border-sky-200 bg-sky-50 text-sky-900",
+      badgeClassName: "border-amber-200 bg-amber-50 text-amber-800",
+      panelClassName: "border-amber-200 bg-amber-50 text-amber-900",
       icon: ShieldAlert,
     };
   }
@@ -145,6 +145,7 @@ export default function MemberVerificationScannerDialog({
   const [isProcessingScan, setIsProcessingScan] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
   const [scanWarning, setScanWarning] = useState<string | null>(null);
+  const [isDifferentClubScan, setIsDifferentClubScan] = useState(false);
   const [scannedMemberUserId, setScannedMemberUserId] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const readerRef = useRef<BrowserQRCodeReader | null>(null);
@@ -154,7 +155,7 @@ export default function MemberVerificationScannerDialog({
   const { data, isFetching, isError } = useQuery({
     queryKey: ["member-qr-verification", clubId, scannedMemberUserId],
     queryFn: () => getClubMember(clubId, scannedMemberUserId || ""),
-    enabled: Boolean(clubId && scannedMemberUserId),
+    enabled: Boolean(clubId && scannedMemberUserId && !isDifferentClubScan),
     retry: 1,
   });
 
@@ -165,9 +166,22 @@ export default function MemberVerificationScannerDialog({
 
     return names.join(" ");
   }, [data?.user?.first_name, data?.user?.surname]);
-  const shouldShowIdentityDetails = Boolean(data?.is_club_member);
+  const shouldShowIdentityDetails = Boolean(data?.is_club_member) && !isDifferentClubScan;
 
-  const verificationTone = useMemo(() => getVerificationTone(data), [data]);
+  const verificationTone = useMemo(() => {
+    if (isDifferentClubScan) {
+      return {
+        title: "Not associated with this club",
+        description: "This QR code was issued for a different club and cannot be used to verify membership here.",
+        badgeLabel: "Different club",
+        badgeClassName: "border-rose-200 bg-rose-50 text-rose-700",
+        panelClassName: "border-rose-200 bg-rose-50 text-rose-900",
+        icon: ShieldAlert,
+      };
+    }
+
+    return getVerificationTone(data);
+  }, [data, isDifferentClubScan]);
   const VerificationIcon = verificationTone.icon;
   const showScannerPreview = !scannedMemberUserId;
 
@@ -200,6 +214,7 @@ export default function MemberVerificationScannerDialog({
     setIsProcessingScan(false);
     setScanError(null);
     setScanWarning(null);
+    setIsDifferentClubScan(false);
     setScannedMemberUserId(null);
   }, []);
 
@@ -267,9 +282,12 @@ export default function MemberVerificationScannerDialog({
           setScannedMemberUserId(parsed.memberUserId);
 
           if (parsed.scannedClubId && parsed.scannedClubId !== clubId) {
+            setIsDifferentClubScan(true);
             setScanWarning(
-              "This QR code was issued for a different club. Showing this person's status in the current club.",
+              "This QR code was issued for a different club.",
             );
+          } else {
+            setIsDifferentClubScan(false);
           }
 
           queueMicrotask(() => {
@@ -356,7 +374,7 @@ export default function MemberVerificationScannerDialog({
                     className="h-full w-full object-cover"
                   />
                   <div className="pointer-events-none absolute inset-0 border-[12px] border-slate-950/45 sm:border-[18px]" />
-                  <div className="pointer-events-none absolute inset-x-4 top-1/2 h-28 -translate-y-1/2 rounded-[18px] border-2 border-white/80 shadow-[0_0_0_999px_rgba(15,23,42,0.18)] sm:inset-x-10 sm:h-32 sm:rounded-[22px]" />
+                  <div className="pointer-events-none absolute left-1/2 top-1/2 h-52 w-52 -translate-x-1/2 -translate-y-1/2 rounded-[28px] border-2 border-white/80 shadow-[0_0_0_999px_rgba(15,23,42,0.18)] sm:h-64 sm:w-64 sm:rounded-[32px]" />
                   {isStartingCamera ? (
                     <div className="absolute inset-0 flex items-center justify-center bg-slate-950/45">
                       <Loader2 className="h-7 w-7 animate-spin text-white" />
