@@ -640,9 +640,10 @@ export default function RegistrationsPage() {
       : null;
   const openedFromMembersTable =
     searchParams.get("source") === "members-table";
+  const openedFromQrScanner = searchParams.get("source") === "qr-scanner";
 
   const handleBackToRegistrations = () => {
-    if (openedFromMembersTable) {
+    if (openedFromMembersTable || openedFromQrScanner) {
       setIsReturningToMembersTable(true);
       return;
     }
@@ -844,7 +845,11 @@ export default function RegistrationsPage() {
                 style={{ transformStyle: "preserve-3d" }}
                 onAnimationComplete={() => {
                   if (isReturningToMembersTable) {
-                    navigate("/manage/members");
+                    navigate(
+                      openedFromQrScanner
+                        ? "/manage/members?scanner=member-verification"
+                        : "/manage/members",
+                    );
                   }
                 }}
               >
@@ -856,7 +861,9 @@ export default function RegistrationsPage() {
                     disabled={isReturningToMembersTable}
                   >
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    {openedFromMembersTable
+                    {openedFromQrScanner
+                      ? "Go back to QR code scanning"
+                      : openedFromMembersTable
                       ? "Go back to members table"
                       : "Go back to registrations"}
                   </Button>

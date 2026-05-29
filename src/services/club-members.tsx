@@ -9,6 +9,7 @@ export interface GetClubMemberResponse {
   };
   is_club_member?: boolean;
   registration?: string | null;
+  registration_id?: string;
   message?: string;
 }
 

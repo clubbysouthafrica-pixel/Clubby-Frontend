@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { getClubMember, type GetClubMemberResponse } from "@/services/admin/club-members";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 type MemberVerificationScannerDialogProps = {
   clubId: string;
@@ -136,10 +136,23 @@ function getErrorMessage(error: unknown) {
   return "Unable to access the camera right now. Check camera permissions and try again.";
 }
 
+function getRegistrationsTab(response?: GetClubMemberResponse) {
+  if (response?.registration?.startsWith("DEREGISTERED")) {
+    return "previous-members";
+  }
+
+  if (response?.registration === "PENDING") {
+    return "pending-members";
+  }
+
+  return "registered-members";
+}
+
 export default function MemberVerificationScannerDialog({
   clubId,
 }: MemberVerificationScannerDialogProps) {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [open, setOpen] = useState(false);
   const [isStartingCamera, setIsStartingCamera] = useState(false);
   const [isProcessingScan, setIsProcessingScan] = useState(false);
@@ -233,6 +246,37 @@ export default function MemberVerificationScannerDialog({
       `/manage/members?memberId=${encodeURIComponent(scannedMemberUserId)}#${encodeURIComponent(scannedMemberUserId)}`,
     );
   }, [navigate, scannedMemberUserId]);
+
+  const handleGoToRegistration = useCallback(() => {
+    if (!scannedMemberUserId) {
+      return;
+    }
+
+    const params = new URLSearchParams({
+      tab: getRegistrationsTab(data),
+      memberId: scannedMemberUserId,
+      source: "qr-scanner",
+    });
+
+    if (data?.registration_id?.trim()) {
+      params.set("registrationId", data.registration_id);
+    }
+
+    setOpen(false);
+    navigate(`/manage/member/registrations?${params.toString()}`);
+  }, [data, navigate, scannedMemberUserId]);
+
+  useEffect(() => {
+    if (searchParams.get("scanner") !== "member-verification") {
+      return;
+    }
+
+    setOpen(true);
+
+    const nextSearchParams = new URLSearchParams(searchParams);
+    nextSearchParams.delete("scanner");
+    setSearchParams(nextSearchParams, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const startScanner = useCallback(async () => {
     if (!videoRef.current) {
@@ -442,9 +486,14 @@ export default function MemberVerificationScannerDialog({
 
                   {shouldShowIdentityDetails ? (
                     <div className="space-y-3 px-3 py-3 sm:px-4 sm:py-4">
-                      <Button type="button" onClick={handleGoToMember} className="w-full sm:w-auto">
-                        Go to member
-                      </Button>
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <Button type="button" onClick={handleGoToMember} className="w-full sm:w-auto">
+                          Go to member
+                        </Button>
+                        <Button type="button" variant="outline" onClick={handleGoToRegistration} className="w-full sm:w-auto">
+                          Go to registration
+                        </Button>
+                      </div>
                     </div>
                   ) : null}
                 </CardContent>
