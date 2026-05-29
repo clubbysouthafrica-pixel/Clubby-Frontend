@@ -283,6 +283,7 @@ export default function MemberVerificationScannerDialog({
 
           if (parsed.scannedClubId && parsed.scannedClubId !== clubId) {
             setIsDifferentClubScan(true);
+            setIsProcessingScan(false);
             setScanWarning(
               "This QR code was issued for a different club.",
             );
@@ -424,6 +425,16 @@ export default function MemberVerificationScannerDialog({
                           <p className="mt-1 text-sm leading-5 opacity-90">
                             {verificationTone.description}
                           </p>
+                          {shouldShowIdentityDetails ? (
+                            <div className="mt-3 rounded-[16px] border border-white/50 bg-white/45 px-3 py-2.5 text-slate-950 backdrop-blur-sm">
+                              <p className="text-[10px] font-medium uppercase tracking-[0.2em] opacity-70">
+                                Member name
+                              </p>
+                              <p className="mt-1 text-sm font-semibold sm:text-base">
+                                {fullName || "Unknown member"}
+                              </p>
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                     </div>
@@ -431,24 +442,6 @@ export default function MemberVerificationScannerDialog({
 
                   {shouldShowIdentityDetails ? (
                     <div className="space-y-3 px-3 py-3 sm:px-4 sm:py-4">
-                      <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
-                        <div className="rounded-[16px] border border-slate-200 bg-slate-50 px-3 py-3">
-                          <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-slate-500">
-                            Member name
-                          </p>
-                          <p className="mt-1.5 text-sm font-semibold text-slate-950">
-                            {fullName || "Unknown member"}
-                          </p>
-                        </div>
-                        <div className="rounded-[16px] border border-slate-200 bg-slate-50 px-3 py-3">
-                          <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-slate-500">
-                            User ID
-                          </p>
-                          <p className="mt-1.5 break-all text-sm font-semibold text-slate-950">
-                            {scannedMemberUserId}
-                          </p>
-                        </div>
-                      </div>
                       <Button type="button" onClick={handleGoToMember} className="w-full sm:w-auto">
                         Go to member
                       </Button>
