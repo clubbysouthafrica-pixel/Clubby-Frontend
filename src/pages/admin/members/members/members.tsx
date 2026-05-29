@@ -35,12 +35,13 @@ import {
   MEMBER_PROFILE_COLUMNS,
   type MemberProfileColumn,
 } from "../../../../helpers/admin/members/member-profile-columns";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 export default function MembersPage() {
   const { club, isLoading: clubLoading } = useContext(
     ClubContext,
   ) as ClubContextType;
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [requestedKeys, setRequestedKeys] = useState<string[]>([]);
 
@@ -433,10 +434,17 @@ export default function MembersPage() {
   const handleBackToMembers = () => {
     setSelectedMember({});
     setHashUserId(null);
-    window.history.pushState(
-      "",
-      document.title,
-      window.location.pathname + window.location.search,
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
+    nextSearchParams.delete("memberId");
+
+    const nextSearch = nextSearchParams.toString();
+    navigate(
+      {
+        pathname: window.location.pathname,
+        search: nextSearch ? `?${nextSearch}` : "",
+        hash: "",
+      },
+      { replace: true },
     );
   };
 

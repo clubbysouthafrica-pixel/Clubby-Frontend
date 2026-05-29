@@ -336,17 +336,17 @@ export default function MemberVerificationScannerDialog({
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-xl rounded-[28px] border-slate-200 bg-white p-4 sm:p-6">
-          <DialogHeader>
+        <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-xl flex-col gap-3 overflow-hidden rounded-[24px] border-slate-200 bg-white p-3 sm:w-full sm:gap-4 sm:rounded-[28px] sm:p-6">
+          <DialogHeader className="shrink-0 pr-8 sm:pr-10">
             <DialogTitle>Scan membership QR code</DialogTitle>
             <DialogDescription>
               Open the camera, scan the member's registration QR code, and verify whether they belong to this club.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="flex-1 space-y-3 overflow-y-auto pr-1 sm:space-y-4">
             {showScannerPreview ? (
-              <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-slate-950">
+              <div className="overflow-hidden rounded-[20px] border border-slate-200 bg-slate-950 sm:rounded-[24px]">
                 <div className="relative aspect-[4/3] w-full">
                   <video
                     ref={videoRef}
@@ -355,8 +355,8 @@ export default function MemberVerificationScannerDialog({
                     playsInline
                     className="h-full w-full object-cover"
                   />
-                  <div className="pointer-events-none absolute inset-0 border-[18px] border-slate-950/45" />
-                  <div className="pointer-events-none absolute inset-x-10 top-1/2 h-32 -translate-y-1/2 rounded-[22px] border-2 border-white/80 shadow-[0_0_0_999px_rgba(15,23,42,0.18)]" />
+                  <div className="pointer-events-none absolute inset-0 border-[12px] border-slate-950/45 sm:border-[18px]" />
+                  <div className="pointer-events-none absolute inset-x-4 top-1/2 h-28 -translate-y-1/2 rounded-[18px] border-2 border-white/80 shadow-[0_0_0_999px_rgba(15,23,42,0.18)] sm:inset-x-10 sm:h-32 sm:rounded-[22px]" />
                   {isStartingCamera ? (
                     <div className="absolute inset-0 flex items-center justify-center bg-slate-950/45">
                       <Loader2 className="h-7 w-7 animate-spin text-white" />
@@ -367,40 +367,40 @@ export default function MemberVerificationScannerDialog({
             ) : null}
 
             {scanError ? (
-              <div className="flex items-start gap-2 rounded-[20px] border border-rose-200 bg-rose-50 px-3 py-3 text-sm text-rose-800">
+              <div className="flex items-start gap-2 rounded-[18px] border border-rose-200 bg-rose-50 px-3 py-3 text-sm text-rose-800">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>{scanError}</p>
               </div>
             ) : null}
 
             {scanWarning ? (
-              <div className="flex items-start gap-2 rounded-[20px] border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-900">
+              <div className="flex items-start gap-2 rounded-[18px] border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-900">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>{scanWarning}</p>
               </div>
             ) : null}
 
             {isProcessingScan || isFetching ? (
-              <div className="flex items-center gap-2 rounded-[20px] border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700">
+              <div className="flex items-center gap-2 rounded-[18px] border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 <p>QR detected. Checking the scanned member against this club...</p>
               </div>
             ) : null}
 
             {scannedMemberUserId && !isFetching ? (
-              <Card className="overflow-hidden rounded-[24px] border border-slate-200 shadow-sm">
+              <Card className="overflow-hidden rounded-[20px] border border-slate-200 shadow-sm sm:rounded-[24px]">
                 <CardContent className="p-0">
-                  <div className={cn("border-b px-4 py-4", verificationTone.panelClassName)}>
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/70 bg-white/80 shadow-sm">
-                        <VerificationIcon className="h-6 w-6" />
+                  <div className={cn("border-b px-3 py-3 sm:px-4 sm:py-4", verificationTone.panelClassName)}>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/70 bg-white/80 shadow-sm sm:h-12 sm:w-12">
+                        <VerificationIcon className="h-5 w-5 sm:h-6 sm:w-6" />
                       </div>
                       <div className="min-w-0 space-y-2">
-                        <Badge className={cn("border px-2 py-0.5 text-[10px] font-semibold", verificationTone.badgeClassName)}>
+                        <Badge className={cn("max-w-full whitespace-normal border px-2 py-0.5 text-[10px] font-semibold leading-tight", verificationTone.badgeClassName)}>
                           {verificationTone.badgeLabel}
                         </Badge>
                         <div>
-                          <h3 className="text-base font-semibold text-slate-950">
+                          <h3 className="text-sm font-semibold text-slate-950 sm:text-base">
                             {verificationTone.title}
                           </h3>
                           <p className="mt-1 text-sm leading-5 opacity-90">
@@ -412,24 +412,24 @@ export default function MemberVerificationScannerDialog({
                   </div>
 
                   {shouldShowIdentityDetails ? (
-                    <div className="space-y-3 px-4 py-4">
-                      <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-3 py-3">
-                        <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-500">
-                          Member name
-                        </p>
-                        <p className="mt-2 text-sm font-semibold text-slate-950">
-                          {fullName || "Unknown member"}
-                        </p>
-                      </div>
-                      <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-3 py-3">
-                        <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-500">
-                          User ID
-                        </p>
-                        <p className="mt-2 break-all text-sm font-semibold text-slate-950">
-                          {scannedMemberUserId}
-                        </p>
-                      </div>
+                    <div className="space-y-3 px-3 py-3 sm:px-4 sm:py-4">
+                      <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
+                        <div className="rounded-[16px] border border-slate-200 bg-slate-50 px-3 py-3">
+                          <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-slate-500">
+                            Member name
+                          </p>
+                          <p className="mt-1.5 text-sm font-semibold text-slate-950">
+                            {fullName || "Unknown member"}
+                          </p>
+                        </div>
+                        <div className="rounded-[16px] border border-slate-200 bg-slate-50 px-3 py-3">
+                          <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-slate-500">
+                            User ID
+                          </p>
+                          <p className="mt-1.5 break-all text-sm font-semibold text-slate-950">
+                            {scannedMemberUserId}
+                          </p>
+                        </div>
                       </div>
                       <Button type="button" onClick={handleGoToMember} className="w-full sm:w-auto">
                         Go to member
@@ -448,12 +448,12 @@ export default function MemberVerificationScannerDialog({
             ) : null}
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+          <DialogFooter className="shrink-0 border-t border-slate-100 pt-3 sm:pt-4">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="w-full sm:w-auto">
               Close
             </Button>
             {!showScannerPreview ? (
-              <Button type="button" onClick={handleScanAnotherCode}>
+              <Button type="button" onClick={handleScanAnotherCode} className="w-full sm:w-auto">
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Scan another code
               </Button>
