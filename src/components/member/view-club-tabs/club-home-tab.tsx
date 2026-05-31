@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactElement } from "react";
+import { useEffect, useRef, useState, type ReactElement } from "react";
 import InfoRow from "@/components/info-row";
 import SocialLink from "@/components/social-links";
 import { formatAmount } from "@/data/currencies";
@@ -34,6 +34,7 @@ import {
   Globe,
   Mail,
   MapPin,
+  ShoppingBag,
   Users,
 } from "lucide-react";
 import { FaFacebook, FaInstagram, FaTwitter } from "react-icons/fa";
@@ -90,6 +91,7 @@ type ClubHomeTabProps = {
   primaryActionLabel?: string;
   primaryActionVariant?: "default" | "destructive";
   onPrimaryAction?: () => void;
+  registrationAmount?: number;
   outstandingBalanceAmount?: number;
   coverImage?: string;
   profileImage?: string;
@@ -101,6 +103,7 @@ type ClubHomeTabProps = {
   galleryImages: GalleryImage[];
   selectedGalleryImageIndex: number | null;
   setSelectedGalleryImageIndex: (index: number | null) => void;
+  enableShop?: boolean;
   enableEvents?: boolean;
   isHomeEventsLoading: boolean;
   isHomeEventsError: boolean;
@@ -125,6 +128,7 @@ type ClubHomeTabProps = {
   onSelectDate: (dateKey: string) => void;
   onOpenEvents: () => void;
   onOpenBookings: () => void;
+  onOpenShop?: () => void;
   onOpenOutstandingBalance?: () => void;
 };
 
@@ -142,6 +146,7 @@ export function ClubHomeTab({
   primaryActionLabel,
   primaryActionVariant = "default",
   onPrimaryAction,
+  registrationAmount,
   outstandingBalanceAmount,
   coverImage,
   profileImage,
@@ -152,6 +157,7 @@ export function ClubHomeTab({
   openingTimeEntries,
   galleryImages,
   setSelectedGalleryImageIndex,
+  enableShop,
   enableEvents,
   isHomeEventsLoading,
   isHomeEventsError,
@@ -176,11 +182,14 @@ export function ClubHomeTab({
   onSelectDate,
   onOpenEvents,
   onOpenBookings,
+  onOpenShop,
   onOpenOutstandingBalance,
 }: ClubHomeTabProps) {
   const isMobile = useIsMobile();
   const [isDayCalendarOpen, setIsDayCalendarOpen] = useState(false);
   const [canShowSideAgenda, setCanShowSideAgenda] = useState(false);
+  const membershipTypesRef = useRef<HTMLElement | null>(null);
+  const publicStoreRef = useRef<HTMLElement | null>(null);
   const primarySocialLinks: SocialActionLink[] = [];
 
   if (clubUrl) {
@@ -252,11 +261,65 @@ export function ClubHomeTab({
             icon: Clock,
           }
       : null;
+  const isPublicLandingView = !isMember && !resubmissionRequired;
+  const membershipTypes = [
+    {
+      title: "Core Membership",
+      price:
+        typeof registrationAmount === "number" && registrationAmount > 0
+          ? formatAmount(registrationAmount, currency || "ZAR")
+          : "Contact club",
+      description: "A straightforward way to join the club and access its standard community offering.",
+      accent: "Best place to start",
+    },
+    {
+      title: "Family Membership",
+      price:
+        typeof registrationAmount === "number" && registrationAmount > 0
+          ? formatAmount(registrationAmount * 1.8, currency || "ZAR")
+          : "From club pricing",
+      description: "Mocked family-style pricing for households joining together under one club profile.",
+      accent: "Built for households",
+    },
+    {
+      title: "Supporter Pass",
+      price:
+        typeof registrationAmount === "number" && registrationAmount > 0
+          ? formatAmount(registrationAmount * 0.55, currency || "ZAR")
+          : "Contact club",
+      description: "A lighter mocked option for supporters who want updates, limited access, and club perks.",
+      accent: "Flexible option",
+    },
+  ];
+  const featuredProducts = [
+    {
+      title: "Club Cap",
+      price: formatAmount(249, currency || "ZAR"),
+      description: "Lightweight branded cap for match days and weekend training.",
+      badge: "Featured",
+    },
+    {
+      title: "Training Tee",
+      price: formatAmount(389, currency || "ZAR"),
+      description: "Soft performance tee in the club colorway.",
+      badge: "Popular",
+    },
+    {
+      title: "Starter Pack",
+      price: formatAmount(699, currency || "ZAR"),
+      description: "A mocked bundle with a cap, tee, and basic supporter extras.",
+      badge: "Bundle",
+    },
+  ];
 
   const selectedHomeDateItemCount =
     selectedHomeDateEvents.length + selectedHomeDateBookings.length;
   const dayAgendaCardClassName =
     "rounded-[1rem] border border-slate-200 bg-white p-2.5 shadow-[0_16px_48px_-32px_rgba(15,23,42,0.08)] sm:p-3";
+
+  const scrollToSection = (sectionRef: React.RefObject<HTMLElement | null>) => {
+    sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 1024px)");
@@ -338,6 +401,54 @@ export function ClubHomeTab({
                       <p className="text-sm leading-5 text-slate-600 sm:text-base sm:leading-relaxed lg:text-lg">{description}</p>
                     )}
                   </div>
+
+                  {isPublicLandingView ? (
+                    <div className="rounded-[1.2rem] border border-slate-200 bg-slate-50 px-3 py-3 sm:px-4 sm:py-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        Public club overview
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-[15px]">
+                        Start with the essentials: review membership options, browse a mocked public store selection, and jump straight into joining this club.
+                      </p>
+                      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                        {primaryActionLabel && onPrimaryAction ? (
+                          <Button
+                            variant={primaryActionVariant}
+                            className={cn(
+                              "w-full rounded-full px-4 py-4 text-sm font-semibold sm:w-auto",
+                              primaryActionVariant === "destructive"
+                                ? "shadow-[0_18px_36px_-24px_rgba(220,38,38,0.45)]"
+                                : "bg-slate-900 text-white shadow-[0_18px_36px_-24px_rgba(15,23,42,0.38)] hover:bg-slate-800",
+                            )}
+                            onClick={onPrimaryAction}
+                          >
+                            <Users className="mr-2 h-4 w-4" />
+                            {primaryActionLabel}
+                          </Button>
+                        ) : null}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full rounded-full sm:w-auto"
+                          onClick={() => scrollToSection(membershipTypesRef)}
+                        >
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          View membership types
+                        </Button>
+                        {enableShop ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full rounded-full sm:w-auto"
+                            onClick={() => scrollToSection(publicStoreRef)}
+                          >
+                            <ShoppingBag className="mr-2 h-4 w-4" />
+                            Browse public store
+                          </Button>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
 
                   {membershipState && (
                     <div className="rounded-[1.2rem] border border-slate-200 bg-slate-50 px-3 py-2 sm:px-4 sm:py-3">
@@ -424,7 +535,7 @@ export function ClubHomeTab({
                   )}
                 </div>
 
-                {(primaryActionLabel && onPrimaryAction) && (
+                {!isPublicLandingView && (primaryActionLabel && onPrimaryAction) && (
                   <div className="w-full lg:w-auto lg:min-w-fit">
                     <Button
                       variant={primaryActionVariant}
@@ -452,6 +563,120 @@ export function ClubHomeTab({
       </div>
 
       <div className="container mx-auto mb-4 mt-4 px-4 sm:mb-6 sm:mt-8">
+        {isPublicLandingView ? (
+          <div className="mb-3 grid grid-cols-1 gap-3 sm:mb-4 sm:gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] xl:gap-5">
+            <section
+              ref={membershipTypesRef}
+              className="rounded-[1.5rem] border border-slate-200 bg-white p-3 shadow-[0_20px_60px_-36px_rgba(15,23,42,0.1)] sm:p-4"
+            >
+              <div className="flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                    Membership types
+                  </p>
+                  <h2 className="mt-1 text-lg font-semibold text-slate-950 sm:text-xl">
+                    Simple ways to join {clubName}
+                  </h2>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Mocked options for the public landing page.
+                </p>
+              </div>
+
+              <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
+                {membershipTypes.map((membershipType) => (
+                  <div
+                    key={membershipType.title}
+                    className="rounded-[1.2rem] border border-slate-200 bg-slate-50 p-3"
+                  >
+                    <Badge className="border-slate-200 bg-white text-slate-700">
+                      {membershipType.accent}
+                    </Badge>
+                    <h3 className="mt-3 text-base font-semibold text-slate-950">
+                      {membershipType.title}
+                    </h3>
+                    <p className="mt-1 text-lg font-bold text-slate-950">
+                      {membershipType.price}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      {membershipType.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {enableShop ? (
+              <section
+                ref={publicStoreRef}
+                className="rounded-[1.5rem] border border-slate-200 bg-white p-3 shadow-[0_20px_60px_-36px_rgba(15,23,42,0.1)] sm:p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                      Public store
+                    </p>
+                    <h2 className="mt-1 text-lg font-semibold text-slate-950 sm:text-xl">
+                      Featured products
+                    </h2>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                      Mocked public store items to help visitors discover club merchandise quickly.
+                    </p>
+                  </div>
+                  <div className="rounded-full bg-slate-100 p-2 text-slate-700">
+                    <ShoppingBag className="h-4 w-4" />
+                  </div>
+                </div>
+
+                <div className="mt-3 space-y-2.5">
+                  {featuredProducts.map((product) => (
+                    <div
+                      key={product.title}
+                      className="rounded-[1.1rem] border border-slate-200 bg-slate-50 px-3 py-3"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-950">
+                            {product.title}
+                          </p>
+                          <p className="mt-1 text-sm text-slate-600">
+                            {product.description}
+                          </p>
+                        </div>
+                        <Badge className="border-slate-200 bg-white text-slate-700">
+                          {product.badge}
+                        </Badge>
+                      </div>
+                      <div className="mt-3 flex items-center justify-between gap-3">
+                        <p className="text-base font-semibold text-slate-950">
+                          {product.price}
+                        </p>
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="rounded-full"
+                          onClick={onOpenShop}
+                        >
+                          Order through store
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-3 w-full rounded-full"
+                  onClick={onOpenShop}
+                >
+                  Open store
+                </Button>
+              </section>
+            ) : null}
+          </div>
+        ) : null}
+
         <div className="grid grid-cols-1 gap-3 sm:gap-4 xl:grid-cols-2 xl:gap-5">
           <aside className="order-2 space-y-3 sm:space-y-4 xl:row-start-2 xl:self-start xl:space-y-5">
             <Card className="overflow-hidden rounded-[1.5rem] border-slate-200 bg-white shadow-[0_20px_60px_-36px_rgba(15,23,42,0.12)]">

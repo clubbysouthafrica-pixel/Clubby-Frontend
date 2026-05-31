@@ -1576,6 +1576,7 @@ export default function ViewClubPage() {
                               )
                           : undefined
                     }
+                          registrationAmount={data?.registration_amount}
                     outstandingBalanceAmount={activeBankDetails?.outstanding_amount}
                     coverImage={coverImage}
                     profileImage={profileImage}
@@ -1587,6 +1588,7 @@ export default function ViewClubPage() {
                     galleryImages={galleryImages}
                     selectedGalleryImageIndex={selectedGalleryImageIndex}
                     setSelectedGalleryImageIndex={setSelectedGalleryImageIndex}
+                    enableShop={Boolean(data?.enable_shop)}
                     enableEvents={data?.enable_events}
                     isHomeEventsLoading={isHomeEventsLoading}
                     isHomeEventsError={isHomeEventsError}
@@ -1626,6 +1628,7 @@ export default function ViewClubPage() {
                     onSelectDate={setSelectedHomeDateKey}
                     onOpenEvents={() => handleSectionChange("events")}
                     onOpenBookings={() => handleSectionChange("bookings")}
+                    onOpenShop={() => handleSectionChange("shop")}
                     onOpenOutstandingBalance={handleOpenOutstandingBalance}
                   />
                   {canViewStorage && (

@@ -492,11 +492,10 @@ export default function MembersPage() {
             ) : (
               <motion.div
                 key="members-overview"
-                initial={{ opacity: 0, rotateY: -18, x: -20 }}
-                animate={{ opacity: 1, rotateY: 0, x: 0 }}
-                exit={{ opacity: 0, rotateY: 18, x: 20 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 transition={{ duration: 0.28, ease: "easeInOut" }}
-                style={{ transformStyle: "preserve-3d" }}
               >
           <section className="mb-1.5 relative overflow-hidden rounded-[22px] border border-stone-300/70 bg-stone-200 px-3 py-3 text-zinc-900 shadow-[0_18px_40px_rgba(120,113,108,0.16)] md:px-5 md:py-4">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.72),_transparent_28%),radial-gradient(circle_at_right,_rgba(214,211,209,0.55),_transparent_24%)]" />
