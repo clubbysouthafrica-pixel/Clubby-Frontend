@@ -6,7 +6,7 @@ export const getMemberOrders = (clubAccountId: string): Promise<any> => {
 }
 
 type OrderLineItem = {
-    product_id: number;
+    product_id: string | number;
     name: string;
     price: number;
     quantity: number;

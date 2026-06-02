@@ -645,32 +645,24 @@ export default function MemberShopPage({
       }
     }
 
-    const totalAmount = getTotalAmount();
-    const orderItems = cart.map((item) => {
-      const numericProductId = Number(item.productId);
-
-      if (!Number.isFinite(numericProductId)) {
-        throw new Error(`Invalid product id for ${item.name}`);
-      }
-
-      return {
-        product_id: numericProductId,
+    try {
+      const totalAmount = getTotalAmount();
+      const orderItems = cart.map((item) => ({
+        product_id: item.productId,
         name: item.name,
         price: item.price,
         quantity: item.quantity,
         subtotal: item.price * item.quantity,
         selected_valid_day: item.selectedValidDay,
+      }));
+
+      const orderRequest = {
+        club_account_id: clubData?.club_account_id,
+        items: orderItems,
+        total_amount: totalAmount,
+        total_items: getTotalItems(),
       };
-    });
 
-    const orderRequest = {
-      club_account_id: clubData?.club_account_id,
-      items: orderItems,
-      total_amount: totalAmount,
-      total_items: getTotalItems(),
-    };
-
-    try {
       const response = isPublicCheckout
         ? await publicCreateOrder({
             ...orderRequest,
