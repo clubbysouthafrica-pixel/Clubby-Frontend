@@ -213,10 +213,13 @@ export function PublicRegistrationForm({
     setTotalRegistrationFee(total);
   };
 
-  const submitRegistration = () => {
+  const submitRegistration = (emailOptIn: boolean) => {
     setIsRegistering(true);
     if (registrationRequest) {
-      mutate(registrationRequest, {
+      mutate({
+        ...registrationRequest,
+        email_opt_in: emailOptIn,
+      }, {
         onSuccess: (response) => {
           setSuccessfulRegistration(
             response && typeof response === "object"
@@ -343,10 +346,10 @@ export function PublicRegistrationForm({
     );
   }
 
-  // Confirmation state (billing summary)
   if (registrationRequest) {
     return (
       <ReusableSubmitRegistration
+        publicEmailOptIn={false}
         firstName={firstName}
         surname={surname}
         email={email}

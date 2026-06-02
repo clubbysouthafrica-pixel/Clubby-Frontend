@@ -97,6 +97,7 @@ export interface ClubDetailsRequest {
   about_club?: string;
   facebook_url?: string;
   instagram_url?: string;
+  public_shop?: boolean;
   hide_from_public?: boolean;
   enable_shop?: boolean;
   enable_events?: boolean;

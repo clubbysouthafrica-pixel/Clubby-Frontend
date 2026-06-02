@@ -39,7 +39,18 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const getMemberStatus = (registered: boolean, resubmissionRequired: boolean) => {
+const getMemberStatus = (
+  registered: boolean,
+  resubmissionRequired: boolean,
+  nonRegistration?: boolean,
+) => {
+  if (nonRegistration) {
+    return {
+      status: "Non Registration",
+      className: "bg-sky-100 text-sky-800 border-sky-300",
+    };
+  }
+
   if (!registered && resubmissionRequired) {
     return { status: "Deregistered", className: "bg-red-100 text-red-800 border-red-300" };
   }
@@ -137,6 +148,7 @@ export default function MembersTable({
 
 
   const getStatusNumber = (member: any) => {
+    if (member.non_registration) return 0;
     if (!member.registered && member.resubmission_required) return 0;
     if (!member.registered && !member.resubmission_required) return 1;
     return 2;
@@ -438,7 +450,8 @@ export default function MembersTable({
                         {(() => {
                           const { status, className } = getMemberStatus(
                             member.registered,
-                            member.resubmission_required
+                            member.resubmission_required,
+                            member.non_registration,
                           );
                           return (
                             <div className="flex w-full justify-center px-1.5 sm:px-2">
@@ -521,7 +534,7 @@ export default function MembersTable({
                                     )
                                     .map(
                                     (reg: any, idx: number) => {
-                                      const memberStatus = getMemberStatus(member.registered, member.resubmission_required);
+                                      const memberStatus = getMemberStatus(member.registered, member.resubmission_required, member.non_registration);
                                       const registrationState = reg.latest_registration ? memberStatus.status : "Deregistered";
                                       const registrationStateClass = reg.latest_registration ? memberStatus.className : "bg-red-100 text-red-800 border-red-300";
                                       return (
@@ -647,7 +660,7 @@ export default function MembersTable({
               </p>
               <div className="space-y-2 max-h-[200px] overflow-y-auto">
                 {membersRequiringDeregistration.map((member: any) => {
-                  const status = getMemberStatus(member.registered, member.resubmission_required);
+                  const status = getMemberStatus(member.registered, member.resubmission_required, member.non_registration);
                   const initials = `${member.member_first_name} ${member.member_surname}`
                     .split(" ")
                     .map((n: string) => n[0])

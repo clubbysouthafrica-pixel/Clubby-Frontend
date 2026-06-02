@@ -201,9 +201,12 @@ export function ClubRegisterForm() {
     setTotalRegistrationFee(total);
   };
 
-  const submitRegistration = () => {
+  const submitRegistration = (emailOptIn: boolean) => {
     if (registrationRequest) {
-      mutate(registrationRequest, {
+      mutate({
+        ...registrationRequest,
+        email_opt_in: emailOptIn,
+      }, {
         onSuccess: () => {
           setShowSuccess(true);
         },
@@ -305,6 +308,7 @@ export function ClubRegisterForm() {
   return (
     <div className="flex justify-center items-center py-8">
       <ReusableSubmitRegistration
+        publicEmailOptIn={false}
         showMemberInfo={false}
         clubName={clubName || data?.club_name || ""}
         clubProfileUrl={clubProfileUrl}

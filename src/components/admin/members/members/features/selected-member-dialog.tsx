@@ -12,9 +12,19 @@ import { Loader2 } from "lucide-react";
 import { ClubMember } from "@/interfaces/club";
 import { Badge } from "@/components/ui/badge";
 
-type SelectedMemberWithStatus = ClubMember & { registered?: boolean };
+type SelectedMemberWithStatus = ClubMember & {
+    registered?: boolean;
+    non_registration?: boolean;
+};
 
 const getMemberStatusBadge = (member: SelectedMemberWithStatus) => {
+    if (member.non_registration) {
+        return {
+            label: "Non Registration",
+            className: "bg-sky-100 text-sky-800 border-sky-300",
+        };
+    }
+
     if (member.deregistered_on || (member.registered === false && member.resubmission_required)) {
         return {
             label: "Deregistered",

@@ -58,6 +58,7 @@ export interface SubmitRegistrationRequest {
     member_email: string
     first_name: string
     surname: string
+    email_opt_in: boolean
     billing_fields: FieldRequest[],
     standard_fields: FieldRequest[]
 }
@@ -67,6 +68,7 @@ export function createValidRegistrationRequest(fields: PageFieldBase[], clubId: 
         member_email: member_email,
         surname: surname,
         first_name: firstname,
+        email_opt_in: false,
         club_account_id: clubId,
         billing_fields: [],
         standard_fields: []

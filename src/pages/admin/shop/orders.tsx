@@ -1,5 +1,5 @@
 import { Fragment, useContext, useEffect, useState, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -204,9 +204,24 @@ function shouldShowSingleOrderAmount(order: OrderPaymentMeta) {
   );
 }
 
+function getOrderMemberUserId(order: unknown) {
+  if (
+    typeof order === "object" &&
+    order !== null &&
+    "user_id" in order &&
+    typeof order.user_id === "string" &&
+    order.user_id.trim().length > 0
+  ) {
+    return order.user_id;
+  }
+
+  return null;
+}
+
 export default function OrdersPage() {
   const { club } = useContext(ClubContext) as ClubContextType;
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
 
   // Parse URL query params first
@@ -1260,7 +1275,7 @@ export default function OrdersPage() {
                     Transaction ID
                   </TableHead>
                   <TableHead className="h-11 w-[140px] text-center text-xs text-slate-200">
-                    Member Name
+                    Name
                   </TableHead>
                   <TableHead className="h-11 w-[140px] text-center text-xs text-slate-200">
                     Payment
@@ -1297,7 +1312,10 @@ export default function OrdersPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  allOrders.map((order) => (
+                  allOrders.map((order) => {
+                    const memberUserId = getOrderMemberUserId(order);
+
+                    return (
                     <Fragment key={order.order_id}>
                       <TableRow className="h-12 border-slate-200 bg-white text-sm hover:bg-slate-50">
                         <TableCell className="text-center">
@@ -1360,7 +1378,19 @@ export default function OrdersPage() {
                           )}
                         </TableCell>
                         <TableCell className="text-center text-sm text-slate-700">
-                          {`${order.first_name} ${order.surname}`}
+                          {memberUserId ? (
+                            <Button
+                              variant="link"
+                              className="h-auto p-0 text-sm font-normal text-slate-700 underline-offset-4 hover:text-slate-900 hover:underline"
+                              onClick={() =>
+                                navigate(`/manage/members?memberId=${encodeURIComponent(memberUserId)}&returnTo=${encodeURIComponent(`${location.pathname}${location.search}`)}&returnLabel=shop`)
+                              }
+                            >
+                              {`${order.first_name} ${order.surname}`}
+                            </Button>
+                          ) : (
+                            `${order.first_name} ${order.surname}`
+                          )}
                         </TableCell>
                         <TableCell className="text-center">
                           <div className="space-y-1">
@@ -1506,6 +1536,11 @@ export default function OrdersPage() {
                                           <p className="font-medium">
                                             {item.name}
                                           </p>
+                                          {item.selected_valid_day ? (
+                                            <p className="mt-1 text-xs font-medium uppercase tracking-[0.12em] text-amber-700">
+                                              Valid for {item.selected_valid_day}
+                                            </p>
+                                          ) : null}
                                           <div className="space-y-1 mt-2">
                                             {item.quantity > 0 && (
                                               <div className="flex items-center gap-2">
@@ -1578,7 +1613,8 @@ export default function OrdersPage() {
                         </TableRow>
                       )}
                     </Fragment>
-                  ))
+                  );
+                  })
                 )}
               </TableBody>
             </Table>
@@ -2148,6 +2184,11 @@ export default function OrdersPage() {
                       >
                         <div className="flex-1">
                           <p className="font-medium">{item.name}</p>
+                          {item.selected_valid_day ? (
+                            <p className="mt-1 text-xs font-medium uppercase tracking-[0.12em] text-amber-700">
+                              Valid for {item.selected_valid_day}
+                            </p>
+                          ) : null}
                           <p className="text-xs text-muted-foreground mt-1">
                             Qty: {item.quantity} ×{" "}
                             {formatAmount(item.price || 0, club?.currency)}

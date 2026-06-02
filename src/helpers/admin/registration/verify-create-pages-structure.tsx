@@ -1,11 +1,13 @@
 import { PageFormRegistration } from "@/interfaces/formRegistration";
 
 export function createPagesRequest(
-    pages: PageFormRegistration[]
+    pages: PageFormRegistration[],
+    formName?: string,
   ): PageFormRegistration[] {
   return pages.map((page, index) => ({
     ...page,
     page_index: index,
+    form_name: formName,
     fields: (page.fields ?? []).map((field) => {
       const {
         prorata_enabled: _prorataEnabled,

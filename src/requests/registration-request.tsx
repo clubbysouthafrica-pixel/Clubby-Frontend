@@ -5,6 +5,7 @@ export interface StandardField {
 
 export interface RegistrationRequest {
     email?: string
+    email_opt_in?: boolean
     club_account_id: string
     billing_fields: StandardField[]
     standard_fields: StandardField[]
@@ -14,6 +15,7 @@ export interface AdminRegistrationRequest {
     member_email: string
     first_name: string
     surname: string
+    email_opt_in?: boolean
     club_account_id: string
     billing_fields: StandardField[]
     standard_fields: StandardField[]

@@ -417,22 +417,29 @@ export default function ViewClubPage() {
     paymentQueryParams.get("accountNumber") ?? undefined;
   const paymentAccountType = paymentQueryParams.get("accountType") ?? undefined;
   const paymentBranchCode = paymentQueryParams.get("branchCode") ?? undefined;
+  const paymentOrderId = paymentQueryParams.get("orderId") ?? undefined;
   const paymentTransactionId = paymentQueryParams.get("transactionId") ?? undefined;
   const paymentPayfastEnabled = paymentQueryParams.get("payfastEnabled");
   const paymentSnapscanEnabled = paymentQueryParams.get("snapscanEnabled");
   const isPublicPaymentRoute = pathname === `/clubs/${clubId}/payments`;
   const shouldUsePublicPaymentData =
-    shouldForcePaymentAccess && isPublicPaymentRoute && !isLoggedIn;
+    shouldForcePaymentAccess && isPublicPaymentRoute;
   const [countryName, setCountryName] = useState("");
   const { data, isLoading, isError } = useFetchClub(
     clubId as string,
     !shouldUsePublicPaymentData,
   );
+  const hasClubRelationship = !!data?.club_member_exists;
+  const isNonRegistrationMember =
+    hasClubRelationship && data?.non_registration === true;
+  const isActualClubMember = hasClubRelationship && !isNonRegistrationMember;
+  const canViewRegistration =
+    isActualClubMember || !!data?.resubmission_required;
 
   const { data: bankDetails, isLoading: bankDetailsLoading } =
     useFetchClubBankDetails(
       clubId as string,
-      !!data?.club_member_exists && !shouldUsePublicPaymentData,
+      hasClubRelationship && !shouldUsePublicPaymentData,
     );
 
   const activeBankDetails = useMemo<BankDetails | null | undefined>(() => {
@@ -538,29 +545,37 @@ export default function ViewClubPage() {
   );
   const canViewBookings =
     isLoggedIn &&
-    !!data?.club_member_exists &&
+    isActualClubMember &&
     !!data?.registered &&
     !!data?.venues_enabled;
 
   const canViewEvents =
     isLoggedIn &&
-    !!data?.club_member_exists &&
+    isActualClubMember &&
     !!data?.registered &&
     !!data?.enable_events;
   const storageEnabled =
     typeof data?.enable_storage === "boolean" ? data.enable_storage : null;
   const isStorageExplicitlyDisabled =
     isLoggedIn &&
-    !!data?.club_member_exists &&
+    isActualClubMember &&
     !!data?.registered &&
     isStorageFeatureEnabled &&
     storageEnabled === false;
   const canViewStorage =
     isLoggedIn &&
-    !!data?.club_member_exists &&
+    isActualClubMember &&
     !!data?.registered &&
     storageEnabled === true &&
     isStorageFeatureEnabled;
+  const canViewMemberShop =
+    !data?.resubmission_required &&
+    !!data?.enable_shop &&
+    isActualClubMember &&
+    !!data?.registered;
+  const canViewPublicShop =
+    !!data?.enable_shop && data?.public_shop === true;
+  const showDedicatedShopSection = canViewMemberShop || (isLoggedIn && canViewPublicShop);
 
   const todayKey = useMemo(() => formatDateKey(new Date()), []);
   const [visibleCalendarMonth, setVisibleCalendarMonth] = useState(() =>
@@ -1130,7 +1145,7 @@ export default function ViewClubPage() {
 
   const handleViewRegistrationPaymentTarget = () => {
     setEventRegistrationSearch("");
-    handleSectionChange("member-registration");
+    handleSectionChange(canViewRegistration ? "member-registration" : "home");
   };
 
   const handleOpenOutstandingBalance = () => {
@@ -1241,6 +1256,18 @@ export default function ViewClubPage() {
     }
   }, [activeTab, canViewBookings, handleSectionChange]);
 
+  useEffect(() => {
+    if (activeTab === "member-registration" && !canViewRegistration) {
+      handleSectionChange("home", { replace: true });
+    }
+  }, [activeTab, canViewRegistration, handleSectionChange]);
+
+  useEffect(() => {
+    if (activeTab === "shop" && !showDedicatedShopSection) {
+      handleSectionChange("home", { replace: true });
+    }
+  }, [activeTab, handleSectionChange, showDedicatedShopSection]);
+
   const clubNavItems = useMemo<ClubNavItem[]>(() => {
     const items: ClubNavItem[] = [
       {
@@ -1250,19 +1277,22 @@ export default function ViewClubPage() {
       },
     ];
 
-    if (data?.club_member_exists || data?.resubmission_required) {
+    if (hasClubRelationship || data?.resubmission_required) {
       items.push(
         {
           key: "bank",
           label: "Payments",
           icon: CreditCard,
         },
-        {
+      );
+
+      if (canViewRegistration) {
+        items.push({
           key: "member-registration",
           label: "Registration",
           icon: FileText,
-        },
-      );
+        });
+      }
     }
 
     if (canViewBookings) {
@@ -1281,12 +1311,7 @@ export default function ViewClubPage() {
       });
     }
 
-    if (
-      !data?.resubmission_required &&
-      data?.enable_shop &&
-      (data?.club_member_exists || data?.resubmission_required) &&
-      data?.registered
-    ) {
+    if (showDedicatedShopSection) {
       items.push({
         key: "shop",
         label: "Shop",
@@ -1306,14 +1331,16 @@ export default function ViewClubPage() {
   }, [
     canViewBookings,
     canViewEvents,
+    canViewRegistration,
     canViewStorage,
-    data?.club_member_exists,
-    data?.enable_shop,
-    data?.registered,
     data?.resubmission_required,
+    hasClubRelationship,
+    showDedicatedShopSection,
   ]);
 
-  const showSidebarNavigation = Boolean(data?.club_member_exists);
+  const showSidebarNavigation = Boolean(
+    hasClubRelationship || data?.resubmission_required,
+  );
 
   if (isLoading) {
     return (
@@ -1341,6 +1368,7 @@ export default function ViewClubPage() {
           payfastEnabled={activePayfastEnabled}
           snapscanEnabled={activeSnapscanEnabled}
           userId={paymentUserId}
+          orderId={paymentOrderId}
           snapscanUserId={shouldUsePublicPaymentData ? paymentUserId : "LOGGED_IN"}
           snapscanTransactionId={
             activeSelectedPaymentOption?.transaction_id ??
@@ -1468,10 +1496,10 @@ export default function ViewClubPage() {
             )}
 
             {/* Section Navigation */}
-            <div className="container mx-auto mb-6 px-4">
+            <div className="container mx-auto mb-4 px-3 sm:mb-6 sm:px-4">
               {showSidebarNavigation && (
-                <div className="sticky top-16 z-20 -mx-4 mb-4 border-y border-slate-200 bg-white/95 px-4 py-2 shadow-[0_18px_45px_-30px_rgba(15,23,42,0.18)] backdrop-blur sm:mb-6 sm:py-3 lg:hidden">
-                  <div className="scrollbar-none -mb-1 flex gap-1.5 overflow-x-auto pb-1 sm:gap-2">
+                <div className="sticky top-16 z-20 -mx-3 mb-3 border-y border-slate-200 bg-white/95 px-3 py-1.5 shadow-[0_18px_45px_-30px_rgba(15,23,42,0.18)] backdrop-blur sm:-mx-4 sm:mb-6 sm:px-4 sm:py-3 lg:hidden">
+                  <div className="scrollbar-none -mb-0.5 flex gap-1 overflow-x-auto pb-0.5 sm:-mb-1 sm:gap-2 sm:pb-1">
                     {clubNavItems.map((item) => {
                       const Icon = item.icon;
                       const isActiveSection = activeTab === item.key;
@@ -1482,7 +1510,7 @@ export default function ViewClubPage() {
                           type="button"
                           onClick={() => handleSectionChange(item.key)}
                           className={cn(
-                            "group relative flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm",
+                            "group relative flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap transition-all duration-200 sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm",
                             isActiveSection
                               ? "border-slate-900 bg-slate-900 text-white shadow-[0_16px_30px_-20px_rgba(15,23,42,0.35)]"
                               : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
@@ -1490,13 +1518,13 @@ export default function ViewClubPage() {
                         >
                           <div
                             className={cn(
-                              "rounded-full p-1 transition-colors duration-200 sm:p-1.5",
+                              "rounded-full p-0.75 transition-colors duration-200 sm:p-1.5",
                               isActiveSection
                                 ? "bg-white/15 text-white"
                                 : "bg-slate-100 text-slate-700 group-hover:bg-slate-200",
                             )}
                           >
-                            <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                            <Icon className="h-3 w-3 sm:h-4 sm:w-4" />
                           </div>
                           <span>{item.label}</span>
                         </button>
@@ -1508,21 +1536,23 @@ export default function ViewClubPage() {
 
               <div>
                 <Tabs value={activeTab}>
-                  <ClubRegistrationTab
-                    membershipStatus={
-                      data.resubmission_required
-                        ? "Resubmission required"
-                        : data.registered
-                          ? "Registered"
-                          : "Pending"
-                    }
-                    clubName={data.club_name}
-                    currency={data.currency}
-                    clubAccountId={data.club_account_id}
-                    userId={data.user_id ?? ""}
-                  />
+                  {canViewRegistration && (
+                    <ClubRegistrationTab
+                      membershipStatus={
+                        data.resubmission_required
+                          ? "Resubmission required"
+                          : data.registered
+                            ? "Registered"
+                            : "Pending"
+                      }
+                      clubName={data.club_name}
+                      currency={data.currency}
+                      clubAccountId={data.club_account_id}
+                      userId={data.user_id ?? ""}
+                    />
+                  )}
                   <ClubShopTab
-                    enabled={Boolean(data?.enable_shop)}
+                    enabled={showDedicatedShopSection}
                   />
                   <ClubBookingsTab
                     canViewBookings={canViewBookings}
@@ -1551,14 +1581,14 @@ export default function ViewClubPage() {
                         ? epochToJoinedString(data.joined)
                         : "Not provided"
                     }
-                    isMember={data?.club_member_exists}
+                    isMember={isActualClubMember}
                     isRegistered={data?.registered}
                     resubmissionRequired={data?.resubmission_required}
                     primaryActionLabel={
                       data?.resubmission_required
                         ? "Re-registration Required"
-                        : !data?.club_member_exists
-                          ? "Join Club"
+                        : !isActualClubMember
+                          ? data?.form_name ?? "Join Club"
                           : undefined
                     }
                     primaryActionVariant={
@@ -1567,7 +1597,7 @@ export default function ViewClubPage() {
                     onPrimaryAction={
                       data?.resubmission_required
                         ? () => navigate(`/clubs/${clubId}/register`)
-                        : !data?.club_member_exists
+                        : !isActualClubMember
                           ? () =>
                               navigate(
                                 isLoggedIn
@@ -1588,7 +1618,12 @@ export default function ViewClubPage() {
                     galleryImages={galleryImages}
                     selectedGalleryImageIndex={selectedGalleryImageIndex}
                     setSelectedGalleryImageIndex={setSelectedGalleryImageIndex}
-                    enableShop={Boolean(data?.enable_shop)}
+                    publicShopEnabled={canViewPublicShop}
+                    onOpenPublicShop={
+                      !isLoggedIn && canViewPublicShop
+                        ? () => navigate(`/clubs/${clubId}/shop`)
+                        : undefined
+                    }
                     enableEvents={data?.enable_events}
                     isHomeEventsLoading={isHomeEventsLoading}
                     isHomeEventsError={isHomeEventsError}
@@ -1628,7 +1663,6 @@ export default function ViewClubPage() {
                     onSelectDate={setSelectedHomeDateKey}
                     onOpenEvents={() => handleSectionChange("events")}
                     onOpenBookings={() => handleSectionChange("bookings")}
-                    onOpenShop={() => handleSectionChange("shop")}
                     onOpenOutstandingBalance={handleOpenOutstandingBalance}
                   />
                   {canViewStorage && (
@@ -1640,7 +1674,7 @@ export default function ViewClubPage() {
                       />
                     </TabsContent>
                   )}
-                  {data?.club_member_exists && (
+                  {hasClubRelationship && (
                     <ClubPaymentsTab
                       data={data}
                       bankDetails={activeBankDetails}

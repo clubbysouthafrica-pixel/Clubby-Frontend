@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactElement } from "react";
 import InfoRow from "@/components/info-row";
 import SocialLink from "@/components/social-links";
+import MemberShopPage from "@/components/member/shop/shop";
 import { formatAmount } from "@/data/currencies";
 import {
   formatDateKey,
@@ -103,7 +104,8 @@ type ClubHomeTabProps = {
   galleryImages: GalleryImage[];
   selectedGalleryImageIndex: number | null;
   setSelectedGalleryImageIndex: (index: number | null) => void;
-  enableShop?: boolean;
+  publicShopEnabled?: boolean;
+  onOpenPublicShop?: () => void;
   enableEvents?: boolean;
   isHomeEventsLoading: boolean;
   isHomeEventsError: boolean;
@@ -128,7 +130,6 @@ type ClubHomeTabProps = {
   onSelectDate: (dateKey: string) => void;
   onOpenEvents: () => void;
   onOpenBookings: () => void;
-  onOpenShop?: () => void;
   onOpenOutstandingBalance?: () => void;
 };
 
@@ -157,7 +158,8 @@ export function ClubHomeTab({
   openingTimeEntries,
   galleryImages,
   setSelectedGalleryImageIndex,
-  enableShop,
+  publicShopEnabled,
+  onOpenPublicShop,
   enableEvents,
   isHomeEventsLoading,
   isHomeEventsError,
@@ -182,13 +184,11 @@ export function ClubHomeTab({
   onSelectDate,
   onOpenEvents,
   onOpenBookings,
-  onOpenShop,
   onOpenOutstandingBalance,
 }: ClubHomeTabProps) {
   const isMobile = useIsMobile();
   const [isDayCalendarOpen, setIsDayCalendarOpen] = useState(false);
   const [canShowSideAgenda, setCanShowSideAgenda] = useState(false);
-  const membershipTypesRef = useRef<HTMLElement | null>(null);
   const publicStoreRef = useRef<HTMLElement | null>(null);
   const primarySocialLinks: SocialActionLink[] = [];
 
@@ -262,64 +262,14 @@ export function ClubHomeTab({
           }
       : null;
   const isPublicLandingView = !isMember && !resubmissionRequired;
-  const membershipTypes = [
-    {
-      title: "Core Membership",
-      price:
-        typeof registrationAmount === "number" && registrationAmount > 0
-          ? formatAmount(registrationAmount, currency || "ZAR")
-          : "Contact club",
-      description: "A straightforward way to join the club and access its standard community offering.",
-      accent: "Best place to start",
-    },
-    {
-      title: "Family Membership",
-      price:
-        typeof registrationAmount === "number" && registrationAmount > 0
-          ? formatAmount(registrationAmount * 1.8, currency || "ZAR")
-          : "From club pricing",
-      description: "Mocked family-style pricing for households joining together under one club profile.",
-      accent: "Built for households",
-    },
-    {
-      title: "Supporter Pass",
-      price:
-        typeof registrationAmount === "number" && registrationAmount > 0
-          ? formatAmount(registrationAmount * 0.55, currency || "ZAR")
-          : "Contact club",
-      description: "A lighter mocked option for supporters who want updates, limited access, and club perks.",
-      accent: "Flexible option",
-    },
-  ];
-  const featuredProducts = [
-    {
-      title: "Club Cap",
-      price: formatAmount(249, currency || "ZAR"),
-      description: "Lightweight branded cap for match days and weekend training.",
-      badge: "Featured",
-    },
-    {
-      title: "Training Tee",
-      price: formatAmount(389, currency || "ZAR"),
-      description: "Soft performance tee in the club colorway.",
-      badge: "Popular",
-    },
-    {
-      title: "Starter Pack",
-      price: formatAmount(699, currency || "ZAR"),
-      description: "A mocked bundle with a cap, tee, and basic supporter extras.",
-      badge: "Bundle",
-    },
-  ];
-
+  const joinClubPriceLabel =
+    typeof registrationAmount === "number" && registrationAmount > 0
+      ? formatAmount(registrationAmount, currency || "ZAR")
+      : "Contact club";
   const selectedHomeDateItemCount =
     selectedHomeDateEvents.length + selectedHomeDateBookings.length;
   const dayAgendaCardClassName =
     "rounded-[1rem] border border-slate-200 bg-white p-2.5 shadow-[0_16px_48px_-32px_rgba(15,23,42,0.08)] sm:p-3";
-
-  const scrollToSection = (sectionRef: React.RefObject<HTMLElement | null>) => {
-    sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 1024px)");
@@ -345,9 +295,9 @@ export function ClubHomeTab({
   };
 
   return (
-    <TabsContent value="home" className="mt-3 sm:mt-6">
+    <TabsContent value="home" className="mt-2 sm:mt-6">
       <div className="relative">
-        <div className="relative h-28 overflow-hidden sm:h-36 md:h-56">
+        <div className="relative h-24 overflow-hidden sm:h-36 md:h-56">
           {coverImage ? (
             <div className="relative h-full w-full">
               <img
@@ -360,18 +310,18 @@ export function ClubHomeTab({
             <div className="flex h-full w-full items-center justify-center bg-slate-100">
               <div className="space-y-2 text-center">
                 <Users className="mx-auto h-16 w-16 text-slate-500/60" />
-                <p className="text-lg font-medium text-slate-600">{clubName}</p>
+                <p className="text-base font-medium text-slate-600">{clubName}</p>
               </div>
             </div>
           )}
         </div>
 
-        <div className="container relative mx-auto -mt-7 px-4 sm:-mt-10 md:-mt-14">
-          <Card className="py-2 gap-0 overflow-hidden rounded-[1.9rem] border-slate-200 bg-white shadow-[0_30px_90px_-42px_rgba(15,23,42,0.16)] backdrop-blur-sm">
-            <CardContent className="p-3 sm:p-6 lg:p-8">
-              <div className="flex flex-col items-start gap-3 sm:gap-5 lg:flex-row lg:items-center lg:gap-6">
+        <div className="container relative mx-auto -mt-6 px-3 sm:-mt-10 sm:px-4 md:-mt-14">
+          <Card className="gap-0 overflow-hidden rounded-[1.65rem] border-slate-200 bg-white py-1.5 shadow-[0_30px_90px_-42px_rgba(15,23,42,0.16)] backdrop-blur-sm sm:rounded-[1.9rem] sm:py-2">
+            <CardContent className="p-2.5 sm:p-6 lg:p-8">
+              <div className="flex flex-col items-start gap-2.5 sm:gap-5 lg:flex-row lg:items-center lg:gap-6">
                 <div className="relative">
-                  <Avatar className="h-16 w-16 border-4 border-white shadow-[0_18px_36px_-20px_rgba(14,116,144,0.45)] sm:h-24 sm:w-24">
+                  <Avatar className="h-14 w-14 border-4 border-white shadow-[0_18px_36px_-20px_rgba(14,116,144,0.45)] sm:h-24 sm:w-24">
                     {profileImage ? (
                       <AvatarImage className="object-cover object-center" src={profileImage} />
                     ) : (
@@ -380,15 +330,15 @@ export function ClubHomeTab({
                       </AvatarFallback>
                     )}
                   </Avatar>
-                  <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-slate-800 shadow-[0_10px_24px_-12px_rgba(15,23,42,0.45)] sm:h-8 sm:w-8">
-                    <Users className="h-3 w-3 text-white sm:h-4 sm:w-4" />
+                  <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-slate-800 shadow-[0_10px_24px_-12px_rgba(15,23,42,0.45)] sm:h-8 sm:w-8">
+                    <Users className="h-2.5 w-2.5 text-white sm:h-4 sm:w-4" />
                   </div>
                 </div>
 
-                <div className="flex-1 space-y-2 sm:space-y-3">
+                <div className="flex-1 space-y-1.5 sm:space-y-3">
                   <div className="space-y-1 sm:space-y-2">
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                      <h1 className="text-xl font-bold text-slate-950 sm:text-3xl md:text-4xl">
+                      <h1 className="text-base font-bold text-slate-950 sm:text-3xl md:text-4xl">
                         {clubName}
                       </h1>
                       {clubType && (
@@ -398,24 +348,24 @@ export function ClubHomeTab({
                       )}
                     </div>
                     {description && (
-                      <p className="text-sm leading-5 text-slate-600 sm:text-base sm:leading-relaxed lg:text-lg">{description}</p>
+                      <p className="text-xs leading-4.5 text-slate-600 sm:text-base sm:leading-relaxed lg:text-lg">{description}</p>
                     )}
                   </div>
 
                   {isPublicLandingView ? (
-                    <div className="rounded-[1.2rem] border border-slate-200 bg-slate-50 px-3 py-3 sm:px-4 sm:py-4">
+                    <div className="rounded-[1.1rem] border border-slate-200 bg-slate-50 px-3 py-2.5 sm:rounded-[1.2rem] sm:px-4 sm:py-4">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                         Public club overview
                       </p>
-                      <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-[15px]">
-                        Start with the essentials: review membership options, browse a mocked public store selection, and jump straight into joining this club.
+                      <p className="mt-1 hidden text-xs leading-4.5 text-slate-600 sm:block sm:text-[15px] sm:leading-6">
+                        Browse the club details, explore what is available publicly, and start your application whenever you are ready to join.
                       </p>
-                      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                      <div className="mt-2 flex flex-col gap-1.5 sm:flex-row sm:flex-wrap">
                         {primaryActionLabel && onPrimaryAction ? (
                           <Button
                             variant={primaryActionVariant}
                             className={cn(
-                              "w-full rounded-full px-4 py-4 text-sm font-semibold sm:w-auto",
+                              "h-9 w-full rounded-full px-3 text-xs font-semibold sm:h-auto sm:w-auto sm:px-4 sm:text-sm sm:py-2 lg:min-w-[13rem] lg:justify-center lg:px-6 lg:text-base",
                               primaryActionVariant === "destructive"
                                 ? "shadow-[0_18px_36px_-24px_rgba(220,38,38,0.45)]"
                                 : "bg-slate-900 text-white shadow-[0_18px_36px_-24px_rgba(15,23,42,0.38)] hover:bg-slate-800",
@@ -426,38 +376,18 @@ export function ClubHomeTab({
                             {primaryActionLabel}
                           </Button>
                         ) : null}
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full rounded-full sm:w-auto"
-                          onClick={() => scrollToSection(membershipTypesRef)}
-                        >
-                          <CheckCircle className="mr-2 h-4 w-4" />
-                          View membership types
-                        </Button>
-                        {enableShop ? (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full rounded-full sm:w-auto"
-                            onClick={() => scrollToSection(publicStoreRef)}
-                          >
-                            <ShoppingBag className="mr-2 h-4 w-4" />
-                            Browse public store
-                          </Button>
-                        ) : null}
                       </div>
                     </div>
                   ) : null}
 
                   {membershipState && (
-                    <div className="rounded-[1.2rem] border border-slate-200 bg-slate-50 px-3 py-2 sm:px-4 sm:py-3">
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <div className="rounded-[1.1rem] border border-slate-200 bg-slate-50 px-3 py-2 sm:rounded-[1.2rem] sm:px-4 sm:py-3">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-3">
                         <Badge className={cn("rounded-full border px-3 py-1 text-xs font-semibold", membershipState.badgeClassName)}>
                           <membershipState.icon className="mr-1.5 h-3.5 w-3.5" />
                           {membershipState.label}
                         </Badge>
-                        <p className="text-sm text-slate-600">{membershipState.description}</p>
+                        <p className="text-xs leading-4.5 text-slate-600 sm:text-sm">{membershipState.description}</p>
                       </div>
                     </div>
                   )}
@@ -490,7 +420,7 @@ export function ClubHomeTab({
                                 icon={link.icon}
                                 label={link.label}
                                 onClick={link.onClick}
-                                className="w-full px-2 py-2 text-xs sm:px-3"
+                                className="h-8 w-full px-1.5 py-1 text-[11px] sm:h-auto sm:px-3 sm:py-2 sm:text-xs"
                               />
                             ))}
                           </div>
@@ -503,7 +433,7 @@ export function ClubHomeTab({
                                 icon={link.icon}
                                 label={link.label}
                                 onClick={link.onClick}
-                                className="w-full px-3 py-2 text-xs"
+                                className="h-8 w-full px-2 py-1 text-[11px] sm:h-auto sm:px-3 sm:py-2 sm:text-xs"
                               />
                             ))}
                           </div>
@@ -516,18 +446,18 @@ export function ClubHomeTab({
                     <button
                       type="button"
                       onClick={onOpenOutstandingBalance}
-                      className="w-full rounded-[1.2rem] border border-orange-200 bg-orange-50 px-3 py-2 text-left transition-colors hover:bg-orange-100 sm:px-4 sm:py-3"
+                      className="w-full rounded-[1.1rem] border border-orange-200 bg-orange-50 px-3 py-2 text-left transition-colors hover:bg-orange-100 sm:rounded-[1.2rem] sm:px-4 sm:py-3"
                     >
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-700">
                             Outstanding Balance
                           </p>
-                          <p className="mt-1 text-lg font-semibold text-slate-950">
+                          <p className="mt-0.5 text-base font-semibold text-slate-950 sm:mt-1 sm:text-lg">
                             {formatAmount(outstandingBalanceAmount, currency || "ZAR")}
                           </p>
                         </div>
-                        <span className="text-sm font-medium text-orange-700">
+                        <span className="text-xs font-medium text-orange-700 sm:text-sm">
                           Open payments
                         </span>
                       </div>
@@ -540,7 +470,7 @@ export function ClubHomeTab({
                     <Button
                       variant={primaryActionVariant}
                       className={cn(
-                        "w-full rounded-full px-4 py-4 text-sm font-semibold lg:w-auto lg:px-5 lg:py-6",
+                        "h-9 w-full rounded-full px-3 text-xs font-semibold lg:h-auto lg:w-auto lg:px-5 lg:py-6 lg:text-sm",
                         primaryActionVariant === "destructive"
                           ? "shadow-[0_18px_36px_-24px_rgba(220,38,38,0.45)]"
                           : "bg-slate-900 text-white shadow-[0_18px_36px_-24px_rgba(15,23,42,0.38)] hover:bg-slate-800",
@@ -562,132 +492,122 @@ export function ClubHomeTab({
         </div>
       </div>
 
-      <div className="container mx-auto mb-4 mt-4 px-4 sm:mb-6 sm:mt-8">
+      <div className="container mx-auto mb-3 mt-3 px-3 sm:mb-6 sm:mt-8 sm:px-4">
         {isPublicLandingView ? (
-          <div className="mb-3 grid grid-cols-1 gap-3 sm:mb-4 sm:gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] xl:gap-5">
-            <section
-              ref={membershipTypesRef}
-              className="rounded-[1.5rem] border border-slate-200 bg-white p-3 shadow-[0_20px_60px_-36px_rgba(15,23,42,0.1)] sm:p-4"
-            >
-              <div className="flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Membership types
-                  </p>
-                  <h2 className="mt-1 text-lg font-semibold text-slate-950 sm:text-xl">
-                    Simple ways to join {clubName}
-                  </h2>
-                </div>
-                <p className="text-xs text-slate-500">
-                  Mocked options for the public landing page.
-                </p>
-              </div>
-
-              <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
-                {membershipTypes.map((membershipType) => (
-                  <div
-                    key={membershipType.title}
-                    className="rounded-[1.2rem] border border-slate-200 bg-slate-50 p-3"
-                  >
-                    <Badge className="border-slate-200 bg-white text-slate-700">
-                      {membershipType.accent}
-                    </Badge>
-                    <h3 className="mt-3 text-base font-semibold text-slate-950">
-                      {membershipType.title}
-                    </h3>
-                    <p className="mt-1 text-lg font-bold text-slate-950">
-                      {membershipType.price}
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
-                      {membershipType.description}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {enableShop ? (
+          <div
+            className={cn(
+              "mb-2 grid grid-cols-1 gap-2 sm:mb-4 sm:gap-4 xl:items-stretch xl:gap-5",
+              publicShopEnabled ? "xl:grid-cols-2" : "xl:grid-cols-1",
+            )}
+          >
+            {publicShopEnabled ? (
               <section
                 ref={publicStoreRef}
-                className="rounded-[1.5rem] border border-slate-200 bg-white p-3 shadow-[0_20px_60px_-36px_rgba(15,23,42,0.1)] sm:p-4"
+                className="rounded-[1.2rem] border border-slate-200 bg-white p-2 shadow-[0_20px_60px_-36px_rgba(15,23,42,0.1)] sm:rounded-[1.5rem] sm:p-4 xl:flex xl:h-[24rem] xl:flex-col"
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start justify-between gap-2.5">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                      Public store
+                      Public shop
                     </p>
-                    <h2 className="mt-1 text-lg font-semibold text-slate-950 sm:text-xl">
-                      Featured products
+                    <h2 className="mt-0.5 text-sm font-semibold text-slate-950 sm:mt-1 sm:text-xl">
+                      Shop products
                     </h2>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">
-                      Mocked public store items to help visitors discover club merchandise quickly.
+                    <p className="mt-1 hidden text-[11px] leading-4 text-slate-600 sm:block sm:text-sm sm:leading-6">
+                      Browse the products currently available from this club without leaving the home page.
                     </p>
                   </div>
-                  <div className="rounded-full bg-slate-100 p-2 text-slate-700">
-                    <ShoppingBag className="h-4 w-4" />
+                  <div className="flex items-center gap-2">
+                    {onOpenPublicShop ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-8 rounded-full border-slate-200 px-3 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 sm:h-9 sm:px-4 sm:text-sm"
+                        onClick={onOpenPublicShop}
+                      >
+                        Open shop
+                      </Button>
+                    ) : null}
+                    <div className="rounded-full bg-slate-100 p-1.5 text-slate-700 sm:p-2">
+                      <ShoppingBag className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    </div>
                   </div>
                 </div>
 
-                <div className="mt-3 space-y-2.5">
-                  {featuredProducts.map((product) => (
-                    <div
-                      key={product.title}
-                      className="rounded-[1.1rem] border border-slate-200 bg-slate-50 px-3 py-3"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-semibold text-slate-950">
-                            {product.title}
-                          </p>
-                          <p className="mt-1 text-sm text-slate-600">
-                            {product.description}
-                          </p>
-                        </div>
-                        <Badge className="border-slate-200 bg-white text-slate-700">
-                          {product.badge}
-                        </Badge>
-                      </div>
-                      <div className="mt-3 flex items-center justify-between gap-3">
-                        <p className="text-base font-semibold text-slate-950">
-                          {product.price}
-                        </p>
-                        <Button
-                          type="button"
-                          size="sm"
-                          className="rounded-full"
-                          onClick={onOpenShop}
-                        >
-                          Order through store
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                <div className="xl:min-h-0 xl:flex-1">
+                  <MemberShopPage embedded compact />
                 </div>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="mt-3 w-full rounded-full"
-                  onClick={onOpenShop}
-                >
-                  Open store
-                </Button>
               </section>
             ) : null}
+
+            <section
+              className={cn(
+                "rounded-[1.2rem] border border-slate-200 bg-white p-2 shadow-[0_20px_60px_-36px_rgba(15,23,42,0.1)] sm:rounded-[1.5rem] sm:p-4 xl:h-[24rem]",
+                !publicShopEnabled && "xl:w-full",
+              )}
+            >
+              <div className="flex flex-col gap-2 xl:h-full">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                    Join
+                  </p>
+                  <h2 className="mt-0.5 text-sm font-semibold text-slate-950 sm:mt-1 sm:text-xl">
+                    Become part of {clubName}
+                  </h2>
+                  <p className="mt-1 hidden text-[11px] leading-4 text-slate-600 sm:block sm:text-sm sm:leading-6">
+                    Join to unlock member registration, payments, and the full experience. Start with a simple application and complete the rest once you are approved.
+                  </p>
+                </div>
+
+                <div className="rounded-[1rem] border border-slate-200 bg-slate-50 p-2.5 sm:rounded-[1.2rem] sm:p-4 xl:flex xl:flex-1 xl:flex-col">
+                  <div className="flex items-start justify-between gap-2.5">
+                    <div>
+                      <Badge className="hidden border-slate-200 bg-white text-slate-700 sm:inline-flex">
+                        New members welcome
+                      </Badge>
+                      <p className="text-[13px] font-semibold text-slate-950 sm:mt-2.5 sm:text-lg">
+                        Registration from {joinClubPriceLabel}
+                      </p>
+                      <p className="mt-1 text-[11px] leading-4 text-slate-600 sm:text-sm sm:leading-6">
+                        Complete your application in a few steps and manage future payments and activity from one place.
+                      </p>
+                    </div>
+                    <div className="rounded-full bg-white p-1.5 text-slate-700 shadow-sm sm:p-2">
+                      <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    </div>
+                  </div>
+                  {primaryActionLabel && onPrimaryAction ? (
+                    <Button
+                      variant={primaryActionVariant}
+                      className={cn(
+                        "mt-2 h-8 w-full rounded-full px-3 text-[11px] font-semibold lg:text-base xl:mt-auto xl:h-auto",
+                        primaryActionVariant === "destructive"
+                          ? "shadow-[0_18px_36px_-24px_rgba(220,38,38,0.45)]"
+                          : "bg-slate-900 text-white shadow-[0_18px_36px_-24px_rgba(15,23,42,0.38)] hover:bg-slate-800",
+                      )}
+                      onClick={onPrimaryAction}
+                    >
+                      <Users className="mr-2 h-4 w-4" />
+                      {primaryActionLabel}
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            </section>
           </div>
         ) : null}
 
-        <div className="grid grid-cols-1 gap-3 sm:gap-4 xl:grid-cols-2 xl:gap-5">
+        <div className="grid grid-cols-1 gap-2.5 sm:gap-4 xl:grid-cols-2 xl:gap-5">
           <aside className="order-2 space-y-3 sm:space-y-4 xl:row-start-2 xl:self-start xl:space-y-5">
             <Card className="overflow-hidden rounded-[1.5rem] border-slate-200 bg-white shadow-[0_20px_60px_-36px_rgba(15,23,42,0.12)]">
               <div className="border-b border-slate-200 bg-white px-3 py-3 text-slate-900 sm:px-4 sm:py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-600/80">
                   Club Snapshot
                 </p>
-                <h3 className="mt-1.5 text-lg font-semibold sm:text-xl">
+                <h3 className="mt-1 text-base font-semibold sm:text-xl">
                   {clubName || "Club information"}
                 </h3>
-                <p className="mt-1.5 text-sm leading-5 text-slate-600">
+                <p className="mt-1 text-xs leading-4.5 text-slate-600 sm:text-sm sm:leading-5">
                   The essentials members and visitors need at a glance.
                 </p>
               </div>
@@ -702,8 +622,8 @@ export function ClubHomeTab({
             {openingTimeEntries.length > 0 && (
               <Card className="rounded-[1.5rem] border-slate-200 bg-white shadow-[0_20px_60px_-36px_rgba(15,23,42,0.1)]">
                 <CardHeader className="px-3 pb-2 pt-3 sm:px-4 sm:pb-2 sm:pt-4">
-                  <CardTitle className="text-lg text-slate-900">Opening Times</CardTitle>
-                  <CardDescription>Published club availability by day.</CardDescription>
+                  <CardTitle className="text-base text-slate-900 sm:text-lg">Opening Times</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">Published club availability by day.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-1.5 px-3 pb-3 pt-0 sm:px-4 sm:pb-4">
                   {openingTimeEntries.map((entry) => {
@@ -717,7 +637,7 @@ export function ClubHomeTab({
                       <div
                         key={entry.day}
                         className={cn(
-                          "flex items-center justify-between rounded-[1rem] border px-3 py-2 text-sm sm:px-3.5 sm:py-2.5",
+                          "flex items-center justify-between rounded-[1rem] border px-3 py-2 text-xs sm:px-3.5 sm:py-2.5 sm:text-sm",
                           isTodayEntry
                             ? "border-slate-300 bg-white text-slate-950"
                             : "border-slate-200 bg-white/80 text-slate-700",
@@ -729,7 +649,7 @@ export function ClubHomeTab({
                             <p className="text-xs font-medium uppercase tracking-wide text-slate-600">Today</p>
                           )}
                         </div>
-                        <span className="text-right text-sm font-medium">{entry.label}</span>
+                        <span className="text-right text-xs font-medium sm:text-sm">{entry.label}</span>
                       </div>
                     );
                   })}
@@ -747,10 +667,10 @@ export function ClubHomeTab({
                       Club Calendar
                     </Badge>
                     <div>
-                      <h2 className="text-lg font-semibold tracking-tight text-slate-950 sm:text-xl lg:text-2xl">
+                      <h2 className="text-base font-semibold tracking-tight text-slate-950 sm:text-xl lg:text-2xl">
                         What&apos;s happening at {clubName || "the club"}
                       </h2>
-                      <p className="mt-1 max-w-2xl text-sm leading-5 text-slate-600 sm:mt-1.5 sm:text-sm sm:leading-5">
+                      <p className="mt-1 max-w-2xl text-xs leading-4.5 text-slate-600 sm:mt-1.5 sm:text-sm sm:leading-5">
                         A focused monthly view of published club events, with the selected day agenda kept front and center.
                       </p>
                     </div>
@@ -759,17 +679,17 @@ export function ClubHomeTab({
                   <div className="grid grid-cols-3 gap-1.5 lg:min-w-[22rem]">
                     <div className="rounded-[1rem] border border-slate-200 bg-white/75 px-2.5 py-2 backdrop-blur sm:px-3 sm:py-2.5">
                       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">This Month</p>
-                      <p className="mt-1 text-base font-semibold text-slate-950 sm:text-xl">{homeEventsThisMonthCount}</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-950 sm:text-xl">{homeEventsThisMonthCount}</p>
                       <p className="text-[11px] text-slate-500 sm:text-xs">events</p>
                     </div>
                     <div className="rounded-[1rem] border border-slate-200 bg-white/75 px-2.5 py-2 backdrop-blur sm:px-3 sm:py-2.5">
                       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Selected Day</p>
-                      <p className="mt-1 text-base font-semibold text-slate-950 sm:text-xl">{selectedHomeDateItemCount}</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-950 sm:text-xl">{selectedHomeDateItemCount}</p>
                       <p className="text-[11px] text-slate-500 sm:text-xs">agenda items</p>
                     </div>
                     <div className="rounded-[1rem] border border-slate-200 bg-white/75 px-2.5 py-2 backdrop-blur sm:px-3 sm:py-2.5">
                       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Bookings</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-950">
+                      <p className="mt-1 text-xs font-semibold text-slate-950 sm:text-sm">
                         {homeBookingsNextSevenDaysCount > 0 ? `${homeBookingsNextSevenDaysCount} upcoming` : "No upcoming bookings"}
                       </p>
                       <p className="text-[11px] leading-4 text-slate-500 sm:text-xs">
@@ -786,8 +706,8 @@ export function ClubHomeTab({
                 {!enableEvents && homeBookingsNextSevenDaysCount === 0 ? (
                   <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 px-5 py-8 text-center sm:px-6 sm:py-12">
                     <CalendarDays className="mx-auto h-10 w-10 text-slate-400" />
-                    <h3 className="mt-4 text-lg font-semibold text-slate-900">Calendar coming soon</h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                    <h3 className="mt-3 text-base font-semibold text-slate-900 sm:mt-4 sm:text-lg">Calendar coming soon</h3>
+                    <p className="mt-1.5 text-xs leading-4.5 text-slate-600 sm:mt-2 sm:text-sm sm:leading-6">
                       This club has not enabled events yet. The surrounding club information is still available below.
                     </p>
                   </div>
@@ -802,8 +722,8 @@ export function ClubHomeTab({
                   </div>
                 ) : isHomeEventsError ? (
                   <div className="rounded-[1.5rem] border border-rose-200 bg-rose-50 px-6 py-8 text-center">
-                    <p className="text-base font-semibold text-rose-900">The calendar could not be loaded right now.</p>
-                    <p className="mt-2 text-sm text-rose-700">
+                    <p className="text-sm font-semibold text-rose-900 sm:text-base">The calendar could not be loaded right now.</p>
+                    <p className="mt-1.5 text-xs text-rose-700 sm:mt-2 sm:text-sm">
                       Refresh the page and try again. The rest of the club profile is still available.
                     </p>
                   </div>
@@ -814,7 +734,7 @@ export function ClubHomeTab({
                         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 sm:text-xs sm:tracking-[0.22em]">
                           {isDayCalendarOpen ? "Day Calendar" : "Browse Month"}
                         </p>
-                        <h3 className="mt-0.5 text-[15px] font-semibold text-slate-950 sm:mt-1 sm:text-lg">
+                        <h3 className="mt-0.5 text-sm font-semibold text-slate-950 sm:mt-1 sm:text-lg">
                           {isDayCalendarOpen
                             ? selectedHomeDateLabel
                             : visibleCalendarMonth.toLocaleDateString("en-US", {
@@ -862,8 +782,8 @@ export function ClubHomeTab({
                               >
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                   <div>
-                                    <p className="text-sm font-semibold text-slate-950 sm:text-base">{booking.venueName}</p>
-                                    <p className="mt-0.5 text-xs text-slate-600 sm:text-sm">{booking.timeLabel}</p>
+                                    <p className="text-xs font-semibold text-slate-950 sm:text-base">{booking.venueName}</p>
+                                    <p className="mt-0.5 text-[11px] text-slate-600 sm:text-sm">{booking.timeLabel}</p>
                                   </div>
                                   <Badge className="w-fit rounded-full border border-sky-200 bg-white px-2.5 py-1 text-[11px] text-sky-700">
                                     Booking
@@ -882,10 +802,10 @@ export function ClubHomeTab({
                                 >
                                   <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between">
                                     <div>
-                                      <p className="text-sm font-semibold text-slate-950 sm:text-base">{event.title}</p>
-                                      <p className="mt-0.5 text-xs text-slate-600 sm:text-sm">{formatRangeLabel(event)}</p>
+                                      <p className="text-xs font-semibold text-slate-950 sm:text-base">{event.title}</p>
+                                      <p className="mt-0.5 text-[11px] text-slate-600 sm:text-sm">{formatRangeLabel(event)}</p>
                                       {event.description ? (
-                                        <p className="mt-1.5 text-xs leading-5 text-slate-500 sm:text-sm">{event.description}</p>
+                                        <p className="mt-1 text-[11px] leading-4 text-slate-500 sm:text-sm">{event.description}</p>
                                       ) : null}
                                     </div>
                                     <Badge className={cn("w-fit rounded-full border px-2.5 py-1 text-[11px]", registrationStatus.className)}>
@@ -898,8 +818,8 @@ export function ClubHomeTab({
                           </div>
                         ) : (
                           <div className="rounded-[1.3rem] border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center sm:px-5 sm:py-8">
-                              <p className="text-base font-semibold text-slate-900 sm:text-lg">Nothing scheduled for this day</p>
-                              <p className="mt-1.5 text-sm leading-5 text-slate-600">
+                              <p className="text-sm font-semibold text-slate-900 sm:text-lg">Nothing scheduled for this day</p>
+                              <p className="mt-1 text-xs leading-4.5 text-slate-600 sm:text-sm sm:leading-5">
                               Pick another date in month view to inspect that day&apos;s bookings and events.
                             </p>
                           </div>
@@ -1035,7 +955,7 @@ export function ClubHomeTab({
                             <div className="flex flex-col gap-1.5 border-b border-slate-200 pb-2.5 sm:pb-3">
                               <div>
                                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Day Agenda</p>
-                                <h3 className="mt-0.5 text-[15px] font-semibold text-slate-950 sm:text-lg">{selectedHomeDateLabel}</h3>
+                                <h3 className="mt-0.5 text-sm font-semibold text-slate-950 sm:text-lg">{selectedHomeDateLabel}</h3>
                               </div>
                               {canViewEvents && (
                                 <Button variant="outline" className="h-7.5 w-fit rounded-full border-slate-300 bg-white/80 px-2.5 text-[11px] text-slate-900 hover:bg-slate-50 sm:h-8 sm:px-3 sm:text-xs" onClick={onOpenEvents}>
@@ -1057,7 +977,7 @@ export function ClubHomeTab({
                                           {booking.timeLabel}
                                         </Badge>
                                         <div>
-                                          <h4 className="text-sm font-semibold text-slate-950">{booking.venueName}</h4>
+                                          <h4 className="text-xs font-semibold text-slate-950 sm:text-sm">{booking.venueName}</h4>
                                         </div>
                                       </div>
 
@@ -1092,8 +1012,8 @@ export function ClubHomeTab({
                                             </Badge>
                                           </div>
                                           <div>
-                                            <h4 className="text-sm font-semibold text-slate-950">{event.title}</h4>
-                                            <p className="mt-0.5 text-xs font-medium text-slate-500">{formatRangeLabel(event)}</p>
+                                            <h4 className="text-xs font-semibold text-slate-950 sm:text-sm">{event.title}</h4>
+                                            <p className="mt-0.5 text-[11px] font-medium text-slate-500 sm:text-xs">{formatRangeLabel(event)}</p>
                                           </div>
                                         </div>
 
@@ -1104,7 +1024,7 @@ export function ClubHomeTab({
                                         )}
                                       </div>
 
-                                      <p className="mt-2 text-xs leading-5 text-slate-600 sm:text-sm">
+                                      <p className="mt-1.5 text-[11px] leading-4 text-slate-600 sm:mt-2 sm:text-sm">
                                         {event.description || "No event description has been published yet."}
                                       </p>
                                     </div>
@@ -1113,8 +1033,8 @@ export function ClubHomeTab({
                               </div>
                             ) : (
                               <div className="mt-2.5 rounded-[1rem] border border-dashed border-slate-300 bg-white/80 px-3 py-5 text-center">
-                                <p className="text-base font-semibold text-slate-900">No items scheduled for this day</p>
-                                <p className="mt-1.5 text-sm leading-5 text-slate-600">
+                                <p className="text-sm font-semibold text-slate-900 sm:text-base">No items scheduled for this day</p>
+                                <p className="mt-1 text-xs leading-4.5 text-slate-600 sm:text-sm sm:leading-5">
                                   {nextHomeEvent
                                     ? `The next published event is ${nextHomeEvent.title} on ${formatRangeLabel(nextHomeEvent)}.`
                                     : "There are no upcoming club events or bookings scheduled for this day."}
@@ -1131,10 +1051,10 @@ export function ClubHomeTab({
                       <div className="flex flex-col gap-1.5 border-b border-slate-200 pb-2.5 sm:flex-row sm:items-end sm:justify-between sm:pb-3">
                         <div>
                           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Day Agenda</p>
-                          <h3 className="mt-0.5 text-[15px] font-semibold text-slate-950 sm:text-lg">{selectedHomeDateLabel}</h3>
+                          <h3 className="mt-0.5 text-base font-semibold text-slate-950 sm:text-lg">{selectedHomeDateLabel}</h3>
                         </div>
                         {canViewEvents && (
-                          <Button variant="outline" className="h-7.5 rounded-full border-slate-300 bg-white/80 px-2.5 text-[11px] text-slate-900 hover:bg-slate-50 sm:h-8 sm:px-3 sm:text-xs" onClick={onOpenEvents}>
+                          <Button variant="outline" className="h-8 rounded-full border-slate-300 bg-white/80 px-3 text-xs text-slate-900 hover:bg-slate-50 sm:h-8 sm:px-3 sm:text-sm" onClick={onOpenEvents}>
                             Open Full Events View
                           </Button>
                         )}
@@ -1149,7 +1069,7 @@ export function ClubHomeTab({
                             >
                               <div className="flex flex-col gap-2 sm:gap-2.5">
                                 <div className="space-y-1.5">
-                                  <Badge className="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] text-slate-700">
+                                  <Badge className="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs text-slate-700 sm:text-sm">
                                     {booking.timeLabel}
                                   </Badge>
                                   <div>
@@ -1159,7 +1079,7 @@ export function ClubHomeTab({
 
                                 {canViewBookings && (
                                   <Button
-                                    className="h-8 w-fit rounded-full bg-slate-900 px-3 text-xs text-white shadow-[0_14px_30px_-18px_rgba(15,23,42,0.3)] hover:bg-slate-800 sm:h-9 sm:px-3.5 sm:text-sm"
+                                    className="h-8 w-fit rounded-full bg-slate-900 px-3 text-sm text-white shadow-[0_14px_30px_-18px_rgba(15,23,42,0.3)] hover:bg-slate-800 sm:h-9 sm:px-3.5"
                                     onClick={onOpenBookings}
                                   >
                                     Go to Bookings
@@ -1180,31 +1100,31 @@ export function ClubHomeTab({
                                 <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start lg:justify-between">
                                   <div className="space-y-2.5">
                                     <div className="flex flex-wrap items-center gap-2">
-                                      <Badge className={cn("rounded-full border px-3 py-1", registrationStatus.className)}>
+                                      <Badge className={cn("rounded-full border px-3 py-1 text-xs sm:text-sm", registrationStatus.className)}>
                                         {registrationStatus.label}
                                       </Badge>
-                                      <Badge className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-slate-700">
+                                      <Badge className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs text-slate-700 sm:text-sm">
                                         {getPricingSummary(event.pricing, currency || "ZAR")}
                                       </Badge>
                                     </div>
                                     <div>
                                       <h4 className="text-base font-semibold text-slate-950 sm:text-lg">{event.title}</h4>
-                                      <p className="mt-1 text-sm font-medium text-slate-500">{formatRangeLabel(event)}</p>
+                                      <p className="mt-0.5 text-sm font-medium text-slate-500 sm:mt-1">{formatRangeLabel(event)}</p>
                                     </div>
                                   </div>
 
                                   {canViewEvents && (
-                                    <Button className="h-8 rounded-full bg-slate-900 px-3 text-xs text-white shadow-[0_14px_30px_-18px_rgba(15,23,42,0.3)] hover:bg-slate-800 sm:h-9 sm:px-3.5 sm:text-sm" onClick={onOpenEvents}>
+                                    <Button className="h-8 rounded-full bg-slate-900 px-3 text-sm text-white shadow-[0_14px_30px_-18px_rgba(15,23,42,0.3)] hover:bg-slate-800 sm:h-9 sm:px-3.5" onClick={onOpenEvents}>
                                       Go to Events
                                     </Button>
                                   )}
                                 </div>
 
-                                <p className="mt-2.5 text-sm leading-5 text-slate-600 sm:mt-4 sm:leading-6">
+                                <p className="mt-2 text-sm leading-5 text-slate-600 sm:mt-4 sm:leading-6">
                                   {event.description || "No event description has been published yet."}
                                 </p>
 
-                                <div className="mt-2.5 flex flex-wrap gap-1.5 text-xs font-medium text-slate-500 sm:mt-4 sm:gap-2">
+                                <div className="mt-2.5 flex flex-wrap gap-1.5 text-sm font-medium text-slate-500 sm:mt-4 sm:gap-2">
                                   <span className="rounded-full border border-slate-200 bg-white/75 px-3 py-1">
                                     Registration opens {event.registrationOpenDate ? formatLongDate(event.registrationOpenDate) : "to be confirmed"}
                                   </span>
@@ -1218,8 +1138,8 @@ export function ClubHomeTab({
                         </div>
                       ) : (
                         <div className="mt-3 rounded-[1.2rem] border border-dashed border-slate-300 bg-white/80 px-4 py-6 text-center sm:px-5 sm:py-8">
-                          <p className="text-lg font-semibold text-slate-900">No items scheduled for this day</p>
-                          <p className="mt-2 text-sm leading-6 text-slate-600">
+                          <p className="text-base font-semibold text-slate-900 sm:text-lg">No items scheduled for this day</p>
+                          <p className="mt-1.5 text-sm leading-5 text-slate-600 sm:mt-2 sm:leading-6">
                             {nextHomeEvent
                               ? `The next published event is ${nextHomeEvent.title} on ${formatRangeLabel(nextHomeEvent)}.`
                               : "There are no upcoming club events or bookings scheduled for this day."}
@@ -1238,19 +1158,19 @@ export function ClubHomeTab({
             {aboutClub && (
               <Card className="rounded-[1.5rem] border-slate-200 bg-white shadow-[0_20px_60px_-36px_rgba(15,23,42,0.1)]">
                 <CardHeader className="px-3 pb-2 pt-3 sm:px-4 sm:pb-2 sm:pt-4">
-                  <CardTitle className="text-lg text-slate-900">Club Description</CardTitle>
-                  <CardDescription>A quick overview of what makes this club distinct.</CardDescription>
+                  <CardTitle className="text-base text-slate-900 sm:text-lg">Club Description</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">A quick overview of what makes this club distinct.</CardDescription>
                 </CardHeader>
                 <CardContent className="px-3 pb-3 pt-0 sm:px-4 sm:pb-4">
-                  <p className="whitespace-pre-wrap text-sm leading-5 text-slate-600 sm:leading-6">{aboutClub}</p>
+                  <p className="whitespace-pre-wrap text-xs leading-4.5 text-slate-600 sm:text-sm sm:leading-6">{aboutClub}</p>
                 </CardContent>
               </Card>
             )}
 
             <Card className="overflow-hidden rounded-[1.5rem] border-slate-200 bg-white shadow-[0_20px_60px_-36px_rgba(15,23,42,0.1)]">
               <CardHeader className="px-3 pb-2 pt-3 sm:px-4 sm:pb-2 sm:pt-4">
-                <CardTitle className="text-lg text-slate-900">Gallery</CardTitle>
-                <CardDescription>Recent visuals from the club community.</CardDescription>
+                <CardTitle className="text-base text-slate-900 sm:text-lg">Gallery</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Recent visuals from the club community.</CardDescription>
               </CardHeader>
               <CardContent className="px-3 pb-3 pt-0 sm:px-4 sm:pb-4">
                 {galleryImages.length > 0 ? (
@@ -1266,14 +1186,14 @@ export function ClubHomeTab({
                         )}
                       >
                         <img src={image.url} alt="Gallery" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                        <div className="absolute inset-x-0 bottom-0 bg-slate-950/70 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-white/85 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                        <div className="absolute inset-x-0 bottom-0 bg-slate-950/70 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/85 opacity-0 transition-opacity duration-300 group-hover:opacity-100 sm:text-xs">
                           Open Image
                         </div>
                       </button>
                     ))}
                   </div>
                 ) : (
-                  <div className="rounded-[1.4rem] border border-dashed border-slate-300 bg-slate-50/80 px-4 py-8 text-center text-sm text-slate-500">
+                  <div className="rounded-[1.4rem] border border-dashed border-slate-300 bg-slate-50/80 px-4 py-8 text-center text-xs text-slate-500 sm:text-sm">
                     No gallery images have been published yet.
                   </div>
                 )}

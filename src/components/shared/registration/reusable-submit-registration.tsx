@@ -15,33 +15,25 @@ export interface BillingFieldItem {
 }
 
 export interface ReusableSubmitRegistrationProps {
-  // Member info (optional)
   firstName?: string;
   surname?: string;
   email?: string;
+  publicEmailOptIn?: boolean;
   showMemberInfo?: boolean;
-
-  // Club and billing
   clubName: string;
   clubProfileUrl?: string;
   clubCurrency: string;
   totalRegistrationFee: number;
   billingFields: BillingFieldItem[];
   getFieldName: (fieldId: string) => string;
-
-  // Actions
   onBack: () => void;
-  onSubmit: () => void;
+  onSubmit: (emailOptIn: boolean) => void;
   isSubmitting: boolean;
-
-  // Optional customization
   headerDescription?: string;
   submitButtonText?: string;
   backButtonText?: string;
   bottomContent?: ReactNode;
   showPaymentWarning?: boolean;
-
-  // Styling
   className?: string;
 }
 
@@ -49,6 +41,7 @@ export function ReusableSubmitRegistration({
   firstName,
   surname,
   email,
+  publicEmailOptIn = false,
   showMemberInfo = false,
   clubName,
   clubProfileUrl,
@@ -59,10 +52,10 @@ export function ReusableSubmitRegistration({
   submitButtonText = "Submit registration",
   backButtonText = "Back to form",
   bottomContent,
-  showPaymentWarning = true,
   className = "",
 }: ReusableSubmitRegistrationProps) {
   const [agreed, setAgreed] = useState(false);
+  const [emailOptIn, setEmailOptIn] = useState(publicEmailOptIn);
 
   return (
     <div className="flex justify-center items-center px-4 lg:px-0">
@@ -76,7 +69,9 @@ export function ReusableSubmitRegistration({
             />
           )}
           <div className="flex flex-col items-center gap-2">
-            <CardTitle className="text-2xl lg:text-3xl text-center">{clubName}</CardTitle>
+            <CardTitle className="text-2xl lg:text-3xl text-center">
+              {clubName}
+            </CardTitle>
             <CardDescription className="text-center text-xs lg:text-xs">
               {headerDescription}
             </CardDescription>
@@ -103,7 +98,7 @@ export function ReusableSubmitRegistration({
                 )}
 
                 {/* Payment Warning */}
-                {showPaymentWarning && (
+                {/* {showPaymentWarning && (
                   <div className="bg-muted/20 p-3 rounded border space-y-2">
                     <p className="text-xs font-semibold text-yellow-700">
                       ⚠️ Please review your membership information carefully
@@ -126,7 +121,7 @@ export function ReusableSubmitRegistration({
                       in processing your membership.
                     </p>
                   </div>
-                )}
+                )} */}
               </div>
 
               <div className="flex items-start gap-2">
@@ -136,12 +131,36 @@ export function ReusableSubmitRegistration({
                   checked={agreed}
                   onChange={(e) => setAgreed(e.target.checked)}
                   required
-                  className="mt-0.5 flex-shrink-0"
+                  className="mt-1.5 flex-shrink-0"
                 />
-                <p className="text-[11px] lg:text-sm">
-                  I agree to the <a target="_blank" href="/terms" className="underline underline-offset-4 text-primary hover:text-primary/80">Terms of service</a> and the <a target="_blank" href="/legal" className="underline underline-offset-4 text-primary hover:text-primary/80">Privacy Policy</a>
+                <p className="text-[16px]">
+                  I agree to the{" "}
+                  <a
+                    target="_blank"
+                    href="/terms"
+                    className="underline underline-offset-4 text-primary hover:text-primary/80"
+                  >
+                    Terms of service
+                  </a>{" "}
+                  and the{" "}
+                  <a
+                    target="_blank"
+                    href="/legal"
+                    className="underline underline-offset-4 text-primary hover:text-primary/80"
+                  >
+                    Privacy Policy
+                  </a>
                 </p>
               </div>
+              <label className="flex items-start gap-3 rounded-2xl bg-white py-3 text-s">
+                <input
+                  type="checkbox"
+                  checked={emailOptIn}
+                  onChange={(e) => setEmailOptIn(e.target.checked)}
+                  className="mt-1.5 flex-shrink-0"
+                />
+                <span>Opt me in to receive emails from the organization.</span>
+              </label>
 
               {/* Action Buttons */}
               <div className="flex flex-col gap-3 pt-4 border-t">
@@ -159,7 +178,7 @@ export function ReusableSubmitRegistration({
                   type="button"
                   size="sm"
                   className="w-full"
-                  onClick={onSubmit}
+                  onClick={() => onSubmit(emailOptIn)}
                   disabled={(isSubmitting && !agreed) || !agreed}
                 >
                   {isSubmitting ? "Submitting..." : submitButtonText}

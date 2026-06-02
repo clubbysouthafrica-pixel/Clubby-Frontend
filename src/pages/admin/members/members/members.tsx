@@ -43,6 +43,8 @@ export default function MembersPage() {
   ) as ClubContextType;
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get("returnTo")?.trim() ?? "";
+  const returnLabel = searchParams.get("returnLabel")?.trim() ?? "members";
   const [requestedKeys, setRequestedKeys] = useState<string[]>([]);
 
   const [memberLimit, setMemberLimit] = useState(100);
@@ -432,6 +434,11 @@ export default function MembersPage() {
       : null;
 
   const handleBackToMembers = () => {
+    if (returnTo) {
+      navigate(returnTo, { replace: true });
+      return;
+    }
+
     setSelectedMember({});
     setHashUserId(null);
     const nextSearchParams = new URLSearchParams(searchParams.toString());
@@ -475,7 +482,7 @@ export default function MembersPage() {
                     onClick={handleBackToMembers}
                   >
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Go back to members
+                    {`Go back to ${returnLabel}`}
                   </Button>
                 </div>
 

@@ -107,6 +107,12 @@ interface PaletteFieldGroup {
   fields: PaletteFieldDefinition[];
 }
 
+const DEFAULT_PAGE: PageFormRegistration = {
+  page_index: 0,
+  page_header: "Page 1",
+  fields: [],
+};
+
 export default function AdminRegistrationFormPage() {
   const { club, setClub } = useContext(ClubContext) as ClubContextType;
   const [deletedFields, setDeletedFields] = useState<string[]>([]);
@@ -117,6 +123,7 @@ export default function AdminRegistrationFormPage() {
   );
 
   const [saving, setSaving] = useState(false);
+  const [formName, setFormName] = useState("Join Club");
 
   // controlled active tab so we can detect changes and scroll
   const [activeTabIndex, setActiveTabIndex] = useState(0);
@@ -168,23 +175,28 @@ export default function AdminRegistrationFormPage() {
     }),
   );
 
-  const defaultPage = { page_index: 0, page_header: "Page 1", fields: [] };
-
-  const [pages, setPages] = useState<PageFormRegistration[]>([defaultPage]);
+  const [pages, setPages] = useState<PageFormRegistration[]>([DEFAULT_PAGE]);
   const [originalPages, setOriginalPages] = useState<PageFormRegistration[]>([
-    defaultPage,
+    DEFAULT_PAGE,
   ]);
+  const [originalFormName, setOriginalFormName] = useState("Join Club");
 
   const hasUnsavedChanges = useMemo(() => {
     if (deletedFields.length > 0) {
       return true;
     }
 
+    if ((formName.trim() || "Join Club") !== originalFormName) {
+      return true;
+    }
+
     return (
-      JSON.stringify(createPagesRequest(pages)) !==
-      JSON.stringify(createPagesRequest(originalPages))
+      JSON.stringify(createPagesRequest(pages, formName.trim() || "Join Club")) !==
+      JSON.stringify(
+        createPagesRequest(originalPages, originalFormName),
+      )
     );
-  }, [deletedFields, pages, originalPages]);
+  }, [deletedFields, formName, originalFormName, pages, originalPages]);
 
   const isFormEmpty = useMemo(
     () => pages.every((page) => (page.fields?.length ?? 0) === 0),
@@ -205,8 +217,9 @@ export default function AdminRegistrationFormPage() {
   };
 
   useEffect(() => {
-    if (data?.pages?.length) {
-      const sortedPages = [...data.pages]
+    if (data) {
+      const incomingFormName = data.form_name?.trim() || "Join Club";
+      const sortedPages = [...(data.pages ?? [])]
         .sort(
           (a: PageFormRegistration, b: PageFormRegistration) =>
             a.page_index - b.page_index,
@@ -218,12 +231,16 @@ export default function AdminRegistrationFormPage() {
           ),
         }));
 
-      setOriginalPages(sortedPages);
-      setPages(sortedPages);
+      const nextPages = sortedPages.length > 0 ? sortedPages : [DEFAULT_PAGE];
+
+      setOriginalPages(nextPages);
+      setPages(nextPages);
       setDeletedFields([]);
+      setFormName(incomingFormName);
+      setOriginalFormName(incomingFormName);
       // initialize prevFieldCounts map
       const counts: Record<number, number> = {};
-      sortedPages.forEach(
+      nextPages.forEach(
         (p: PageFormRegistration) =>
           (counts[p.page_index] = p.fields?.length ?? 0),
       );
@@ -330,9 +347,10 @@ export default function AdminRegistrationFormPage() {
     setSaving(true);
     mutate(
       {
-        pages: createPagesRequest(pages),
+        pages: createPagesRequest(pages, formName.trim() || "Join Club"),
         deleteFields: createDeleteFieldsRequest(deletedFields, originalPages),
         club_account_id: club?.club_account_id as string,
+        form_name: formName.trim() || "Join Club",
       },
       {
         onSuccess: () => {
@@ -349,6 +367,7 @@ export default function AdminRegistrationFormPage() {
           setSaving(false);
           // Update originalPages with current pages so new fields are now locked
           setOriginalPages(pages);
+          setOriginalFormName(formName.trim() || "Join Club");
           setDeletedFields([]);
         },
         onError: (e) => {
@@ -371,7 +390,7 @@ export default function AdminRegistrationFormPage() {
                 fields: [],
               },
             ]
-          : [defaultPage];
+          : [DEFAULT_PAGE];
       // Jump to the new page in the section that initiated the add.
       setTimeout(() => {
         if (target === "preview") {
@@ -929,6 +948,16 @@ export default function AdminRegistrationFormPage() {
               Here you can build your dynamic member registration form for
               members to use and register to the club.
             </p>
+            <div className="mt-3 flex items-center gap-2">
+              <label htmlFor="form-name-input" className="text-sm font-medium text-slate-700 whitespace-nowrap">Form name</label>
+              <Input
+                id="form-name-input"
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                placeholder="Join Club"
+                className="h-8 w-56 text-sm"
+              />
+            </div>
           </div>
         </div>
         <div className="flex gap-4">
@@ -981,6 +1010,7 @@ export default function AdminRegistrationFormPage() {
                 setCurrentPageIndex={setMemberPreviewPageIndex}
                 setFieldValue={handleMemberPreviewFieldValue}
                 requiredFieldsMissing={memberPreviewRequiredFieldsMissing}
+                headerTitle={formName || "Join Club"}
                 headerDescription="This is the member-facing preview of your registration form."
                 showHeader={true}
                 showNavigation={true}

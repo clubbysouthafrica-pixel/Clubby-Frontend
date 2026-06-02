@@ -20,6 +20,7 @@ export interface Club {
     currency: string
     onboarded: boolean
     deregistration_in_progress: boolean
+    public_shop?: boolean
     enable_shop?: boolean
     enable_events?: boolean
     enable_storage?: boolean

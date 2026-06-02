@@ -211,10 +211,13 @@ export function ClubRegisterForm({
     setTotalRegistrationFee(total);
   };
 
-  const submitRegistration = () => {
+  const submitRegistration = (emailOptIn: boolean) => {
     setIsRegistering(true);
     if (registrationRequest) {
-      mutate(registrationRequest, {
+      mutate({
+        ...registrationRequest,
+        email_opt_in: emailOptIn,
+      }, {
         onSuccess: () => {
           setIsRegistering(false);
         },
@@ -329,6 +332,7 @@ export function ClubRegisterForm({
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <ReusableSubmitRegistration
+        publicEmailOptIn={false}
         firstName={memberFirstName}
         surname={memberSurname}
         email={memberEmail}

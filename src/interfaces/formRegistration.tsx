@@ -42,10 +42,12 @@ export interface PageFormRegistration {
     page_header: string
     page_index: number
     fields: InputFormRegistration[]
+    form_name?: string
 }
 
 export interface FormRegistrationRequest {
     club_account_id: string
     deleteFields: string[]
     pages: PageFormRegistration[]
+    form_name?: string
 }

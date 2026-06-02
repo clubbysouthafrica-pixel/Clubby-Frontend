@@ -6,6 +6,10 @@ export interface AddProductRequest {
     price: number;
     active_product: boolean;
     purchase_limit: "single" | "multiple";
+    product_type?: "standard" | "ticket";
+    valid_day_start_date?: string;
+    valid_day_end_date?: string;
+    excluded_valid_day_options?: string[];
     description?: string;
     product_image?: string;
 }
@@ -16,6 +20,10 @@ export interface UpdateProductRequest {
     name?: string;
     initial_quantity?: number;
     active_product?: boolean;
+    product_type?: "standard" | "ticket";
+    valid_day_start_date?: string;
+    valid_day_end_date?: string;
+    excluded_valid_day_options?: string[];
     product_image?: string;
 }
 

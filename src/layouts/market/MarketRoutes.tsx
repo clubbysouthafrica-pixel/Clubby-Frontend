@@ -58,6 +58,14 @@ export default function MarketRoutes() {
 
       <Route path="/clubs" element={<BrowseClubsPage />}></Route>
       <Route path="/clubs/:clubId" element={<ViewClubPage />}></Route>
+      <Route
+        path="/clubs/:clubId/shop"
+        element={<MemberShopPage productsOnly />}
+      ></Route>
+      <Route
+        path="/clubs/:clubId/shop/:productId"
+        element={<MemberShopPage productsOnly />}
+      ></Route>
       <Route path="/clubs/:clubId/payments" element={<ViewClubPage />}></Route>
       <Route
         path="/clubs/:clubId/public/register"

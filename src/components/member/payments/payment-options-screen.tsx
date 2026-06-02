@@ -38,6 +38,7 @@ interface PaymentOptionsScreenProps {
   payfastEnabled?: boolean;
   snapscanEnabled?: boolean;
   userId?: string;
+  orderId?: string;
   snapscanUserId?: string;
   snapscanTransactionId?: string;
   paymentReference?: string;
@@ -60,6 +61,7 @@ export default function PaymentOptionsScreen({
   payfastEnabled = false,
   snapscanEnabled = false,
   userId,
+  orderId,
   snapscanUserId,
   snapscanTransactionId,
   paymentReference,
@@ -100,8 +102,9 @@ export default function PaymentOptionsScreen({
   };
 
   const outstandingAmount = selectedPaymentOption?.outstanding_amount ?? bankDetails?.outstanding_amount ?? 0;
+  const resolvedTransactionId = selectedPaymentOption?.transaction_id ?? snapscanTransactionId;
   const snapscanRequest = useMemo<FetchSnapScanQRCodeRequest | null>(() => {
-    const transactionId = selectedPaymentOption?.transaction_id ?? snapscanTransactionId;
+    const transactionId = resolvedTransactionId;
 
     if (!snapscanEnabled || !clubAccountId || !snapscanUserId || !transactionId) {
       return null;
@@ -114,9 +117,8 @@ export default function PaymentOptionsScreen({
     };
   }, [
     clubAccountId,
-    selectedPaymentOption?.transaction_id,
+    resolvedTransactionId,
     snapscanEnabled,
-    snapscanTransactionId,
     snapscanUserId,
   ]);
   const {
@@ -488,8 +490,8 @@ export default function PaymentOptionsScreen({
                   clubAccountId={clubAccountId}
                   outstandingAmount={outstandingAmount}
                   userId={userId}
-                  transactionId={selectedPaymentOption?.transaction_id}
-                  orderId={selectedPaymentOption?.order_id}
+                  transactionId={resolvedTransactionId}
+                  orderId={selectedPaymentOption?.order_id ?? orderId}
                   eventId={selectedPaymentOption?.event_id}
                   eventRegistrationId={selectedPaymentOption?.event_registration_id}
                   showHeader={false}
