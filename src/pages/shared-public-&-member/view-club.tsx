@@ -1627,6 +1627,7 @@ export default function ViewClubPage() {
                     enableEvents={data?.enable_events}
                     isHomeEventsLoading={isHomeEventsLoading}
                     isHomeEventsError={isHomeEventsError}
+                    homeEventsTotalCount={homeEvents.length}
                     homeEventsThisMonthCount={homeEventsThisMonthCount}
                     homeBookingsNextSevenDaysCount={
                       upcomingMemberBookings.length

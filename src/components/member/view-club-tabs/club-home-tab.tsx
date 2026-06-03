@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type ReactElement } from "react";
-import InfoRow from "@/components/info-row";
 import SocialLink from "@/components/social-links";
 import MemberShopPage from "@/components/member/shop/shop";
 import { formatAmount } from "@/data/currencies";
@@ -68,6 +67,89 @@ export type HomeBookingItem = {
 
 const HOME_CALENDAR_WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+function GalleryCarousel({
+  galleryImages,
+  onOpenImage,
+}: {
+  galleryImages: GalleryImage[];
+  onOpenImage: (index: number) => void;
+}) {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const prev = () =>
+    setActiveIndex((i) => (i === 0 ? galleryImages.length - 1 : i - 1));
+  const next = () =>
+    setActiveIndex((i) => (i === galleryImages.length - 1 ? 0 : i + 1));
+
+  return (
+    <Card className="overflow-hidden rounded-[1.5rem] border-slate-200 bg-white shadow-[0_20px_60px_-36px_rgba(15,23,42,0.1)]">
+      <CardContent className="px-3 pb-3 pt-3 sm:px-4 sm:pb-4 sm:pt-4">
+        {galleryImages.length > 0 ? (
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => onOpenImage(activeIndex)}
+              className="group relative block w-full overflow-hidden rounded-[1.35rem] bg-slate-100"
+              style={{ aspectRatio: "16/9" }}
+            >
+              <img
+                src={galleryImages[activeIndex].url}
+                alt="Gallery"
+                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+              <div className="absolute inset-x-0 bottom-0 bg-slate-950/70 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/85 opacity-0 transition-opacity duration-300 group-hover:opacity-100 sm:text-xs">
+                Open Image
+              </div>
+            </button>
+
+            {galleryImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={prev}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-1.5 shadow-md backdrop-blur-sm hover:bg-white transition-colors"
+                  aria-label="Previous image"
+                >
+                  <ArrowLeft className="h-4 w-4 text-slate-800" />
+                </button>
+                <button
+                  type="button"
+                  onClick={next}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-1.5 shadow-md backdrop-blur-sm hover:bg-white transition-colors"
+                  aria-label="Next image"
+                >
+                  <ArrowRight className="h-4 w-4 text-slate-800" />
+                </button>
+
+                <div className="mt-2.5 flex justify-center gap-1.5">
+                  {galleryImages.map((_, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setActiveIndex(idx)}
+                      aria-label={`Go to image ${idx + 1}`}
+                      className={cn(
+                        "h-1.5 rounded-full transition-all duration-200",
+                        idx === activeIndex
+                          ? "w-4 bg-slate-800"
+                          : "w-1.5 bg-slate-300 hover:bg-slate-400",
+                      )}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-[1.4rem] border border-dashed border-slate-300 bg-slate-50/80 px-4 py-8 text-center text-xs text-slate-500 sm:text-sm">
+            No gallery images have been published yet.
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function abbreviateCalendarLabel(value: string, maxLength = 18) {
   const normalizedValue = value.trim().replace(/\s+/g, " ");
 
@@ -109,6 +191,7 @@ type ClubHomeTabProps = {
   enableEvents?: boolean;
   isHomeEventsLoading: boolean;
   isHomeEventsError: boolean;
+  homeEventsTotalCount: number;
   homeEventsThisMonthCount: number;
   homeBookingsNextSevenDaysCount: number;
   selectedHomeDateEvents: MemberEvent[];
@@ -163,6 +246,7 @@ export function ClubHomeTab({
   enableEvents,
   isHomeEventsLoading,
   isHomeEventsError,
+  homeEventsTotalCount,
   homeEventsThisMonthCount,
   homeBookingsNextSevenDaysCount,
   selectedHomeDateEvents,
@@ -355,10 +439,10 @@ export function ClubHomeTab({
                   {isPublicLandingView ? (
                     <div className="rounded-[1.1rem] border border-slate-200 bg-slate-50 px-3 py-2.5 sm:rounded-[1.2rem] sm:px-4 sm:py-4">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                        Public club overview
+                        Overview
                       </p>
                       <p className="mt-1 hidden text-xs leading-4.5 text-slate-600 sm:block sm:text-[15px] sm:leading-6">
-                        Browse the club details, explore what is available publicly, and start your application whenever you are ready to join.
+                        {aboutClub || "Browse the club details, explore what is available publicly, and start your application whenever you are ready to join."}
                       </p>
                       <div className="mt-2 flex flex-col gap-1.5 sm:flex-row sm:flex-wrap">
                         {primaryActionLabel && onPrimaryAction ? (
@@ -598,66 +682,47 @@ export function ClubHomeTab({
         ) : null}
 
         <div className="grid grid-cols-1 gap-2.5 sm:gap-4 xl:grid-cols-2 xl:gap-5">
-          <aside className="order-2 space-y-3 sm:space-y-4 xl:row-start-2 xl:self-start xl:space-y-5">
-            <Card className="overflow-hidden rounded-[1.5rem] border-slate-200 bg-white shadow-[0_20px_60px_-36px_rgba(15,23,42,0.12)]">
-              <div className="border-b border-slate-200 bg-white px-3 py-3 text-slate-900 sm:px-4 sm:py-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-600/80">
-                  Club Snapshot
-                </p>
-                <h3 className="mt-1 text-base font-semibold sm:text-xl">
-                  {clubName || "Club information"}
-                </h3>
-                <p className="mt-1 text-xs leading-4.5 text-slate-600 sm:text-sm sm:leading-5">
-                  The essentials members and visitors need at a glance.
-                </p>
-              </div>
+          {openingTimeEntries.length > 0 && (
+          <aside className="order-3 space-y-3 sm:space-y-4 xl:row-start-3 xl:self-start xl:space-y-5">
+            <Card className="rounded-[1.5rem] border-slate-200 bg-white shadow-[0_20px_60px_-36px_rgba(15,23,42,0.1)]">
+              <CardHeader className="px-3 pb-2 pt-3 sm:px-4 sm:pb-2 sm:pt-4">
+                <CardTitle className="text-base text-slate-900 sm:text-lg">Opening Times</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Published club availability by day.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-1.5 px-3 pb-3 pt-0 sm:px-4 sm:pb-4">
+                {openingTimeEntries.map((entry) => {
+                  const isTodayEntry =
+                    entry.day.slice(0, 3).toLowerCase() ===
+                    new Intl.DateTimeFormat("en-US", { weekday: "short" })
+                      .format(new Date())
+                      .toLowerCase();
 
-              <CardContent className="space-y-2.5 p-3 sm:space-y-4 sm:p-4">
-                <InfoRow icon={<Mail />} label="Support Email" value={supportEmail || "Not provided"} />
-                <InfoRow icon={<MapPin />} label="Location" value={countryName || "Not provided"} />
-                <InfoRow icon={<Calendar />} label="Established" value={joinedLabel || "Not provided"} />
+                  return (
+                    <div
+                      key={entry.day}
+                      className={cn(
+                        "flex items-center justify-between rounded-[1rem] border px-3 py-2 text-xs sm:px-3.5 sm:py-2.5 sm:text-sm",
+                        isTodayEntry
+                          ? "border-slate-300 bg-white text-slate-950"
+                          : "border-slate-200 bg-white/80 text-slate-700",
+                      )}
+                    >
+                      <div>
+                        <p className="font-medium capitalize">{entry.day}</p>
+                        {isTodayEntry && (
+                          <p className="text-xs font-medium uppercase tracking-wide text-slate-600">Today</p>
+                        )}
+                      </div>
+                      <span className="text-right text-xs font-medium sm:text-sm">{entry.label}</span>
+                    </div>
+                  );
+                })}
               </CardContent>
             </Card>
-
-            {openingTimeEntries.length > 0 && (
-              <Card className="rounded-[1.5rem] border-slate-200 bg-white shadow-[0_20px_60px_-36px_rgba(15,23,42,0.1)]">
-                <CardHeader className="px-3 pb-2 pt-3 sm:px-4 sm:pb-2 sm:pt-4">
-                  <CardTitle className="text-base text-slate-900 sm:text-lg">Opening Times</CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">Published club availability by day.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-1.5 px-3 pb-3 pt-0 sm:px-4 sm:pb-4">
-                  {openingTimeEntries.map((entry) => {
-                    const isTodayEntry =
-                      entry.day.slice(0, 3).toLowerCase() ===
-                      new Intl.DateTimeFormat("en-US", { weekday: "short" })
-                        .format(new Date())
-                        .toLowerCase();
-
-                    return (
-                      <div
-                        key={entry.day}
-                        className={cn(
-                          "flex items-center justify-between rounded-[1rem] border px-3 py-2 text-xs sm:px-3.5 sm:py-2.5 sm:text-sm",
-                          isTodayEntry
-                            ? "border-slate-300 bg-white text-slate-950"
-                            : "border-slate-200 bg-white/80 text-slate-700",
-                        )}
-                      >
-                        <div>
-                          <p className="font-medium capitalize">{entry.day}</p>
-                          {isTodayEntry && (
-                            <p className="text-xs font-medium uppercase tracking-wide text-slate-600">Today</p>
-                          )}
-                        </div>
-                        <span className="text-right text-xs font-medium sm:text-sm">{entry.label}</span>
-                      </div>
-                    );
-                  })}
-                </CardContent>
-              </Card>
-            )}
           </aside>
+          )}
 
+          {enableEvents && (isHomeEventsLoading || isHomeEventsError || homeEventsTotalCount > 0) && (
           <section className="order-1 space-y-3 sm:space-y-4 xl:col-span-2 xl:row-start-1 xl:space-y-5">
             <Card className="overflow-hidden rounded-[1.6rem] border-slate-200 bg-white shadow-[0_24px_70px_-38px_rgba(15,23,42,0.12)]">
               <div className="border-b border-slate-200 bg-white px-3 py-3 sm:px-4 sm:py-4 lg:px-5 lg:py-5">
@@ -1153,52 +1218,13 @@ export function ClubHomeTab({
               </CardContent>
             </Card>
           </section>
+          )}
 
-          <aside className="order-3 space-y-3 sm:space-y-4 xl:row-start-2 xl:w-full xl:self-start xl:space-y-5">
-            {aboutClub && (
-              <Card className="rounded-[1.5rem] border-slate-200 bg-white shadow-[0_20px_60px_-36px_rgba(15,23,42,0.1)]">
-                <CardHeader className="px-3 pb-2 pt-3 sm:px-4 sm:pb-2 sm:pt-4">
-                  <CardTitle className="text-base text-slate-900 sm:text-lg">Club Description</CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">A quick overview of what makes this club distinct.</CardDescription>
-                </CardHeader>
-                <CardContent className="px-3 pb-3 pt-0 sm:px-4 sm:pb-4">
-                  <p className="whitespace-pre-wrap text-xs leading-4.5 text-slate-600 sm:text-sm sm:leading-6">{aboutClub}</p>
-                </CardContent>
-              </Card>
-            )}
-
-            <Card className="overflow-hidden rounded-[1.5rem] border-slate-200 bg-white shadow-[0_20px_60px_-36px_rgba(15,23,42,0.1)]">
-              <CardHeader className="px-3 pb-2 pt-3 sm:px-4 sm:pb-2 sm:pt-4">
-                <CardTitle className="text-base text-slate-900 sm:text-lg">Gallery</CardTitle>
-                <CardDescription className="text-xs sm:text-sm">Recent visuals from the club community.</CardDescription>
-              </CardHeader>
-              <CardContent className="px-3 pb-3 pt-0 sm:px-4 sm:pb-4">
-                {galleryImages.length > 0 ? (
-                  <div className="grid auto-rows-[4.5rem] grid-cols-2 gap-1.5 sm:auto-rows-[6.75rem] sm:gap-2.5">
-                    {galleryImages.slice(0, 5).map((image, idx) => (
-                      <button
-                        key={image.key}
-                        type="button"
-                        onClick={() => setSelectedGalleryImageIndex(idx)}
-                        className={cn(
-                          "group relative overflow-hidden rounded-[1.35rem] bg-slate-100 text-left transition-transform hover:-translate-y-0.5",
-                          idx === 0 && "col-span-2 row-span-2",
-                        )}
-                      >
-                        <img src={image.url} alt="Gallery" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                        <div className="absolute inset-x-0 bottom-0 bg-slate-950/70 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/85 opacity-0 transition-opacity duration-300 group-hover:opacity-100 sm:text-xs">
-                          Open Image
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="rounded-[1.4rem] border border-dashed border-slate-300 bg-slate-50/80 px-4 py-8 text-center text-xs text-slate-500 sm:text-sm">
-                    No gallery images have been published yet.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          <aside className="order-2 space-y-3 sm:space-y-4 xl:col-span-2 xl:row-start-2 xl:self-start xl:space-y-5">
+            <GalleryCarousel
+              galleryImages={galleryImages}
+              onOpenImage={setSelectedGalleryImageIndex}
+            />
           </aside>
         </div>
       </div>
