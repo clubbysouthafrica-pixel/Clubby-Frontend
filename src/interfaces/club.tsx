@@ -42,6 +42,7 @@ export interface ClubMember {
     user_id: string
     resubmission_required: boolean
     missing_club_member?: boolean
+    email_opt_in?: boolean
 }
 
 export interface RegisterClubMember {

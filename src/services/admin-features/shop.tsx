@@ -12,6 +12,7 @@ export interface AddProductRequest {
     excluded_valid_day_options?: string[];
     description?: string;
     product_image?: string;
+    auto_deliver?: boolean;
 }
 
 export interface UpdateProductRequest {
@@ -25,6 +26,7 @@ export interface UpdateProductRequest {
     valid_day_end_date?: string;
     excluded_valid_day_options?: string[];
     product_image?: string;
+    auto_deliver?: boolean;
 }
 
 export const addProduct = (productRequest: AddProductRequest): Promise<any> => {

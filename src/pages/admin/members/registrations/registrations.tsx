@@ -352,6 +352,7 @@ export default function RegistrationsPage() {
       return {
         email: member.member_email as string,
         name: `${member.member_first_name} ${member.member_surname}`,
+        email_opt_in: member.email_opt_in,
       };
     });
     const allDeregisterMembers = members.map((member: ClubMember) => {

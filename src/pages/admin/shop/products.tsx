@@ -82,6 +82,7 @@ type ProductRecord = {
   ticketDateConfig: TicketDateConfig;
   validDayOptions: string[];
   image?: string;
+  autoDeliver?: boolean;
 };
 
 type RawProductRecord = {
@@ -99,6 +100,7 @@ type RawProductRecord = {
   excluded_valid_day_options?: string[];
   valid_day_options?: string[];
   product_image_url?: string;
+  auto_deliver?: boolean;
 };
 
 const getErrorMessage = (error: unknown, fallback: string) => {
@@ -177,6 +179,7 @@ export default function ProductsPage() {
   const [editProductType, setEditProductType] = useState<"standard" | "ticket">("standard");
   const [editTicketDateConfig, setEditTicketDateConfig] = useState<TicketDateConfig>(emptyTicketDateConfig);
   const [editProductImage, setEditProductImage] = useState<string>("");
+  const [editAutoDeliver, setEditAutoDeliver] = useState(false);
   const [isSavingProduct, setIsSavingProduct] = useState(false);
   
   // Form state
@@ -189,6 +192,7 @@ export default function ProductsPage() {
   const [productType, setProductType] = useState<"standard" | "ticket">("standard");
   const [ticketDateConfig, setTicketDateConfig] = useState<TicketDateConfig>(emptyTicketDateConfig);
   const [productImage, setProductImage] = useState<string>("");
+  const [autoDeliver, setAutoDeliver] = useState(false);
   const [isEnablingShop, setIsEnablingShop] = useState(false);
   const [isTogglingShop, setIsTogglingShop] = useState(false);
   const [isTogglingPublicShop, setIsTogglingPublicShop] = useState(false);
@@ -213,6 +217,7 @@ export default function ProductsPage() {
           ticketDateConfig,
           validDayOptions: normalizeTicketValidDayOptions(product),
           image: product?.product_image_url ?? undefined,
+          autoDeliver: product.auto_deliver ?? false,
         };
       });
       setProducts(formattedProducts);
@@ -238,6 +243,7 @@ export default function ProductsPage() {
     setProductType("standard");
     setTicketDateConfig(emptyTicketDateConfig());
     setProductImage("");
+    setAutoDeliver(false);
   };
 
   const resetEditForm = () => {
@@ -248,6 +254,7 @@ export default function ProductsPage() {
     setEditProductType("standard");
     setEditTicketDateConfig(emptyTicketDateConfig());
     setEditProductImage("");
+    setEditAutoDeliver(false);
     setIsSavingProduct(false);
   };
 
@@ -309,6 +316,7 @@ export default function ProductsPage() {
                 .filter(Boolean)
             : undefined,
         description: description || undefined,
+        auto_deliver: autoDeliver,
         ...(productImage && { product_image: productImage }),
       };
 
@@ -337,6 +345,7 @@ export default function ProductsPage() {
               }
             : emptyTicketDateConfig(),
         validDayOptions: productType === "ticket" ? ticketDateResult.options : [],
+        autoDeliver,
       };
 
       setProducts(prev => [...prev, newProduct]);
@@ -412,6 +421,7 @@ export default function ProductsPage() {
     setEditProductType(product.productType);
     setEditTicketDateConfig(product.ticketDateConfig);
     setEditProductImage(product.image ?? "");
+    setEditAutoDeliver(product.autoDeliver ?? false);
     setEditDialogOpen(true);
   };
 
@@ -485,6 +495,7 @@ export default function ProductsPage() {
                 .map((value) => value.trim())
                 .filter(Boolean)
             : [],
+        auto_deliver: editAutoDeliver,
       };
 
       // Only include product_image if it has changed
@@ -517,14 +528,15 @@ export default function ProductsPage() {
                 validDayOptions:
                   editProductType === "ticket" ? editTicketDateResult.options : [],
                 image: editProductImage || undefined,
+                autoDeliver: editAutoDeliver,
               }
             : item,
         ),
       );
-      
+
       // Update original values after successful save
-      setOriginalProducts(prev => 
-        prev.map(orig => 
+      setOriginalProducts(prev =>
+        prev.map(orig =>
           orig.id === editingProductId
             ? {
                 ...orig,
@@ -546,6 +558,7 @@ export default function ProductsPage() {
                 validDayOptions:
                   editProductType === "ticket" ? editTicketDateResult.options : [],
                 image: editProductImage || undefined,
+                autoDeliver: editAutoDeliver,
               }
             : orig
         )
@@ -1054,8 +1067,20 @@ export default function ProductsPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="autoDeliver" className="text-sm font-medium">Auto-deliver when paid</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">Automatically mark this item as delivered once payment is received</p>
+              </div>
+              <Switch
+                id="autoDeliver"
+                checked={autoDeliver}
+                onCheckedChange={setAutoDeliver}
+              />
+            </div>
           </div>
-          
+
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline" onClick={resetForm}>Cancel</Button>
@@ -1220,6 +1245,18 @@ export default function ProductsPage() {
                 onCheckedChange={(checked) => setEditIsActive(checked as boolean)}
               />
               <Label htmlFor="editIsActive">Active Product (visible to members)</Label>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="editAutoDeliver" className="text-sm font-medium">Auto-deliver when paid</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">Automatically mark this item as delivered once payment is received</p>
+              </div>
+              <Switch
+                id="editAutoDeliver"
+                checked={editAutoDeliver}
+                onCheckedChange={setEditAutoDeliver}
+              />
             </div>
           </div>
 

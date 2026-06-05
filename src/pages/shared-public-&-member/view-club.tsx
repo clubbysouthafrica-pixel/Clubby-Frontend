@@ -54,6 +54,11 @@ import StorageRequestDialog, {
   type StorageItem,
 } from "@/components/storage-request-dialog/StorageRequestDialog";
 import { isStorageFeatureEnabled } from "@/lib/feature-flags";
+import { Switch } from "@/components/ui/switch";
+import {
+  getMemberClubAssociation,
+  updateMemberEmailOptIn,
+} from "@/services/member/club-member";
 
 function epochToJoinedString(epoch: number): string {
   const date = new Date(epoch); // if epoch is in seconds, use new Date(epoch * 1000)
@@ -576,6 +581,47 @@ export default function ViewClubPage() {
   const canViewPublicShop =
     !!data?.enable_shop && data?.public_shop === true;
   const showDedicatedShopSection = canViewMemberShop || (isLoggedIn && canViewPublicShop);
+
+  // Fetch club member association for logged-in members only (not public visitors)
+  const shouldFetchMemberAssociation =
+    isLoggedIn &&
+    !!data?.club_account_id &&
+    !!data?.user_id &&
+    (hasClubRelationship || !!data?.resubmission_required || canViewPublicShop);
+
+  const { data: memberAssociationData } = useQuery({
+    queryKey: ["memberClubAssociation", data?.club_account_id, data?.user_id],
+    queryFn: () =>
+      getMemberClubAssociation(
+        data!.club_account_id as string,
+        data!.user_id as string,
+      ),
+    enabled: shouldFetchMemberAssociation,
+    retry: false,
+  });
+
+  const [emailOptIn, setEmailOptIn] = useState<boolean | null>(null);
+  const [isUpdatingEmailOptIn, setIsUpdatingEmailOptIn] = useState(false);
+
+  useEffect(() => {
+    if (memberAssociationData?.email_opt_in !== undefined) {
+      setEmailOptIn(memberAssociationData.email_opt_in);
+    }
+  }, [memberAssociationData]);
+
+  const handleEmailOptInToggle = async (checked: boolean) => {
+    if (!data?.club_account_id || isUpdatingEmailOptIn) return;
+    setEmailOptIn(checked);
+    setIsUpdatingEmailOptIn(true);
+    try {
+      await updateMemberEmailOptIn(data.club_account_id as string, checked);
+    } catch {
+      setEmailOptIn(!checked);
+      toast.error("Failed to update email preference. Please try again.");
+    } finally {
+      setIsUpdatingEmailOptIn(false);
+    }
+  };
 
   const todayKey = useMemo(() => formatDateKey(new Date()), []);
   const [visibleCalendarMonth, setVisibleCalendarMonth] = useState(() =>
@@ -1493,6 +1539,29 @@ export default function ViewClubPage() {
                   </div>
                 </div>
               </aside>
+            )}
+
+            {/* Email opt-in bar */}
+            {emailOptIn !== null && (
+              <div className="border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
+                <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-slate-800">Club email updates</p>
+                    <p className="text-xs text-slate-500">Receive emails and announcements from this club</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Label htmlFor="email-opt-in" className="text-sm text-slate-600 cursor-pointer select-none">
+                      {emailOptIn ? "Opted in" : "Opted out"}
+                    </Label>
+                    <Switch
+                      id="email-opt-in"
+                      checked={emailOptIn}
+                      onCheckedChange={handleEmailOptInToggle}
+                      disabled={isUpdatingEmailOptIn}
+                    />
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* Section Navigation */}

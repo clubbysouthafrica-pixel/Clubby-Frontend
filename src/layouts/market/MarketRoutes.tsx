@@ -25,6 +25,7 @@ import PrivacyPage from "@/pages/public/privacy";
 import RegistrationPolicy from "@/pages/public/privacy-clubs";
 import ResetTemporaryPasswordPage from "@/pages/public/login/reset-temporary-password/page";
 import HomeLayout from "@/pages/member/home-layout";
+import MemberOrderDetailPage from "@/pages/member/order-detail";
 import { isStorageFeatureEnabled } from "@/lib/feature-flags";
 
 export default function MarketRoutes() {
@@ -113,6 +114,14 @@ export default function MarketRoutes() {
         element={
           <ProtectedRoute>
             <MemberShopPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/myclubs/:clubId/orders/:orderId"
+        element={
+          <ProtectedRoute>
+            <MemberOrderDetailPage />
           </ProtectedRoute>
         }
       ></Route>

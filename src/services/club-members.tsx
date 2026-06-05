@@ -11,6 +11,7 @@ export interface GetClubMemberResponse {
   registration?: string | null;
   registration_id?: string;
   message?: string;
+  email_opt_in?: boolean;
 }
 
 export const getClubMember = (

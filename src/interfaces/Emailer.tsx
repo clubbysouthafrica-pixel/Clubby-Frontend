@@ -3,4 +3,5 @@ export interface SendEmailRequest {
     subject:string
     email_body: string
     emails: string[]
+    is_html?: boolean
 }

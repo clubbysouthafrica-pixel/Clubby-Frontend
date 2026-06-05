@@ -28,7 +28,6 @@ import {
   Loader2,
   Receipt,
   Clock3,
-  CheckCircle,
   ShoppingBag,
 } from "lucide-react";
 import { AuthContext, type AuthContextType } from "@/context/AuthContext";
@@ -998,148 +997,60 @@ export default function MemberShopPage({
                   </p>
                 </div>
               ) : (
-                <div className="grid gap-4 xl:grid-cols-2">
+                <div className="overflow-hidden rounded-2xl border border-slate-200">
                   {memberOrders.map((order) => {
+                    const orderId = order.order_id || order.transaction_id;
                     const orderItems = Array.isArray(order.items) ? order.items : [];
                     const totalItems = orderItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
                     const createdDate = order.created_date
-                      ? new Date(order.created_date * 1000).toLocaleDateString()
+                      ? new Date(order.created_date * 1000).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
                       : "Unknown date";
-                    const isPendingOrder = order.payment_status === "PENDING";
-                    const canContinuePayment =
-                      (order.payment_status === "PENDING" ||
-                        order.payment_status === "PARTIALLY_PAID") &&
-                      Boolean(order.order_id);
 
                     return (
-                      <div key={order.order_id || order.transaction_id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                          <div className="space-y-2">
+                      <div
+                        key={orderId}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() =>
+                          navigate(`/myclubs/${clubId}/orders/${orderId}`, {
+                            state: { order, currency: clubCurrency },
+                          })
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ")
+                            navigate(`/myclubs/${clubId}/orders/${orderId}`, {
+                              state: { order, currency: clubCurrency },
+                            });
+                        }}
+                        className="flex cursor-pointer items-center gap-3 border-b border-slate-100 bg-white px-4 py-3.5 transition-colors last:border-b-0 hover:bg-slate-50 sm:gap-4 sm:px-5"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
                             <p className="text-sm font-semibold text-slate-900">
                               Order #{order.order_id?.slice(0, 8) || "N/A"}
                             </p>
-                            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
-                              <span className="inline-flex items-center gap-1">
-                                <Clock3 className="h-4 w-4" />
-                                {createdDate}
-                              </span>
-                              <span>{totalItems} item{totalItems === 1 ? "" : "s"}</span>
-                            </div>
+                            <span className="inline-flex items-center gap-1 text-xs text-slate-400">
+                              <Clock3 className="h-3 w-3" />
+                              {createdDate}
+                            </span>
+                            <span className="text-xs text-slate-400">{totalItems} item{totalItems === 1 ? "" : "s"}</span>
                           </div>
-                          <div className="flex flex-wrap gap-2">
-                            <Badge className={cn("font-medium", getPaymentStatusBadgeClassName(order.payment_status))}>
-                              {order.payment_status || "Unknown payment status"}
+                          <div className="mt-1.5 flex flex-wrap gap-1.5">
+                            <Badge className={cn("text-[11px] font-medium", getPaymentStatusBadgeClassName(order.payment_status))}>
+                              {order.payment_status || "Unknown"}
                             </Badge>
-                            <Badge className={cn("font-medium", getFulfillmentStatusBadgeClassName(order.fulfillment_status))}>
-                              {order.fulfillment_status || "Unknown fulfillment"}
+                            <Badge className={cn("text-[11px] font-medium", getFulfillmentStatusBadgeClassName(order.fulfillment_status))}>
+                              {order.fulfillment_status || "Unknown"}
                             </Badge>
                           </div>
                         </div>
 
-                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Total</p>
-                            <p className="mt-2 text-lg font-semibold text-slate-950">
-                              {formatAmount(order.total_amount || 0, clubCurrency)}
-                            </p>
-                          </div>
-                          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Amount paid</p>
-                            <p className="mt-2 text-lg font-semibold text-slate-950">
-                              {formatAmount(order.amount_paid || 0, clubCurrency)}
-                            </p>
-                          </div>
+                        <div className="flex flex-shrink-0 items-center gap-2">
+                          <p className="text-sm font-semibold text-slate-900">
+                            {formatAmount(order.total_amount || 0, clubCurrency)}
+                          </p>
+                          <ChevronRight className="h-4 w-4 text-slate-300" />
                         </div>
-
-                        <div className="mt-4 space-y-2">
-                          {orderItems.map((item, index) => {
-                            const quantity = Number(item.quantity || 0);
-                            const deliveredQuantity = Math.min(
-                              Number(item.fulfillment_quantity || 0),
-                              quantity,
-                            );
-                            const refundedQuantity = Math.min(
-                              Number(item.refund_quantity || 0),
-                              Math.max(quantity - deliveredQuantity, 0),
-                            );
-                            const pendingQuantity = Math.max(
-                              quantity - deliveredQuantity - refundedQuantity,
-                              0,
-                            );
-
-                            return (
-                              <div
-                                key={`${order.order_id || "order"}-${item.product_id || item.name || index}`}
-                                className="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm"
-                              >
-                                <div className="min-w-0 flex-1">
-                                  <p className="font-medium text-slate-900">{item.name || "Unnamed item"}</p>
-                                  <p className="text-slate-500">Qty {item.quantity || 0}</p>
-                                  {item.selected_valid_day ? (
-                                    <p className="mt-1 text-[11px] font-medium uppercase tracking-[0.12em] text-amber-700">
-                                        Valid for {formatTicketDateLabel(item.selected_valid_day)}
-                                    </p>
-                                  ) : null}
-                                  <div className="mt-2 flex flex-wrap gap-1.5">
-                                    {deliveredQuantity > 0 ? (
-                                      <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
-                                        Delivered {deliveredQuantity}
-                                      </span>
-                                    ) : null}
-                                    {pendingQuantity > 0 ? (
-                                      <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">
-                                        Not delivered {pendingQuantity}
-                                      </span>
-                                    ) : null}
-                                    {refundedQuantity > 0 ? (
-                                      <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
-                                        Refunded {refundedQuantity}
-                                      </span>
-                                    ) : null}
-                                  </div>
-                                </div>
-                                <p className="font-semibold text-slate-900">
-                                  {formatAmount(item.subtotal || 0, clubCurrency)}
-                                </p>
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        {canContinuePayment || isPendingOrder ? (
-                          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                            {canContinuePayment ? (
-                              <Button
-                                className="bg-black text-white hover:bg-slate-900"
-                                onClick={() => {
-                                  const queryParams = new URLSearchParams({
-                                    orderId: order.order_id || "",
-                                    paymentScreen: "true",
-                                  });
-
-                                  navigate(`/myclubs/${clubId}/payments?${queryParams.toString()}`);
-                                }}
-                              >
-                                <CreditCard className="mr-2 h-4 w-4" />
-                                Continue to payment
-                              </Button>
-                            ) : null}
-                            {isPendingOrder ? (
-                              <Button
-                                variant="outline"
-                                className="border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
-                                onClick={() => setSelectedOrderForCancel(order)}
-                              >
-                                Cancel order
-                              </Button>
-                            ) : null}
-                          </div>
-                        ) : order.fulfillment_status === "FULFILLED" || order.fulfillment_status === "DELIVERED" ? (
-                          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700">
-                            <CheckCircle className="h-4 w-4" />
-                            Order fulfilled
-                          </div>
-                        ) : null}
                       </div>
                     );
                   })}

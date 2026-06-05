@@ -38,7 +38,6 @@ import { ClubVariable } from "@/interfaces/club-variable";
 import { generateClubVariableValue } from "@/lib/club-variable-rules";
 import ReusableDeregisterDialog from "./features/reusable-deregister-dialog";
 import EmptyRegistrationsRow from "@/components/admin/members/registrations/features/empty-registrations-row";
-import ReusableSendEmailDialog from "@/components/admin/members/members/features/reusable-send-email-dialog";
 
 type TemplateVariableConfig =
   | string
@@ -140,7 +139,6 @@ export default function PendingMembersList({
   const [isPaymentMethodsOpen, setIsPaymentMethodsOpen] =
     useState<boolean>(true);
   const [isDeregisterDialogOpen, setIsDeregisterDialogOpen] = useState(false);
-  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [
     showPendingRegistrationsDropdown,
     setShowPendingRegistrationsDropdown,
@@ -659,12 +657,6 @@ export default function PendingMembersList({
                           <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
                             Actions
                           </DropdownMenuLabel>
-                          <DropdownMenuItem
-                            onClick={() => setIsEmailDialogOpen(true)}
-                            disabled={!listActionItems.length}
-                          >
-                            Send Email
-                          </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => {
                               setIsDeregisterDialogOpen(true);
@@ -1437,19 +1429,6 @@ export default function PendingMembersList({
         }}
       />
 
-      <ReusableSendEmailDialog
-        isOpen={isEmailDialogOpen}
-        onOpenChange={setIsEmailDialogOpen}
-        title="Send Email"
-        description="Mailing list"
-        contactsList={listActionItems}
-        clubId={clubId}
-        onSuccessClose={() => {
-          setlistActionItems([]);
-          setDeregisterMembers([]);
-          setAllMembersSelected(false);
-        }}
-      />
     </div>
   );
 }

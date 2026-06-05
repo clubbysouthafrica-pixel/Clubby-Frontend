@@ -65,7 +65,7 @@ interface ImageProps {
   sensors: any;
   sortableId: any;
   allMembersSelected: boolean;
-  listActionItems: { email: string; name: string; timestamp?: string | number }[];
+  listActionItems: { email: string; name: string; timestamp?: string | number; email_opt_in?: boolean }[];
   dereigsterMembers: { user_id: string; name: string }[];
   clubId: string;
   currency: string;
@@ -75,7 +75,7 @@ interface ImageProps {
   setAllListActionItems: (members: ClubMember[]) => void;
   setSelectedMember: React.Dispatch<React.SetStateAction<object>>;
   setlistActionItems: React.Dispatch<
-    React.SetStateAction<{ email: string; name: string; timestamp?: string | number }[]>
+    React.SetStateAction<{ email: string; name: string; timestamp?: string | number; email_opt_in?: boolean }[]>
   >;
   setDeregisterMembers: React.Dispatch<
     React.SetStateAction<{ user_id: string; name: string }[]>
@@ -404,6 +404,7 @@ export default function MembersTable({
                                   {
                                     email: member.member_email,
                                     name: `${member.member_first_name} ${member.member_surname}`,
+                                    email_opt_in: member.email_opt_in,
                                   },
                                 ];
                                 setlistActionItems(updatedListActionItems);
