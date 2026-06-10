@@ -24,7 +24,7 @@ import {
 import { formatAmount } from "@/data/currencies";
 import { useArchiveRegistrationMutation } from "@/mutations/admin/useRegistrationMutation";
 import { toast } from "sonner";
-import EmptyRegistrationsRow from "@/components/admin/members/registrations/features/empty-registrations-row";
+import EmptyRegistrationsRow from "@/components/admin/registrations/features/empty-registrations-row";
 
 interface PreviousMembersListProps {
   club: Club | null;

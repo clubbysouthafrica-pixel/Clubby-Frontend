@@ -35,7 +35,7 @@ import {
   getMemberProfileColumnValue,
   MEMBER_PROFILE_COLUMNS,
   type MemberProfileColumn,
-} from "../../../../helpers/admin/members/member-profile-columns";
+} from "@/helpers/admin/members/member-profile-columns";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -156,7 +156,7 @@ export default function MembersTable({
 
   const sortedRegisteredMembers = useMemo(() => {
     let sortedCopy = [...members];
-    
+
     if (memberNameSortAsc !== null) {
       sortedCopy.sort((a: any, b: any) => {
         const aName = `${a.member_first_name} ${a.member_surname}`.toLowerCase();
@@ -176,7 +176,7 @@ export default function MembersTable({
         return regSortAsc ? aTime - bTime : bTime - aTime;
       });
     }
-    
+
     return sortedCopy;
   }, [members, regSortAsc, memberNameSortAsc, statusSortAsc]);
 
@@ -530,7 +530,7 @@ export default function MembersTable({
                                 {member.registrations &&
                                 member.registrations.length > 0 ? (
                                   [...member.registrations]
-                                    .sort((a: any, b: any) => 
+                                    .sort((a: any, b: any) =>
                                       b.latest_registration === true ? 1 : a.latest_registration === true ? -1 : 0
                                     )
                                     .map(

@@ -1,24 +1,13 @@
 "use client"
-
-import * as React from "react"
-import { ChevronRight, type LucideIcon } from "lucide-react"
-
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
+import { type LucideIcon } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { cn } from "@/lib/utils"
 import {
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
+  SidebarMenuButton,
 } from "@/components/ui/sidebar"
-import { Link, useLocation } from "react-router-dom";
 
 export function NavMain({
   items,
@@ -26,81 +15,34 @@ export function NavMain({
   items: {
     title: string
     url: string
+    hubUrl?: string
     icon?: LucideIcon
     isActive?: boolean
-    items?: {
-      title: string
-      url: string
-    }[]
+    items?: { title: string; url: string }[]
   }[]
 }) {
-  const location = useLocation()
-  const pathname = location.pathname
-
-  // Helper kept for potential parent matching; currently parent uses exact match and childActive uses exact child matches.
-  // (Left here in case we later want startsWith behavior for opening groups.)
-  // remove matchesUrl helper — subitems and parent use explicit checks below
-  const [openMap, setOpenMap] = React.useState<Record<string, boolean>>(() =>
-    items.reduce((acc, it) => {
-      acc[it.title] = Boolean(it.isActive)
-      return acc
-    }, {} as Record<string, boolean>)
-  )
-
-  // Sync open state when items' isActive changes (e.g., on route change)
-  React.useEffect(() => {
-    setOpenMap((prev) => {
-      const next: Record<string, boolean> = { ...prev }
-      for (const it of items) {
-        // If the route marks this group active, ensure it's open; otherwise close it.
-        next[it.title] = Boolean(it.isActive)
-      }
-      return next
-    })
-  }, [items])
+  const navigate = useNavigate()
 
   return (
-    <SidebarGroup>
-      <SidebarGroupLabel>Management</SidebarGroupLabel>
-      <SidebarMenu>
+    <SidebarGroup className="p-0">
+      <SidebarMenu className="gap-0">
         {items.map((item) => (
-          <Collapsible
-            key={item.title}
-            asChild
-            open={Boolean(openMap[item.title])}
-            onOpenChange={(open) => setOpenMap((m) => ({ ...m, [item.title]: open }))}
-            className="group/collapsible"
-          >
-            <SidebarMenuItem>
-              <CollapsibleTrigger asChild>
-                {/* Parent is active when parent url OR any child url exactly matches the pathname */}
-                <SidebarMenuButton
-                  tooltip={item.title}
-                  isActive={
-                    (item.url ? item.url === pathname : false) ||
-                    (item.items ? item.items.some((s) => s.url === pathname) : false)
-                  }
-                >
-                  {item.icon && <item.icon />}
-                  <span>{item.title}</span>
-                  <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                </SidebarMenuButton>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <SidebarMenuSub>
-                    {item.items?.map((subItem) => (
-                      <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton asChild isActive={subItem.url === pathname}>
-                            <Link to={subItem.url} className="flex items-center">
-                              <span>{subItem.title}</span>
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                    ))}
-                </SidebarMenuSub>
-              </CollapsibleContent>
-            </SidebarMenuItem>
-          </Collapsible>
+          <SidebarMenuItem key={item.title}>
+            <SidebarMenuButton
+              tooltip={item.title}
+              isActive={item.isActive}
+              onClick={() => navigate((item as { hubUrl?: string }).hubUrl ?? item.url)}
+              className={cn(
+                "h-11 w-full cursor-pointer rounded-none px-4 text-base",
+                item.isActive
+                  ? "bg-slate-100 font-medium text-slate-900 hover:bg-slate-100"
+                  : "font-normal text-slate-600 hover:bg-slate-50 hover:text-slate-900",
+              )}
+            >
+              {item.icon && <item.icon className="h-[15px] w-[15px] shrink-0 text-inherit" />}
+              <span className="truncate">{item.title}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         ))}
       </SidebarMenu>
     </SidebarGroup>

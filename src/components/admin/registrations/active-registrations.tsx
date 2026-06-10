@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import ReusableDeregisterDialog from "./features/reusable-deregister-dialog";
 import { formatAmount } from "@/data/currencies";
-import EmptyRegistrationsRow from "@/components/admin/members/registrations/features/empty-registrations-row";
+import EmptyRegistrationsRow from "@/components/admin/registrations/features/empty-registrations-row";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ImageProps {

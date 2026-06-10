@@ -26,7 +26,7 @@ import {
   AdminRegistrationForm,
   FormPage,
   PageFieldBase,
-} from "@/components/admin/registration-form/admin-registration-form";
+} from "@/components/admin/registrations/registration-form/admin-registration-form";
 import { ReusableRegistrationForm } from "@/components/shared/registration/reusable-registration-form";
 import FieldInputEditorDialog from "@/components/dialog-field-input-editor";
 import {

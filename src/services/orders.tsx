@@ -48,3 +48,8 @@ export const cancelOrder = (orderData: CancelOrderRequest): Promise<any> => {
     return api.post('/orders/cancelOrder', orderData)
         .then(res => res.data);
 }
+
+export const getPublicOrder = (orderId: string, clubAccountId: string): Promise<any> => {
+    return api.get(`/orders/getPublicOrder?order_id=${orderId}&club_account_id=${clubAccountId}`)
+        .then(res => res.data);
+}

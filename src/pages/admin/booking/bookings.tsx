@@ -18,7 +18,7 @@ import { toast } from "sonner";
 
 import {
   CreateVenueData,
-} from "@/components/admin/venues-&-bookings/create-venue-dialog";
+} from "@/components/admin/booking/create-venue-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

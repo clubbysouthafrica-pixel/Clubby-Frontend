@@ -1,18 +1,9 @@
 import { AppSidebar } from "@/components/app-sidebar";
+import { AdminTopNav } from "@/components/admin/top-nav";
 import { Button } from "@/components/ui/button";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import {
   Dialog,
@@ -22,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import ClubProvider, {
   ClubAccountBalanceEntry,
@@ -43,7 +34,6 @@ function getOutstandingBalanceDialogKey(clubAccountId: string) {
 }
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
-  const location = useLocation();
   const navigate = useNavigate();
   const { club, setClub, isLoading: clubLoading } = useContext(
     ClubContext,
@@ -104,9 +94,6 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       })
       .join(", ");
   }, [outstandingAccountBalanceEntries]);
-
-  // Split the path into parts and filter out empty segments
-  const pathSegments = location.pathname.split("/").filter(Boolean);
 
   // Check if club setup is incomplete
   const isClubIncomplete =
@@ -285,7 +272,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       )}
       <div className={`flex flex-col min-h-screen`}>
         <div className={`flex-1 ${isClubIncomplete && !isBannerClosed ? "" : ""}`}>
-        <SidebarProvider className={`${isClubIncomplete && !isBannerClosed ? "" : ""}`}>
+        <SidebarProvider>
+          {/* Fixed full-width top nav — rendered inside SidebarProvider so SidebarTrigger works */}
+          <AdminTopNav />
           <AppSidebar />
           <SidebarInset
             className={[
@@ -310,52 +299,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                 </Alert>
               </div>
             )}
-            <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-2 border-b border-slate-200 bg-white/95 backdrop-blur transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-              <div className="flex items-center gap-2 px-4">
-                <SidebarTrigger className="-ml-1" />
-                <Separator orientation="vertical" className="mr-2 h-4" />
-
-                <Breadcrumb>
-                  <BreadcrumbList>
-                    {/* Home Link */}
-                    <BreadcrumbItem className="hidden md:block">
-                      <BreadcrumbLink asChild>
-                        <Link to="/">Home</Link>
-                      </BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator className="hidden md:block" />
-
-                    {/* Generate Breadcrumbs */}
-                    {pathSegments.map((segment, index) => {
-                      // Build the cumulative path for each segment
-                      const path = `/${pathSegments.slice(0, index + 1).join("/")}`;
-
-                      return (
-                        <React.Fragment key={`${segment}-${index}`}>
-                          <BreadcrumbItem>
-                            {index === pathSegments.length - 1 ? (
-                              <BreadcrumbPage>
-                                {segment.replace(/-/g, " ")}
-                              </BreadcrumbPage>
-                            ) : (
-                              <BreadcrumbLink asChild>
-                                <Link to={path}>
-                                  {segment.replace(/-/g, " ")}
-                                </Link>
-                              </BreadcrumbLink>
-                            )}
-                          </BreadcrumbItem>
-                          {index < pathSegments.length - 1 && (
-                            <BreadcrumbSeparator />
-                          )}
-                        </React.Fragment>
-                      );
-                    })}
-                  </BreadcrumbList>
-                </Breadcrumb>
-              </div>
-            </header>
-            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pt-0">{children}</div>
+            {/* Spacer so content starts below the fixed top nav */}
+            <div className="h-[100px] shrink-0" />
+            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">{children}</div>
           </SidebarInset>
         </SidebarProvider>
         </div>

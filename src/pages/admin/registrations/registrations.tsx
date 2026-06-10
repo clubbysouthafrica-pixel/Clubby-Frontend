@@ -14,7 +14,7 @@ import {
 } from "@dnd-kit/core";
 import { ClubMember } from "@/interfaces/club";
 import { useRegisterUserToClubMutation } from "@/mutations/admin/member";
-import RegistrationDialog from "@/components/admin/members/registrations/features/registration-dialog";
+import RegistrationDialog from "@/components/admin/registrations/features/registration-dialog";
 import { formatAmount } from "@/data/currencies";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,11 +27,11 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
-import RegisteredMembersList from "@/components/admin/members/registrations/active-registrations";
-import PendingMembersList from "@/components/admin/members/registrations/pending-registrations";
-import PreviousMembersList from "@/components/admin/members/registrations/previous-registrations";
-import AddColumnsDialog from "@/components/admin/members/registrations/features/add-columns-dialog";
-import AddFiltersDialog from "@/components/admin/members/registrations/features/add-filters-dialog";
+import RegisteredMembersList from "@/components/admin/registrations/active-registrations";
+import PendingMembersList from "@/components/admin/registrations/pending-registrations";
+import PreviousMembersList from "@/components/admin/registrations/previous-registrations";
+import AddColumnsDialog from "@/components/admin/registrations/features/add-columns-dialog";
+import AddFiltersDialog from "@/components/admin/registrations/features/add-filters-dialog";
 import {
   ArrowLeft,
   Loader2,

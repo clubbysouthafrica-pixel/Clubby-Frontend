@@ -5,27 +5,33 @@ import GetStartedPage from "@/pages/public/get-started";
 import AboutPage from "@/pages/public/about";
 import SettingsPage from "@/pages/shared-admin-&-member/user-settings";
 import ProtectedRoute from "@/guards/ProtectedRoute.tsx";
-import AdminRegistrationFormPage from "@/pages/admin/registration-form/create-form";
+import AdminRegistrationFormPage from "@/pages/admin/registrations/create-form";
 import ManageClubDashboard from "@/pages/admin/club/manage-club";
-import HomeDashboardPage from "@/pages/admin/club/home";
+import DashboardPage from "@/pages/admin/dashboard/dashboard";
 import BillingPage from "@/pages/admin/billing/billing";
 import GeneralReportingPage from "@/pages/admin/club/club-financials";
-import AddMemberPage from "@/pages/admin/members/add-member/add-member";
+import AddMemberPage from "@/pages/admin/registrations/add-member";
 import TermsPage from "@/pages/public/terms";
 import PrivacyPage from "@/pages/public/privacy";
 import ShopPage from "@/pages/admin/shop/shop";
 import ProductsPage from "@/pages/admin/shop/products";
 import OrdersPage from "@/pages/admin/shop/orders";
 import AnalyticsPage from "@/pages/admin/shop/analytics";
-import RegistrationsPage from "@/pages/admin/members/registrations/registrations";
-import MembersPage from "@/pages/admin/members/members/members";
-import VenuesPage from "@/pages/admin/venues-&-bookings/venues";
-import BookingsPage from "@/pages/admin/venues-&-bookings/bookings";
-import StorageAdmin from "@/pages/admin/storage-requests/storage";
-import StorageRequestsAdmin from "@/pages/admin/storage-requests/storage-requests";
+import RegistrationsPage from "@/pages/admin/registrations/registrations";
+import MembersPage from "@/pages/admin/user-management/members";
+import VenuesPage from "@/pages/admin/booking/venues";
+import BookingsPage from "@/pages/admin/booking/bookings";
+import StorageAdmin from "@/pages/admin/storage/storage";
+import StorageRequestsAdmin from "@/pages/admin/storage/storage-requests";
 import EventsPage from "@/pages/admin/events/events";
 import EventRegistrationsPage from "@/pages/admin/events/registrations";
 import { isStorageFeatureEnabled } from "@/lib/feature-flags";
+import ClubHubPage from "@/pages/admin/hub/club-hub";
+import MembersHubPage from "@/pages/admin/hub/members-hub";
+import UserManagementHubPage from "@/pages/admin/hub/user-management-hub";
+import ShopHubPage from "@/pages/admin/hub/shop-hub";
+import EventsHubPage from "@/pages/admin/hub/events-hub";
+import StorageHubPage from "@/pages/admin/hub/storage-hub";
 
 export default function AdminRoutes() {
   return (
@@ -45,7 +51,7 @@ export default function AdminRoutes() {
         path="/"
         element={
           <ProtectedRoute>
-            <HomeDashboardPage />
+            <DashboardPage />
           </ProtectedRoute>
         }
       ></Route>
@@ -177,6 +183,14 @@ export default function AdminRoutes() {
       {isStorageFeatureEnabled && (
         <>
           <Route
+            path="/storage-hub"
+            element={
+              <ProtectedRoute>
+                <StorageHubPage />
+              </ProtectedRoute>
+            }
+          ></Route>
+          <Route
             path="/storage"
             element={
               <ProtectedRoute>
@@ -207,6 +221,46 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <EventRegistrationsPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/club-hub"
+        element={
+          <ProtectedRoute>
+            <ClubHubPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/members-hub"
+        element={
+          <ProtectedRoute>
+            <MembersHubPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/user-management-hub"
+        element={
+          <ProtectedRoute>
+            <UserManagementHubPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/shop-hub"
+        element={
+          <ProtectedRoute>
+            <ShopHubPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/events-hub"
+        element={
+          <ProtectedRoute>
+            <EventsHubPage />
           </ProtectedRoute>
         }
       ></Route>

@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ChevronLeft, ChevronRight, CheckCircle, Clock3, CreditCard, Package } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ChevronLeft, ChevronRight, CheckCircle, Clock3, CreditCard, Loader2, Package, QrCode, User, X } from "lucide-react";
 import QRCode from "react-qr-code";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatAmount } from "@/data/currencies";
-import { formatTicketDateLabel } from "@/lib/shop-valid-days";
+import { formatTicketDateLabel, ISO_DATE_PATTERN } from "@/lib/shop-valid-days";
+import { AuthContext, type AuthContextType } from "@/context/AuthContext";
+import { useGetProfileQuery } from "@/queries/profile";
+import { getPublicOrder } from "@/services/orders";
 
 type MemberOrderItem = {
   product_id?: string;
@@ -50,17 +53,59 @@ export default function MemberOrderDetailPage() {
   const { clubId, orderId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { order, currency = "ZAR" } = (location.state as LocationState) ?? {};
+  const { order: stateOrder, currency: stateCurrency } = (location.state as LocationState) ?? {};
 
+  const auth = useContext(AuthContext) as AuthContextType;
+  const { data: profileData } = useGetProfileQuery(auth?.isAdmin ?? false, !!auth?.user);
+
+  const [fetchedOrder, setFetchedOrder] = useState<MemberOrder | null>(null);
+  const [fetchedCurrency, setFetchedCurrency] = useState<string>("ZAR");
+  const [fetchLoading, setFetchLoading] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [showQr, setShowQr] = useState(false);
+
+  const order = stateOrder ?? fetchedOrder ?? undefined;
+  const currency = stateCurrency ?? fetchedCurrency;
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
+    if (!stateOrder && orderId && clubId) {
+      setFetchLoading(true);
+      getPublicOrder(orderId, clubId)
+        .then((data) => {
+          setFetchedOrder(data.order ?? data);
+          if (data.currency) setFetchedCurrency(data.currency);
+        })
+        .catch(() => setFetchError(true))
+        .finally(() => setFetchLoading(false));
+    }
+  }, [stateOrder, orderId, clubId]);
+
+  if (fetchLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+      </div>
+    );
+  }
 
   if (!order) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="space-y-4 px-4 text-center">
           <Package className="mx-auto h-12 w-12 text-slate-400" />
-          <p className="text-lg font-semibold text-slate-900">Order not found</p>
-          <p className="text-sm text-slate-500">Navigate to this page from your order history.</p>
+          <p className="text-lg font-semibold text-slate-900">
+            {fetchError ? "Could not load order" : "Order not found"}
+          </p>
+          <p className="text-sm text-slate-500">
+            {fetchError
+              ? "There was a problem loading this order. Please try again."
+              : "Navigate to this page from your order history."}
+          </p>
           <Button variant="outline" onClick={() => navigate(-1)}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Go back
@@ -88,7 +133,7 @@ export default function MemberOrderDetailPage() {
   const isFulfilled =
     order.fulfillment_status === "FULFILLED" || order.fulfillment_status === "DELIVERED";
 
-  const pageUrl = `${window.location.origin}/myclubs/${clubId}/orders/${orderId}`;
+  const qrValue = [order.order_id, clubId].filter(Boolean).join("|");
 
   const currentItem = orderItems[currentIndex];
   const goToPrev = () => setCurrentIndex((i) => Math.max(i - 1, 0));
@@ -107,10 +152,27 @@ export default function MemberOrderDetailPage() {
     0,
   );
 
+  const isCurrentItemExpired = (() => {
+    const day = currentItem?.selected_valid_day;
+    if (!day) return false;
+    let ticketDate: Date;
+    if (ISO_DATE_PATTERN.test(day)) {
+      const [y, m, d] = day.split("-").map(Number);
+      ticketDate = new Date(y, m - 1, d);
+    } else {
+      const cleaned = day.replace(/\s*\([^)]*\)/, "").trim();
+      ticketDate = new Date(cleaned);
+      if (isNaN(ticketDate.getTime())) return false;
+    }
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    return ticketDate < todayStart;
+  })();
+
   return (
     <div className="min-h-screen bg-[#F8F6F3]">
       {/* Sticky back bar */}
-      <div className="sticky top-0 z-20 border-b border-slate-200/60 bg-[#F8F6F3]/90 backdrop-blur-sm">
+      <div className="sticky top-16 z-20 border-b border-slate-200/60 bg-[#F8F6F3]/90 backdrop-blur-sm">
         <div className="mx-auto max-w-lg px-4 sm:px-6">
           <Button
             variant="ghost"
@@ -125,6 +187,14 @@ export default function MemberOrderDetailPage() {
       </div>
 
       <div className="mx-auto max-w-lg px-4 pb-12 pt-6 sm:px-6 sm:pt-8">
+
+        {/* Privacy warning */}
+        <div className="mb-5 flex items-start gap-2.5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600" />
+          <p className="text-xs text-amber-800">
+            <span className="font-semibold">Keep this page private.</span> Anyone with this link can view your order and QR code — do not share this URL.
+          </p>
+        </div>
 
         {/* Order header */}
         <div className="mb-6">
@@ -144,6 +214,19 @@ export default function MemberOrderDetailPage() {
                 <span>·</span>
                 <span>{totalItems} item{totalItems === 1 ? "" : "s"}</span>
               </div>
+              {profileData && (
+                <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm">
+                  <User className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
+                  <span className="text-sm font-semibold text-slate-800">
+                    {[profileData.first_name, profileData.surname].filter(Boolean).join(" ")}
+                  </span>
+                  {profileData.user_id && (
+                    <span className="font-mono text-[11px] text-slate-400">
+                      #{profileData.user_id.slice(0, 8).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+              )}
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <Badge className={cn("px-3 py-1 text-sm font-semibold", getPaymentStatusClassName(order.payment_status))}>
                   {order.payment_status || "Unknown"}
@@ -154,15 +237,18 @@ export default function MemberOrderDetailPage() {
               </div>
             </div>
 
-            {/* QR code — top right */}
-            <div className="flex-shrink-0">
-              <QRCode
-                value={pageUrl}
-                size={120}
-                bgColor="transparent"
-                fgColor="#0f172a"
-              />
-            </div>
+            {/* QR code — tap to expand */}
+            <button
+              onClick={() => setShowQr(true)}
+              className="group flex flex-shrink-0 flex-col items-center gap-1.5"
+              aria-label="View QR code"
+            >
+              <QRCode value={qrValue} size={160} bgColor="transparent" fgColor="#0f172a" />
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 group-hover:text-slate-600">
+                <QrCode className="h-3 w-3" />
+                View
+              </span>
+            </button>
           </div>
 
           {/* Fulfilled banner — full width below the header row */}
@@ -240,7 +326,10 @@ export default function MemberOrderDetailPage() {
             </div>
 
             {/* Carousel card */}
-            <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_20px_60px_-30px_rgba(15,23,42,0.14)]">
+            <div className={cn(
+              "overflow-hidden rounded-3xl border bg-white shadow-[0_20px_60px_-30px_rgba(15,23,42,0.14)]",
+              isCurrentItemExpired ? "border-red-200" : "border-slate-200",
+            )}>
               <div className="relative flex aspect-[4/3] items-center justify-center bg-stone-100">
                 {currentItem?.product_image_url ? (
                   <img
@@ -250,6 +339,13 @@ export default function MemberOrderDetailPage() {
                   />
                 ) : (
                   <Package className="h-16 w-16 text-stone-400" />
+                )}
+                {isCurrentItemExpired && (
+                  <div className="absolute inset-x-[-20%] top-1/2 -translate-y-1/2 rotate-[-30deg] flex items-center justify-center bg-red-600/35 py-2.5 backdrop-blur-sm">
+                    <span className="text-sm font-bold uppercase tracking-widest text-white">
+                      Expired
+                    </span>
+                  </div>
                 )}
                 <div className="absolute bottom-3 right-3 rounded-full border border-white/40 bg-black/30 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
                   {currentIndex + 1} / {orderItems.length}
@@ -263,8 +359,12 @@ export default function MemberOrderDetailPage() {
                       {currentItem?.name || "Unnamed item"}
                     </h2>
                     {currentItem?.selected_valid_day ? (
-                      <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-amber-700">
-                        Valid for {formatTicketDateLabel(currentItem.selected_valid_day)}
+                      <p className={cn(
+                        "mt-1 text-xs font-semibold uppercase tracking-[0.14em]",
+                        isCurrentItemExpired ? "text-red-600" : "text-amber-700",
+                      )}>
+                        {isCurrentItemExpired ? "Expired · " : "Valid for "}
+                        {formatTicketDateLabel(currentItem.selected_valid_day)}
                       </p>
                     ) : null}
                   </div>
@@ -309,6 +409,7 @@ export default function MemberOrderDetailPage() {
                   )}
                 </div>
               </div>
+
             </div>
 
             {orderItems.length > 1 && (
@@ -363,6 +464,33 @@ export default function MemberOrderDetailPage() {
           </div>
         )}
       </div>
+
+      {/* QR code modal */}
+      {showQr && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={() => setShowQr(false)}
+        >
+          <div
+            className="relative mx-4 flex flex-col items-center gap-6 rounded-3xl bg-white px-10 py-10 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowQr(false)}
+              className="absolute right-4 top-4 rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+              Order QR code
+            </p>
+            <QRCode value={qrValue} size={220} bgColor="transparent" fgColor="#0f172a" />
+            <p className="font-mono text-sm font-semibold text-slate-700">
+              #{order.order_id?.slice(0, 8).toUpperCase()}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

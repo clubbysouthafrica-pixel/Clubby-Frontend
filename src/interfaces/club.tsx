@@ -45,6 +45,22 @@ export interface ClubMember {
     email_opt_in?: boolean
 }
 
+export interface NonRegistrationClub {
+    club_account_id: string
+    club_name: string
+    currency: string
+    email_opt_in: boolean
+    member_email: string
+    member_first_name: string
+    member_surname: string
+    non_registration: boolean
+    registered: boolean
+    registration_payment_reference: string
+    resubmission_required: boolean
+    season_cycle: number
+    user_id: string
+}
+
 export interface RegisterClubMember {
     clubId: string
     userId: string

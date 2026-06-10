@@ -12,16 +12,16 @@ import { useFetchRegistrationForm } from "@/queries/admin/registration-form";
 import { useFetchClub } from "@/queries/admin/clubs";
 import { AdminRegistrationRequest } from "@/requests/registration-request";
 import { useMemberRegistrationMutation } from "@/mutations/admin/useMemberRegistrationMutation";
-import { createValidRegistrationRequest } from "../../../../helpers/admin/registration/create-registration-request";
-import { getFieldName } from "../../../../helpers/members/registration/get-field-name";
+import { createValidRegistrationRequest } from "@/helpers/admin/registration/create-registration-request";
+import { getFieldName } from "@/helpers/members/registration/get-field-name";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import {
   ReusableRegistrationForm,
   FormPage,
   PagedFormPayload,
   PageFieldBase,
-} from "../../../shared/registration/reusable-registration-form";
-import { ReusableSubmitRegistration } from "../../../shared/registration/reusable-submit-registration";
+} from "@/components/shared/registration/reusable-registration-form";
+import { ReusableSubmitRegistration } from "@/components/shared/registration/reusable-submit-registration";
 import RegistrationSuccessful from "@/components/shared/registration/registration-successful";
 import { toast } from "sonner";
 

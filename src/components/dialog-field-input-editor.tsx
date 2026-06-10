@@ -9,18 +9,18 @@ import { Label } from "./ui/label"
 import { Input } from "./ui/input"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { Checkbox } from "./ui/checkbox"
-import EditTextDisplay from "./admin/registration-form/edit-fields/text-display"
-import EditBillingText from "./admin/registration-form/edit-fields/billing-text"
-import DisplayBillingText from "./admin/registration-form/display-fields/billing-text";
-import EditBillingDropdown from './admin/registration-form/edit-fields/billing-dropdown';
-import EditBillingNumber from './admin/registration-form/edit-fields/billing-number';
-import DisplayBillingDropdown from "./admin/registration-form/display-fields/billing-dropdown"
-import DisplayBillingNumber from "./admin/registration-form/display-fields/billing-number"
-import EditStandardCheckbox from "./admin/registration-form/edit-fields/standard-checkbox"
-import DisplayStandardCheckbox from "./admin/registration-form/display-fields/standard-checkbox"
-import DisplayStandardText from "./admin/registration-form/display-fields/standard-text"
-import StandardSignature from "./admin/registration-form/display-fields/standard-signature"
-import EditStandardSignature from "./admin/registration-form/edit-fields/standard-signature"
+import EditTextDisplay from "./admin/registrations/registration-form/edit-fields/text-display"
+import EditBillingText from "./admin/registrations/registration-form/edit-fields/billing-text"
+import DisplayBillingText from "./admin/registrations/registration-form/display-fields/billing-text";
+import EditBillingDropdown from './admin/registrations/registration-form/edit-fields/billing-dropdown';
+import EditBillingNumber from './admin/registrations/registration-form/edit-fields/billing-number';
+import DisplayBillingDropdown from "./admin/registrations/registration-form/display-fields/billing-dropdown"
+import DisplayBillingNumber from "./admin/registrations/registration-form/display-fields/billing-number"
+import EditStandardCheckbox from "./admin/registrations/registration-form/edit-fields/standard-checkbox"
+import DisplayStandardCheckbox from "./admin/registrations/registration-form/display-fields/standard-checkbox"
+import DisplayStandardText from "./admin/registrations/registration-form/display-fields/standard-text"
+import StandardSignature from "./admin/registrations/registration-form/display-fields/standard-signature"
+import EditStandardSignature from "./admin/registrations/registration-form/edit-fields/standard-signature"
 
 function createEmptyProrataRule(): InputBillingProrataRule {
     return {

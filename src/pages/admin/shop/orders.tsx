@@ -1,4 +1,4 @@
-import { Fragment, useContext, useEffect, useState, useRef } from "react";
+import { Fragment, useContext, useEffect, useState, useRef, useMemo } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,10 +22,12 @@ import {
   Download,
   ShoppingBag,
   X,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -48,6 +50,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import {
   getClubOrders,
@@ -218,6 +221,23 @@ function getOrderMemberUserId(order: unknown) {
   return null;
 }
 
+const PAYMENT_SORT_ORDER: Record<string, number> = {
+  AWAITING_PAYMENT: 0,
+  PARTIALLY_PAID: 1,
+  PAID: 2,
+  REFUNDED: 3,
+  CANCELLED: 4,
+};
+
+const FULFILLMENT_SORT_ORDER: Record<string, number> = {
+  NOT_PROCESSED: 0,
+  PROCESSING: 1,
+  PARTIALLY_DELIVERED: 2,
+  DELIVERED: 3,
+  REFUNDED: 4,
+  CANCELLED: 5,
+};
+
 export default function OrdersPage() {
   const { club } = useContext(ClubContext) as ClubContextType;
   const navigate = useNavigate();
@@ -303,6 +323,32 @@ export default function OrdersPage() {
     useState<any>(null);
   const [isProcessingDelete, setIsProcessingDelete] = useState(false);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [sortColumn, setSortColumn] = useState<"date" | "payment" | "fulfillment" | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  const handleSort = (col: "date" | "payment" | "fulfillment") => {
+    if (sortColumn === col) {
+      setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortColumn(col);
+      setSortDirection("asc");
+    }
+  };
+
+  const sortedOrders = useMemo(() => {
+    if (!sortColumn) return allOrders;
+    return [...allOrders].sort((a, b) => {
+      let cmp = 0;
+      if (sortColumn === "date") {
+        cmp = (a.created_date || 0) - (b.created_date || 0);
+      } else if (sortColumn === "payment") {
+        cmp = (PAYMENT_SORT_ORDER[getOrderDisplayPaymentStatus(a)] ?? 99) - (PAYMENT_SORT_ORDER[getOrderDisplayPaymentStatus(b)] ?? 99);
+      } else if (sortColumn === "fulfillment") {
+        cmp = (FULFILLMENT_SORT_ORDER[a.fulfillment_status?.toUpperCase() ?? ""] ?? 99) - (FULFILLMENT_SORT_ORDER[b.fulfillment_status?.toUpperCase() ?? ""] ?? 99);
+      }
+      return sortDirection === "asc" ? cmp : -cmp;
+    });
+  }, [allOrders, sortColumn, sortDirection]);
   const [showPendingDropdown, setShowPendingDropdown] = useState(false);
   const [showPendingPaymentsDropdown, setShowPendingPaymentsDropdown] =
     useState(false);
@@ -1267,24 +1313,36 @@ export default function OrdersPage() {
       <Card className="rounded-[20px] border-slate-200/70 bg-white/95 p-4 shadow-[0_16px_36px_rgba(15,23,42,0.07)] md:p-5">
         <CardContent className="p-0">
           <div className="overflow-hidden rounded-[20px] border border-slate-200">
-            <Table>
-              <TableHeader className="sticky top-0 z-10 bg-zinc-700 [&_tr]:border-zinc-600">
-                <TableRow>
-                  <TableHead className="h-11 w-[40px] text-center text-slate-200"></TableHead>
-                  <TableHead className="h-11 w-[140px] text-center text-xs text-slate-200">
-                    Transaction ID
+            <div className="max-h-[352px] overflow-y-auto">
+            <table className="w-full caption-bottom text-sm">
+              <TableHeader className="sticky top-0 z-10 bg-slate-50 shadow-[0_1px_0_0_rgba(15,23,42,0.08)]">
+                <TableRow className="border-slate-200 hover:bg-slate-50">
+                  <TableHead className="h-10 w-[40px] text-center text-slate-500"></TableHead>
+                  <TableHead className="h-10 w-[140px] text-center text-xs font-semibold text-slate-600">
+                    
                   </TableHead>
-                  <TableHead className="h-11 w-[140px] text-center text-xs text-slate-200">
-                    Name
+                  <TableHead className="h-10 w-[160px] text-center text-xs font-semibold text-slate-600">
+                    Products
                   </TableHead>
-                  <TableHead className="h-11 w-[140px] text-center text-xs text-slate-200">
-                    Payment
+                  <TableHead className="h-10 w-[140px] text-center text-xs font-semibold text-slate-600">
+                    <button onClick={() => handleSort("payment")} className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-900 transition-colors">
+                      Payment
+                      {sortColumn === "payment" ? (sortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 opacity-40" />}
+                    </button>
                   </TableHead>
-                  <TableHead className="h-11 w-[140px] text-center text-xs text-slate-200">
-                    Fulfillment Status
+                  <TableHead className="h-10 w-[140px] text-center text-xs font-semibold text-slate-600">
+                    <button onClick={() => handleSort("fulfillment")} className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-900 transition-colors">
+                      Fulfillment
+                      {sortColumn === "fulfillment" ? (sortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 opacity-40" />}
+                    </button>
                   </TableHead>
-                  <TableHead className="h-11 w-[120px] text-center text-xs text-slate-200">Date</TableHead>
-                  <TableHead className="h-11 w-[100px] text-center text-xs text-slate-200">
+                  <TableHead className="h-10 w-[120px] text-center text-xs font-semibold text-slate-600">
+                    <button onClick={() => handleSort("date")} className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-900 transition-colors">
+                      Date
+                      {sortColumn === "date" ? (sortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 opacity-40" />}
+                    </button>
+                  </TableHead>
+                  <TableHead className="h-10 w-[100px] text-center text-xs font-semibold text-slate-600">
                     Actions
                   </TableHead>
                 </TableRow>
@@ -1292,14 +1350,14 @@ export default function OrdersPage() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="py-8 text-center text-sm text-slate-500">
+                    <TableCell colSpan={6} className="py-8 text-center text-sm text-slate-500">
                       Loading orders...
                     </TableCell>
                   </TableRow>
                 ) : error ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={6}
                       className="py-8 text-center text-sm text-red-600"
                     >
                       {error}
@@ -1307,12 +1365,12 @@ export default function OrdersPage() {
                   </TableRow>
                 ) : allOrders.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="py-8 text-center text-sm text-slate-500">
+                    <TableCell colSpan={6} className="py-8 text-center text-sm text-slate-500">
                       No orders found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  allOrders.map((order) => {
+                  sortedOrders.map((order) => {
                     const memberUserId = getOrderMemberUserId(order);
 
                     return (
@@ -1340,42 +1398,18 @@ export default function OrdersPage() {
                             />
                           </Button>
                         </TableCell>
-                        <TableCell className="group text-center font-medium text-sm">
-                          {order.transaction_id ? (
-                            <div className="flex items-center justify-center gap-2">
-                              <span className="font-mono">
-                                {order.transaction_id
-                                  .substring(0, 8)
-                                  .toUpperCase()}
-                                ...
+                        <TableCell className="max-w-[160px] text-center text-sm text-slate-700">
+                          {(() => {
+                            const items = (order.items as { name?: string }[]) ?? [];
+                            if (items.length === 0) return <span className="text-xs text-muted-foreground">—</span>;
+                            const first = items[0]?.name || "Unknown";
+                            const extra = items.length - 1;
+                            return (
+                              <span className="line-clamp-2 text-xs leading-snug">
+                                {first}{extra > 0 && <span className="ml-1 text-muted-foreground">+{extra}</span>}
                               </span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(
-                                    order.transaction_id,
-                                  );
-                                  setCopiedTransactionId(order.transaction_id);
-                                  setTimeout(
-                                    () => setCopiedTransactionId(null),
-                                    2000,
-                                  );
-                                }}
-                                title="Copy full Transaction ID"
-                                className="h-6 w-6 p-0 opacity-0 transition-opacity group-hover:opacity-100"
-                              >
-                                {copiedTransactionId ===
-                                order.transaction_id ? (
-                                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                ) : (
-                                  <Copy className="h-4 w-4" />
-                                )}
-                              </Button>
-                            </div>
-                          ) : (
-                            "N/A"
-                          )}
+                            );
+                          })()}
                         </TableCell>
                         <TableCell className="text-center text-sm text-slate-700">
                           {memberUserId ? (
@@ -1473,19 +1507,62 @@ export default function OrdersPage() {
                             </Badge>
                           </div>
                         </TableCell>
-                        <TableCell className="text-center text-sm text-slate-600">
-                          {order.created_date
-                            ? new Date(
-                                order.created_date * 1000,
-                              ).toLocaleDateString("en-US", {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                              })
-                            : "N/A"}
+                        <TableCell className="text-center text-xs text-slate-600">
+                          {order.created_date ? (
+                            <div className="space-y-0.5">
+                              <p>{new Date(order.created_date * 1000).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</p>
+                              <p className="text-muted-foreground">{new Date(order.created_date * 1000).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</p>
+                            </div>
+                          ) : "N/A"}
                         </TableCell>
                         <TableCell className="text-center">
-                          <div className="flex flex-col items-center justify-center gap-2">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <TooltipProvider delayDuration={200}>
+                            {/* Confirm payment */}
+                            {(getOrderDisplayPaymentStatus(order) === "AWAITING_PAYMENT" ||
+                              getOrderDisplayPaymentStatus(order) === "PARTIALLY_PAID") && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    onClick={() => handlePayNowClick(order)}
+                                    className="rounded-full border border-amber-200 bg-amber-50 p-1.5 text-amber-700 transition-colors hover:bg-amber-100"
+                                  >
+                                    <CreditCard className="h-3.5 w-3.5" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>Confirm payment</TooltipContent>
+                              </Tooltip>
+                            )}
+                            {/* Confirm fulfillment */}
+                            {(order.payment_status === "PAID" || order.payment_status === "PAID (Partial Refund)") &&
+                              (order.items as { quantity?: number; fulfillment_quantity?: number }[])?.some(
+                                (item) => (item.quantity || 0) - (item.fulfillment_quantity || 0) > 0,
+                              ) && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    onClick={() => {
+                                      const orderUndelivered = undeliveredItems.filter(
+                                        (u) => u.orderId === order.order_id,
+                                      );
+                                      const newSelected = new Set(selectedDeliveryItems);
+                                      orderUndelivered.forEach((u) => {
+                                        newSelected.add(`${u.orderId}-${u.productId}-${u.unitIndex}`);
+                                      });
+                                      setSelectedDeliveryItems(newSelected);
+                                      setShowPendingDropdown(true);
+                                      setShowPendingPaymentsDropdown(false);
+                                    }}
+                                    className="rounded-full border border-purple-200 bg-purple-50 p-1.5 text-purple-700 transition-colors hover:bg-purple-100"
+                                  >
+                                    <Package className="h-3.5 w-3.5" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>Confirm fulfillment</TooltipContent>
+                              </Tooltip>
+                            )}
+                            </TooltipProvider>
+                            {/* Cancel / Refund */}
                             {order.fulfillment_status === "NOT_PROCESSED" ? (
                               <Button
                                 size="sm"
@@ -1506,16 +1583,14 @@ export default function OrdersPage() {
                                 Refund
                               </Button>
                             ) : (
-                              <span className="text-xs text-muted-foreground">
-                                N/A
-                              </span>
+                              <span className="text-xs text-muted-foreground">—</span>
                             )}
                           </div>
                         </TableCell>
                       </TableRow>
                       {expandedOrderId === order.order_id && (
                         <TableRow className="bg-slate-50/80">
-                          <TableCell colSpan={7} className="p-4">
+                          <TableCell colSpan={6} className="p-4">
                             <div className="space-y-3">
                               <h4 className="font-medium text-sm">
                                 Order Items
@@ -1617,7 +1692,8 @@ export default function OrdersPage() {
                   })
                 )}
               </TableBody>
-            </Table>
+            </table>
+            </div>
           </div>
         </CardContent>
       </Card>

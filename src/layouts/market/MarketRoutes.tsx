@@ -14,7 +14,7 @@ import ViewClubPage from "@/pages/shared-public-&-member/view-club";
 import MemberShopPage from "@/components/member/shop/shop";
 import EventRegistrationPage from "@/components/member/events/event-registration-page";
 import OnboardMember from "@/pages/member/onboard-member";
-import AdminRegistrationFormPage from "@/pages/admin/registration-form/create-form";
+import AdminRegistrationFormPage from "@/pages/admin/registrations/create-form";
 import BrowseClubsPage from "@/pages/public/browse-clubs";
 import PublicJoinRegisterPage from "@/pages/public/public-join-register";
 import PublicMemberVerificationPage from "@/pages/public/member-verification";
@@ -119,11 +119,7 @@ export default function MarketRoutes() {
       ></Route>
       <Route
         path="/myclubs/:clubId/orders/:orderId"
-        element={
-          <ProtectedRoute>
-            <MemberOrderDetailPage />
-          </ProtectedRoute>
-        }
+        element={<MemberOrderDetailPage />}
       ></Route>
       <Route
         path="/myclubs/:clubId/payments"

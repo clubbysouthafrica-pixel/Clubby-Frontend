@@ -1237,22 +1237,14 @@ export default function ViewClubPage() {
   const [profileImage, setProfileImage] = useState("");
 
   useEffect(() => {
-    const getImg = async () => {
-      try {
-        setCoverImage(data?.club_cover_url ?? "");
-        setProfileImage(data?.club_profile_url ?? "");
-      } catch (error) {
-        console.error("Failed to fetch images", error);
-      }
-    };
-
     if (data?.country_of_operation) {
       const upperCountryCode = data.country_of_operation.toUpperCase();
       setCountryName(countryMap[upperCountryCode] ?? upperCountryCode);
     }
 
     if (data) {
-      getImg();
+      setCoverImage(data.club_cover_url ?? "");
+      setProfileImage(data.club_profile_url ?? "");
     }
   }, [data]);
 
@@ -1430,8 +1422,13 @@ export default function ViewClubPage() {
           copiedField={copiedField}
           onCopyToClipboard={copyToClipboard}
           onBack={() => {
-            setIsPaymentScreenOpen(false);
-            handleSectionChange(paymentReturnTab as ClubSection);
+            if (shouldUsePublicPaymentData) {
+              setIsPaymentScreenOpen(false);
+              navigate(`/clubs/${clubId}`);
+            } else {
+              setIsPaymentScreenOpen(false);
+              handleSectionChange(paymentReturnTab as ClubSection);
+            }
           }}
         />
       </Pager>

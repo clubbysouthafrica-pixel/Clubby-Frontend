@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, CheckCircle2, Loader2, User, XCircle } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../../../../ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDeregisterAllMutation } from "@/mutations/admin/useDeregisterMutation";
 import { toast } from "sonner";

@@ -388,6 +388,8 @@ export function ClubHomeTab({
                 src={coverImage}
                 alt={`${clubName} cover`}
                 className="h-full w-full object-cover"
+                onError={() => fetch(coverImage, { method: "HEAD" }).then((r) => console.error("[cover image] failed:", r.status, r.statusText, coverImage)).catch((e) => console.error("[cover image] network error:", e.message, coverImage))}
+                onLoad={() => console.log("[cover image] loaded:", coverImage)}
               />
             </div>
           ) : (
@@ -407,7 +409,12 @@ export function ClubHomeTab({
                 <div className="relative">
                   <Avatar className="h-14 w-14 border-4 border-white shadow-[0_18px_36px_-20px_rgba(14,116,144,0.45)] sm:h-24 sm:w-24">
                     {profileImage ? (
-                      <AvatarImage className="object-cover object-center" src={profileImage} />
+                      <AvatarImage
+                        className="object-cover object-center"
+                        src={profileImage}
+                        onError={() => fetch(profileImage, { method: "HEAD" }).then((r) => console.error("[profile image] failed:", r.status, r.statusText, profileImage)).catch((e) => console.error("[profile image] network error:", e.message, profileImage))}
+                        onLoad={() => console.log("[profile image] loaded:", profileImage)}
+                      />
                     ) : (
                       <AvatarFallback className="bg-slate-100 text-xl font-bold text-slate-700">
                         {clubName.split(" ").map((word) => word[0])}

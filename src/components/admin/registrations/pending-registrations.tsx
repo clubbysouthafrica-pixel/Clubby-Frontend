@@ -37,7 +37,7 @@ import {
 import { ClubVariable } from "@/interfaces/club-variable";
 import { generateClubVariableValue } from "@/lib/club-variable-rules";
 import ReusableDeregisterDialog from "./features/reusable-deregister-dialog";
-import EmptyRegistrationsRow from "@/components/admin/members/registrations/features/empty-registrations-row";
+import EmptyRegistrationsRow from "@/components/admin/registrations/features/empty-registrations-row";
 
 type TemplateVariableConfig =
   | string

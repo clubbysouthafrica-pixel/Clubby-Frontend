@@ -4,7 +4,7 @@ import { CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { AlertCircle } from "lucide-react";
-import { ClubRegisterForm } from "@/components/admin/members/add-member/club-registration-form";
+import { ClubRegisterForm } from "@/components/admin/registrations/add-member/club-registration-form";
 import { Label } from "@/components/ui/label";
 
 export default function AddMemberPage() {

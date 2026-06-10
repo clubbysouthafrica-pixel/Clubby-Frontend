@@ -7,29 +7,26 @@ import {
 } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useContext, useEffect, useMemo } from "react";
-import {
-  ClubContext,
-  ClubContextType,
-} from "@/context/ClubContext";
-import { HomeSectionCards } from "@/components/admin/club/home/section-cards";
+import { ClubContext, ClubContextType } from "@/context/ClubContext";
+import { HomeSectionCards } from "@/components/admin/dashboard/section-cards";
 import {
   ArrowRight,
   BoxIcon,
   CalendarDays,
   CheckCircle2,
+  ClipboardList,
   Loader2,
   MapPin,
   Settings,
   ShoppingBag,
-  UserPlus,
-  Users,
+  UserCog,
   XCircle,
 } from "lucide-react";
 import { useFetchAdminClubs, useFetchClub } from "@/queries/admin/clubs";
 import { isStorageFeatureEnabled } from "@/lib/feature-flags";
-import DeregisterSeasonDialog from "@/components/admin/members/registrations/features/deregister-season";
+import DeregisterSeasonDialog from "@/components/admin/registrations/features/deregister-season";
 
-export default function HomeDashboardPage() {
+export default function DashboardPage() {
   const {
     club,
     setClub,
@@ -37,14 +34,14 @@ export default function HomeDashboardPage() {
   } = useContext(ClubContext) as ClubContextType;
   const clubAccountId = club?.club_account_id ?? "";
   const { data: adminClubsResponse } = useFetchAdminClubs();
-  const { data: fetchedClub, isLoading: fetchedClubLoading } =
-    useFetchClub(clubAccountId, {
-      includeAccountBalance: true,
-      stats: true,
-    });
+  const { data: fetchedClub, isLoading: fetchedClubLoading } = useFetchClub(
+    clubAccountId,
+    { includeAccountBalance: true, stats: true },
+  );
   const adminClubItems = adminClubsResponse?.data?.items ?? [];
   const activeAdminClub = adminClubItems.find(
-    (item: { club_account_id?: string }) => item.club_account_id === clubAccountId,
+    (item: { club_account_id?: string }) =>
+      item.club_account_id === clubAccountId,
   );
   const currentClub = useMemo(
     () => ({
@@ -65,20 +62,20 @@ export default function HomeDashboardPage() {
       {
         label: "Shop",
         enabled: Boolean(currentClub?.enable_shop),
-        route: "/shop/products",
+        route: "/shop-hub",
       },
       {
         label: "Events",
         enabled: Boolean(currentClub?.enable_events),
-        route: "/events",
+        route: "/events-hub",
       },
       {
         label: "Storage",
         enabled: Boolean(currentClub?.enable_storage),
-        route: "/storage",
+        route: "/storage-hub",
       },
       {
-        label: "Venues & bookings",
+        label: "Booking",
         enabled: Boolean(currentClub?.venues_enabled),
         route: "/venues",
       },
@@ -87,81 +84,77 @@ export default function HomeDashboardPage() {
   );
 
   const portalSections = useMemo(
-    () => [
-      {
-        title: "Club",
-        description: "Manage club details, settings and financial overview.",
-        icon: Settings,
-        items: [
-          { title: "Home", route: "/" },
-          { title: "Manage Club", route: "/manage/club" },
-          { title: "Club financials", route: "/reporting/general" },
-        ],
-      },
-      {
-        title: "Members",
-        description: "Review members, registrations and add new members.",
-        icon: Users,
-        items: [
-          { title: "Members", route: "/manage/members" },
-          { title: "Registrations", route: "/manage/member/registrations" },
-          { title: "Add member", route: "/manage/members/add" },
-        ],
-      },
-      {
-        title: "Shop",
-        description: "Manage products and orders for the club shop.",
-        icon: ShoppingBag,
-        items: [
-          { title: "Products", route: "/shop/products" },
-          { title: "Orders", route: "/shop/orders" },
-        ],
-      },
-      {
-        title: "Venues & Bookings",
-        description: "Configure venues and manage booking activity.",
-        icon: MapPin,
-        items: [
-          { title: "Venues", route: "/venues" },
-          { title: "Bookings", route: "/venues/bookings" },
-        ],
-      },
-      {
-        title: "Events",
-        description: "Create events and monitor event registrations.",
-        icon: CalendarDays,
-        items: [
-          { title: "Events", route: "/events" },
-          { title: "Registrations", route: "/events/registrations" },
-        ],
-      },
-      {
-        title: "Storage & Requests",
-        description: "Manage storage units and review storage requests.",
-        icon: BoxIcon,
-        items: [
-          { title: "Storage", route: "/storage" },
-          { title: "Storage requests", route: "/storage/requests" },
-        ],
-      },
-      {
-        title: "Registration Form",
-        description: "Build and maintain the club registration form.",
-        icon: UserPlus,
-        items: [
-          { title: "Create Form", route: "/manage/registrations/forms" },
-        ],
-      }
-    ].filter(
-      (section) =>
-        section.title !== "Storage & Requests" ||
-        (isStorageFeatureEnabled && Boolean(currentClub?.enable_storage)),
-    ),
+    () =>
+      [
+        {
+          title: "Club",
+          description: "Manage club details, settings and financial overview.",
+          icon: Settings,
+          items: [
+            { title: "Manage Club", route: "/manage/club" },
+            { title: "Club Financials", route: "/reporting/general" },
+          ],
+        },
+        {
+          title: "User Management",
+          description: "View and manage current club members.",
+          icon: UserCog,
+          items: [{ title: "Members", route: "/manage/members" }],
+        },
+        {
+          title: "Registrations",
+          description: "Review registrations and manage registration forms.",
+          icon: ClipboardList,
+          items: [
+            { title: "Registrations", route: "/manage/member/registrations" },
+            { title: "Register a Member", route: "/manage/members/add" },
+            { title: "Registration Form", route: "/manage/registrations/forms" },
+          ],
+        },
+        {
+          title: "Shop",
+          description: "Manage products and orders for the club shop.",
+          icon: ShoppingBag,
+          items: [
+            { title: "Products", route: "/shop/products" },
+            { title: "Orders", route: "/shop/orders" },
+          ],
+        },
+        {
+          title: "Booking",
+          description: "Configure venues and manage booking activity.",
+          icon: MapPin,
+          items: [{ title: "Venues & Bookings", route: "/venues" }],
+        },
+        {
+          title: "Events",
+          description: "Create events and monitor event registrations.",
+          icon: CalendarDays,
+          items: [
+            { title: "Events", route: "/events" },
+            { title: "Registrations", route: "/events/registrations" },
+          ],
+        },
+        {
+          title: "Storage",
+          description: "Manage storage units and review storage requests.",
+          icon: BoxIcon,
+          items: [
+            { title: "Storage", route: "/storage" },
+            { title: "Storage Requests", route: "/storage/requests" },
+          ],
+        },
+      ].filter(
+        (section) =>
+          section.title !== "Storage" ||
+          (isStorageFeatureEnabled && Boolean(currentClub?.enable_storage)),
+      ),
     [currentClub],
   );
 
-  const enabledFeatures = featureStatus.filter((item) => item.enabled);
-  const disabledFeatures = featureStatus.filter((item) => !item.enabled);
+  const enabledFeatures = featureStatus.filter((f) => f.enabled);
+  const disabledFeatures = featureStatus.filter((f) => !f.enabled);
+
   useEffect(() => {
     if (fetchedClub && club) {
       const nextClub = {
@@ -170,7 +163,6 @@ export default function HomeDashboardPage() {
         ...fetchedClub,
         access: activeAdminClub?.access ?? club.access,
       };
-
       if (JSON.stringify(nextClub) !== JSON.stringify(club)) {
         setClub(nextClub);
       }
@@ -197,15 +189,15 @@ export default function HomeDashboardPage() {
         <div className="w-full px-3 py-3 sm:px-6 sm:py-6">
           <div className="flex flex-col gap-2.5 md:flex-row md:items-start md:justify-between md:gap-4">
             <div className="space-y-1 sm:space-y-2">
-                <h1 className="text-xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-                  {currentClub?.club_name}
-                </h1>
-                <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-[11px] text-slate-500 sm:gap-4 sm:text-sm">
-                  <span>Season: <span className="font-medium text-slate-900">{currentClub?.season_cycle ?? "-"}</span></span>
-                  <span>Type: <span className="font-medium text-slate-900">{currentClub?.club_type}</span></span>
-                  <span>Currency: <span className="font-medium text-slate-900">{currentClub?.currency}</span></span>
-                  <span>Access: <span className="font-medium text-slate-900">{currentClub?.access}</span></span>
-                </div>
+              <h1 className="text-xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
+                {currentClub?.club_name}
+              </h1>
+              <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-[11px] text-slate-500 sm:gap-4 sm:text-sm">
+                <span>Season: <span className="font-medium text-slate-900">{currentClub?.season_cycle ?? "-"}</span></span>
+                <span>Type: <span className="font-medium text-slate-900">{currentClub?.club_type}</span></span>
+                <span>Currency: <span className="font-medium text-slate-900">{currentClub?.currency}</span></span>
+                <span>Access: <span className="font-medium text-slate-900">{currentClub?.access}</span></span>
+              </div>
             </div>
             {!isStageRestrictedClub && (
               <div className="flex shrink-0 items-center">
@@ -238,11 +230,9 @@ export default function HomeDashboardPage() {
           <Card className="border border-slate-200 bg-white shadow-sm">
             <CardHeader className="px-3 py-3 sm:px-6 sm:py-6">
               <div className="space-y-1">
-                <CardTitle className="text-base font-semibold text-slate-950 sm:text-xl">
-                  Features
-                </CardTitle>
+                <CardTitle className="text-base font-semibold text-slate-950 sm:text-xl">Features</CardTitle>
                 <CardDescription className="text-xs sm:text-sm">
-                  Enabled and disabled admin features for this club.
+                  Enabled and disabled optional features for this club.
                 </CardDescription>
               </div>
             </CardHeader>
@@ -272,7 +262,6 @@ export default function HomeDashboardPage() {
                   )}
                 </div>
               </div>
-
               <div className="space-y-2.5 sm:space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-slate-900">Disabled</h3>
@@ -304,16 +293,12 @@ export default function HomeDashboardPage() {
 
         <section className="space-y-2.5 sm:space-y-4">
           <div className="space-y-1">
-            <h2 className="text-base font-semibold text-slate-950 sm:text-lg">Portal navigation</h2>
-              <p className="hidden text-sm text-slate-600 sm:block">These links mirror the sections in the sidebar.</p>
+            <h2 className="text-base font-semibold text-slate-950 sm:text-lg">Quick navigation</h2>
+            <p className="hidden text-sm text-slate-600 sm:block">Jump to any section of the admin portal.</p>
           </div>
-
           <div className="grid grid-cols-1 gap-2.5 sm:gap-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {portalSections.map((section) => (
-              <Card
-                key={section.title}
-                className="border border-slate-200 bg-white shadow-sm"
-              >
+              <Card key={section.title} className="border border-slate-200 bg-white shadow-sm">
                 <CardHeader className="px-3 pb-2 pt-3 sm:px-6 sm:pt-6">
                   <div className="flex items-center gap-2 sm:gap-3">
                     <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-700 sm:h-9 sm:w-9">
@@ -342,7 +327,7 @@ export default function HomeDashboardPage() {
                     </button>
                   ))}
                 </CardContent>
-                </Card>
+              </Card>
             ))}
           </div>
         </section>

@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useFetchClubMembers } from "@/queries/admin/club-members";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import { Label } from "@/components/ui/label";
-import SelectedMemberDialog from "@/components/admin/members/members/features/selected-member-dialog";
+import SelectedMemberDialog from "@/components/admin/user-management/features/selected-member-dialog";
 import {
   KeyboardSensor,
   MouseSensor,
@@ -22,19 +22,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import MembersTable from "@/components/admin/members/members/members_table";
+import MembersTable from "@/components/admin/user-management/members_table";
 import { Loader2, X, Download, AlertCircle, Users, ArrowLeft } from "lucide-react";
 import { exportTableData } from "@/helpers/admin/members/csv-export";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import AddFiltersDialog from "@/components/admin/members/registrations/features/add-filters-dialog";
-import AddColumnsDialog from "@/components/admin/members/registrations/features/add-columns-dialog";
-import MemberVerificationScannerDialog from "@/components/admin/members/members/features/member-verification-scanner-dialog";
+import AddFiltersDialog from "@/components/admin/registrations/features/add-filters-dialog";
+import AddColumnsDialog from "@/components/admin/registrations/features/add-columns-dialog";
+import MemberVerificationScannerDialog from "@/components/admin/user-management/features/member-verification-scanner-dialog";
 import { countryCodes, getDialingCode } from "@/data/country-codes";
 import {
   MEMBER_PROFILE_COLUMNS,
   type MemberProfileColumn,
-} from "../../../../helpers/admin/members/member-profile-columns";
+} from "@/helpers/admin/members/member-profile-columns";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 export default function MembersPage() {
