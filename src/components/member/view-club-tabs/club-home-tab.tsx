@@ -389,7 +389,7 @@ export function ClubHomeTab({
                 alt={`${clubName} cover`}
                 className="h-full w-full object-cover"
                 onError={() => fetch(coverImage, { method: "HEAD" }).then((r) => console.error("[cover image] failed:", r.status, r.statusText, coverImage)).catch((e) => console.error("[cover image] network error:", e.message, coverImage))}
-                onLoad={() => console.log("[cover image] loaded:", coverImage)}
+                onLoad={() => {}}
               />
             </div>
           ) : (
@@ -413,7 +413,7 @@ export function ClubHomeTab({
                         className="object-cover object-center"
                         src={profileImage}
                         onError={() => fetch(profileImage, { method: "HEAD" }).then((r) => console.error("[profile image] failed:", r.status, r.statusText, profileImage)).catch((e) => console.error("[profile image] network error:", e.message, profileImage))}
-                        onLoad={() => console.log("[profile image] loaded:", profileImage)}
+                        onLoad={() => {}}
                       />
                     ) : (
                       <AvatarFallback className="bg-slate-100 text-xl font-bold text-slate-700">
