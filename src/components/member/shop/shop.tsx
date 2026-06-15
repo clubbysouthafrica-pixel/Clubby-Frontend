@@ -36,6 +36,7 @@ import { useFetchClub } from "@/queries/clubs";
 import { useGetProfileQuery } from "@/queries/profile";
 import { getClubProducts } from "@/services/shop";
 import { cancelOrder, createOrder, getMemberOrders, publicCreateOrder } from "@/services/orders";
+import { getMemberClubAssociation, updateMemberEmailOptIn } from "@/services/member/club-member";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -78,8 +79,6 @@ type ShopProduct = {
   excluded_valid_day_options?: string[];
   valid_day_options?: string[];
 };
-
-type ProductCatalogFilter = "all" | "single" | "multiple";
 
 type MemberOrderItem = {
   product_id?: string;
@@ -256,9 +255,9 @@ export default function MemberShopPage({
   const [publicCheckoutFirstName, setPublicCheckoutFirstName] = useState("");
   const [publicCheckoutSurname, setPublicCheckoutSurname] = useState("");
   const [publicEmailOptIn, setPublicEmailOptIn] = useState(false);
-  const [productCatalogFilter, setProductCatalogFilter] =
-    useState<ProductCatalogFilter>("all");
-
+  const [memberEmailOptIn, setMemberEmailOptIn] = useState(false);
+  const [memberOptInChecked, setMemberOptInChecked] = useState(false);
+  const [memberHasExistingOptIn, setMemberHasExistingOptIn] = useState(false);
   const clubCurrency = clubData?.currency || "ZAR";
   const availableProducts = useMemo<ShopProduct[]>(() => {
     const products = Array.isArray(productsData?.products)
@@ -268,25 +267,11 @@ export default function MemberShopPage({
     return products.filter((product) => product.active_product);
   }, [productsData?.products]);
 
+  const filteredProducts = availableProducts;
+
   const memberOrders = useMemo<MemberOrder[]>(() => {
     return Array.isArray(ordersData?.orders) ? ordersData.orders : [];
   }, [ordersData?.orders]);
-
-  const filteredProducts = useMemo(() => {
-    if (productCatalogFilter === "single") {
-      return availableProducts.filter(
-        (product) => product.purchase_limit === "single",
-      );
-    }
-
-    if (productCatalogFilter === "multiple") {
-      return availableProducts.filter(
-        (product) => product.purchase_limit !== "single",
-      );
-    }
-
-    return availableProducts;
-  }, [availableProducts, productCatalogFilter]);
   const selectedPublicProduct = useMemo(() => {
     if (!productsOnly || !productId) {
       return null;
@@ -300,15 +285,6 @@ export default function MemberShopPage({
     );
   }, [availableProducts, productId, productsOnly]);
 
-  const pendingOrdersCount = useMemo(
-    () => memberOrders.filter((order) => order.payment_status === "PENDING" || order.payment_status === "PARTIALLY_PAID").length,
-    [memberOrders],
-  );
-
-  const fulfilledOrdersCount = useMemo(
-    () => memberOrders.filter((order) => order.fulfillment_status === "FULFILLED").length,
-    [memberOrders],
-  );
   const canBrowsePublicShop =
     !!clubData?.enable_shop && clubData?.public_shop === true;
   const hasMemberShopAccess =
@@ -325,10 +301,6 @@ export default function MemberShopPage({
     ? `/clubs/${clubId}`
     : `/myclubs/${clubId}`;
   const backButtonLabel = productsOnly ? "Back to shop" : "Back to club";
-  const shopTitle = isPublicShopRoute ? "Shop products" : "Member shop";
-  const shopDescription = isPublicShopRoute
-    ? "Browse the products currently available from this club and add what you need to your cart."
-    : "Browse club merchandise, build your cart, and then jump into your order history only when you need it.";
   const catalogHeading = isPublicShopRoute
     ? clubData?.club_name || "Shop products"
     : "Items for sale";
@@ -408,6 +380,16 @@ export default function MemberShopPage({
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [embedded]);
+
+  useEffect(() => {
+    if (!orderDialog || !isLoggedIn || !clubData?.club_account_id || !clubData?.user_id) return;
+    setMemberOptInChecked(false);
+    setMemberHasExistingOptIn(false);
+    setMemberEmailOptIn(false);
+    getMemberClubAssociation(clubData.club_account_id, String(clubData.user_id))
+      .then(() => { setMemberHasExistingOptIn(true); setMemberOptInChecked(true); })
+      .catch(() => { setMemberHasExistingOptIn(false); setMemberOptInChecked(true); });
+  }, [orderDialog, isLoggedIn, clubData?.club_account_id, clubData?.user_id]);
 
   // Show loading state while checking registration or loading products
   if (isClubLoading || isProductsLoading) {
@@ -673,9 +655,22 @@ export default function MemberShopPage({
         : await createOrder(orderRequest);
       
       toast.success(response.message || "Order created successfully!");
+      if (isLoggedIn && memberOptInChecked && !memberHasExistingOptIn && clubData?.club_account_id) {
+        updateMemberEmailOptIn(clubData.club_account_id, memberEmailOptIn).catch(() => {});
+      }
       setCart([]);
       setOrderDialog(false);
       setShowCart(false);
+
+      if (totalAmount === 0) {
+        const orderId = response?.order_id || response?.id;
+        if (orderId) {
+          navigate(`/myclubs/${clubId}/orders/${orderId}`);
+        } else {
+          navigate(backToClubPath);
+        }
+        return;
+      }
 
       if (isPublicCheckout) {
         const queryParams = new URLSearchParams();
@@ -704,6 +699,11 @@ export default function MemberShopPage({
         if (typeof clubData?.snapscan_enabled === 'boolean') {
           queryParams.set('snapscanEnabled', String(clubData.snapscan_enabled));
         }
+
+        if (response?.bank) queryParams.set('bank', response.bank);
+        if (response?.account_number) queryParams.set('accountNumber', response.account_number);
+        if (response?.account_type) queryParams.set('accountType', response.account_type);
+        if (response?.branch_code) queryParams.set('branchCode', response.branch_code);
 
         navigate(`/clubs/${clubId}/payments?${queryParams.toString()}`);
         return;
@@ -738,9 +738,7 @@ export default function MemberShopPage({
       className={cn(
         embedded
           ? "bg-transparent"
-          : isPublicProductPage
-            ? "min-h-screen bg-[#f5f0e8]"
-            : "min-h-screen bg-background",
+          : "min-h-screen bg-white",
         embedded && compact && "h-full min-h-0",
       )}
     >
@@ -752,187 +750,34 @@ export default function MemberShopPage({
             : "px-0 py-0"
           : "px-3 py-2 sm:px-6 sm:py-6 lg:px-8 lg:py-8",
         embedded && compact && "flex h-full min-h-0 flex-col",
+        hasCartItems && "pb-0",
       )}>
-        {!compact && !isPublicProductPage ? (
-          <div className="space-y-2.5 sm:space-y-4">
-          <Card className="overflow-hidden py-2 border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] text-slate-900 shadow-[0_24px_70px_-34px_rgba(15,23,42,0.22)]">
-            <CardContent className="space-y-2 p-2 sm:space-y-6 sm:p-6">
-              <div className="flex flex-col gap-2 sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div className="space-y-1 sm:space-y-3">
-                  {!embedded ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => navigate(backToClubPath)}
-                      className="h-5 w-fit px-0 text-[10px] text-slate-600 hover:bg-transparent hover:text-slate-900 sm:h-9 sm:text-sm"
-                    >
-                      <ArrowLeft className="mr-1.5 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
-                      {backButtonLabel}
-                    </Button>
-                  ) : null}
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 sm:h-12 sm:w-12 sm:rounded-2xl">
-                      <ShoppingBag className="h-4 w-4 text-slate-700 sm:h-6 sm:w-6" />
-                    </div>
-                    <div>
-                      <h1 className="text-base font-semibold tracking-tight leading-tight sm:text-3xl">
-                        {shopTitle}
-                      </h1>
-                    </div>
-                  </div>
-                  <p className="hidden max-w-2xl text-sm leading-6 text-slate-600 sm:block sm:text-base">
-                    {shopDescription}
-                  </p>
-                </div>
-                {!productsOnly ? (
-                  <div className="grid grid-cols-3 gap-1 sm:grid-cols-3 sm:gap-2">
-                    <div className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-center shadow-sm sm:rounded-2xl sm:px-4 sm:py-3 sm:text-left">
-                      <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500 sm:text-[11px] sm:tracking-[0.18em]">Products</p>
-                      <p className="mt-0.5 text-sm font-semibold text-slate-950 sm:mt-2 sm:text-2xl">{availableProducts.length}</p>
-                    </div>
-                    <div className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-center shadow-sm sm:rounded-2xl sm:px-4 sm:py-3 sm:text-left">
-                      <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500 sm:text-[11px] sm:tracking-[0.18em]">Orders</p>
-                      <p className="mt-0.5 text-sm font-semibold text-slate-950 sm:mt-2 sm:text-2xl">{memberOrders.length}</p>
-                    </div>
-                    <div className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-center shadow-sm sm:rounded-2xl sm:px-4 sm:py-3 sm:text-left">
-                      <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500 sm:text-[11px] sm:tracking-[0.18em]">Cart</p>
-                      <p className="mt-0.5 text-[11px] font-semibold text-slate-950 sm:mt-2 sm:text-2xl">{formatAmount(cartTotal, clubCurrency)}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="rounded-2xl border border-stone-200 bg-white px-4 py-3 text-center shadow-sm sm:min-w-48 sm:text-left">
-                    <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500 sm:text-[11px] sm:tracking-[0.18em]">Products</p>
-                    <p className="mt-1 text-lg font-semibold text-slate-950 sm:mt-2 sm:text-2xl">{filteredProducts.length}</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {!productsOnly ? (
-            <Card className="h-full py-2 overflow-hidden border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] text-slate-900 shadow-[0_24px_70px_-34px_rgba(15,23,42,0.22)]">
-              <CardContent className="flex h-full flex-col gap-2.5 p-2.5 sm:gap-4 sm:p-6">
-                <div className="space-y-0.5 sm:space-y-1">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 sm:text-xs sm:tracking-[0.22em]">
-                    Quick actions
-                  </p>
-                  <h2 className="text-sm font-semibold sm:text-xl">Shop control panel</h2>
-                </div>
-
-                <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm sm:rounded-3xl sm:p-4">
-                  <div className="flex items-center justify-between gap-3 sm:block">
-                    <div>
-                      <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500 sm:text-xs sm:tracking-[0.18em]">Pending orders</p>
-                      <p className="mt-0.5 text-xl font-semibold tracking-tight sm:mt-2 sm:text-3xl">{pendingOrdersCount}</p>
-                    </div>
-                    <div className="text-right sm:mt-1 sm:text-left">
-                      <p className="text-[11px] text-slate-500 sm:text-sm">
-                        {fulfilledOrdersCount} fulfilled
-                      </p>
-                    </div>
-                  </div>
-                  <p className="mt-1 hidden text-xs text-slate-500 sm:mt-1 sm:block sm:text-sm">
-                    {fulfilledOrdersCount} fulfilled so far
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 gap-2">
-                  {canShowOrderHistory ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-9 w-full justify-between border-slate-200 bg-white px-2.5 text-xs text-slate-700 hover:bg-slate-50 sm:h-11 sm:px-3 sm:text-sm"
-                      onClick={() => setShowOrdersSection((value) => !value)}
-                    >
-                      <span className="flex items-center gap-1.5 sm:gap-2">
-                        {showOrdersSection ? (
-                          <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                        ) : (
-                          <Receipt className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                        )}
-                        <span className="truncate">
-                          {showOrdersSection ? "Back to items" : "View orders"}
-                        </span>
-                      </span>
-                      <ChevronRight className={cn("h-3.5 w-3.5 transition-transform sm:h-4 sm:w-4", showOrdersSection && "rotate-180")} />
-                    </Button>
-                  ) : null}
-                </div>
-              </CardContent>
-            </Card>
-          ) : null}
-          </div>
-        ) : null}
 
         {hasCartItems ? (
-          <div
-            className={cn(
-              "z-30",
-              compact || productsOnly
-                ? "pointer-events-none fixed right-3 top-20 sm:right-4 sm:top-24"
-                : "sticky top-32 mt-2 sm:top-20 sm:mt-6",
-            )}
-          >
-            {compact || productsOnly ? (
-              <div className="pointer-events-auto flex items-center gap-2">
+          <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-stone-200 bg-white px-4 py-3 sm:px-10 sm:py-7">
+            <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
+              <p className="text-sm font-semibold text-slate-900 sm:text-xl">
+                {totalCartItems} item{totalCartItems === 1 ? "" : "s"} in cart
+              </p>
+              <div className="flex items-center gap-2 sm:gap-4">
                 <Button
                   type="button"
-                  variant="outline"
-                  size="sm"
+                  variant="ghost"
                   onClick={clearCart}
-                  className="h-10 rounded-full border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-[0_18px_36px_-20px_rgba(15,23,42,0.18)] hover:bg-slate-50 sm:h-11 sm:px-4.5"
+                  className="h-10 rounded-full px-5 text-sm font-semibold text-slate-500 hover:bg-slate-100 hover:text-slate-900 sm:h-14 sm:px-9 sm:text-lg"
                 >
-                  Clear
+                  Clear cart
                 </Button>
                 <Button
                   type="button"
-                  size="sm"
                   onClick={() => setShowCart(true)}
-                  className="h-10 rounded-full bg-emerald-600 px-4 text-sm font-semibold text-white shadow-[0_18px_36px_-20px_rgba(5,150,105,0.45)] hover:bg-emerald-500 sm:h-11 sm:px-4.5"
+                  className="h-10 rounded-full bg-slate-900 px-5 text-sm font-semibold text-white hover:bg-slate-800 sm:h-14 sm:px-9 sm:text-lg"
                 >
-                  <ShoppingCart className="mr-1.5 h-4.5 w-4.5" />
-                  Shopping cart ({totalCartItems})
+                  <ShoppingCart className="mr-1.5 h-4 w-4 sm:mr-2 sm:h-6 sm:w-6" />
+                  Go to cart
                 </Button>
               </div>
-            ) : (
-              <div className="rounded-[1.1rem] border border-slate-200 bg-slate-950 px-2.5 py-2 text-white shadow-[0_24px_60px_-34px_rgba(15,23,42,0.55)] sm:rounded-[1.4rem] sm:px-4 sm:py-3">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-300 sm:text-xs sm:tracking-[0.2em]">
-                      Active Cart
-                    </p>
-                    <p className="mt-0.5 truncate text-[12px] font-semibold text-white sm:mt-1 sm:text-sm">
-                      {totalCartItems} item{totalCartItems === 1 ? "" : "s"} selected
-                    </p>
-                    <p className="hidden text-[11px] text-slate-300 sm:mt-0.5 sm:block sm:text-xs">
-                      {formatAmount(cartTotal, clubCurrency)} ready to review.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1.5 sm:gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={clearCart}
-                      className="h-8 border-slate-600 bg-slate-900 px-2.5 text-[10px] font-semibold text-white hover:bg-slate-800 hover:text-white sm:h-10 sm:px-4 sm:text-xs"
-                    >
-                      <span className="sm:hidden">Clear</span>
-                      <span className="hidden sm:inline">Clear cart</span>
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={() => setShowCart(true)}
-                      className="h-8 bg-white px-2.5 text-[10px] font-semibold text-slate-950 hover:bg-slate-100 sm:h-10 sm:px-4 sm:text-xs"
-                    >
-                      <ShoppingCart className="mr-1 h-3.5 w-3.5 sm:mr-1.5 sm:h-4 sm:w-4" />
-                      <span className="sm:hidden">Cart</span>
-                      <span className="hidden sm:inline">Go to cart</span>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         ) : null}
 
@@ -1062,17 +907,30 @@ export default function MemberShopPage({
           ) : (
             <>
               {!compact ? (
-                <div className="flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between sm:gap-3">
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 sm:text-xs sm:tracking-[0.22em]">
-                      Shop catalog
-                    </p>
-                    <h2 className="text-base font-semibold tracking-tight leading-tight sm:text-3xl">
-                      Items for sale
-                    </h2>
-                    <p className="hidden mt-1 text-sm leading-6 text-slate-500 sm:block">
-                      Choose what you want first. Orders and payment follow after checkout.
-                    </p>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    {!isPublicProductPage ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(backToClubPath)}
+                        className="h-8 w-fit px-0 text-[10px] text-slate-600 hover:bg-transparent hover:text-slate-900 sm:h-9 sm:text-sm"
+                      >
+                        <ArrowLeft className="mr-1.5 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
+                        Back to club
+                      </Button>
+                    ) : null}
+                    {canShowOrderHistory && !productsOnly ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-8 justify-between border-slate-200 bg-white px-3 text-xs text-slate-700 hover:bg-slate-50 sm:h-11 sm:text-sm"
+                        onClick={() => setShowOrdersSection((value) => !value)}
+                      >
+                        <Receipt className="mr-1.5 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
+                        {showOrdersSection ? "Back to shop" : "View orders"}
+                      </Button>
+                    ) : null}
                   </div>
                   <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] text-slate-600 shadow-sm sm:px-3 sm:py-2 sm:text-sm">
                     <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -1081,17 +939,7 @@ export default function MemberShopPage({
                 </div>
               ) : null}
 
-              {filteredProducts.length === 0 && !productsOnly ? (
-                <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center">
-                  <Package className="mx-auto h-12 w-12 text-slate-400" />
-                  <h2 className="mt-4 text-lg font-medium text-slate-900">No products available</h2>
-                  <p className="mt-2 text-sm leading-6 text-slate-500">
-                    {productCatalogFilter === "all"
-                      ? "Check back later for new merchandise."
-                      : "No products match the selected filter yet."}
-                  </p>
-                </div>
-              ) : compact ? (
+              {compact ? (
                 <div className="flex min-h-0 flex-1 flex-col space-y-2.5 xl:overflow-y-auto xl:pr-1">
                   {filteredProducts.map((product) => {
                     const inCartQuantity = getInCartQuantity(product.product_id);
@@ -1131,14 +979,18 @@ export default function MemberShopPage({
                                 <p className="line-clamp-1 text-sm font-semibold text-slate-950 lg:text-base">
                                   {product.name}
                                 </p>
-                                <p className="mt-1 text-sm font-semibold text-slate-950 lg:text-base">
-                                  {formatAmount(product.price, clubCurrency)}
-                                </p>
-                                {productRequiresValidDay(product) ? (
+                                <div className="mt-1">
+                                  {product.price === 0 ? (
+                                    <Badge className="cursor-default bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Free</Badge>
+                                  ) : (
+                                    <p className="text-sm font-semibold text-slate-950 lg:text-base">{formatAmount(product.price, clubCurrency)}</p>
+                                  )}
+                                </div>
+                                {/* {productRequiresValidDay(product) ? (
                                   <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-amber-700 lg:text-[11px]">
                                     Choose a valid day
                                   </p>
-                                ) : null}
+                                ) : null} */}
                               </div>
                               {inCartQuantity > 0 ? (
                                 <Badge className="border-amber-200 bg-amber-50 px-1.5 py-0 text-[10px] text-amber-700">
@@ -1220,9 +1072,15 @@ export default function MemberShopPage({
                         <p className="text-2xl font-semibold uppercase tracking-[0.04em] text-slate-700 sm:text-3xl">
                           {selectedPublicProduct.name}
                         </p>
-                        <p className="mt-4 text-3xl font-semibold text-slate-700">
-                          {formatAmount(selectedPublicProduct.price, clubCurrency)}
-                        </p>
+                        {selectedPublicProduct.price === 0 ? (
+                          <div className="mt-4">
+                            <Badge className="cursor-default bg-emerald-100 text-emerald-700 hover:bg-emerald-100 text-base px-3 py-1">Free</Badge>
+                          </div>
+                        ) : (
+                          <p className="mt-4 text-3xl font-semibold text-slate-700">
+                            {formatAmount(selectedPublicProduct.price, clubCurrency)}
+                          </p>
+                        )}
                         <p className="mt-1 text-xs text-slate-500">
                           Price listed in {clubCurrency}
                         </p>
@@ -1246,11 +1104,6 @@ export default function MemberShopPage({
                           : "Currently unavailable"}
                       </p>
 
-                      {productRequiresValidDay(selectedPublicProduct) ? (
-                        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                          Buyers will choose a valid day for this ticket before adding it to the cart.
-                        </div>
-                      ) : null}
 
                       <Button
                         type="button"
@@ -1268,11 +1121,6 @@ export default function MemberShopPage({
                               ? "Single purchase"
                               : "Multiple quantity allowed"}
                           </p>
-                          {productRequiresValidDay(selectedPublicProduct) ? (
-                            <p>
-                              Valid day options: {normalizeValidDayOptions(selectedPublicProduct).map((option) => formatTicketDateLabel(option)).join(", ")}
-                            </p>
-                          ) : null}
                           <p>
                             Club currency: {clubCurrency}
                           </p>
@@ -1303,94 +1151,16 @@ export default function MemberShopPage({
                     </Button>
                   </div>
                 )
-              ) : productsOnly ? (
-                <div className="grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start">
-                  <aside className="rounded-[2rem] border border-stone-200 bg-white/90 p-5 shadow-[0_20px_60px_-42px_rgba(15,23,42,0.18)]">
-                    <p className="text-sm font-semibold text-slate-700">Browse</p>
-                    <div className="mt-5 space-y-2">
-                      {[
-                        {
-                          key: "all",
-                          label: "All products",
-                          count: availableProducts.length,
-                        },
-                        {
-                          key: "single",
-                          label: "Single purchase",
-                          count: availableProducts.filter(
-                            (product) => product.purchase_limit === "single",
-                          ).length,
-                        },
-                        {
-                          key: "multiple",
-                          label: "Multiple quantity",
-                          count: availableProducts.filter(
-                            (product) => product.purchase_limit !== "single",
-                          ).length,
-                        },
-                      ].map((filterOption) => {
-                        const isActive = productCatalogFilter === filterOption.key;
-
-                        return (
-                          <button
-                            key={filterOption.key}
-                            type="button"
-                            onClick={() =>
-                              setProductCatalogFilter(
-                                filterOption.key as ProductCatalogFilter,
-                              )
-                            }
-                            className={cn(
-                              "flex w-full items-center justify-between rounded-full border px-4 py-3 text-left text-sm transition-colors",
-                              isActive
-                                ? "border-slate-900 bg-slate-900 text-white"
-                                : "border-stone-200 bg-stone-50 text-slate-700 hover:bg-stone-100",
-                            )}
-                          >
-                            <span>{filterOption.label}</span>
-                            <span
-                              className={cn(
-                                "rounded-full px-2 py-0.5 text-xs font-semibold",
-                                isActive
-                                  ? "bg-white/15 text-white"
-                                  : "bg-white text-slate-500",
-                              )}
-                            >
-                              {filterOption.count}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    <Separator className="my-5 bg-stone-200" />
-
-                    <div className="space-y-3">
-                      <Button
-                        type="button"
-                        className="h-11 w-full rounded-full bg-pink-500 text-sm font-semibold text-white hover:bg-pink-400"
-                        onClick={() => setProductCatalogFilter("all")}
-                      >
-                        Filter
-                      </Button>
-                      <button
-                        type="button"
-                        onClick={() => setProductCatalogFilter("all")}
-                        className="w-full text-center text-sm font-semibold uppercase tracking-[0.14em] text-slate-500 underline-offset-4 hover:text-slate-700 hover:underline"
-                      >
-                        Clear
-                      </button>
-                    </div>
-                  </aside>
-
-                  <section className="space-y-8">
+              ) : (
+                <section className="space-y-8">
                     <div className="space-y-3 text-center">
-                      <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-500">
-                        Public shop
-                      </p>
-                      <h2 className="text-4xl font-semibold tracking-[0.04em] text-slate-900 sm:text-5xl">
-                        {catalogHeading}
-                      </h2>
+                      {productsOnly ? (
+                        <>
+                          <h2 className="text-2xl font-semibold tracking-[0.04em] text-slate-900 sm:text-5xl">
+                            {catalogHeading}
+                          </h2>
+                        </>
+                      ) : null}
                       <div className="flex items-center justify-end">
                         <p className="text-sm font-semibold text-slate-600">
                           {filteredProducts.length} Result{filteredProducts.length === 1 ? "" : "s"}
@@ -1403,13 +1173,11 @@ export default function MemberShopPage({
                         <Package className="mx-auto h-12 w-12 text-slate-400" />
                         <h2 className="mt-4 text-lg font-medium text-slate-900">No products available</h2>
                         <p className="mt-2 text-sm leading-6 text-slate-500">
-                          {productCatalogFilter === "all"
-                            ? "Check back later for new merchandise."
-                            : "No products match the selected filter yet."}
+                          Check back later for new merchandise.
                         </p>
                       </div>
                     ) : (
-                      <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-3">
+                      <div className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3">
                         {filteredProducts.map((product) => {
                           const inCartQuantity = getInCartQuantity(product.product_id);
 
@@ -1425,7 +1193,7 @@ export default function MemberShopPage({
                                   openProductDetails(product);
                                 }
                               }}
-                              className="group space-y-4 transition-opacity hover:opacity-95"
+                              className="group space-y-2 transition-opacity hover:opacity-95 sm:space-y-4"
                             >
                               <div className="overflow-hidden bg-[#f4efe6]">
                                 {product.product_image_url ? (
@@ -1436,14 +1204,14 @@ export default function MemberShopPage({
                                   />
                                 ) : (
                                   <div className="flex aspect-[4/4.2] items-center justify-center">
-                                    <Package className="h-16 w-16 text-stone-400" />
+                                    <Package className="h-8 w-8 text-stone-400 sm:h-16 sm:w-16" />
                                   </div>
                                 )}
                               </div>
 
-                              <div className="space-y-2 text-center">
-                                <div className="flex items-center justify-center gap-2">
-                                  <h3 className="text-xl font-semibold tracking-[0.04em] text-slate-900">
+                              <div className="space-y-1 text-center sm:space-y-2">
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <h3 className="text-sm font-semibold tracking-[0.02em] text-slate-900 sm:text-xl sm:tracking-[0.04em]">
                                     {product.name}
                                   </h3>
                                   {inCartQuantity > 0 ? (
@@ -1452,19 +1220,11 @@ export default function MemberShopPage({
                                     </Badge>
                                   ) : null}
                                 </div>
-                                {productRequiresValidDay(product) ? (
-                                  <p className="text-xs font-medium uppercase tracking-[0.12em] text-amber-700">
-                                    Choose a valid day
-                                  </p>
-                                ) : null}
-                                <p className="text-sm text-slate-500">
-                                  from {formatAmount(product.price, clubCurrency)}
-                                </p>
-                                {product.description ? (
-                                  <p className="mx-auto max-w-xs text-sm leading-6 text-slate-500">
-                                    {product.description}
-                                  </p>
-                                ) : null}
+                                {product.price === 0 ? (
+                                  <Badge className="cursor-default bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Free</Badge>
+                                ) : (
+                                  <p className="text-xs text-slate-500 sm:text-sm">from {formatAmount(product.price, clubCurrency)}</p>
+                                )}
                               </div>
 
                               <div className="flex justify-center">
@@ -1474,9 +1234,9 @@ export default function MemberShopPage({
                                     event.stopPropagation();
                                     startAddToCart(product);
                                   }}
-                                  className="rounded-full bg-slate-900 px-6 text-sm font-semibold text-white hover:bg-slate-800"
+                                  className="h-8 rounded-full bg-slate-900 px-3 text-xs font-semibold text-white hover:bg-slate-800 sm:h-9 sm:px-6 sm:text-sm"
                                 >
-                                  <ShoppingCart className="mr-2 h-4 w-4" />
+                                  <ShoppingCart className="mr-1.5 h-3 w-3 sm:mr-2 sm:h-4 sm:w-4" />
                                   Add to cart
                                 </Button>
                               </div>
@@ -1486,98 +1246,10 @@ export default function MemberShopPage({
                       </div>
                     )}
                   </section>
-                </div>
-              ) : (
-                <div className={cn(
-                  "grid grid-cols-2",
-                  compact ? "gap-2 lg:grid-cols-4" : "gap-2 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3",
-                )}>
-                  {filteredProducts.map((product) => {
-                    const inCartQuantity = getInCartQuantity(product.product_id);
-
-                    return (
-                      <Card
-                        key={product.product_id}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => openProductDetails(product)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            openProductDetails(product);
-                          }
-                        }}
-                        className={cn(
-                          "overflow-hidden border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] transition-transform duration-200 hover:-translate-y-1 cursor-pointer",
-                          compact
-                            ? "shadow-[0_16px_40px_-28px_rgba(15,23,42,0.16)] hover:shadow-[0_20px_50px_-30px_rgba(15,23,42,0.2)]"
-                            : "shadow-[0_20px_60px_-34px_rgba(15,23,42,0.18)] hover:shadow-[0_28px_70px_-34px_rgba(15,23,42,0.24)]",
-                        )}
-                      >
-                        <div className={cn("overflow-hidden bg-slate-100", compact ? "aspect-[4/3]" : "aspect-square sm:aspect-[4/3]")}>
-                          {product.product_image_url ? (
-                            <img
-                              src={product.product_image_url}
-                              alt={product.name}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-full items-center justify-center">
-                              <Package className="h-16 w-16 text-slate-400" />
-                            </div>
-                          )}
-                        </div>
-                        <CardHeader className={cn(compact ? "space-y-1 p-2.5" : "space-y-1.5 p-2 sm:space-y-4 sm:p-6")}>
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <CardTitle className={cn(
-                                "line-clamp-2 text-slate-950",
-                                compact ? "text-xs leading-4" : "text-xs leading-4 sm:text-lg sm:leading-6",
-                              )}>{product.name}</CardTitle>
-                              {productRequiresValidDay(product) ? (
-                                <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-amber-700 sm:text-xs">
-                                  Choose a valid day
-                                </p>
-                              ) : null}
-                              <p className={cn(
-                                "font-semibold tracking-tight text-slate-950",
-                                compact ? "mt-1 text-sm" : "mt-0.5 text-sm sm:mt-2 sm:text-3xl",
-                              )}>
-                                {formatAmount(product.price, clubCurrency)}
-                              </p>
-                            </div>
-                            {inCartQuantity > 0 ? (
-                              <Badge className="border-amber-200 bg-amber-50 px-1.5 py-0 text-[10px] text-amber-700 sm:text-xs">
-                                {inCartQuantity}
-                              </Badge>
-                            ) : null}
-                          </div>
-                          <CardDescription className={cn(
-                            "line-clamp-2 min-h-0 text-slate-500",
-                            compact ? "text-[10px] leading-4" : "text-[10px] leading-3.5 sm:min-h-12 sm:text-sm sm:leading-6",
-                          )}>
-                            {product.description || "No description available"}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className={cn(compact ? "p-2.5 pt-0" : "p-2 pt-0 sm:p-6 sm:pt-0")}>
-                          <Button onClick={(event) => {
-                            event.stopPropagation();
-                            startAddToCart(product);
-                          }} className={cn(
-                            "w-full bg-black px-2 text-white hover:bg-slate-900",
-                            compact ? "h-8 text-[11px]" : "h-7 text-[10px] sm:h-11 sm:text-sm",
-                          )}>
-                            <ShoppingCart className="mr-1 h-3 w-3 sm:mr-2 sm:h-4 sm:w-4" />
-                            Add
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
               )}
             </>
           )}
+          {hasCartItems && !compact && <div className="h-24 sm:h-40" aria-hidden="true" />}
         </div>
       </div>
 
@@ -1615,9 +1287,15 @@ export default function MemberShopPage({
                       <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
                         Price
                       </p>
-                      <p className="mt-2 text-3xl font-semibold text-slate-950">
-                        {formatAmount(selectedProduct.price, clubCurrency)}
-                      </p>
+                      {selectedProduct.price === 0 ? (
+                        <div className="mt-2">
+                          <Badge className="cursor-default bg-emerald-100 text-emerald-700 hover:bg-emerald-100 text-base px-3 py-1">Free</Badge>
+                        </div>
+                      ) : (
+                        <p className="mt-2 text-3xl font-semibold text-slate-950">
+                          {formatAmount(selectedProduct.price, clubCurrency)}
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex flex-wrap gap-2">
@@ -1626,11 +1304,6 @@ export default function MemberShopPage({
                           ? "Single purchase"
                           : "Multiple quantity"}
                       </Badge>
-                      {productRequiresValidDay(selectedProduct) ? (
-                        <Badge className="border-amber-200 bg-amber-50 text-amber-700">
-                          Choose a valid day
-                        </Badge>
-                      ) : null}
                       {getInCartQuantity(selectedProduct.product_id) > 0 ? (
                         <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700">
                           {getInCartQuantity(selectedProduct.product_id)} in cart
@@ -1692,8 +1365,8 @@ export default function MemberShopPage({
                   ) : null}
                 </div>
 
-                <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-                  <div className="mb-3 flex items-center justify-between">
+                <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm sm:p-3">
+                  <div className="mb-2 flex items-center justify-between sm:mb-3">
                     <Button
                       type="button"
                       variant="ghost"
@@ -1721,15 +1394,15 @@ export default function MemberShopPage({
                     </Button>
                   </div>
 
-                  <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-medium uppercase tracking-[0.12em] text-slate-400">
+                  <div className="grid grid-cols-7 gap-0.5 text-center text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400 sm:gap-1 sm:text-[11px] sm:tracking-[0.12em]">
                     {TICKET_CALENDAR_WEEKDAYS.map((weekday) => (
-                      <span key={weekday} className="py-1">
+                      <span key={weekday} className="py-0.5 sm:py-1">
                         {weekday}
                       </span>
                     ))}
                   </div>
 
-                  <div className="mt-1 grid grid-cols-7 gap-1">
+                  <div className="mt-0.5 grid grid-cols-7 gap-0.5 sm:mt-1 sm:gap-1">
                     {pendingCalendarDays.map((day) => {
                       const isSelected = day.dateKey === pendingSelectedValidDay;
                       const isEnabled = pendingValidDaySet.has(day.dateKey);
@@ -1740,7 +1413,7 @@ export default function MemberShopPage({
                           type="button"
                           variant="ghost"
                           className={cn(
-                            "h-10 rounded-xl p-0 text-sm font-medium",
+                            "h-8 rounded-lg p-0 text-xs font-medium sm:h-10 sm:rounded-xl sm:text-sm",
                             !day.isCurrentMonth && "text-slate-300",
                             day.isCurrentMonth && !isEnabled && "text-slate-300",
                             isEnabled && "bg-slate-50 text-slate-800 hover:bg-slate-100",
@@ -1876,91 +1549,91 @@ export default function MemberShopPage({
 
       {/* Order Confirmation Dialog */}
       <Dialog open={orderDialog} onOpenChange={setOrderDialog}>
-        <DialogContent className="max-w-md border-slate-200 bg-white shadow-[0_24px_80px_-40px_rgba(15,23,42,0.45)]">
+        <DialogContent className="w-[calc(100%-2rem)] rounded-2xl border-slate-200 bg-white p-5 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.45)] sm:max-w-md sm:rounded-2xl sm:p-6">
           <DialogHeader>
-            <DialogTitle>Confirm Your Order</DialogTitle>
-            <DialogDescription>
-              Please review your order details before confirming
+            <DialogTitle className="text-lg sm:text-xl">Confirm Your Order</DialogTitle>
+            <DialogDescription className="text-sm">
+              Review your order details before confirming.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
-            <div>
-              <Label className="text-sm font-medium">Order Summary</Label>
-              <div className="mt-2 space-y-2">
+            <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-500">Order Summary</p>
+              <div className="space-y-2">
                 {cart.map((item) => (
-                  <div key={item.cartKey} className="flex justify-between gap-4 text-sm">
-                    <span>
-                      {item.name} x{item.quantity}
-                      {item.selectedValidDay ? ` (${formatTicketDateLabel(item.selectedValidDay)})` : ""}
+                  <div key={item.cartKey} className="flex justify-between gap-3 text-sm">
+                    <span className="text-slate-700">
+                      {item.name} <span className="text-slate-400">×{item.quantity}</span>
+                      {item.selectedValidDay ? <span className="text-slate-400"> ({formatTicketDateLabel(item.selectedValidDay)})</span> : ""}
                     </span>
-                    <span>{formatAmount(item.price * item.quantity, clubCurrency)}</span>
+                    <span className="shrink-0 font-medium text-slate-900">{formatAmount(item.price * item.quantity, clubCurrency)}</span>
                   </div>
                 ))}
               </div>
-            </div>
-            
-            <Separator />
-            
-            <div className="flex justify-between font-medium">
-              <span>Total Amount:</span>
-              <span>{formatAmount(getTotalAmount(), clubCurrency)}</span>
+              <Separator className="my-3" />
+              <div className="flex justify-between text-sm font-semibold text-slate-900">
+                <span>Total</span>
+                <span>{formatAmount(getTotalAmount(), clubCurrency)}</span>
+              </div>
             </div>
 
-            {isPublicCheckout ? (
-              <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
-                {!shouldUseProfileCheckoutIdentity ? (
-                  <>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="public-order-first-name" className="text-sm font-medium text-slate-900">
-                          First name
-                        </Label>
-                        <Input
-                          id="public-order-first-name"
-                          type="text"
-                          value={publicCheckoutFirstName}
-                          onChange={(event) => setPublicCheckoutFirstName(event.target.value)}
-                          placeholder="Enter your first name"
-                          className="rounded-2xl bg-white"
-                        />
-                      </div>
+            {isLoggedIn && memberOptInChecked && !memberHasExistingOptIn ? (
+              <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700">
+                <Checkbox
+                  checked={memberEmailOptIn}
+                  onCheckedChange={(checked) => setMemberEmailOptIn(checked === true)}
+                  className="mt-0.5"
+                />
+                <span>Opt me in to receive emails from this club.</span>
+              </label>
+            ) : null}
 
-                      <div className="space-y-1.5">
-                        <Label htmlFor="public-order-surname" className="text-sm font-medium text-slate-900">
-                          Last name
-                        </Label>
-                        <Input
-                          id="public-order-surname"
-                          type="text"
-                          value={publicCheckoutSurname}
-                          onChange={(event) => setPublicCheckoutSurname(event.target.value)}
-                          placeholder="Enter your last name"
-                          className="rounded-2xl bg-white"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label htmlFor="public-order-email" className="text-sm font-medium text-slate-900">
-                        Email address
-                      </Label>
-                      <Input
-                        id="public-order-email"
-                        type="email"
-                        value={publicCheckoutEmail}
-                        onChange={(event) => setPublicCheckoutEmail(event.target.value)}
-                        placeholder="Enter your email"
-                        className="rounded-2xl bg-white"
-                      />
-                      <p className="text-xs text-slate-500">
-                        We&apos;ll use this email for your public shop order.
-                      </p>
-                    </div>
-                  </>
-                ) : null}
-
-                <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700">
+            {isPublicCheckout && !shouldUseProfileCheckoutIdentity ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="public-order-first-name" className="text-sm font-medium text-slate-900">
+                      First name
+                    </Label>
+                    <Input
+                      id="public-order-first-name"
+                      type="text"
+                      value={publicCheckoutFirstName}
+                      onChange={(event) => setPublicCheckoutFirstName(event.target.value)}
+                      placeholder="First name"
+                      className="h-11 rounded-xl bg-white text-base sm:text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="public-order-surname" className="text-sm font-medium text-slate-900">
+                      Last name
+                    </Label>
+                    <Input
+                      id="public-order-surname"
+                      type="text"
+                      value={publicCheckoutSurname}
+                      onChange={(event) => setPublicCheckoutSurname(event.target.value)}
+                      placeholder="Last name"
+                      className="h-11 rounded-xl bg-white text-base sm:text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="public-order-email" className="text-sm font-medium text-slate-900">
+                    Email address
+                  </Label>
+                  <Input
+                    id="public-order-email"
+                    type="email"
+                    value={publicCheckoutEmail}
+                    onChange={(event) => setPublicCheckoutEmail(event.target.value)}
+                    placeholder="your@email.com"
+                    className="h-11 rounded-xl bg-white text-base sm:text-sm"
+                  />
+                  <p className="text-xs text-slate-500">Used for your order confirmation.</p>
+                </div>
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700">
                   <Checkbox
                     checked={publicEmailOptIn}
                     onCheckedChange={(checked) => setPublicEmailOptIn(checked === true)}
@@ -1970,21 +1643,13 @@ export default function MemberShopPage({
                 </label>
               </div>
             ) : null}
-            
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <p className="text-sm text-blue-800">
-                {isPublicCheckout
-                  ? "📧 Confirm your public order details before submitting."
-                  : "📧 Confirm your order and proceed to payment."}
-              </p>
-            </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOrderDialog(false)}>
+          <DialogFooter className="mt-2 flex-col gap-2 sm:flex-row sm:gap-0">
+            <Button variant="outline" className="w-full rounded-full sm:w-auto" onClick={() => setOrderDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreateOrder}>
+            <Button className="w-full rounded-full sm:w-auto" onClick={handleCreateOrder}>
               Confirm Order
             </Button>
           </DialogFooter>

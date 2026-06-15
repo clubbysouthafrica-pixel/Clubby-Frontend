@@ -50,4 +50,5 @@ export interface FormRegistrationRequest {
     deleteFields: string[]
     pages: PageFormRegistration[]
     form_name?: string
+    deregistered_form_name?: string
 }

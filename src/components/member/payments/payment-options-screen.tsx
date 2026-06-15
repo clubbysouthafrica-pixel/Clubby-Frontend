@@ -6,6 +6,7 @@ import { PayFastPayment } from "@/components/payments/payfast-payment";
 import { cn } from "@/lib/utils";
 import { formatAmount } from "@/data/currencies";
 import { useFetchSnapScanQRCodeQuery } from "@/queries/snapscan";
+import { useFetchPaymentDetails } from "@/queries/clubs";
 import type {
   FetchSnapScanQRCodeRequest,
 } from "@/services/snapscan/details";
@@ -74,6 +75,13 @@ export default function PaymentOptionsScreen({
   onCopyToClipboard,
   onBack,
 }: PaymentOptionsScreenProps) {
+  const { data: paymentDetails } = useFetchPaymentDetails(clubAccountId);
+
+  const resolvedEftDetails = paymentDetails ? paymentDetails.eft_details : (bankDetails ?? null);
+  const resolvedPayfastEnabled = paymentDetails ? paymentDetails.payfast_enabled : payfastEnabled;
+  const resolvedSnapscanEnabled = paymentDetails ? paymentDetails.snapscan_enabled : snapscanEnabled;
+  const eftEnabled = resolvedEftDetails !== null;
+
   const getSnapScanApiMessage = (error: unknown) => {
     if (!axios.isAxiosError(error)) {
       return null;
@@ -224,17 +232,17 @@ export default function PaymentOptionsScreen({
   }, []);
 
   useEffect(() => {
-    if (!payfastEnabled && selectedPaymentMethod === "payfast") {
+    if (!resolvedPayfastEnabled && selectedPaymentMethod === "payfast") {
       onSelectedPaymentMethodChange(null);
     }
-    if (!snapscanEnabled && selectedPaymentMethod === "snapscan") {
+    if (!resolvedSnapscanEnabled && selectedPaymentMethod === "snapscan") {
       onSelectedPaymentMethodChange(null);
     }
   }, [
     onSelectedPaymentMethodChange,
-    payfastEnabled,
+    resolvedPayfastEnabled,
+    resolvedSnapscanEnabled,
     selectedPaymentMethod,
-    snapscanEnabled,
   ]);
 
   return (
@@ -264,35 +272,24 @@ export default function PaymentOptionsScreen({
               </div>
             </div>
 
-            <div className="space-y-1 text-sm leading-relaxed text-muted-foreground">
-              {selectedPaymentOption ? (
-                <>
-                  <p>
-                    Payment Type:{" "}
-                    <span className="font-semibold text-foreground">
-                      {selectedPaymentOption.type === "ORDER" ? "SHOP ORDER" : selectedPaymentOption.type}
-                    </span>
-                  </p>
-                  <p>
-                    Amount to pay:{" "}
-                    <span className="font-semibold text-orange-600">
-                      {formatAmount(outstandingAmount, currency)}
-                    </span>
-                  </p>
-                </>
-              ) : (
-                <p>
-                  Amount to pay:{" "}
-                  <span className="font-semibold text-foreground">
-                    {formatAmount(bankDetails?.outstanding_amount ?? 0, currency)}
-                  </span>
-                </p>
-              )}
+            <div className="rounded-2xl border border-orange-200 bg-orange-50 px-4 py-4 sm:px-5 sm:py-5">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-orange-500">
+                {selectedPaymentOption
+                  ? selectedPaymentOption.type === "ORDER"
+                    ? "Shop Order"
+                    : selectedPaymentOption.type
+                  : "Outstanding Balance"}
+              </p>
+              <p className="text-3xl font-bold tracking-tight text-orange-600 sm:text-4xl">
+                {formatAmount(outstandingAmount, currency)}
+              </p>
+              <p className="mt-1 text-xs text-orange-400">Amount due — choose a payment method below</p>
             </div>
           </CardHeader>
 
           <CardContent className="space-y-5 px-1 pb-2 pt-2 sm:space-y-6 sm:p-6">
             <div className="space-y-4">
+              {eftEnabled && (<>
               <button
                 type="button"
                 onClick={() =>
@@ -482,9 +479,10 @@ export default function PaymentOptionsScreen({
                   </div>
                 </div>
               )}
+              </>)}
             </div>
 
-            {payfastEnabled && (
+            {resolvedPayfastEnabled && (
               <div className="space-y-4">
                 <PayFastPayment
                   clubAccountId={clubAccountId}

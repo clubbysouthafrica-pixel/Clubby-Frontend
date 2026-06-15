@@ -1,4 +1,4 @@
-import { fetchClub, fetchClubBankDetails, listClubs } from "@/services/club";
+import { fetchClub, fetchClubBankDetails, fetchPaymentDetails, listClubs } from "@/services/club";
 import { useQuery } from "@tanstack/react-query"
 
 export const useFetchClubsQuery = () => {
@@ -16,6 +16,7 @@ export const useFetchClub = (clubAccountId: string, enabled = true) => {
         return fetchClub(clubId);
       },
       enabled: enabled && !!clubAccountId,
+      staleTime: 5 * 60 * 1000,
     });
 }
 
@@ -27,5 +28,16 @@ export const useFetchClubBankDetails = (clubAccountId: string, isRegistered: boo
       return fetchClubBankDetails(clubId);
     },
     enabled: !!clubAccountId && isRegistered,
+  });
+}
+
+export const useFetchPaymentDetails = (clubAccountId: string, enabled = true) => {
+  return useQuery({
+    queryKey: ['getPaymentDetails', clubAccountId],
+    queryFn: ({ queryKey }) => {
+      const [_key, clubId] = queryKey;
+      return fetchPaymentDetails(clubId);
+    },
+    enabled: enabled && !!clubAccountId,
   });
 }

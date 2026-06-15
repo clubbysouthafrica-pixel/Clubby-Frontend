@@ -67,6 +67,7 @@ interface BankingDetailsFormProps {
   bankDetails?: BankDetails;
   payfastDetails?: PayFastDetails;
   snapscanDetails?: SnapScanDetails;
+  eftEnabled?: boolean;
   payfastEnabled?: boolean;
   snapscanEnabled?: boolean;
   autoRegisterMembersIfPaid?: boolean;
@@ -82,6 +83,7 @@ export function BankingDetailsForm({
   bankDetails,
   payfastDetails,
   snapscanDetails,
+  eftEnabled: initialEftEnabled,
   payfastEnabled = false,
   snapscanEnabled = false,
   customPaymentMethods = [],
@@ -112,6 +114,7 @@ export function BankingDetailsForm({
     isPending: updateCustomPaymentsLoading,
   } = useUpdateCustomPaymentMethodsMutation();
 
+  const [eftEnabled, setEftEnabled] = useState(initialEftEnabled ?? true);
   const [bank, setBank] = useState("");
   const [bankAccountNumber, setBankAccountNumber] = useState("");
   const [branchCode, setBranchCode] = useState("");
@@ -180,6 +183,8 @@ export function BankingDetailsForm({
     setSavedAutoRegisterMembersIfPaid(initialAutoRegisterMembersIfPaid);
     setAutoRegisterMembersIfPaidSnapScan(initialAutoRegisterMembersIfPaidSnapScan);
     setSavedAutoRegisterMembersIfPaidSnapScan(initialAutoRegisterMembersIfPaidSnapScan);
+    const resolvedEftEnabled = initialEftEnabled ?? true;
+    setEftEnabled(resolvedEftEnabled);
   }, [
     bankDetails,
     customPaymentMethods,
@@ -188,6 +193,7 @@ export function BankingDetailsForm({
     snapscanDetails,
     initialAutoRegisterMembersIfPaid,
     initialAutoRegisterMembersIfPaidSnapScan,
+    initialEftEnabled,
   ]);
 
   useEffect(() => {
@@ -502,6 +508,12 @@ export function BankingDetailsForm({
   };
 
   const handleSave = () => {
+    mutateUpdateClubDetails(
+      { club_account_id: clubAccountId, eft_enabled: eftEnabled },
+      {
+        onError: (error) => toast.error(getApiErrorMessage(error)),
+      },
+    );
     onSave({
       bank_details: {
         bank,
@@ -731,6 +743,28 @@ export function BankingDetailsForm({
             </p>
           )}
           <TabsContent value="eft" className="space-y-4 mt-4">
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <Label htmlFor="eft-enabled-toggle" className="text-sm font-medium">Enable EFT</Label>
+                <p className="text-xs text-muted-foreground">Allow members to pay via Electronic Funds Transfer.</p>
+              </div>
+              <Switch
+                id="eft-enabled-toggle"
+                checked={eftEnabled}
+                onCheckedChange={(checked) => {
+                  setEftEnabled(checked);
+                  mutateUpdateClubDetails(
+                    { club_account_id: clubAccountId, eft_enabled: checked },
+                    {
+                      onError: (error) => {
+                        setEftEnabled(!checked);
+                        toast.error(getApiErrorMessage(error));
+                      },
+                    },
+                  );
+                }}
+              />
+            </div>
             <div className="grid gap-3">
               <Label htmlFor="bank">
                 Bank

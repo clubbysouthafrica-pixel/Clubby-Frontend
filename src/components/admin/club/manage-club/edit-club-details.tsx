@@ -222,29 +222,8 @@ export default function EditClubDetails({
   }) => {
     mutate(
       {
-        opening_times: openingTimes,
         club_account_id: club?.club_account_id as string,
         bank_details: bankingData.bank_details,
-        country_of_operation: country,
-        currency,
-        time_zone: timeZone,
-        support_email: supportEmail,
-        club_url: clubUrl,
-        about_club: clubDetails,
-        instagram_url: instagramUrl,
-        facebook_url: facebookUrl,
-        hide_from_public: hideFromPublic,
-        registration_submission_email_template_body:
-          registrationSubmissionEmailTemplate,
-        registration_submission_email_subject:
-          registrationSubmissionEmailSubject,
-        registration_success_email_template_body:
-          registrationSuccessEmailTemplate,
-        registration_success_email_subject: registrationSuccessEmailSubject,
-        use_success_email_template: useSuccessEmailTemplate,
-        use_submission_email_template: useSubmissionEmailTemplate,
-        notify_on_member_registration: notifyOnMemberRegistration,
-        club_variables: clubVariables.map(toClubVariableRequest),
       },
       {
         onSuccess: () => {
@@ -707,6 +686,7 @@ export default function EditClubDetails({
                 autoRegisterMembersIfPaidSnapScan={
                   data?.auto_register_members_if_paid_snapscan ?? false
                 }
+                eftEnabled={data?.eft_enabled}
                 payfastEnabled={data?.payfast_enabled}
                 snapscanEnabled={data?.snapscan_enabled}
                 customPaymentMethods={data?.custom_payment_methods}

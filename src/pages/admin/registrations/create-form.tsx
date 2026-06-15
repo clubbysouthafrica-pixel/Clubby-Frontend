@@ -124,6 +124,7 @@ export default function AdminRegistrationFormPage() {
 
   const [saving, setSaving] = useState(false);
   const [formName, setFormName] = useState("Join Club");
+  const [deregisteredFormName, setDeregisteredFormName] = useState("Resubmission Required");
 
   // controlled active tab so we can detect changes and scroll
   const [activeTabIndex, setActiveTabIndex] = useState(0);
@@ -180,6 +181,7 @@ export default function AdminRegistrationFormPage() {
     DEFAULT_PAGE,
   ]);
   const [originalFormName, setOriginalFormName] = useState("Join Club");
+  const [originalDeregisteredFormName, setOriginalDeregisteredFormName] = useState("Resubmission Required");
 
   const hasUnsavedChanges = useMemo(() => {
     if (deletedFields.length > 0) {
@@ -190,13 +192,17 @@ export default function AdminRegistrationFormPage() {
       return true;
     }
 
+    if (deregisteredFormName.trim() !== originalDeregisteredFormName) {
+      return true;
+    }
+
     return (
       JSON.stringify(createPagesRequest(pages, formName.trim() || "Join Club")) !==
       JSON.stringify(
         createPagesRequest(originalPages, originalFormName),
       )
     );
-  }, [deletedFields, formName, originalFormName, pages, originalPages]);
+  }, [deletedFields, deregisteredFormName, formName, originalDeregisteredFormName, originalFormName, pages, originalPages]);
 
   const isFormEmpty = useMemo(
     () => pages.every((page) => (page.fields?.length ?? 0) === 0),
@@ -233,11 +239,14 @@ export default function AdminRegistrationFormPage() {
 
       const nextPages = sortedPages.length > 0 ? sortedPages : [DEFAULT_PAGE];
 
+      const incomingDeregisteredFormName = data.deregistered_form_name?.trim() || "Resubmission Required";
       setOriginalPages(nextPages);
       setPages(nextPages);
       setDeletedFields([]);
       setFormName(incomingFormName);
       setOriginalFormName(incomingFormName);
+      setDeregisteredFormName(incomingDeregisteredFormName);
+      setOriginalDeregisteredFormName(incomingDeregisteredFormName);
       // initialize prevFieldCounts map
       const counts: Record<number, number> = {};
       nextPages.forEach(
@@ -351,6 +360,7 @@ export default function AdminRegistrationFormPage() {
         deleteFields: createDeleteFieldsRequest(deletedFields, originalPages),
         club_account_id: club?.club_account_id as string,
         form_name: formName.trim() || "Join Club",
+        deregistered_form_name: deregisteredFormName.trim() || "Resubmission Required",
       },
       {
         onSuccess: () => {
@@ -368,6 +378,7 @@ export default function AdminRegistrationFormPage() {
           // Update originalPages with current pages so new fields are now locked
           setOriginalPages(pages);
           setOriginalFormName(formName.trim() || "Join Club");
+          setOriginalDeregisteredFormName(deregisteredFormName.trim());
           setDeletedFields([]);
         },
         onError: (e) => {
@@ -948,15 +959,27 @@ export default function AdminRegistrationFormPage() {
               Here you can build your dynamic member registration form for
               members to use and register to the club.
             </p>
-            <div className="mt-3 flex items-center gap-2">
-              <label htmlFor="form-name-input" className="text-sm font-medium text-slate-700 whitespace-nowrap">Form name</label>
-              <Input
-                id="form-name-input"
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                placeholder="Join Club"
-                className="h-8 w-56 text-sm"
-              />
+            <div className="mt-3 flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <label htmlFor="form-name-input" className="w-48 text-sm font-medium text-slate-700 whitespace-nowrap">Form name</label>
+                <Input
+                  id="form-name-input"
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  placeholder="Join Club"
+                  className="h-8 w-56 text-sm"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label htmlFor="deregistered-form-name-input" className="w-48 text-sm font-medium text-slate-700 whitespace-nowrap">Deregistration form name</label>
+                <Input
+                  id="deregistered-form-name-input"
+                  value={deregisteredFormName}
+                  onChange={(e) => setDeregisteredFormName(e.target.value)}
+                  placeholder="Resubmission Required"
+                  className="h-8 w-56 text-sm"
+                />
+              </div>
             </div>
           </div>
         </div>

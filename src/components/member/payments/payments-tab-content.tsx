@@ -359,8 +359,7 @@ export default function PaymentsTabContent({
           </CardContent>
         </Card>
 
-        {!data?.resubmission_required ? (
-          <Card className="h-full overflow-hidden border-0 bg-[radial-gradient(circle_at_top_left,_rgba(15,23,42,0.08),_transparent_32%),linear-gradient(180deg,#fff_0%,#f8fafc_100%)] shadow-[0_20px_60px_-34px_rgba(15,23,42,0.35)]">
+        <Card className="h-full overflow-hidden border-0 bg-[radial-gradient(circle_at_top_left,_rgba(15,23,42,0.08),_transparent_32%),linear-gradient(180deg,#fff_0%,#f8fafc_100%)] shadow-[0_20px_60px_-34px_rgba(15,23,42,0.35)]">
               <CardHeader className="border-b border-slate-200 px-3 pb-3 pt-3 sm:px-6 sm:pb-5 sm:pt-6">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-4">
                   <div className="flex items-start gap-4">
@@ -527,7 +526,6 @@ export default function PaymentsTabContent({
                 )}
               </CardContent>
           </Card>
-        ) : null}
 
         <Card className="overflow-hidden border-0 bg-white shadow-[0_20px_60px_-34px_rgba(15,23,42,0.35)] xl:col-span-2">
             <CardHeader className="border-b border-slate-200 px-3 pb-3 pt-3 sm:px-6 sm:pb-5 sm:pt-6">

@@ -277,7 +277,7 @@ export default function ProductsPage() {
   };
 
   const handleSubmit = async () => {
-    if (!productName || !price || !club?.club_account_id) {
+    if (!productName || !club?.club_account_id) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -300,7 +300,7 @@ export default function ProductsPage() {
       const productRequest: AddProductRequest = {
         club_account_id: club.club_account_id,
         name: productName,
-        price: parseFloat(price) * 100, // Convert to cents as expected by backend
+        price: parseFloat(price || "0") * 100, // Convert to cents as expected by backend
         active_product: isActive,
         purchase_limit: allowMultiple ? "multiple" : "single",
         product_type: productType,
@@ -326,7 +326,7 @@ export default function ProductsPage() {
       const newProduct: ProductRecord = {
         id: response.product_id || products.length + 1,
         name: productName,
-        price: parseFloat(price),
+        price: parseFloat(price || "0"),
         quantityLeft: 0,
         isActive,
         createdAt: Math.floor(Date.now() / 1000), // Current epoch time
@@ -842,7 +842,11 @@ export default function ProductsPage() {
                             </div>
                           </TableCell>
                           <TableCell className="text-center w-[120px]">
-                            {formatAmount(product.price * 100, club?.currency)}
+                            {product.price === 0 ? (
+                              <Badge variant="secondary" className="cursor-default bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Free</Badge>
+                            ) : (
+                              formatAmount(product.price * 100, club?.currency)
+                            )}
                           </TableCell>
                           <TableCell className="text-center w-[160px]">
                             <Badge 
@@ -902,12 +906,12 @@ export default function ProductsPage() {
       </div>
       
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Add New Product</DialogTitle>
           </DialogHeader>
-          
-          <div className="space-y-4">
+
+          <div className="flex-1 overflow-y-auto pr-1 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="productName">Product Name *</Label>
               <Input
@@ -919,7 +923,7 @@ export default function ProductsPage() {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="price">Price *</Label>
+              <Label htmlFor="price">Price</Label>
               <Input
                 id="price"
                 type="text"
@@ -1087,7 +1091,7 @@ export default function ProductsPage() {
             </DialogClose>
             <Button 
               onClick={handleSubmit}
-              disabled={!productName || !price}
+              disabled={!productName}
             >
               Add Product
             </Button>

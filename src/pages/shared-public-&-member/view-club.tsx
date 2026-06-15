@@ -1652,7 +1652,7 @@ export default function ViewClubPage() {
                     resubmissionRequired={data?.resubmission_required}
                     primaryActionLabel={
                       data?.resubmission_required
-                        ? "Re-registration Required"
+                        ? data?.deregistered_form_name ?? "Resubmission Required"
                         : !isActualClubMember
                           ? data?.form_name ?? "Join Club"
                           : undefined

@@ -483,6 +483,19 @@ export function ClubHomeTab({
                     </div>
                   )}
 
+                  {resubmissionRequired && primaryActionLabel && onPrimaryAction ? (
+                    <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap">
+                      <Button
+                        variant="destructive"
+                        className="h-9 w-full rounded-full px-3 text-xs font-semibold shadow-[0_18px_36px_-24px_rgba(220,38,38,0.45)] sm:h-auto sm:w-auto sm:px-4 sm:text-sm sm:py-2 lg:min-w-[13rem] lg:justify-center lg:px-6 lg:text-base"
+                        onClick={onPrimaryAction}
+                      >
+                        <AlertTriangle className="mr-2 h-4 w-4" />
+                        {primaryActionLabel}
+                      </Button>
+                    </div>
+                  ) : null}
+
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-slate-500 sm:text-sm">
                     <div className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" />
@@ -556,27 +569,6 @@ export function ClubHomeTab({
                   )}
                 </div>
 
-                {!isPublicLandingView && (primaryActionLabel && onPrimaryAction) && (
-                  <div className="w-full lg:w-auto lg:min-w-fit">
-                    <Button
-                      variant={primaryActionVariant}
-                      className={cn(
-                        "h-9 w-full rounded-full px-3 text-xs font-semibold lg:h-auto lg:w-auto lg:px-5 lg:py-6 lg:text-sm",
-                        primaryActionVariant === "destructive"
-                          ? "shadow-[0_18px_36px_-24px_rgba(220,38,38,0.45)]"
-                          : "bg-slate-900 text-white shadow-[0_18px_36px_-24px_rgba(15,23,42,0.38)] hover:bg-slate-800",
-                      )}
-                      onClick={onPrimaryAction}
-                    >
-                      {resubmissionRequired ? (
-                        <AlertTriangle className="mr-2 h-4 w-4" />
-                      ) : (
-                        <Users className="mr-2 h-4 w-4" />
-                      )}
-                      {primaryActionLabel}
-                    </Button>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
@@ -598,14 +590,11 @@ export function ClubHomeTab({
               >
                 <div className="flex items-start justify-between gap-2.5">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                      Public shop
-                    </p>
                     <h2 className="mt-0.5 text-sm font-semibold text-slate-950 sm:mt-1 sm:text-xl">
                       Shop products
                     </h2>
                     <p className="mt-1 hidden text-[11px] leading-4 text-slate-600 sm:block sm:text-sm sm:leading-6">
-                      Browse the products currently available from this club without leaving the home page.
+                      Browse the products currently available without leaving the home page.
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
