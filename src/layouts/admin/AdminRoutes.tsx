@@ -11,6 +11,7 @@ import DashboardPage from "@/pages/admin/dashboard/dashboard";
 import BillingPage from "@/pages/admin/billing/billing";
 import GeneralReportingPage from "@/pages/admin/club/club-financials";
 import AddMemberPage from "@/pages/admin/registrations/add-member";
+import AddMembersBulkPage from "@/pages/admin/registrations/add-members-bulk";
 import TermsPage from "@/pages/public/terms";
 import PrivacyPage from "@/pages/public/privacy";
 import ShopPage from "@/pages/admin/shop/shop";
@@ -105,6 +106,14 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <AddMemberPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/manage/members/add-bulk"
+        element={
+          <ProtectedRoute>
+            <AddMembersBulkPage />
           </ProtectedRoute>
         }
       ></Route>

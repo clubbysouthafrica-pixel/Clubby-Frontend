@@ -150,6 +150,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         items: [
           { title: "Registrations", url: "/manage/member/registrations" },
           { title: "Register a Member", url: "/manage/members/add" },
+          { title: "Bulk Register Members", url: "/manage/members/add-bulk" },
           { title: "Registration Form", url: "/manage/registrations/forms" },
         ],
       },

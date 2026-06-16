@@ -1,5 +1,5 @@
 import { SectionHub } from "@/components/admin/section-hub"
-import { ClipboardList, UserPlus, FileText } from "lucide-react"
+import { ClipboardList, UserPlus, FileText, Users } from "lucide-react"
 
 export default function MembersHubPage() {
   return (
@@ -18,6 +18,12 @@ export default function MembersHubPage() {
           description: "Manually register a new member directly to your club.",
           url: "/manage/members/add",
           icon: UserPlus,
+        },
+        {
+          title: "Bulk Register Members",
+          description: "Register multiple members at once using a shared registration form.",
+          url: "/manage/members/add-bulk",
+          icon: Users,
         },
         {
           title: "Registration Form",

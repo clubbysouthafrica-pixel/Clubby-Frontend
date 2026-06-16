@@ -16,6 +16,8 @@ export interface AdminRegistrationRequest {
     first_name: string
     surname: string
     email_opt_in?: boolean
+    send_account_email?: boolean
+    send_club_email?: boolean
     club_account_id: string
     billing_fields: StandardField[]
     standard_fields: StandardField[]
