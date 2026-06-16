@@ -127,7 +127,6 @@ function getOrderDisplayPaymentStatus(
 ): OrderDisplayPaymentStatus {
   const normalizedStatus = order.payment_status?.trim().toUpperCase() || "";
   const refundedAmount = getOrderRefundedAmount(order);
-  const effectiveAmount = getOrderEffectiveAmount(order);
   const outstandingAmount = getOrderOutstandingAmount(order);
   const amountPaid = order.amount_paid || 0;
 
@@ -143,11 +142,11 @@ function getOrderDisplayPaymentStatus(
     return "REFUNDED";
   }
 
-  if (amountPaid <= 0) {
+  if (amountPaid <= 0 && normalizedStatus !== "PAID") {
     return "AWAITING_PAYMENT";
   }
 
-  if (effectiveAmount > 0 && outstandingAmount <= 0) {
+  if (outstandingAmount <= 0) {
     return "PAID";
   }
 
@@ -202,8 +201,7 @@ function shouldShowSingleOrderAmount(order: OrderPaymentMeta) {
 
   return (
     displayStatus !== "AWAITING_PAYMENT" &&
-    displayStatus !== "PARTIALLY_PAID" &&
-    getOrderEffectiveAmount(order) > 0
+    displayStatus !== "PARTIALLY_PAID"
   );
 }
 
