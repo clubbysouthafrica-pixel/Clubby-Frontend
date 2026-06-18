@@ -1,11 +1,4 @@
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { ReactNode, useState } from "react";
 
 export interface BillingFieldItem {
@@ -58,138 +51,106 @@ export function ReusableSubmitRegistration({
   const [emailOptIn, setEmailOptIn] = useState(publicEmailOptIn);
 
   return (
-    <div className="flex justify-center items-center px-4 lg:px-0">
-      <Card className={`w-full lg:w-[800px] pt-0 gap-0 ${className}`}>
-        <CardHeader className="border-b bg-muted/30 py-4 lg:py-6 pb-4 lg:pb-6 flex flex-col items-center gap-3">
-          {clubProfileUrl && (
+    <div className={`flex flex-col gap-4 justify-center items-center px-4 lg:px-0 py-6 lg:py-12 ${className}`}>
+      <div className="w-full max-w-2xl bg-white rounded-lg shadow-md overflow-hidden">
+        {clubProfileUrl && (
+          <div className="w-full overflow-hidden">
             <img
               src={clubProfileUrl}
-              alt="Club Profile"
-              className="w-24 h-24 rounded-full object-cover border-3 border-white shadow-md"
+              alt="Club cover"
+              className="w-full h-32 lg:h-44 object-cover"
             />
-          )}
-          <div className="flex flex-col items-center gap-2">
-            <CardTitle className="text-2xl lg:text-3xl text-center">
-              {clubName}
-            </CardTitle>
-            <CardDescription className="text-center text-xs lg:text-xs">
-              {headerDescription}
-            </CardDescription>
           </div>
-        </CardHeader>
+        )}
+        <div className="py-4 lg:py-6 px-6 lg:px-10 flex flex-col items-center gap-1">
+          <h2 className="text-2xl lg:text-4xl font-bold text-center text-gray-900">
+            {clubName}
+          </h2>
+          <p className="text-center text-sm lg:text-base text-gray-600 mt-2">
+            {headerDescription}
+          </p>
+        </div>
+      </div>
 
-        <CardContent className="py-4 lg:py-3 px-4 lg:px-4">
-          <form>
-            <div className="space-y-4">
-              <div className="px-0 py-2 space-y-3 bg-muted/10 rounded p-3">
-                {/* Member Information (optional) */}
-                {showMemberInfo && firstName && surname && email && (
-                  <div>
-                    <h1 className="text-xs lg:text-sm font-semibold">
-                      Name:{" "}
-                      <strong>
-                        {firstName} {surname}
-                      </strong>
-                    </h1>
-                    <h1 className="text-xs lg:text-sm">
-                      Email: <strong>{email}</strong>
-                    </h1>
-                  </div>
-                )}
+      {showMemberInfo && firstName && surname && email && (
+        <div className="w-full max-w-2xl bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="px-6 lg:px-10 py-4 lg:py-5 space-y-1">
+            <h1 className="text-sm lg:text-base font-semibold text-gray-900">
+              Name: <strong>{firstName} {surname}</strong>
+            </h1>
+            <h1 className="text-sm lg:text-base font-semibold text-gray-900">
+              Email: <strong>{email}</strong>
+            </h1>
+          </div>
+        </div>
+      )}
 
-                {/* Payment Warning */}
-                {/* {showPaymentWarning && (
-                  <div className="bg-muted/20 p-3 rounded border space-y-2">
-                    <p className="text-xs font-semibold text-yellow-700">
-                      ⚠️ Please review your membership information carefully
-                      before submitting.
-                    </p>
-                    <p className="text-xs">
-                      Once your registration is submitted, you must visit the{" "}
-                      <strong>Payments & Billing</strong> tab in your associated
-                      club profile to view available payment methods and
-                      instructions for paying any outstanding amounts.
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Clubby is <strong>not responsible</strong> for any
-                      incorrect payments, misdirected payments, or payment
-                      errors. Please follow the instructions on the Payments tab
-                      carefully.
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Ensure all billing information is correct to avoid delays
-                      in processing your membership.
-                    </p>
-                  </div>
-                )} */}
-              </div>
+      <div className="w-full max-w-2xl bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="px-6 lg:px-10 py-6 space-y-4">
+          <div className="flex items-start gap-2">
+            <input
+              id="terms"
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              required
+              className="mt-1.5 flex-shrink-0"
+            />
+            <p className="text-[16px]">
+              I agree to the{" "}
+              <a
+                target="_blank"
+                href="/terms"
+                className="underline underline-offset-4 text-primary hover:text-primary/80"
+              >
+                Terms of service
+              </a>{" "}
+              and the{" "}
+              <a
+                target="_blank"
+                href="/legal"
+                className="underline underline-offset-4 text-primary hover:text-primary/80"
+              >
+                Privacy Policy
+              </a>
+            </p>
+          </div>
 
-              <div className="flex items-start gap-2">
-                <input
-                  id="terms"
-                  type="checkbox"
-                  checked={agreed}
-                  onChange={(e) => setAgreed(e.target.checked)}
-                  required
-                  className="mt-1.5 flex-shrink-0"
-                />
-                <p className="text-[16px]">
-                  I agree to the{" "}
-                  <a
-                    target="_blank"
-                    href="/terms"
-                    className="underline underline-offset-4 text-primary hover:text-primary/80"
-                  >
-                    Terms of service
-                  </a>{" "}
-                  and the{" "}
-                  <a
-                    target="_blank"
-                    href="/legal"
-                    className="underline underline-offset-4 text-primary hover:text-primary/80"
-                  >
-                    Privacy Policy
-                  </a>
-                </p>
-              </div>
-              <label className="flex items-start gap-3 rounded-2xl bg-white py-3 text-s">
-                <input
-                  type="checkbox"
-                  checked={emailOptIn}
-                  onChange={(e) => setEmailOptIn(e.target.checked)}
-                  className="mt-1.5 flex-shrink-0"
-                />
-                <span>Opt me in to receive emails from the organization.</span>
-              </label>
+          <label className="flex items-start gap-3 py-1 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={emailOptIn}
+              onChange={(e) => setEmailOptIn(e.target.checked)}
+              className="mt-1 flex-shrink-0"
+            />
+            <span>Opt me in to receive emails from the organization.</span>
+          </label>
 
-              {/* Action Buttons */}
-              <div className="flex flex-col gap-3 pt-4 border-t">
-                <Button
-                  variant="outline"
-                  type="button"
-                  size="sm"
-                  className="w-full"
-                  disabled={isSubmitting}
-                  onClick={onBack}
-                >
-                  {backButtonText}
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => onSubmit(emailOptIn)}
-                  disabled={(isSubmitting && !agreed) || !agreed}
-                >
-                  {isSubmitting ? "Submitting..." : submitButtonText}
-                </Button>
-              </div>
+          <div className="flex flex-col gap-3 pt-4 border-t">
+            <Button
+              variant="outline"
+              type="button"
+              size="sm"
+              className="w-full"
+              disabled={isSubmitting}
+              onClick={onBack}
+            >
+              {backButtonText}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              className="w-full"
+              onClick={() => onSubmit(emailOptIn)}
+              disabled={(isSubmitting && !agreed) || !agreed}
+            >
+              {isSubmitting ? "Submitting..." : submitButtonText}
+            </Button>
+          </div>
 
-              {bottomContent}
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+          {bottomContent}
+        </div>
+      </div>
     </div>
   );
 }

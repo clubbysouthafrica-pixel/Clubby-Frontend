@@ -99,6 +99,7 @@ interface ReusableRegistrationFormProps {
   headerTitle?: string;
   headerDescription?: string;
   showHeader?: boolean;
+  afterHeaderContent?: ReactNode;
   topContent?: ReactNode;
   bottomContent?: ReactNode;
   onPrevious?: () => void;
@@ -124,6 +125,7 @@ export function ReusableRegistrationForm({
   headerTitle,
   headerDescription,
   showHeader = true,
+  afterHeaderContent,
   topContent,
   bottomContent,
   onPrevious,
@@ -157,33 +159,38 @@ export function ReusableRegistrationForm({
 
   return (
     <div
-      className={`flex flex-col gap-10 justify-center items-center px-3 lg:px-4 w-full overflow-x-hidden  bg-gradient-to-b from-gray-50 to-white ${className ?? "py-6 lg:py-12"}`}
+      className={`flex flex-col gap-10 justify-center items-center px-3 lg:px-4 w-full overflow-x-hidden ${className ?? "py-6 lg:py-12"}`}
     >
       <div
         className={`w-full max-w-2xl bg-white rounded-lg shadow-md overflow-hidden ${className}`}
       >
         {showHeader && (
-          <div className="border-b border-gray-200 bg-white py-4 lg:py-6 px-6 lg:px-10 flex flex-col items-center gap-4">
+          <div className="border-b border-gray-200 bg-white flex flex-col items-center gap-4">
             {clubProfileUrl && (
-              <img
-                src={clubProfileUrl}
-                alt="Club Profile"
-                className="w-32 h-32 rounded-full object-cover border-2 border-gray-300 shadow-md"
-              />
+              <div className="w-full overflow-hidden">
+                <img
+                  src={clubProfileUrl}
+                  alt="Club cover"
+                  className="w-full h-32 lg:h-44 object-cover"
+                />
+              </div>
             )}
-            <div className="flex flex-col items-center gap-1">
-              <h1 className="text-2xl lg:text-4xl font-bold text-center text-gray-900">
-                {headerTitle || clubName}
-              </h1>
-              {headerDescription && (
-                <p className="text-center text-sm lg:text-base text-gray-600 mt-2">
-                  {headerDescription}
-                </p>
-              )}
+            <div className="py-4 lg:py-6 px-6 lg:px-10 flex flex-col items-center gap-4 w-full">
+              <div className="flex flex-col items-center gap-1">
+                <h1 className="text-2xl lg:text-4xl font-bold text-center text-gray-900">
+                  {headerTitle || clubName}
+                </h1>
+                {headerDescription && (
+                  <p className="text-center text-sm lg:text-base text-gray-600 mt-2">
+                    {headerDescription}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         )}
       </div>
+      {afterHeaderContent}
       <div
         className={`w-full max-w-2xl mb-5 bg-white rounded-lg shadow-md overflow-hidden ${className}`}
       >

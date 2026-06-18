@@ -385,18 +385,6 @@ export function PublicRegistrationForm({
 
   return (
     <div className="">
-      <div className="bg-gray-50 rounded-lg rounded-b-none p-4">
-        <h1 className="text-base lg:text-lg font-semibold text-center text-gray-900">
-          Name:{" "}
-          <strong>
-            {firstName} {surname}
-          </strong>
-        </h1>
-        <h1 className="text-base lg:text-lg font-medium text-center text-gray-600 mt-1">
-          Email: <strong>{email}</strong>
-        </h1>
-      </div>
-
       {pages.length > 0 && (
         <ReusableRegistrationForm
           clubName={clubName}
@@ -413,6 +401,18 @@ export function PublicRegistrationForm({
           requiredFieldsMissing={requiredFieldsMissing}
           missingFieldNames={missingFieldNames}
           showHeader={true}
+          afterHeaderContent={
+            <div className="w-full max-w-2xl bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="px-6 lg:px-10 py-4 lg:py-5 space-y-1">
+                <h1 className="text-sm lg:text-base font-semibold text-gray-900">
+                  Name: <strong>{firstName} {surname}</strong>
+                </h1>
+                <h1 className="text-sm lg:text-base font-semibold text-gray-900">
+                  Email: <strong>{email}</strong>
+                </h1>
+              </div>
+            </div>
+          }
           onNext={handleNextPage}
           onContinue={handleContinue}
           isPending={isRegistering}

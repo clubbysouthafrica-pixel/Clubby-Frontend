@@ -10,7 +10,6 @@ import {
   getRegistrationStatus,
   type MemberEvent,
 } from "@/components/member/events/event-utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -233,7 +232,6 @@ export function ClubHomeTab({
   registrationAmount,
   outstandingBalanceAmount,
   coverImage,
-  profileImage,
   clubUrl,
   facebook,
   instagram,
@@ -380,18 +378,16 @@ export function ClubHomeTab({
 
   return (
     <TabsContent value="home" className="mt-2 sm:mt-6">
-      <div className="relative">
-        <div className="relative h-24 overflow-hidden sm:h-36 md:h-56">
+      <div>
+        <div className="relative h-40 overflow-hidden sm:h-56 md:h-72">
           {coverImage ? (
-            <div className="relative h-full w-full">
-              <img
-                src={coverImage}
-                alt={`${clubName} cover`}
-                className="h-full w-full object-cover"
-                onError={() => fetch(coverImage, { method: "HEAD" }).then((r) => console.error("[cover image] failed:", r.status, r.statusText, coverImage)).catch((e) => console.error("[cover image] network error:", e.message, coverImage))}
-                onLoad={() => {}}
-              />
-            </div>
+            <img
+              src={coverImage}
+              alt={`${clubName} cover`}
+              className="h-full w-full object-cover"
+              onError={() => fetch(coverImage, { method: "HEAD" }).then((r) => console.error("[cover image] failed:", r.status, r.statusText, coverImage)).catch((e) => console.error("[cover image] network error:", e.message, coverImage))}
+              onLoad={() => {}}
+            />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-slate-100">
               <div className="space-y-2 text-center">
@@ -402,30 +398,10 @@ export function ClubHomeTab({
           )}
         </div>
 
-        <div className="container relative mx-auto -mt-6 px-3 sm:-mt-10 sm:px-4 md:-mt-14">
-          <Card className="gap-0 overflow-hidden rounded-[1.65rem] border-slate-200 bg-white py-1.5 shadow-[0_30px_90px_-42px_rgba(15,23,42,0.16)] backdrop-blur-sm sm:rounded-[1.9rem] sm:py-2">
+        <div className="container mx-auto px-3 pt-4 sm:px-4 sm:pt-6">
+          <Card className="gap-0 overflow-hidden rounded-[1.65rem] border-slate-200 bg-white py-1.5 shadow-[0_30px_90px_-42px_rgba(15,23,42,0.16)] sm:rounded-[1.9rem] sm:py-2">
             <CardContent className="p-2.5 sm:p-6 lg:p-8">
-              <div className="flex flex-col items-start gap-2.5 sm:gap-5 lg:flex-row lg:items-center lg:gap-6">
-                <div className="relative">
-                  <Avatar className="h-14 w-14 border-4 border-white shadow-[0_18px_36px_-20px_rgba(14,116,144,0.45)] sm:h-24 sm:w-24">
-                    {profileImage ? (
-                      <AvatarImage
-                        className="object-cover object-center"
-                        src={profileImage}
-                        onError={() => fetch(profileImage, { method: "HEAD" }).then((r) => console.error("[profile image] failed:", r.status, r.statusText, profileImage)).catch((e) => console.error("[profile image] network error:", e.message, profileImage))}
-                        onLoad={() => {}}
-                      />
-                    ) : (
-                      <AvatarFallback className="bg-slate-100 text-xl font-bold text-slate-700">
-                        {clubName.split(" ").map((word) => word[0])}
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                  <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-slate-800 shadow-[0_10px_24px_-12px_rgba(15,23,42,0.45)] sm:h-8 sm:w-8">
-                    <Users className="h-2.5 w-2.5 text-white sm:h-4 sm:w-4" />
-                  </div>
-                </div>
-
+              <div className="flex flex-col items-start gap-2.5 sm:gap-5">
                 <div className="flex-1 space-y-1.5 sm:space-y-3">
                   <div className="space-y-1 sm:space-y-2">
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -444,30 +420,28 @@ export function ClubHomeTab({
                   </div>
 
                   {isPublicLandingView ? (
-                    <div className="rounded-[1.1rem] border border-slate-200 bg-slate-50 px-3 py-2.5 sm:rounded-[1.2rem] sm:px-4 sm:py-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                        Overview
-                      </p>
-                      <p className="mt-1 hidden text-xs leading-4.5 text-slate-600 sm:block sm:text-[15px] sm:leading-6">
-                        {aboutClub || "Browse the club details, explore what is available publicly, and start your application whenever you are ready to join."}
-                      </p>
-                      <div className="mt-2 flex flex-col gap-1.5 sm:flex-row sm:flex-wrap">
-                        {primaryActionLabel && onPrimaryAction ? (
-                          <Button
-                            variant={primaryActionVariant}
-                            className={cn(
-                              "h-9 w-full rounded-full px-3 text-xs font-semibold sm:h-auto sm:w-auto sm:px-4 sm:text-sm sm:py-2 lg:min-w-[13rem] lg:justify-center lg:px-6 lg:text-base",
-                              primaryActionVariant === "destructive"
-                                ? "shadow-[0_18px_36px_-24px_rgba(220,38,38,0.45)]"
-                                : "bg-slate-900 text-white shadow-[0_18px_36px_-24px_rgba(15,23,42,0.38)] hover:bg-slate-800",
-                            )}
-                            onClick={onPrimaryAction}
-                          >
-                            <Users className="mr-2 h-4 w-4" />
-                            {primaryActionLabel}
-                          </Button>
-                        ) : null}
-                      </div>
+                    <div className="space-y-2">
+                      {aboutClub && (
+                        <div className="hidden sm:block space-y-1">
+                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">About</p>
+                          <p className="text-xs leading-4.5 text-slate-600 sm:text-[15px] sm:leading-6">{aboutClub}</p>
+                        </div>
+                      )}
+                      {primaryActionLabel && onPrimaryAction ? (
+                        <Button
+                          variant={primaryActionVariant}
+                          className={cn(
+                            "h-8 w-full rounded-full px-3 text-[11px] font-semibold sm:h-10 sm:px-4 sm:text-sm lg:text-base",
+                            primaryActionVariant === "destructive"
+                              ? "shadow-[0_18px_36px_-24px_rgba(220,38,38,0.45)]"
+                              : "bg-slate-900 text-white shadow-[0_18px_36px_-24px_rgba(15,23,42,0.38)] hover:bg-slate-800",
+                          )}
+                          onClick={onPrimaryAction}
+                        >
+                          <Users className="mr-2 h-4 w-4" />
+                          {primaryActionLabel}
+                        </Button>
+                      ) : null}
                     </div>
                   ) : null}
 
@@ -634,9 +608,9 @@ export function ClubHomeTab({
                   <h2 className="mt-0.5 text-sm font-semibold text-slate-950 sm:mt-1 sm:text-xl">
                     Become part of {clubName}
                   </h2>
-                  <p className="mt-1 hidden text-[11px] leading-4 text-slate-600 sm:block sm:text-sm sm:leading-6">
-                    Join to unlock member registration, payments, and the full experience. Start with a simple application and complete the rest once you are approved.
-                  </p>
+                  {description && (
+                    <p className="mt-1 text-[11px] leading-4 text-slate-600 sm:text-sm sm:leading-6">{description}</p>
+                  )}
                 </div>
 
                 <div className="rounded-[1rem] border border-slate-200 bg-slate-50 p-2.5 sm:rounded-[1.2rem] sm:p-4 xl:flex xl:flex-1 xl:flex-col">
@@ -678,7 +652,7 @@ export function ClubHomeTab({
         ) : null}
 
         <div className="grid grid-cols-1 gap-2.5 sm:gap-4 xl:grid-cols-2 xl:gap-5">
-          {openingTimeEntries.length > 0 && (
+          {openingTimeEntries.length > 0 && openingTimeEntries.some((e) => e.label !== "Hours unavailable") && (
           <aside className="order-3 space-y-3 sm:space-y-4 xl:row-start-3 xl:self-start xl:space-y-5">
             <Card className="rounded-[1.5rem] border-slate-200 bg-white shadow-[0_20px_60px_-36px_rgba(15,23,42,0.1)]">
               <CardHeader className="px-3 pb-2 pt-3 sm:px-4 sm:pb-2 sm:pt-4">

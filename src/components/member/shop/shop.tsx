@@ -940,7 +940,7 @@ export default function MemberShopPage({
               ) : null}
 
               {compact ? (
-                <div className="flex min-h-0 flex-1 flex-col space-y-2.5 xl:overflow-y-auto xl:pr-1">
+                <div className="flex min-h-0 flex-1 flex-col space-y-1.5 overflow-y-auto pr-0.5 max-h-64 sm:max-h-80 xl:max-h-none xl:pr-1">
                   {filteredProducts.map((product) => {
                     const inCartQuantity = getInCartQuantity(product.product_id);
 
@@ -956,10 +956,10 @@ export default function MemberShopPage({
                             openProductDetails(product);
                           }
                         }}
-                        className="rounded-[1.1rem] border border-slate-200 bg-slate-50 px-3 py-3 shadow-sm transition-colors hover:border-slate-300 hover:bg-white"
+                        className="rounded-[1rem] border border-slate-200 bg-slate-50 px-2.5 py-2 shadow-sm transition-colors hover:border-slate-300 hover:bg-white sm:rounded-[1.1rem] sm:px-3 sm:py-3"
                       >
-                        <div className="flex items-start gap-3">
-                          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-slate-100">
+                        <div className="flex items-center gap-2.5 sm:items-start sm:gap-3">
+                          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-slate-100 sm:h-16 sm:w-16 sm:rounded-xl">
                             {product.product_image_url ? (
                               <img
                                 src={product.product_image_url}
@@ -968,52 +968,44 @@ export default function MemberShopPage({
                               />
                             ) : (
                               <div className="flex h-full items-center justify-center">
-                                <Package className="h-6 w-6 text-slate-400" />
+                                <Package className="h-4 w-4 text-slate-400 sm:h-6 sm:w-6" />
                               </div>
                             )}
                           </div>
 
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="min-w-0">
-                                <p className="line-clamp-1 text-sm font-semibold text-slate-950 lg:text-base">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="min-w-0 flex items-center gap-1.5">
+                                <p className="line-clamp-1 text-xs font-semibold text-slate-950 sm:text-sm lg:text-base">
                                   {product.name}
                                 </p>
-                                <div className="mt-1">
-                                  {product.price === 0 ? (
-                                    <Badge className="cursor-default bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Free</Badge>
-                                  ) : (
-                                    <p className="text-sm font-semibold text-slate-950 lg:text-base">{formatAmount(product.price, clubCurrency)}</p>
-                                  )}
-                                </div>
-                                {/* {productRequiresValidDay(product) ? (
-                                  <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-amber-700 lg:text-[11px]">
-                                    Choose a valid day
-                                  </p>
-                                ) : null} */}
+                                {inCartQuantity > 0 ? (
+                                  <Badge className="border-amber-200 bg-amber-50 px-1.5 py-0 text-[10px] text-amber-700">
+                                    {inCartQuantity}
+                                  </Badge>
+                                ) : null}
                               </div>
-                              {inCartQuantity > 0 ? (
-                                <Badge className="border-amber-200 bg-amber-50 px-1.5 py-0 text-[10px] text-amber-700">
-                                  {inCartQuantity}
-                                </Badge>
-                              ) : null}
-                            </div>
-
-                            <p className="mt-1 line-clamp-2 text-[11px] leading-4.5 text-slate-500 lg:text-[13px] lg:leading-5">
-                              {product.description || "No description available"}
-                            </p>
-
-                            <div className="mt-2 flex justify-end">
                               <Button
                                 onClick={(event) => {
                                   event.stopPropagation();
                                   startAddToCart(product);
                                 }}
-                                className="h-8 rounded-full bg-black px-3 text-[11px] text-white hover:bg-slate-900 lg:text-[13px]"
+                                className="h-6 shrink-0 rounded-full bg-black px-2.5 text-[10px] text-white hover:bg-slate-900 sm:h-8 sm:px-3 sm:text-[11px] lg:text-[13px]"
                               >
-                                <ShoppingCart className="mr-1 h-3 w-3" />
+                                <ShoppingCart className="mr-1 h-2.5 w-2.5 sm:h-3 sm:w-3" />
                                 Add
                               </Button>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-2 mt-0.5">
+                              {product.price === 0 ? (
+                                <Badge className="cursor-default bg-emerald-100 text-[10px] text-emerald-700 hover:bg-emerald-100 px-1.5 py-0">Free</Badge>
+                              ) : (
+                                <p className="text-[11px] font-semibold text-slate-700 sm:text-sm">{formatAmount(product.price, clubCurrency)}</p>
+                              )}
+                              <p className="line-clamp-1 text-[10px] leading-4 text-slate-400 sm:text-[11px]">
+                                {product.description || ""}
+                              </p>
                             </div>
                           </div>
                         </div>

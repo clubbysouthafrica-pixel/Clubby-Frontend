@@ -57,131 +57,140 @@ export function CollectUserDetails({
   };
 
   return (
-    <div className="space-y-3">
-      {clubProfileUrl && (
-        <div className="flex flex-col items-center pb-2 gap-2">
-          <img
-            src={clubProfileUrl}
-            alt="Club Profile"
-            className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover border-4 border-muted"
-          />
-          {clubName && (
-            <h2 className="text-lg md:text-xl font-semibold text-center">
-              {clubName}
-            </h2>
-          )}
-        </div>
-      )}
-      <div className="flex flex-col gap-1.5 p-3 rounded-lg">
-        <Label
-          htmlFor="public_email"
-          className="text-xs font-semibold text-muted-foreground"
-        >
-          Email Address
-        </Label>
-        <div className="relative">
-          <Input
-            id="public_email"
-            type="email"
-            placeholder="Enter your email address"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              setError(undefined);
-            }}
-            className="pr-10 text-base md:text-sm"
-            required
-          />
-          {email && (
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              {isEmailValid ? (
-                <Check className="h-5 w-5 text-green-600" />
-              ) : (
-                <X className="h-5 w-5 text-red-600" />
-              )}
+    <div className="space-y-4">
+      {(clubProfileUrl || clubName) && (
+        <div className="w-full bg-white rounded-lg shadow-md overflow-hidden">
+          {clubProfileUrl && (
+            <div className="w-full overflow-hidden">
+              <img
+                src={clubProfileUrl}
+                alt="Club cover"
+                className="w-full h-32 lg:h-44 object-cover"
+              />
             </div>
           )}
+          <div className="py-4 md:py-6 px-6 md:px-10 flex flex-col items-center gap-1">
+            {clubName && (
+              <h2 className="text-2xl md:text-4xl font-bold text-center text-gray-900">
+                {clubName}
+              </h2>
+            )}
+            <p className="text-center text-sm md:text-base text-gray-600 mt-2">
+              Please complete all required fields to proceed with your registration.
+            </p>
+          </div>
         </div>
-      </div>
-      <div className="flex flex-col gap-1.5 p-3 bg-muted/20 rounded-lg">
-        <Label htmlFor="public_confirm_email" className="text-xs font-semibold text-muted-foreground">
-          Confirm Email Address
-        </Label>
-        <div className="relative">
-          <Input
-            id="public_confirm_email"
-            type="email"
-            placeholder="Re-enter your email address"
-            value={confirmEmail}
-            onChange={(e) => {
-              setConfirmEmail(e.target.value);
-              setError(undefined);
-            }}
-            className="pr-10 text-base md:text-sm"
-            required
-          />
-          {confirmEmail && (
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              {emailsMatch ? (
-                <Check className="h-5 w-5 text-green-600" />
-              ) : (
-                <X className="h-5 w-5 text-red-600" />
+      )}
+
+      <div className="w-full bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="px-4 md:px-6 py-5 space-y-3">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="public_email" className="text-xs font-semibold text-muted-foreground">
+              Email Address
+            </Label>
+            <div className="relative">
+              <Input
+                id="public_email"
+                type="email"
+                placeholder="Enter your email address"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError(undefined);
+                }}
+                className="pr-10 text-base md:text-sm"
+                required
+              />
+              {email && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  {isEmailValid ? (
+                    <Check className="h-5 w-5 text-green-600" />
+                  ) : (
+                    <X className="h-5 w-5 text-red-600" />
+                  )}
+                </div>
               )}
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="public_confirm_email" className="text-xs font-semibold text-muted-foreground">
+              Confirm Email Address
+            </Label>
+            <div className="relative">
+              <Input
+                id="public_confirm_email"
+                type="email"
+                placeholder="Re-enter your email address"
+                value={confirmEmail}
+                onChange={(e) => {
+                  setConfirmEmail(e.target.value);
+                  setError(undefined);
+                }}
+                className="pr-10 text-base md:text-sm"
+                required
+              />
+              {confirmEmail && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  {emailsMatch ? (
+                    <Check className="h-5 w-5 text-green-600" />
+                  ) : (
+                    <X className="h-5 w-5 text-red-600" />
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="public_firstname" className="text-xs font-semibold text-muted-foreground">
+              First Name
+            </Label>
+            <Input
+              id="public_firstname"
+              type="text"
+              placeholder="Enter your first name"
+              value={firstName}
+              onChange={(e) => {
+                setFirstName(formatName(e.target.value));
+                setError(undefined);
+              }}
+              className="text-base md:text-sm"
+              required
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="public_surname" className="text-xs font-semibold text-muted-foreground">
+              Surname
+            </Label>
+            <Input
+              id="public_surname"
+              type="text"
+              placeholder="Enter your surname"
+              value={surname}
+              onChange={(e) => {
+                setSurname(formatName(e.target.value));
+                setError(undefined);
+              }}
+              className="text-base md:text-sm"
+              required
+            />
+          </div>
+
+          {error && (
+            <Alert variant="destructive" className="flex flex-row">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-xs">{error}</AlertDescription>
+            </Alert>
           )}
+
+          <Button size="sm" className="w-full" onClick={handleContinue} disabled={!isFormValid}>
+            Continue
+          </Button>
         </div>
       </div>
-      <div className="flex flex-col gap-1.5 p-3 rounded-lg">
-        <Label
-          htmlFor="public_firstname"
-          className="text-xs font-semibold text-muted-foreground"
-        >
-          First Name
-        </Label>
-        <Input
-          id="public_firstname"
-          type="text"
-          placeholder="Enter your first name"
-          value={firstName}
-          onChange={(e) => {
-            setFirstName(formatName(e.target.value));
-            setError(undefined);
-          }}
-          className="text-base md:text-sm"
-          required
-        />
-      </div>
-      <div className="flex flex-col gap-1.5 p-3 rounded-lg">
-        <Label
-          htmlFor="public_surname"
-          className="text-xs font-semibold text-muted-foreground"
-        >
-          Surname
-        </Label>
-        <Input
-          id="public_surname"
-          type="text"
-          placeholder="Enter your surname"
-          value={surname}
-          onChange={(e) => {
-            setSurname(formatName(e.target.value));
-            setError(undefined);
-          }}
-          className="text-base md:text-sm"
-          required
-        />
-      </div>
-      {error && (
-        <Alert variant="destructive" className="flex flex-row">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="text-xs">{error}</AlertDescription>
-        </Alert>
-      )}
-      <div className="flex flex-col gap-1.5 p-3 rounded-lg">
-        <Button size="sm" className="w-full" onClick={handleContinue} disabled={!isFormValid}>
-          Continue
-        </Button>
-      </div>
+
       <div className="text-center text-xs">
         Already a member?{" "}
         <Link to="/login" className="underline underline-offset-4">
