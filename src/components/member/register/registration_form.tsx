@@ -8,7 +8,6 @@ import { useFetchRegistrationForm } from "@/queries/registration-form";
 import { RegistrationRequest } from "@/requests/registration-request";
 import { useMemberRegistrationMutation } from "@/mutations/useMemberRegistrationMutation";
 import { toast } from "sonner";
-import RegistrationSuccessful from "@/components/shared/registration/registration-successful";
 import { AuthContext, AuthContextType } from "@/context/AuthContext";
 import { createValidRegistrationRequest } from "../../../helpers/members/registration/create-registration-request";
 import { getFieldName } from "../../../helpers/members/registration/get-field-name";
@@ -30,17 +29,28 @@ async function presignedUrlToDataUrl(url: string): Promise<string> {
   });
 }
 
+type SuccessfulRegistrationPayload = {
+  message?: string;
+  transaction_id?: string;
+  registration_id?: string;
+  id?: string;
+  user_id?: string;
+  amount?: number;
+  payment_reference?: string;
+  account_number?: string;
+  account_type?: string;
+  bank?: string;
+  branch_code?: string;
+  payfast_enabled?: boolean;
+  snapscan_enabled?: boolean;
+};
+
 export function ClubRegisterForm() {
   const { user } = useContext(AuthContext) as AuthContextType;
   const { clubId } = useParams();
   const navigate = useNavigate();
 
-  const {
-    mutate,
-    isPending,
-    error: registerError,
-    isSuccess,
-  } = useMemberRegistrationMutation();
+  const { mutate, isPending } = useMemberRegistrationMutation();
   const { data, isLoading } = useFetchRegistrationForm(clubId as string);
 
   const [email, setEmail] = useState("");
@@ -51,7 +61,7 @@ export function ClubRegisterForm() {
     RegistrationRequest | undefined
   >(undefined);
   const [totalRegistrationFee, setTotalRegistrationFee] = useState(0);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [successfulRegistration, setSuccessfulRegistration] = useState<SuccessfulRegistrationPayload | null>(null);
   const [clubCurrency, setClubCurrency] = useState("");
   const [clubName, setClubName] = useState("");
   const [clubProfileUrl, setClubProfileUrl] = useState("");
@@ -201,17 +211,52 @@ export function ClubRegisterForm() {
     setTotalRegistrationFee(total);
   };
 
+  useEffect(() => {
+    if (!successfulRegistration) return;
+
+    const queryParams = new URLSearchParams();
+    queryParams.set("paymentScreen", "true");
+
+    const { transaction_id, registration_id, id, user_id, amount, payment_reference, account_number, account_type, bank, branch_code, payfast_enabled, snapscan_enabled } = successfulRegistration;
+
+    if (transaction_id) queryParams.set("transactionId", transaction_id);
+    if (registration_id || id) queryParams.set("registrationId", (registration_id || id)!);
+    if (user_id) queryParams.set("userId", user_id);
+    if (typeof amount === "number") queryParams.set("amount", String(amount));
+    if (payment_reference) queryParams.set("paymentReference", payment_reference);
+    if (bank) queryParams.set("bank", bank);
+    if (account_number) queryParams.set("accountNumber", account_number);
+    if (account_type) queryParams.set("accountType", account_type);
+    if (branch_code) queryParams.set("branchCode", branch_code);
+    if (typeof payfast_enabled === "boolean") queryParams.set("payfastEnabled", String(payfast_enabled));
+    if (typeof snapscan_enabled === "boolean") queryParams.set("snapscanEnabled", String(snapscan_enabled));
+
+    navigate(`/clubs/${clubId}/payments?${queryParams.toString()}`, {
+      state: { registrationSuccess: true, registrationEmail: email, eftEnabled: !!(bank && account_number) },
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [successfulRegistration]);
+
   const submitRegistration = (emailOptIn: boolean) => {
     if (registrationRequest) {
       mutate({
         ...registrationRequest,
         email_opt_in: emailOptIn,
       }, {
-        onSuccess: () => {
-          setShowSuccess(true);
+        onSuccess: (response) => {
+          setSuccessfulRegistration(
+            response && typeof response === "object"
+              ? (response as SuccessfulRegistrationPayload)
+              : {},
+          );
         },
-        onError: () => {
-          toast(registerError?.message ?? "Registration failed");
+        onError: (error) => {
+          let message = "Registration failed";
+          if (error && typeof error === "object") {
+            const err = error as { response?: { data?: { message?: string } }; message?: string };
+            message = err.response?.data?.message ?? err.message ?? message;
+          }
+          toast.error(message);
         },
       });
     }
@@ -233,20 +278,6 @@ export function ClubRegisterForm() {
     return (
       <div className="flex justify-center py-8">
         <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-  if (showSuccess || isSuccess) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <RegistrationSuccessful
-          title={`Successfully Registered`}
-          message={`Club will stay in contact with you once registration is completed.`}
-          clubName={clubName}
-          clubProfileUrl={clubProfileUrl}
-          onClose={() => navigate(`/clubs/${clubId}`)}
-        />
       </div>
     );
   }

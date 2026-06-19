@@ -1,7 +1,6 @@
 import { useFetchRegistrationForm } from "@/queries/registration-form";
 import { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
-import RegistrationSuccessful from "@/components/shared/registration/registration-successful";
 import {
   createValidRegistrationRequest,
   type SubmitRegistrationRequest,
@@ -57,7 +56,7 @@ export function PublicRegistrationForm({
 }: RegistrationFormProps) {
   const navigate = useNavigate();
   const { data, isLoading } = useFetchRegistrationForm(clubAccountId);
-  const { mutate, isSuccess } = useMemberRegistrationMutation();
+  const { mutate } = useMemberRegistrationMutation();
 
   const firstName = _firstName;
   const surname = _surname;
@@ -249,99 +248,36 @@ export function PublicRegistrationForm({
     setTotalRegistrationFee(0);
   };
 
+  useEffect(() => {
+    if (!successfulRegistration) return;
+
+    const queryParams = new URLSearchParams();
+    queryParams.set("paymentScreen", "true");
+
+    const { transaction_id, registration_id, id, user_id, amount, payment_reference, account_number, account_type, bank, branch_code, payfast_enabled, snapscan_enabled } = successfulRegistration;
+
+    if (transaction_id) queryParams.set("transactionId", transaction_id);
+    if (registration_id || id) queryParams.set("registrationId", (registration_id || id)!);
+    if (user_id) queryParams.set("userId", user_id);
+    if (typeof amount === "number") queryParams.set("amount", String(amount));
+    if (payment_reference) queryParams.set("paymentReference", payment_reference);
+    if (bank) queryParams.set("bank", bank);
+    if (account_number) queryParams.set("accountNumber", account_number);
+    if (account_type) queryParams.set("accountType", account_type);
+    if (branch_code) queryParams.set("branchCode", branch_code);
+    if (typeof payfast_enabled === "boolean") queryParams.set("payfastEnabled", String(payfast_enabled));
+    if (typeof snapscan_enabled === "boolean") queryParams.set("snapscanEnabled", String(snapscan_enabled));
+
+    navigate(`/clubs/${clubAccountId}/payments?${queryParams.toString()}`, {
+      state: { registrationSuccess: true, registrationEmail: email, eftEnabled: !!(bank && account_number) },
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [successfulRegistration]);
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center p-5 min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (isSuccess) {
-    const transactionId = successfulRegistration?.transaction_id;
-    const registrationId =
-      successfulRegistration?.registration_id || successfulRegistration?.id;
-    const userId = successfulRegistration?.user_id;
-    const amount = successfulRegistration?.amount;
-    const requiresPayment = typeof amount !== "number" || amount > 0;
-    const paymentReference = successfulRegistration?.payment_reference;
-    const accountNumber = successfulRegistration?.account_number;
-    const accountType = successfulRegistration?.account_type;
-    const bank = successfulRegistration?.bank;
-    const branchCode = successfulRegistration?.branch_code;
-    const payfastEnabled = successfulRegistration?.payfast_enabled;
-    const snapscanEnabled = successfulRegistration?.snapscan_enabled;
-
-    return (
-      <div className="space-y-2">
-        <RegistrationSuccessful
-          title={`Registration successful!`}
-          message={
-            requiresPayment
-              ? `Your registration has been submitted. Please check your email for further instructions.`
-              : successfulRegistration?.message ||
-                `Your registration has been submitted successfully. No payment is required.`
-          }
-          clubName={clubName}
-          clubProfileUrl={clubProfileUrl}
-          onClose={onEditDetails}
-          actionLabel={requiresPayment ? "Continue to payments" : undefined}
-          onAction={
-            requiresPayment
-              ? () => {
-                  const queryParams = new URLSearchParams();
-
-                  queryParams.set("paymentScreen", "true");
-
-                  if (transactionId) {
-                    queryParams.set("transactionId", transactionId);
-                  }
-
-                  if (registrationId) {
-                    queryParams.set("registrationId", registrationId);
-                  }
-
-                  if (userId) {
-                    queryParams.set("userId", userId);
-                  }
-
-                  if (typeof amount === "number") {
-                    queryParams.set("amount", String(amount));
-                  }
-
-                  if (paymentReference) {
-                    queryParams.set("paymentReference", paymentReference);
-                  }
-
-                  if (bank) {
-                    queryParams.set("bank", bank);
-                  }
-
-                  if (accountNumber) {
-                    queryParams.set("accountNumber", accountNumber);
-                  }
-
-                  if (accountType) {
-                    queryParams.set("accountType", accountType);
-                  }
-
-                  if (branchCode) {
-                    queryParams.set("branchCode", branchCode);
-                  }
-
-                  if (typeof payfastEnabled === "boolean") {
-                    queryParams.set("payfastEnabled", String(payfastEnabled));
-                  }
-
-                  if (typeof snapscanEnabled === "boolean") {
-                    queryParams.set("snapscanEnabled", String(snapscanEnabled));
-                  }
-
-                  navigate(`/clubs/${clubAccountId}/payments?${queryParams.toString()}`);
-                }
-              : undefined
-          }
-        />
       </div>
     );
   }

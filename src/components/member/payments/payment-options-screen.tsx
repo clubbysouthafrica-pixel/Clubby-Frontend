@@ -7,18 +7,11 @@ import { cn } from "@/lib/utils";
 import { formatAmount } from "@/data/currencies";
 import { useFetchSnapScanQRCodeQuery } from "@/queries/snapscan";
 import { useFetchPaymentDetails } from "@/queries/clubs";
-import type {
-  FetchSnapScanQRCodeRequest,
-} from "@/services/snapscan/details";
-import type {
-  BankDetails,
-  PaymentTransactionOption,
-} from "./payment-types.ts";
+import type { FetchSnapScanQRCodeRequest } from "@/services/snapscan/details";
+import type { BankDetails, PaymentTransactionOption } from "./payment-types.ts";
 import {
-  ArrowLeft,
   CheckCircle2,
   Copy,
-  CreditCard,
   ExternalLink,
   Loader2,
 } from "lucide-react";
@@ -66,20 +59,24 @@ export default function PaymentOptionsScreen({
   snapscanUserId,
   snapscanTransactionId,
   paymentReference,
-  backLabel = "Go Back to Club",
   selectedPaymentOption,
   selectedPaymentMethod,
   onSelectedPaymentMethodChange,
   customPaymentMethods,
   copiedField,
   onCopyToClipboard,
-  onBack,
 }: PaymentOptionsScreenProps) {
   const { data: paymentDetails } = useFetchPaymentDetails(clubAccountId);
 
-  const resolvedEftDetails = paymentDetails ? paymentDetails.eft_details : (bankDetails ?? null);
-  const resolvedPayfastEnabled = paymentDetails ? paymentDetails.payfast_enabled : payfastEnabled;
-  const resolvedSnapscanEnabled = paymentDetails ? paymentDetails.snapscan_enabled : snapscanEnabled;
+  const resolvedEftDetails = paymentDetails
+    ? paymentDetails.eft_details
+    : (bankDetails ?? null);
+  const resolvedPayfastEnabled = paymentDetails
+    ? paymentDetails.payfast_enabled
+    : payfastEnabled;
+  const resolvedSnapscanEnabled = paymentDetails
+    ? paymentDetails.snapscan_enabled
+    : snapscanEnabled;
   const eftEnabled = resolvedEftDetails !== null;
 
   const getSnapScanApiMessage = (error: unknown) => {
@@ -109,12 +106,21 @@ export default function PaymentOptionsScreen({
     return null;
   };
 
-  const outstandingAmount = selectedPaymentOption?.outstanding_amount ?? bankDetails?.outstanding_amount ?? 0;
-  const resolvedTransactionId = selectedPaymentOption?.transaction_id ?? snapscanTransactionId;
+  const outstandingAmount =
+    selectedPaymentOption?.outstanding_amount ??
+    bankDetails?.outstanding_amount ??
+    0;
+  const resolvedTransactionId =
+    selectedPaymentOption?.transaction_id ?? snapscanTransactionId;
   const snapscanRequest = useMemo<FetchSnapScanQRCodeRequest | null>(() => {
     const transactionId = resolvedTransactionId;
 
-    if (!snapscanEnabled || !clubAccountId || !snapscanUserId || !transactionId) {
+    if (
+      !resolvedSnapscanEnabled ||
+      !clubAccountId ||
+      !snapscanUserId ||
+      !transactionId
+    ) {
       return null;
     }
 
@@ -123,12 +129,7 @@ export default function PaymentOptionsScreen({
       user_id: snapscanUserId,
       transaction_id: transactionId,
     };
-  }, [
-    clubAccountId,
-    resolvedTransactionId,
-    snapscanEnabled,
-    snapscanUserId,
-  ]);
+  }, [clubAccountId, resolvedTransactionId, resolvedSnapscanEnabled, snapscanUserId]);
   const {
     data: snapScanData,
     error: snapScanError,
@@ -175,7 +176,7 @@ export default function PaymentOptionsScreen({
     };
   }, [outstandingAmount, snapScanData, snapScanError]);
   const snapScanErrorMessage = useMemo(() => {
-    if (!snapscanEnabled || selectedPaymentMethod !== "snapscan") {
+    if (!resolvedSnapscanEnabled || selectedPaymentMethod !== "snapscan") {
       return null;
     }
 
@@ -187,16 +188,23 @@ export default function PaymentOptionsScreen({
       return null;
     }
 
-    if (axios.isAxiosError(snapScanError) && snapScanError.response?.status === 400) {
-      return getSnapScanApiMessage(snapScanError) ?? "SnapScan payment details could not be returned at this time.";
+    if (
+      axios.isAxiosError(snapScanError) &&
+      snapScanError.response?.status === 400
+    ) {
+      return (
+        getSnapScanApiMessage(snapScanError) ??
+        "SnapScan payment details could not be returned at this time."
+      );
     }
 
     return axios.isAxiosError(snapScanError)
-      ? getSnapScanApiMessage(snapScanError) ?? "SnapScan payment details could not be returned at this time."
+      ? (getSnapScanApiMessage(snapScanError) ??
+          "SnapScan payment details could not be returned at this time.")
       : snapScanError instanceof Error
         ? snapScanError.message
         : "SnapScan payment details could not be returned at this time.";
-  }, [selectedPaymentMethod, snapScanError, snapscanEnabled, snapscanRequest]);
+  }, [selectedPaymentMethod, snapScanError, resolvedSnapscanEnabled, snapscanRequest]);
 
   useEffect(() => {
     if (selectedPaymentMethod !== "snapscan") {
@@ -207,7 +215,7 @@ export default function PaymentOptionsScreen({
     outstandingAmount,
     selectedPaymentMethod,
     selectedPaymentOption,
-    snapscanEnabled,
+    resolvedSnapscanEnabled,
     snapscanRequest,
     snapscanTransactionId,
     snapscanUserId,
@@ -247,31 +255,9 @@ export default function PaymentOptionsScreen({
 
   return (
     <div className="min-h-screen bg-background px-3 py-4 sm:px-4 sm:py-6 md:px-8 md:py-10">
-      <div className="sticky top-0 z-20 -mx-3 mb-4 bg-background/95 px-3 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-4 sm:px-4 md:-mx-8 md:mb-6 md:px-8">
-        <div className="mx-auto max-w-5xl">
-          <Button variant="ghost" onClick={onBack} className="-ml-2 w-fit text-sm sm:text-base">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {backLabel}
-          </Button>
-        </div>
-      </div>
-
       <div className="mx-auto max-w-5xl space-y-4 sm:space-y-6">
-
         <Card className="border-none shadow-none gap-0">
-          <CardHeader className="space-y-3 border-primary/10 px-1 pb-4 sm:pb-6">
-            <div className="flex items-start gap-3 sm:items-center">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/10 sm:h-12 sm:w-12">
-                <CreditCard className="h-5 w-5 text-primary sm:h-6 sm:w-6" />
-              </div>
-              <div className="min-w-0">
-                <CardTitle className="text-xl sm:text-2xl">Payment Options</CardTitle>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  Complete your outstanding payment using one of the supported methods below.
-                </p>
-              </div>
-            </div>
-
+          <CardHeader className="space-y-3 border-primary/10 px-1 sm:pb-6 px-0">
             <div className="rounded-2xl border border-orange-200 bg-orange-50 px-4 py-4 sm:px-5 sm:py-5">
               <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-orange-500">
                 {selectedPaymentOption
@@ -283,203 +269,289 @@ export default function PaymentOptionsScreen({
               <p className="text-3xl font-bold tracking-tight text-orange-600 sm:text-4xl">
                 {formatAmount(outstandingAmount, currency)}
               </p>
-              <p className="mt-1 text-xs text-orange-400">Amount due — choose a payment method below</p>
+              <p className="mt-1 text-xs text-orange-400">
+                Amount due — choose a payment method below
+              </p>
             </div>
+
+            {!eftEnabled && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 flex items-start gap-2">
+                <span className="text-amber-500 shrink-0 text-sm leading-none">⚠</span>
+                <p className="text-xs text-amber-800">
+                  <strong>Note:</strong> This transaction will be removed after <strong>1 hour</strong> if no payment is submitted.
+                </p>
+              </div>
+            )}
           </CardHeader>
 
-          <CardContent className="space-y-5 px-1 pb-2 pt-2 sm:space-y-6 sm:p-6">
+          <CardContent className="px-0 space-y-5 pb-2 pt-2 sm:space-y-6">
+            <div className="flex items-start gap-3 pb-3 border-b-2 border-gray-200 sm:items-center">
+              <div className="min-w-0">
+                <CardTitle className="text-xl sm:text-4xl">
+                  Select a Payment Method
+                </CardTitle>
+              </div>
+            </div>
             <div className="space-y-4">
-              {eftEnabled && (<>
-              <button
-                type="button"
-                onClick={() =>
-                  onSelectedPaymentMethodChange(
-                    selectedPaymentMethod === "eft" ? null : "eft",
-                  )
-                }
-                className={cn(
-                  "flex w-full flex-col items-start gap-4 rounded-2xl border bg-white px-4 py-4 text-left shadow-md transition-all duration-200 sm:flex-row sm:items-center sm:justify-between sm:px-5",
-                  selectedPaymentMethod === "eft"
-                    ? "border-slate-400 ring-2 ring-slate-200"
-                    : "border-gray-200 hover:border-slate-300 hover:shadow-lg",
-                )}
-              >
-                <div className="flex items-start gap-3 sm:items-center sm:gap-4">
-                  <div
+              {eftEnabled && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onSelectedPaymentMethodChange(
+                        selectedPaymentMethod === "eft" ? null : "eft",
+                      )
+                    }
                     className={cn(
-                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                      "flex w-full flex-col items-start gap-4 rounded-2xl border bg-white px-4 py-4 text-left shadow-md transition-all duration-200 sm:flex-row sm:items-center sm:justify-between sm:px-5",
                       selectedPaymentMethod === "eft"
-                        ? "border-slate-300 bg-slate-200"
-                        : "border-slate-300 bg-white",
+                        ? "border-slate-400 ring-2 ring-slate-200"
+                        : "border-gray-200 hover:border-slate-300 hover:shadow-lg",
                     )}
                   >
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-black text-white">
-                      {selectedPaymentMethod === "eft" ? <CheckCircle2 className="h-4 w-4" /> : null}
-                    </div>
-                  </div>
-
-                  <div className="min-w-0">
-                    <p className="text-lg font-semibold text-gray-950 sm:text-2xl">Pay via EFT</p>
-                    <p className="text-sm text-muted-foreground">Transfer directly into the club bank account.</p>
-                  </div>
-                </div>
-
-                <div className="w-full rounded-2xl bg-slate-100 px-4 py-3 text-left sm:w-auto sm:text-right">
-                  <p className="text-sm font-semibold text-slate-800">Bank Transfer</p>
-                  <p className="text-xs text-slate-600">Manual payment with reference</p>
-                </div>
-              </button>
-
-              {selectedPaymentMethod === "eft" && (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-3 py-3 sm:px-5 sm:py-4">
-                  <div className="space-y-4">
-                    {bankDetailsLoading ? (
-                      <div className="flex justify-center py-8">
-                        <Loader2 className="h-8 w-8 animate-spin text-slate-600" />
-                      </div>
-                    ) : (
-                      <>
-                        <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
-                          <div className="flex items-start justify-between gap-3 px-3 py-3 sm:px-4">
-                            <div className="min-w-0">
-                              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Bank Name</p>
-                              <p className="break-words text-sm font-semibold text-slate-950">{bankDetails?.bank}</p>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => onCopyToClipboard(bankDetails?.bank || "", "bank")}
-                              className="shrink-0"
-                            >
-                              {copiedField === "bank" ? (
-                                <CheckCircle2 className="h-4 w-4 text-slate-700" />
-                              ) : (
-                                <Copy className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </div>
-
-                          <div className="flex items-start justify-between gap-3 px-3 py-3 sm:px-4">
-                            <div className="min-w-0">
-                              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Account Number</p>
-                              <p className="break-all font-mono text-sm font-semibold text-slate-950">{bankDetails?.account_number}</p>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => onCopyToClipboard(bankDetails?.account_number || "", "account")}
-                              className="shrink-0"
-                            >
-                              {copiedField === "account" ? (
-                                <CheckCircle2 className="h-4 w-4 text-slate-700" />
-                              ) : (
-                                <Copy className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </div>
-
-                          <div className="flex items-start justify-between gap-3 px-3 py-3 sm:px-4">
-                            <div className="min-w-0">
-                              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Branch Code</p>
-                              <p className="break-all font-mono text-sm font-semibold text-slate-950">{bankDetails?.branch_code}</p>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => onCopyToClipboard(bankDetails?.branch_code || "", "branch")}
-                              className="shrink-0"
-                            >
-                              {copiedField === "branch" ? (
-                                <CheckCircle2 className="h-4 w-4 text-slate-700" />
-                              ) : (
-                                <Copy className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </div>
-
-                          <div className="flex items-start justify-between gap-3 px-3 py-3 sm:px-4">
-                            <div className="min-w-0">
-                              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Account Type</p>
-                              <p className="break-words text-sm font-semibold text-slate-950">{bankDetails?.account_type}</p>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => onCopyToClipboard(bankDetails?.account_type || "", "type")}
-                              className="shrink-0"
-                            >
-                              {copiedField === "type" ? (
-                                <CheckCircle2 className="h-4 w-4 text-slate-700" />
-                              ) : (
-                                <Copy className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </div>
+                    <div className="flex items-start gap-3 sm:items-center sm:gap-4">
+                      <div
+                        className={cn(
+                          "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                          selectedPaymentMethod === "eft"
+                            ? "border-slate-300 bg-slate-200"
+                            : "border-slate-300 bg-white",
+                        )}
+                      >
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-black text-white">
+                          {selectedPaymentMethod === "eft" ? (
+                            <CheckCircle2 className="h-4 w-4" />
+                          ) : null}
                         </div>
+                      </div>
 
-                        {(paymentReference || bankDetails?.registration_payment_reference) && (
-                          <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 sm:px-4">
-                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-                              <div className="min-w-0">
-                                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Payment Reference</p>
-                                <p className="mt-1 break-all font-mono text-base font-semibold text-slate-950 sm:text-lg">
-                                  {paymentReference || bankDetails?.registration_payment_reference}
-                                </p>
-                                <p className="mt-1 text-sm text-muted-foreground">
-                                  Include this reference with your EFT payment.
-                                </p>
+                      <div className="min-w-0">
+                        <p className="text-lg font-semibold text-gray-950 sm:text-2xl">
+                          Pay via EFT
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Transfer directly into the club bank account.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="w-full rounded-2xl bg-slate-100 px-4 py-3 text-left sm:w-auto sm:text-right">
+                      <p className="text-sm font-semibold text-slate-800">
+                        Bank Transfer
+                      </p>
+                      <p className="text-xs text-slate-600">
+                        Manual payment with reference
+                      </p>
+                    </div>
+                  </button>
+
+                  {selectedPaymentMethod === "eft" && (
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-3 py-3 sm:px-5 sm:py-4">
+                      <div className="space-y-4">
+                        {bankDetailsLoading ? (
+                          <div className="flex justify-center py-8">
+                            <Loader2 className="h-8 w-8 animate-spin text-slate-600" />
+                          </div>
+                        ) : (
+                          <>
+                            <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
+                              <div className="flex items-start justify-between gap-3 px-3 py-3 sm:px-4">
+                                <div className="min-w-0">
+                                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                    Bank Name
+                                  </p>
+                                  <p className="break-words text-sm font-semibold text-slate-950">
+                                    {bankDetails?.bank}
+                                  </p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    onCopyToClipboard(
+                                      bankDetails?.bank || "",
+                                      "bank",
+                                    )
+                                  }
+                                  className="shrink-0"
+                                >
+                                  {copiedField === "bank" ? (
+                                    <CheckCircle2 className="h-4 w-4 text-slate-700" />
+                                  ) : (
+                                    <Copy className="h-4 w-4" />
+                                  )}
+                                </Button>
                               </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  onCopyToClipboard(
-                                    paymentReference || bankDetails?.registration_payment_reference || "",
-                                    "reference",
-                                  )
-                                }
-                                className="shrink-0"
-                              >
-                                {copiedField === "reference" ? (
+
+                              <div className="flex items-start justify-between gap-3 px-3 py-3 sm:px-4">
+                                <div className="min-w-0">
+                                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                    Account Number
+                                  </p>
+                                  <p className="break-all font-mono text-sm font-semibold text-slate-950">
+                                    {bankDetails?.account_number}
+                                  </p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    onCopyToClipboard(
+                                      bankDetails?.account_number || "",
+                                      "account",
+                                    )
+                                  }
+                                  className="shrink-0"
+                                >
+                                  {copiedField === "account" ? (
+                                    <CheckCircle2 className="h-4 w-4 text-slate-700" />
+                                  ) : (
+                                    <Copy className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </div>
+
+                              <div className="flex items-start justify-between gap-3 px-3 py-3 sm:px-4">
+                                <div className="min-w-0">
+                                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                    Branch Code
+                                  </p>
+                                  <p className="break-all font-mono text-sm font-semibold text-slate-950">
+                                    {bankDetails?.branch_code}
+                                  </p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    onCopyToClipboard(
+                                      bankDetails?.branch_code || "",
+                                      "branch",
+                                    )
+                                  }
+                                  className="shrink-0"
+                                >
+                                  {copiedField === "branch" ? (
+                                    <CheckCircle2 className="h-4 w-4 text-slate-700" />
+                                  ) : (
+                                    <Copy className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </div>
+
+                              <div className="flex items-start justify-between gap-3 px-3 py-3 sm:px-4">
+                                <div className="min-w-0">
+                                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                    Account Type
+                                  </p>
+                                  <p className="break-words text-sm font-semibold text-slate-950">
+                                    {bankDetails?.account_type}
+                                  </p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    onCopyToClipboard(
+                                      bankDetails?.account_type || "",
+                                      "type",
+                                    )
+                                  }
+                                  className="shrink-0"
+                                >
+                                  {copiedField === "type" ? (
+                                    <CheckCircle2 className="h-4 w-4 text-slate-700" />
+                                  ) : (
+                                    <Copy className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </div>
+                            </div>
+
+                            {(paymentReference ||
+                              bankDetails?.registration_payment_reference) && (
+                              <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 sm:px-4">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                                  <div className="min-w-0">
+                                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                                      Payment Reference
+                                    </p>
+                                    <p className="mt-1 break-all font-mono text-base font-semibold text-slate-950 sm:text-lg">
+                                      {paymentReference ||
+                                        bankDetails?.registration_payment_reference}
+                                    </p>
+                                    <p className="mt-1 text-sm text-muted-foreground">
+                                      Include this reference with your EFT
+                                      payment.
+                                    </p>
+                                  </div>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      onCopyToClipboard(
+                                        paymentReference ||
+                                          bankDetails?.registration_payment_reference ||
+                                          "",
+                                        "reference",
+                                      )
+                                    }
+                                    className="shrink-0"
+                                  >
+                                    {copiedField === "reference" ? (
+                                      <>
+                                        <CheckCircle2 className="mr-2 h-4 w-4 text-slate-700" />
+                                        Copied
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Copy className="mr-2 h-4 w-4" />
+                                        Copy
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="space-y-2 text-sm text-muted-foreground">
+                              <p>
+                                <strong className="text-slate-950">
+                                  Important:
+                                </strong>{" "}
+                                Always include your payment reference number to
+                                ensure proper allocation of your payment.
+                              </p>
+                              <p>
+                                <strong className="text-slate-950">
+                                  Registration Status:
+                                </strong>{" "}
+                                Your registration will remain{" "}
+                                <strong>Pending</strong> until the club
+                                administrator confirms receipt of your payment.
+                                {supportEmail && (
                                   <>
-                                    <CheckCircle2 className="mr-2 h-4 w-4 text-slate-700" />
-                                    Copied
-                                  </>
-                                ) : (
-                                  <>
-                                    <Copy className="mr-2 h-4 w-4" />
-                                    Copy
+                                    {" "}
+                                    If you do not receive confirmation in a
+                                    reasonable timeframe, contact{" "}
+                                    <a
+                                      href={`mailto:${supportEmail}`}
+                                      className="font-semibold text-slate-700 underline"
+                                    >
+                                      {supportEmail}
+                                    </a>
+                                    .
                                   </>
                                 )}
-                                
-                              </Button>
+                              </p>
                             </div>
-                          </div>
+                          </>
                         )}
-
-                        <div className="space-y-2 text-sm text-muted-foreground">
-                          <p>
-                            <strong className="text-slate-950">Important:</strong> Always include your payment reference number to ensure proper allocation of your payment.
-                          </p>
-                          <p>
-                            <strong className="text-slate-950">Registration Status:</strong> Your registration will remain <strong>Pending</strong> until the club administrator confirms receipt of your payment.
-                            {supportEmail && (
-                              <>
-                                {" "}If you do not receive confirmation in a reasonable timeframe, contact{" "}
-                                <a href={`mailto:${supportEmail}`} className="font-semibold text-slate-700 underline">
-                                  {supportEmail}
-                                </a>
-                                .
-                              </>
-                            )}
-                          </p>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
-              </>)}
             </div>
 
             {resolvedPayfastEnabled && (
@@ -491,7 +563,9 @@ export default function PaymentOptionsScreen({
                   transactionId={resolvedTransactionId}
                   orderId={selectedPaymentOption?.order_id ?? orderId}
                   eventId={selectedPaymentOption?.event_id}
-                  eventRegistrationId={selectedPaymentOption?.event_registration_id}
+                  eventRegistrationId={
+                    selectedPaymentOption?.event_registration_id
+                  }
                   showHeader={false}
                   buttonVariant="logo"
                   isSelected={selectedPaymentMethod === "payfast"}
@@ -502,7 +576,7 @@ export default function PaymentOptionsScreen({
               </div>
             )}
 
-            {snapscanEnabled && (
+            {resolvedSnapscanEnabled && (
               <div className="space-y-4">
                 <button
                   type="button"
@@ -528,7 +602,9 @@ export default function PaymentOptionsScreen({
                       )}
                     >
                       <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white">
-                        {selectedPaymentMethod === "snapscan" ? <CheckCircle2 className="h-4 w-4" /> : null}
+                        {selectedPaymentMethod === "snapscan" ? (
+                          <CheckCircle2 className="h-4 w-4" />
+                        ) : null}
                       </div>
                     </div>
 
@@ -537,13 +613,16 @@ export default function PaymentOptionsScreen({
                         Pay with SnapScan
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Use SnapScan to complete payment through a mobile-friendly checkout.
+                        Use SnapScan to complete payment through a
+                        mobile-friendly checkout.
                       </p>
                     </div>
                   </div>
 
                   <div className="w-full max-w-[160px] rounded-2xl bg-emerald-50 px-4 py-3 text-left sm:w-auto sm:text-right">
-                    <p className="text-sm font-semibold text-emerald-800">SnapScan</p>
+                    <p className="text-sm font-semibold text-emerald-800">
+                      SnapScan
+                    </p>
                     <p className="text-xs text-emerald-700">Scan to pay</p>
                   </div>
                 </button>
@@ -596,7 +675,10 @@ export default function PaymentOptionsScreen({
 
                       {snapScanUrls.merchantReference && (
                         <div className="rounded-xl border border-emerald-200 bg-white/80 px-4 py-3 text-sm text-emerald-900">
-                          Reference: <span className="font-semibold">{snapScanUrls.merchantReference}</span>
+                          Reference:{" "}
+                          <span className="font-semibold">
+                            {snapScanUrls.merchantReference}
+                          </span>
                         </div>
                       )}
 
@@ -654,14 +736,18 @@ export default function PaymentOptionsScreen({
                             <ExternalLink className="h-5 w-5" />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-base font-semibold text-slate-950">{method.name}</p>
+                            <p className="text-base font-semibold text-slate-950">
+                              {method.name}
+                            </p>
                             <p className="text-sm text-muted-foreground">
                               Proceed to {method.name} to complete payment.
                             </p>
                           </div>
                         </div>
                         <Button
-                          onClick={() => method.url && window.open(method.url, "_blank")}
+                          onClick={() =>
+                            method.url && window.open(method.url, "_blank")
+                          }
                           className="w-full rounded-full bg-primary px-5 hover:bg-primary/90 sm:w-auto"
                         >
                           <ExternalLink className="mr-2 h-4 w-4" />

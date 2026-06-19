@@ -229,7 +229,6 @@ export function ClubHomeTab({
   primaryActionLabel,
   primaryActionVariant = "default",
   onPrimaryAction,
-  registrationAmount,
   outstandingBalanceAmount,
   coverImage,
   clubUrl,
@@ -344,10 +343,6 @@ export function ClubHomeTab({
           }
       : null;
   const isPublicLandingView = !isMember && !resubmissionRequired;
-  const joinClubPriceLabel =
-    typeof registrationAmount === "number" && registrationAmount > 0
-      ? formatAmount(registrationAmount, currency || "ZAR")
-      : "Contact club";
   const selectedHomeDateItemCount =
     selectedHomeDateEvents.length + selectedHomeDateBookings.length;
   const dayAgendaCardClassName =
@@ -401,8 +396,8 @@ export function ClubHomeTab({
         <div className="container mx-auto px-3 pt-4 sm:px-4 sm:pt-6">
           <Card className="gap-0 overflow-hidden rounded-[1.65rem] border-slate-200 bg-white py-1.5 shadow-[0_30px_90px_-42px_rgba(15,23,42,0.16)] sm:rounded-[1.9rem] sm:py-2">
             <CardContent className="p-2.5 sm:p-6 lg:p-8">
-              <div className="flex flex-col items-start gap-2.5 sm:gap-5">
-                <div className="flex-1 space-y-1.5 sm:space-y-3">
+              <div className="flex flex-col gap-2.5 sm:gap-5">
+                <div className="w-full space-y-1.5 sm:space-y-3">
                   <div className="space-y-1 sm:space-y-2">
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                       <h1 className="text-base font-bold text-slate-950 sm:text-3xl md:text-4xl">
@@ -619,9 +614,6 @@ export function ClubHomeTab({
                       <Badge className="hidden border-slate-200 bg-white text-slate-700 sm:inline-flex">
                         New members welcome
                       </Badge>
-                      <p className="text-[13px] font-semibold text-slate-950 sm:mt-2.5 sm:text-lg">
-                        Registration from {joinClubPriceLabel}
-                      </p>
                       <p className="mt-1 text-[11px] leading-4 text-slate-600 sm:text-sm sm:leading-6">
                         Complete your application in a few steps and manage future payments and activity from one place.
                       </p>

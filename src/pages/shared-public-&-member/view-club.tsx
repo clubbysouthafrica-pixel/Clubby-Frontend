@@ -13,6 +13,8 @@ import {
   ArrowLeft,
   ArrowRight,
   BoxIcon,
+  CheckCircle,
+  X,
 } from "lucide-react";
 import { useFetchClub, useFetchClubBankDetails } from "@/queries/clubs";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
@@ -410,8 +412,12 @@ export default function ViewClubPage() {
 
   const navigate = useNavigate();
   const { clubId } = useParams();
-  const { pathname, search } = useLocation();
+  const { pathname, search, state: locationState } = useLocation();
   const paymentQueryParams = useMemo(() => new URLSearchParams(search), [search]);
+  const [showRegistrationSuccessBanner, setShowRegistrationSuccessBanner] = useState(
+    () => !!(locationState as { registrationSuccess?: boolean } | null)?.registrationSuccess
+  );
+  const registrationSuccessEmail = (locationState as { registrationEmail?: string } | null)?.registrationEmail;
   const shouldForcePaymentAccess =
     paymentQueryParams.get("paymentScreen") === "true";
   const paymentReference = paymentQueryParams.get("paymentReference") ?? undefined;
@@ -1397,6 +1403,31 @@ export default function ViewClubPage() {
 
     return (
       <Pager>
+        {showRegistrationSuccessBanner && (
+          <div className="border-b border-emerald-200 bg-emerald-50 px-4 py-3 sm:px-6">
+            <div className="flex w-full items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+                <div>
+                  <p className="text-sm font-semibold text-emerald-900">Your registration has been submitted successfully.</p>
+                  <p className="mt-0.5 text-xs leading-5 text-emerald-800">
+                    If you don't have a Clubby account yet, an email will be sent to{" "}
+                    {registrationSuccessEmail ? <strong>{registrationSuccessEmail}</strong> : "your email address"}{" "}
+                    with details on how to activate your account, view your membership, and manage more.{" "}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowRegistrationSuccessBanner(false)}
+                className="shrink-0 rounded-full p-1 text-emerald-700 hover:bg-emerald-100"
+                aria-label="Dismiss"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
         <PaymentOptionsScreen
           bankDetails={activeBankDetails}
           bankDetailsLoading={activeBankDetailsLoading}
@@ -1536,6 +1567,33 @@ export default function ViewClubPage() {
                   </div>
                 </div>
               </aside>
+            )}
+
+            {/* Registration success banner */}
+            {showRegistrationSuccessBanner && (
+              <div className="border-b border-emerald-200 bg-emerald-50 px-4 py-3 sm:px-6">
+                <div className="mx-auto flex max-w-7xl items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+                    <div>
+                      <p className="text-sm font-semibold text-emerald-900">Your registration has been submitted successfully.</p>
+                      <p className="mt-0.5 text-xs leading-5 text-emerald-800">
+                        If you don't have a Clubby account yet, an email will be sent to{" "}
+                        {registrationSuccessEmail ? <strong>{registrationSuccessEmail}</strong> : "your email address"}{" "}
+                        with details on how to activate your account, view your membership, and manage more.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowRegistrationSuccessBanner(false)}
+                    className="shrink-0 rounded-full p-1 text-emerald-700 hover:bg-emerald-100"
+                    aria-label="Dismiss"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
             )}
 
             {/* Email opt-in bar */}
