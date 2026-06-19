@@ -18,6 +18,7 @@ import {
 import {
   ShoppingCart,
   Package,
+  Ticket,
   Minus,
   Plus,
   ArrowLeft,
@@ -966,6 +967,10 @@ export default function MemberShopPage({
                                 alt={product.name}
                                 className="h-full w-full object-cover"
                               />
+                            ) : product.product_type === "ticket" ? (
+                              <div className="flex h-full items-center justify-center bg-amber-50">
+                                <Ticket className="h-4 w-4 text-amber-500 sm:h-6 sm:w-6" />
+                              </div>
                             ) : (
                               <div className="flex h-full items-center justify-center">
                                 <Package className="h-4 w-4 text-slate-400 sm:h-6 sm:w-6" />
@@ -1037,6 +1042,10 @@ export default function MemberShopPage({
                               alt={selectedPublicProduct.name}
                               className="h-20 w-20 object-cover"
                             />
+                          ) : selectedPublicProduct.product_type === "ticket" ? (
+                            <div className="flex h-20 w-20 items-center justify-center bg-amber-50">
+                              <Ticket className="h-8 w-8 text-amber-500" />
+                            </div>
                           ) : (
                             <div className="flex h-20 w-20 items-center justify-center bg-stone-100">
                               <Package className="h-8 w-8 text-stone-400" />
@@ -1052,6 +1061,20 @@ export default function MemberShopPage({
                             alt={selectedPublicProduct.name}
                             className="h-full max-h-[78vh] w-full object-cover"
                           />
+                        ) : selectedPublicProduct.product_type === "ticket" ? (
+                          <div className="flex min-h-[520px] flex-col items-center justify-center gap-4 bg-gradient-to-b from-amber-50 to-orange-50">
+                            <div className="rounded-full bg-amber-100 p-6">
+                              <Ticket className="h-20 w-20 text-amber-500" />
+                            </div>
+                            {(selectedPublicProduct.valid_day_start_date || selectedPublicProduct.valid_day_end_date) ? (
+                              <p className="text-sm font-semibold uppercase tracking-[0.12em] text-amber-700">
+                                {selectedPublicProduct.valid_day_start_date ? formatTicketDateLabel(selectedPublicProduct.valid_day_start_date) : ""}
+                                {selectedPublicProduct.valid_day_end_date && selectedPublicProduct.valid_day_end_date !== selectedPublicProduct.valid_day_start_date
+                                  ? ` – ${formatTicketDateLabel(selectedPublicProduct.valid_day_end_date)}`
+                                  : ""}
+                              </p>
+                            ) : null}
+                          </div>
                         ) : (
                           <div className="flex min-h-[520px] items-center justify-center bg-stone-100">
                             <Package className="h-24 w-24 text-stone-400" />
@@ -1194,6 +1217,18 @@ export default function MemberShopPage({
                                     alt={product.name}
                                     className="aspect-[4/4.2] h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                                   />
+                                ) : product.product_type === "ticket" ? (
+                                  <div className="flex aspect-[4/4.2] flex-col items-center justify-center gap-2 bg-gradient-to-b from-amber-50 via-orange-50 to-amber-100">
+                                    <Ticket className="h-10 w-10 text-amber-500 sm:h-14 sm:w-14" />
+                                    {(product.valid_day_start_date || product.valid_day_end_date) ? (
+                                      <p className="px-2 text-center text-[9px] font-semibold uppercase tracking-[0.12em] text-amber-600 sm:text-[10px]">
+                                        {product.valid_day_start_date ? formatTicketDateLabel(product.valid_day_start_date) : ""}
+                                        {product.valid_day_end_date && product.valid_day_end_date !== product.valid_day_start_date
+                                          ? ` – ${formatTicketDateLabel(product.valid_day_end_date)}`
+                                          : ""}
+                                      </p>
+                                    ) : null}
+                                  </div>
                                 ) : (
                                   <div className="flex aspect-[4/4.2] items-center justify-center">
                                     <Package className="h-8 w-8 text-stone-400 sm:h-16 sm:w-16" />
@@ -1256,6 +1291,20 @@ export default function MemberShopPage({
                     alt={selectedProduct.name}
                     className="h-full w-full object-cover"
                   />
+                ) : selectedProduct.product_type === "ticket" ? (
+                  <div className="flex min-h-[320px] flex-col items-center justify-center gap-4 bg-gradient-to-b from-amber-50 to-orange-50 md:min-h-[520px]">
+                    <div className="rounded-full bg-amber-100 p-5">
+                      <Ticket className="h-14 w-14 text-amber-500" />
+                    </div>
+                    {(selectedProduct.valid_day_start_date || selectedProduct.valid_day_end_date) ? (
+                      <p className="px-4 text-center text-sm font-semibold uppercase tracking-[0.12em] text-amber-700">
+                        {selectedProduct.valid_day_start_date ? formatTicketDateLabel(selectedProduct.valid_day_start_date) : ""}
+                        {selectedProduct.valid_day_end_date && selectedProduct.valid_day_end_date !== selectedProduct.valid_day_start_date
+                          ? ` – ${formatTicketDateLabel(selectedProduct.valid_day_end_date)}`
+                          : ""}
+                      </p>
+                    ) : null}
+                  </div>
                 ) : (
                   <div className="flex min-h-[320px] items-center justify-center md:min-h-[520px]">
                     <Package className="h-20 w-20 text-stone-400" />
