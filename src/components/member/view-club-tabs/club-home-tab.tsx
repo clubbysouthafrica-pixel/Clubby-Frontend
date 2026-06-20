@@ -409,19 +409,10 @@ export function ClubHomeTab({
                         </Badge>
                       )}
                     </div>
-                    {description && (
-                      <p className="text-xs leading-4.5 text-slate-600 sm:text-base sm:leading-relaxed lg:text-lg">{description}</p>
-                    )}
                   </div>
 
                   {isPublicLandingView ? (
                     <div className="space-y-2">
-                      {aboutClub && (
-                        <div className="hidden sm:block space-y-1">
-                          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">About</p>
-                          <p className="text-xs leading-4.5 text-slate-600 sm:text-[15px] sm:leading-6">{aboutClub}</p>
-                        </div>
-                      )}
                       {primaryActionLabel && onPrimaryAction ? (
                         <Button
                           variant={primaryActionVariant}
@@ -595,49 +586,31 @@ export function ClubHomeTab({
                 !publicShopEnabled && "xl:w-full",
               )}
             >
-              <div className="flex flex-col gap-2 xl:h-full">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Join
-                  </p>
-                  <h2 className="mt-0.5 text-sm font-semibold text-slate-950 sm:mt-1 sm:text-xl">
-                    Become part of {clubName}
-                  </h2>
-                  {description && (
-                    <p className="mt-1 text-[11px] leading-4 text-slate-600 sm:text-sm sm:leading-6">{description}</p>
-                  )}
-                </div>
-
-                <div className="rounded-[1rem] border border-slate-200 bg-slate-50 p-2.5 sm:rounded-[1.2rem] sm:p-4 xl:flex xl:flex-1 xl:flex-col">
-                  <div className="flex items-start justify-between gap-2.5">
-                    <div>
-                      <Badge className="hidden border-slate-200 bg-white text-slate-700 sm:inline-flex">
-                        New members welcome
-                      </Badge>
-                      <p className="mt-1 text-[11px] leading-4 text-slate-600 sm:text-sm sm:leading-6">
-                        Complete your application in a few steps and manage future payments and activity from one place.
-                      </p>
-                    </div>
-                    <div className="rounded-full bg-white p-1.5 text-slate-700 shadow-sm sm:p-2">
-                      <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    </div>
-                  </div>
-                  {primaryActionLabel && onPrimaryAction ? (
-                    <Button
-                      variant={primaryActionVariant}
-                      className={cn(
-                        "mt-2 h-8 w-full rounded-full px-3 text-[11px] font-semibold lg:text-base xl:mt-auto xl:h-auto",
-                        primaryActionVariant === "destructive"
-                          ? "shadow-[0_18px_36px_-24px_rgba(220,38,38,0.45)]"
-                          : "bg-slate-900 text-white shadow-[0_18px_36px_-24px_rgba(15,23,42,0.38)] hover:bg-slate-800",
-                      )}
-                      onClick={onPrimaryAction}
-                    >
-                      <Users className="mr-2 h-4 w-4" />
-                      {primaryActionLabel}
-                    </Button>
-                  ) : null}
-                </div>
+              <div className="flex flex-col gap-3 xl:h-full">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                  About
+                </p>
+                {description && (
+                  <p className="text-[11px] leading-4 text-slate-600 sm:text-sm sm:leading-6">{description}</p>
+                )}
+                {aboutClub && (
+                  <p className="text-[11px] leading-4 text-slate-600 sm:text-sm sm:leading-6">{aboutClub}</p>
+                )}
+                {primaryActionLabel && onPrimaryAction ? (
+                  <Button
+                    variant={primaryActionVariant}
+                    className={cn(
+                      "mt-auto h-8 w-full rounded-lg px-3 text-[11px] font-semibold lg:text-base xl:h-auto",
+                      primaryActionVariant === "destructive"
+                        ? "shadow-[0_18px_36px_-24px_rgba(220,38,38,0.45)]"
+                        : "bg-slate-900 text-white shadow-[0_18px_36px_-24px_rgba(15,23,42,0.38)] hover:bg-slate-800",
+                    )}
+                    onClick={onPrimaryAction}
+                  >
+                    <Users className="mr-2 h-4 w-4" />
+                    {primaryActionLabel}
+                  </Button>
+                ) : null}
               </div>
             </section>
           </div>
