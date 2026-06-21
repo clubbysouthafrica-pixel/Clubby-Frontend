@@ -593,6 +593,12 @@ export default function AddMembersBulkPage() {
                         f.field_type === "BILLING" &&
                         f.input_type === "DROPDOWN"
                       ) {
+                        const selectedBillingOpt = (f.billingOptions ?? []).find(
+                          (o) => o.option_order_id === f.option_order_id,
+                        );
+                        const showMultiplier = !!(selectedBillingOpt?.multiplier && f.option_order_id);
+                        const multiplierQty = f.multiplier_value ?? 1;
+
                         return (
                           <td key={f.field_id} className="px-3 py-1.5 overflow-hidden">
                             <Select
@@ -608,6 +614,7 @@ export default function AddMembersBulkPage() {
                                   label: opt.label,
                                   selectedAmountCents: opt.amount,
                                   option_order_id: opt.option_order_id,
+                                  multiplier_value: opt.multiplier ? 1 : undefined,
                                 });
                               }}
                             >
@@ -626,6 +633,28 @@ export default function AddMembersBulkPage() {
                                 ))}
                               </SelectContent>
                             </Select>
+                            {showMultiplier && (
+                              <div className="mt-1 flex items-center gap-1.5">
+                                <span className="text-[10px] text-muted-foreground whitespace-nowrap">Qty</span>
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  className="h-6 w-full text-xs text-center px-1"
+                                  value={multiplierQty}
+                                  disabled={isSubmitting}
+                                  onChange={(e) => {
+                                    const qty = Math.max(1, parseInt(e.target.value) || 1);
+                                    updateField(member.id, pi, f.field_id, {
+                                      multiplier_value: qty,
+                                      selectedAmountCents: (selectedBillingOpt?.amount ?? 0) * qty,
+                                    });
+                                  }}
+                                />
+                                <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                  = {formatAmount((selectedBillingOpt?.amount ?? 0) * multiplierQty, club?.currency)}
+                                </span>
+                              </div>
+                            )}
                           </td>
                         );
                       }

@@ -8,8 +8,8 @@ export default function UserManagementHubPage() {
       description="View and manage your club's members."
       items={[
         {
-          title: "Members",
-          description: "View and manage all current members of your club.",
+          title: "Users",
+          description: "View and manage all current users of your club.",
           url: "/manage/members",
           icon: Users,
         },

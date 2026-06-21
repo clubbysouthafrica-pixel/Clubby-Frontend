@@ -149,7 +149,7 @@ export default function BillingDropdown({
           onOpenChange={setIsOpen}
         >
           <SelectTrigger
-            className={`w-full border border-gray-300 rounded-md px-3 py-2.5 text-base font-normal focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent ${
+            className={`w-full border border-gray-300 rounded-md px-3 py-2.5 text-base font-normal focus:outline-none focus:ring-0 focus:border-gray-300 ${
               selectedOption?.multiplier && field.value
                 ? "rounded-b-none border-b-0"
                 : ""
@@ -202,7 +202,7 @@ export default function BillingDropdown({
               }
             }}
           >
-            <p className="text-sm font-medium text-gray-900">{selectedOption.label}</p>
+            <p className="text-sm font-medium text-gray-900">Amount</p>
             <span className="text-gray-900 font-medium">×</span>
             <input
               type="number"

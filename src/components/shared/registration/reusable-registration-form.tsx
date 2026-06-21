@@ -24,6 +24,7 @@ export interface BillingOption {
   option_order_id: string;
   amount: number; // in cents
   label: string;
+  multiplier?: boolean;
 }
 
 export interface FieldRequest {

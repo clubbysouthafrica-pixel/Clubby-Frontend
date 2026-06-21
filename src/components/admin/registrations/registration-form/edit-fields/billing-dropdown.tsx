@@ -142,13 +142,13 @@ export default function EditBillingDropdown({
                     </Button>
                 </div>
 
-                {/* <div className="flex items-center gap-2 mt-3 ml-2">
-                    <Checkbox 
-                        checked={dropdownMultiplier} 
+                <div className="flex items-center gap-2 mt-3 ml-2">
+                    <Checkbox
+                        checked={dropdownMultiplier}
                         onCheckedChange={(checked) => setDropdownMultiplier(checked === true)}
                     />
                     <Label className="text-xs cursor-pointer">Multiplier</Label>
-                </div> */}
+                </div>
 
                 {dropdownBillingOptions.length > 0 && (
                     <div className={dropdownBillingOptions.length > 5 ? "mt-2 space-y-2 max-h-[400px] overflow-y-auto" : "mt-2 space-y-2"}>

@@ -86,6 +86,10 @@ export default function AdminRoutes() {
         }
       ></Route>
       <Route
+        path="/manage/users"
+        element={<Navigate to="/manage/members" replace />}
+      ></Route>
+      <Route
         path="/manage/members"
         element={
           <ProtectedRoute>
