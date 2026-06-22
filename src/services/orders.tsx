@@ -32,6 +32,8 @@ type PublicCreateOrderRequest = CreateOrderRequest & {
     first_name: string;
     surname: string;
     email_opt_in: boolean;
+    send_account_email?: boolean;
+    send_order_email?: boolean;
 }
 
 export const createOrder = (orderData: CreateOrderRequest): Promise<any> => {

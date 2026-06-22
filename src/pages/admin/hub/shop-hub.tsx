@@ -19,6 +19,12 @@ export default function ShopHubPage() {
           url: "/shop/orders",
           icon: ShoppingCart,
         },
+        {
+          title: "Create Order",
+          description: "Create an order on behalf of a customer.",
+          url: "/shop/create-order",
+          icon: ShoppingCart,
+        },
       ]}
     />
   )
