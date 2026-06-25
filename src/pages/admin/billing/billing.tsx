@@ -20,6 +20,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { getSaveCardUrl } from "@/services/payfast-api/save-card";
+
+const PAYNOW_ENABLED = false;
 
 interface MonthlyPaymentOption {
   month: string;
@@ -57,6 +70,36 @@ export default function BillingPage() {
     seasonToFetch,
   );
   const [isPayfastLoading, setIsPayfastLoading] = useState(false);
+  const [showSaveCardDialog, setShowSaveCardDialog] = useState(false);
+  const [saveCardFirstName, setSaveCardFirstName] = useState("");
+  const [saveCardSurname, setSaveCardSurname] = useState("");
+  const [saveCardEmail, setSaveCardEmail] = useState("");
+  const [isSaveCardLoading, setIsSaveCardLoading] = useState(false);
+
+  const handleSaveCard = async () => {
+    if (!saveCardFirstName.trim() || !saveCardSurname.trim() || !saveCardEmail.includes("@")) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+    setIsSaveCardLoading(true);
+    try {
+      const result = await getSaveCardUrl({
+        club_account_id: club?.club_account_id ?? "",
+        first_name: saveCardFirstName.trim(),
+        surname: saveCardSurname.trim(),
+        email: saveCardEmail.trim(),
+      });
+      if (result?.redirectUrl) {
+        window.location.href = result.redirectUrl;
+      } else {
+        toast.error("An error occurred. Please try again.");
+        setIsSaveCardLoading(false);
+      }
+    } catch {
+      toast.error("An error occurred. Please try again.");
+      setIsSaveCardLoading(false);
+    }
+  };
 
   const availableSeasons = club?.season_cycle
     ? Array.from({ length: club.season_cycle - 1 }, (_, i) => ({
@@ -234,10 +277,25 @@ export default function BillingPage() {
     );
   }
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,_#e7e5e4_0%,_#f5f5f4_22%,_#fafaf9_22%,_#fafaf9_100%)] text-slate-900">
+    <div className="min-h-screen bg-white text-slate-900">
+      {club?.payfast_token === false && (
+        <div className="flex w-full items-center gap-3 bg-amber-50 px-4 py-3 border-b border-amber-200">
+          <CreditCard className="h-4 w-4 shrink-0 text-amber-600" />
+          <p className="text-sm text-amber-800">
+            <span className="font-semibold">Action required:</span> You have not saved your card details yet. Save your card to enable subscription billing.
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowSaveCardDialog(true)}
+            className="ml-auto shrink-0 rounded-full bg-amber-600 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-amber-700"
+          >
+            Setup card
+          </button>
+        </div>
+      )}
       <div className="flex w-full max-w-none flex-col gap-2.5 px-2 py-2.5 sm:px-3 md:px-4 md:py-3 xl:px-5 2xl:px-6">
-        <section className="relative overflow-hidden rounded-[22px] border border-stone-300/70 bg-stone-200 px-4 py-3.5 text-zinc-900 shadow-[0_18px_40px_rgba(120,113,108,0.16)] md:px-5 md:py-3.5">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.72),_transparent_28%),radial-gradient(circle_at_right,_rgba(214,211,209,0.55),_transparent_24%)]" />
+        <section className="relative overflow-hidden rounded-[22px] border border-slate-200 bg-white px-4 py-3.5 text-zinc-900 shadow-sm md:px-5 md:py-3.5">
+          <div className="hidden" />
           <div className="relative flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
               <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-stone-300 bg-white/70 px-2.5 py-1 text-[11px] text-zinc-600 backdrop-blur">
@@ -270,14 +328,25 @@ export default function BillingPage() {
                   </SelectContent>
                 </Select>
               )}
-              <Button
-                type="button"
-                onClick={handlePayNowClick}
-                disabled={!showPayNow || !selectedPaymentChoice || isPayfastLoading}
-                className="h-8 rounded-full border border-stone-300 bg-white px-3.5 text-xs text-zinc-800 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isPayfastLoading ? "Redirecting..." : "Open PayFast"}
-              </Button>
+              {club?.payfast_token && (
+                <Button
+                  type="button"
+                  className="h-8 rounded-full border border-red-300 bg-white px-3.5 text-xs text-red-600 hover:bg-red-50"
+                >
+                  <CreditCard className="mr-1.5 h-3.5 w-3.5" />
+                  Cancel subscription
+                </Button>
+              )}
+              {PAYNOW_ENABLED && (
+                <Button
+                  type="button"
+                  onClick={handlePayNowClick}
+                  disabled={!showPayNow || !selectedPaymentChoice || isPayfastLoading}
+                  className="h-8 rounded-full border border-stone-300 bg-white px-3.5 text-xs text-zinc-800 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isPayfastLoading ? "Redirecting..." : "Open PayFast"}
+                </Button>
+              )}
             </div>
           </div>
 
@@ -303,114 +372,167 @@ export default function BillingPage() {
           </div>
         </section>
 
-        <section className="order-2 rounded-[22px] border border-slate-200/70 bg-white/90 p-2 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur md:p-2.5">
-          <div className="rounded-[18px] border border-slate-200/70 bg-slate-50/90 p-1.5 backdrop-blur">
-            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <div className="flex flex-wrap gap-2">
-                {paymentChoices.length > 0 && (
-                  <div className="space-y-1">
-                    <div className="pl-1">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                        Choose a month to pay
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        Use this selector to switch between outstanding months or pay all outstanding months.
-                      </p>
+        {PAYNOW_ENABLED && (
+          <section className="order-2 rounded-[22px] border border-slate-200/70 bg-white/90 p-2 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur md:p-2.5">
+            <div className="rounded-[18px] border border-slate-200/70 bg-slate-50/90 p-1.5 backdrop-blur">
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-wrap gap-2">
+                  {paymentChoices.length > 0 && (
+                    <div className="space-y-1">
+                      <div className="pl-1">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                          Choose a month to pay
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Use this selector to switch between outstanding months or pay all outstanding months.
+                        </p>
+                      </div>
+                      <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                        <SelectTrigger className="h-8 min-w-[260px] rounded-full bg-white text-xs">
+                          <SelectValue placeholder="Select payment option" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {paymentChoices.map(({ value, label, isPaid, isAllOutstanding }) => (
+                            <SelectItem
+                              key={value}
+                              value={value}
+                              disabled={isPaid && !isAllOutstanding}
+                            >
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                      <SelectTrigger className="h-8 min-w-[260px] rounded-full bg-white text-xs">
-                        <SelectValue placeholder="Select payment option" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {paymentChoices.map(({ value, label, isPaid, isAllOutstanding }) => (
-                          <SelectItem
-                            key={value}
-                            value={value}
-                            disabled={isPaid && !isAllOutstanding}
-                          >
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
 
-              <div className="flex items-center gap-2 text-xs text-slate-500">
-                {selectedPaymentChoice ? (
-                  <span>
-                    {selectedPaymentChoice.isAllOutstanding
-                      ? `Pay all outstanding months for ${formatAmount(selectedPaymentChoice.amount, club?.currency)}`
-                      : `Pay ${selectedPaymentChoice.month} for ${formatAmount(selectedPaymentChoice.amount, club?.currency)}`}
-                  </span>
-                ) : (
-                  <span>No unpaid months available</span>
-                )}
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  {selectedPaymentChoice ? (
+                    <span>
+                      {selectedPaymentChoice.isAllOutstanding
+                        ? `Pay all outstanding months for ${formatAmount(selectedPaymentChoice.amount, club?.currency)}`
+                        : `Pay ${selectedPaymentChoice.month} for ${formatAmount(selectedPaymentChoice.amount, club?.currency)}`}
+                    </span>
+                  ) : (
+                    <span>No unpaid months available</span>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="space-y-2.5 px-1 pb-1 pt-2 md:px-1.5 md:pb-1.5">
-            {showPayNow ? (
-              <button
-                type="button"
-                onClick={handlePayNowClick}
-                disabled={!selectedPaymentChoice || isPayfastLoading}
-                className="flex w-full items-center justify-between rounded-[18px] border border-slate-200/70 bg-white px-4 py-3 text-left shadow-sm transition-all duration-200 hover:border-[#59b9e6] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-slate-300 bg-white transition-colors">
-                    <div className="h-6 w-6 rounded-full bg-black" />
+            <div className="space-y-2.5 px-1 pb-1 pt-2 md:px-1.5 md:pb-1.5">
+              {showPayNow ? (
+                <button
+                  type="button"
+                  onClick={handlePayNowClick}
+                  disabled={!selectedPaymentChoice || isPayfastLoading}
+                  className="flex w-full items-center justify-between rounded-[18px] border border-slate-200/70 bg-white px-4 py-3 text-left shadow-sm transition-all duration-200 hover:border-[#59b9e6] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-slate-300 bg-white transition-colors">
+                      <div className="h-6 w-6 rounded-full bg-black" />
+                    </div>
+
+                    <div>
+                      <p className="text-lg font-semibold text-gray-950 sm:text-xl">
+                        {isPayfastLoading
+                          ? "Redirecting..."
+                          : `Pay Now (${formatAmount(selectedPaymentChoice?.amount ?? 0, club?.currency)})`}
+                      </p>
+                      <p className="text-xs text-muted-foreground sm:text-sm">
+                        {selectedPaymentChoice
+                          ? selectedPaymentChoice.isAllOutstanding
+                            ? `Pay all outstanding months with PayFast for ${formatAmount(selectedPaymentChoice.amount, club?.currency)}.`
+                            : `Pay ${selectedPaymentChoice.month} with PayFast for ${formatAmount(selectedPaymentChoice.amount, club?.currency)}.`
+                          : "Pay your outstanding Clubby balance with PayFast."}
+                      </p>
+                    </div>
                   </div>
 
-                  <div>
-                    <p className="text-lg font-semibold text-gray-950 sm:text-xl">
-                      {isPayfastLoading
-                        ? "Redirecting..."
-                        : `Pay Now (${formatAmount(selectedPaymentChoice?.amount ?? 0, club?.currency)})`}
-                    </p>
-                    <p className="text-xs text-muted-foreground sm:text-sm">
-                      {selectedPaymentChoice
-                        ? selectedPaymentChoice.isAllOutstanding
-                          ? `Pay all outstanding months with PayFast for ${formatAmount(selectedPaymentChoice.amount, club?.currency)}.`
-                          : `Pay ${selectedPaymentChoice.month} with PayFast for ${formatAmount(selectedPaymentChoice.amount, club?.currency)}.`
-                        : "Pay your outstanding Clubby balance with PayFast."}
-                    </p>
+                  <div className="flex items-center gap-3 pl-4">
+                    <div className="flex flex-col items-start leading-none">
+                      <span className="text-[1.7rem] font-light tracking-[-0.08em] text-[#0072bc] sm:text-[2.2rem]">
+                        payfast
+                      </span>
+                      <span className="pl-1 text-[0.75rem] font-normal tracking-[-0.04em] text-[#0072bc] sm:text-[0.95rem]">
+                        by network
+                      </span>
+                    </div>
+                    <ChevronRight
+                      className="h-8 w-8 text-[#ef476f] sm:h-10 sm:w-10"
+                      strokeWidth={2.5}
+                    />
                   </div>
+                </button>
+              ) : monthlyPaymentOptions.length > 0 ? (
+                <div className="rounded-[20px] border border-slate-200/70 bg-white p-4 text-sm text-slate-500 shadow-sm">
+                  All listed months are already marked as paid. PayFast is only available for unpaid months.
                 </div>
+              ) : null}
+            </div>
+          </section>
+        )}
 
-                <div className="flex items-center gap-3 pl-4">
-                  <div className="flex flex-col items-start leading-none">
-                    <span className="text-[1.7rem] font-light tracking-[-0.08em] text-[#0072bc] sm:text-[2.2rem]">
-                      payfast
-                    </span>
-                    <span className="pl-1 text-[0.75rem] font-normal tracking-[-0.04em] text-[#0072bc] sm:text-[0.95rem]">
-                      by network
-                    </span>
-                  </div>
-                  <ChevronRight
-                    className="h-8 w-8 text-[#ef476f] sm:h-10 sm:w-10"
-                    strokeWidth={2.5}
-                  />
-                </div>
-              </button>
-            ) : monthlyPaymentOptions.length > 0 ? (
-              <div className="rounded-[20px] border border-slate-200/70 bg-white p-4 text-sm text-slate-500 shadow-sm">
-                All listed months are already marked as paid. PayFast is only available for unpaid months.
-              </div>
-            ) : null}
-
-            <ClubUsageAndCharges
-              data={data.report ?? {}}
-              currency={club?.currency ?? "ZAR"}
-              selectedMonth={selectedMonth}
-              onMonthSelect={setSelectedMonth}
-              clubName={club?.club_name}
-            />
-          </div>
+        <section className="order-2">
+          <ClubUsageAndCharges
+            data={data.report ?? {}}
+            currency={club?.currency ?? "ZAR"}
+            selectedMonth={selectedMonth}
+            onMonthSelect={setSelectedMonth}
+            clubName={club?.club_name}
+          />
         </section>
       </div>
+
+      <Dialog open={showSaveCardDialog} onOpenChange={setShowSaveCardDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Save card</DialogTitle>
+            <DialogDescription>
+              Enter your details to securely save a card via PayFast.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 py-2">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="save-card-first-name">First name</Label>
+              <Input
+                id="save-card-first-name"
+                value={saveCardFirstName}
+                onChange={(e) => setSaveCardFirstName(e.target.value)}
+                placeholder="First name"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="save-card-surname">Surname</Label>
+              <Input
+                id="save-card-surname"
+                value={saveCardSurname}
+                onChange={(e) => setSaveCardSurname(e.target.value)}
+                placeholder="Surname"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="save-card-email">Email</Label>
+              <Input
+                id="save-card-email"
+                type="email"
+                value={saveCardEmail}
+                onChange={(e) => setSaveCardEmail(e.target.value)}
+                placeholder="email@example.com"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveCardDialog(false)} disabled={isSaveCardLoading}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveCard} disabled={isSaveCardLoading}>
+              {isSaveCardLoading ? "Redirecting..." : "Continue"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

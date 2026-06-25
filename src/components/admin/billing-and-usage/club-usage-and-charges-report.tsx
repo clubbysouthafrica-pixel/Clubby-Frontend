@@ -9,9 +9,14 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { Label } from "@/components/ui/label";
 import { formatAmount } from "@/data/currencies";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -39,7 +44,7 @@ import { Download } from "lucide-react";
 import jsPDF from "jspdf";
 import * as React from "react";
 
-const REPORTING_METRICS = ["Registrations", "Emails", "Orders"];
+type MetricTab = "Registrations" | "Emails" | "Orders" | "Total";
 
 type PaymentRecord = {
   month: string;
@@ -309,10 +314,9 @@ export default function ClubUsageAndCharges({
   data,
   currency,
   selectedMonth,
-  onMonthSelect,
   clubName,
 }: ClubUsageAndChargesProps) {
-  const [selectedTab, setSelectedTab] = useState("Registrations");
+  const [selectedTab, setSelectedTab] = useState<MetricTab>("Total");
   const currentYearMonth = getCurrentYearMonth();
   const paymentStatusByMonth = useMemo(() => {
     const payments = data?.Payments ?? [];
@@ -391,164 +395,205 @@ export default function ClubUsageAndCharges({
   );
   const isTableScrollable = previousMonthRows.length > 3;
 
+  const totalChartData = useMemo(() => {
+    return Object.entries(data.overall_month_data ?? {})
+      .filter(([month]) => month <= currentYearMonth)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, amounts]) => ({
+        name: month,
+        Registrations: amounts.registration_amount ?? 0,
+        Emails: amounts.email_amount ?? 0,
+        Shop: amounts.order_amount ?? 0,
+      }));
+  }, [data.overall_month_data, currentYearMonth]);
+
   return (
     <div className="space-y-2.5">
-      <Card className="w-full gap-1.5 rounded-[20px] border border-slate-200/70 bg-white/95 p-2 shadow-[0_16px_36px_rgba(15,23,42,0.07)] md:p-2.5">
-        <Tabs
-          value={selectedTab}
-          onValueChange={setSelectedTab}
-          className="w-full flex-col gap-2.5"
-        >
-          <div className="rounded-[16px] border border-slate-200/70 bg-slate-50/90 p-1 backdrop-blur">
-            <Label htmlFor="view-selector" className="sr-only">
-              View
-            </Label>
-            <TabsList className="h-auto gap-2 bg-transparent p-0">
-              <TabsTrigger
-                value="Registrations"
-                className="h-7 rounded-full border border-slate-200 bg-white px-3 text-[11px] font-medium text-zinc-700 data-[state=active]:bg-zinc-700 data-[state=active]:text-white"
-              >
-                Registrations
-              </TabsTrigger>
-              <TabsTrigger
-                value="Emails"
-                className="h-7 rounded-full border border-slate-200 bg-white px-3 text-[11px] font-medium text-zinc-700 data-[state=active]:bg-zinc-700 data-[state=active]:text-white"
-              >
-                Emails
-              </TabsTrigger>
-              <TabsTrigger
-                value="Orders"
-                className="h-7 rounded-full border border-slate-200 bg-white px-3 text-[11px] font-medium text-zinc-700 data-[state=active]:bg-zinc-700 data-[state=active]:text-white"
-              >
-                Shop
-              </TabsTrigger>
-            </TabsList>
+      <Card className="w-full gap-1.5 rounded-[20px] border border-slate-200/70 bg-white p-2 shadow-none md:p-2.5">
+        <div className="flex flex-col gap-2.5">
+          <div className="flex items-center justify-between rounded-[16px] border border-slate-200/70 bg-slate-50/90 px-2 py-1.5 backdrop-blur">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+              Charges breakdown
+            </p>
+            <Select value={selectedTab} onValueChange={(v) => setSelectedTab(v as MetricTab)}>
+              <SelectTrigger className="h-7 w-[160px] rounded-full border-slate-200 bg-white text-xs shadow-none">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Total">Total</SelectItem>
+                <SelectItem value="Registrations">Registrations</SelectItem>
+                <SelectItem value="Emails">Emails</SelectItem>
+                <SelectItem value="Orders">Shop</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          {REPORTING_METRICS.map((metricKey) => {
-            if (selectedTab !== metricKey) return null;
-
-            const metricData = data[metricKey as ReportingMetricKey];
-
-            if (!metricData) {
-              return null;
-            }
-
-            return (
-              <div key={metricKey}>
-                <div className="grid gap-1.5 pb-2 md:grid-cols-3">
-                  {Object.entries(metricData).map(([k, value]) => {
-                    if (k === "month_data") return null;
-                    if (metricKey === "Orders" && k === "sales") return null;
-
-                    const displayValue =
-                      typeof value === "number" || typeof value === "string"
-                        ? value
-                        : "-";
-
-                    return (
-                      <Card
-                        key={k}
-                        className="rounded-[16px] border border-slate-200/70 bg-slate-50/80 p-2 shadow-none"
-                      >
-                        <CardHeader className="flex flex-col items-center justify-center p-0 text-center">
-                          <CardDescription className="text-[9px] uppercase tracking-[0.16em] text-zinc-400">
-                            {k}
-                          </CardDescription>
-                          <CardTitle className="mt-0.5 text-base font-semibold tabular-nums leading-tight text-zinc-900 md:text-lg">
-                            {displayValue}
-                          </CardTitle>
-                        </CardHeader>
-                      </Card>
-                    );
-                  })}
-                </div>
-
-                <section className="rounded-[18px] border border-slate-200/70 bg-white p-2 shadow-sm md:p-2.5">
-                  <ResponsiveContainer width="100%" height={210}>
-                    <BarChart data={metricData.month_data} barGap={10}>
-                      <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" vertical={false} />
-                      <XAxis
-                        dataKey="name"
-                        tickLine={false}
-                        axisLine={false}
-                        tick={{ fill: "#64748b", fontSize: 11 }}
-                      />
-                      {metricKey !== "Orders" && (
-                        <YAxis
-                          yAxisId="left"
+          {selectedTab === "Total" ? (
+            <div>
+              <div className="grid gap-1.5 pb-2 md:grid-cols-4">
+                {[
+                  { label: "Registrations", value: previousMonthsTotals.registrationAmount },
+                  { label: "Emails", value: previousMonthsTotals.emailAmount },
+                  { label: "Shop", value: previousMonthsTotals.orderAmount },
+                  { label: "Total", value: previousMonthsTotals.totalAmount },
+                ].map(({ label, value }) => (
+                  <Card key={label} className="rounded-[16px] border border-slate-200/70 bg-slate-50/80 p-2 shadow-none">
+                    <CardHeader className="flex flex-col items-center justify-center p-0 text-center">
+                      <CardDescription className="text-[9px] uppercase tracking-[0.16em] text-zinc-400">
+                        {label}
+                      </CardDescription>
+                      <CardTitle className="mt-0.5 text-base font-semibold tabular-nums leading-tight text-zinc-900 md:text-lg">
+                        {formatAmount(value, currency)}
+                      </CardTitle>
+                    </CardHeader>
+                  </Card>
+                ))}
+              </div>
+            <section className="rounded-[18px] border border-slate-200/70 bg-white p-2 shadow-sm md:p-2.5">
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={totalChartData} barGap={4}>
+                  <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fill: "#64748b", fontSize: 11 }}
+                  />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fill: "#64748b", fontSize: 11 }}
+                    tickFormatter={(value) => formatAmount(value, currency)}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: "14px",
+                      border: "1px solid #e2e8f0",
+                      boxShadow: "0 12px 30px rgba(15, 23, 42, 0.10)",
+                      padding: "8px 10px",
+                    }}
+                    formatter={(value, name) => [formatAmount(value as number, currency), name]}
+                  />
+                  <Legend wrapperStyle={{ paddingTop: 6, fontSize: 11 }} />
+                  <Bar stackId="total" radius={[0, 0, 0, 0]} dataKey="Registrations" fill="#9ca3af" name="Registrations" />
+                  <Bar stackId="total" radius={[0, 0, 0, 0]} dataKey="Emails" fill="#6b7280" name="Emails" />
+                  <Bar stackId="total" radius={[8, 8, 0, 0]} dataKey="Shop" fill="#111827" name="Shop" />
+                </BarChart>
+              </ResponsiveContainer>
+            </section>
+            </div>
+          ) : (
+            (() => {
+              const metricKey = selectedTab as ReportingMetricKey;
+              const metricData = data[metricKey];
+              if (!metricData) return null;
+              return (
+                <div>
+                  <div className="grid gap-1.5 pb-2 md:grid-cols-3">
+                    {Object.entries(metricData).map(([k, value]) => {
+                      if (k === "month_data") return null;
+                      if (metricKey === "Orders" && k === "sales") return null;
+                      if (metricKey === "Emails" && k.toLowerCase().includes("limit")) return null;
+                      const displayValue =
+                        typeof value === "number" || typeof value === "string" ? value : "-";
+                      return (
+                        <Card
+                          key={k}
+                          className="rounded-[16px] border border-slate-200/70 bg-slate-50/80 p-2 shadow-none"
+                        >
+                          <CardHeader className="flex flex-col items-center justify-center p-0 text-center">
+                            <CardDescription className="text-[9px] uppercase tracking-[0.16em] text-zinc-400">
+                              {k}
+                            </CardDescription>
+                            <CardTitle className="mt-0.5 text-base font-semibold tabular-nums leading-tight text-zinc-900 md:text-lg">
+                              {displayValue}
+                            </CardTitle>
+                          </CardHeader>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                  <section className="rounded-[18px] border border-slate-200/70 bg-white p-2 shadow-sm md:p-2.5">
+                    <ResponsiveContainer width="100%" height={280}>
+                      <BarChart data={metricData.month_data} barGap={10}>
+                        <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" vertical={false} />
+                        <XAxis
+                          dataKey="name"
                           tickLine={false}
                           axisLine={false}
                           tick={{ fill: "#64748b", fontSize: 11 }}
                         />
-                      )}
-                      <YAxis
-                        yAxisId="right"
-                        orientation="right"
-                        tickLine={false}
-                        axisLine={false}
-                        tick={{ fill: "#64748b", fontSize: 11 }}
-                        tickFormatter={(value) => formatAmount(value, currency)}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          borderRadius: "14px",
-                          border: "1px solid #e2e8f0",
-                          boxShadow: "0 12px 30px rgba(15, 23, 42, 0.10)",
-                          padding: "8px 10px",
-                        }}
-                        formatter={(value, name) => {
-                          if (name === "Charges" || name === "Email Charges") {
-                            return [
-                              formatAmount(value as number, currency),
-                              name,
-                            ];
-                          }
-                          return [value, name];
-                        }}
-                      />
-                      <Legend wrapperStyle={{ paddingTop: 6, fontSize: 11 }} />
-                      {metricKey !== "Orders" && (
-                        <Bar
-                          yAxisId="left"
-                          radius={[8, 8, 0, 0]}
-                          dataKey={metricKey === "Registrations" ? "users" : "emails"}
-                          fill="#475569"
-                          name={metricKey === "Registrations" ? "Users" : "Emails Sent"}
+                        {metricKey !== "Orders" && (
+                          <YAxis
+                            yAxisId="left"
+                            tickLine={false}
+                            axisLine={false}
+                            tick={{ fill: "#64748b", fontSize: 11 }}
+                          />
+                        )}
+                        <YAxis
+                          yAxisId="right"
+                          orientation="right"
+                          tickLine={false}
+                          axisLine={false}
+                          tick={{ fill: "#64748b", fontSize: 11 }}
+                          tickFormatter={(value) => formatAmount(value, currency)}
                         />
-                      )}
-                      <Bar
-                        yAxisId="right"
-                        radius={[8, 8, 0, 0]}
-                        dataKey="charge"
-                        fill="#d97706"
-                        name="Charges"
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </section>
-              </div>
-            );
-          })}
-        </Tabs>
+                        <Tooltip
+                          contentStyle={{
+                            borderRadius: "14px",
+                            border: "1px solid #e2e8f0",
+                            boxShadow: "0 12px 30px rgba(15, 23, 42, 0.10)",
+                            padding: "8px 10px",
+                          }}
+                          formatter={(value, name) => {
+                            if (name === "Charges" || name === "Email Charges") {
+                              return [formatAmount(value as number, currency), name];
+                            }
+                            return [value, name];
+                          }}
+                        />
+                        <Legend wrapperStyle={{ paddingTop: 6, fontSize: 11 }} />
+                        {metricKey !== "Orders" && (
+                          <Bar
+                            yAxisId="left"
+                            radius={[8, 8, 0, 0]}
+                            dataKey={metricKey === "Registrations" ? "users" : "emails"}
+                            fill="#9ca3af"
+                            name={metricKey === "Registrations" ? "Users" : "Emails Sent"}
+                          />
+                        )}
+                        <Bar
+                          yAxisId="right"
+                          radius={[8, 8, 0, 0]}
+                          dataKey="charge"
+                          fill="#111827"
+                          name="Charges"
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </section>
+                </div>
+              );
+            })()
+          )}
+        </div>
       </Card>
 
-      <div className="overflow-hidden rounded-[22px] border border-slate-200/70 bg-white shadow-[0_16px_36px_rgba(15,23,42,0.07)]">
+      <div className="overflow-hidden rounded-[22px] border border-slate-200/70 bg-white">
         <DndContext
           collisionDetection={closestCenter}
           sensors={sensors}
           id={sortableId}
         >
           <Table>
-            <TableHeader className="bg-slate-50/95">
-              <TableRow>
-                <TableHead className="text-center w-1/6">Month</TableHead>
-                <TableHead className="text-center w-1/7">
-                  Registrations
-                </TableHead>
-                <TableHead className="text-center w-1/7">Emails</TableHead>
-                <TableHead className="text-center w-1/7">Shop</TableHead>
-                <TableHead className="text-center w-1/4">Payment</TableHead>
+            <TableHeader className="bg-slate-200">
+              <TableRow className="hover:bg-slate-200">
+                <TableHead className="w-1/6 py-3 text-center text-slate-600">Month</TableHead>
+                <TableHead className="w-1/7 py-3 text-center text-slate-600">Registrations</TableHead>
+                <TableHead className="w-1/7 py-3 text-center text-slate-600">Emails</TableHead>
+                <TableHead className="w-1/7 py-3 text-center text-slate-600">Shop</TableHead>
+                <TableHead className="w-1/4 py-3 text-center text-slate-600">Payment</TableHead>
               </TableRow>
             </TableHeader>
           </Table>
@@ -659,16 +704,6 @@ export default function ClubUsageAndCharges({
                             <p className="text-[11px] text-slate-500">
                               {formatAmount(paidAmount, currency)} of {formatAmount(totalAmount, currency)}
                             </p>
-                            <button
-                              type="button"
-                              onClick={() => onMonthSelect?.(month)}
-                              className={selectedMonth === month
-                                ? "inline-flex rounded-full bg-amber-200 px-3 py-1 text-xs font-medium text-amber-800"
-                                : "inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-200 cursor-pointer"
-                              }
-                            >
-                              Outstanding: {formatAmount(outstandingAmount, currency)}
-                            </button>
                           </div>
                         )}
                       </TableCell>
@@ -678,26 +713,26 @@ export default function ClubUsageAndCharges({
               </TableBody>
             </Table>
           </div>
-          <div className="border-t border-slate-200/70 bg-zinc-700">
+          <div className="border-t border-slate-200/70 bg-slate-200">
             <Table>
               <TableBody>
-                <TableRow className="bg-zinc-700 font-semibold text-white hover:bg-zinc-700">
-                  <TableCell className="w-1/6 py-2.5 text-center text-white">Total</TableCell>
-                  <TableCell className="w-1/7 py-2.5 text-center">
+                <TableRow className="bg-slate-200 font-semibold hover:bg-slate-200">
+                  <TableCell className="w-1/6 py-3 text-center text-slate-700">Total</TableCell>
+                  <TableCell className="w-1/7 py-3 text-center text-slate-600">
                     {formatAmount(previousMonthsTotals.registrationAmount, currency)}
                   </TableCell>
-                  <TableCell className="w-1/7 py-2.5 text-center">
+                  <TableCell className="w-1/7 py-3 text-center text-slate-600">
                     {formatAmount(previousMonthsTotals.emailAmount, currency)}
                   </TableCell>
-                  <TableCell className="w-1/7 py-2.5 text-center">
+                  <TableCell className="w-1/7 py-3 text-center text-slate-600">
                     {formatAmount(previousMonthsTotals.orderAmount, currency)}
                   </TableCell>
-                  <TableCell className="w-1/4 py-2.5 text-center text-white">
+                  <TableCell className="w-1/4 py-3 text-center">
                     <div className="space-y-1">
-                      <p className="font-bold text-white">
+                      <p className="font-bold text-slate-700">
                         {formatAmount(previousMonthsTotals.totalAmount, currency)} total
                       </p>
-                      <p className="text-[11px] font-medium text-slate-200">
+                      <p className="text-[11px] font-medium text-slate-500">
                         Outstanding: {formatAmount(previousMonthsTotals.outstandingAmount, currency)}
                       </p>
                     </div>

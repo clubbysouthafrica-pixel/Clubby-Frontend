@@ -31,6 +31,7 @@ export interface Club {
     country_exists?: boolean
     bank_details_exists?: boolean
     account_balance_entries?: ClubAccountBalanceEntry[]
+    payfast_token?: boolean
 }
 
 interface ClubProviderProps {
