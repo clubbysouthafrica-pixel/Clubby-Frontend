@@ -31,6 +31,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getSaveCardUrl } from "@/services/payfast-api/save-card";
+import { removeCard } from "@/services/payfast-api/remove-card";
 
 const PAYNOW_ENABLED = false;
 
@@ -75,6 +76,23 @@ export default function BillingPage() {
   const [saveCardSurname, setSaveCardSurname] = useState("");
   const [saveCardEmail, setSaveCardEmail] = useState("");
   const [isSaveCardLoading, setIsSaveCardLoading] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [isCancelLoading, setIsCancelLoading] = useState(false);
+
+  const handleRemoveCard = async () => {
+    if (!club?.club_account_id) return;
+    setIsCancelLoading(true);
+    try {
+      await removeCard({ club_account_id: club.club_account_id });
+      toast.success("Subscription cancelled and card removed.");
+      setShowCancelDialog(false);
+      window.location.reload();
+    } catch {
+      toast.error("Failed to remove card. Please try again.");
+    } finally {
+      setIsCancelLoading(false);
+    }
+  };
 
   const handleSaveCard = async () => {
     if (!saveCardFirstName.trim() || !saveCardSurname.trim() || !saveCardEmail.includes("@")) {
@@ -279,18 +297,25 @@ export default function BillingPage() {
   return (
     <div className="min-h-screen bg-white text-slate-900">
       {club?.payfast_token === false && (
-        <div className="flex w-full items-center gap-3 bg-amber-50 px-4 py-3 border-b border-amber-200">
-          <CreditCard className="h-4 w-4 shrink-0 text-amber-600" />
-          <p className="text-sm text-amber-800">
-            <span className="font-semibold">Action required:</span> You have not saved your card details yet. Save your card to enable subscription billing.
-          </p>
-          <button
-            type="button"
-            onClick={() => setShowSaveCardDialog(true)}
-            className="ml-auto shrink-0 rounded-full bg-amber-600 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-amber-700"
-          >
-            Setup card
-          </button>
+        <div className="px-2 pt-2.5 sm:px-3 md:px-4 xl:px-5 2xl:px-6">
+          <div className="flex items-center gap-4 rounded-[18px] border border-orange-300 bg-orange-50 px-4 py-3.5 shadow-sm">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-100 border border-orange-200">
+              <CreditCard className="h-4 w-4 text-orange-600" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-orange-900">Action required: Set up your card</p>
+              <p className="text-xs text-orange-700">
+                Save your card details to enable automatic subscription billing.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowSaveCardDialog(true)}
+              className="ml-auto shrink-0 rounded-full bg-orange-500 px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-orange-600 transition-colors"
+            >
+              Setup card
+            </button>
+          </div>
         </div>
       )}
       <div className="flex w-full max-w-none flex-col gap-2.5 px-2 py-2.5 sm:px-3 md:px-4 md:py-3 xl:px-5 2xl:px-6">
@@ -331,6 +356,7 @@ export default function BillingPage() {
               {club?.payfast_token && (
                 <Button
                   type="button"
+                  onClick={() => setShowCancelDialog(true)}
                   className="h-8 rounded-full border border-red-300 bg-white px-3.5 text-xs text-red-600 hover:bg-red-50"
                 >
                   <CreditCard className="mr-1.5 h-3.5 w-3.5" />
@@ -484,6 +510,36 @@ export default function BillingPage() {
           />
         </section>
       </div>
+
+      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cancel subscription</DialogTitle>
+            <DialogDescription>
+              This will remove your saved card and cancel your Clubby subscription. You will no longer be billed automatically. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCancelDialog(false)} disabled={isCancelLoading}>
+              Keep subscription
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => void handleRemoveCard()}
+              disabled={isCancelLoading}
+            >
+              {isCancelLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Cancelling...
+                </>
+              ) : (
+                "Cancel subscription"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showSaveCardDialog} onOpenChange={setShowSaveCardDialog}>
         <DialogContent className="sm:max-w-md">
