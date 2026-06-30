@@ -767,7 +767,7 @@ export default function PendingMembersList({
                           setSelectedMember(member);
                           window.location.hash = member.user_id;
                         }}
-                        className={`group h-14 cursor-pointer border-slate-200 bg-white text-sm transition-colors hover:bg-slate-50 ${
+                        className={`group h-14 cursor-pointer bg-white text-sm transition-colors hover:bg-slate-50 shadow-[0_0_0_1px_#e2e8f0,0_2px_8px_0_rgba(0,0,0,0.06)] ${
                           listActionItems.some(
                             (item) =>
                               item.email === member.member_email &&

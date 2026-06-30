@@ -1131,7 +1131,7 @@ export default function AdminRegistrationFormPage() {
             >
               <div className="flex h-[calc(100vh-19rem)] min-h-[40rem] gap-6 overflow-hidden">
                 {/* Field Palette Sidebar */}
-                <div className="w-56 flex-shrink-0 self-start">
+                <div className="w-56 flex-shrink-0 h-full overflow-y-auto">
                   <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                     <h3 className="text-sm font-semibold text-gray-900 mb-2">
                       Available Fields

@@ -122,7 +122,7 @@ export default function RegistrationReportingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
+    <div className="h-full bg-white text-slate-900">
       <section
         ref={reportingSectionRef}
         className="px-6 py-8"

@@ -28,6 +28,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 
 type MemberVerificationScannerDialogProps = {
   clubId: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 type VerificationTone = {
@@ -150,10 +152,15 @@ function getRegistrationsTab(response?: GetClubMemberResponse) {
 
 export default function MemberVerificationScannerDialog({
   clubId,
+  open: openProp,
+  onOpenChange,
 }: MemberVerificationScannerDialogProps) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = openProp !== undefined;
+  const open = isControlled ? openProp : internalOpen;
+  const setOpen = isControlled ? (onOpenChange ?? (() => {})) : setInternalOpen;
   const [isStartingCamera, setIsStartingCamera] = useState(false);
   const [isProcessingScan, setIsProcessingScan] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
@@ -388,15 +395,17 @@ export default function MemberVerificationScannerDialog({
 
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => setOpen(true)}
-        className="h-8 rounded-full border-stone-300 bg-white/85 px-3 text-xs text-zinc-700 backdrop-blur hover:bg-white"
-      >
-        <Camera className="mr-2 h-4 w-4" />
-        Scan membership QR
-      </Button>
+      {!isControlled && (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setOpen(true)}
+          className="h-8 rounded-full border-stone-300 bg-white/85 px-3 text-xs text-zinc-700 backdrop-blur hover:bg-white"
+        >
+          <Camera className="mr-2 h-4 w-4" />
+          Scan membership QR
+        </Button>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-xl flex-col gap-3 overflow-hidden rounded-[24px] border-slate-200 bg-white p-3 sm:w-full sm:gap-4 sm:rounded-[28px] sm:p-6">
