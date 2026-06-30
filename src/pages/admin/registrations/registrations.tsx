@@ -1302,7 +1302,7 @@ export default function RegistrationsPage() {
                 {!fetchError &&
                   clubMembers?.pageToken &&
                   clubMembers.pageToken !== "" && (
-                    <div className="mt-4 flex items-center justify-between rounded-[20px] border border-amber-300 bg-amber-50 px-4 py-3">
+                    <div className="mt-4 flex items-center justify-between border border-amber-300 bg-amber-50 px-4 py-3">
                       <div className="flex items-center gap-2 text-amber-900">
                         <AlertCircle className="h-4 w-4" />
                         <p className="text-sm font-medium">
