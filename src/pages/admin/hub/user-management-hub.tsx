@@ -5,7 +5,7 @@ export default function UserManagementHubPage() {
   return (
     <SectionHub
       title="User Management"
-      description="View and manage your club's members."
+      description="View and manage all users that have interacted with your system."
       items={[
         {
           title: "Users",

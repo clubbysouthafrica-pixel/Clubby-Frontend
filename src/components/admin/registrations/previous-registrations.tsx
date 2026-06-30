@@ -1,6 +1,5 @@
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import {
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -8,7 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ClubMember } from "@/interfaces/club";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   ChevronsUpDown,
   Archive,
@@ -38,14 +37,12 @@ interface PreviousMembersListProps {
   dynamicFilters: Record<string, string>;
   activeColumnKeys?: string[];
   memberLimit: number;
-  showTenRows?: boolean;
   showArchived?: boolean;
   setlistActionItems: React.Dispatch<
     React.SetStateAction<{ email: string; name: string }[]>
   >;
   setDeregisteredMembers: React.Dispatch<React.SetStateAction<ClubMember[]>>;
   setSelectedMember: React.Dispatch<React.SetStateAction<object>>;
-  setDeregisteredMembersLength: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const getRegistrationRowKey = (
@@ -92,9 +89,7 @@ export default function PreviousMembersList({
   club,
   activeColumnKeys = [],
   listActionItems,
-  showTenRows = false,
   setSelectedMember,
-  setDeregisteredMembersLength,
   showArchived = false,
 }: PreviousMembersListProps) {
   // Use raw clubMembers.deregistered - backend already handles pagination and member_name/member_id filtering
@@ -165,64 +160,40 @@ export default function PreviousMembersList({
     showArchived,
   ]);
 
-  useEffect(() => {
-    setDeregisteredMembersLength(sortedDeregisteredMembers.length);
-  }, [setDeregisteredMembersLength, sortedDeregisteredMembers]);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const handleBodyScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (headerRef.current) headerRef.current.scrollLeft = e.currentTarget.scrollLeft;
+  };
 
-  const rowHeight = 60;
-  const maxVisibleRows = showTenRows ? 10 : 5;
-  const shouldScrollY = sortedDeregisteredMembers.length > maxVisibleRows;
-  const tableViewportMaxHeight = shouldScrollY
-    ? maxVisibleRows * rowHeight
-    : undefined;
-  const tableColumnWidths = [
-    "120px",
-    "220px",
-    "150px",
-    "150px",
-    "150px",
-    ...activeColumnKeys.map(() => "150px"),
+  const EXTRA_COL_WIDTH = 150;
+  const extraColsTotal = activeColumnKeys.length * EXTRA_COL_WIDTH;
+  const tableWidth = activeColumnKeys.length > 0 ? `calc(100% + ${extraColsTotal}px)` : "100%";
+  const columnWidths: (string | undefined)[] = [
+    "120px",   // actions - fixed
+    undefined, // member name - flex
+    undefined, // email - flex
+    undefined, // total fee - flex
+    undefined, // deregistered on - flex
+    ...activeColumnKeys.map(() => `${EXTRA_COL_WIDTH}px`),
   ];
 
   return (
     <>
-      <div className="w-full max-w-full min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white [contain:inline-size]">
-        <div className="block max-w-full overflow-x-auto">
-        <DndContext
-          collisionDetection={closestCenter}
-          sensors={sensors}
-          id={sortableId}
-        >
-          <div
-            className={shouldScrollY ? "overflow-y-auto" : "overflow-y-hidden"}
-            style={
-              tableViewportMaxHeight
-                ? {
-                    maxHeight: `${tableViewportMaxHeight}px`,
-                    scrollbarGutter: "stable",
-                  }
-                : undefined
-            }
-          >
-          <Table
-            className="table-fixed"
-            style={{
-              width: "max-content",
-              minWidth: "100%",
-              maxWidth: "none",
-            }}
-          >
+      <div className="w-full min-w-0 overflow-hidden bg-white">
+        <div ref={headerRef} className="overflow-hidden">
+          <table className="table-fixed w-full caption-bottom text-sm" style={{ width: tableWidth }}>
             <colgroup>
-              {tableColumnWidths.map((width, index) => (
-                <col key={`previous-col-${index}`} style={{ width }} />
+              {columnWidths.map((width, index) => (
+                <col key={`previous-col-h-${index}`} style={width ? { width } : undefined} />
               ))}
             </colgroup>
-            <TableHeader className="sticky top-0 z-10 bg-zinc-700 [&_tr]:border-zinc-600">
+            <TableHeader className="bg-zinc-700 [&_tr]:border-b [&_tr]:border-zinc-600">
               <TableRow>
-                <TableHead className="sticky left-0 z-30 h-11 w-[120px] flex-shrink-0 bg-zinc-700 py-2 text-center text-xs text-slate-200">
+                <TableHead className="sticky left-0 z-30 h-14 w-[120px] flex-shrink-0 bg-zinc-700 py-2 text-center text-sm text-slate-200">
                   Actions
                 </TableHead>
-                <TableHead className="h-11 w-[220px] px-0 text-center text-xs text-slate-200">
+                <TableHead className="h-14 w-[220px] px-0 text-center text-sm text-slate-200">
                   <button
                     type="button"
                     className="grid w-full grid-cols-[10px_auto_auto_10px] items-center justify-center gap-1 px-1.5 hover:underline"
@@ -249,8 +220,8 @@ export default function PreviousMembersList({
                     <span aria-hidden="true" />
                   </button>
                 </TableHead>
-                <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">Email</TableHead>
-                <TableHead className="h-11 w-[150px] px-0 text-center text-xs text-slate-200">
+                <TableHead className="h-14 w-[150px] text-center text-sm text-slate-200">Email</TableHead>
+                <TableHead className="h-14 w-[150px] px-0 text-center text-sm text-slate-200">
                   <button
                     type="button"
                     className="grid w-full grid-cols-[10px_auto_auto_10px] items-center justify-center gap-1 px-1.5 hover:underline"
@@ -277,7 +248,7 @@ export default function PreviousMembersList({
                     <span aria-hidden="true" />
                   </button>
                 </TableHead>
-                <TableHead className="h-11 w-[150px] px-0 text-center text-xs text-slate-200">
+                <TableHead className="h-14 w-[150px] px-0 text-center text-sm text-slate-200">
                   <button
                     type="button"
                     className="grid w-full grid-cols-[10px_auto_auto_10px] items-center justify-center gap-1 px-1.5 hover:underline"
@@ -305,15 +276,25 @@ export default function PreviousMembersList({
                   .map((column: any) => (
                     <TableHead
                       key={column.key}
-                      className="h-11 w-[150px] text-center text-xs text-slate-200"
+                      className="h-14 w-[150px] text-center text-sm text-slate-200"
                     >
                       {column.field_name}
                     </TableHead>
                   ))}
               </TableRow>
             </TableHeader>
-            <TableBody>
-              {sortedDeregisteredMembers.length ? (
+          </table>
+        </div>
+        <div ref={bodyRef} className="bg-slate-50/70" style={{ maxHeight: "560px", overflowY: "auto", overflowX: "auto" }} onScroll={handleBodyScroll}>
+          <DndContext collisionDetection={closestCenter} sensors={sensors} id={sortableId}>
+            <table className="table-fixed w-full caption-bottom text-sm" style={{ width: tableWidth, borderCollapse: "separate", borderSpacing: "0 6px" }}>
+              <colgroup>
+                {columnWidths.map((width, index) => (
+                  <col key={`previous-col-b-${index}`} style={width ? { width } : undefined} />
+                ))}
+              </colgroup>
+              <TableBody>
+                {sortedDeregisteredMembers.length ? (
                 sortedDeregisteredMembers.map((member: ClubMember) => (
                   <TableRow
                     key={getRegistrationRowKey(member)}
@@ -551,10 +532,9 @@ export default function PreviousMembersList({
                   colSpan={5 + (activeColumnKeys?.length ?? 0)}
                 />
               )}
-            </TableBody>
-          </Table>
-          </div>
-        </DndContext>
+              </TableBody>
+            </table>
+          </DndContext>
         </div>
       </div>
     </>

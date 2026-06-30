@@ -1,11 +1,10 @@
 import { DndContext, closestCenter } from "@dnd-kit/core";
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronsUpDown, ChevronDown, UserPlus, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -79,7 +78,6 @@ interface ImageProps {
   clubId: string;
   activeColumnKeys?: string[];
   memberLimit: number;
-  showTenRows?: boolean;
   reset: () => void;
   handleFormattedInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   registerUser: (
@@ -116,7 +114,6 @@ export default function PendingMembersList({
   activeColumnKeys = [],
   reset,
   handleFormattedInputChange,
-  showTenRows = false,
   registerUser,
   setSelectedMember,
   setlistActionItems,
@@ -477,19 +474,23 @@ export default function PendingMembersList({
     setDeregisterMembers(updatedDeregisterMembers);
   }, [listActionItems, baseUnregisteredMembers]);
 
-  const rowHeight = 60;
-  const maxVisibleRows = showTenRows ? 10 : 5;
-  const shouldScrollY = sortedUnregisteredMembers.length > maxVisibleRows;
-  const tableViewportMaxHeight = shouldScrollY
-    ? maxVisibleRows * rowHeight
-    : undefined;
-  const tableColumnWidths = [
-    "80px",
-    "150px",
-    "150px",
-    "190px",
-    "150px",
-    ...activeColumnKeys.map(() => "150px"),
+  const headerRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const handleBodyScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (headerRef.current) headerRef.current.scrollLeft = e.currentTarget.scrollLeft;
+  };
+
+  const EXTRA_COL_WIDTH = 150;
+  const extraColsTotal = activeColumnKeys.length * EXTRA_COL_WIDTH;
+  const tableWidth = activeColumnKeys.length > 0 ? `calc(100% + ${extraColsTotal}px)` : "100%";
+  const columnWidths: (string | undefined)[] = [
+    "80px",    // checkbox - fixed
+    undefined, // member name - flex
+    undefined, // email - flex
+    undefined, // registration fee - flex
+    undefined, // registration submitted - flex
+    ...activeColumnKeys.map(() => `${EXTRA_COL_WIDTH}px`),
+    "190px",   // actions - fixed
   ];
 
   return (
@@ -592,40 +593,17 @@ export default function PendingMembersList({
           </h2>
         </div>
       )}
-      <div className="w-full max-w-full min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white [contain:inline-size]">
-        <div className="block max-w-full overflow-x-auto">
-          <DndContext
-            collisionDetection={closestCenter}
-            sensors={sensors}
-            id={sortableId}
-          >
-            <div
-              className={shouldScrollY ? "overflow-y-auto" : "overflow-y-visible"}
-              style={
-                tableViewportMaxHeight
-                  ? {
-                      maxHeight: `${tableViewportMaxHeight}px`,
-                      scrollbarGutter: "stable",
-                    }
-                  : undefined
-              }
-            >
-              <Table
-                className="table-fixed"
-                style={{
-                  width: "max-content",
-                  minWidth: "100%",
-                  maxWidth: "none",
-                }}
-              >
-                <colgroup>
-                  {tableColumnWidths.map((width, index) => (
-                    <col key={`pending-col-${index}`} style={{ width }} />
-                  ))}
-                </colgroup>
-              <TableHeader className="sticky top-0 z-10 bg-zinc-700 [&_tr]:border-zinc-600">
-                <TableRow>
-                  <TableHead className="sticky left-0 z-30 w-[80px] flex-shrink-0 bg-zinc-700 py-2 text-center text-slate-200">
+      <div className="w-full min-w-0 overflow-hidden bg-white">
+        <div ref={headerRef} className="overflow-hidden">
+          <table className="table-fixed w-full caption-bottom text-sm" style={{ width: tableWidth }}>
+            <colgroup>
+              {columnWidths.map((width, index) => (
+                <col key={`pending-col-h-${index}`} style={width ? { width } : undefined} />
+              ))}
+            </colgroup>
+            <TableHeader className="bg-zinc-700 [&_tr]:border-b [&_tr]:border-zinc-600">
+              <TableRow>
+                  <TableHead className="sticky left-0 z-30 h-14 w-[80px] flex-shrink-0 bg-zinc-700 py-2 text-center text-slate-200">
                     <div className="mx-auto flex w-fit items-center justify-center rounded-full border border-slate-200/80 bg-slate-50 pl-3 pr-1 transition-colors hover:bg-white">
                       <Checkbox
                         checked={allMembersSelected}
@@ -670,7 +648,7 @@ export default function PendingMembersList({
                       </DropdownMenu>
                     </div>
                   </TableHead>
-                  <TableHead className="h-11 w-[150px] px-0 text-center text-xs text-slate-200">
+                  <TableHead className="h-14 w-[150px] px-0 text-center text-sm text-slate-200">
                     <button
                       type="button"
                       className="grid w-full grid-cols-[10px_auto_auto_10px] items-center justify-center gap-1 px-1.5 hover:underline"
@@ -697,10 +675,10 @@ export default function PendingMembersList({
                       <span aria-hidden="true" />
                     </button>
                   </TableHead>
-                  <TableHead className="h-11 w-[150px] text-center text-xs text-slate-200">
+                  <TableHead className="h-14 w-[150px] text-center text-sm text-slate-200">
                     Email
                   </TableHead>
-                  <TableHead className="h-11 w-[190px] px-0 text-center text-xs text-slate-200">
+                  <TableHead className="h-14 w-[190px] px-0 text-center text-sm text-slate-200">
                     <button
                       type="button"
                       className="grid w-full grid-cols-[10px_auto_auto_10px] items-center justify-center gap-1 px-1.5 hover:underline"
@@ -728,7 +706,7 @@ export default function PendingMembersList({
                       <span aria-hidden="true" />
                     </button>
                   </TableHead>
-                  <TableHead className="h-11 w-[150px] px-0 text-center text-xs text-slate-200">
+                  <TableHead className="h-14 w-[150px] px-0 text-center text-sm text-slate-200">
                     <button
                       type="button"
                       className="grid w-full grid-cols-[10px_auto_auto_10px] items-center justify-center gap-1 px-1.5 hover:underline"
@@ -760,13 +738,26 @@ export default function PendingMembersList({
                     .map((column: any) => (
                       <TableHead
                         key={column.key}
-                        className="h-11 w-[150px] text-center text-xs text-slate-200"
+                        className="h-14 w-[150px] text-center text-sm text-slate-200"
                       >
                         {column.field_name}
                       </TableHead>
                     ))}
+                  <TableHead className="h-14 w-[190px] text-center text-sm text-slate-200">
+                    Actions
+                  </TableHead>
                 </TableRow>
-              </TableHeader>
+            </TableHeader>
+          </table>
+        </div>
+        <div ref={bodyRef} className="bg-slate-50/70" style={{ maxHeight: "560px", overflowY: "auto", overflowX: "auto" }} onScroll={handleBodyScroll}>
+          <DndContext collisionDetection={closestCenter} sensors={sensors} id={sortableId}>
+            <table className="table-fixed w-full caption-bottom text-sm" style={{ width: tableWidth, borderCollapse: "separate", borderSpacing: "0 6px" }}>
+              <colgroup>
+                {columnWidths.map((width, index) => (
+                  <col key={`pending-col-b-${index}`} style={width ? { width } : undefined} />
+                ))}
+              </colgroup>
               <TableBody>
                 {baseUnregisteredMembers.length ? (
                   sortedUnregisteredMembers.map((member: ClubMember) => (
@@ -993,6 +984,27 @@ export default function PendingMembersList({
                               </TableCell>
                             );
                           })}
+                        <TableCell className="w-[190px] text-center" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setOpenDialogUserId(member.user_id)}
+                              className="inline-flex h-7 items-center gap-1 rounded-md bg-slate-800 px-2.5 text-xs font-medium text-white transition hover:bg-slate-700"
+                            >
+                              Register
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDeregisterMembers([{ user_id: member.user_id, name: `${member.member_first_name} ${member.member_surname}` }]);
+                                setIsDeregisterDialogOpen(true);
+                              }}
+                              className="inline-flex h-7 items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2.5 text-xs font-medium text-red-700 transition hover:bg-red-100"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                       <Dialog
                         open={openDialogUserId === member.user_id}
@@ -1391,12 +1403,11 @@ export default function PendingMembersList({
                   ))
                 ) : (
                   <EmptyRegistrationsRow
-                    colSpan={6 + activeColumnKeys.length}
+                    colSpan={7 + activeColumnKeys.length}
                   />
                 )}
               </TableBody>
-            </Table>
-            </div>
+            </table>
           </DndContext>
         </div>
       </div>

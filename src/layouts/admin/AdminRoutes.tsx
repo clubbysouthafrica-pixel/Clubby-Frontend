@@ -20,6 +20,7 @@ import OrdersPage from "@/pages/admin/shop/orders";
 import AnalyticsPage from "@/pages/admin/shop/analytics";
 import CreateOrderPage from "@/pages/admin/shop/create-order";
 import RegistrationsPage from "@/pages/admin/registrations/registrations";
+import RegistrationReportingPage from "@/pages/admin/registrations/registration-reporting";
 import MembersPage from "@/pages/admin/user-management/members";
 import VenuesPage from "@/pages/admin/booking/venues";
 import BookingsPage from "@/pages/admin/booking/bookings";
@@ -103,6 +104,14 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <RegistrationsPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/manage/member/registrations/reporting"
+        element={
+          <ProtectedRoute>
+            <RegistrationReportingPage />
           </ProtectedRoute>
         }
       ></Route>

@@ -1,5 +1,5 @@
 import { SectionHub } from "@/components/admin/section-hub"
-import { ClipboardList, UserPlus, FileText, Users } from "lucide-react"
+import { ClipboardList, UserPlus, FileText, Users, BarChart2 } from "lucide-react"
 
 export default function MembersHubPage() {
   return (
@@ -30,6 +30,12 @@ export default function MembersHubPage() {
           description: "Create and manage the registration form for new members.",
           url: "/manage/registrations/forms",
           icon: FileText,
+        },
+        {
+          title: "Registration Reporting",
+          description: "Review registration revenue trends, pending balances, and field-level billing performance.",
+          url: "/manage/member/registrations/reporting",
+          icon: BarChart2,
         },
       ]}
     />
