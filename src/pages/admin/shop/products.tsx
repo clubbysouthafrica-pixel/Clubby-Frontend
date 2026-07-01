@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Package, ChevronsUpDown, ImageIcon, AlertCircle, Loader2, Settings, Pencil } from "lucide-react";
 import {
@@ -653,257 +653,235 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Products</h1>
-          <p className="text-muted-foreground">
-            Manage your club's merchandise and product catalog.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {club?.enable_shop && (
-            <Button
-              onClick={() => setShowShopSettings(true)}
-              variant="outline"
-              size="sm"
-              className="text-gray-600 hover:text-gray-900"
-              title="Shop settings"
-            >
-              <Settings className="h-4 w-4" />
+    <div className="min-h-screen bg-white text-slate-900">
+      <section className="px-6 py-8">
+        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Products</h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Manage your club's merchandise and product catalog.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {club?.enable_shop && (
+              <Button
+                onClick={() => setShowShopSettings(true)}
+                variant="outline"
+                size="sm"
+                className="text-slate-600 hover:text-slate-900"
+                title="Shop settings"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            )}
+            <Button onClick={() => setOpenDialog(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Product
             </Button>
-          )}
-          <Button onClick={() => setOpenDialog(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Product
-          </Button>
+          </div>
         </div>
-      </div>
 
-      {!club?.enable_shop && (
-        <Card className="mb-6 overflow-hidden border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 shadow-sm p-0">
-          <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
-            <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-300 bg-amber-100">
-                <AlertCircle className="h-4 w-4 text-amber-700" />
+        {!club?.enable_shop && (
+          <Card className="mb-6 overflow-hidden border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 p-0">
+            <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-300 bg-amber-100">
+                  <AlertCircle className="h-4 w-4 text-amber-700" />
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-sm font-semibold text-amber-950 sm:text-base">
+                    Shop is currently disabled
+                  </p>
+                  <p className="max-w-2xl text-sm leading-snug text-amber-800">
+                    Enable your shop to make it visible to members and start receiving orders.
+                  </p>
+                  <p className="pt-1 text-xs leading-snug text-amber-700/90">
+                    Enabling the shop and selling items results in a Clubby charge of 2% of each product sold.
+                  </p>
+                </div>
               </div>
-              <div className="space-y-0.5">
-                <p className="text-sm font-semibold text-amber-950 sm:text-base">
-                  Shop is currently disabled
-                </p>
-                <p className="max-w-2xl text-sm leading-snug text-amber-800">
-                  Enable your shop to make it visible to members and start receiving orders.
-                </p>
-                <p className="pt-1 text-xs leading-snug text-amber-700/90">
-                  Enabling the shop and selling items results in a Clubby charge of 2% of each product sold.
-                </p>
-              </div>
-            </div>
-            <Button
-              onClick={handleEnableShop}
-              disabled={isEnablingShop}
-              className="w-full bg-amber-700 text-white hover:bg-amber-800 sm:w-auto"
+              <Button
+                onClick={handleEnableShop}
+                disabled={isEnablingShop}
+                className="w-full bg-amber-700 text-white hover:bg-amber-800 sm:w-auto"
+              >
+                {isEnablingShop ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Enabling...
+                  </>
+                ) : (
+                  "Enable Shop"
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="w-full min-w-0 overflow-hidden bg-white">
+          <div className="overflow-x-auto">
+            <Table
+              style={{
+                width: "100%",
+                minWidth: "860px",
+                borderCollapse: "separate",
+                borderSpacing: "0 6px",
+              }}
             >
-              {isEnablingShop ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Enabling...
-                </>
-              ) : (
-                "Enable Shop"
-              )}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Products Table */}
-      <div className="mb-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Product Inventory</CardTitle>
-            <CardDescription>
-              Current stock levels and product status
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-lg border w-full overflow-hidden">
-              <div className="overflow-y-auto overflow-x-auto">
-                <Table className="table-auto" style={{ minWidth: "1190px" }}>
-                  <TableHeader className="bg-muted sticky top-0 z-10">
-                    <TableRow>
-                      <TableHead className="text-center w-[140px]">
-                        Image
-                      </TableHead>
-                      <TableHead className="text-center w-[140px]">
-                        <button
-                          className="flex items-center justify-center gap-1 w-full hover:bg-gray-100 rounded p-1"
-                          onClick={() => handleSort('name')}
+              <TableHeader>
+                <TableRow className="border-b border-slate-100 hover:bg-transparent">
+                  <TableHead className="h-14 w-[110px] text-sm font-semibold text-slate-600">
+                    Image
+                  </TableHead>
+                  <TableHead className="h-14 text-sm font-semibold text-slate-600">
+                    <button
+                      className="flex items-center gap-1 hover:text-slate-900"
+                      onClick={() => handleSort("name")}
+                    >
+                      Product Name
+                      {nameSortAsc === null ? (
+                        <ChevronsUpDown className="h-3.5 w-3.5 opacity-50" />
+                      ) : (
+                        <span className="text-xs">{nameSortAsc ? "▲" : "▼"}</span>
+                      )}
+                    </button>
+                  </TableHead>
+                  <TableHead className="h-14 w-[130px] text-sm font-semibold text-slate-600">
+                    <button
+                      className="flex items-center gap-1 hover:text-slate-900"
+                      onClick={() => handleSort("price")}
+                    >
+                      Price
+                      {priceSortAsc === null ? (
+                        <ChevronsUpDown className="h-3.5 w-3.5 opacity-50" />
+                      ) : (
+                        <span className="text-xs">{priceSortAsc ? "▲" : "▼"}</span>
+                      )}
+                    </button>
+                  </TableHead>
+                  <TableHead className="h-14 w-[120px] text-sm font-semibold text-slate-600">
+                    Status
+                  </TableHead>
+                  <TableHead className="h-14 w-[160px] text-sm font-semibold text-slate-600">
+                    Purchase Limit
+                  </TableHead>
+                  <TableHead className="h-14 w-[140px] text-sm font-semibold text-slate-600">
+                    <button
+                      className="flex items-center gap-1 hover:text-slate-900"
+                      onClick={() => handleSort("createdAt")}
+                    >
+                      Created
+                      {createdAtSortAsc === null ? (
+                        <ChevronsUpDown className="h-3.5 w-3.5 opacity-50" />
+                      ) : (
+                        <span className="text-xs">{createdAtSortAsc ? "▲" : "▼"}</span>
+                      )}
+                    </button>
+                  </TableHead>
+                  <TableHead className="h-14 w-[70px]" />
+                </TableRow>
+              </TableHeader>
+              <TableBody className="bg-slate-50/70">
+                {productsLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="py-12 text-center text-sm text-slate-500">
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Loading products...
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : productsError ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="py-12 text-center text-sm text-red-500">
+                      Error loading products. Please try again.
+                    </TableCell>
+                  </TableRow>
+                ) : sortedProducts.length ? (
+                  sortedProducts.map((product) => (
+                    <TableRow key={product.id} className="h-14 border-0">
+                      <TableCell className="w-[110px]">
+                        {product.image ? (
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="h-11 w-11 cursor-pointer rounded-lg border border-slate-200 object-cover transition-opacity hover:opacity-80"
+                            onClick={() => product.image && handleImageClick(product.image)}
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-slate-100">
+                            <ImageIcon className="h-5 w-5 text-slate-400" />
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <span className="font-medium text-slate-900">{product.name}</span>
+                          <p className="mt-0.5 text-xs text-slate-400">
+                            {product.productType === "ticket" ? "Ticket or pass" : "Standard product"}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="w-[130px]">
+                        {product.price === 0 ? (
+                          <Badge variant="secondary" className="cursor-default bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+                            Free
+                          </Badge>
+                        ) : (
+                          <span className="font-medium text-slate-900">
+                            {formatAmount(product.price * 100, club?.currency)}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="w-[120px]">
+                        <Badge
+                          variant={product.isActive ? "default" : "secondary"}
+                          className="cursor-default opacity-80"
                         >
-                          Product Name
-                          {nameSortAsc === null ? (
-                            <ChevronsUpDown className="h-3 w-3 opacity-60" />
-                          ) : (
-                            <span className="text-xs">
-                              {nameSortAsc ? "▲" : "▼"}
+                          {product.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="w-[160px]">
+                        <div className="flex flex-col gap-1">
+                          <Badge variant="outline">{product.allowMultiple ? "Multiple" : "Single"}</Badge>
+                          {product.productType === "ticket" && (
+                            <span className="text-xs text-slate-400">
+                              {formatTicketDateSummary(product.validDayOptions)}
                             </span>
                           )}
-                        </button>
-                      </TableHead>
-                      <TableHead className="text-center w-[120px]">
-                        <button
-                          className="flex items-center justify-center gap-1 w-full hover:bg-gray-100 rounded p-1"
-                          onClick={() => handleSort('price')}
+                        </div>
+                      </TableCell>
+                      <TableCell className="w-[140px] text-sm text-slate-600">
+                        {formatDate(product.createdAt)}
+                      </TableCell>
+                      <TableCell className="w-[70px]">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditProduct(product)}
+                          className="h-8 w-8 p-0 text-slate-500 hover:bg-slate-200 hover:text-slate-900"
+                          aria-label={`Edit ${product.name}`}
                         >
-                          Price
-                          {priceSortAsc === null ? (
-                            <ChevronsUpDown className="h-3 w-3 opacity-60" />
-                          ) : (
-                            <span className="text-xs">
-                              {priceSortAsc ? "▲" : "▼"}
-                            </span>
-                          )}
-                        </button>
-                      </TableHead>
-                      <TableHead className="text-center w-[160px]">
-                        Active Product
-                      </TableHead>
-                      <TableHead className="text-center w-[140px]">
-                        Purchase Limit
-                      </TableHead>
-                      <TableHead className="text-center w-[140px]">
-                        <button
-                          className="flex items-center justify-center gap-1 w-full hover:bg-gray-100 rounded p-1"
-                          onClick={() => handleSort('createdAt')}
-                        >
-                          Created At
-                          {createdAtSortAsc === null ? (
-                            <ChevronsUpDown className="h-3 w-3 opacity-60" />
-                          ) : (
-                            <span className="text-xs">
-                              {createdAtSortAsc ? "▲" : "▼"}
-                            </span>
-                          )}
-                        </button>
-                      </TableHead>
-                      <TableHead className="w-[100px]" />
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {productsLoading ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8">
-                          Loading products...
-                        </TableCell>
-                      </TableRow>
-                    ) : productsError ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-red-600">
-                          Error loading products. Please try again.
-                        </TableCell>
-                      </TableRow>
-                    ) : sortedProducts.length ? (
-                      sortedProducts.map((product) => (
-                        <TableRow 
-                          key={product.id} 
-                          className="h-12"
-                        >
-                          <TableCell className="text-center w-[140px]">
-                            {product.image ? (
-                              <div className="flex justify-center">
-                                <img 
-                                  src={product.image} 
-                                  alt={product.name}
-                                  className="h-12 w-12 object-cover rounded border cursor-pointer hover:opacity-75 transition-opacity"
-                                  onClick={() => product.image && handleImageClick(product.image)}
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = 'none';
-                                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                                  }}
-                                />
-                                <div className="hidden flex items-center justify-center h-12 w-12 bg-gray-100 rounded border">
-                                  <ImageIcon className="h-6 w-6 text-gray-400" />
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="flex justify-center">
-                                <div className="flex items-center justify-center h-12 w-12 bg-gray-100 rounded border">
-                                  <ImageIcon className="h-6 w-6 text-gray-400" />
-                                </div>
-                              </div>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-center w-[140px]">
-                            <div className="space-y-1">
-                              <span className="font-medium">{product.name}</span>
-                              <p className="text-[11px] text-muted-foreground">
-                                {product.productType === "ticket" ? "Ticket or pass" : "Standard product"}
-                              </p>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center w-[120px]">
-                            {product.price === 0 ? (
-                              <Badge variant="secondary" className="cursor-default bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Free</Badge>
-                            ) : (
-                              formatAmount(product.price * 100, club?.currency)
-                            )}
-                          </TableCell>
-                          <TableCell className="text-center w-[160px]">
-                            <Badge 
-                              variant={product.isActive ? "default" : "secondary"}
-                              className="cursor-default opacity-70"
-                            >
-                              {product.isActive ? "Active" : "Inactive"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-center w-[140px]">
-                            <div className="flex flex-col items-center gap-1">
-                              <Badge variant="outline">
-                                {product.allowMultiple ? "Multiple" : "Single"}
-                              </Badge>
-                              {product.productType === "ticket" ? (
-                                <>
-                                  <span className="text-[11px] text-muted-foreground">
-                                    {product.validDayOptions.length} day option{product.validDayOptions.length === 1 ? "" : "s"}
-                                  </span>
-                                  <span className="text-[11px] text-muted-foreground">
-                                    {formatTicketDateSummary(product.validDayOptions)}
-                                  </span>
-                                </>
-                              ) : null}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center w-[140px]">
-                            {formatDate(product.createdAt)}
-                          </TableCell>
-                          <TableCell className="text-center w-[100px]">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEditProduct(product)}
-                              className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50"
-                              aria-label={`Edit ${product.name}`}
-                              title={`Edit ${product.name}`}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8">
-                          No products found
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="py-12 text-center text-sm text-slate-400">
+                      No products found
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      </section>
       
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">

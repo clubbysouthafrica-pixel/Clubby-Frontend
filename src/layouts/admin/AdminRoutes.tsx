@@ -19,6 +19,7 @@ import ProductsPage from "@/pages/admin/shop/products";
 import OrdersPage from "@/pages/admin/shop/orders";
 import AnalyticsPage from "@/pages/admin/shop/analytics";
 import CreateOrderPage from "@/pages/admin/shop/create-order";
+import OrderReportingPage from "@/pages/admin/shop/order-reporting";
 import RegistrationsPage from "@/pages/admin/registrations/registrations";
 import RegistrationReportingPage from "@/pages/admin/registrations/registration-reporting";
 import MembersPage from "@/pages/admin/user-management/members";
@@ -192,6 +193,14 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <CreateOrderPage />
+          </ProtectedRoute>
+        }
+      ></Route>
+      <Route
+        path="/shop/order-reporting"
+        element={
+          <ProtectedRoute>
+            <OrderReportingPage />
           </ProtectedRoute>
         }
       ></Route>

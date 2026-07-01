@@ -5,23 +5,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   ChevronDown,
-  Copy,
-  CheckCircle2,
   AlertCircle,
   Loader2,
-  CreditCard,
-  Package,
-  Download,
-  ShoppingBag,
-  X,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
@@ -50,7 +44,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ClubContext, ClubContextType } from "@/context/ClubContext";
 import {
   getClubOrders,
@@ -60,9 +53,6 @@ import {
 } from "@/services/admin-features/orders";
 import { formatAmount } from "@/data/currencies";
 import { Label } from "@/components/ui/label";
-import { useShopReportingQuery } from "@/queries/admin/useReporting";
-import { ShopProductReport } from "@/components/admin/reporting/shop-reporting/shop-product-report";
-import type { ShopReport } from "@/interfaces/report";
 
 type OrderPaymentItem = {
   price?: number | null;
@@ -291,10 +281,7 @@ export default function OrdersPage() {
   const [nextPageToken, setNextPageToken] = useState<string | undefined>(
     undefined,
   );
-  const [selectedSeason, setSelectedSeason] = useState<string>("current");
-  const [pendingSeasonScroll, setPendingSeasonScroll] = useState(false);
   const isLoadingMoreRef = useRef(false);
-  const reportingSectionRef = useRef<HTMLElement | null>(null);
 
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [selectedOrderForPayment, setSelectedOrderForPayment] =
@@ -303,9 +290,6 @@ export default function OrdersPage() {
   const [selectedPaymentType, setSelectedPaymentType] = useState("");
   const [isPaymentMethodsOpen, setIsPaymentMethodsOpen] = useState(false);
   const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
-  const [copiedTransactionId, setCopiedTransactionId] = useState<string | null>(
-    null,
-  );
   const [refundDialogOpen, setRefundDialogOpen] = useState(false);
   const [selectedOrderForRefund, setSelectedOrderForRefund] =
     useState<any>(null);
@@ -347,73 +331,13 @@ export default function OrdersPage() {
       return sortDirection === "asc" ? cmp : -cmp;
     });
   }, [allOrders, sortColumn, sortDirection]);
-  const [showPendingDropdown, setShowPendingDropdown] = useState(false);
-  const [showPendingPaymentsDropdown, setShowPendingPaymentsDropdown] =
-    useState(false);
-  const [selectedDeliveryItems, setSelectedDeliveryItems] = useState<
-    Set<string>
-  >(new Set());
   const [isConfirmingDelivery, setIsConfirmingDelivery] = useState(false);
 
-  const seasonCycle = (club as { season_cycle?: number } | null)?.season_cycle;
-  const seasonToFetch =
-    selectedSeason === "current" ? undefined : parseInt(selectedSeason, 10);
-  const availableSeasons = seasonCycle
-    ? Array.from({ length: seasonCycle - 1 }, (_, index) => ({
-        value: (seasonCycle - index - 1).toString(),
-        label: `Season ${seasonCycle - index - 1}`,
-      }))
-    : [];
-
-  const { data: shopReportingData, isLoading: shopReportingLoading } =
-    useShopReportingQuery(club?.club_account_id as string, seasonToFetch);
-  const shopReportItems: ShopReport["report"] = shopReportingData?.report ?? [];
-
-  const shopReportingSummary = {
-    products: shopReportItems.length,
-    totalRevenue: shopReportItems.reduce(
-      (sum: number, product: ShopReport["report"][number]) =>
-        sum + (product.total_revenue || 0),
-      0,
-    ),
-    pendingRevenue: shopReportItems.reduce(
-      (sum: number, product: ShopReport["report"][number]) =>
-        sum + (product.total_pending_revenue || 0),
-      0,
-    ),
-    unitsSold: shopReportItems.reduce(
-      (sum: number, product: ShopReport["report"][number]) =>
-        sum + (product.total_sold_units || 0),
-      0,
-    ),
-    pendingUnits: shopReportItems.reduce(
-      (sum: number, product: ShopReport["report"][number]) =>
-        sum + (product.total_pending_units || 0),
-      0,
-    ),
-  };
-
-  const scrollShopReportingIntoView = () => {
-    reportingSectionRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-    });
-  };
-
-  useEffect(() => {
-    if (!pendingSeasonScroll || shopReportingLoading) {
-      return;
-    }
-
-    scrollShopReportingIntoView();
-    setPendingSeasonScroll(false);
-  }, [pendingSeasonScroll, shopReportingLoading]);
-
-  const pendingPaymentOrders = allOrders.filter(
-    (order) =>
-      getOrderDisplayPaymentStatus(order) === "AWAITING_PAYMENT" ||
-      getOrderDisplayPaymentStatus(order) === "PARTIALLY_PAID",
-  );
+  const hasFilterChanges =
+    transactionIdSearch !== (appliedFilters.transaction_id ?? "") ||
+    memberNameSearch !== (appliedFilters.member_name ?? "") ||
+    JSON.stringify(paymentStatusFilter) !== JSON.stringify(appliedFilters.payment_status ?? []) ||
+    JSON.stringify(fulfillmentStatusFilter) !== JSON.stringify(appliedFilters.fulfillment_status ?? []);
 
   // Calculate total undelivered items
   const undeliveredItems = allOrders
@@ -514,7 +438,6 @@ export default function OrdersPage() {
             "0";
       setSelectedPaymentType(String(methodId));
     }
-    setShowPendingPaymentsDropdown(false);
     setPaymentDialogOpen(true);
   };
 
@@ -570,7 +493,6 @@ export default function OrdersPage() {
 
       if (response.status === 200) {
         toast.success("Payment confirmed successfully");
-        // Update the order locally instead of refreshing the page
         setAllOrders((prevOrders) =>
           prevOrders.map((order) =>
             order.order_id === selectedOrderForPayment.order_id
@@ -578,6 +500,7 @@ export default function OrdersPage() {
                   ...order,
                   payment_status: "PAID",
                   fulfillment_status: "PROCESSING",
+                  amount_paid: (order.amount_paid || 0) + amountInCents,
                 }
               : order,
           ),
@@ -774,45 +697,23 @@ export default function OrdersPage() {
     }
   };
 
-  const handleConfirmDelivery = async () => {
-    if (selectedDeliveryItems.size === 0) return;
-
+  const handleConfirmOrderDelivery = async (orderId: string) => {
+    const orderItems = undeliveredItems.filter((u) => u.orderId === orderId);
+    if (orderItems.length === 0) return;
     try {
       setIsConfirmingDelivery(true);
-
-      // Build payload with selected items
-      const deliveryItems = Array.from(selectedDeliveryItems)
-        .map((itemId) => {
-          const item = undeliveredItems.find(
-            (u) =>
-              `${u.orderId}-${u.productId}-${u.unitIndex}` === itemId ||
-              `${u.orderId}-${u.productId}` === itemId,
-          );
-          if (item) {
-            return {
-              order_id: item.orderId,
-              product_id: item.productId,
-            };
-          }
-          return null;
-        })
-        .filter((item) => item !== null);
-
+      const deliveryItems = orderItems.map((item) => ({
+        order_id: item.orderId,
+        product_id: item.productId,
+      }));
       const response = await updateAdminOrderFulfillment({
         orders: deliveryItems,
         club_account_id: club?.club_account_id || "",
       });
-
       if (response.status !== 200) {
         throw new Error(response.data?.message || "Failed to confirm delivery");
       }
-
-      toast.success(
-        `Confirmed delivery for ${selectedDeliveryItems.size} item(s)`,
-      );
-      setSelectedDeliveryItems(new Set());
-
-      // Refresh the page to fetch updated orders
+      toast.success(`Confirmed delivery for ${orderItems.length} item(s)`);
       window.location.reload();
     } catch (err: any) {
       toast.error(err.message || "Error confirming delivery");
@@ -822,40 +723,11 @@ export default function OrdersPage() {
     }
   };
 
-  const handleDownloadShopReport = () => {
-    if (!shopReportingData?.report?.length) return;
-
-    const headers = [
-      "Product Name",
-      "Total Revenue",
-      "Pending Revenue",
-      "Units Sold",
-      "Pending Units",
-    ];
-    const rows = shopReportingData.report.map(
-      (product: ShopReport["report"][number]) =>
-        `"${product.product_name}","${product.total_revenue || 0}","${product.total_pending_revenue || 0}","${product.total_sold_units || 0}","${product.total_pending_units || 0}"`,
-    );
-
-    const csvContent = [headers.map((header) => `"${header}"`).join(","), ...rows].join(
-      "\n",
-    );
-
-    const element = document.createElement("a");
-    const file = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    element.href = URL.createObjectURL(file);
-    element.download = `Shop_Report_${new Date().toISOString().split("T")[0]}.csv`;
-    element.style.display = "none";
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-  };
-
   return (
-    <div className="space-y-6 p-5">
-      <div className="mb-4">
-        <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
-        <p className="text-muted-foreground">Manage your club orders</p>
+    <div className="h-full bg-white text-slate-900 flex flex-col gap-4 px-4 py-6 sm:px-6 md:px-8">
+      <div className="mb-2 flex flex-col gap-1">
+        <h1 className="text-2xl font-bold text-slate-900">Orders</h1>
+        <p className="text-sm text-slate-500">Manage your club orders</p>
       </div>
 
       {!enableShop && (
@@ -884,17 +756,17 @@ export default function OrdersPage() {
         </Card>
       )}
 
-      <Card className="mb-6 rounded-[20px] border-slate-200/70 bg-slate-50/80 p-3 shadow-none">
-        <div className="flex flex-wrap gap-3">
+      <div className="border border-slate-100 bg-slate-50/60 px-4 py-3">
+        <div className="flex flex-wrap gap-2">
           <Input
-            className="h-8 w-full bg-white text-xs sm:w-[220px]"
+            className="h-9 w-full rounded-full border-slate-200 bg-white px-3.5 text-sm text-slate-700 placeholder:text-slate-400 sm:w-[220px]"
             placeholder="Search by Transaction ID"
             value={transactionIdSearch}
             onChange={(e) => setTransactionIdSearch(e.target.value)}
           />
 
           <Input
-            className="h-8 w-full bg-white text-xs sm:w-[220px]"
+            className="h-9 w-full rounded-full border-slate-200 bg-white px-3.5 text-sm text-slate-700 placeholder:text-slate-400 sm:w-[220px]"
             placeholder="Search by Member Name"
             value={memberNameSearch}
             onChange={(e) => setMemberNameSearch(e.target.value)}
@@ -902,9 +774,9 @@ export default function OrdersPage() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-8 w-full justify-between rounded-full bg-white px-3 text-xs font-normal text-slate-700 hover:bg-slate-50 sm:w-[220px]">
-                {formatFilterLabel("Payment Status", paymentStatusFilter)}
-                <ChevronDown className="ml-2 h-4 w-4" />
+              <Button variant="outline" className="h-9 w-full justify-between rounded-full border-slate-200 bg-white px-3.5 text-sm text-slate-700 hover:bg-slate-50 sm:w-[220px]">
+                <span className="truncate">{formatFilterLabel("Payment Status", paymentStatusFilter)}</span>
+                <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56">
@@ -917,13 +789,15 @@ export default function OrdersPage() {
                 { value: "REFUND", label: "Refund" },
                 { value: "CANCELLED", label: "Cancelled" },
               ].map((option) => (
-                <DropdownMenuCheckboxItem
+                <DropdownMenuItem
                   key={option.value}
-                  checked={paymentStatusFilter.includes(option.value)}
-                  onCheckedChange={() => toggleSelection(option.value, setPaymentStatusFilter)}
+                  onSelect={(e) => e.preventDefault()}
+                  onClick={() => toggleSelection(option.value, setPaymentStatusFilter)}
+                  className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm"
                 >
+                  <Checkbox checked={paymentStatusFilter.includes(option.value)} className="pointer-events-none h-3.5 w-3.5" />
                   {option.label}
-                </DropdownMenuCheckboxItem>
+                </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
               <Button
@@ -940,9 +814,9 @@ export default function OrdersPage() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-8 w-full justify-between rounded-full bg-white px-3 text-xs font-normal text-slate-700 hover:bg-slate-50 sm:w-[220px]">
-                {formatFilterLabel("Fulfillment Status", fulfillmentStatusFilter)}
-                <ChevronDown className="ml-2 h-4 w-4" />
+              <Button variant="outline" className="h-9 w-full justify-between rounded-full border-slate-200 bg-white px-3.5 text-sm text-slate-700 hover:bg-slate-50 sm:w-[220px]">
+                <span className="truncate">{formatFilterLabel("Fulfillment Status", fulfillmentStatusFilter)}</span>
+                <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56">
@@ -954,13 +828,15 @@ export default function OrdersPage() {
                 { value: "DELIVERED", label: "Delivered" },
                 { value: "NOT_PROCESSED", label: "Not Processed" },
               ].map((option) => (
-                <DropdownMenuCheckboxItem
+                <DropdownMenuItem
                   key={option.value}
-                  checked={fulfillmentStatusFilter.includes(option.value)}
-                  onCheckedChange={() => toggleSelection(option.value, setFulfillmentStatusFilter)}
+                  onSelect={(e) => e.preventDefault()}
+                  onClick={() => toggleSelection(option.value, setFulfillmentStatusFilter)}
+                  className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm"
                 >
+                  <Checkbox checked={fulfillmentStatusFilter.includes(option.value)} className="pointer-events-none h-3.5 w-3.5" />
                   {option.label}
-                </DropdownMenuCheckboxItem>
+                </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
               <Button
@@ -976,35 +852,31 @@ export default function OrdersPage() {
           </DropdownMenu>
         </div>
 
-        <div className="mt-3 flex flex-col gap-3 border-t border-slate-200 pt-3 md:flex-row md:items-center md:justify-between">
-          <p className="text-xs text-slate-500">
-            Apply filters to refresh the embedded orders workspace without
-            leaving this page.
-          </p>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-3">
-              <label className="text-xs font-medium text-slate-600">
-                Results per page:
-              </label>
-              <Select
-                value={ordersLimit.toString()}
-                onValueChange={(value) => {
-                  setOrdersLimit(parseInt(value));
-                  setPageToken(undefined);
-                  setAllOrders([]);
-                }}
-              >
-                <SelectTrigger className="h-8 w-[96px] rounded-full bg-white text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="100">100</SelectItem>
-                  <SelectItem value="200">200</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-slate-500">
+              Results per page:
+            </label>
+            <Select
+              value={ordersLimit.toString()}
+              onValueChange={(value) => {
+                setOrdersLimit(parseInt(value));
+                setPageToken(undefined);
+                setAllOrders([]);
+              }}
+            >
+              <SelectTrigger className="h-9 w-[85px] rounded-full border-slate-200 bg-white px-2.5 text-sm text-slate-700 shadow-none">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="100">100</SelectItem>
+                <SelectItem value="200">200</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-            <Button
+          {hasFilterChanges && (
+            <button
               onClick={() => {
                 setAppliedFilters({
                   transaction_id: transactionIdSearch,
@@ -1015,274 +887,20 @@ export default function OrdersPage() {
                 setPageToken(undefined);
                 setAllOrders([]);
               }}
-              className="h-8 rounded-full bg-zinc-700 px-4 text-xs text-white hover:bg-zinc-800"
-              title="Run database query to refresh orders data"
+              className="h-9 rounded-full bg-zinc-700 px-4 text-sm font-medium text-white transition hover:bg-zinc-800"
             >
-              Run
-            </Button>
-          </div>
-        </div>
-      </Card>
-
-      <div className="mb-4 flex items-center gap-4">
-        <div className="relative">
-          <button
-            onClick={() => {
-              setShowPendingDropdown(!showPendingDropdown);
-              setShowPendingPaymentsDropdown(false);
-            }}
-            className="relative mr-2 rounded-full border border-slate-200 bg-slate-50 p-2.5 transition-colors hover:bg-slate-100 cursor-pointer"
-            title="Pending deliveries"
-          >
-            <Package className="h-4 w-4 text-slate-700" />
-            {undeliveredItems.length > 0 && (
-              <span className="absolute right-0 top-0 inline-flex -translate-y-1/3 translate-x-1/3 items-center justify-center rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-bold text-white">
-                {undeliveredItems.length}
-              </span>
-            )}
-          </button>
-          {showPendingDropdown && (
-            <div className="absolute top-full left-0 z-50 mt-2 w-96 max-h-96 overflow-y-auto rounded-[22px] border border-slate-200 bg-white shadow-2xl">
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
-                <h3 className="font-semibold text-slate-900">
-                  Pending Deliveries ({undeliveredItems.length})
-                </h3>
-                <div className="flex items-center gap-2">
-                  {undeliveredItems.length > 0 && (
-                    <Button
-                      onClick={handleConfirmDelivery}
-                      disabled={
-                        selectedDeliveryItems.size === 0 || isConfirmingDelivery
-                      }
-                      className="h-7 rounded-full bg-zinc-700 px-3 text-[11px] text-white hover:bg-zinc-800"
-                      size="sm"
-                    >
-                      {isConfirmingDelivery ? (
-                        <>
-                          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                          Confirming...
-                        </>
-                      ) : (
-                        `Confirm (${selectedDeliveryItems.size})`
-                      )}
-                    </Button>
-                  )}
-                  <button
-                    onClick={() => setShowPendingDropdown(false)}
-                    className="rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-
-              {undeliveredItems.length === 0 ? (
-                <div className="p-5 text-center text-sm text-slate-500">
-                  All items delivered!
-                </div>
-              ) : (
-                <>
-                  <div className="max-h-96 divide-y overflow-y-auto">
-                    {undeliveredItems.map((item, idx) => (
-                      <div
-                        key={`${item.orderId}-${item.productId}-${idx}`}
-                        className="p-4 transition-colors hover:bg-slate-50"
-                      >
-                        <div className="flex items-start gap-3">
-                          <input
-                            type="checkbox"
-                            checked={selectedDeliveryItems.has(
-                              `${item.orderId}-${item.productId}-${item.unitIndex}`,
-                            )}
-                            onChange={(e) => {
-                              const itemId = `${item.orderId}-${item.productId}-${item.unitIndex}`;
-                              const newSelected = new Set(
-                                selectedDeliveryItems,
-                              );
-                              if (e.target.checked) {
-                                newSelected.add(itemId);
-                              } else {
-                                newSelected.delete(itemId);
-                              }
-                              setSelectedDeliveryItems(newSelected);
-                            }}
-                            className="mt-1 rounded flex-shrink-0 cursor-pointer"
-                          />
-                          <div className="flex-1">
-                            <p className="font-medium text-sm text-slate-900">
-                              {item.itemName}
-                            </p>
-                            <p className="mt-1 text-xs text-slate-500">
-                              {item.memberName}
-                            </p>
-                            <div className="flex items-center gap-1">
-                              <p className="text-xs text-slate-500">
-                                Transaction:{" "}
-                                <span className="font-mono">
-                                  {item.transactionId
-                                    ?.substring(0, 8)
-                                    .toUpperCase()}
-                                </span>
-                              </p>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(
-                                    item.transactionId,
-                                  );
-                                  setCopiedTransactionId(item.transactionId);
-                                  setTimeout(
-                                    () => setCopiedTransactionId(null),
-                                    2000,
-                                  );
-                                }}
-                                title="Copy full Transaction ID"
-                                className="h-4 w-4 p-0 opacity-75 transition-opacity hover:opacity-100"
-                              >
-                                {copiedTransactionId === item.transactionId ? (
-                                  <CheckCircle2 className="h-3 w-3 text-green-600" />
-                                ) : (
-                                  <Copy className="h-3 w-3" />
-                                )}
-                              </Button>
-                            </div>
-                            <p className="mt-1 text-xs text-slate-500">
-                              Price:{" "}
-                              {formatAmount(
-                                item.itemPrice || 0,
-                                club?.currency,
-                              )}
-                            </p>
-                          </div>
-                          <Badge className="whitespace-nowrap flex-shrink-0 border-amber-200 bg-amber-100 text-amber-800">
-                            Unit {item.unitIndex}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
+              Apply Filters
+            </button>
           )}
         </div>
-
-        <div className="relative">
-          <button
-            onClick={() => {
-              setShowPendingPaymentsDropdown(!showPendingPaymentsDropdown);
-              setShowPendingDropdown(false);
-            }}
-            className="relative mr-2 rounded-full border border-slate-200 bg-slate-50 p-2.5 transition-colors hover:bg-slate-100 cursor-pointer"
-            title="Pending payments"
-          >
-            <CreditCard className="h-4 w-4 text-slate-700" />
-            {pendingPaymentOrders.length > 0 && (
-              <span className="absolute right-0 top-0 inline-flex -translate-y-1/3 translate-x-1/3 items-center justify-center rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-bold text-white">
-                {pendingPaymentOrders.length}
-              </span>
-            )}
-          </button>
-
-          {showPendingPaymentsDropdown && (
-            <div className="absolute top-full left-0 z-50 mt-2 w-96 max-h-96 overflow-y-auto rounded-[22px] border border-slate-200 bg-white shadow-2xl">
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
-                <h3 className="font-semibold text-slate-900">
-                  Pending Payments ({pendingPaymentOrders.length})
-                </h3>
-                <button
-                  onClick={() => setShowPendingPaymentsDropdown(false)}
-                  className="rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              {pendingPaymentOrders.length === 0 ? (
-                <div className="p-5 text-center text-sm text-slate-500">
-                  No pending payments.
-                </div>
-              ) : (
-                <div className="max-h-96 divide-y overflow-y-auto">
-                  {pendingPaymentOrders.map((order) => {
-                    const remainingAmount = getOrderOutstandingAmount(order);
-
-                    return (
-                      <div
-                        key={order.order_id}
-                        className="p-4 transition-colors hover:bg-slate-50"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0 flex-1 space-y-1">
-                            <p className="font-medium text-sm text-slate-900">
-                              {`${order.first_name} ${order.surname}`}
-                            </p>
-                            <div className="flex items-center gap-1">
-                              <p className="text-xs text-slate-500">
-                                Transaction:{" "}
-                                <span className="font-mono">
-                                  {order.transaction_id
-                                    ?.substring(0, 8)
-                                    .toUpperCase()}
-                                </span>
-                              </p>
-                              {order.transaction_id && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(
-                                      order.transaction_id,
-                                    );
-                                    setCopiedTransactionId(order.transaction_id);
-                                    setTimeout(
-                                      () => setCopiedTransactionId(null),
-                                      2000,
-                                    );
-                                  }}
-                                  title="Copy full Transaction ID"
-                                  className="h-4 w-4 p-0 opacity-75 transition-opacity hover:opacity-100"
-                                >
-                                  {copiedTransactionId === order.transaction_id ? (
-                                    <CheckCircle2 className="h-3 w-3 text-green-600" />
-                                  ) : (
-                                    <Copy className="h-3 w-3" />
-                                  )}
-                                </Button>
-                              )}
-                            </div>
-                            <p className="text-xs font-medium text-amber-700">
-                              Outstanding: {formatAmount(remainingAmount, club?.currency)}
-                            </p>
-                          </div>
-
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handlePayNowClick(order)}
-                            className="h-8 rounded-full border-slate-200 bg-white gap-1.5 text-zinc-700 hover:bg-slate-100"
-                          >
-                            <CreditCard className="h-3.5 w-3.5" />
-                            Confirm
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        <h2 className="text-sm font-medium text-slate-500">
-          Showing <span className="font-bold">{allOrders.length}</span> items
-        </h2>
       </div>
 
+      <p className="text-sm font-medium text-slate-500">
+        Showing <span className="font-bold text-slate-900">{allOrders.length}</span> orders
+      </p>
+
       {nextPageToken && nextPageToken !== "" && (
-        <div className="mb-4 flex items-center justify-between rounded-[20px] border border-amber-300 bg-amber-50 px-4 py-3">
+        <div className="mb-4 flex items-center justify-between border border-amber-300 bg-amber-50 px-4 py-3">
           <div className="flex items-center gap-2 text-amber-900">
             <AlertCircle className="h-4 w-4 text-amber-700" />
             <p className="text-sm font-medium">More results available</p>
@@ -1308,44 +926,41 @@ export default function OrdersPage() {
         </div>
       )}
 
-      <Card className="rounded-[20px] border-slate-200/70 bg-white/95 p-4 shadow-[0_16px_36px_rgba(15,23,42,0.07)] md:p-5">
-        <CardContent className="p-0">
-          <div className="overflow-hidden rounded-[20px] border border-slate-200">
-            <div className="max-h-[352px] overflow-y-auto">
-            <table className="w-full caption-bottom text-sm">
-              <TableHeader className="sticky top-0 z-10 bg-slate-50 shadow-[0_1px_0_0_rgba(15,23,42,0.08)]">
-                <TableRow className="border-slate-200 hover:bg-slate-50">
-                  <TableHead className="h-10 w-[40px] text-center text-slate-500"></TableHead>
-                  <TableHead className="h-10 w-[140px] text-center text-xs font-semibold text-slate-600">
-                    
+      <div className="w-full min-w-0 overflow-hidden bg-white">
+          <table className="w-full caption-bottom text-sm" style={{ borderCollapse: "separate", borderSpacing: "0 6px", minWidth: "860px" }}>
+              <TableHeader className="bg-zinc-700 [&_tr]:border-b [&_tr]:border-zinc-600">
+                <TableRow>
+                  <TableHead className="h-12 sm:h-14 w-[40px] text-center text-slate-200"></TableHead>
+                  <TableHead className="h-12 sm:h-14 w-[140px] text-center text-sm font-semibold text-slate-200">
+                    Items
                   </TableHead>
-                  <TableHead className="h-10 w-[160px] text-center text-xs font-semibold text-slate-600">
-                    Products
+                  <TableHead className="h-12 sm:h-14 w-[160px] text-center text-sm font-semibold text-slate-200">
+                    Member
                   </TableHead>
-                  <TableHead className="h-10 w-[140px] text-center text-xs font-semibold text-slate-600">
-                    <button onClick={() => handleSort("payment")} className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-900 transition-colors">
+                  <TableHead className="h-12 sm:h-14 w-[140px] text-center text-sm font-semibold text-slate-200">
+                    <button onClick={() => handleSort("payment")} className="inline-flex items-center gap-1 text-slate-200 hover:text-white transition-colors">
                       Payment
                       {sortColumn === "payment" ? (sortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 opacity-40" />}
                     </button>
                   </TableHead>
-                  <TableHead className="h-10 w-[140px] text-center text-xs font-semibold text-slate-600">
-                    <button onClick={() => handleSort("fulfillment")} className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-900 transition-colors">
+                  <TableHead className="h-12 sm:h-14 w-[140px] text-center text-sm font-semibold text-slate-200">
+                    <button onClick={() => handleSort("fulfillment")} className="inline-flex items-center gap-1 text-slate-200 hover:text-white transition-colors">
                       Fulfillment
                       {sortColumn === "fulfillment" ? (sortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 opacity-40" />}
                     </button>
                   </TableHead>
-                  <TableHead className="h-10 w-[120px] text-center text-xs font-semibold text-slate-600">
-                    <button onClick={() => handleSort("date")} className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-900 transition-colors">
+                  <TableHead className="h-12 sm:h-14 w-[120px] text-center text-sm font-semibold text-slate-200">
+                    <button onClick={() => handleSort("date")} className="inline-flex items-center gap-1 text-slate-200 hover:text-white transition-colors">
                       Date
                       {sortColumn === "date" ? (sortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 opacity-40" />}
                     </button>
                   </TableHead>
-                  <TableHead className="h-10 w-[100px] text-center text-xs font-semibold text-slate-600">
+                  <TableHead className="h-12 sm:h-14 w-[100px] text-center text-sm font-semibold text-slate-200">
                     Actions
                   </TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody className="bg-slate-50/70">
                 {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={6} className="py-8 text-center text-sm text-slate-500">
@@ -1373,7 +988,7 @@ export default function OrdersPage() {
 
                     return (
                     <Fragment key={order.order_id}>
-                      <TableRow className="h-12 border-slate-200 bg-white text-sm hover:bg-slate-50">
+                      <TableRow className="h-14 border-0 text-sm hover:bg-white/80">
                         <TableCell className="text-center">
                           <Button
                             variant="ghost"
@@ -1514,52 +1129,32 @@ export default function OrdersPage() {
                           ) : "N/A"}
                         </TableCell>
                         <TableCell className="text-center">
-                          <div className="flex items-center justify-center gap-1.5">
-                            <TooltipProvider delayDuration={200}>
-                            {/* Confirm payment */}
+                          <div className="flex flex-wrap items-center justify-center gap-1.5">
                             {(getOrderDisplayPaymentStatus(order) === "AWAITING_PAYMENT" ||
                               getOrderDisplayPaymentStatus(order) === "PARTIALLY_PAID") && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    onClick={() => handlePayNowClick(order)}
-                                    className="rounded-full border border-amber-200 bg-amber-50 p-1.5 text-amber-700 transition-colors hover:bg-amber-100"
-                                  >
-                                    <CreditCard className="h-3.5 w-3.5" />
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent>Confirm payment</TooltipContent>
-                              </Tooltip>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 rounded-full border-amber-300 bg-amber-50 px-3 text-xs text-amber-700 hover:bg-amber-100"
+                                onClick={() => handlePayNowClick(order)}
+                              >
+                                Confirm Payment
+                              </Button>
                             )}
-                            {/* Confirm fulfillment */}
                             {(order.payment_status === "PAID" || order.payment_status === "PAID (Partial Refund)") &&
                               (order.items as { quantity?: number; fulfillment_quantity?: number }[])?.some(
                                 (item) => (item.quantity || 0) - (item.fulfillment_quantity || 0) > 0,
                               ) && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    onClick={() => {
-                                      const orderUndelivered = undeliveredItems.filter(
-                                        (u) => u.orderId === order.order_id,
-                                      );
-                                      const newSelected = new Set(selectedDeliveryItems);
-                                      orderUndelivered.forEach((u) => {
-                                        newSelected.add(`${u.orderId}-${u.productId}-${u.unitIndex}`);
-                                      });
-                                      setSelectedDeliveryItems(newSelected);
-                                      setShowPendingDropdown(true);
-                                      setShowPendingPaymentsDropdown(false);
-                                    }}
-                                    className="rounded-full border border-purple-200 bg-purple-50 p-1.5 text-purple-700 transition-colors hover:bg-purple-100"
-                                  >
-                                    <Package className="h-3.5 w-3.5" />
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent>Confirm fulfillment</TooltipContent>
-                              </Tooltip>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 rounded-full border-purple-200 bg-purple-50 px-3 text-xs text-purple-700 hover:bg-purple-100"
+                                onClick={() => handleConfirmOrderDelivery(order.order_id)}
+                                disabled={isConfirmingDelivery}
+                              >
+                                {isConfirmingDelivery ? "Confirming..." : "Confirm Delivery"}
+                              </Button>
                             )}
-                            </TooltipProvider>
                             {/* Cancel / Refund */}
                             {order.fulfillment_status === "NOT_PROCESSED" ? (
                               <Button
@@ -1587,7 +1182,7 @@ export default function OrdersPage() {
                         </TableCell>
                       </TableRow>
                       {expandedOrderId === order.order_id && (
-                        <TableRow className="bg-slate-50/80">
+                        <TableRow className="border-0 bg-slate-100/60">
                           <TableCell colSpan={6} className="p-4">
                             <div className="space-y-3">
                               <h4 className="font-medium text-sm">
@@ -1599,7 +1194,7 @@ export default function OrdersPage() {
                                     (item: any, idx: number) => (
                                       <div
                                         key={`${item.product_id}-${idx}`}
-                                        className={`flex items-center justify-between rounded-[16px] border bg-white p-3 text-sm ${
+                                        className={`flex items-center justify-between rounded-xl border bg-white p-3 text-sm ${
                                           order.payment_status === "CANCELLED"
                                             ? "border-red-200 bg-red-50"
                                             : "border-slate-200"
@@ -1691,160 +1286,8 @@ export default function OrdersPage() {
                 )}
               </TableBody>
             </table>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      </div>
 
-      <section className="space-y-3">
-        <section className="relative overflow-hidden rounded-[24px] border border-stone-300/70 bg-stone-200 px-4 py-4 text-zinc-900 shadow-[0_18px_40px_rgba(120,113,108,0.16)] md:px-5 md:py-4">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.72),_transparent_28%),radial-gradient(circle_at_right,_rgba(214,211,209,0.55),_transparent_24%)]" />
-          <div className="relative flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-stone-300 bg-white/70 px-2.5 py-1 text-[11px] text-zinc-600 backdrop-blur">
-                <ShoppingBag className="h-3.5 w-3.5 text-zinc-500" />
-                Shop analytics
-              </div>
-              <h2 className="text-xl font-semibold tracking-tight md:text-3xl">
-                Product sales reporting inside orders
-              </h2>
-              <p className="mt-2 max-w-2xl text-[11px] leading-4 text-zinc-600 md:text-xs">
-                Review product revenue, pending balances, and unit movement
-                without leaving the orders workspace.
-              </p>
-            </div>
-
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-              {availableSeasons.length > 0 && (
-                <Select
-                  value={selectedSeason}
-                  onValueChange={(value) => {
-                    setSelectedSeason(value);
-                    setPendingSeasonScroll(true);
-                  }}
-                >
-                  <SelectTrigger className="h-8 w-full rounded-full border-stone-300 bg-white text-zinc-700 shadow-none sm:w-[180px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="current">Current Season</SelectItem>
-                    {availableSeasons.map((season) => (
-                      <SelectItem key={season.value} value={season.value}>
-                        {season.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              <Button
-                onClick={handleDownloadShopReport}
-                disabled={!shopReportingData?.report?.length}
-                className="h-8 rounded-full border border-stone-300 bg-white px-3.5 text-xs text-zinc-800 hover:bg-stone-100"
-                title="Download report data as CSV"
-              >
-                <Download className="h-3.5 w-3.5" />
-                Export active view
-              </Button>
-            </div>
-          </div>
-
-          <div className="relative mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-[18px] border border-stone-300/70 bg-white/75 p-3 backdrop-blur">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-400">
-                    Products tracked
-                  </p>
-                  <p className="mt-1 text-lg font-semibold text-zinc-900">
-                    {shopReportingSummary.products}
-                  </p>
-                </div>
-                <div className="inline-flex shrink-0 rounded-2xl bg-gradient-to-br from-sky-400/20 via-sky-300/10 to-transparent p-2">
-                  <ShoppingBag className="h-3.5 w-3.5 text-zinc-700" />
-                </div>
-              </div>
-            </div>
-            <div className="rounded-[18px] border border-stone-300/70 bg-white/75 p-3 backdrop-blur">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-400">
-                    Total revenue
-                  </p>
-                  <p className="mt-1 text-lg font-semibold text-zinc-900">
-                    {formatAmount(
-                      shopReportingSummary.totalRevenue,
-                      club?.currency ?? "ZAR",
-                    )}
-                  </p>
-                </div>
-                <div className="inline-flex shrink-0 rounded-2xl bg-gradient-to-br from-emerald-400/20 via-emerald-300/10 to-transparent p-2">
-                  <CreditCard className="h-3.5 w-3.5 text-zinc-700" />
-                </div>
-              </div>
-            </div>
-            <div className="rounded-[18px] border border-stone-300/70 bg-white/75 p-3 backdrop-blur">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-400">
-                    Pending revenue
-                  </p>
-                  <p className="mt-1 text-lg font-semibold text-zinc-900">
-                    {formatAmount(
-                      shopReportingSummary.pendingRevenue,
-                      club?.currency ?? "ZAR",
-                    )}
-                  </p>
-                </div>
-                <div className="inline-flex shrink-0 rounded-2xl bg-gradient-to-br from-stone-400/20 via-stone-300/10 to-transparent p-2">
-                  <AlertCircle className="h-3.5 w-3.5 text-zinc-700" />
-                </div>
-              </div>
-            </div>
-            <div className="rounded-[18px] border border-stone-300/70 bg-white/75 p-3 backdrop-blur">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-400">
-                    Units sold / pending
-                  </p>
-                  <p className="mt-1 text-lg font-semibold text-zinc-900">
-                    {shopReportingSummary.unitsSold} / {shopReportingSummary.pendingUnits}
-                  </p>
-                </div>
-                <div className="inline-flex shrink-0 rounded-2xl bg-gradient-to-br from-amber-400/20 via-amber-300/10 to-transparent p-2">
-                  <Package className="h-3.5 w-3.5 text-zinc-700" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section
-          ref={reportingSectionRef}
-          className="rounded-[24px] border border-slate-200/70 bg-white/90 p-2.5 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur md:p-3"
-        >
-          <div className="rounded-[18px] border border-slate-200/70 bg-slate-50/90 p-1.5 backdrop-blur">
-            <div className="space-y-3 px-1 pb-1 pt-2.5 md:px-2 md:pb-2">
-              <section className="rounded-[20px] border border-slate-200/70 bg-white p-3 shadow-sm md:p-4">
-                {shopReportingLoading ? (
-                  <div className="flex min-h-96 items-center justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                  </div>
-                ) : shopReportingData ? (
-                  <ShopProductReport
-                    report={shopReportingData}
-                    currency={club?.currency ?? "ZAR"}
-                    onInteract={scrollShopReportingIntoView}
-                  />
-                ) : (
-                  <div className="flex min-h-48 items-center justify-center rounded-[18px] border border-slate-200 bg-slate-50 text-sm text-muted-foreground">
-                    No shop reporting data available.
-                  </div>
-                )}
-              </section>
-            </div>
-          </div>
-        </section>
-      </section>
 
       <Dialog open={paymentDialogOpen} onOpenChange={handleClosePaymentDialog}>
         <DialogContent className="sm:max-w-[640px] md:max-w-[768px]">

@@ -836,9 +836,9 @@ export default function RegistrationsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="registered-members" className="text-sm">Active Registrations</SelectItem>
-                  <SelectItem value="pending-members" className="text-sm">Pending Registrations</SelectItem>
-                  <SelectItem value="previous-members" className="text-sm">De-registrations</SelectItem>
+                  <SelectItem value="registered-members" className="text-l">Active Registrations</SelectItem>
+                  <SelectItem value="pending-members" className="text-l">Pending Registrations</SelectItem>
+                  <SelectItem value="previous-members" className="text-l">De-registrations</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -878,7 +878,7 @@ export default function RegistrationsPage() {
                                     prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
                                   )
                                 }
-                                className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-xs"
+                                className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm"
                               >
                                 <Checkbox
                                   checked={activeKeys.includes(key)}
@@ -888,7 +888,7 @@ export default function RegistrationsPage() {
                               </DropdownMenuItem>
                             ))
                           ) : (
-                            <div className="px-3 py-2 text-xs text-slate-400">No columns available</div>
+                            <div className="px-3 py-2 text-sm text-slate-400">No columns available</div>
                           )}
                         </div>
                         <div className="mt-1 border-t border-slate-100 pt-1">
@@ -910,7 +910,7 @@ export default function RegistrationsPage() {
                               await refetchClubMembers();
                               setColumnsDropdownOpen(false);
                             }}
-                            className="w-full rounded-md bg-zinc-700 py-1.5 text-xs font-medium text-white transition hover:bg-zinc-800"
+                            className="w-full rounded-md bg-zinc-700 py-1.5 text-sm font-medium text-white transition hover:bg-zinc-800"
                           >
                             Apply
                           </button>
@@ -951,7 +951,7 @@ export default function RegistrationsPage() {
                               prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
                             )
                           }
-                          className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-xs"
+                          className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm"
                         >
                           <Checkbox checked={tempFilterKeys.includes(key)} className="pointer-events-none h-3.5 w-3.5" />
                           {field_name}
@@ -969,7 +969,7 @@ export default function RegistrationsPage() {
                                   prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
                                 )
                               }
-                              className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-xs"
+                              className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm"
                             >
                               <Checkbox checked={tempFilterKeys.includes(key)} className="pointer-events-none h-3.5 w-3.5" />
                               {field_name}
@@ -993,7 +993,7 @@ export default function RegistrationsPage() {
                           if (!tempFilterKeys.includes("__id__")) setMemberIdFilter("");
                           setFiltersDropdownOpen(false);
                         }}
-                        className="w-full rounded-md bg-zinc-700 py-1.5 text-xs font-medium text-white transition hover:bg-zinc-800"
+                        className="w-full rounded-md bg-zinc-700 py-1.5 text-sm font-medium text-white transition hover:bg-zinc-800"
                       >
                         Apply
                       </button>
@@ -1054,14 +1054,14 @@ export default function RegistrationsPage() {
                     <div className="mt-2 flex flex-col gap-1">
                       {activeFilterKeys.includes("__name__") && (
                         <div className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-100/60">
-                          <span className="w-32 shrink-0 text-xs font-medium text-slate-600">Member Name</span>
+                          <span className="w-32 shrink-0 text-sm font-medium text-slate-600">Member Name</span>
                           <Input placeholder="Filter by name" value={memberNameFilter} onChange={(e) => { setMemberNameFilter(e.target.value); setlistActionItems([]); setDeregisterMembers([]); setAllMembersSelected(false); }} className="h-8 flex-1 rounded-full border-slate-200 bg-white px-2.5 text-xs text-slate-700" />
                           <button onClick={() => { setMemberNameFilter(""); setActiveFilterKeys((prev) => prev.filter((k) => k !== "__name__")); }} className="rounded-full p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-600"><X className="h-3.5 w-3.5" /></button>
                         </div>
                       )}
                       {activeFilterKeys.includes("__id__") && (
                         <div className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-100/60">
-                          <span className="w-32 shrink-0 text-xs font-medium text-slate-600">Member ID</span>
+                          <span className="w-32 shrink-0 text-sm font-medium text-slate-600">Member ID</span>
                           <Input placeholder="Filter by ID" value={memberIdFilter} onChange={(e) => { setMemberIdFilter(e.target.value); setlistActionItems([]); setDeregisterMembers([]); setAllMembersSelected(false); }} className="h-8 flex-1 rounded-full border-slate-200 bg-white px-2.5 text-xs text-slate-700" />
                           <button onClick={() => { setMemberIdFilter(""); setActiveFilterKeys((prev) => prev.filter((k) => k !== "__id__")); }} className="rounded-full p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-600"><X className="h-3.5 w-3.5" /></button>
                         </div>
@@ -1093,7 +1093,7 @@ export default function RegistrationsPage() {
 
                             return (
                               <div key={key} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-100/60">
-                                <span className="w-32 shrink-0 text-xs font-medium text-slate-600">{field_name}</span>
+                                <span className="w-32 shrink-0 text-sm font-medium text-slate-600">{field_name}</span>
                                 <div className="flex flex-1 items-center gap-2">
                                   <Select
                                     onValueChange={(newOperator) => {
@@ -1146,7 +1146,7 @@ export default function RegistrationsPage() {
                           if (type === "club_variable" || !options || options.length === 0) {
                             return (
                               <div key={key} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-100/60">
-                                <span className="w-32 shrink-0 text-xs font-medium text-slate-600">{field_name}</span>
+                                <span className="w-32 shrink-0 text-sm font-medium text-slate-600">{field_name}</span>
                                 <Input
                                   placeholder={`Filter by ${field_name}`}
                                   value={dynamicFilterTextValues[key] || ""}
@@ -1168,7 +1168,7 @@ export default function RegistrationsPage() {
                           if (options && options.length === 2 && options.includes("true") && options.includes("false")) {
                             return (
                               <div key={key} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-100/60">
-                                <label htmlFor={key} className="w-32 shrink-0 cursor-pointer text-xs font-medium text-slate-600">
+                                <label htmlFor={key} className="w-32 shrink-0 cursor-pointer text-sm font-medium text-slate-600">
                                   {field_name}
                                 </label>
                                 <Switch
@@ -1190,7 +1190,7 @@ export default function RegistrationsPage() {
 
                           return (
                             <div key={key} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-100/60">
-                              <span className="w-32 shrink-0 text-xs font-medium text-slate-600">{field_name}</span>
+                              <span className="w-32 shrink-0 text-sm font-medium text-slate-600">{field_name}</span>
                               <Select
                                 onValueChange={(value) => {
                                   setDynamicFilters((prev) => ({ ...prev, [key]: value }));
@@ -1240,7 +1240,7 @@ export default function RegistrationsPage() {
                       setAppliedCustomFilters(computedCustomFilters);
                       await refetchClubMembers();
                     }}
-                    className="h-8 rounded-full bg-zinc-700 px-4 text-xs font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="h-9 rounded-full bg-zinc-700 px-4 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Apply Filters
                   </button>

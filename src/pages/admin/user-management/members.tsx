@@ -547,7 +547,7 @@ export default function MembersPage() {
                                     prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
                                   )
                                 }
-                                className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-xs"
+                                className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm"
                               >
                                 <Checkbox
                                   checked={activeColumnKeysRegistered.includes(key)}
@@ -557,7 +557,7 @@ export default function MembersPage() {
                               </DropdownMenuItem>
                             ))
                           ) : (
-                            <div className="px-3 py-2 text-xs text-slate-400">No columns available</div>
+                            <div className="px-3 py-2 text-sm text-slate-400">No columns available</div>
                           )}
                         </div>
                         <div className="mt-1 border-t border-slate-100 pt-1">
@@ -566,7 +566,7 @@ export default function MembersPage() {
                               await applyAll();
                               setColumnsDropdownOpen(false);
                             }}
-                            className="w-full rounded-md bg-zinc-700 py-1.5 text-xs font-medium text-white transition hover:bg-zinc-800"
+                            className="w-full rounded-md bg-zinc-700 py-1.5 text-sm font-medium text-white transition hover:bg-zinc-800"
                           >
                             Apply
                           </button>
@@ -607,7 +607,7 @@ export default function MembersPage() {
                                   prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
                                 )
                               }
-                              className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-xs"
+                              className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm"
                             >
                               <Checkbox checked={tempFilterKeys.includes(key)} className="pointer-events-none h-3.5 w-3.5" />
                               {field_name}
@@ -625,7 +625,7 @@ export default function MembersPage() {
                                       prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
                                     )
                                   }
-                                  className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-xs"
+                                  className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm"
                                 >
                                   <Checkbox checked={tempFilterKeys.includes(key)} className="pointer-events-none h-3.5 w-3.5" />
                                   {field_name}
@@ -650,7 +650,7 @@ export default function MembersPage() {
                               if (!tempFilterKeys.includes("__membership__")) setMemberType("all");
                               setFiltersDropdownOpen(false);
                             }}
-                            className="w-full rounded-md bg-zinc-700 py-1.5 text-xs font-medium text-white transition hover:bg-zinc-800"
+                            className="w-full rounded-md bg-zinc-700 py-1.5 text-sm font-medium text-white transition hover:bg-zinc-800"
                           >
                             Apply
                           </button>
@@ -701,21 +701,21 @@ export default function MembersPage() {
                       <div className="mt-2 flex flex-col gap-1">
                         {activeFilterKeys.includes("__name__") && (
                           <div className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-100/60">
-                            <span className="w-32 shrink-0 text-xs font-medium text-slate-600">Member Name</span>
+                            <span className="w-32 shrink-0 text-sm font-medium text-slate-600">Member Name</span>
                             <Input placeholder="Filter by name" value={memberNameFilter} onChange={(e) => { setMemberNameFilter(e.target.value); setlistActionItems([]); setDeregisterMembers([]); setAllMembersSelected(false); }} className="h-8 flex-1 rounded-full border-slate-200 bg-white px-2.5 text-xs text-slate-700" />
                             <button onClick={() => { setMemberNameFilter(""); setActiveFilterKeys((prev) => prev.filter((k) => k !== "__name__")); }} className="rounded-full p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-600"><X className="h-3.5 w-3.5" /></button>
                           </div>
                         )}
                         {activeFilterKeys.includes("__id__") && (
                           <div className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-100/60">
-                            <span className="w-32 shrink-0 text-xs font-medium text-slate-600">Member ID</span>
+                            <span className="w-32 shrink-0 text-sm font-medium text-slate-600">Member ID</span>
                             <Input placeholder="Filter by ID" value={memberIdFilter} onChange={(e) => { setMemberIdFilter(e.target.value); setlistActionItems([]); setDeregisterMembers([]); setAllMembersSelected(false); }} className="h-8 flex-1 rounded-full border-slate-200 bg-white px-2.5 text-xs text-slate-700" />
                             <button onClick={() => { setMemberIdFilter(""); setActiveFilterKeys((prev) => prev.filter((k) => k !== "__id__")); }} className="rounded-full p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-600"><X className="h-3.5 w-3.5" /></button>
                           </div>
                         )}
                         {activeFilterKeys.includes("__membership__") && (
                           <div className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-100/60">
-                            <span className="w-32 shrink-0 text-xs font-medium text-slate-600">Membership</span>
+                            <span className="w-32 shrink-0 text-sm font-medium text-slate-600">Membership</span>
                             <Select value={memberType} onValueChange={(v) => { setMemberType(v); setlistActionItems([]); setDeregisterMembers([]); setAllMembersSelected(false); }}>
                               <SelectTrigger className="h-8 flex-1 rounded-full border-slate-200 bg-white px-2.5 text-xs text-slate-700"><SelectValue /></SelectTrigger>
                               <SelectContent>
@@ -741,7 +741,7 @@ export default function MembersPage() {
                             const displayValue = rawValue ? formatAmount(parseInt(rawValue) || 0, club?.currency) : "";
                             return (
                               <div key={key} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-100/60">
-                                <span className="w-32 shrink-0 text-xs font-medium text-slate-600">{field_name}</span>
+                                <span className="w-32 shrink-0 text-sm font-medium text-slate-600">{field_name}</span>
                                 <div className="flex flex-1 items-center gap-2">
                                   <Select onValueChange={(newOperator) => { setDynamicFilters((prev) => ({ ...prev, [key]: { operator: newOperator, value: rawValue } })); setlistActionItems([]); setDeregisterMembers([]); setAllMembersSelected(false); }} value={operator}>
                                     <SelectTrigger className="h-8 w-[160px] rounded-full border-slate-200 bg-white px-2.5 text-xs text-slate-700"><SelectValue /></SelectTrigger>
@@ -764,7 +764,7 @@ export default function MembersPage() {
                           if (type === "member_profile" && input_type === "date") {
                             return (
                               <div key={key} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-100/60">
-                                <span className="w-32 shrink-0 text-xs font-medium text-slate-600">{field_name}</span>
+                                <span className="w-32 shrink-0 text-sm font-medium text-slate-600">{field_name}</span>
                                 <Input type="date" value={String(dynamicFilters[key] || "").replaceAll("/", "-")} onChange={(e) => { setDynamicFilters((prev) => ({ ...prev, [key]: e.target.value })); setlistActionItems([]); setDeregisterMembers([]); setAllMembersSelected(false); }} className="h-8 flex-1 rounded-full border-slate-200 bg-white px-2.5 text-xs text-slate-700" />
                                 <button onClick={removeFilter} className="rounded-full p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-600"><X className="h-3.5 w-3.5" /></button>
                               </div>
@@ -777,7 +777,7 @@ export default function MembersPage() {
                               : { countryCode: filterCountryCodes[key] || "ZA", value: typeof dynamicFilters[key] === "string" ? dynamicFilters[key] as string : "" };
                             return (
                               <div key={key} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-100/60">
-                                <span className="w-32 shrink-0 text-xs font-medium text-slate-600">{field_name}</span>
+                                <span className="w-32 shrink-0 text-sm font-medium text-slate-600">{field_name}</span>
                                 <div className="flex flex-1 items-center gap-2">
                                   <Select value={phoneFilter.countryCode || filterCountryCodes[key] || "ZA"} onValueChange={(countryCode) => { setFilterCountryCodes((prev) => ({ ...prev, [key]: countryCode })); setDynamicFilters((prev) => ({ ...prev, [key]: { countryCode, value: phoneFilter.value || "" } })); setlistActionItems([]); setDeregisterMembers([]); setAllMembersSelected(false); }}>
                                     <SelectTrigger className="h-8 w-[110px] rounded-full border-slate-200 bg-white px-2.5 text-xs text-slate-700"><SelectValue /></SelectTrigger>
@@ -793,7 +793,7 @@ export default function MembersPage() {
                           if (!options || options.length === 0) {
                             return (
                               <div key={key} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-100/60">
-                                <span className="w-32 shrink-0 text-xs font-medium text-slate-600">{field_name}</span>
+                                <span className="w-32 shrink-0 text-sm font-medium text-slate-600">{field_name}</span>
                                 <Input placeholder={`Filter by ${field_name}`} value={(dynamicFilters[key] as string) || ""} onChange={(e) => { setDynamicFilters((prev) => ({ ...prev, [key]: e.target.value })); setlistActionItems([]); setDeregisterMembers([]); setAllMembersSelected(false); }} className="h-8 flex-1 rounded-full border-slate-200 bg-white px-2.5 text-xs text-slate-700" />
                                 <button onClick={removeFilter} className="rounded-full p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-600"><X className="h-3.5 w-3.5" /></button>
                               </div>
@@ -803,7 +803,7 @@ export default function MembersPage() {
                           if (options.length === 2 && options.includes("true") && options.includes("false")) {
                             return (
                               <div key={key} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-100/60">
-                                <label htmlFor={key} className="w-32 shrink-0 cursor-pointer text-xs font-medium text-slate-600">{field_name}</label>
+                                <label htmlFor={key} className="w-32 shrink-0 cursor-pointer text-sm font-medium text-slate-600">{field_name}</label>
                                 <Switch id={key} checked={dynamicFilters[key] === "true"} onCheckedChange={(checked) => { setDynamicFilters((prev) => ({ ...prev, [key]: checked ? "true" : "" })); setlistActionItems([]); setDeregisterMembers([]); setAllMembersSelected(false); }} />
                                 <button onClick={removeFilter} className="ml-auto rounded-full p-1 text-slate-400 transition hover:bg-slate-200 hover:text-slate-600"><X className="h-3.5 w-3.5" /></button>
                               </div>
@@ -812,7 +812,7 @@ export default function MembersPage() {
 
                           return (
                             <div key={key} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-100/60">
-                              <span className="w-32 shrink-0 text-xs font-medium text-slate-600">{field_name}</span>
+                              <span className="w-32 shrink-0 text-sm font-medium text-slate-600">{field_name}</span>
                               <Select onValueChange={(value) => { setDynamicFilters((prev) => ({ ...prev, [key]: value })); setlistActionItems([]); setDeregisterMembers([]); setAllMembersSelected(false); }} value={(dynamicFilters[key] as string) || ""}>
                                 <SelectTrigger className="h-8 flex-1 rounded-full border-slate-200 bg-white px-2.5 text-xs text-slate-700"><SelectValue placeholder="All" /></SelectTrigger>
                                 <SelectContent>
@@ -832,7 +832,7 @@ export default function MembersPage() {
                     <div className="mt-2 flex justify-end">
                       <button
                         onClick={applyAll}
-                        className="h-8 rounded-full bg-zinc-700 px-4 text-xs font-medium text-white transition hover:bg-zinc-800"
+                        className="h-9 rounded-full bg-zinc-700 px-4 text-sm font-medium text-white transition hover:bg-zinc-800"
                       >
                         Apply Filters
                       </button>

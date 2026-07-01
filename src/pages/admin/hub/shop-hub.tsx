@@ -1,5 +1,5 @@
 import { SectionHub } from "@/components/admin/section-hub"
-import { Package, ShoppingCart } from "lucide-react"
+import { BarChart2, Package, ShoppingCart } from "lucide-react"
 
 export default function ShopHubPage() {
   return (
@@ -24,6 +24,12 @@ export default function ShopHubPage() {
           description: "Create an order on behalf of a customer.",
           url: "/shop/create-order",
           icon: ShoppingCart,
+        },
+        {
+          title: "Order Reporting",
+          description: "Review product revenue, pending balances, and unit sales.",
+          url: "/shop/order-reporting",
+          icon: BarChart2,
         },
       ]}
     />
