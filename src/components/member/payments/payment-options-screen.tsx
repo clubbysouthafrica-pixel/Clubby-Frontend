@@ -9,10 +9,10 @@ import {
   DialogClose,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
 import { formatAmount } from "@/data/currencies";
 import { useFetchSnapScanQRCodeQuery } from "@/queries/snapscan";
 import { useFetchPaymentDetails } from "@/queries/clubs";
+import { getTransactionStatus } from "@/services/transactions";
 import type { FetchSnapScanQRCodeRequest } from "@/services/snapscan/details";
 import type { BankDetails, PaymentTransactionOption } from "./payment-types.ts";
 import {
@@ -72,8 +72,12 @@ export default function PaymentOptionsScreen({
   customPaymentMethods,
   copiedField,
   onCopyToClipboard,
+  onBack,
 }: PaymentOptionsScreenProps) {
   const [eftDialogOpen, setEftDialogOpen] = useState(false);
+  const [snapScanCountdown, setSnapScanCountdown] = useState(5);
+  const [snapScanCycle, setSnapScanCycle] = useState(0);
+  const [snapScanPaid, setSnapScanPaid] = useState(false);
 
   const { data: paymentDetails } = useFetchPaymentDetails(clubAccountId);
 
@@ -230,13 +234,67 @@ export default function PaymentOptionsScreen({
 
   useEffect(() => {
     if (selectedPaymentMethod === "snapscan" && snapScanUrls.checkoutUrl) {
-      window.location.href = snapScanUrls.checkoutUrl;
+      window.open(snapScanUrls.checkoutUrl, "_blank", "noopener,noreferrer");
     }
   }, [selectedPaymentMethod, snapScanUrls.checkoutUrl]);
 
-  const isSnapscanRedirecting =
-    selectedPaymentMethod === "snapscan" &&
-    (isSnapScanFetching || !!snapScanUrls.checkoutUrl);
+  const snapScanExpired = snapScanCycle >= 60;
+
+  useEffect(() => {
+    if (!resolvedSnapscanEnabled || snapScanExpired || !resolvedTransactionId) return;
+
+    let count = 10;
+    setSnapScanCountdown(10);
+
+    const interval = setInterval(async () => {
+      count -= 1;
+      setSnapScanCountdown(count);
+
+      if (count <= 0) {
+        clearInterval(interval);
+        try {
+          const result = await getTransactionStatus(clubAccountId, resolvedTransactionId);
+          if (result.is_paid) {
+            setSnapScanPaid(true);
+            return;
+          }
+        } catch {
+          // Silently restart on error
+        }
+        setTimeout(() => setSnapScanCycle((c) => c + 1), 300);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [resolvedSnapscanEnabled, snapScanExpired, snapScanCycle, clubAccountId, resolvedTransactionId]);
+
+  const isSnapscanLoading =
+    selectedPaymentMethod === "snapscan" && isSnapScanFetching;
+    
+  if (snapScanPaid) {
+    return (
+      <div className="min-h-screen bg-background px-3 py-4 sm:px-4 sm:py-6 md:px-8 md:py-10">
+        <div className="mx-auto max-w-lg pt-16 text-center">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
+            <CheckCircle2 className="h-10 w-10 text-green-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Payment Complete</h1>
+          <p className="mt-3 text-sm text-slate-500">
+            Your payment of{" "}
+            <span className="font-semibold text-slate-800">{formatAmount(outstandingAmount, currency ?? "ZAR")}</span>{" "}
+            has been confirmed via SnapScan.
+          </p>
+          <p className="mt-1 text-xs text-slate-400">You can safely close this page.</p>
+          <Button
+            onClick={onBack}
+            className="mt-8 rounded-full bg-zinc-900 px-6 text-sm text-white hover:bg-zinc-700"
+          >
+            Go back to club
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background px-3 py-4 sm:px-4 sm:py-6 md:px-8 md:py-10">
@@ -252,11 +310,31 @@ export default function PaymentOptionsScreen({
                   : "Outstanding Balance"}
               </p>
               <p className="text-3xl font-bold tracking-tight text-orange-600 sm:text-4xl">
-                {formatAmount(outstandingAmount, currency)}
+                {formatAmount(outstandingAmount, currency === undefined || currency === "" ? "ZAR" : currency)}
               </p>
               <p className="mt-1 text-xs text-orange-400">
                 Amount due — choose a payment method below
               </p>
+
+              {resolvedSnapscanEnabled && (
+                <div className="mt-3 flex items-center gap-3 rounded-xl border border-orange-200 bg-white/60 px-3 py-2.5">
+                  {snapScanExpired ? (
+                    <>
+                      <div className="h-3.5 w-3.5 flex-shrink-0 rounded-full bg-red-400" />
+                      <p className="flex-1 text-xs font-medium text-red-700">Session expired — please refresh the page.</p>
+                    </>
+                  ) : (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 flex-shrink-0 animate-spin text-orange-500" />
+                      <div className="flex-1">
+                        <p className="text-xs font-medium text-orange-800">Checking payment status...</p>
+                        <p className="text-[11px] text-orange-400">Checking again in {snapScanCountdown}s</p>
+                      </div>
+                      <span className="text-sm font-bold tabular-nums text-orange-600">{snapScanCountdown}</span>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
             {!eftEnabled && (
@@ -281,7 +359,10 @@ export default function PaymentOptionsScreen({
               {eftEnabled && (
                 <button
                   type="button"
-                  onClick={() => setEftDialogOpen(true)}
+                  onClick={() => {
+                    onSelectedPaymentMethodChange(null);
+                    setEftDialogOpen(true);
+                  }}
                   className="flex w-full flex-col items-start gap-4 rounded-2xl border border-gray-200 bg-white px-4 py-4 text-left shadow-md transition-all duration-200 hover:border-slate-300 hover:shadow-lg sm:flex-row sm:items-center sm:justify-between sm:px-5"
                 >
                   <div className="flex items-start gap-3 sm:items-center sm:gap-4">
@@ -337,56 +418,30 @@ export default function PaymentOptionsScreen({
               <div className="space-y-3">
                 <button
                   type="button"
-                  onClick={() =>
-                    onSelectedPaymentMethodChange(
-                      selectedPaymentMethod === "snapscan" ? null : "snapscan",
-                    )
-                  }
-                  disabled={isSnapscanRedirecting}
-                  className={cn(
-                    "flex w-full items-center justify-between rounded-2xl border bg-white px-5 py-4 text-left shadow-md transition-all duration-200",
-                    selectedPaymentMethod === "snapscan"
-                      ? "border-emerald-400 ring-2 ring-emerald-100"
-                      : "border-gray-200 hover:border-emerald-300 hover:shadow-lg",
-                    isSnapscanRedirecting && "cursor-not-allowed",
-                  )}
+                  onClick={() => onSelectedPaymentMethodChange("snapscan")}
+                  disabled={isSnapscanLoading}
+                  className={`flex w-full items-center justify-between rounded-2xl border border-gray-200 bg-white px-5 py-4 text-left shadow-md transition-all duration-200 hover:border-slate-300 hover:shadow-lg ${isSnapscanLoading ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
                 >
                   <div className="flex items-center gap-4">
-                    <div
-                      className={cn(
-                        "flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors",
-                        selectedPaymentMethod === "snapscan"
-                          ? "border-emerald-300 bg-emerald-100"
-                          : "border-emerald-300 bg-white",
-                      )}
-                    >
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white">
-                        {isSnapScanFetching ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : selectedPaymentMethod === "snapscan" ? (
-                          <CheckCircle2 className="h-4 w-4" />
-                        ) : null}
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-slate-300 bg-white">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-black text-white">
+                        {isSnapScanFetching && <Loader2 className="h-4 w-4 animate-spin" />}
                       </div>
                     </div>
 
                     <div>
                       <p className="text-xl font-semibold text-gray-950 sm:text-2xl">
-                        {isSnapscanRedirecting
-                          ? "Redirecting to SnapScan..."
-                          : "Pay with SnapScan"}
+                        {isSnapscanLoading ? "Loading SnapScan..." : "Pay with SnapScan"}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Use SnapScan to complete payment through a
-                        mobile-friendly checkout.
+                        Use SnapScan to complete payment through a mobile-friendly checkout.
                       </p>
                     </div>
                   </div>
 
-                  <div className="w-full max-w-[160px] rounded-2xl bg-emerald-50 px-4 py-3 text-left sm:w-auto sm:text-right">
-                    <p className="text-sm font-semibold text-emerald-800">
-                      SnapScan
-                    </p>
-                    <p className="text-xs text-emerald-700">Scan to pay</p>
+                  <div className="w-full max-w-[160px] rounded-2xl bg-slate-100 px-4 py-3 text-left sm:w-auto sm:text-right">
+                    <p className="text-sm font-semibold text-slate-800">SnapScan</p>
+                    <p className="text-xs text-slate-600">Scan to pay</p>
                   </div>
                 </button>
 
@@ -406,6 +461,7 @@ export default function PaymentOptionsScreen({
                     )}
                   </div>
                 )}
+
               </div>
             )}
 
