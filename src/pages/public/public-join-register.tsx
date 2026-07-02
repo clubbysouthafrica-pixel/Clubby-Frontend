@@ -1,7 +1,7 @@
-import { Button } from "@/components/ui/button";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import { useFetchClub } from "@/queries/clubs";
 import { CollectUserDetails } from "@/components/public/registration/collect-user-details";
 import { PublicRegistrationForm } from "@/components/public/registration/registration-form";
@@ -15,6 +15,7 @@ export default function PublicJoinRegisterPage() {
   const [firstName, setFirstName] = useState("");
   const [surname, setSurname] = useState("");
   const [showSummary, setShowSummary] = useState(false);
+  const [isAlreadyRegistered, setIsAlreadyRegistered] = useState(false);
 
   const handleUserDetailsContinue = (
     email: string,
@@ -47,17 +48,16 @@ export default function PublicJoinRegisterPage() {
             clubAccountId={data?.club_account_id as string}
             clubCurrency={data?.currency}
             onEditDetails={() => setShowSummary(false)}
+            onAlreadyRegistered={() => setIsAlreadyRegistered(true)}
           />
         )}
-        <div className="flex items-center justify-center gap-3 pt-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate(`/clubs/${clubId}`)}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Club
-          </Button>
-        </div>
+        {!isAlreadyRegistered && (
+          <div className="flex items-center justify-center gap-3 pt-4">
+            <Button variant="ghost" size="sm" onClick={() => navigate(`/clubs/${clubId}`)}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Club
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

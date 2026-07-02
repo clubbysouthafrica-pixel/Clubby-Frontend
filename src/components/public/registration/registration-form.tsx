@@ -42,6 +42,7 @@ interface RegistrationFormProps {
   clubCurrency?: string;
   onEditDetails: () => void;
   onSuccess?: () => void;
+  onAlreadyRegistered?: () => void;
 }
 
 export function PublicRegistrationForm({
@@ -53,9 +54,10 @@ export function PublicRegistrationForm({
   clubAccountId,
   clubCurrency = "ZAR",
   onEditDetails,
+  onAlreadyRegistered,
 }: RegistrationFormProps) {
   const navigate = useNavigate();
-  const { data, isLoading } = useFetchRegistrationForm(clubAccountId);
+  const { data, isLoading, error } = useFetchRegistrationForm(clubAccountId, email);
   const { mutate } = useMemberRegistrationMutation();
 
   const firstName = _firstName;
@@ -274,10 +276,47 @@ export function PublicRegistrationForm({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [successfulRegistration]);
 
+  const isAlreadyRegistered =
+    error !== null &&
+    typeof error === "object" &&
+    "response" in error &&
+    (error as { response?: { status?: number } }).response?.status === 409;
+
+  useEffect(() => {
+    if (isAlreadyRegistered) onAlreadyRegistered?.();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAlreadyRegistered]);
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center p-5 min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (isAlreadyRegistered) {
+    const apiMessage =
+      (error as { response?: { data?: { message?: string } } }).response?.data?.message ??
+      "You already have a pending or active registration with this club.";
+
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-6 px-4 py-10 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
+          <svg className="h-8 w-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M12 3a9 9 0 100 18A9 9 0 0012 3z" />
+          </svg>
+        </div>
+        <div className="space-y-1">
+          <h2 className="text-lg font-semibold text-slate-900">Already Registered</h2>
+          <p className="max-w-sm text-sm text-slate-500">{apiMessage}</p>
+        </div>
+        <button
+          onClick={() => navigate(`/clubs/${clubAccountId}`)}
+          className="rounded-full bg-zinc-900 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-700"
+        >
+          Back to {clubName}
+        </button>
       </div>
     );
   }

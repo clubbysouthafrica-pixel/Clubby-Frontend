@@ -832,13 +832,34 @@ export default function RegistrationsPage() {
           >
             <div>
               <Select value={selectedTab} onValueChange={handleTabChange}>
-                <SelectTrigger className="h-10 w-auto min-w-[220px] border-2 border-slate-200 bg-white text-l text-slate-900 shadow-none">
+                <SelectTrigger className={`h-10 w-auto min-w-[220px] border-2 shadow-none font-medium transition-colors ${
+                  selectedTab === "registered-members"
+                    ? "border-green-300 bg-green-50 text-green-800"
+                    : selectedTab === "pending-members"
+                      ? "border-amber-300 bg-amber-50 text-amber-800"
+                      : "border-red-200 bg-red-50 text-red-700"
+                }`}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="registered-members" className="text-l">Active Registrations</SelectItem>
-                  <SelectItem value="pending-members" className="text-l">Pending Registrations</SelectItem>
-                  <SelectItem value="previous-members" className="text-l">De-registrations</SelectItem>
+                  <SelectItem value="registered-members" className="text-l">
+                    <span className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-green-500 flex-shrink-0" />
+                      Active Registrations
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="pending-members" className="text-l">
+                    <span className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-amber-400 flex-shrink-0" />
+                      Pending Registrations
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="previous-members" className="text-l">
+                    <span className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-red-400 flex-shrink-0" />
+                      De-registrations
+                    </span>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>

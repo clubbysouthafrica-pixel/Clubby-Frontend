@@ -1,10 +1,13 @@
 import { RegistrationRequest } from "@/requests/registration-request";
 import { api } from "./api";
 
-export const fetchRegistrationForm = (clubAccountId: string): Promise<any> => {
+export const fetchRegistrationForm = (clubAccountId: string, email?: string): Promise<any> => {
     if (!clubAccountId) throw new Error("no club set")
 
-    return api.get(`/registration/getForm?club_account_id=${clubAccountId}`)
+    const params = new URLSearchParams({ club_account_id: clubAccountId });
+    if (email) params.set("email", email);
+
+    return api.get(`/registration/getForm?${params.toString()}`)
         .then(res => res.data);
 } 
 

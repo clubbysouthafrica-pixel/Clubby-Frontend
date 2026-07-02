@@ -1,14 +1,18 @@
 import { fetchMemberRegistration, fetchRegistrationForm } from "@/services/registration-form"
 import { useQuery } from "@tanstack/react-query"
 
-export const useFetchRegistrationForm = (clubAccountId: string) => {
+export const useFetchRegistrationForm = (clubAccountId: string, email?: string) => {
   return useQuery({
-    queryKey: ['registrationForm', clubAccountId],
+    queryKey: ['registrationForm', clubAccountId, email],
     queryFn: ({ queryKey }) => {
-      const [_key, clubId] = queryKey;
-      return fetchRegistrationForm(clubId);
+      const [_key, clubId, email] = queryKey;
+      return fetchRegistrationForm(clubId as string, email ?? undefined);
     },
     enabled: !!clubAccountId,
+    retry: (_, error) => {
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      return status !== 409;
+    },
   });
 };
 
