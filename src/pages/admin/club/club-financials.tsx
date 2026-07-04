@@ -19,7 +19,6 @@ import {
 import {
   Loader2,
   Download,
-  BarChart3,
   Bell,
   X,
   CheckCircle2,
@@ -39,7 +38,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { formatAmount } from "@/data/currencies";
 import { api } from "@/services/admin/api";
 import { toast } from "sonner";
@@ -487,13 +485,6 @@ export default function GeneralReportingPage() {
     : [];
 
   const hasPreviousSeasons = availableSeasons.length > 0;
-  const expenseGraphOptions = [
-    { value: "overall", label: "Overall Expense" },
-    ...((report?.expense_type_data ?? []).map((expenseType: ExpenseTypeDataRow) => ({
-      value: expenseType.type,
-      label: expenseType.type,
-    })) ?? []),
-  ];
 
   useEffect(() => {
     if (!isStorageFeatureEnabled && selectedIncomeGraph === "storage") {
@@ -746,62 +737,54 @@ export default function GeneralReportingPage() {
 
   if (clubLoading || reportLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(214,211,209,0.55),_transparent_32%),linear-gradient(180deg,_#e7e5e4_0%,_#f5f5f4_40%,_#fafaf9_100%)] px-6">
-        <div className="flex flex-col items-center gap-4 rounded-[24px] border border-stone-300/70 bg-white/90 px-8 py-10 text-zinc-900 shadow-xl backdrop-blur">
-          <Loader2 className="h-10 w-10 animate-spin text-zinc-500" />
-          <p className="text-lg font-medium text-zinc-700">
-            Loading analytics dashboard...
-          </p>
+      <div className="flex h-full items-center justify-center px-6">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+          <p className="text-sm text-slate-500">Loading financial reporting...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,_#e7e5e4_0%,_#f5f5f4_22%,_#fafaf9_22%,_#fafaf9_100%)] text-slate-900">
-      <div className="flex w-full max-w-none flex-col gap-3 px-2 py-3 sm:px-3 md:px-4 md:py-4 xl:px-5 2xl:px-6">
-        <section className="relative overflow-hidden rounded-[24px] border border-stone-300/70 bg-stone-200 px-4 py-4 text-zinc-900 shadow-[0_18px_40px_rgba(120,113,108,0.16)] md:px-5 md:py-4">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.72),_transparent_28%),radial-gradient(circle_at_right,_rgba(214,211,209,0.55),_transparent_24%)]" />
-          <div className="relative flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-stone-300 bg-white/70 px-2.5 py-1 text-[11px] text-zinc-600 backdrop-blur">
-                <BarChart3 className="h-3.5 w-3.5 text-zinc-500" />
-                Analytics overview
-              </div>
-            </div>
-
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-              {hasPreviousSeasons && (
-                <Select value={selectedSeason} onValueChange={setSelectedSeason}>
-                  <SelectTrigger className="h-8 w-full rounded-full border-stone-300 bg-white text-zinc-700 shadow-none sm:w-[180px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="current">Current Season</SelectItem>
-                    {availableSeasons.map((season) => (
-                      <SelectItem key={season.value} value={season.value}>
-                        {season.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              <Button
-                onClick={handleDownloadCurrentGraphView}
-                className="h-8 rounded-full border border-stone-300 bg-white px-3.5 text-xs text-zinc-800 hover:bg-stone-100"
-                title="Download report data as CSV"
-              >
-                <Download className="h-3.5 w-3.5" />
-                Export active view
-              </Button>
-            </div>
+    <div className="bg-white text-slate-900">
+      <div className="flex w-full flex-col gap-4 px-4 py-6 sm:px-6 md:px-8">
+        <div className="mb-2 flex flex-col gap-1">
+          <h1 className="text-2xl font-bold text-slate-900">Financial Reporting</h1>
+          <p className="text-sm text-slate-500">Track income, expenses and transaction activity across your club.</p>
+        </div>
+        <section className="py-2">
+          <div className="mb-4 flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+            {hasPreviousSeasons && (
+              <Select value={selectedSeason} onValueChange={setSelectedSeason}>
+                <SelectTrigger className="h-9 w-full rounded-full border-slate-200 bg-white text-sm text-zinc-700 shadow-none sm:w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="current">Current Season</SelectItem>
+                  {availableSeasons.map((season) => (
+                    <SelectItem key={season.value} value={season.value}>
+                      {season.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <Button
+              onClick={handleDownloadCurrentGraphView}
+              className="h-9 rounded-full border border-slate-200 bg-white px-3.5 text-sm text-zinc-800 hover:bg-slate-50"
+              title="Download report data as CSV"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Export active view
+            </Button>
           </div>
 
-          <div className="relative mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-            {summaryCards.map(({ label, value, icon: Icon, tone }) => (
+          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+            {summaryCards.map(({ label, value, icon: Icon }) => (
               <div
                 key={label}
-                className="rounded-[18px] border border-stone-300/70 bg-white/75 p-3 backdrop-blur"
+                className="rounded-lg border border-slate-200 bg-white p-3"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -810,86 +793,53 @@ export default function GeneralReportingPage() {
                     </p>
                     <p className="mt-1 text-lg font-semibold text-zinc-900">{value}</p>
                   </div>
-                  <div
-                    className={`inline-flex shrink-0 rounded-2xl bg-gradient-to-br p-2 ${tone}`}
-                  >
-                    <Icon className="h-3.5 w-3.5 text-zinc-700" />
+                  <div className="inline-flex shrink-0 rounded-full bg-slate-100 p-2">
+                    <Icon className="h-3.5 w-3.5 text-zinc-600" />
                   </div>
                 </div>
               </div>
             ))}
           </div>
         </section>
-        <section className="order-1 rounded-[24px] border border-slate-200/70 bg-white/90 p-2.5 shadow-[0_16px_36px_rgba(15,23,42,0.07)] backdrop-blur md:p-3">
-          <div className="rounded-[18px] border border-slate-200/70 bg-slate-50/90 p-1.5 backdrop-blur">
-            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  onClick={() => setGraphView("income")}
-                  className={`h-8 rounded-full px-3.5 text-xs font-medium ${
-                    graphView === "income"
-                      ? "bg-zinc-700 text-white hover:bg-zinc-800"
-                      : "border border-slate-200 bg-white text-zinc-700 hover:bg-slate-100"
-                  }`}
-                >
-                  Income Graphs
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => setGraphView("expense")}
-                  className={`h-8 rounded-full px-3.5 text-xs font-medium ${
-                    graphView === "expense"
-                      ? "bg-zinc-700 text-white hover:bg-zinc-800"
-                      : "border border-slate-200 bg-white text-zinc-700 hover:bg-slate-100"
-                  }`}
-                >
-                  Expense Graphs
-                </Button>
-              </div>
-
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <Select
-                  value={graphView === "income" ? selectedIncomeGraph : selectedExpenseGraph}
-                  onValueChange={(value) => {
-                    if (graphView === "income") {
-                      setSelectedIncomeGraph(value as IncomeGraphKey);
-                      return;
-                    }
-
-                    setSelectedExpenseGraph(value);
-                  }}
-                >
-                  <SelectTrigger className="h-8 min-w-[220px] rounded-full bg-white text-xs">
-                    <SelectValue placeholder="Select graph" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {graphView === "income" ? (
-                      <>
-                        <SelectItem value="overall">Overall Income</SelectItem>
-                        <SelectItem value="registration">Registration</SelectItem>
-                        <SelectItem value="shop">Shop</SelectItem>
-                        <SelectItem value="events">Events</SelectItem>
-                        {isStorageFeatureEnabled && (
-                          <SelectItem value="storage">Storage</SelectItem>
-                        )}
-                      </>
-                    ) : (
-                      expenseGraphOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+        <section className="py-2">
+          <div className="flex items-center pb-3">
+            <Select
+              value={graphView === "income" ? `income:${selectedIncomeGraph}` : `expense:${selectedExpenseGraph}`}
+              onValueChange={(value) => {
+                const [view, key] = value.split(":");
+                if (view === "income") {
+                  setGraphView("income");
+                  setSelectedIncomeGraph(key as IncomeGraphKey);
+                } else {
+                  setGraphView("expense");
+                  setSelectedExpenseGraph(key);
+                }
+              }}
+            >
+              <SelectTrigger className="h-9 w-auto min-w-[220px] rounded-full border-slate-200 bg-white text-sm shadow-none">
+                <SelectValue placeholder="Select graph" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="income:overall">Overall Income</SelectItem>
+                <SelectItem value="income:registration">Registration Income</SelectItem>
+                <SelectItem value="income:shop">Shop Income</SelectItem>
+                <SelectItem value="income:events">Events Income</SelectItem>
+                {isStorageFeatureEnabled && (
+                  <SelectItem value="income:storage">Storage Income</SelectItem>
+                )}
+                <SelectItem value="expense:overall">Overall Expense</SelectItem>
+                {(report?.expense_type_data ?? []).map((expenseType: ExpenseTypeDataRow) => (
+                  <SelectItem key={expenseType.type} value={`expense:${expenseType.type}`}>
+                    {expenseType.type} Expense
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="space-y-3 px-1 pb-1 pt-2.5 md:px-2 md:pb-2">
+          <div className="pt-4">
             {graphView === "income" ? (
-              <section className="rounded-[20px] border border-slate-200/70 bg-white p-3 shadow-sm md:p-4">
+              <section>
                 {report && selectedIncomeGraph === "overall" && (
                   <OverallReport
                     report={report}
@@ -930,7 +880,7 @@ export default function GeneralReportingPage() {
                 )}
               </section>
             ) : (
-              <section className="rounded-[20px] border border-slate-200/70 bg-white p-3 shadow-sm md:p-4">
+              <section>
                 {report && selectedExpenseGraph === "overall" && (
                   <RevenueBreakdownReport
                     title="Expense Report"
@@ -973,8 +923,8 @@ export default function GeneralReportingPage() {
           </div>
         </section>
         {selectedSeason === "current" && (
-        <section className="order-2 rounded-[24px] border border-slate-200/70 bg-white/95 p-4 shadow-[0_16px_36px_rgba(15,23,42,0.07)] md:p-5">
-          <div className="flex flex-col gap-4 border-b border-slate-200 pb-4 lg:flex-row lg:items-end lg:justify-between">
+        <section className="py-2">
+          <div className="flex flex-col gap-4 border-b border-slate-100 pb-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-400">
                 Transactions ledger
@@ -1124,47 +1074,36 @@ export default function GeneralReportingPage() {
             </div>
           </div>
 
-          <Card className="mt-4 rounded-[20px] border-slate-200/70 bg-slate-50/80 p-3 shadow-none">
-            <div className="flex flex-wrap gap-3">
+          <div className="mt-4 border border-slate-100 bg-slate-50/60 px-4 py-3">
+            <div className="flex flex-wrap items-center gap-2">
               <Input
-                className="h-8 min-w-[200px] flex-1 bg-white text-xs"
+                className="h-9 min-w-[160px] flex-1 rounded-full border-slate-200 bg-white px-3.5 text-sm text-slate-700 shadow-none"
                 placeholder="Search by Transaction ID"
                 value={txIdSearch}
                 onChange={(e) => setTxIdSearch(e.target.value)}
               />
-
               <Input
-                className="h-8 min-w-[200px] flex-1 bg-white text-xs"
+                className="h-9 min-w-[160px] flex-1 rounded-full border-slate-200 bg-white px-3.5 text-sm text-slate-700 shadow-none"
                 placeholder="Search by Member ID"
                 value={memberIdSearch}
                 onChange={(e) => setMemberIdSearch(e.target.value)}
               />
-
               <Select onValueChange={setTransactionType} value={transactionType}>
-                <SelectTrigger className="h-8 min-w-[190px] rounded-full bg-white text-xs">
-                  <span className="text-muted-foreground whitespace-nowrap">
-                    Tx. Type:
-                  </span>
+                <SelectTrigger className="h-9 min-w-[155px] rounded-full border-slate-200 bg-white px-3.5 text-sm text-slate-700 shadow-none">
+                  <span className="whitespace-nowrap text-xs text-muted-foreground">Tx. Type:</span>
                   <SelectValue placeholder="All" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="REGISTRATION">
-                    Club Registration Income
-                  </SelectItem>
+                  <SelectItem value="REGISTRATION">Club Registration Income</SelectItem>
                   <SelectItem value="ORDER">Shop Income</SelectItem>
                   <SelectItem value="CLUBBY">Clubby Charges</SelectItem>
-                  <SelectItem value="EVENT REGISTRATION">
-                    Event Registration Income
-                  </SelectItem>
+                  <SelectItem value="EVENT REGISTRATION">Event Registration Income</SelectItem>
                 </SelectContent>
               </Select>
-
               <Select onValueChange={setStatusFilter} value={statusFilter}>
-                <SelectTrigger className="h-8 min-w-[170px] rounded-full bg-white text-xs">
-                  <span className="text-muted-foreground whitespace-nowrap">
-                    Status:
-                  </span>
+                <SelectTrigger className="h-9 min-w-[130px] rounded-full border-slate-200 bg-white px-3.5 text-sm text-slate-700 shadow-none">
+                  <span className="whitespace-nowrap text-xs text-muted-foreground">Status:</span>
                   <SelectValue placeholder="All" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1176,60 +1115,43 @@ export default function GeneralReportingPage() {
                   <SelectItem value="REFUND">Refund</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="mt-3 flex flex-col gap-3 border-t border-slate-200 pt-3 md:flex-row md:items-center md:justify-between">
-              <p className="text-xs text-slate-500">
-                Apply filters to refresh the embedded ledger without leaving this
-                dashboard.
-              </p>
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-3">
-                  <label className="text-xs font-medium text-slate-600">
-                    Results per page:
-                  </label>
-                  <Select
-                    value={transactionLimit.toString()}
-                    onValueChange={(value) => {
-                      setTransactionLimit(parseInt(value));
-                      setPageToken(undefined);
-                    }}
-                  >
-                    <SelectTrigger className="h-8 w-[96px] rounded-full bg-white text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="25">25</SelectItem>
-                      <SelectItem value="50">50</SelectItem>
-                      <SelectItem value="100">100</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
+              <div className="ml-auto flex items-center gap-2">
+                <Select
+                  value={transactionLimit.toString()}
+                  onValueChange={(value) => {
+                    setTransactionLimit(parseInt(value));
+                    setPageToken(undefined);
+                  }}
+                >
+                  <SelectTrigger className="h-9 w-[85px] rounded-full border-slate-200 bg-white px-2.5 text-sm text-slate-700 shadow-none">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Button
                   onClick={() => {
-                    const nextFilters = {
+                    setAppliedFilters({
                       transaction_id: txIdSearch,
                       member_id: memberIdSearch,
                       transaction_type: transactionType,
                       status: statusFilter,
-                    };
-
-                    setAppliedFilters({
-                      ...nextFilters,
                     });
                     setPageToken(undefined);
                     isLoadingMoreRef.current = false;
                     setTimeout(() => refetchTransactions(), 0);
                   }}
-                  className="h-8 rounded-full bg-zinc-700 px-4 text-xs text-white hover:bg-zinc-800"
+                  className="h-9 rounded-full bg-zinc-700 px-5 text-sm text-white hover:bg-zinc-800"
                   title="Run database query to refresh transactions data"
                 >
                   Run
                 </Button>
               </div>
             </div>
-          </Card>
+          </div>
 
           {transactions?.pageToken && transactions.pageToken !== "" && (
             <div className="mt-4 flex items-center justify-between rounded-[20px] border border-amber-300 bg-amber-50 px-4 py-3">
@@ -1259,7 +1181,7 @@ export default function GeneralReportingPage() {
             </div>
           )}
 
-          <div className="mt-4 overflow-hidden rounded-[20px] border border-slate-200">
+          <div className="mt-4 overflow-hidden">
             <Table
               className="table-fixed"
               style={{
@@ -1276,13 +1198,13 @@ export default function GeneralReportingPage() {
                 <col style={{ width: "120px" }} />
                 <col style={{ width: "160px" }} />
               </colgroup>
-              <TableHeader className="bg-zinc-700 [&_tr]:border-zinc-600">
+              <TableHeader className="bg-zinc-700 [&_tr]:border-b [&_tr]:border-zinc-600">
                 <TableRow>
-                  <TableHead className="h-11 w-10 px-0 text-center text-slate-200" />
-                  <TableHead className="h-11 w-[180px] text-center text-xs text-slate-200">
+                  <TableHead className="h-14 w-10 px-0 text-center text-slate-200" />
+                  <TableHead className="h-14 w-[180px] text-center text-sm text-slate-200">
                     Transaction ID
                   </TableHead>
-                  <TableHead className="h-11 w-[220px] text-center text-xs text-slate-200">
+                  <TableHead className="h-14 w-[220px] text-center text-sm text-slate-200">
                     <button
                       type="button"
                       className="inline-flex w-full items-center justify-center gap-1 hover:underline"
@@ -1309,13 +1231,13 @@ export default function GeneralReportingPage() {
                       )}
                     </button>
                   </TableHead>
-                  <TableHead className="h-11 w-[180px] text-center text-xs text-slate-200">
+                  <TableHead className="h-14 w-[180px] text-center text-sm text-slate-200">
                     Transaction Type
                   </TableHead>
-                  <TableHead className="h-11 w-[120px] text-center text-xs text-slate-200">
+                  <TableHead className="h-14 w-[120px] text-center text-sm text-slate-200">
                     Flow
                   </TableHead>
-                  <TableHead className="h-11 w-[160px] text-center text-xs text-slate-200">
+                  <TableHead className="h-14 w-[160px] text-center text-sm text-slate-200">
                     <button
                       type="button"
                       className="inline-flex w-full items-center justify-center gap-1 hover:underline"
@@ -1347,8 +1269,8 @@ export default function GeneralReportingPage() {
             </Table>
 
             <div
-              className="h-[320px] overflow-y-auto border-t border-slate-200"
-              style={{ scrollbarGutter: "stable" }}
+              className="bg-slate-50/70"
+              style={{ maxHeight: "480px", overflowY: "auto", overflowX: "auto", scrollbarGutter: "stable" }}
             >
               <Table
                 className="table-fixed"
@@ -1356,6 +1278,8 @@ export default function GeneralReportingPage() {
                   width: "max-content",
                   minWidth: "100%",
                   maxWidth: "none",
+                  borderCollapse: "separate",
+                  borderSpacing: "0 6px",
                 }}
               >
                 <colgroup>
@@ -1393,7 +1317,7 @@ export default function GeneralReportingPage() {
                     <Fragment key={tx.transaction_id}>
                       <TableRow
                         key={tx.transaction_id}
-                        className="cursor-pointer border-slate-200 bg-white text-sm hover:bg-slate-50"
+                        className="group h-14 cursor-pointer bg-white text-sm transition-colors hover:bg-slate-50 shadow-[0_0_0_1px_#e2e8f0,0_2px_8px_0_rgba(0,0,0,0.06)]"
                         onClick={() => toggleRow(tx.transaction_id)}
                       >
                         <TableCell className="w-10 px-0 text-center">
