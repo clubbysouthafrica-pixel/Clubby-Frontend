@@ -431,6 +431,7 @@ function renderPreviewField(
         currentPageIndex={currentPageIndex}
         pages={pages}
         setFieldValue={setFieldValue}
+        enableCamera={false}
       />
     );
 

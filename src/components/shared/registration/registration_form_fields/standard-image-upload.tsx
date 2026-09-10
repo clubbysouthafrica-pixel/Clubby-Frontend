@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { ImagePlusIcon, Loader2, XIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { CameraIcon, ImagePlusIcon, Loader2, XIcon } from "lucide-react";
 import { parseUploadedImages } from "@/helpers/registration/parse-uploaded-images";
 import RequiredLabel from "./required-label";
 
@@ -22,6 +22,8 @@ interface StandardFieldInputProps {
     fieldId: string,
     updater: (f: any) => any,
   ) => void;
+  /** Allow capturing a selfie from the device camera. Disabled in the form builder preview. */
+  enableCamera?: boolean;
 }
 
 const MAX_IMAGES = 6;
@@ -34,11 +36,17 @@ const ACCEPTED_TYPES = [
   "image/gif",
 ];
 
+const cameraSupported = () =>
+  typeof navigator !== "undefined" &&
+  !!navigator.mediaDevices &&
+  typeof navigator.mediaDevices.getUserMedia === "function";
+
 export default function StandardImageUpload({
   field,
   currentPageIndex,
   pages,
   setFieldValue,
+  enableCamera = true,
 }: StandardFieldInputProps) {
   const images = parseUploadedImages(field.value);
   const [error, setError] = useState("");
@@ -46,7 +54,15 @@ export default function StandardImageUpload({
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [cameraError, setCameraError] = useState("");
+  const [capturedPreview, setCapturedPreview] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
   const targetPageIndex = pages[currentPageIndex]?.page_index ?? currentPageIndex;
+  const showCamera = enableCamera && cameraSupported();
+  const atCapacity = images.length >= MAX_IMAGES;
 
   const commit = (next: string[]) => {
     setFieldValue(targetPageIndex, field.field_id, (f) => ({
@@ -54,6 +70,61 @@ export default function StandardImageUpload({
       value: next.length > 0 ? JSON.stringify(next) : "",
     }));
   };
+
+  const stopStream = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+  };
+
+  const closeCamera = () => {
+    stopStream();
+    setIsCameraOpen(false);
+    setCapturedPreview(null);
+    setCameraError("");
+  };
+
+  // Acquire / release the camera stream while the capture panel is open and
+  // not currently showing a still preview.
+  useEffect(() => {
+    if (!isCameraOpen || capturedPreview) return;
+
+    let active = true;
+    navigator.mediaDevices
+      .getUserMedia({ video: { facingMode: "user" }, audio: false })
+      .then((stream) => {
+        if (!active) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          void videoRef.current.play().catch(() => {});
+        }
+      })
+      .catch((err: unknown) => {
+        if (!active) return;
+        const name =
+          err && typeof err === "object" && "name" in err
+            ? (err as { name?: string }).name
+            : undefined;
+        setCameraError(
+          name === "NotAllowedError" || name === "SecurityError"
+            ? "Camera access was denied. Allow it in your browser, or upload an image instead."
+            : "Could not access the camera. You can upload an image instead.",
+        );
+      });
+
+    return () => {
+      active = false;
+      stopStream();
+    };
+  }, [isCameraOpen, capturedPreview]);
+
+  // Safety net: release the camera if the component unmounts while open.
+  useEffect(() => stopStream, []);
 
   const handleFiles = async (fileList: FileList | File[] | null) => {
     const files = fileList ? Array.from(fileList) : [];
@@ -107,10 +178,46 @@ export default function StandardImageUpload({
     }
   };
 
+  const capturePhoto = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+    if (!width || !height) return;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.drawImage(video, 0, 0, width, height);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+
+    stopStream(); // freeze on the captured frame
+    setCapturedPreview(dataUrl);
+  };
+
+  const usePhoto = () => {
+    if (!capturedPreview) return;
+    if (atCapacity) {
+      setError(`You can upload up to ${MAX_IMAGES} images.`);
+      closeCamera();
+      return;
+    }
+    setError("");
+    commit([...images, capturedPreview]);
+    closeCamera();
+  };
+
   const removeImage = (index: number) => {
     setError("");
     commit(images.filter((_, i) => i !== index));
   };
+
+  const selfieButtonClasses =
+    "inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:border-blue-400 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-60";
 
   return (
     <div className="space-y-2" key={field.field_id}>
@@ -138,39 +245,142 @@ export default function StandardImageUpload({
         }}
       />
 
-      {images.length === 0 ? (
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setIsDragging(true);
-          }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setIsDragging(false);
-            void handleFiles(e.dataTransfer.files);
-          }}
-          disabled={isReading}
-          className={`flex w-full flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed px-4 py-6 text-center transition-colors ${
-            isDragging
-              ? "border-blue-400 bg-blue-50 text-blue-600"
-              : "border-gray-300 bg-gray-50 text-gray-500 hover:border-blue-400 hover:text-blue-600"
-          } disabled:cursor-not-allowed disabled:opacity-60`}
-        >
-          {isReading ? (
-            <Loader2 className="h-6 w-6 animate-spin" />
+      {isCameraOpen && (
+        <div className="space-y-3 rounded-md border border-gray-200 bg-gray-900 p-3">
+          {cameraError ? (
+            <div className="space-y-3 rounded-md bg-white p-4 text-center">
+              <p className="text-sm text-red-600">{cameraError}</p>
+              <button
+                type="button"
+                onClick={closeCamera}
+                className={selfieButtonClasses + " mx-auto"}
+              >
+                Close camera
+              </button>
+            </div>
+          ) : capturedPreview ? (
+            <>
+              <img
+                src={capturedPreview}
+                alt="Selfie preview"
+                className="mx-auto max-h-72 w-auto rounded-md object-contain"
+              />
+              <div className="flex flex-wrap justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={usePhoto}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                >
+                  Use photo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCapturedPreview(null);
+                    setCameraError("");
+                  }}
+                  className={selfieButtonClasses}
+                >
+                  Retake
+                </button>
+                <button
+                  type="button"
+                  onClick={closeCamera}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-transparent px-3 py-1.5 text-sm font-medium text-gray-200 transition-colors hover:text-white"
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
           ) : (
-            <ImagePlusIcon className="h-6 w-6" />
+            <>
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="mx-auto max-h-72 w-auto rounded-md bg-black object-contain"
+              />
+              <div className="flex flex-wrap justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={capturePhoto}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                >
+                  <CameraIcon className="h-4 w-4" />
+                  Capture
+                </button>
+                <button
+                  type="button"
+                  onClick={closeCamera}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-transparent px-3 py-1.5 text-sm font-medium text-gray-200 transition-colors hover:text-white"
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
           )}
-          <span className="text-sm font-medium">
-            Click to upload or drag &amp; drop images
-          </span>
-          <span className="text-xs">
-            PNG, JPG, WEBP or GIF · up to 5MB each · {images.length}/{MAX_IMAGES}
-          </span>
-        </button>
+        </div>
+      )}
+
+      {images.length === 0 ? (
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+              void handleFiles(e.dataTransfer.files);
+            }}
+            disabled={isReading}
+            className={`flex w-full flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed px-4 py-6 text-center transition-colors ${
+              isDragging
+                ? "border-blue-400 bg-blue-50 text-blue-600"
+                : "border-gray-300 bg-gray-50 text-gray-500 hover:border-blue-400 hover:text-blue-600"
+            } disabled:cursor-not-allowed disabled:opacity-60`}
+          >
+            {isReading ? (
+              <Loader2 className="h-6 w-6 animate-spin" />
+            ) : (
+              <ImagePlusIcon className="h-6 w-6" />
+            )}
+            <span className="text-sm font-medium">
+              Click to upload or drag &amp; drop images
+            </span>
+            <span className="text-xs">
+              PNG, JPG, WEBP or GIF · up to 5MB each · {images.length}/
+              {MAX_IMAGES}
+            </span>
+          </button>
+
+          {showCamera && (
+            <>
+              <p className="text-center text-xs text-gray-400">
+                or don&apos;t have a photo?
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setError("");
+                  setCameraError("");
+                  setCapturedPreview(null);
+                  setIsCameraOpen(true);
+                }}
+                disabled={isCameraOpen}
+                className={selfieButtonClasses + " w-full justify-center"}
+              >
+                <CameraIcon className="h-4 w-4" />
+                Take a selfie
+              </button>
+            </>
+          )}
+        </div>
       ) : (
         <div
           onDragOver={(e) => {
@@ -220,8 +430,8 @@ export default function StandardImageUpload({
                 }
                 inputRef.current?.click();
               }}
-              disabled={images.length >= MAX_IMAGES || isReading}
-              className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:border-blue-400 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={atCapacity || isReading}
+              className={selfieButtonClasses}
             >
               {isReading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -230,6 +440,22 @@ export default function StandardImageUpload({
               )}
               {images.length === 1 ? "Replace image" : "Add more images"}
             </button>
+            {showCamera && (
+              <button
+                type="button"
+                onClick={() => {
+                  setError("");
+                  setCameraError("");
+                  setCapturedPreview(null);
+                  setIsCameraOpen(true);
+                }}
+                disabled={atCapacity || isCameraOpen}
+                className={selfieButtonClasses}
+              >
+                <CameraIcon className="h-4 w-4" />
+                Take a selfie
+              </button>
+            )}
             <button
               type="button"
               onClick={() => {
