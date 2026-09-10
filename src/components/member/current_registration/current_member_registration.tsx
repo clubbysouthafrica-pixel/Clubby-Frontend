@@ -20,6 +20,9 @@ import {
   fetchMemberRegistrationField,
   updateMemberRegistrationField,
 } from "@/services/registration-form";
+import { resolveRegistrationFieldImageUrl } from "@/services/registration-image";
+import { RegistrationFieldImages } from "@/components/shared/registration/registration-field-images";
+import { isImageFieldValue } from "@/helpers/registration/parse-uploaded-images";
 import { countryCodes, getDialingCode } from "@/data/country-codes";
 import { cn } from "@/lib/utils";
 import {
@@ -642,6 +645,20 @@ export function MemberRegistration({
       );
     }
 
+    if (
+      field.type === "STANDARD_IMAGE" ||
+      (field.type === "STANDARD_OTHER" && isImageFieldValue(field.value))
+    ) {
+      return (
+        <RegistrationFieldImages
+          value={field.value}
+          resolveImageUrl={(key) =>
+            resolveRegistrationFieldImageUrl(clubAccountId, key)
+          }
+        />
+      );
+    }
+
     if (field.type === "STANDARD_OTHER") {
       if (editingFieldId === field.label) {
         return renderEditableInput(field);
@@ -986,7 +1003,9 @@ export function MemberRegistration({
                     field.field_id &&
                     (field.editable_by_member === true ||
                       fieldMetadata[field.label]?.editable_by_member === true) &&
-                    field.visible !== false;
+                    field.visible !== false &&
+                    field.type !== "STANDARD_IMAGE" &&
+                    !isImageFieldValue(field.value);
 
                   return (
                     <div

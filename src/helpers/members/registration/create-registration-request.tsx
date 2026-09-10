@@ -1,6 +1,7 @@
 import { getProratedAmount } from "@/lib/billing-prorata";
+import { parseUploadedImages } from "@/helpers/registration/parse-uploaded-images";
 
-export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER" | "SIGNATURE";
+export type InputType = "TEXT" | "DROPDOWN" | "CHECKBOX" | "NUMBER" | "SIGNATURE" | "IMAGE";
 export type FieldType = "TEXT" | "STANDARD" | "BILLING";
 
 export interface BillingOption {
@@ -46,6 +47,7 @@ export interface FieldRequest {
     signature_type?: string
     option_order_id?: string
     multiplier_value?: number
+    images?: string[]
     label?: string
 }
 
@@ -97,6 +99,15 @@ export function createValidRegistrationRequest(fields: PageFieldBase[], clubId: 
                 signature_type: f.signature_type
             }
             request.standard_fields.push(field)
+        } else if (f.input_type === "IMAGE") {
+            const images = parseUploadedImages(f.value)
+            if (images.length > 0) {
+                request.standard_fields.push({
+                    field_id: f.field_id,
+                    value: JSON.stringify(images),
+                    images,
+                })
+            }
         } else if (f.value) {
             const field: FieldRequest = {
                 field_id: f.field_id,

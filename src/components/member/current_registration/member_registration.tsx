@@ -9,6 +9,9 @@ import { useState } from "react";
 import { useFetchMemberRegisteration } from "@/queries/registration-form";
 import { Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { resolveRegistrationFieldImageUrl } from "@/services/registration-image";
+import { RegistrationFieldImages } from "@/components/shared/registration/registration-field-images";
+import { isImageFieldValue } from "@/helpers/registration/parse-uploaded-images";
 
 export function MemberRegistration({
   clubAccountId,
@@ -84,6 +87,23 @@ export function MemberRegistration({
                       </div>
                     )
                   }
+                }
+
+                if (
+                  field.type === "STANDARD_IMAGE" ||
+                  (field.type === "STANDARD_OTHER" && isImageFieldValue(field.value))
+                ) {
+                  return (
+                    <div key={field.label} className="flex flex-col gap-2">
+                      <Label className="text-[12px] font-semibold">{field.label}:</Label>
+                      <RegistrationFieldImages
+                        value={field.value}
+                        resolveImageUrl={(key) =>
+                          resolveRegistrationFieldImageUrl(clubAccountId, key)
+                        }
+                      />
+                    </div>
+                  );
                 }
 
                 if (field.type === "STANDARD_OTHER") {

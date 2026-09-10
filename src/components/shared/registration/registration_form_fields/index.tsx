@@ -5,3 +5,4 @@ export { default as StandardCheckbox } from "./standard-checkbox";
 export { default as StandardDropdown } from "./standard-dropdown";
 export { default as StandardSignature } from "./standard-signature";
 export { default as StandardText } from "./standard-text";
+export { default as StandardImageUpload } from "./standard-image-upload";

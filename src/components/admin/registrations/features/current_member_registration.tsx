@@ -49,6 +49,9 @@ import {
   updateRegistrationField,
 } from "@/services/admin/registration-form";
 import { updateMemberVariable } from "@/services/admin/club-members";
+import { resolveRegistrationFieldImageUrl } from "@/services/admin/registration-image";
+import { RegistrationFieldImages } from "@/components/shared/registration/registration-field-images";
+import { isImageFieldValue } from "@/helpers/registration/parse-uploaded-images";
 import { toast } from "sonner";
 import {
   validateFieldValue,
@@ -904,6 +907,37 @@ export function CurrentMemberRegistration({
                         </div>
                       );
                     }
+                  }
+
+                  if (
+                    field.type === "STANDARD_IMAGE" ||
+                    (field.type === "STANDARD_OTHER" && isImageFieldValue(field.value))
+                  ) {
+                    return (
+                      <div
+                        key={field.label}
+                        className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-4 shadow-sm"
+                      >
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Label className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                            {field.label}
+                          </Label>
+                          {field.visible === false && (
+                            <Badge className="border-orange-200 bg-orange-50 text-orange-700">
+                              Removed from registration form
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="mt-3">
+                          <RegistrationFieldImages
+                            value={field.value}
+                            resolveImageUrl={(key) =>
+                              resolveRegistrationFieldImageUrl(clubAccountId, key)
+                            }
+                          />
+                        </div>
+                      </div>
+                    );
                   }
 
                   if (field.type === "STANDARD_OTHER") {

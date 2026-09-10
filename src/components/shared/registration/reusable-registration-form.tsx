@@ -8,6 +8,7 @@ import {
   StandardDropdown,
   StandardText,
   StandardSignature,
+  StandardImageUpload,
   BillingText,
   BillingNumber,
 } from "./registration_form_fields";
@@ -17,7 +18,8 @@ export type InputType =
   | "DROPDOWN"
   | "CHECKBOX"
   | "NUMBER"
-  | "SIGNATURE";
+  | "SIGNATURE"
+  | "IMAGE";
 export type FieldType = "TEXT" | "STANDARD" | "BILLING";
 
 export interface BillingOption {
@@ -293,6 +295,21 @@ export function ReusableRegistrationForm({
                               <StandardSignature
                                 key={field.field_id}
                                 field={field as SignatureField}
+                                currentPageIndex={currentPageIndex}
+                                pages={pages}
+                                setFieldValue={setFieldValue}
+                              />
+                            );
+                          }
+
+                          if (
+                            field.field_type === "STANDARD" &&
+                            field.input_type === "IMAGE"
+                          ) {
+                            return (
+                              <StandardImageUpload
+                                key={field.field_id}
+                                field={field}
                                 currentPageIndex={currentPageIndex}
                                 pages={pages}
                                 setFieldValue={setFieldValue}

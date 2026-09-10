@@ -21,6 +21,7 @@ import {
   StandardDropdown,
   StandardText,
   StandardSignature,
+  StandardImageUpload,
   BillingText,
   BillingNumber,
 } from "@/components/shared/registration/registration_form_fields";
@@ -30,7 +31,8 @@ export type InputType =
   | "DROPDOWN"
   | "CHECKBOX"
   | "NUMBER"
-  | "SIGNATURE";
+  | "SIGNATURE"
+  | "IMAGE";
 export type FieldType = "TEXT" | "STANDARD" | "BILLING";
 
 interface SortableFieldWrapperProps {
@@ -402,6 +404,30 @@ function renderPreviewField(
     const element = (
       <StandardSignature
         field={field as SignatureField}
+        currentPageIndex={currentPageIndex}
+        pages={pages}
+        setFieldValue={setFieldValue}
+      />
+    );
+
+    return isEditing ? (
+      <SortableFieldWrapper
+        field={field}
+        element={element}
+        currentPageIndex={currentPageIndex}
+        isRecentlyAdded={isRecentlyAdded}
+        onFieldEdit={onFieldEdit}
+        onFieldDelete={onFieldDelete}
+      />
+    ) : (
+      element
+    );
+  }
+
+  if (field.field_type === "STANDARD" && field.input_type === "IMAGE") {
+    const element = (
+      <StandardImageUpload
+        field={field}
         currentPageIndex={currentPageIndex}
         pages={pages}
         setFieldValue={setFieldValue}

@@ -577,7 +577,7 @@ export default function AdminRegistrationFormPage() {
       finalInputType = "";
       fieldText = "Display Text";
     } else if (
-      ["TEXT", "DROPDOWN", "CHECKBOX", "NUMBER", "SIGNATURE"].includes(
+      ["TEXT", "DROPDOWN", "CHECKBOX", "NUMBER", "SIGNATURE", "IMAGE"].includes(
         actualInputType,
       ) &&
       !isBillingType
@@ -675,6 +675,7 @@ export default function AdminRegistrationFormPage() {
       CHECKBOX: { label: "Checkbox", description: "Boolean toggle field" },
       NUMBER: { label: "Number", description: "Numeric input field" },
       SIGNATURE: { label: "Signature", description: "Signature capture field" },
+      IMAGE: { label: "Image Upload", description: "Let members upload images" },
       BILLING_TEXT: {
         label: "Billing Text",
         description: "Text amount for billing",
@@ -731,6 +732,11 @@ export default function AdminRegistrationFormPage() {
           id: "palette-SIGNATURE",
           label: "Signature",
           description: "Signature capture",
+        },
+        {
+          id: "palette-IMAGE",
+          label: "Image Upload",
+          description: "Upload photos or images",
         },
       ],
     },
