@@ -1,11 +1,21 @@
+import { useContext } from "react"
 import { SectionHub } from "@/components/admin/section-hub"
+import { RegistrationSettingsDialog } from "@/components/admin/registrations/registration-settings-dialog"
+import { ClubContext, ClubContextType } from "@/context/ClubContext"
 import { ClipboardList, UserPlus, FileText, Users, BarChart2 } from "lucide-react"
 
 export default function MembersHubPage() {
+  const { club } = useContext(ClubContext) as ClubContextType
+
   return (
     <SectionHub
       title="Registrations"
       description="Review registration requests, register new members, and manage registration forms."
+      headerAction={
+        club?.club_account_id ? (
+          <RegistrationSettingsDialog clubAccountId={club.club_account_id} />
+        ) : null
+      }
       items={[
         {
           title: "Registrations",
