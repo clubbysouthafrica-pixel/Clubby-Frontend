@@ -1,4 +1,5 @@
 import { type LucideIcon } from "lucide-react"
+import { type ReactNode } from "react"
 import { useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 
@@ -14,16 +15,21 @@ interface SectionHubProps {
   title: string
   description: string
   items: SectionHubItem[]
+  /** Optional content (e.g. a settings button) rendered in the top-right corner. */
+  headerAction?: ReactNode
 }
 
-export function SectionHub({ title, description, items }: SectionHubProps) {
+export function SectionHub({ title, description, items, headerAction }: SectionHubProps) {
   const navigate = useNavigate()
 
   return (
     <div className="p-6 md:p-8 lg:p-10">
-      <div className="mb-8 max-w-2xl">
-        <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">{title}</h1>
-        <p className="mt-2 text-base leading-relaxed text-slate-500">{description}</p>
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div className="max-w-2xl">
+          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">{title}</h1>
+          <p className="mt-2 text-base leading-relaxed text-slate-500">{description}</p>
+        </div>
+        {headerAction && <div className="shrink-0">{headerAction}</div>}
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((item) => (

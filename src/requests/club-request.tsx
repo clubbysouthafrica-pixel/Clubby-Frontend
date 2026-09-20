@@ -112,5 +112,6 @@ export interface ClubDetailsRequest {
   use_success_email_template?: boolean;
   use_submission_email_template?: boolean;
   notify_on_member_registration?: boolean;
+  send_qr_code_email_on_registration?: boolean;
   club_variables?: ClubVariableRequest[];
 }

@@ -314,7 +314,7 @@ export function MemberRegistration({
 
   const handleOpenVerificationLink = () => {
     if (!verificationLink) {
-      toast.error("Verification link is not available yet.", { duration: 2500 });
+      toast.error("Verification link is not available yet.");
       return;
     }
 
@@ -325,7 +325,7 @@ export function MemberRegistration({
     const svgElement = verificationQrRef.current?.querySelector("svg");
 
     if (!svgElement) {
-      toast.error("QR code is not available to download yet.", { duration: 2500 });
+      toast.error("QR code is not available to download yet.");
       return;
     }
 
@@ -345,7 +345,7 @@ export function MemberRegistration({
       URL.revokeObjectURL(objectUrl);
     } catch (error) {
       console.error("Error downloading verification QR code:", error);
-      toast.error("Unable to download the QR code.", { duration: 2500 });
+      toast.error("Unable to download the QR code.");
     }
   };
 
@@ -384,7 +384,7 @@ export function MemberRegistration({
       const validationError = validateFieldValue(field.label, editValue, metadata);
 
       if (validationError) {
-        toast.error(validationError, { duration: 3000 });
+        toast.error(validationError);
         setIsSaving(false);
         return;
       }
@@ -416,10 +416,10 @@ export function MemberRegistration({
       }));
 
       setEditingFieldId(null);
-      toast.success(`${field.label} updated successfully`, { duration: 3000 });
+      toast.success(`${field.label} updated successfully`);
     } catch (error) {
       console.error("Error updating field:", error);
-      toast.error("Failed to update field", { duration: 3000 });
+      toast.error("Failed to update field");
     } finally {
       setIsSaving(false);
     }
@@ -464,7 +464,7 @@ export function MemberRegistration({
         setEditingFieldId(field.label);
       } catch (error) {
         console.error("Error loading field metadata:", error);
-        toast.error("Failed to load field", { duration: 2000 });
+        toast.error("Failed to load field");
       } finally {
         setLoadingFieldId(null);
       }
