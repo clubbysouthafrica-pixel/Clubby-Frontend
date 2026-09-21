@@ -366,7 +366,7 @@ export default function BillingPage() {
             </div>
           </div>
 
-          <div className="relative mt-2.5 grid gap-2 md:grid-cols-3">
+          <div className="relative mt-2.5 grid gap-2 md:grid-cols-2">
             {summaryCards.map(({ label, value, icon: Icon, tone }) => (
               <div
                 key={label}
