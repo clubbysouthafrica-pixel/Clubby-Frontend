@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import ClubProvider, {
   ClubAccountBalanceEntry,
@@ -22,25 +22,19 @@ import ClubProvider, {
   ClubContextType,
 } from "@/context/ClubContext";
 import { formatAmount } from "@/data/currencies";
-import { AlertTriangle, AlertCircle, X } from "lucide-react";
+import { AlertTriangle, AlertCircle, CreditCard, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useFetchAdminClubs, useFetchClub } from "@/queries/admin/clubs";
 
-const OUTSTANDING_BALANCE_DIALOG_KEY_PREFIX =
-  "admin-outstanding-balance-dialog-shown";
-
-function getOutstandingBalanceDialogKey(clubAccountId: string) {
-  return `${OUTSTANDING_BALANCE_DIALOG_KEY_PREFIX}:${clubAccountId}`;
-}
+const BILLING_AND_USAGE_PATH = "/billing&usage";
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { club, setClub, isLoading: clubLoading } = useContext(
     ClubContext,
   ) as ClubContextType;
   const [isBannerClosed, setIsBannerClosed] = useState(false);
-  const [isOutstandingBalanceDialogOpen, setIsOutstandingBalanceDialogOpen] =
-    useState(false);
   const clubAccountId = club?.club_account_id ?? "";
   const { data: adminClubsResponse } = useFetchAdminClubs();
   const { data: fetchedClub, isLoading: fetchedClubLoading } = useFetchClub(
@@ -118,74 +112,46 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     }
   }, [activeAdminClub, fetchedClub, club, setClub]);
 
-  useEffect(() => {
-    if (typeof window === "undefined" || !clubAccountId) {
-      return;
-    }
-
-    if (outstandingAccountBalanceEntries.length === 0) {
-      setIsOutstandingBalanceDialogOpen(false);
-      return;
-    }
-
-    const storageKey = getOutstandingBalanceDialogKey(clubAccountId);
-    const hasShownDialogInSession =
-      window.sessionStorage.getItem(storageKey) === "true";
-
-    if (!hasShownDialogInSession) {
-      window.sessionStorage.setItem(storageKey, "true");
-      setIsOutstandingBalanceDialogOpen(true);
-    }
-  }, [clubAccountId, outstandingAccountBalanceEntries.length]);
+  const isOnBillingAndUsagePage = location.pathname === BILLING_AND_USAGE_PATH;
+  const needsPayfastCard = currentClub?.payfast_token !== true;
 
   const shouldShowOutstandingBalanceDialog =
     !clubLoading &&
     !fetchedClubLoading &&
+    !!clubAccountId &&
+    !isOnBillingAndUsagePage &&
     outstandingAccountBalanceEntries.length > 0 &&
-    isOutstandingBalanceDialogOpen;
-
-  const handleOutstandingBalanceDialogOpenChange = (open: boolean) => {
-    setIsOutstandingBalanceDialogOpen(open);
-
-    if (typeof window === "undefined" || !clubAccountId || !open) {
-      return;
-    }
-
-    window.sessionStorage.setItem(
-      getOutstandingBalanceDialogKey(clubAccountId),
-      "true",
-    );
-  };
+    needsPayfastCard;
 
   const handleBillingNavigation = () => {
-    setIsOutstandingBalanceDialogOpen(false);
-    navigate("/billing&usage");
+    navigate(BILLING_AND_USAGE_PATH);
   };
 
   return (
     <>
-      <Dialog
-        open={shouldShowOutstandingBalanceDialog}
-        onOpenChange={handleOutstandingBalanceDialogOpenChange}
-      >
+      <Dialog open={shouldShowOutstandingBalanceDialog}>
         <DialogContent
           className="sm:max-w-xl border-amber-200 bg-white"
           showCloseButton={false}
+          onPointerDownOutside={(event) => event.preventDefault()}
+          onInteractOutside={(event) => event.preventDefault()}
+          onEscapeKeyDown={(event) => event.preventDefault()}
         >
           <DialogHeader className="space-y-3 text-left">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-              <AlertCircle className="h-6 w-6" />
+              <CreditCard className="h-6 w-6" />
             </div>
-            <DialogTitle>Outstanding Clubby balance</DialogTitle>
+            <DialogTitle>Add a card to continue billing</DialogTitle>
             <DialogDescription className="space-y-3 text-slate-600">
               <p>
                 There {outstandingAccountBalanceEntries.length === 1 ? "is" : "are"} unpaid
                 account balance {outstandingAccountBalanceEntries.length === 1 ? "entry" : "entries"}
-                {outstandingBalanceMonthsLabel ? ` for ${outstandingBalanceMonthsLabel}` : ""}.
+                {outstandingBalanceMonthsLabel ? ` for ${outstandingBalanceMonthsLabel}` : ""}, and no card is on
+                file for your club.
               </p>
               <p>
-                Please review and pay {outstandingAccountBalanceEntries.length === 1 ? "this amount" : "these amounts"}
-                in Billing &amp; Usage before continuing.
+                Add your card details in Billing &amp; Usage so Clubby can automatically charge
+                outstanding and future balances.
               </p>
               <p className="font-medium text-slate-950">
                 Total outstanding: {formatAmount(totalOutstandingAccountBalance, currentClub?.currency)}
@@ -195,17 +161,10 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           <DialogFooter>
             <Button
               type="button"
-              variant="outline"
-              onClick={() => setIsOutstandingBalanceDialogOpen(false)}
-            >
-              Not now
-            </Button>
-            <Button
-              type="button"
               className="bg-amber-600 text-white hover:bg-amber-700"
               onClick={handleBillingNavigation}
             >
-              Go to Billing &amp; Usage
+              Add Card Details
             </Button>
           </DialogFooter>
         </DialogContent>
