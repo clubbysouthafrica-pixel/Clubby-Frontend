@@ -223,17 +223,7 @@ export default function BillingPage() {
       value: String(payableMonthlyPaymentOptions.length),
       icon: CreditCard,
       tone: "from-sky-400/20 via-sky-300/10 to-transparent",
-    },
-    {
-      label: "Selected payment",
-      value: selectedPaymentChoice
-        ? selectedPaymentChoice.isAllOutstanding
-          ? "All outstanding"
-          : selectedPaymentChoice.month ?? "None"
-        : "None",
-      icon: BarChart3,
-      tone: "from-stone-400/20 via-stone-300/10 to-transparent",
-    },
+    }
   ];
 
   useEffect(() => {
