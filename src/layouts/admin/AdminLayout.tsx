@@ -141,7 +141,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-700">
               <CreditCard className="h-6 w-6" />
             </div>
-            <DialogTitle>Add a card to continue billing</DialogTitle>
+            <DialogTitle>Add a card to continue using Clubby</DialogTitle>
             <DialogDescription className="space-y-3 text-slate-600">
               <p>
                 There {outstandingAccountBalanceEntries.length === 1 ? "is" : "are"} unpaid
