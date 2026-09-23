@@ -1410,11 +1410,6 @@ export default function ViewClubPage() {
                 <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
                 <div>
                   <p className="text-sm font-semibold text-emerald-900">Your registration has been submitted successfully.</p>
-                  <p className="mt-0.5 text-xs leading-5 text-emerald-800">
-                    If you don't have a Clubby account yet, an email will be sent to{" "}
-                    {registrationSuccessEmail ? <strong>{registrationSuccessEmail}</strong> : "your email address"}{" "}
-                    with details on how to activate your account, view your membership, and manage more.{" "}
-                  </p>
                 </div>
               </div>
               <button

@@ -104,7 +104,6 @@ export default function MembersTable({
   const navigate = useNavigate();
   const [regSortAsc, setRegSortAsc] = useState<boolean | null>(null);
   const [memberNameSortAsc, setMemberNameSortAsc] = useState<boolean | null>(null);
-  const [statusSortAsc, setStatusSortAsc] = useState<boolean | null>(null);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isValidationDialogOpen, setIsValidationDialogOpen] = useState(false);
@@ -144,12 +143,6 @@ export default function MembersTable({
   };
 
 
-  const getStatusNumber = (member: any) => {
-    if (member.non_registration) return 0;
-    if (!member.registered && member.resubmission_required) return 0;
-    if (!member.registered && !member.resubmission_required) return 1;
-    return 2;
-  };
 
   const sortedRegisteredMembers = useMemo(() => {
     let sortedCopy = [...members];
@@ -160,12 +153,6 @@ export default function MembersTable({
         const bName = `${b.member_first_name} ${b.member_surname}`.toLowerCase();
         return memberNameSortAsc ? aName.localeCompare(bName) : bName.localeCompare(aName);
       });
-    } else if (statusSortAsc !== null) {
-      sortedCopy.sort((a: any, b: any) => {
-        const aStatus = getStatusNumber(a);
-        const bStatus = getStatusNumber(b);
-        return statusSortAsc ? aStatus - bStatus : bStatus - aStatus;
-      });
     } else if (regSortAsc !== null) {
       sortedCopy.sort((a: any, b: any) => {
         const aTime = a.registrations?.[0]?.registration_submitted_on || 0;
@@ -175,7 +162,7 @@ export default function MembersTable({
     }
 
     return sortedCopy;
-  }, [members, regSortAsc, memberNameSortAsc, statusSortAsc]);
+  }, [members, regSortAsc, memberNameSortAsc]);
 
   useEffect(() => {
     setRegisteredMembersLength?.(members.length);
@@ -185,11 +172,15 @@ export default function MembersTable({
     () => MEMBER_PROFILE_COLUMNS.filter((column) => activeColumnKeys.includes(column.key)),
     [activeColumnKeys],
   );
+  const showSourceColumn = sortedRegisteredMembers.some(
+    (member: any) => member.registration_user || member.shop_user,
+  );
+  const baseColumnCount = showSourceColumn ? 5 : 4;
   const tableColumnWidths = [
     "80px",
     "200px",
     "220px",
-    "160px",
+    ...(showSourceColumn ? ["160px"] : []),
     "160px",
     ...selectedProfileColumns.map(() => "200px"),
   ];
@@ -287,7 +278,6 @@ export default function MembersTable({
                     onClick={() => {
                       setMemberNameSortAsc((prev) => (prev === null ? true : !prev));
                       setRegSortAsc(null);
-                      setStatusSortAsc(null);
                     }}
                     title="Toggle sort by Member Name"
                   >
@@ -306,29 +296,11 @@ export default function MembersTable({
                 <TableHead className="h-14 w-[150px] text-center text-sm text-slate-200">
                   Email
                 </TableHead>
-                <TableHead className="h-14 w-[120px] px-0 text-center text-sm text-slate-200">
-                  <button
-                    type="button"
-                    className="grid w-full grid-cols-[10px_auto_auto_10px] items-center justify-center gap-1 px-1.5 hover:underline"
-                    onClick={() => {
-                      setStatusSortAsc((prev) => (prev === null ? true : !prev));
-                      setMemberNameSortAsc(null);
-                      setRegSortAsc(null);
-                    }}
-                    title="Toggle sort by Status"
-                  >
-                    <span aria-hidden="true" />
-                    <span className="text-center">Status</span>
-                    <span className="flex justify-start">
-                      {statusSortAsc === null ? (
-                        <ChevronsUpDown className="h-3 w-3 opacity-60" />
-                      ) : (
-                        <span className="text-xs">{statusSortAsc ? "▲" : "▼"}</span>
-                      )}
-                    </span>
-                    <span aria-hidden="true" />
-                  </button>
-                </TableHead>
+                {showSourceColumn && (
+                  <TableHead className="h-14 w-[120px] text-center text-sm text-slate-200">
+                    Source
+                  </TableHead>
+                )}
                 <TableHead className="h-14 w-[120px] text-center text-sm text-slate-200">
                   Registrations
                 </TableHead>
@@ -401,22 +373,22 @@ export default function MembersTable({
                             <span className="line-clamp-1 break-all">{member.member_email}</span>
                           )}
                         </TableCell>
-                        <TableCell className="w-[120px] px-0 text-center">
-                          {(() => {
-                            const { status, className } = getMemberStatus(
-                              member.registered,
-                              member.resubmission_required,
-                              member.non_registration,
-                            );
-                            return (
-                              <div className="flex w-full justify-center px-2">
-                                <Badge className={`${className} px-2 py-0.5 text-xs font-medium`}>
-                                  {status}
+                        {showSourceColumn && (
+                          <TableCell className="w-[120px] px-0 text-center">
+                            <div className="flex w-full flex-wrap justify-center gap-1 px-2">
+                              {member.registration_user && (
+                                <Badge className="border-indigo-300 bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-800">
+                                  Registration
                                 </Badge>
-                              </div>
-                            );
-                          })()}
-                        </TableCell>
+                              )}
+                              {member.shop_user && (
+                                <Badge className="border-teal-300 bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-800">
+                                  Shop
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                        )}
                         <TableCell className="w-[120px] px-0 text-center">
                           <div className="flex w-full justify-center px-2">
                             <Button
@@ -448,7 +420,7 @@ export default function MembersTable({
                       </TableRow>
                       {expandedMemberId === member.user_id && (
                         <TableRow>
-                          <TableCell colSpan={5 + selectedProfileColumns.length} className="border-l-4 border-blue-500 p-4">
+                          <TableCell colSpan={baseColumnCount + selectedProfileColumns.length} className="border-l-4 border-blue-500 p-4">
                             <div className="overflow-hidden rounded-[18px] border border-slate-200 bg-slate-50">
                               <Table className="w-full">
                                 <TableHeader className="bg-zinc-700 [&_tr]:border-b [&_tr]:border-zinc-600">
@@ -499,7 +471,7 @@ export default function MembersTable({
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5 + selectedProfileColumns.length} className="h-20 text-center text-sm text-slate-500">
+                    <TableCell colSpan={baseColumnCount + selectedProfileColumns.length} className="h-20 text-center text-sm text-slate-500">
                       No results.
                     </TableCell>
                   </TableRow>

@@ -1,11 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ShieldAlert, ShieldCheck, UserRoundX } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { FileText, ShieldAlert, ShieldCheck, UserRoundX } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Card,
   CardContent,
@@ -19,7 +19,10 @@ import {
   getClubMember,
   type GetClubMemberResponse,
 } from "@/services/club-members";
+import { PublicMemberRegistrationView } from "@/components/public/public-member-registration-view";
 import { cn } from "@/lib/utils";
+
+type VerificationView = "verification" | "registration";
 
 type VerificationTone = {
   title: string;
@@ -140,6 +143,7 @@ export default function PublicMemberVerificationPage() {
     memberUserId: string;
   }>();
   const [searchParams] = useSearchParams();
+  const [view, setView] = useState<VerificationView>("verification");
   const { data: clubData } = useFetchClub(clubId || "", Boolean(clubId));
 
   const { data, dataUpdatedAt, isLoading, isError } = useQuery({
@@ -161,17 +165,6 @@ export default function PublicMemberVerificationPage() {
     () => clubName || clubData?.club_name?.trim() || "Club member status",
     [clubData?.club_name, clubName],
   );
-  const clubProfileImage = clubData?.club_profile_url?.trim() || "";
-  const clubInitials = useMemo(() => {
-    const initials = clubDisplayName
-      .split(" ")
-      .filter((value: string) => Boolean(value.trim()))
-      .slice(0, 2)
-      .map((value: string) => value[0]?.toUpperCase() || "")
-      .join("");
-
-    return initials || "CM";
-  }, [clubDisplayName]);
 
   const verificationTone = useMemo(
     () => getVerificationTone(data, dataUpdatedAt),
@@ -217,63 +210,97 @@ export default function PublicMemberVerificationPage() {
         ) : null}
 
         {!isLoading && !isError ? (
-          <>
-            <Card className="overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-[0_28px_90px_-54px_rgba(15,23,42,0.45)] sm:rounded-[2rem]">
-              <CardContent className="p-0">
-                <div className="border-b border-slate-200 bg-[linear-gradient(180deg,_rgba(248,250,252,0.95)_0%,_rgba(241,245,249,0.9)_100%)] px-4 pb-4 pt-5 text-center sm:px-7 sm:pb-6 sm:pt-8">
-                  <Avatar className="mx-auto h-20 w-20 border-4 border-white bg-white shadow-[0_18px_40px_-24px_rgba(15,23,42,0.45)] sm:h-32 sm:w-32">
-                    <AvatarImage className="object-cover object-center" src={clubProfileImage} alt={clubDisplayName} />
-                    <AvatarFallback className="bg-slate-100 text-lg font-semibold text-slate-700 sm:text-3xl">
-                      {clubInitials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="mt-3 space-y-0.5 sm:mt-5 sm:space-y-1">
-                    <p className="text-[10px] font-medium uppercase tracking-[0.28em] text-slate-500 sm:text-xs">
-                      {clubDisplayName}
-                    </p>
-                    <h1 className="text-lg font-bold tracking-tight text-slate-950 sm:text-3xl">
-                      {fullName || "Unknown member"}
-                    </h1>
-                  </div>
-                </div>
-
-                <div className="px-3 py-3 sm:px-6 sm:py-6">
-                  <div className={cn("rounded-[1.25rem] border px-3 py-3 sm:rounded-[1.5rem] sm:px-5 sm:py-5", verificationTone.panelClassName)}>
-                    <div className="flex items-start gap-2.5 sm:gap-4">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/60 bg-white/80 shadow-sm sm:h-14 sm:w-14">
-                        <VerificationIcon className="h-5 w-5 sm:h-7 sm:w-7" />
+          <div className="[perspective:1600px]">
+            <AnimatePresence mode="wait" initial={false}>
+              {view === "verification" ? (
+                <motion.div
+                  key="verification"
+                  initial={{ rotateY: -90, opacity: 0 }}
+                  animate={{ rotateY: 0, opacity: 1 }}
+                  exit={{ rotateY: 90, opacity: 0 }}
+                  transition={{ duration: 0.35, ease: "easeInOut" }}
+                  style={{ transformStyle: "preserve-3d" }}
+                >
+                  <Card className="overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-[0_28px_90px_-54px_rgba(15,23,42,0.45)] sm:rounded-[2rem]">
+                    <CardContent className="p-0">
+                      <div className="border-b border-slate-200 bg-[linear-gradient(180deg,_rgba(248,250,252,0.95)_0%,_rgba(241,245,249,0.9)_100%)] px-4 pb-4 pt-5 text-center sm:px-7 sm:pb-6 sm:pt-8">
+                        <div className="space-y-0.5 sm:space-y-1">
+                          <p className="text-[10px] font-medium uppercase tracking-[0.28em] text-slate-500 sm:text-xs">
+                            {clubDisplayName}
+                          </p>
+                          <h1 className="text-lg font-bold tracking-tight text-slate-950 sm:text-3xl">
+                            {fullName || "Unknown member"}
+                          </h1>
+                        </div>
                       </div>
-                      <div className="min-w-0 space-y-1.5 sm:space-y-2">
-                        <Badge className={cn("border px-2 py-0.5 text-[10px] font-semibold sm:px-3 sm:py-1 sm:text-xs", verificationTone.badgeClassName)}>
-                          {verificationTone.badgeLabel}
-                        </Badge>
-                        <div>
-                          <h2 className="text-sm font-semibold tracking-tight sm:text-xl">
-                            {verificationTone.title}
-                          </h2>
-                          <p className="mt-0.5 text-[11px] leading-4.5 opacity-90 sm:mt-1 sm:text-sm sm:leading-6">
-                            {verificationTone.description}
+
+                      <div className="px-3 py-3 sm:px-6 sm:py-6">
+                        <div className={cn("rounded-[1.25rem] border px-3 py-3 sm:rounded-[1.5rem] sm:px-5 sm:py-5", verificationTone.panelClassName)}>
+                          <div className="flex items-start gap-2.5 sm:gap-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/60 bg-white/80 shadow-sm sm:h-14 sm:w-14">
+                              <VerificationIcon className="h-5 w-5 sm:h-7 sm:w-7" />
+                            </div>
+                            <div className="min-w-0 space-y-1.5 sm:space-y-2">
+                              <Badge className={cn("border px-2 py-0.5 text-[10px] font-semibold sm:px-3 sm:py-1 sm:text-xs", verificationTone.badgeClassName)}>
+                                {verificationTone.badgeLabel}
+                              </Badge>
+                              <div>
+                                <h2 className="text-sm font-semibold tracking-tight sm:text-xl">
+                                  {verificationTone.title}
+                                </h2>
+                                <p className="mt-0.5 text-[11px] leading-4.5 opacity-90 sm:mt-1 sm:text-sm sm:leading-6">
+                                  {verificationTone.description}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-2.5 rounded-[1rem] border border-slate-200 bg-slate-50 px-3 py-2 text-center sm:mt-4 sm:rounded-[1.25rem] sm:px-4 sm:py-3">
+                          <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-500 sm:text-xs">
+                            Membership credential
                           </p>
                         </div>
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-2.5 rounded-[1rem] border border-slate-200 bg-slate-50 px-3 py-2 text-center sm:mt-4 sm:rounded-[1.25rem] sm:px-4 sm:py-3">
-                    <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-slate-500 sm:text-xs">
-                      Membership credential
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="registration"
+                  initial={{ rotateY: 90, opacity: 0 }}
+                  animate={{ rotateY: 0, opacity: 1 }}
+                  exit={{ rotateY: -90, opacity: 0 }}
+                  transition={{ duration: 0.35, ease: "easeInOut" }}
+                  style={{ transformStyle: "preserve-3d" }}
+                >
+                  <PublicMemberRegistrationView
+                    clubAccountId={clubId}
+                    userId={memberUserId}
+                    currency={clubData?.currency || "ZAR"}
+                    registrationId={data?.registration_id}
+                    onBack={() => setView("verification")}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         ) : null}
 
-        <div className="flex justify-center">
+        <div className="flex flex-wrap justify-center gap-2">
           <Button asChild variant="outline" className="h-8 rounded-full bg-white px-3 text-xs sm:h-10 sm:px-4 sm:text-sm">
             <Link to={`/clubs/${clubId}`}>View club</Link>
           </Button>
+          {view === "verification" && data?.is_club_member && (
+            <Button
+              variant="outline"
+              className="h-8 gap-1.5 rounded-full bg-white px-3 text-xs sm:h-10 sm:px-4 sm:text-sm"
+              onClick={() => setView("registration")}
+            >
+              <FileText className="h-3.5 w-3.5" />
+              View registration
+            </Button>
+          )}
         </div>
       </div>
     </div>

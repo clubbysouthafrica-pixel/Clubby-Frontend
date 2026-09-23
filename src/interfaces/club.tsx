@@ -43,6 +43,8 @@ export interface ClubMember {
     resubmission_required: boolean
     missing_club_member?: boolean
     email_opt_in?: boolean
+    registration_user?: boolean
+    shop_user?: boolean
 }
 
 export interface NonRegistrationClub {

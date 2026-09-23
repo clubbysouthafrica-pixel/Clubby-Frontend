@@ -409,6 +409,16 @@ export function ClubHomeTab({
                         </Badge>
                       )}
                     </div>
+                    {isPublicLandingView && (description || aboutClub) ? (
+                      <div className="space-y-1.5 sm:space-y-2">
+                        {description && (
+                          <p className="text-[11px] leading-4 text-slate-600 sm:text-sm sm:leading-6">{description}</p>
+                        )}
+                        {aboutClub && (
+                          <p className="text-[11px] leading-4 text-slate-600 sm:text-sm sm:leading-6">{aboutClub}</p>
+                        )}
+                      </div>
+                    ) : null}
                   </div>
 
                   {isPublicLandingView ? (
@@ -536,15 +546,9 @@ export function ClubHomeTab({
       </div>
 
       <div className="container mx-auto mb-3 mt-3 px-3 sm:mb-6 sm:mt-8 sm:px-4">
-        {isPublicLandingView ? (
-          <div
-            className={cn(
-              "mb-2 grid grid-cols-1 gap-2 sm:mb-4 sm:gap-4 xl:items-stretch xl:gap-5",
-              publicShopEnabled ? "xl:grid-cols-2" : "xl:grid-cols-1",
-            )}
-          >
-            {publicShopEnabled ? (
-              <section
+        {isPublicLandingView && publicShopEnabled ? (
+          <div className="mb-2 grid grid-cols-1 gap-2 sm:mb-4 sm:gap-4 xl:items-stretch xl:gap-5">
+            <section
                 ref={publicStoreRef}
                 className="rounded-[1.2rem] border border-slate-200 bg-white p-2 shadow-[0_20px_60px_-36px_rgba(15,23,42,0.1)] sm:rounded-[1.5rem] sm:p-4 xl:flex xl:h-[24rem] xl:flex-col"
               >
@@ -578,41 +582,6 @@ export function ClubHomeTab({
                   <MemberShopPage embedded compact />
                 </div>
               </section>
-            ) : null}
-
-            <section
-              className={cn(
-                "rounded-[1.2rem] border border-slate-200 bg-white p-2 shadow-[0_20px_60px_-36px_rgba(15,23,42,0.1)] sm:rounded-[1.5rem] sm:p-4 xl:h-[24rem]",
-                !publicShopEnabled && "xl:w-full",
-              )}
-            >
-              <div className="flex flex-col gap-3 xl:h-full">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                  About
-                </p>
-                {description && (
-                  <p className="text-[11px] leading-4 text-slate-600 sm:text-sm sm:leading-6">{description}</p>
-                )}
-                {aboutClub && (
-                  <p className="text-[11px] leading-4 text-slate-600 sm:text-sm sm:leading-6">{aboutClub}</p>
-                )}
-                {primaryActionLabel && onPrimaryAction ? (
-                  <Button
-                    variant={primaryActionVariant}
-                    className={cn(
-                      "mt-auto h-8 w-full rounded-lg px-3 text-[11px] font-semibold lg:text-base xl:h-auto",
-                      primaryActionVariant === "destructive"
-                        ? "shadow-[0_18px_36px_-24px_rgba(220,38,38,0.45)]"
-                        : "bg-slate-900 text-white shadow-[0_18px_36px_-24px_rgba(15,23,42,0.38)] hover:bg-slate-800",
-                    )}
-                    onClick={onPrimaryAction}
-                  >
-                    <Users className="mr-2 h-4 w-4" />
-                    {primaryActionLabel}
-                  </Button>
-                ) : null}
-              </div>
-            </section>
           </div>
         ) : null}
 

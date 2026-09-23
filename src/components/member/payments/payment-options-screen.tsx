@@ -79,18 +79,19 @@ export default function PaymentOptionsScreen({
   const [snapScanCycle, setSnapScanCycle] = useState(0);
   const [snapScanPaid, setSnapScanPaid] = useState(false);
 
-  const { data: paymentDetails } = useFetchPaymentDetails(clubAccountId);
+  const { data: paymentDetails, isLoading: paymentDetailsLoading } = useFetchPaymentDetails(clubAccountId);
 
-  const resolvedEftDetails = paymentDetails
-    ? paymentDetails.eft_details
-    : (bankDetails ?? null);
+  const resolvedEftDetails = paymentDetails ? paymentDetails.eft_details : null;
   const resolvedPayfastEnabled = paymentDetails
     ? paymentDetails.payfast_enabled
     : payfastEnabled;
   const resolvedSnapscanEnabled = paymentDetails
     ? paymentDetails.snapscan_enabled
     : snapscanEnabled;
-  const eftEnabled = resolvedEftDetails !== null;
+  // Wait for paymentDetails (the source of truth for eft_enabled) before deciding
+  // whether to show the EFT option, otherwise it briefly shows using the stale
+  // bankDetails fallback and then disappears once paymentDetails loads.
+  const eftEnabled = !paymentDetailsLoading && resolvedEftDetails !== null;
 
   const getSnapScanApiMessage = (error: unknown) => {
     if (!axios.isAxiosError(error)) {
@@ -312,9 +313,12 @@ export default function PaymentOptionsScreen({
               <p className="text-3xl font-bold tracking-tight text-orange-600 sm:text-4xl">
                 {formatAmount(outstandingAmount, currency === undefined || currency === "" ? "ZAR" : currency)}
               </p>
-              <p className="mt-1 text-xs text-orange-400">
-                Amount due — choose a payment method below
-              </p>
+              {!eftEnabled && (<div className="pt-3 flex items-start gap-2">
+                <span className="text-amber-500 shrink-0 text-sm leading-none">⚠</span>
+                <p className="text-xs text-amber-800">
+                  <strong>Note:</strong> This transaction will be removed after <strong>1 hour</strong> if no payment is submitted.
+                </p>
+              </div>)}
 
               {resolvedSnapscanEnabled && (
                 <div className="mt-3 flex items-center gap-3 rounded-xl border border-orange-200 bg-white/60 px-3 py-2.5">
@@ -336,15 +340,6 @@ export default function PaymentOptionsScreen({
                 </div>
               )}
             </div>
-
-            {!eftEnabled && (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 flex items-start gap-2">
-                <span className="text-amber-500 shrink-0 text-sm leading-none">⚠</span>
-                <p className="text-xs text-amber-800">
-                  <strong>Note:</strong> This transaction will be removed after <strong>1 hour</strong> if no payment is submitted.
-                </p>
-              </div>
-            )}
           </CardHeader>
 
           <CardContent className="px-0 space-y-5 pb-2 pt-2 sm:space-y-6">
