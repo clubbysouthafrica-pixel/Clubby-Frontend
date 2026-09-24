@@ -25,7 +25,11 @@ export function RegistrationSettingsDialog({
 }: RegistrationSettingsDialogProps) {
   const [open, setOpen] = useState(false);
   const [sendQrCodeEmail, setSendQrCodeEmail] = useState(false);
-  const [savedSendQrCodeEmail, setSavedSendQrCodeEmail] = useState(false);
+  const [sendLoginCredentialsEmail, setSendLoginCredentialsEmail] = useState(false);
+  const [saved, setSaved] = useState({
+    sendQrCodeEmail: false,
+    sendLoginCredentialsEmail: false,
+  });
 
   const { data: registrationConfiguration, isLoading } = useFetchRegistrationConfiguration(
     clubAccountId,
@@ -35,23 +39,31 @@ export function RegistrationSettingsDialog({
 
   useEffect(() => {
     if (registrationConfiguration) {
-      const value = Boolean(registrationConfiguration.configuration.send_qr_code_email_on_registration);
-      setSendQrCodeEmail(value);
-      setSavedSendQrCodeEmail(value);
+      const { configuration } = registrationConfiguration;
+      const next = {
+        sendQrCodeEmail: Boolean(configuration.send_qr_code_email_on_registration),
+        sendLoginCredentialsEmail: Boolean(configuration.send_login_credentials_email_on_registration),
+      };
+      setSendQrCodeEmail(next.sendQrCodeEmail);
+      setSendLoginCredentialsEmail(next.sendLoginCredentialsEmail);
+      setSaved(next);
     }
   }, [registrationConfiguration]);
 
-  const hasChanges = sendQrCodeEmail !== savedSendQrCodeEmail;
+  const hasChanges =
+    sendQrCodeEmail !== saved.sendQrCodeEmail ||
+    sendLoginCredentialsEmail !== saved.sendLoginCredentialsEmail;
 
   const handleSave = () => {
     mutate(
       {
         club_account_id: clubAccountId,
         send_qr_code_email_on_registration: sendQrCodeEmail,
+        send_login_credentials_email_on_registration: sendLoginCredentialsEmail,
       },
       {
         onSuccess: () => {
-          setSavedSendQrCodeEmail(sendQrCodeEmail);
+          setSaved({ sendQrCodeEmail, sendLoginCredentialsEmail });
           toast.success("Registration settings updated");
           setOpen(false);
         },
@@ -113,6 +125,24 @@ export function RegistrationSettingsDialog({
                 id="send-qr-code-email"
                 checked={sendQrCodeEmail}
                 onCheckedChange={setSendQrCodeEmail}
+                disabled={isPending}
+              />
+            </div>
+
+            <div className="flex items-start justify-between gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <div className="space-y-1">
+                <Label htmlFor="send-login-credentials-email" className="text-sm font-medium">
+                  Email login credentials on registration
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  When a new member registers, email them their login credentials
+                  so they can sign in to their account.
+                </p>
+              </div>
+              <Switch
+                id="send-login-credentials-email"
+                checked={sendLoginCredentialsEmail}
+                onCheckedChange={setSendLoginCredentialsEmail}
                 disabled={isPending}
               />
             </div>
